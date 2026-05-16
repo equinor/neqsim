@@ -25,6 +25,7 @@ import neqsim.process.mechanicaldesign.distillation.DistillationColumnMechanical
 import neqsim.process.util.monitor.DistillationColumnResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -71,12 +72,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private static final double DEFAULT_ENTHALPY_BALANCE_TOLERANCE = 1.6e-2;
   /** Default scaled MESH residual tolerance when residual gating is enabled. */
   private static final double DEFAULT_MESH_RESIDUAL_TOLERANCE = 1.0;
+  /** Default product draw residual tolerance when MESH residual gating is enabled. */
+  private static final double DEFAULT_MESH_PRODUCT_DRAW_RESIDUAL_TOLERANCE = 2.0e-2;
   /** Minimum temperature span required before a tray temperature profile is considered useful. */
   private static final double MINIMUM_FEED_PROFILE_SPAN = 1.0;
   /** Temperature offset used when only one column-end temperature is specified. */
   private static final double FEED_PROFILE_END_TEMPERATURE_OFFSET = 20.0;
   /** Tolerance used when comparing equivalent feed tray candidates. */
   private static final double FEED_TRAY_TIE_TOLERANCE = 1.0e-9;
+  /** Default maximum number of candidate cases in tray optimization searches. */
+  private static final int DEFAULT_MAX_TRAY_OPTIMIZATION_CANDIDATES = 2000;
+  /** Default maximum elapsed time for tray optimization searches in seconds. */
+  private static final double DEFAULT_MAX_TRAY_OPTIMIZATION_TIME_SECONDS = 120.0;
   double condenserCoolingDuty = 10.0;
   private double reboilerTemperature = 273.15;
   private double condenserTemperature = 270.15;
@@ -90,6 +97,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double enthalpyBalanceTolerance = DEFAULT_ENTHALPY_BALANCE_TOLERANCE;
   /** Scaled MESH residual convergence tolerance. */
   private double meshResidualTolerance = DEFAULT_MESH_RESIDUAL_TOLERANCE;
+  /** Scaled terminal product-draw residual convergence tolerance. */
+  private double meshProductDrawResidualTolerance = DEFAULT_MESH_PRODUCT_DRAW_RESIDUAL_TOLERANCE;
+  /** Maximum number of candidate cases allowed in tray optimization searches. */
+  private int maxTrayOptimizationCandidates = DEFAULT_MAX_TRAY_OPTIMIZATION_CANDIDATES;
+  /** Maximum elapsed time allowed in tray optimization searches in seconds. */
+  private double maxTrayOptimizationTimeSeconds = DEFAULT_MAX_TRAY_OPTIMIZATION_TIME_SECONDS;
   /** Track whether temperature tolerance has been manually overridden. */
   private boolean temperatureToleranceCustomized = false;
   /** Track whether mass balance tolerance has been manually overridden. */
@@ -136,8 +149,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double maxEnergyRelaxationWeight = 10.0;
   /** Control whether energy residual must satisfy tolerance before convergence. */
   private boolean enforceEnergyBalanceTolerance = false;
-  /** Control whether the MESH residual vector must satisfy tolerance before convergence. */
+  /**
+   * Explicit control of whether the MESH residual vector must satisfy tolerance before convergence.
+   * When not explicitly set, the gate is active for {@link SolverType#MESH_RESIDUAL} and inactive
+   * for the legacy solver modes.
+   */
   private boolean enforceMeshResidualTolerance = false;
+  /** Track whether MESH residual convergence gating has been explicitly configured. */
+  private boolean enforceMeshResidualToleranceCustomized = false;
   private boolean doMultiPhaseCheck = true;
 
   /**
@@ -211,6 +230,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double lastBottomSpecificationResidual = 0.0;
   /** Latest MESH residual diagnostics. */
   private transient ColumnMeshResidual lastMeshResidual = null;
+  /** Reconciled top product draw used by product-draw residual diagnostics. */
+  private transient StreamInterface terminalGasProductDrawStream = null;
+  /** Reconciled bottom product draw used by product-draw residual diagnostics. */
+  private transient StreamInterface terminalLiquidProductDrawStream = null;
   /** Duration of the latest solve step in seconds. */
   private double lastSolveTimeSeconds = 0.0;
 
@@ -219,6 +242,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * This allows multiple feeds to the same tray.
    */
   private Map<Integer, List<StreamInterface>> feedStreams = new HashMap<>();
+  /** Legacy direct tray feeds captured before internal vapor/liquid traffic is connected. */
+  private Map<Integer, List<StreamInterface>> directExternalFeedStreams = new HashMap<>();
   private List<StreamInterface> unassignedFeedStreams = new ArrayList<>();
 
   /**
@@ -249,6 +274,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /** Murphree tray efficiency applied to each equilibrium stage (0..1). Default 1.0 = ideal. */
   private double murphreeEfficiency = 1.0;
+
+  /**
+   * Per-stage Murphree efficiency overrides. Index 0 is the reboiler and the last stage is the
+   * condenser if present. A {@link Double#NaN} value means that the column-wide Murphree efficiency
+   * is used for that stage.
+   */
+  private double[] perStageMurphreeEfficiency = null;
 
   /** Per-iteration convergence history: [iteration][0=tempErr, 1=massErr, 2=energyErr]. */
   private transient List<double[]> convergenceHistory = new ArrayList<>();
@@ -485,14 +517,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     setDoInitializion(false);
 
-    // If feedStreams is empty, nothing to do
-    if (feedStreams.isEmpty()) {
+    captureDirectExternalTrayFeeds();
+
+    // If feed streams are empty, nothing to do
+    if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
     }
 
     // Grab the tray with the lowest index among the feed trays
-    int firstFeedTrayNumber = feedStreams.keySet().stream().min(Integer::compareTo).get();
+    int firstFeedTrayNumber = getFirstExternalFeedTrayNumber();
 
     // We run the first feed tray to see its temperature:
     getTray(firstFeedTrayNumber).run();
@@ -914,13 +948,115 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   void solveMeshResidual(UUID id) {
     solveInsideOut(id);
     updateMeshResiduals();
-    if (lastMeshResidual == null || !lastMeshResidual.isFinite()
-        || lastMeshResidual.getInfinityNorm() > 1.0) {
-      logger.debug("MESH residual monitor requested Newton polish; residual={}",
-          lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm());
-      solveNewton(id);
-      updateMeshResiduals();
+    for (int polish = 0; polish < 3 && meshResidualNeedsPolishing(); polish++) {
+      double residualNorm =
+          lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm();
+      logger.debug("MESH residual solver requested Newton polish {}; residual={}",
+          Integer.valueOf(polish + 1), Double.valueOf(residualNorm));
+      if (!tryGuardedMeshNewtonPolish(id, residualNorm)) {
+        break;
+      }
     }
+  }
+
+  /**
+   * Try one Newton polishing pass on a deep-copied candidate column and accept it only if the MESH
+   * residual norm improves.
+   *
+   * <p>
+   * Running the aggressive Newton accelerator on a candidate protects the accepted inside-out
+   * solution from flash failures, non-finite states, or residual growth. This provides a bounded
+   * line-search style guard for the residual-monitored solver without changing the legacy Newton
+   * solver contract.
+   * </p>
+   *
+   * @param id calculation identifier
+   * @param baselineResidualNorm accepted residual norm before the polish attempt
+   * @return {@code true} if the candidate polish was accepted
+   */
+  private boolean tryGuardedMeshNewtonPolish(UUID id, double baselineResidualNorm) {
+    if (!Double.isFinite(baselineResidualNorm)) {
+      return false;
+    }
+    DistillationColumn candidate;
+    try {
+      candidate = (DistillationColumn) this.copy();
+    } catch (RuntimeException exception) {
+      logger.debug("MESH Newton polish skipped because candidate copy failed.", exception);
+      return false;
+    }
+
+    try {
+      candidate.solveNewton(id);
+      candidate.updateMeshResiduals();
+    } catch (RuntimeException exception) {
+      logger.debug("MESH Newton polish rejected because the candidate solve failed.", exception);
+      return false;
+    }
+
+    double candidateResidualNorm = candidate.lastMeshResidual == null ? Double.NaN
+        : candidate.lastMeshResidual.getInfinityNorm();
+    if (!Double.isFinite(candidateResidualNorm)
+        || candidateResidualNorm >= baselineResidualNorm * 0.999) {
+      logger.debug("MESH Newton polish rejected: residual {} did not improve baseline {}.",
+          Double.valueOf(candidateResidualNorm), Double.valueOf(baselineResidualNorm));
+      return false;
+    }
+
+    acceptMeshPolishCandidate(candidate);
+    logger.debug("MESH Newton polish accepted: residual {} improved baseline {}.",
+        Double.valueOf(candidateResidualNorm), Double.valueOf(baselineResidualNorm));
+    return true;
+  }
+
+  /**
+   * Copy the solved state from an accepted MESH-polish candidate back to this live column.
+   *
+   * <p>
+   * User-facing feed stream maps are intentionally not replaced: they may contain stream object
+   * identities supplied by callers and are reused on later runs. The candidate tray network already
+   * contains equivalent cloned feed streams for the accepted solved state, and the preserved maps
+   * will refresh tray inputs from the caller-owned streams on the next solve.
+   * </p>
+   *
+   * @param candidate accepted candidate column
+   */
+  private void acceptMeshPolishCandidate(DistillationColumn candidate) {
+    this.trays = candidate.trays;
+    this.numberOfTrays = candidate.numberOfTrays;
+    this.distoperations = candidate.distoperations;
+    this.feedmixer = candidate.feedmixer;
+    this.stream_3 = candidate.stream_3;
+    this.gasOutStream = candidate.gasOutStream;
+    this.liquidOutStream = candidate.liquidOutStream;
+    this.stream_3isset = candidate.stream_3isset;
+    this.heater = candidate.heater;
+    this.separator2 = candidate.separator2;
+    this.err = candidate.err;
+    this.lastIterationCount = candidate.lastIterationCount;
+    this.lastTemperatureResidual = candidate.lastTemperatureResidual;
+    this.lastMassResidual = candidate.lastMassResidual;
+    this.lastEnergyResidual = candidate.lastEnergyResidual;
+    this.lastTopSpecificationResidual = candidate.lastTopSpecificationResidual;
+    this.lastBottomSpecificationResidual = candidate.lastBottomSpecificationResidual;
+    this.lastMeshResidual = candidate.lastMeshResidual;
+    this.terminalGasProductDrawStream = candidate.terminalGasProductDrawStream;
+    this.terminalLiquidProductDrawStream = candidate.terminalLiquidProductDrawStream;
+    this.lastSolveTimeSeconds = candidate.lastSolveTimeSeconds;
+    this.hasBeenSolvedBefore = candidate.hasBeenSolvedBefore;
+    this.lastTotalFeedFlow = candidate.lastTotalFeedFlow;
+    this.doInitializion = candidate.doInitializion;
+  }
+
+  /**
+   * Check whether the latest MESH residual still needs Newton polishing.
+   *
+   * @return {@code true} when no finite residual is available or the norm is above tolerance
+   */
+  private boolean meshResidualNeedsPolishing() {
+    return lastMeshResidual == null || !lastMeshResidual.isFinite()
+      || lastMeshResidual.getInfinityNorm() > meshResidualTolerance
+      || !productDrawResidualsSatisfied();
   }
 
   /**
@@ -971,10 +1107,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private double getTotalFeedComponentFlow(String componentName) {
     double total = 0.0;
-    for (List<StreamInterface> feeds : feedStreams.values()) {
-      for (StreamInterface feed : feeds) {
-        total += feed.getFluid().getComponent(componentName).getTotalFlowRate("mol/hr");
-      }
+    for (StreamInterface feed : getAllExternalFeedStreams()) {
+      total += feed.getFluid().getComponent(componentName).getTotalFlowRate("mol/hr");
     }
     return total;
   }
@@ -1048,8 +1182,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       double temperatureDifference = Math.abs(trayTemperature - feedTemperature);
-      if (temperatureDifference < minimumTemperatureDifference || Math.abs(
-          temperatureDifference - minimumTemperatureDifference) <= FEED_TRAY_TIE_TOLERANCE) {
+      if (temperatureDifference < minimumTemperatureDifference || Math
+          .abs(temperatureDifference - minimumTemperatureDifference) <= FEED_TRAY_TIE_TOLERANCE) {
         minimumTemperatureDifference = temperatureDifference;
         bestTray = trayNumber;
       }
@@ -1151,7 +1285,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param bottomTemperature bottom temperature estimate in Kelvin
    * @return top temperature estimate in Kelvin
    */
-  private double estimateTopFeedProfileTemperature(double feedTemperature, double bottomTemperature) {
+  private double estimateTopFeedProfileTemperature(double feedTemperature,
+      double bottomTemperature) {
     int topTrayNumber = numberOfTrays - 1;
     if (hasCondenser && getCondenser().isSetOutTemperature()
         && isUsableTemperature(getCondenser().getOutTemperature())) {
@@ -1463,9 +1598,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     public EconomicTrayOptimizationResult(TrayOptimizationResult baseResult, double capitalCost,
         double annualUtilityCost, double annualizedCapitalCost, double totalAnnualizedCost,
         double capitalChargeFactor, double operatingHoursPerYear, double steamCostPerTonne,
-        double coolingWaterCostPerM3, double trayEfficiency, int actualTrays,
-        double columnDiameter, double columnHeight, double condenserRefluxRatio,
-        double reboilerRatio) {
+        double coolingWaterCostPerM3, double trayEfficiency, int actualTrays, double columnDiameter,
+        double columnHeight, double condenserRefluxRatio, double reboilerRatio) {
       super(baseResult.isFeasible(), baseResult.getNumberOfTrays(), baseResult.getFeedTrayNumber(),
           baseResult.getComponentName(), baseResult.isTopProduct(), baseResult.getTargetPurity(),
           baseResult.getProductPurity(), baseResult.getReboilerDuty(),
@@ -1690,10 +1824,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param componentName the name of the key component
    * @param isTopProduct true if the spec is for the top product, false for the bottom product
    * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
-   * @return structured optimization result with selected tray count, feed tray, duties and residuals
+   * @return structured optimization result with selected tray count, feed tray, duties and
+   *         residuals
    */
   public TrayOptimizationResult findOptimalTrayConfiguration(double productSpec,
       String componentName, boolean isTopProduct, int maxTrays) {
+    long optimizationStartNanos = System.nanoTime();
     ColumnOptimizationState state = captureColumnOptimizationState();
     List<StreamInterface> optimizationFeeds = collectOptimizationFeeds();
     if (optimizationFeeds.isEmpty()) {
@@ -1716,6 +1852,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       int lastFeedTray = getLastFeedTrayCandidate();
 
       for (int feedTray = firstFeedTray; feedTray <= lastFeedTray; feedTray++) {
+        if (isTrayOptimizationSearchBudgetExceeded(evaluatedCases, optimizationStartNanos)) {
+          String budgetMessage = createTrayOptimizationBudgetMessage(evaluatedCases,
+              optimizationStartNanos);
+          if (bestForTrayCount != null) {
+            return applyTrayOptimizationResult(bestForTrayCount, optimizationFeeds, state,
+                productSpec, componentName, isTopProduct, evaluatedCases, convergedCases,
+                "Selected best candidate found before " + budgetMessage);
+          }
+          return createInfeasibleTrayOptimizationResult(productSpec, componentName, isTopProduct,
+              evaluatedCases, convergedCases, budgetMessage);
+        }
         evaluatedCases++;
         TrayOptimizationResult candidate = evaluateTrayOptimizationCandidate(totalTrayCount,
             feedTray, productSpec, componentName, isTopProduct, optimizationFeeds, state);
@@ -1726,16 +1873,29 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
             && isBetterTrayOptimizationCandidate(candidate, bestForTrayCount)) {
           bestForTrayCount = candidate;
         }
+        if (isTrayOptimizationSearchBudgetExceeded(evaluatedCases, optimizationStartNanos)) {
+          String budgetMessage = createTrayOptimizationBudgetMessage(evaluatedCases,
+              optimizationStartNanos);
+          if (bestForTrayCount != null) {
+            return applyTrayOptimizationResult(bestForTrayCount, optimizationFeeds, state,
+                productSpec, componentName, isTopProduct, evaluatedCases, convergedCases,
+                "Selected best candidate found before " + budgetMessage);
+          }
+          return createInfeasibleTrayOptimizationResult(productSpec, componentName, isTopProduct,
+              evaluatedCases, convergedCases, budgetMessage);
+        }
       }
 
       if (bestForTrayCount != null) {
         return applyTrayOptimizationResult(bestForTrayCount, optimizationFeeds, state, productSpec,
-            componentName, isTopProduct, evaluatedCases, convergedCases);
+            componentName, isTopProduct, evaluatedCases, convergedCases,
+            "Selected minimum-tray candidate with lowest duty for that tray count.");
       }
     }
 
     return createInfeasibleTrayOptimizationResult(productSpec, componentName, isTopProduct,
-        evaluatedCases, convergedCases, "No converged tray/feed-tray candidate met the product spec.");
+        evaluatedCases, convergedCases,
+        "No converged tray/feed-tray candidate met the product spec.");
   }
 
   /**
@@ -1749,8 +1909,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public int findOptimalNumberOfTrays(double productSpec, String componentName,
       boolean isTopProduct, int maxTrays) {
-    TrayOptimizationResult result = findOptimalTrayConfiguration(productSpec, componentName,
-        isTopProduct, maxTrays);
+    TrayOptimizationResult result =
+        findOptimalTrayConfiguration(productSpec, componentName, isTopProduct, maxTrays);
     return result.isFeasible() ? result.getNumberOfTrays() : -1;
   }
 
@@ -1760,9 +1920,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * <p>
    * This method searches tray count and feed tray for all converged candidates that meet the
    * product specification, then selects the candidate with the lowest annualized cost. The cost is
-   * calculated as annualized installed capital plus reboiler/condenser utility cost using the column
-   * mechanical design and cost-estimation correlations. Default assumptions are 15%/year capital
-   * charge factor, 8000 operating hours/year, 25 USD/tonne steam, and 0.03 USD/m3 cooling water.
+   * calculated as annualized installed capital plus reboiler/condenser utility cost using the
+   * column mechanical design and cost-estimation correlations. Default assumptions are 15%/year
+   * capital charge factor, 8000 operating hours/year, 25 USD/tonne steam, and 0.03 USD/m3 cooling
+   * water.
    * </p>
    *
    * @param productSpec the target purity (mole fraction) of the key component
@@ -1826,6 +1987,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       String componentName, boolean isTopProduct, int maxTrays, double[] condenserRefluxRatios,
       double[] reboilerRatios, double capitalChargeFactor, double operatingHoursPerYear,
       double steamCostPerTonne, double coolingWaterCostPerM3, double trayEfficiency) {
+    long optimizationStartNanos = System.nanoTime();
     ColumnOptimizationState state = captureColumnOptimizationState();
     List<StreamInterface> optimizationFeeds = collectOptimizationFeeds();
     if (optimizationFeeds.isEmpty()) {
@@ -1855,8 +2017,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
       for (int feedTray = firstFeedTray; feedTray <= lastFeedTray; feedTray++) {
         for (int refluxIndex = 0; refluxIndex < refluxCandidates.length; refluxIndex++) {
-          for (int reboilerIndex = 0; reboilerIndex < reboilerCandidates.length;
-              reboilerIndex++) {
+          for (int reboilerIndex = 0; reboilerIndex < reboilerCandidates.length; reboilerIndex++) {
+            if (isTrayOptimizationSearchBudgetExceeded(evaluatedCases, optimizationStartNanos)) {
+              String budgetMessage = createTrayOptimizationBudgetMessage(evaluatedCases,
+                  optimizationStartNanos);
+              if (bestCandidate != null) {
+                return applyEconomicTrayOptimizationResult(bestCandidate, optimizationFeeds, state,
+                    productSpec, componentName, isTopProduct, evaluatedCases, convergedCases,
+                    capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne,
+                    coolingWaterCostPerM3, trayEfficiency,
+                    "Selected best economic candidate found before " + budgetMessage);
+              }
+              return createInfeasibleEconomicTrayOptimizationResult(productSpec, componentName,
+                  isTopProduct, evaluatedCases, convergedCases, capitalChargeFactor,
+                  operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
+                  budgetMessage);
+            }
             evaluatedCases++;
             EconomicTrayOptimizationResult candidate = evaluateEconomicTrayOptimizationCandidate(
                 totalTrayCount, feedTray, productSpec, componentName, isTopProduct,
@@ -1870,6 +2046,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
                 && isBetterEconomicTrayOptimizationCandidate(candidate, bestCandidate)) {
               bestCandidate = candidate;
             }
+            if (isTrayOptimizationSearchBudgetExceeded(evaluatedCases, optimizationStartNanos)) {
+              String budgetMessage = createTrayOptimizationBudgetMessage(evaluatedCases,
+                  optimizationStartNanos);
+              if (bestCandidate != null) {
+                return applyEconomicTrayOptimizationResult(bestCandidate, optimizationFeeds, state,
+                    productSpec, componentName, isTopProduct, evaluatedCases, convergedCases,
+                    capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne,
+                    coolingWaterCostPerM3, trayEfficiency,
+                    "Selected best economic candidate found before " + budgetMessage);
+              }
+              return createInfeasibleEconomicTrayOptimizationResult(productSpec, componentName,
+                  isTopProduct, evaluatedCases, convergedCases, capitalChargeFactor,
+                  operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
+                  budgetMessage);
+            }
           }
         }
       }
@@ -1879,11 +2070,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return applyEconomicTrayOptimizationResult(bestCandidate, optimizationFeeds, state,
           productSpec, componentName, isTopProduct, evaluatedCases, convergedCases,
           capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3,
-          trayEfficiency);
+          trayEfficiency, "Selected annualized-cost optimum candidate.");
     }
 
-    return createInfeasibleEconomicTrayOptimizationResult(productSpec, componentName,
-        isTopProduct, evaluatedCases, convergedCases, capitalChargeFactor, operatingHoursPerYear,
+    return createInfeasibleEconomicTrayOptimizationResult(productSpec, componentName, isTopProduct,
+        evaluatedCases, convergedCases, capitalChargeFactor, operatingHoursPerYear,
         steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
         "No converged economic tray/feed-tray candidate met the product spec.");
   }
@@ -1946,6 +2137,46 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       minimumTrayCount++;
     }
     return minimumTrayCount;
+  }
+
+  /**
+   * Check whether tray optimization should stop because a configured search budget is exhausted.
+   *
+   * @param evaluatedCases number of candidate cases already evaluated
+   * @param optimizationStartNanos value from {@link System#nanoTime()} at search start
+   * @return {@code true} when candidate-count or elapsed-time budget has been reached
+   */
+  private boolean isTrayOptimizationSearchBudgetExceeded(int evaluatedCases,
+      long optimizationStartNanos) {
+    return evaluatedCases >= maxTrayOptimizationCandidates
+        || getTrayOptimizationElapsedSeconds(optimizationStartNanos)
+            >= maxTrayOptimizationTimeSeconds;
+  }
+
+  /**
+   * Calculate tray optimization elapsed time in seconds.
+   *
+   * @param optimizationStartNanos value from {@link System#nanoTime()} at search start
+   * @return elapsed time in seconds
+   */
+  private double getTrayOptimizationElapsedSeconds(long optimizationStartNanos) {
+    return (System.nanoTime() - optimizationStartNanos) * 1.0e-9;
+  }
+
+  /**
+   * Create a diagnostic message for a budget-limited optimization search.
+   *
+   * @param evaluatedCases number of candidate cases already evaluated
+   * @param optimizationStartNanos value from {@link System#nanoTime()} at search start
+   * @return diagnostic message explaining the active budget limits
+   */
+  private String createTrayOptimizationBudgetMessage(int evaluatedCases,
+      long optimizationStartNanos) {
+    double elapsedSeconds = Math.round(getTrayOptimizationElapsedSeconds(optimizationStartNanos)
+        * 10.0) / 10.0;
+    return "Tray optimization stopped after evaluating " + evaluatedCases + " candidate cases in "
+        + elapsedSeconds + " s due to the configured search budget. Increase "
+        + "max tray optimization candidates or time for larger studies.";
   }
 
   /**
@@ -2021,9 +2252,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
           getSelectedCondenserRatio(candidateState), getSelectedReboilerRatio(candidateState));
     }
-    EconomicTrayOptimizationMetrics metrics = calculateEconomicTrayOptimizationMetrics(
-        capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3,
-        trayEfficiency);
+    EconomicTrayOptimizationMetrics metrics =
+        calculateEconomicTrayOptimizationMetrics(capitalChargeFactor, operatingHoursPerYear,
+            steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency);
     return createEconomicTrayOptimizationResult(trayResult, metrics, capitalChargeFactor,
         operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
         getSelectedCondenserRatio(candidateState), getSelectedReboilerRatio(candidateState));
@@ -2045,14 +2276,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
    * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
    * @param trayEfficiency overall tray efficiency used for actual tray count and column height
+  * @param message diagnostic message to store in the returned result
    * @return final economic optimization result from the applied selected candidate
    */
   private EconomicTrayOptimizationResult applyEconomicTrayOptimizationResult(
       EconomicTrayOptimizationResult selectedResult, List<StreamInterface> optimizationFeeds,
-      ColumnOptimizationState state, double productSpec, String componentName,
-      boolean isTopProduct, int evaluatedCases, int convergedCases, double capitalChargeFactor,
+      ColumnOptimizationState state, double productSpec, String componentName, boolean isTopProduct,
+      int evaluatedCases, int convergedCases, double capitalChargeFactor,
       double operatingHoursPerYear, double steamCostPerTonne, double coolingWaterCostPerM3,
-      double trayEfficiency) {
+      double trayEfficiency, String message) {
     ColumnOptimizationState selectedState = state.copy();
     applyEconomicRatioOverrides(selectedState, selectedResult.getCondenserRefluxRatio(),
         selectedResult.getReboilerRatio());
@@ -2080,10 +2312,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     TrayOptimizationResult trayResult = createTrayOptimizationResult(productPurity >= productSpec,
         selectedResult.getNumberOfTrays(), selectedResult.getFeedTrayNumber(), productSpec,
         componentName, isTopProduct, productPurity, evaluatedCases, convergedCases,
-        "Selected annualized-cost optimum candidate.");
-    EconomicTrayOptimizationMetrics metrics = calculateEconomicTrayOptimizationMetrics(
-        capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3,
-        trayEfficiency);
+      message);
+    EconomicTrayOptimizationMetrics metrics =
+        calculateEconomicTrayOptimizationMetrics(capitalChargeFactor, operatingHoursPerYear,
+            steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency);
     return createEconomicTrayOptimizationResult(trayResult, metrics, capitalChargeFactor,
         operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
         selectedResult.getCondenserRefluxRatio(), selectedResult.getReboilerRatio());
@@ -2277,8 +2509,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (currentBest == null) {
       return true;
     }
-    double costDifference = candidate.getTotalAnnualizedCost()
-        - currentBest.getTotalAnnualizedCost();
+    double costDifference =
+        candidate.getTotalAnnualizedCost() - currentBest.getTotalAnnualizedCost();
     if (Math.abs(costDifference) > 1.0e-6) {
       return costDifference < 0.0;
     }
@@ -2349,11 +2581,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param isTopProduct {@code true} for top product, {@code false} for bottom product
    * @param evaluatedCases number of evaluated candidate cases
    * @param convergedCases number of converged candidate cases
+  * @param message diagnostic message to store in the returned result
    * @return final optimization result from the applied selected candidate
    */
   private TrayOptimizationResult applyTrayOptimizationResult(TrayOptimizationResult selectedResult,
       List<StreamInterface> optimizationFeeds, ColumnOptimizationState state, double productSpec,
-      String componentName, boolean isTopProduct, int evaluatedCases, int convergedCases) {
+      String componentName, boolean isTopProduct, int evaluatedCases, int convergedCases,
+      String message) {
     rebuildColumnForOptimization(selectedResult.getNumberOfTrays(), state);
     addOptimizationFeedsToTray(optimizationFeeds, selectedResult.getFeedTrayNumber());
     try {
@@ -2374,7 +2608,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return createTrayOptimizationResult(productPurity >= productSpec,
         selectedResult.getNumberOfTrays(), selectedResult.getFeedTrayNumber(), productSpec,
         componentName, isTopProduct, productPurity, evaluatedCases, convergedCases,
-        "Selected minimum-tray candidate with lowest duty for that tray count.");
+      message);
   }
 
   /**
@@ -2393,6 +2627,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     hasBeenSolvedBefore = false;
     lastTotalFeedFlow = -1.0;
     lastMeshResidual = null;
+    terminalGasProductDrawStream = null;
+    terminalLiquidProductDrawStream = null;
     err = 1.0e10;
     resetLastSolveMetrics();
 
@@ -2522,9 +2758,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double totalAbsoluteDuty = Math.abs(reboilerDuty) + Math.abs(condenserDuty);
     return new TrayOptimizationResult(feasible, feasible ? totalTrayCount : -1,
         feasible ? feedTray : -1, componentName, isTopProduct, productSpec, productPurity,
-        reboilerDuty, condenserDuty, totalAbsoluteDuty, lastIterationCount,
-        lastTemperatureResidual, lastMassResidual, lastEnergyResidual, evaluatedCases,
-        convergedCases, message);
+        reboilerDuty, condenserDuty, totalAbsoluteDuty, lastIterationCount, lastTemperatureResidual,
+        lastMassResidual, lastEnergyResidual, evaluatedCases, convergedCases, message);
   }
 
   /**
@@ -2542,8 +2777,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       String componentName, boolean isTopProduct, int evaluatedCases, int convergedCases,
       String message) {
     return new TrayOptimizationResult(false, -1, -1, componentName, isTopProduct, productSpec,
-        Double.NaN, 0.0, 0.0, 0.0, lastIterationCount, lastTemperatureResidual,
-        lastMassResidual, lastEnergyResidual, evaluatedCases, convergedCases, message);
+        Double.NaN, 0.0, 0.0, 0.0, lastIterationCount, lastTemperatureResidual, lastMassResidual,
+        lastEnergyResidual, evaluatedCases, convergedCases, message);
   }
 
   /**
@@ -4351,7 +4586,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
       double[] deltaT = solveLinearSystem(jacobian, rhs);
 
-      if (deltaT == null) {
+      if (deltaT == null || !isFiniteVector(deltaT)) {
         // Singular Jacobian — fall back to direct substitution step
         logger.warn("Newton: singular Jacobian at iter {}, using direct substitution step", iter);
         for (int i = 0; i < numberOfTrays; i++) {
@@ -4491,8 +4726,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double[] b = new double[n];
     for (int i = 0; i < n; i++) {
       b[i] = vectorB[i];
+      if (!Double.isFinite(b[i])) {
+        return null;
+      }
       for (int j = 0; j < n; j++) {
         a[i][j] = matrixA[i][j];
+        if (!Double.isFinite(a[i][j])) {
+          return null;
+        }
       }
     }
 
@@ -4508,7 +4749,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         }
       }
 
-      if (maxVal < 1e-30) {
+      if (!Double.isFinite(maxVal) || maxVal < 1e-30) {
         return null; // Singular matrix
       }
 
@@ -4541,8 +4782,26 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         sum -= a[i][j] * x[j];
       }
       x[i] = sum / a[i][i];
+      if (!Double.isFinite(x[i])) {
+        return null;
+      }
     }
     return x;
+  }
+
+  /**
+   * Check whether all values in an array are finite.
+   *
+   * @param values values to inspect
+   * @return {@code true} when every entry is finite
+   */
+  private boolean isFiniteVector(double[] values) {
+    for (int i = 0; i < values.length; i++) {
+      if (!Double.isFinite(values[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
 
@@ -4743,11 +5002,38 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return {@code true} if MESH residual gating is disabled or the latest residual is acceptable
    */
   private boolean meshResidualsSatisfied() {
-    if (!enforceMeshResidualTolerance || lastMeshResidual == null) {
+    if (!isEffectiveMeshResidualToleranceEnforced()) {
       return true;
     }
+    if (lastMeshResidual == null) {
+      return false;
+    }
     return lastMeshResidual.isFinite()
-        && lastMeshResidual.getInfinityNorm() <= meshResidualTolerance;
+        && lastMeshResidual.getInfinityNorm() <= meshResidualTolerance
+        && productDrawResidualsSatisfied();
+  }
+
+  /**
+   * Check whether the product draw residual satisfies its convergence gate.
+   *
+   * @return {@code true} when product draws are consistent with terminal tray traffic
+   */
+  private boolean productDrawResidualsSatisfied() {
+    double productDrawResidual = getLastMeshProductDrawResidualNorm();
+    return Double.isFinite(productDrawResidual)
+        && productDrawResidual <= meshProductDrawResidualTolerance;
+  }
+
+  /**
+   * Determine whether MESH residuals are currently part of the convergence contract.
+   *
+   * @return {@code true} if the active convergence gate includes the MESH residual vector
+   */
+  private boolean isEffectiveMeshResidualToleranceEnforced() {
+    if (enforceMeshResidualToleranceCustomized) {
+      return enforceMeshResidualTolerance;
+    }
+    return solverType == SolverType.MESH_RESIDUAL;
   }
 
   void setError(double err) {
@@ -4864,6 +5150,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Retrieve the latest MESH product draw residual infinity norm.
+   *
+   * @return maximum absolute product draw residual, or {@code Double.NaN} if unavailable
+   */
+  public double getLastMeshProductDrawResidualNorm() {
+    return getLastMeshResidualNorm(ColumnMeshEquationType.PRODUCT_DRAW);
+  }
+
+  /**
    * Retrieve the latest MESH specification residual infinity norm.
    *
    * @return maximum absolute specification residual, or {@code Double.NaN} if unavailable
@@ -4941,7 +5236,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         .append(enforceEnergyBalanceTolerance).append(")\n");
     diagnostics.append("    mesh infinity norm: ").append(getLastMeshResidualNorm())
         .append(" (tolerance ").append(meshResidualTolerance).append(", enforced=")
-        .append(enforceMeshResidualTolerance).append(")\n");
+      .append(isEffectiveMeshResidualToleranceEnforced()).append(")\n");
+    diagnostics.append("      material: ").append(getLastMeshMaterialResidualNorm())
+      .append(", equilibrium: ").append(getLastMeshEquilibriumResidualNorm())
+      .append(", summation: ").append(getLastMeshSummationResidualNorm())
+      .append(", energy: ").append(getLastMeshEnergyResidualNorm())
+      .append(", product draw: ").append(getLastMeshProductDrawResidualNorm())
+      .append(", specification: ").append(getLastMeshSpecificationResidualNorm())
+      .append("\n");
 
     diagnostics.append("  Feed trays:\n");
     if (feedStreams.isEmpty()) {
@@ -5009,6 +5311,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           .append(SolverType.MESH_RESIDUAL).append(" or ").append(SolverType.NEWTON)
           .append(" after checking feed-tray placement. They can be faster than direct ")
           .append("substitution for well-conditioned columns.\n");
+      count++;
+    }
+    double productDrawResidual = getLastMeshProductDrawResidualNorm();
+    if (Double.isFinite(productDrawResidual) && productDrawResidual > meshResidualTolerance) {
+      diagnostics.append("    - Product draw residual is above the product-draw tolerance. This means ")
+          .append("the exposed overhead/bottom streams do not match the terminal tray traffic; ")
+          .append("use ").append(SolverType.MESH_RESIDUAL)
+          .append(" or inspect reflux, boilup, and product specifications before trusting the ")
+          .append("product split.\n");
       count++;
     }
     if (!solved) {
@@ -5079,21 +5390,23 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /**
    * Control whether the latest MESH residual vector must satisfy tolerance during convergence
-   * checks.
+   * checks. Calling this method explicitly overrides the default behavior where
+   * {@link SolverType#MESH_RESIDUAL} enforces the gate and legacy solvers do not.
    *
    * @param enforce {@code true} to require MESH residuals to satisfy the configured tolerance
    */
   public void setEnforceMeshResidualTolerance(boolean enforce) {
     this.enforceMeshResidualTolerance = enforce;
+    this.enforceMeshResidualToleranceCustomized = true;
   }
 
   /**
-   * Check if convergence requires the latest MESH residual vector to satisfy tolerance.
+   * Check if convergence currently requires the latest MESH residual vector to satisfy tolerance.
    *
    * @return {@code true} if MESH residuals are part of the convergence check
    */
   public boolean isEnforceMeshResidualTolerance() {
-    return enforceMeshResidualTolerance;
+    return isEffectiveMeshResidualToleranceEnforced();
   }
 
   /**
@@ -5112,6 +5425,59 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public double getMeshResidualTolerance() {
     return meshResidualTolerance;
+  }
+
+  /**
+   * Access the configured scaled product-draw residual tolerance.
+   *
+   * @return product-draw residual tolerance
+   */
+  public double getMeshProductDrawResidualTolerance() {
+    return meshProductDrawResidualTolerance;
+  }
+
+  /**
+   * Access the maximum number of tray optimization candidate cases allowed per search.
+   *
+   * @return maximum candidate count
+   */
+  public int getMaxTrayOptimizationCandidates() {
+    return maxTrayOptimizationCandidates;
+  }
+
+  /**
+   * Set the maximum number of tray optimization candidate cases allowed per search.
+   *
+   * @param maxCandidates maximum candidate count, must be at least one
+   * @throws IllegalArgumentException if {@code maxCandidates} is less than one
+   */
+  public void setMaxTrayOptimizationCandidates(int maxCandidates) {
+    if (maxCandidates < 1) {
+      throw new IllegalArgumentException("Maximum tray optimization candidates must be positive.");
+    }
+    this.maxTrayOptimizationCandidates = maxCandidates;
+  }
+
+  /**
+   * Access the maximum elapsed time allowed for a tray optimization search.
+   *
+   * @return maximum search time in seconds
+   */
+  public double getMaxTrayOptimizationTimeSeconds() {
+    return maxTrayOptimizationTimeSeconds;
+  }
+
+  /**
+   * Set the maximum elapsed time allowed for a tray optimization search.
+   *
+   * @param maxTimeSeconds maximum search time in seconds, must be finite and greater than zero
+   * @throws IllegalArgumentException if {@code maxTimeSeconds} is not finite or positive
+   */
+  public void setMaxTrayOptimizationTimeSeconds(double maxTimeSeconds) {
+    if (!isPositiveFinite(maxTimeSeconds)) {
+      throw new IllegalArgumentException("Maximum tray optimization time must be finite and positive.");
+    }
+    this.maxTrayOptimizationTimeSeconds = maxTimeSeconds;
   }
 
   /**
@@ -5217,14 +5583,190 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return liquidOutStream;
   }
 
+  /**
+   * Get all external feed streams connected to a tray.
+   *
+   * <p>
+   * Feeds registered through {@link #addFeedStream(StreamInterface, int)} are always included. The
+   * method also includes named streams added directly to the tray to preserve legacy workflows that
+   * use {@code getTray(index).addStream(stream)} for side feeds or stripping gas.
+   * </p>
+   *
+   * @param trayIndex tray index to inspect
+   * @return external feed streams connected to the tray
+   */
+  List<StreamInterface> getExternalFeedStreams(int trayIndex) {
+    List<StreamInterface> externalFeeds = new ArrayList<>();
+    List<StreamInterface> registeredFeeds = feedStreams.get(trayIndex);
+    if (registeredFeeds != null) {
+      externalFeeds.addAll(registeredFeeds);
+    }
+    List<StreamInterface> directFeeds = directExternalFeedStreams.get(trayIndex);
+    if (directFeeds != null) {
+      for (StreamInterface directFeed : directFeeds) {
+        addStreamIfMissingByIdentity(externalFeeds, directFeed);
+      }
+    }
+    return externalFeeds;
+  }
+
+  /**
+   * Get all external feed streams connected to the column.
+   *
+   * @return external feed streams connected through the column API or named direct tray inputs
+   */
+  private List<StreamInterface> getAllExternalFeedStreams() {
+    List<StreamInterface> externalFeeds = new ArrayList<>();
+    for (List<StreamInterface> feedList : feedStreams.values()) {
+      for (StreamInterface feed : feedList) {
+        addStreamIfMissingByIdentity(externalFeeds, feed);
+      }
+    }
+    for (List<StreamInterface> directFeedList : directExternalFeedStreams.values()) {
+      for (StreamInterface directFeed : directFeedList) {
+        addStreamIfMissingByIdentity(externalFeeds, directFeed);
+      }
+    }
+    return externalFeeds;
+  }
+
+  /**
+   * Capture named streams added directly to trays before the column connects internal traffic.
+   */
+  private void captureDirectExternalTrayFeeds() {
+    for (int trayIndex = 0; trayIndex < trays.size(); trayIndex++) {
+      List<StreamInterface> externalFeeds = getExternalFeedStreams(trayIndex);
+      SimpleTray tray = trays.get(trayIndex);
+      for (int streamIndex = 0; streamIndex < tray.getNumberOfInputStreams(); streamIndex++) {
+        StreamInterface stream = tray.getStream(streamIndex);
+        if (isUnregisteredExternalTrayFeed(stream, externalFeeds)) {
+          List<StreamInterface> directFeeds = directExternalFeedStreams.get(trayIndex);
+          if (directFeeds == null) {
+            directFeeds = new ArrayList<>();
+            directExternalFeedStreams.put(trayIndex, directFeeds);
+          }
+          directFeeds.add(stream);
+          externalFeeds.add(stream);
+        }
+      }
+    }
+  }
+
+  /**
+   * Get the lowest tray index containing an external feed stream.
+   *
+   * @return first external feed tray index
+   */
+  private int getFirstExternalFeedTrayNumber() {
+    int firstFeedTrayNumber = numberOfTrays;
+    for (Integer trayIndex : feedStreams.keySet()) {
+      firstFeedTrayNumber = Math.min(firstFeedTrayNumber, trayIndex.intValue());
+    }
+    for (Integer trayIndex : directExternalFeedStreams.keySet()) {
+      firstFeedTrayNumber = Math.min(firstFeedTrayNumber, trayIndex.intValue());
+    }
+    return firstFeedTrayNumber;
+  }
+
+  /**
+   * Add a stream to a list if the exact object is not already present.
+   *
+   * @param streams stream list to update
+   * @param candidate stream to add
+   */
+  private void addStreamIfMissingByIdentity(List<StreamInterface> streams,
+      StreamInterface candidate) {
+    if (!containsStreamByIdentity(streams, candidate)) {
+      streams.add(candidate);
+    }
+  }
+
+  /**
+   * Check whether a list already contains a stream object by identity.
+   *
+   * @param streams stream list to inspect
+   * @param candidate stream to find
+   * @return {@code true} if the exact stream object is present
+   */
+  private boolean containsStreamByIdentity(List<StreamInterface> streams,
+      StreamInterface candidate) {
+    for (StreamInterface stream : streams) {
+      if (stream == candidate) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Check whether a tray input should be treated as a legacy direct external feed.
+   *
+   * @param stream tray input stream to inspect
+   * @param knownExternalFeeds external streams already identified
+   * @return {@code true} if the stream looks like a named direct external feed
+   */
+  private boolean isUnregisteredExternalTrayFeed(StreamInterface stream,
+      List<StreamInterface> knownExternalFeeds) {
+    if (stream == null || containsStreamByIdentity(knownExternalFeeds, stream)) {
+      return false;
+    }
+    String streamName = stream.getName();
+    if (streamName == null || streamName.trim().isEmpty()) {
+      return false;
+    }
+    return !streamName.startsWith("Split Stream_");
+  }
+
+  /**
+   * Get the terminal top product draw used by product-draw residual diagnostics.
+   *
+   * @return synchronized top product draw stream, or the top tray vapor outlet before a solve has
+   *         synchronized product draws
+   */
+  StreamInterface getTerminalGasProductDrawStream() {
+    if (terminalGasProductDrawStream != null) {
+      return terminalGasProductDrawStream;
+    }
+    if (numberOfTrays <= 0) {
+      return gasOutStream;
+    }
+    return trays.get(numberOfTrays - 1).getGasOutStream();
+  }
+
+  /**
+   * Get the terminal bottom product draw used by product-draw residual diagnostics.
+   *
+   * @return synchronized bottom product draw stream, or the bottom tray liquid outlet before a solve
+   *         has synchronized product draws
+   */
+  StreamInterface getTerminalLiquidProductDrawStream() {
+    if (terminalLiquidProductDrawStream != null) {
+      return terminalLiquidProductDrawStream;
+    }
+    if (numberOfTrays <= 0) {
+      return liquidOutStream;
+    }
+    return trays.get(0).getLiquidOutStream();
+  }
+
+  /**
+   * Override terminal product draw streams for package-level residual diagnostics.
+   *
+   * @param topProductDraw top product draw stream to use in diagnostics
+   * @param bottomProductDraw bottom product draw stream to use in diagnostics
+   */
+  void setTerminalProductDrawStreamsForDiagnostics(StreamInterface topProductDraw,
+      StreamInterface bottomProductDraw) {
+    terminalGasProductDrawStream = topProductDraw;
+    terminalLiquidProductDrawStream = bottomProductDraw;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getMassBalance(String unit) {
     double inletFlow = 0.0;
-    for (List<StreamInterface> feedList : feedStreams.values()) {
-      for (StreamInterface feed : feedList) {
-        inletFlow += feed.getThermoSystem().getFlowRate(unit);
-      }
+    for (StreamInterface feed : getAllExternalFeedStreams()) {
+      inletFlow += feed.getThermoSystem().getFlowRate(unit);
     }
     double outletFlow = getGasOutStream().getThermoSystem().getFlowRate(unit)
         + getLiquidOutStream().getThermoSystem().getFlowRate(unit);
@@ -5375,6 +5917,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Set the product-draw residual tolerance used when MESH residual gating is enabled.
+   *
+   * @param tol positive finite product-draw residual tolerance
+   * @throws IllegalArgumentException if the tolerance is not positive and finite
+   */
+  public void setMeshProductDrawResidualTolerance(double tol) {
+    if (!Double.isFinite(tol) || tol <= 0.0) {
+      throw new IllegalArgumentException(
+          "MESH product draw residual tolerance must be positive and finite");
+    }
+    this.meshProductDrawResidualTolerance = tol;
+  }
+
+  /**
    * Restore adaptive default tolerances, discarding manual overrides.
    */
   public void resetToleranceOverrides() {
@@ -5385,7 +5941,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     massBalanceTolerance = DEFAULT_MASS_BALANCE_TOLERANCE;
     enthalpyBalanceTolerance = DEFAULT_ENTHALPY_BALANCE_TOLERANCE;
     meshResidualTolerance = DEFAULT_MESH_RESIDUAL_TOLERANCE;
+    meshProductDrawResidualTolerance = DEFAULT_MESH_PRODUCT_DRAW_RESIDUAL_TOLERANCE;
     enforceMeshResidualTolerance = false;
+    enforceMeshResidualToleranceCustomized = false;
   }
 
   /**
@@ -5577,7 +6135,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param trayIndex index of the tray in the {@code trays} list
    */
   private void applyMurphreeCorrection(int trayIndex) {
-    if (murphreeEfficiency >= 1.0 - 1e-10) {
+    double emv = getEffectiveMurphreeEfficiency(trayIndex);
+    if (emv >= 1.0 - 1e-10) {
       return; // ideal tray, no correction needed
     }
     // Skip reboiler (index 0) — always an equilibrium stage
@@ -5601,8 +6160,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     int nc = fluid.getPhase(0).getNumberOfComponents();
-    double emv = murphreeEfficiency;
-
     // Equilibrium compositions from flash
     double[] yEq = new double[nc];
     double[] yIn = new double[nc];
@@ -5729,10 +6286,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
     liquidOutStream.setCalculationIdentifier(id);
 
-    if (hasRefluxedTotalCondenser()) {
-      updateTotalCondenserProductsFromExternalComponentBalance(id);
-      lastMassResidual = Math.max(lastMassResidual, getExternalMassBalanceError());
-    }
+    updateProductsFromExternalComponentBalance(id);
+    synchronizeTerminalProductDrawStreams(id);
+    lastMassResidual = Math.max(lastMassResidual, getExternalMassBalanceError());
 
     boolean anyFeedMultiPhase = false;
     for (List<StreamInterface> feeds : feedStreams.values()) {
@@ -5758,34 +6314,50 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Updates total-condenser products so the exposed streams close the external component balance.
+   * Updates products so the exposed streams close the external component balance.
    *
    * @param id calculation identifier to assign to the updated stream
    */
-  private void updateTotalCondenserProductsFromExternalComponentBalance(UUID id) {
-    if (!hasRefluxedTotalCondenser() || feedStreams.isEmpty() || gasOutStream == null
-        || liquidOutStream == null) {
+  private void updateProductsFromExternalComponentBalance(UUID id) {
+    if (feedStreams.isEmpty() || gasOutStream == null || liquidOutStream == null) {
       return;
     }
 
     double[] feedComponentMoles = getFeedComponentMoles();
     double[] topProductComponentMoles = getComponentMoles(gasOutStream.getThermoSystem());
-    if (feedComponentMoles.length != topProductComponentMoles.length) {
+    double[] bottomProductComponentMoles = getComponentMoles(liquidOutStream.getThermoSystem());
+    if (feedComponentMoles.length != topProductComponentMoles.length
+        || feedComponentMoles.length != bottomProductComponentMoles.length) {
+      return;
+    }
+
+    double feedTotalMoles = 0.0;
+    double currentProductTotalMoles = 0.0;
+    for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
+      feedTotalMoles += Math.max(0.0, feedComponentMoles[componentIndex]);
+      currentProductTotalMoles += Math.max(0.0, topProductComponentMoles[componentIndex])
+          + Math.max(0.0, bottomProductComponentMoles[componentIndex]);
+    }
+    if (feedTotalMoles <= 1.0e-20 || currentProductTotalMoles <= 1.0e-20) {
       return;
     }
 
     double[] balancedTopProductComponentMoles = new double[feedComponentMoles.length];
-    double[] bottomProductComponentMoles = new double[feedComponentMoles.length];
+    double[] balancedBottomProductComponentMoles = new double[feedComponentMoles.length];
     double topTotalMoles = 0.0;
     double bottomTotalMoles = 0.0;
     for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
-      balancedTopProductComponentMoles[componentIndex] = Math.max(0.0,
-          Math.min(topProductComponentMoles[componentIndex], feedComponentMoles[componentIndex]));
-      double remainingMoles =
-          feedComponentMoles[componentIndex] - balancedTopProductComponentMoles[componentIndex];
-      bottomProductComponentMoles[componentIndex] = Math.max(0.0, remainingMoles);
+      double currentTopMoles = Math.max(0.0, topProductComponentMoles[componentIndex]);
+      double currentBottomMoles = Math.max(0.0, bottomProductComponentMoles[componentIndex]);
+      double currentComponentMoles = currentTopMoles + currentBottomMoles;
+      if (currentComponentMoles > 1.0e-20) {
+        double componentScale = Math.max(0.0, feedComponentMoles[componentIndex])
+            / currentComponentMoles;
+        balancedTopProductComponentMoles[componentIndex] = currentTopMoles * componentScale;
+        balancedBottomProductComponentMoles[componentIndex] = currentBottomMoles * componentScale;
+      }
       topTotalMoles += balancedTopProductComponentMoles[componentIndex];
-      bottomTotalMoles += bottomProductComponentMoles[componentIndex];
+      bottomTotalMoles += balancedBottomProductComponentMoles[componentIndex];
     }
 
     if (topTotalMoles <= 1.0e-20 || bottomTotalMoles <= 1.0e-20) {
@@ -5793,7 +6365,26 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     updateProductStreamFromComponentMoles(gasOutStream, balancedTopProductComponentMoles, id);
-    updateProductStreamFromComponentMoles(liquidOutStream, bottomProductComponentMoles, id);
+    updateProductStreamFromComponentMoles(liquidOutStream, balancedBottomProductComponentMoles, id);
+  }
+
+  /**
+   * Synchronizes terminal tray draw streams with the externally exposed product streams.
+   *
+   * <p>
+   * The external component-balance reconciliation updates the public column products. Without this
+   * synchronization, diagnostics can compare those reconciled products against stale draw streams
+   * from before the reconciliation. The synchronized streams are kept separate from the tray outlet
+   * streams so legacy inspection of raw reboiler/condenser tray traffic is unchanged.
+   * </p>
+   *
+   * @param id calculation identifier to assign to the synchronized draw streams
+   */
+  private void synchronizeTerminalProductDrawStreams(UUID id) {
+    terminalGasProductDrawStream = gasOutStream.clone();
+    terminalGasProductDrawStream.setCalculationIdentifier(id);
+    terminalLiquidProductDrawStream = liquidOutStream.clone();
+    terminalLiquidProductDrawStream.setCalculationIdentifier(id);
   }
 
   /**
@@ -5813,7 +6404,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     balancedSystem.setTemperature(productTemperature);
     balancedSystem.setPressure(productPressure, "bara");
     balancedSystem.init(0);
+    ThermodynamicOperations operations = new ThermodynamicOperations(balancedSystem);
+    operations.TPflash();
     balancedSystem.init(3);
+    balancedSystem.initProperties();
     productStream.setThermoSystem(balancedSystem);
     productStream.setCalculationIdentifier(id);
   }
@@ -5825,12 +6419,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private double[] getFeedComponentMoles() {
     double[] feedComponentMoles = new double[getNumberOfComponentsFromFeeds()];
-    for (List<StreamInterface> feedList : feedStreams.values()) {
-      for (StreamInterface feed : feedList) {
-        double[] componentMoles = getComponentMoles(feed.getThermoSystem());
-        for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
-          feedComponentMoles[componentIndex] += componentMoles[componentIndex];
-        }
+    for (StreamInterface feed : getAllExternalFeedStreams()) {
+      double[] componentMoles = getComponentMoles(feed.getThermoSystem());
+      for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
+        feedComponentMoles[componentIndex] += componentMoles[componentIndex];
       }
     }
     return feedComponentMoles;
@@ -5842,16 +6434,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return number of components, or zero when no feeds are connected
    */
   private int getNumberOfComponentsFromFeeds() {
-    for (List<StreamInterface> feedList : feedStreams.values()) {
-      for (StreamInterface feed : feedList) {
-        return feed.getThermoSystem().getNumberOfComponents();
-      }
+    for (StreamInterface feed : getAllExternalFeedStreams()) {
+      return feed.getThermoSystem().getNumberOfComponents();
     }
     return 0;
   }
 
   /**
-   * Calculates component mole amounts from the system-level phase zero inventory.
+   * Calculates component mole amounts from all phases in a thermodynamic system.
    *
    * @param system thermodynamic system to inspect
    * @return component mole amounts on the system-flow basis
@@ -5859,19 +6449,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double[] getComponentMoles(SystemInterface system) {
     double[] componentMoles = new double[system.getNumberOfComponents()];
     for (int componentIndex = 0; componentIndex < componentMoles.length; componentIndex++) {
-      componentMoles[componentIndex] =
-          system.getPhase(0).getComponent(componentIndex).getNumberOfmoles();
+      double componentTotal = 0.0;
+      for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+        componentTotal +=
+            system.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase();
+      }
+      if (componentTotal <= 0.0 && system.getNumberOfPhases() > 0) {
+        componentTotal = system.getPhase(0).getComponent(componentIndex).getNumberOfmoles();
+      }
+      componentMoles[componentIndex] = componentTotal;
     }
     return componentMoles;
-  }
-
-  /**
-   * Checks whether the top tray is a total condenser with an explicit reflux ratio split.
-   *
-   * @return {@code true} when a refluxed total condenser is configured
-   */
-  private boolean hasRefluxedTotalCondenser() {
-    return hasCondenser && getCondenser().totalCondenser && getCondenser().refluxIsSet;
   }
 
   /** Reset cached solve metrics when no calculation is performed. */
@@ -5881,6 +6469,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastMassResidual = 0.0;
     lastEnergyResidual = 0.0;
     lastSolveTimeSeconds = 0.0;
+    terminalGasProductDrawStream = null;
+    terminalLiquidProductDrawStream = null;
   }
 
   /**
@@ -6018,21 +6608,143 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Set the Murphree tray efficiency for all stages.
+   * Set the Murphree tray efficiency for all stages without explicit overrides.
    *
    * @param efficiency value between 0.0 (no separation) and 1.0 (ideal equilibrium stage)
    */
   public void setMurphreeEfficiency(double efficiency) {
-    this.murphreeEfficiency = Math.max(0.0, Math.min(1.0, efficiency));
+    this.murphreeEfficiency = clampMurphreeEfficiency(efficiency);
   }
 
   /**
-   * Retrieve the current Murphree tray efficiency.
+   * Set the Murphree tray efficiency for a single stage.
    *
-   * @return Murphree efficiency
+   * <p>
+   * Stage numbering follows the column internal order: stage 0 is the reboiler when present and the
+   * last stage is the condenser when present. Reboiler and condenser stages are still treated as
+   * equilibrium stages by the correction algorithm, but the value is stored so external
+   * UniSim-style scripts can round-trip stage efficiency data consistently.
+   * </p>
+   *
+   * @param stage 0-based stage index in the range {@code [0, numberOfTrays)}
+   * @param efficiency value between 0.0 (no separation) and 1.0 (ideal equilibrium stage)
+   */
+  public void setMurphreeEfficiency(int stage, double efficiency) {
+    validateStageIndex(stage);
+    ensurePerStageMurphreeEfficiencyArray();
+    perStageMurphreeEfficiency[stage] = clampMurphreeEfficiency(efficiency);
+  }
+
+  /**
+   * Set Murphree tray efficiencies for every stage in one call.
+   *
+   * <p>
+   * The array length must equal the total number of stages including reboiler and condenser if they
+   * are present. Entries equal to {@link Double#NaN} restore use of the column-wide default for
+   * that stage.
+   * </p>
+   *
+   * @param efficiencies per-stage Murphree efficiencies, or {@code null} to clear all overrides
+   */
+  public void setMurphreeEfficiencies(double[] efficiencies) {
+    if (efficiencies == null) {
+      clearPerStageMurphreeEfficiency();
+      return;
+    }
+    if (efficiencies.length != numberOfTrays) {
+      throw new IllegalArgumentException("efficiencies length " + efficiencies.length
+          + " does not match number of stages " + numberOfTrays);
+    }
+    double[] copy = new double[numberOfTrays];
+    for (int stage = 0; stage < numberOfTrays; stage++) {
+      copy[stage] = Double.isNaN(efficiencies[stage]) ? Double.NaN
+          : clampMurphreeEfficiency(efficiencies[stage]);
+    }
+    perStageMurphreeEfficiency = copy;
+  }
+
+  /**
+   * Clear all per-stage Murphree efficiency overrides.
+   */
+  public void clearPerStageMurphreeEfficiency() {
+    perStageMurphreeEfficiency = null;
+  }
+
+  /**
+   * Retrieve the current column-wide Murphree tray efficiency.
+   *
+   * @return Murphree efficiency used as the default for stages without overrides
    */
   public double getMurphreeEfficiency() {
     return murphreeEfficiency;
+  }
+
+  /**
+   * Retrieve the effective Murphree tray efficiency for a single stage.
+   *
+   * @param stage 0-based stage index in the range {@code [0, numberOfTrays)}
+   * @return per-stage override when set, otherwise the column-wide Murphree efficiency
+   */
+  public double getMurphreeEfficiency(int stage) {
+    validateStageIndex(stage);
+    return getEffectiveMurphreeEfficiency(stage);
+  }
+
+  /**
+   * Ensure that the per-stage Murphree efficiency array exists and matches the current stage count.
+   */
+  private void ensurePerStageMurphreeEfficiencyArray() {
+    if (perStageMurphreeEfficiency != null && perStageMurphreeEfficiency.length == numberOfTrays) {
+      return;
+    }
+    double[] resized = new double[numberOfTrays];
+    for (int stage = 0; stage < numberOfTrays; stage++) {
+      resized[stage] =
+          perStageMurphreeEfficiency != null && stage < perStageMurphreeEfficiency.length
+              ? perStageMurphreeEfficiency[stage]
+              : Double.NaN;
+    }
+    perStageMurphreeEfficiency = resized;
+  }
+
+  /**
+   * Get the effective Murphree efficiency for a stage without performing bounds validation.
+   *
+   * @param stage 0-based stage index
+   * @return per-stage override when finite, otherwise the column-wide Murphree efficiency
+   */
+  private double getEffectiveMurphreeEfficiency(int stage) {
+    if (perStageMurphreeEfficiency != null && stage >= 0
+        && stage < perStageMurphreeEfficiency.length) {
+      double value = perStageMurphreeEfficiency[stage];
+      if (!Double.isNaN(value)) {
+        return value;
+      }
+    }
+    return murphreeEfficiency;
+  }
+
+  /**
+   * Clamp a Murphree efficiency into the supported interval.
+   *
+   * @param efficiency requested efficiency value
+   * @return value clamped to the interval {@code [0.0, 1.0]}
+   */
+  private double clampMurphreeEfficiency(double efficiency) {
+    return Math.max(0.0, Math.min(1.0, efficiency));
+  }
+
+  /**
+   * Validate that a stage index is within the current column stage range.
+   *
+   * @param stage stage index to validate
+   * @throws IndexOutOfBoundsException if the stage is outside {@code [0, numberOfTrays)}
+   */
+  private void validateStageIndex(int stage) {
+    if (stage < 0 || stage >= numberOfTrays) {
+      throw new IndexOutOfBoundsException(
+          "stage index " + stage + " out of range [0, " + numberOfTrays + ")");
+    }
   }
 
   /**

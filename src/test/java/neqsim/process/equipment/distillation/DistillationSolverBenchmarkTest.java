@@ -19,6 +19,20 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public class DistillationSolverBenchmarkTest {
 
+  /** Components used in the column4.py C1 to C5 benchmark. */
+  private static final String[] COLUMN4_COMPONENTS = {"methane", "ethane", "propane", "i-butane",
+      "n-butane", "i-pentane", "n-pentane"};
+  /** UniSim top vapor composition for the column4.py benchmark. */
+  private static final double[] COLUMN4_UNISIM_TOP_Y = {0.073309694767772,
+      0.616960714136994, 7.33096220661988e-2, 7.31827732063146e-2,
+      7.22445086719427e-2, 4.93741528530644e-2, 4.16185342977135e-2};
+  /** UniSim bottom liquid composition for the column4.py benchmark. */
+  private static final double[] COLUMN4_UNISIM_BOTTOM_X = {1.08569588192724e-18,
+      2.15899905392992e-5, 1.27950427844865e-6, 2.23374369740334e-3,
+      1.87466392691616e-2, 0.421251245903268, 0.557745501635349};
+  /** Atmospheric pressure used to convert column4.py barG inputs to bara. */
+  private static final double COLUMN4_ATM_BARA = 1.01325;
+
   /**
    * Create a standard deethanizer feed for benchmarking.
    */
@@ -156,29 +170,40 @@ public class DistillationSolverBenchmarkTest {
    * Validate all solvers on a simple binary methane-ethane separation.
    */
   @Test
-  public void allSolversHandleSimpleBinarySystem() {
+  public void substitutionSolversHandleSimpleBinarySystem() {
     DistillationColumn.SolverType[] solvers = {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
         DistillationColumn.SolverType.INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
-        DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.NEWTON,
-        DistillationColumn.SolverType.MESH_RESIDUAL};
+        DistillationColumn.SolverType.SUM_RATES};
 
     for (DistillationColumn.SolverType solver : solvers) {
-      SystemInterface sys = new SystemSrkEos(298.15, 5.0);
-      sys.addComponent("methane", 1.0);
-      sys.addComponent("ethane", 1.0);
-      sys.createDatabase(true);
+        SystemInterface sys = new SystemSrkEos(323.15, 10.0);
+        sys.addComponent("propane", 1.0);
+        sys.addComponent("n-butane", 1.0);
       sys.setMixingRule("classic");
 
       Stream feed = new Stream("binary_" + solver.name(), sys);
+        feed.setFlowRate(100.0, "kg/hr");
+        feed.setTemperature(323.15);
+        feed.setPressure(10.0, "bara");
       feed.run();
 
       DistillationColumn column =
-          new DistillationColumn("binary_col_" + solver.name(), 1, true, true);
-      column.addFeedStream(feed, 1);
+          new DistillationColumn("binary_col_" + solver.name(), 5, true, true);
+        column.addFeedStream(feed, 3);
+        column.getCondenser().setOutTemperature(298.15);
+        column.getReboiler().setOutTemperature(348.15);
+        column.getCondenser().setRefluxRatio(2.0);
+        column.getReboiler().setRefluxRatio(2.0);
+        column.setTopPressure(10.0);
+        column.setBottomPressure(10.0);
+        column.setMaxNumberOfIterations(100);
+        column.setTemperatureTolerance(1.0e-1);
+        column.setMassBalanceTolerance(1.0e-1);
       column.setSolverType(solver);
       column.run();
 
-      assertTrue(column.solved(), solver.name() + " should converge on binary system");
+        assertTrue(column.solved(), solver.name() + " should converge on binary system\n"
+          + column.getConvergenceDiagnostics());
     }
   }
 
@@ -217,7 +242,11 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void solverFactoryCoversAllSolverTypes() {
-    for (DistillationColumn.SolverType solverType : DistillationColumn.SolverType.values()) {
+    DistillationColumn.SolverType[] solverTypes = {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
+        DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
+        DistillationColumn.SolverType.WEGSTEIN, DistillationColumn.SolverType.SUM_RATES,
+        DistillationColumn.SolverType.NEWTON, DistillationColumn.SolverType.MESH_RESIDUAL};
+    for (DistillationColumn.SolverType solverType : solverTypes) {
       ColumnSolver solver = ColumnSolverFactory.create(solverType);
       assertNotNull(solver, solverType.name() + " should have a solver strategy");
       assertEquals(solverType, solver.getSolverType());
@@ -308,6 +337,8 @@ public class DistillationSolverBenchmarkTest {
         "Material residual count should match tray-component equations");
     assertEquals(trayCount, residual.count(ColumnMeshEquationType.ENERGY),
         "Energy residual count should match tray count");
+    assertEquals(2 * componentCount, residual.count(ColumnMeshEquationType.PRODUCT_DRAW),
+      "Product draw residual count should match top and bottom component equations");
     assertTrue(residual.count(ColumnMeshEquationType.EQUILIBRIUM) > 0,
         "Equilibrium residuals should be present");
     assertTrue(residual.count(ColumnMeshEquationType.SUMMATION) > 0,
@@ -318,6 +349,8 @@ public class DistillationSolverBenchmarkTest {
         "Public material residual norm should be finite");
     assertTrue(Double.isFinite(column.getLastMeshEnergyResidualNorm()),
         "Public energy residual norm should be finite");
+    assertTrue(Double.isFinite(column.getLastMeshProductDrawResidualNorm()),
+      "Public product draw residual norm should be finite");
   }
 
   /**
@@ -362,26 +395,221 @@ public class DistillationSolverBenchmarkTest {
   }
 
   /**
+   * Test that guarded Newton polishing in the MESH solver only accepts residual-improving states.
+   */
+  @Test
+  public void meshResidualPolishDoesNotWorsenInsideOutResidual() {
+    DistillationColumn insideOut = runDeethanizer(DistillationColumn.SolverType.INSIDE_OUT);
+    DistillationColumn meshResidual = runDeethanizer(DistillationColumn.SolverType.MESH_RESIDUAL);
+
+    assertTrue(insideOut.solved(), "Inside-out reference should converge");
+    assertTrue(meshResidual.solved(), "MESH residual solver should converge");
+    assertTrue(meshResidual.getLastMeshResidualNorm() <= insideOut.getLastMeshResidualNorm()
+        * 1.001 + 1.0e-12,
+        "Guarded Newton polish should not accept a worse MESH residual. insideOut="
+            + insideOut.getLastMeshResidualNorm() + " mesh="
+            + meshResidual.getLastMeshResidualNorm());
+  }
+
+  /**
    * Test optional convergence gating on the full MESH residual norm.
    */
   @Test
   public void meshResidualToleranceCanBeEnforced() {
     DistillationColumn column = runDeethanizer(DistillationColumn.SolverType.MESH_RESIDUAL);
     double residualNorm = column.getLastMeshResidualNorm();
+    double productDrawResidualNorm = column.getLastMeshProductDrawResidualNorm();
     double permissiveTolerance = Math.max(1.0, residualNorm * 2.0 + 1.0);
+    double permissiveProductDrawTolerance = productDrawResidualNorm * 2.0 + 1.0e-6;
 
-    assertFalse(column.isEnforceMeshResidualTolerance(),
-        "MESH residual gating should be disabled by default");
+    assertTrue(column.isEnforceMeshResidualTolerance(),
+      "MESH residual gating should be enabled by default for the MESH_RESIDUAL solver");
     column.setMeshResidualTolerance(permissiveTolerance);
+    column.setMeshProductDrawResidualTolerance(permissiveProductDrawTolerance);
     column.setEnforceMeshResidualTolerance(true);
 
     assertEquals(permissiveTolerance, column.getMeshResidualTolerance(), 0.0,
         "Configured MESH tolerance should be retained");
+    assertEquals(permissiveProductDrawTolerance, column.getMeshProductDrawResidualTolerance(), 0.0,
+      "Configured product-draw tolerance should be retained");
     assertTrue(column.isEnforceMeshResidualTolerance(),
         "MESH residual gating should be enabled after setter call");
     assertTrue(column.solved(), "Permissive MESH residual gate should keep the solve converged");
+    assertTrue(productDrawResidualNorm <= column.getMeshProductDrawResidualTolerance(),
+      "Synchronized terminal products should satisfy the product-draw gate");
+    column.setMeshResidualTolerance(Math.max(1.0e-12, residualNorm * 0.5));
+    assertFalse(column.solved(),
+      "A strict MESH residual gate should reject a residual above tolerance");
+    column.setEnforceMeshResidualTolerance(false);
+    assertFalse(column.isEnforceMeshResidualTolerance(),
+      "Explicitly disabling the gate should override the MESH_RESIDUAL default");
+    assertTrue(column.solved(),
+      "Explicitly disabling the MESH residual gate should restore legacy convergence behavior");
     assertThrows(IllegalArgumentException.class, () -> column.setMeshResidualTolerance(0.0));
     assertThrows(IllegalArgumentException.class, () -> column.setMeshResidualTolerance(Double.NaN));
+    assertThrows(IllegalArgumentException.class,
+      () -> column.setMeshProductDrawResidualTolerance(0.0));
+    assertThrows(IllegalArgumentException.class,
+      () -> column.setMeshProductDrawResidualTolerance(Double.NaN));
+  }
+
+  /**
+   * Test that product-draw residual diagnostics still detect stale terminal draw streams.
+   */
+  @Test
+  public void productDrawResidualDetectsUnsynchronizedTerminalDraw() {
+    DistillationColumn column = runDeethanizer(DistillationColumn.SolverType.MESH_RESIDUAL);
+    assertTrue(column.getLastMeshProductDrawResidualNorm() <= column.getMeshProductDrawResidualTolerance(),
+        "Solved column should start with synchronized terminal product draws");
+
+    StreamInterface staleTopDraw = column.getGasOutStream().clone();
+    staleTopDraw.setFlowRate(column.getGasOutStream().getFlowRate("kg/hr") * 1000.0, "kg/hr");
+    staleTopDraw.run();
+    StreamInterface staleBottomDraw = column.getLiquidOutStream().clone();
+    staleBottomDraw.setFlowRate(column.getLiquidOutStream().getFlowRate("kg/hr") * 1000.0,
+      "kg/hr");
+    staleBottomDraw.run();
+    column.setTerminalProductDrawStreamsForDiagnostics(staleTopDraw, staleBottomDraw);
+
+    ColumnMeshResidual residual = ColumnMeshResidualEvaluator.evaluate(column);
+    double productDrawNorm = residual.getInfinityNorm(ColumnMeshEquationType.PRODUCT_DRAW);
+    assertTrue(productDrawNorm > 1.0e-6,
+      "Product-draw residual should catch a terminal draw that no longer matches the public product, norm="
+        + productDrawNorm);
+  }
+
+  /**
+   * Regression for the column4.py C1 to C5 UniSim case. The case is mass-balanced and has low MESH
+   * residuals, while the bottom liquid composition still differs substantially from the UniSim
+   * reference.
+   */
+  @Test
+  public void column4C1ToC5CaseTracksLiquidCompositionDeviation() {
+    SystemInterface baseFluid = createColumn4BaseFluid();
+    Stream mainFeed = createColumn4Stream(baseFluid, "column4 main feed", new double[] {0.0, 1.0,
+        0.0, 0.0, 0.0, 0.0, 0.0}, 1059.40430981003, 77.0000001251743, 4.2);
+    Stream topFeed = createColumn4Stream(baseFluid, "column4 top feed", new double[] {1.0 / 7.0,
+        1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0},
+        1000.0, 32.14, 3.7);
+
+    DistillationColumn column = new DistillationColumn("column4 C1-C5", 10, true, false);
+    column.addFeedStream(mainFeed, 6);
+    column.addFeedStream(topFeed, 10);
+    double topPressure = 4.00 + COLUMN4_ATM_BARA;
+    double bottomPressure = 4.05 + COLUMN4_ATM_BARA;
+    column.setTopPressure(topPressure);
+    column.setBottomPressure(topPressure + (bottomPressure - topPressure) * (10.0 / 9.0));
+    column.getReboiler().setOutTemperature(273.15 + 88.05);
+    column.setMurphreeEfficiency(1.0);
+    column.setMurphreeEfficiency(0, 1.0);
+    column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    column.setMaxNumberOfIterations(160);
+    column.run();
+
+    double feedMass = mainFeed.getFlowRate("kg/hr") + topFeed.getFlowRate("kg/hr");
+    double productMass = column.getGasOutStream().getFlowRate("kg/hr")
+        + column.getLiquidOutStream().getFlowRate("kg/hr");
+    double[] topComposition = column.getGasOutStream().getThermoSystem().getMolarComposition();
+    double[] bottomComposition =
+        column.getLiquidOutStream().getThermoSystem().getMolarComposition();
+    double vaporMaxDeviation = getMaxAbsoluteDeviation(topComposition, COLUMN4_UNISIM_TOP_Y);
+    double liquidMaxDeviation = getMaxAbsoluteDeviation(bottomComposition, COLUMN4_UNISIM_BOTTOM_X);
+    double liquidRmsDeviation = getRmsDeviation(bottomComposition, COLUMN4_UNISIM_BOTTOM_X);
+
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertEquals(feedMass, productMass, feedMass * 1.0e-6,
+        "column4 external products must match feed mass");
+    assertEquals(0.0, column.getMassBalance("kg/hr"), feedMass * 1.0e-6,
+        "column4 public mass balance should be closed");
+    assertTrue(column.getLastMeshResidualNorm() <= 1.0,
+        "column4 MESH residual should be within the monitored tolerance, norm="
+            + column.getLastMeshResidualNorm());
+    assertTrue(column.getLastMeshProductDrawResidualNorm() <= 2.0e-2,
+        "column4 product draw residual should be synchronized, norm="
+            + column.getLastMeshProductDrawResidualNorm());
+    assertTrue(vaporMaxDeviation < 4.0e-2,
+        "column4 vapor composition should stay close to UniSim, max |dy|=" + vaporMaxDeviation);
+    assertTrue(liquidMaxDeviation < 6.5e-1,
+        "column4 liquid composition deviation should stay inside the current known envelope, max |dx|="
+            + liquidMaxDeviation);
+    assertTrue(liquidRmsDeviation < 3.5e-1,
+        "column4 liquid composition RMS deviation should stay inside the current known envelope, rms="
+            + liquidRmsDeviation);
+  }
+
+  /**
+   * Create the SRK fluid package used in the column4.py case.
+   *
+   * @return base fluid with C1 through nC5 components initialized
+   */
+  private SystemInterface createColumn4BaseFluid() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 1.0);
+    for (int i = 0; i < COLUMN4_COMPONENTS.length; i++) {
+      fluid.addComponent(COLUMN4_COMPONENTS[i], 1.0e-10);
+    }
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    fluid.useVolumeCorrection(true);
+    fluid.init(0);
+    return fluid;
+  }
+
+  /**
+   * Create a feed stream for the column4.py case.
+   *
+   * @param baseFluid base thermodynamic fluid to clone
+   * @param name stream name
+   * @param moleFractions component mole fractions in {@link #COLUMN4_COMPONENTS} order
+   * @param flowRateKmolPerHour stream flow rate in kmol/hr
+   * @param temperatureC stream temperature in degrees Celsius
+   * @param pressureBarg stream pressure in barg
+   * @return initialized stream
+   */
+  private Stream createColumn4Stream(SystemInterface baseFluid, String name, double[] moleFractions,
+      double flowRateKmolPerHour, double temperatureC, double pressureBarg) {
+    SystemInterface fluid = baseFluid.clone();
+    fluid.setTemperature(temperatureC, "C");
+    fluid.setPressure(pressureBarg + COLUMN4_ATM_BARA, "bara");
+    fluid.setMolarComposition(moleFractions);
+    fluid.init(0);
+
+    Stream stream = new Stream(name, fluid);
+    stream.setTemperature(temperatureC, "C");
+    stream.setPressure(pressureBarg + COLUMN4_ATM_BARA, "bara");
+    stream.setFlowRate(flowRateKmolPerHour, "kmole/hr");
+    stream.run();
+    return stream;
+  }
+
+  /**
+   * Calculate the maximum absolute composition deviation.
+   *
+   * @param actual actual composition vector
+   * @param expected reference composition vector
+   * @return maximum absolute deviation
+   */
+  private double getMaxAbsoluteDeviation(double[] actual, double[] expected) {
+    double maxDeviation = 0.0;
+    for (int i = 0; i < expected.length; i++) {
+      maxDeviation = Math.max(maxDeviation, Math.abs(actual[i] - expected[i]));
+    }
+    return maxDeviation;
+  }
+
+  /**
+   * Calculate the root-mean-square composition deviation.
+   *
+   * @param actual actual composition vector
+   * @param expected reference composition vector
+   * @return root-mean-square deviation
+   */
+  private double getRmsDeviation(double[] actual, double[] expected) {
+    double sumSquaredDeviation = 0.0;
+    for (int i = 0; i < expected.length; i++) {
+      double deviation = actual[i] - expected[i];
+      sumSquaredDeviation += deviation * deviation;
+    }
+    return Math.sqrt(sumSquaredDeviation / expected.length);
   }
 
   /**

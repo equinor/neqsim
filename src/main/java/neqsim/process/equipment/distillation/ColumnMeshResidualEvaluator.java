@@ -2,6 +2,7 @@ package neqsim.process.equipment.distillation;
 
 import java.util.ArrayList;
 import java.util.List;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -31,6 +32,7 @@ final class ColumnMeshResidualEvaluator {
     addEquilibriumResiduals(column, state, builder);
     addSummationResiduals(state, builder);
     addEnergyResiduals(column, builder);
+    addProductDrawResiduals(column, state, builder);
     addSpecificationResiduals(column, builder);
     return builder.build();
   }
@@ -147,6 +149,76 @@ final class ColumnMeshResidualEvaluator {
   }
 
   /**
+  * Add residuals coupling public product streams to the terminal product draw streams.
+   *
+   * <p>
+   * These residuals are intentionally separate from the external product component balance. They
+  * highlight cases where a post-solve product reconciliation changed the public overhead or
+  * bottoms stream without synchronizing the terminal product draw basis used by diagnostics. A
+  * rigorous MESH solve should eventually drive these residuals toward zero by solving product draw
+  * rates together with internal vapor and liquid traffic.
+   * </p>
+   *
+   * @param column column to inspect
+   * @param state column state snapshot
+   * @param builder residual builder
+   */
+  private static void addProductDrawResiduals(DistillationColumn column, ColumnMeshState state,
+      ResidualBuilder builder) {
+    String[] componentNames = state.getComponentNames();
+    if (componentNames.length == 0 || state.getTrayCount() == 0) {
+      return;
+    }
+    int topTray = state.getTrayCount() - 1;
+    for (int comp = 0; comp < state.getComponentCount(); comp++) {
+      String componentName = componentNames[comp];
+      double feedComponentFlow = totalFeedComponentFlow(state, comp);
+      double publicTop = componentFlow(column.getGasOutStream(), componentName);
+        double terminalTop = componentFlow(column.getTerminalGasProductDrawStream(), componentName);
+      addDrawResidual(publicTop, terminalTop, feedComponentFlow, builder, topTray,
+          componentName + ":top");
+
+      double publicBottom = componentFlow(column.getLiquidOutStream(), componentName);
+        double terminalBottom = componentFlow(column.getTerminalLiquidProductDrawStream(), componentName);
+      addDrawResidual(publicBottom, terminalBottom, feedComponentFlow, builder, 0,
+          componentName + ":bottom");
+    }
+  }
+
+  /**
+   * Calculate total feed flow for a component across all trays.
+   *
+   * @param state column state snapshot
+   * @param componentIndex component index
+   * @return total feed component flow in mol/hr
+   */
+  private static double totalFeedComponentFlow(ColumnMeshState state, int componentIndex) {
+    double total = 0.0;
+    for (int tray = 0; tray < state.getTrayCount(); tray++) {
+      total += state.getFeedComponentFlow(tray, componentIndex);
+    }
+    return total;
+  }
+
+  /**
+   * Add a scaled product draw residual.
+   *
+   * @param publicDraw exposed public product component flow in mol/hr
+   * @param terminalDraw terminal tray component flow in mol/hr
+   * @param feedComponentFlow total feed component flow in mol/hr
+   * @param builder residual builder
+   * @param trayIndex terminal tray index
+   * @param label residual label
+   */
+  private static void addDrawResidual(double publicDraw, double terminalDraw,
+      double feedComponentFlow, ResidualBuilder builder, int trayIndex, String label) {
+    double scale = Math.max(ColumnMeshState.getMinimumScale(), Math.abs(publicDraw)
+        + Math.abs(terminalDraw) + Math.abs(feedComponentFlow));
+    builder.add((publicDraw - terminalDraw) / scale, ColumnMeshEquationType.PRODUCT_DRAW,
+        trayIndex, label);
+  }
+
+  /**
    * Add active column specification residuals.
    *
    * @param column column to inspect
@@ -203,6 +275,21 @@ final class ColumnMeshResidualEvaluator {
       return Math.max(MIN_LOG_ARGUMENT, phase.getComponent(componentName).getFugacityCoefficient());
     } catch (Exception ex) {
       return 1.0;
+    }
+  }
+
+  /**
+   * Get a component molar flow from a stream.
+   *
+   * @param stream stream to inspect
+   * @param componentName component name
+   * @return component molar flow in mol/hr, or zero if unavailable
+   */
+  private static double componentFlow(StreamInterface stream, String componentName) {
+    try {
+      return stream.getFluid().getComponent(componentName).getTotalFlowRate("mol/hr");
+    } catch (Exception ex) {
+      return 0.0;
     }
   }
 
