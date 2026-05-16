@@ -4916,6 +4916,16 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void setForcePhaseTypes(boolean forcePhaseTypes) {
     this.forcePhaseTypes = forcePhaseTypes;
+    // Propagate to each phase so the EOS molar-volume solver can honor the flag.
+    // Without this, the system-level flag had no effect inside the cubic root
+    // selection and Newton iteration could silently drift to the wrong root.
+    if (phaseArray != null) {
+      for (PhaseInterface p : phaseArray) {
+        if (p != null) {
+          p.setForcePhaseType(forcePhaseTypes);
+        }
+      }
+    }
   }
 
   /** {@inheritDoc} */

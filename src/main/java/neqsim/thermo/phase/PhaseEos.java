@@ -417,6 +417,21 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
+    // When the caller has insisted on a specific phase type (via
+    // SystemThermo.setForcePhaseTypes(true)), use the analytical cubic-root
+    // selector. The iterative Newton solver below can otherwise silently drift
+    // to the opposite root via its `changeFase` fallback, which makes the
+    // system-level flag a no-op. The analytical solver picks the smallest
+    // positive Z for LIQUID and the largest for GAS, which is the textbook
+    // behavior. If only one positive real root exists, both phase types
+    // collapse to that root (physically correct: only one phase is stable).
+    if (forcePhaseType) {
+      try {
+        return molarVolumeAnalytical(pressure, temperature, pt);
+      } catch (neqsim.util.exception.IsNaNException ex) {
+        // fall through to numerical solver if analytical fails
+      }
+    }
     double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
         : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
     BonV = Math.max(1.0e-4, Math.min(1.0 - 1.0e-4, BonV));

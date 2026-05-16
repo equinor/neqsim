@@ -738,6 +738,20 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public boolean useVolumeCorrection();
 
   /**
+   * Set whether the phase must honor the requested {@link PhaseType} in its
+   * molar-volume solver. Propagated from
+   * {@link neqsim.thermo.system.SystemInterface#setForcePhaseTypes(boolean)}.
+   *
+   * @param force true to force the requested phase type.
+   */
+  public void setForcePhaseType(boolean force);
+
+  /**
+   * @return true if the phase is forced to honor the requested {@link PhaseType}.
+   */
+  public boolean isForcePhaseType();
+
+  /**
    * <p>
    * Getter for property <code>beta</code>. Beta is the mole fraction of a phase of all the moles of
    * a system.

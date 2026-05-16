@@ -73,6 +73,15 @@ public abstract class Phase implements PhaseInterface {
   protected double molarVolume = 1.0;
   protected double phaseVolume = 1.0;
 
+  /**
+   * When true, the phase's EOS molar-volume solver must honor the requested
+   * {@link PhaseType} (GAS/LIQUID) by using the analytical cubic-root selector
+   * instead of the iterative Newton solver. This is propagated from
+   * {@code SystemThermo.setForcePhaseTypes(true)} and is the mechanism that
+   * makes that system-level flag actually take effect inside the EOS.
+   */
+  protected boolean forcePhaseType = false;
+
   public boolean chemSyst = false;
   protected double diElectricConstant = 0;
   double Z = 1;
@@ -2459,6 +2468,29 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public void useVolumeCorrection(boolean volcor) {
     useVolumeCorrection = volcor;
+  }
+
+  /**
+   * Returns whether this phase is required to honor the requested
+   * {@link PhaseType} in its molar-volume solver.
+   *
+   * @return true when the analytical cubic-root selector must be used.
+   */
+  public boolean isForcePhaseType() {
+    return forcePhaseType;
+  }
+
+  /**
+   * Set whether this phase must honor the requested {@link PhaseType} in its
+   * molar-volume solver. When true, cubic EOS phases must use the analytical
+   * root selector (smallest positive Z for liquid, largest for gas) instead of
+   * the iterative Newton solver, which may silently drift to the other root
+   * via its {@code changeFase} fallback branch.
+   *
+   * @param force true to force the requested phase type.
+   */
+  public void setForcePhaseType(boolean force) {
+    this.forcePhaseType = force;
   }
 
   /** {@inheritDoc} */
