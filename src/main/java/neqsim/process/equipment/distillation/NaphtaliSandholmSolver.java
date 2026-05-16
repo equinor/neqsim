@@ -409,6 +409,11 @@ final class NaphtaliSandholmSolver {
           tray.isSetOutTemperature() && Double.isFinite(tray.getOutTemperature())
               ? tray.getOutTemperature()
               : Double.NaN;
+      double seedTemperature = column.getSeedTemperature(trayIndex);
+      if (Double.isNaN(fixedTemperatures[trayIndex]) && Double.isFinite(seedTemperature)) {
+        temperatures[trayIndex] =
+            Math.max(MIN_TEMPERATURE, Math.min(MAX_TEMPERATURE, seedTemperature));
+      }
 
       double liquidTotal = 0.0;
       for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {

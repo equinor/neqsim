@@ -241,6 +241,34 @@ public class DistillationSolverBenchmarkTest {
   }
 
   /**
+   * Test seed-temperature accessors used by external warm-start examples.
+   */
+  @Test
+  public void seedTemperatureAccessors() {
+    DistillationColumn column = new DistillationColumn("seeded", 3, true, true);
+    assertEquals(column.getNumerOfTrays(), column.getNumberOfTrays());
+    assertFalse(column.hasSeedTemperatures());
+    assertTrue(Double.isNaN(column.getSeedTemperature(1)));
+
+    column.setSeedTemperature(1, 320.0);
+    assertTrue(column.hasSeedTemperatures());
+    assertEquals(320.0, column.getSeedTemperature(1), 1.0e-12);
+
+    column.setSeedTemperature(-1, 280.0);
+    column.setSeedTemperature(99, 280.0);
+    assertTrue(Double.isNaN(column.getSeedTemperature(-1)));
+    assertTrue(Double.isNaN(column.getSeedTemperature(99)));
+
+    column.setSeedTemperature(1, Double.NaN);
+    assertFalse(column.hasSeedTemperatures());
+
+    column.setSeedTemperature(2, 330.0);
+    assertTrue(column.hasSeedTemperatures());
+    column.clearSeedTemperatures();
+    assertFalse(column.hasSeedTemperatures());
+  }
+
+  /**
    * Test that every public solver enum has a mapped solver strategy.
    */
   @Test

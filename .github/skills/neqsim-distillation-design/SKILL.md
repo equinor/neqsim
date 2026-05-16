@@ -61,6 +61,8 @@ column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
 
 // Naphtali-Sandholm - guarded simultaneous MESH residual Newton solver
 column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
+// Optional: seed stage temperatures as initial guesses only, not fixed specs
+column.setSeedTemperature(3, 273.15 + 45.0);
 // Adjust max iterations
 column.setMaxNumberOfIterations(200);
 ```

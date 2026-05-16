@@ -167,6 +167,8 @@ System.out.println("Solve time:     " + column.getLastSolveTimeSeconds() + " s")
   temperature, and vapor flow as tray variables.
 - Builds a finite-difference block-tridiagonal Jacobian from neighboring tray couplings and uses a
   guarded Newton line search with flow and temperature trust limits.
+- Supports optional `setSeedTemperature(stageIndex, temperatureK)` warm-start guesses. Seeds are
+  initial values only; they do not pin tray temperatures or replace energy-balance residuals.
 - Accepts the Newton-refined state only when the scaled MESH residual improves; otherwise the
   inside-out warm-start state is retained.
 

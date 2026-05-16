@@ -322,6 +322,7 @@ flow rate), NeqSim wraps the inner solver in a secant-method outer loop that:
 | `setEnthalpyBalanceTolerance(double)` | Override the adaptive relative enthalpy-balance tolerance. |
 | `setEnforceEnergyBalanceTolerance(boolean)` | Require the energy residual to pass before `solved()` returns true. Disabled by default for backward compatibility. |
 | `setRelaxationFactor(double)` | Set the starting relaxation factor for `DAMPED_SUBSTITUTION`. |
+| `setSeedTemperature(int, double)` | Set a non-binding per-stage temperature guess in Kelvin for residual solvers such as `NAPHTALI_SANDHOLM`; use `Double.NaN` to clear one stage. |
 | `setMeshResidualTolerance(double)` | Set the scaled MESH residual norm tolerance used by the optional MESH convergence gate. |
 | `setMeshProductDrawResidualTolerance(double)` | Set the scaled terminal product-draw residual tolerance used when MESH residual gating is enabled. |
 | `setEnforceMeshResidualTolerance(boolean)` | Require the latest MESH residual vector to pass before `solved()` returns true. This gate is effective by default for `NAPHTALI_SANDHOLM` and `MESH_RESIDUAL`. |

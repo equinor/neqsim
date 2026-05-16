@@ -208,6 +208,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   double bottomTrayPressure = -1.0;
   int numberOfTrays = 1;
   int maxNumberOfIterations = 50;
+  /** Optional per-stage initial temperature guesses for simultaneous residual solvers. */
+  private double[] seedTemperatures = null;
   StreamInterface stream_3 = new Stream("stream_3");
   StreamInterface gasOutStream = new Stream("gasOutStream");
   StreamInterface liquidOutStream = new Stream("liquidOutStream");
@@ -7325,6 +7327,96 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public int getNumerOfTrays() {
     return numberOfTrays;
+  }
+
+  /**
+   * Get the number of stages in the column using the correctly spelled API name.
+   *
+   * <p>
+   * This method is an alias for the legacy {@link #getNumerOfTrays()} method and is kept separate
+   * to preserve backwards compatibility with existing scripts.
+   * </p>
+   *
+   * @return number of stages in the column including reboiler and condenser stages when present
+   */
+  public int getNumberOfTrays() {
+    return getNumerOfTrays();
+  }
+
+  /**
+   * Set a per-stage seed temperature used as an initial guess by residual solvers.
+   *
+   * <p>
+   * A seed temperature is not a tray specification. Unlike {@link SimpleTray#setOutTemperature}, it
+   * does not pin the stage temperature or replace the energy balance. The current
+   * {@link SolverType#NAPHTALI_SANDHOLM} implementation uses finite seeds only when the same stage
+   * has no fixed output-temperature specification.
+   * </p>
+   *
+   * @param stageIndex bottom-up stage index, where zero is the reboiler when present and
+   *        {@code numberOfTrays - 1} is the top stage
+   * @param temperatureK seed temperature in kelvin; pass {@link Double#NaN} to clear a stage seed
+   */
+  public void setSeedTemperature(int stageIndex, double temperatureK) {
+    if (stageIndex < 0 || stageIndex >= numberOfTrays) {
+      return;
+    }
+    ensureSeedTemperatureArray();
+    seedTemperatures[stageIndex] = Double.isFinite(temperatureK) ? temperatureK : Double.NaN;
+  }
+
+  /**
+   * Get the seed temperature configured for one stage.
+   *
+   * @param stageIndex bottom-up stage index to inspect
+   * @return seed temperature in kelvin, or {@link Double#NaN} when no seed is configured or the
+   *         stage index is outside the current column range
+   */
+  public double getSeedTemperature(int stageIndex) {
+    if (seedTemperatures == null || stageIndex < 0 || stageIndex >= numberOfTrays) {
+      return Double.NaN;
+    }
+    return seedTemperatures[stageIndex];
+  }
+
+  /**
+   * Check whether at least one finite stage seed temperature is configured.
+   *
+   * @return {@code true} when one or more stages have a finite seed temperature
+   */
+  public boolean hasSeedTemperatures() {
+    if (seedTemperatures == null) {
+      return false;
+    }
+    for (double seedTemperature : seedTemperatures) {
+      if (Double.isFinite(seedTemperature)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Clear all per-stage seed temperatures.
+   */
+  public void clearSeedTemperatures() {
+    seedTemperatures = null;
+  }
+
+  /**
+   * Ensure the seed-temperature array exists and matches the current stage count.
+   */
+  private void ensureSeedTemperatureArray() {
+    if (seedTemperatures != null && seedTemperatures.length == numberOfTrays) {
+      return;
+    }
+    double[] resized = new double[numberOfTrays];
+    Arrays.fill(resized, Double.NaN);
+    if (seedTemperatures != null) {
+      System.arraycopy(seedTemperatures, 0, resized, 0,
+          Math.min(seedTemperatures.length, resized.length));
+    }
+    seedTemperatures = resized;
   }
 
   /**
