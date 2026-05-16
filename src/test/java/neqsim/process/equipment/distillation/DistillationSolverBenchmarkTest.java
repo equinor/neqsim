@@ -225,6 +225,34 @@ public class DistillationSolverBenchmarkTest {
   }
 
   /**
+   * Test that column diagnostics explain common convergence causes for top-fed low-reflux columns.
+   */
+  @Test
+  public void diagnosticsHighlightTopFeedAndSolverAlternatives() {
+    SystemInterface sys = new SystemSrkEos(289.15, 14.0);
+    sys.addComponent("propane", 0.35);
+    sys.addComponent("n-butane", 0.40);
+    sys.addComponent("n-pentane", 0.25);
+    sys.setMixingRule("classic");
+
+    Stream feed = new Stream("diagnostic_feed", sys);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("diagnostic debutanizer", 10, true, true);
+    column.addFeedStream(feed, 9);
+    column.getCondenser().setRefluxRatio(0.1);
+    column.getCondenser().setTotalCondenser(true);
+
+    String diagnostics = column.getConvergenceDiagnostics();
+
+    assertTrue(diagnostics.contains("near top/condenser"));
+    assertTrue(diagnostics.contains("reflux ratio is low"));
+    assertTrue(diagnostics.contains("MESH_RESIDUAL"));
+    assertTrue(diagnostics.contains("NEWTON"));
+  }
+
+  /**
    * Test component material closure for the standard deethanizer benchmark.
    */
   @Test

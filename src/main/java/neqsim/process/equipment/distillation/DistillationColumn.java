@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
+import neqsim.process.costestimation.column.ColumnCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
@@ -70,6 +71,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private static final double DEFAULT_ENTHALPY_BALANCE_TOLERANCE = 1.6e-2;
   /** Default scaled MESH residual tolerance when residual gating is enabled. */
   private static final double DEFAULT_MESH_RESIDUAL_TOLERANCE = 1.0;
+  /** Minimum temperature span required before a tray temperature profile is considered useful. */
+  private static final double MINIMUM_FEED_PROFILE_SPAN = 1.0;
+  /** Temperature offset used when only one column-end temperature is specified. */
+  private static final double FEED_PROFILE_END_TEMPERATURE_OFFSET = 20.0;
+  /** Tolerance used when comparing equivalent feed tray candidates. */
+  private static final double FEED_TRAY_TIE_TOLERANCE = 1.0e-9;
   double condenserCoolingDuty = 10.0;
   private double reboilerTemperature = 273.15;
   private double condenserTemperature = 270.15;
@@ -345,8 +352,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Add a feed stream to the column without specifying the tray. The optimal feed tray will be
-   * determined automatically based on temperature match.
+   * Add a feed stream to the column without specifying the tray.
+   *
+   * <p>
+   * The feed tray is estimated automatically when the column is run. The estimate uses an existing
+   * tray temperature profile when available, otherwise it builds a simple temperature profile from
+   * configured condenser/reboiler temperatures and the feed temperature. This is a robust initial
+   * placement heuristic, not a guarantee of global optimum or convergence for every specification.
+   * </p>
    *
    * @param inputStream the feed stream
    */
@@ -367,6 +380,92 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return Collections.emptyList();
     }
     return Collections.unmodifiableList(feeds);
+  }
+
+  /**
+   * Estimate which tray an unassigned feed stream would be placed on.
+   *
+   * <p>
+   * This method does not connect the feed stream to the column. It is intended for diagnostics and
+   * for checking automatic feed placement before calling {@link #run()}.
+   * </p>
+   *
+   * @param inputStream feed stream to evaluate
+   * @return 0-based tray number, or {@code -1} if the stream is null or no trays exist
+   */
+  public int estimateFeedTrayNumber(StreamInterface inputStream) {
+    if (inputStream == null || numberOfTrays == 0) {
+      return -1;
+    }
+    inputStream.run();
+    return estimateFeedTrayNumber(inputStream.getTemperature());
+  }
+
+  /**
+   * Return the tray number for a feed stream currently assigned to the column.
+   *
+   * <p>
+   * The lookup first compares stream object identity and then falls back to the stream name. Feed
+   * streams added with {@link #addFeedStream(StreamInterface)} are assigned when the column is run.
+   * </p>
+   *
+   * @param inputStream feed stream to locate
+   * @return 0-based tray number, or {@code -1} if the stream is null or not assigned
+   */
+  public int getFeedTrayNumber(StreamInterface inputStream) {
+    if (inputStream == null) {
+      return -1;
+    }
+    int feedTrayNumber = getFeedTrayNumberByReference(inputStream);
+    if (feedTrayNumber >= 0) {
+      return feedTrayNumber;
+    }
+    return getFeedTrayNumber(inputStream.getName());
+  }
+
+  /**
+   * Return the tray number for a feed stream with the given name.
+   *
+   * @param streamName feed stream name to locate
+   * @return 0-based tray number, or {@code -1} if the name is null or not assigned
+   */
+  public int getFeedTrayNumber(String streamName) {
+    if (streamName == null) {
+      return -1;
+    }
+    for (int trayNumber = 0; trayNumber < numberOfTrays; trayNumber++) {
+      List<StreamInterface> feeds = feedStreams.get(trayNumber);
+      if (feeds == null) {
+        continue;
+      }
+      for (StreamInterface feed : feeds) {
+        if (streamName.equals(feed.getName())) {
+          return trayNumber;
+        }
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Return the tray number for the exact feed stream object.
+   *
+   * @param inputStream feed stream object to locate
+   * @return 0-based tray number, or {@code -1} if the stream object is not assigned
+   */
+  private int getFeedTrayNumberByReference(StreamInterface inputStream) {
+    for (int trayNumber = 0; trayNumber < numberOfTrays; trayNumber++) {
+      List<StreamInterface> feeds = feedStreams.get(trayNumber);
+      if (feeds == null) {
+        continue;
+      }
+      for (StreamInterface feed : feeds) {
+        if (feed == inputStream) {
+          return trayNumber;
+        }
+      }
+    }
+    return -1;
   }
 
   /**
@@ -897,6 +996,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     return count > 0 ? sumTemp / count : 300.0;
   }
 
+  /**
+   * Assign queued feed streams to estimated tray locations.
+   */
   private void assignUnassignedFeeds() {
     if (unassignedFeedStreams.isEmpty()) {
       return;
@@ -909,33 +1011,731 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     Iterator<StreamInterface> iter = unassignedFeedStreams.iterator();
     while (iter.hasNext()) {
       StreamInterface feed = iter.next();
-      feed.run(); // Ensure we have T
-      double feedT = feed.getTemperature();
-
-      int bestTray = -1;
-      double minDiff = Double.MAX_VALUE;
-
-      // Check if trays have reasonable temperatures (not all default)
-      // If not initialized, just pick middle.
-      boolean isInitialized = Math
-          .abs(trays.get(0).getTemperature() - trays.get(numberOfTrays - 1).getTemperature()) > 1.0;
-
-      if (!isInitialized) {
-        bestTray = numberOfTrays / 2;
-      } else {
-        for (int i = 0; i < numberOfTrays; i++) {
-          double trayT = trays.get(i).getTemperature();
-          double diff = Math.abs(trayT - feedT);
-          if (diff < minDiff) {
-            minDiff = diff;
-            bestTray = i;
-          }
-        }
-      }
+      int bestTray = estimateFeedTrayNumber(feed);
 
       addFeedStream(feed, bestTray);
       iter.remove();
     }
+  }
+
+  /**
+   * Estimate the feed tray number from a feed temperature.
+   *
+   * @param feedTemperature feed stream temperature in Kelvin
+   * @return 0-based estimated feed tray number
+   */
+  private int estimateFeedTrayNumber(double feedTemperature) {
+    int firstFeedTray = getFirstFeedTrayCandidate();
+    int lastFeedTray = getLastFeedTrayCandidate();
+    if (firstFeedTray > lastFeedTray) {
+      firstFeedTray = 0;
+      lastFeedTray = numberOfTrays - 1;
+    }
+
+    if (!isUsableTemperature(feedTemperature)) {
+      return (firstFeedTray + lastFeedTray) / 2;
+    }
+
+    boolean useTrayProfile = hasUsableTrayTemperatureProfile(firstFeedTray, lastFeedTray);
+    int bestTray = (firstFeedTray + lastFeedTray) / 2;
+    double minimumTemperatureDifference = Double.MAX_VALUE;
+
+    for (int trayNumber = firstFeedTray; trayNumber <= lastFeedTray; trayNumber++) {
+      double trayTemperature = useTrayProfile ? trays.get(trayNumber).getTemperature()
+          : estimateTrayTemperatureFromColumnEnds(trayNumber, feedTemperature);
+      if (!isUsableTemperature(trayTemperature)) {
+        continue;
+      }
+
+      double temperatureDifference = Math.abs(trayTemperature - feedTemperature);
+      if (temperatureDifference < minimumTemperatureDifference || Math.abs(
+          temperatureDifference - minimumTemperatureDifference) <= FEED_TRAY_TIE_TOLERANCE) {
+        minimumTemperatureDifference = temperatureDifference;
+        bestTray = trayNumber;
+      }
+    }
+    return bestTray;
+  }
+
+  /**
+   * Return the first tray to consider for automatic feed placement.
+   *
+   * @return first 0-based feed tray candidate
+   */
+  private int getFirstFeedTrayCandidate() {
+    return hasReboiler && numberOfTrays > 1 ? 1 : 0;
+  }
+
+  /**
+   * Return the last tray to consider for automatic feed placement.
+   *
+   * @return last 0-based feed tray candidate
+   */
+  private int getLastFeedTrayCandidate() {
+    int lastFeedTray = numberOfTrays - 1;
+    if (hasCondenser && lastFeedTray > 0) {
+      lastFeedTray--;
+    }
+    return lastFeedTray;
+  }
+
+  /**
+   * Check whether the column already has a useful tray temperature profile.
+   *
+   * @param firstFeedTray first tray index included in the check
+   * @param lastFeedTray last tray index included in the check
+   * @return {@code true} when at least two tray temperatures span a useful range
+   */
+  private boolean hasUsableTrayTemperatureProfile(int firstFeedTray, int lastFeedTray) {
+    double minimumTemperature = Double.MAX_VALUE;
+    double maximumTemperature = -Double.MAX_VALUE;
+    int temperatureCount = 0;
+    for (int trayNumber = firstFeedTray; trayNumber <= lastFeedTray; trayNumber++) {
+      double trayTemperature = trays.get(trayNumber).getTemperature();
+      if (!isUsableTemperature(trayTemperature)) {
+        continue;
+      }
+      minimumTemperature = Math.min(minimumTemperature, trayTemperature);
+      maximumTemperature = Math.max(maximumTemperature, trayTemperature);
+      temperatureCount++;
+    }
+    return temperatureCount >= 2
+        && Math.abs(maximumTemperature - minimumTemperature) > MINIMUM_FEED_PROFILE_SPAN;
+  }
+
+  /**
+   * Estimate a tray temperature from configured column-end temperatures.
+   *
+   * @param trayNumber tray index to estimate
+   * @param feedTemperature feed stream temperature in Kelvin
+   * @return estimated tray temperature in Kelvin, or {@link Double#NaN} if no useful profile exists
+   */
+  private double estimateTrayTemperatureFromColumnEnds(int trayNumber, double feedTemperature) {
+    if (numberOfTrays <= 1) {
+      return feedTemperature;
+    }
+
+    double bottomTemperature = estimateBottomFeedProfileTemperature(feedTemperature);
+    double topTemperature = estimateTopFeedProfileTemperature(feedTemperature, bottomTemperature);
+    if (!isUsableTemperature(bottomTemperature) || !isUsableTemperature(topTemperature)
+        || bottomTemperature - topTemperature <= MINIMUM_FEED_PROFILE_SPAN) {
+      return Double.NaN;
+    }
+
+    double trayFraction = trayNumber / (numberOfTrays - 1.0);
+    return bottomTemperature + trayFraction * (topTemperature - bottomTemperature);
+  }
+
+  /**
+   * Estimate the bottom temperature used for initial feed placement.
+   *
+   * @param feedTemperature feed stream temperature in Kelvin
+   * @return bottom temperature estimate in Kelvin
+   */
+  private double estimateBottomFeedProfileTemperature(double feedTemperature) {
+    if (hasReboiler && getReboiler().isSetOutTemperature()
+        && isUsableTemperature(getReboiler().getOutTemperature())) {
+      return getReboiler().getOutTemperature();
+    }
+    double trayTemperature = trays.get(0).getTemperature();
+    if (isUsableTemperature(trayTemperature)) {
+      return trayTemperature;
+    }
+    return feedTemperature + FEED_PROFILE_END_TEMPERATURE_OFFSET;
+  }
+
+  /**
+   * Estimate the top temperature used for initial feed placement.
+   *
+   * @param feedTemperature feed stream temperature in Kelvin
+   * @param bottomTemperature bottom temperature estimate in Kelvin
+   * @return top temperature estimate in Kelvin
+   */
+  private double estimateTopFeedProfileTemperature(double feedTemperature, double bottomTemperature) {
+    int topTrayNumber = numberOfTrays - 1;
+    if (hasCondenser && getCondenser().isSetOutTemperature()
+        && isUsableTemperature(getCondenser().getOutTemperature())) {
+      return getCondenser().getOutTemperature();
+    }
+    double trayTemperature = trays.get(topTrayNumber).getTemperature();
+    if (isUsableTemperature(trayTemperature)) {
+      return trayTemperature;
+    }
+    double topTemperature = feedTemperature - FEED_PROFILE_END_TEMPERATURE_OFFSET;
+    if (isUsableTemperature(bottomTemperature)
+        && topTemperature >= bottomTemperature - MINIMUM_FEED_PROFILE_SPAN) {
+      topTemperature = bottomTemperature - FEED_PROFILE_END_TEMPERATURE_OFFSET;
+    }
+    return topTemperature;
+  }
+
+  /**
+   * Check whether a temperature is finite and physically usable for feed placement.
+   *
+   * @param temperature temperature in Kelvin
+   * @return {@code true} when the temperature can be used in the feed-placement heuristic
+   */
+  private boolean isUsableTemperature(double temperature) {
+    return !Double.isNaN(temperature) && !Double.isInfinite(temperature) && temperature > 0.0;
+  }
+
+  /**
+   * Result from a rigorous tray-count and feed-tray search.
+   *
+   * <p>
+   * The result is immutable and records the selected tray count, selected feed tray, product
+   * purity, duty estimates and convergence diagnostics from the final candidate run.
+   * </p>
+   *
+   * @author esol
+   * @version 1.0
+   */
+  public static class TrayOptimizationResult implements java.io.Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000;
+    private final boolean feasible;
+    private final int numberOfTrays;
+    private final int feedTrayNumber;
+    private final String componentName;
+    private final boolean topProduct;
+    private final double targetPurity;
+    private final double productPurity;
+    private final double reboilerDuty;
+    private final double condenserDuty;
+    private final double totalAbsoluteDuty;
+    private final int iterationCount;
+    private final double temperatureResidual;
+    private final double massResidual;
+    private final double energyResidual;
+    private final int evaluatedCases;
+    private final int convergedCases;
+    private final String message;
+
+    /**
+     * Create a tray optimization result.
+     *
+     * @param feasible {@code true} if a candidate met the product specification
+     * @param numberOfTrays total tray count including reboiler and condenser if present
+     * @param feedTrayNumber 0-based feed tray number selected for all optimization feeds
+     * @param componentName product component used in the purity specification
+     * @param topProduct {@code true} when the purity target applies to the top product
+     * @param targetPurity target product mole fraction
+     * @param productPurity achieved product mole fraction
+     * @param reboilerDuty reboiler duty in W
+     * @param condenserDuty condenser duty in W
+     * @param totalAbsoluteDuty sum of absolute condenser and reboiler duties in W
+     * @param iterationCount solver iteration count for the final candidate
+     * @param temperatureResidual final temperature residual in K
+     * @param massResidual final relative mass residual
+     * @param energyResidual final relative energy residual
+     * @param evaluatedCases number of tray-count/feed-tray cases evaluated
+     * @param convergedCases number of evaluated cases that converged
+     * @param message diagnostic message describing the outcome
+     */
+    public TrayOptimizationResult(boolean feasible, int numberOfTrays, int feedTrayNumber,
+        String componentName, boolean topProduct, double targetPurity, double productPurity,
+        double reboilerDuty, double condenserDuty, double totalAbsoluteDuty, int iterationCount,
+        double temperatureResidual, double massResidual, double energyResidual, int evaluatedCases,
+        int convergedCases, String message) {
+      this.feasible = feasible;
+      this.numberOfTrays = numberOfTrays;
+      this.feedTrayNumber = feedTrayNumber;
+      this.componentName = componentName;
+      this.topProduct = topProduct;
+      this.targetPurity = targetPurity;
+      this.productPurity = productPurity;
+      this.reboilerDuty = reboilerDuty;
+      this.condenserDuty = condenserDuty;
+      this.totalAbsoluteDuty = totalAbsoluteDuty;
+      this.iterationCount = iterationCount;
+      this.temperatureResidual = temperatureResidual;
+      this.massResidual = massResidual;
+      this.energyResidual = energyResidual;
+      this.evaluatedCases = evaluatedCases;
+      this.convergedCases = convergedCases;
+      this.message = message;
+    }
+
+    /**
+     * Check whether the optimization found a feasible candidate.
+     *
+     * @return {@code true} if the product specification was met by a converged candidate
+     */
+    public boolean isFeasible() {
+      return feasible;
+    }
+
+    /**
+     * Get the selected total number of trays.
+     *
+     * @return total tray count including reboiler and condenser if present, or {@code -1}
+     */
+    public int getNumberOfTrays() {
+      return numberOfTrays;
+    }
+
+    /**
+     * Get the selected feed tray number.
+     *
+     * @return 0-based feed tray number, or {@code -1} if no feasible candidate was found
+     */
+    public int getFeedTrayNumber() {
+      return feedTrayNumber;
+    }
+
+    /**
+     * Get the component used for the product-purity specification.
+     *
+     * @return component name
+     */
+    public String getComponentName() {
+      return componentName;
+    }
+
+    /**
+     * Check whether the optimized specification applies to the top product.
+     *
+     * @return {@code true} for top product, {@code false} for bottom product
+     */
+    public boolean isTopProduct() {
+      return topProduct;
+    }
+
+    /**
+     * Get the target product mole fraction.
+     *
+     * @return target purity as mole fraction
+     */
+    public double getTargetPurity() {
+      return targetPurity;
+    }
+
+    /**
+     * Get the achieved product mole fraction.
+     *
+     * @return achieved product purity as mole fraction, or {@link Double#NaN}
+     */
+    public double getProductPurity() {
+      return productPurity;
+    }
+
+    /**
+     * Get the final reboiler duty.
+     *
+     * @return reboiler duty in W, or {@code 0.0} when no reboiler is present
+     */
+    public double getReboilerDuty() {
+      return reboilerDuty;
+    }
+
+    /**
+     * Get the final condenser duty.
+     *
+     * @return condenser duty in W, or {@code 0.0} when no condenser is present
+     */
+    public double getCondenserDuty() {
+      return condenserDuty;
+    }
+
+    /**
+     * Get the objective duty used to compare candidates with the same tray count.
+     *
+     * @return sum of absolute condenser and reboiler duties in W
+     */
+    public double getTotalAbsoluteDuty() {
+      return totalAbsoluteDuty;
+    }
+
+    /**
+     * Get the final solver iteration count.
+     *
+     * @return iteration count for the final candidate
+     */
+    public int getIterationCount() {
+      return iterationCount;
+    }
+
+    /**
+     * Get the final temperature residual.
+     *
+     * @return temperature residual in K
+     */
+    public double getTemperatureResidual() {
+      return temperatureResidual;
+    }
+
+    /**
+     * Get the final mass residual.
+     *
+     * @return relative mass residual
+     */
+    public double getMassResidual() {
+      return massResidual;
+    }
+
+    /**
+     * Get the final energy residual.
+     *
+     * @return relative energy residual
+     */
+    public double getEnergyResidual() {
+      return energyResidual;
+    }
+
+    /**
+     * Get the number of evaluated candidate cases.
+     *
+     * @return evaluated tray-count/feed-tray combinations
+     */
+    public int getEvaluatedCases() {
+      return evaluatedCases;
+    }
+
+    /**
+     * Get the number of converged candidate cases.
+     *
+     * @return converged tray-count/feed-tray combinations
+     */
+    public int getConvergedCases() {
+      return convergedCases;
+    }
+
+    /**
+     * Get the optimization diagnostic message.
+     *
+     * @return diagnostic message
+     */
+    public String getMessage() {
+      return message;
+    }
+  }
+
+  /**
+   * Result from an economic tray-count, feed-tray, and optional reflux/boilup search.
+   *
+   * <p>
+   * The result extends the rigorous tray optimization result with mechanical design, installed
+   * capital cost, annual utility cost, and annualized total-cost metrics. Costs are screening-level
+   * estimates using the column mechanical design and column cost-estimation correlations.
+   * </p>
+   *
+   * @author esol
+   * @version 1.0
+   */
+  public static class EconomicTrayOptimizationResult extends TrayOptimizationResult {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000;
+
+    private final double capitalCost;
+    private final double annualUtilityCost;
+    private final double annualizedCapitalCost;
+    private final double totalAnnualizedCost;
+    private final double capitalChargeFactor;
+    private final double operatingHoursPerYear;
+    private final double steamCostPerTonne;
+    private final double coolingWaterCostPerM3;
+    private final double trayEfficiency;
+    private final int actualTrays;
+    private final double columnDiameter;
+    private final double columnHeight;
+    private final double condenserRefluxRatio;
+    private final double reboilerRatio;
+
+    /**
+     * Create an economic tray optimization result from a rigorous tray result.
+     *
+     * @param baseResult rigorous tray optimization result used as the process-design basis
+     * @param capitalCost installed capital cost estimate in USD
+     * @param annualUtilityCost annual utility cost estimate in USD/year
+     * @param annualizedCapitalCost annualized capital cost in USD/year
+     * @param totalAnnualizedCost total annualized cost in USD/year
+     * @param capitalChargeFactor capital annualization factor in 1/year
+     * @param operatingHoursPerYear operating hours used for utility costing in hr/year
+     * @param steamCostPerTonne steam cost used for reboiler duty in USD/tonne
+     * @param coolingWaterCostPerM3 cooling-water cost used for condenser duty in USD/m3
+     * @param trayEfficiency overall tray efficiency used to convert theoretical to actual trays
+     * @param actualTrays actual tray count after tray-efficiency correction
+     * @param columnDiameter mechanically designed column diameter in m
+     * @param columnHeight mechanically designed tangent-to-tangent column height in m
+     * @param condenserRefluxRatio selected condenser reflux ratio, or {@link Double#NaN}
+     * @param reboilerRatio selected reboiler boilup/reflux ratio, or {@link Double#NaN}
+     */
+    public EconomicTrayOptimizationResult(TrayOptimizationResult baseResult, double capitalCost,
+        double annualUtilityCost, double annualizedCapitalCost, double totalAnnualizedCost,
+        double capitalChargeFactor, double operatingHoursPerYear, double steamCostPerTonne,
+        double coolingWaterCostPerM3, double trayEfficiency, int actualTrays,
+        double columnDiameter, double columnHeight, double condenserRefluxRatio,
+        double reboilerRatio) {
+      super(baseResult.isFeasible(), baseResult.getNumberOfTrays(), baseResult.getFeedTrayNumber(),
+          baseResult.getComponentName(), baseResult.isTopProduct(), baseResult.getTargetPurity(),
+          baseResult.getProductPurity(), baseResult.getReboilerDuty(),
+          baseResult.getCondenserDuty(), baseResult.getTotalAbsoluteDuty(),
+          baseResult.getIterationCount(), baseResult.getTemperatureResidual(),
+          baseResult.getMassResidual(), baseResult.getEnergyResidual(),
+          baseResult.getEvaluatedCases(), baseResult.getConvergedCases(), baseResult.getMessage());
+      this.capitalCost = capitalCost;
+      this.annualUtilityCost = annualUtilityCost;
+      this.annualizedCapitalCost = annualizedCapitalCost;
+      this.totalAnnualizedCost = totalAnnualizedCost;
+      this.capitalChargeFactor = capitalChargeFactor;
+      this.operatingHoursPerYear = operatingHoursPerYear;
+      this.steamCostPerTonne = steamCostPerTonne;
+      this.coolingWaterCostPerM3 = coolingWaterCostPerM3;
+      this.trayEfficiency = trayEfficiency;
+      this.actualTrays = actualTrays;
+      this.columnDiameter = columnDiameter;
+      this.columnHeight = columnHeight;
+      this.condenserRefluxRatio = condenserRefluxRatio;
+      this.reboilerRatio = reboilerRatio;
+    }
+
+    /**
+     * Get the installed capital cost estimate.
+     *
+     * @return installed capital cost in USD
+     */
+    public double getCapitalCost() {
+      return capitalCost;
+    }
+
+    /**
+     * Get annual utility cost.
+     *
+     * @return annual utility cost in USD/year
+     */
+    public double getAnnualUtilityCost() {
+      return annualUtilityCost;
+    }
+
+    /**
+     * Get annualized capital cost.
+     *
+     * @return annualized capital cost in USD/year
+     */
+    public double getAnnualizedCapitalCost() {
+      return annualizedCapitalCost;
+    }
+
+    /**
+     * Get total annualized cost.
+     *
+     * @return annualized capital plus annual utility cost in USD/year
+     */
+    public double getTotalAnnualizedCost() {
+      return totalAnnualizedCost;
+    }
+
+    /**
+     * Get the capital charge factor.
+     *
+     * @return capital annualization factor in 1/year
+     */
+    public double getCapitalChargeFactor() {
+      return capitalChargeFactor;
+    }
+
+    /**
+     * Get the operating hours used for utility costing.
+     *
+     * @return operating hours per year
+     */
+    public double getOperatingHoursPerYear() {
+      return operatingHoursPerYear;
+    }
+
+    /**
+     * Get the steam cost assumption.
+     *
+     * @return steam cost in USD/tonne
+     */
+    public double getSteamCostPerTonne() {
+      return steamCostPerTonne;
+    }
+
+    /**
+     * Get the cooling-water cost assumption.
+     *
+     * @return cooling-water cost in USD/m3
+     */
+    public double getCoolingWaterCostPerM3() {
+      return coolingWaterCostPerM3;
+    }
+
+    /**
+     * Get the tray efficiency used for the mechanical design.
+     *
+     * @return overall tray efficiency
+     */
+    public double getTrayEfficiency() {
+      return trayEfficiency;
+    }
+
+    /**
+     * Get the actual tray count after applying tray efficiency.
+     *
+     * @return actual tray count
+     */
+    public int getActualTrays() {
+      return actualTrays;
+    }
+
+    /**
+     * Get the mechanically designed column diameter.
+     *
+     * @return column diameter in m
+     */
+    public double getColumnDiameter() {
+      return columnDiameter;
+    }
+
+    /**
+     * Get the mechanically designed column height.
+     *
+     * @return column height in m
+     */
+    public double getColumnHeight() {
+      return columnHeight;
+    }
+
+    /**
+     * Get the selected condenser reflux ratio.
+     *
+     * @return selected reflux ratio, or {@link Double#NaN} if not set by the optimization
+     */
+    public double getCondenserRefluxRatio() {
+      return condenserRefluxRatio;
+    }
+
+    /**
+     * Get the selected reboiler boilup/reflux ratio.
+     *
+     * @return selected reboiler ratio, or {@link Double#NaN} if not set by the optimization
+     */
+    public double getReboilerRatio() {
+      return reboilerRatio;
+    }
+  }
+
+  /**
+   * Economic metrics calculated for one distillation-column candidate.
+   *
+   * @author esol
+   * @version 1.0
+   */
+  private static class EconomicTrayOptimizationMetrics implements java.io.Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000;
+
+    private double capitalCost;
+    private double annualUtilityCost;
+    private double annualizedCapitalCost;
+    private double totalAnnualizedCost;
+    private int actualTrays;
+    private double columnDiameter;
+    private double columnHeight;
+  }
+
+  /**
+   * Snapshot of column settings reused when rebuilding candidates during tray optimization.
+   *
+   * @author esol
+   * @version 1.0
+   */
+  private static class ColumnOptimizationState {
+    private boolean reboilerRefluxSet;
+    private double reboilerRefluxRatio = 0.1;
+    private boolean reboilerHasSetTemperature;
+    private double reboilerTemperature = Double.NaN;
+    private double reboilerHeatInput;
+    private boolean condenserRefluxSet;
+    private double condenserRefluxRatio = 0.1;
+    private boolean condenserHasSetTemperature;
+    private double condenserTemperature = Double.NaN;
+    private double condenserHeatInput;
+    private boolean totalCondenser;
+
+    /**
+     * Create a copy of the optimization state.
+     *
+     * @return independent copy with the same settings
+     */
+    private ColumnOptimizationState copy() {
+      ColumnOptimizationState copy = new ColumnOptimizationState();
+      copy.reboilerRefluxSet = reboilerRefluxSet;
+      copy.reboilerRefluxRatio = reboilerRefluxRatio;
+      copy.reboilerHasSetTemperature = reboilerHasSetTemperature;
+      copy.reboilerTemperature = reboilerTemperature;
+      copy.reboilerHeatInput = reboilerHeatInput;
+      copy.condenserRefluxSet = condenserRefluxSet;
+      copy.condenserRefluxRatio = condenserRefluxRatio;
+      copy.condenserHasSetTemperature = condenserHasSetTemperature;
+      copy.condenserTemperature = condenserTemperature;
+      copy.condenserHeatInput = condenserHeatInput;
+      copy.totalCondenser = totalCondenser;
+      return copy;
+    }
+  }
+
+  /**
+   * Find the minimum tray count and best feed tray that meet a product specification.
+   *
+   * <p>
+   * The search evaluates total tray count and feed tray together. It returns the first total tray
+   * count that has a converged case meeting the requested purity, then selects the feed tray with
+   * the lowest absolute condenser-plus-reboiler duty for that tray count. The selected candidate is
+   * applied back to this column and the final solved state is left in the object.
+   * </p>
+   *
+   * @param productSpec the target purity (mole fraction) of the key component
+   * @param componentName the name of the key component
+   * @param isTopProduct true if the spec is for the top product, false for the bottom product
+   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
+   * @return structured optimization result with selected tray count, feed tray, duties and residuals
+   */
+  public TrayOptimizationResult findOptimalTrayConfiguration(double productSpec,
+      String componentName, boolean isTopProduct, int maxTrays) {
+    ColumnOptimizationState state = captureColumnOptimizationState();
+    List<StreamInterface> optimizationFeeds = collectOptimizationFeeds();
+    if (optimizationFeeds.isEmpty()) {
+      return createInfeasibleTrayOptimizationResult(productSpec, componentName, isTopProduct, 0, 0,
+          "No feed streams are connected to the column.");
+    }
+
+    int minimumTrayCount = getMinimumOptimizationTrayCount();
+    if (maxTrays < minimumTrayCount) {
+      return createInfeasibleTrayOptimizationResult(productSpec, componentName, isTopProduct, 0, 0,
+          "Maximum tray count is below the minimum searchable column size.");
+    }
+
+    int evaluatedCases = 0;
+    int convergedCases = 0;
+    for (int totalTrayCount = minimumTrayCount; totalTrayCount <= maxTrays; totalTrayCount++) {
+      TrayOptimizationResult bestForTrayCount = null;
+      rebuildColumnForOptimization(totalTrayCount, state);
+      int firstFeedTray = getFirstFeedTrayCandidate();
+      int lastFeedTray = getLastFeedTrayCandidate();
+
+      for (int feedTray = firstFeedTray; feedTray <= lastFeedTray; feedTray++) {
+        evaluatedCases++;
+        TrayOptimizationResult candidate = evaluateTrayOptimizationCandidate(totalTrayCount,
+            feedTray, productSpec, componentName, isTopProduct, optimizationFeeds, state);
+        if (solved()) {
+          convergedCases++;
+        }
+        if (candidate.isFeasible()
+            && isBetterTrayOptimizationCandidate(candidate, bestForTrayCount)) {
+          bestForTrayCount = candidate;
+        }
+      }
+
+      if (bestForTrayCount != null) {
+        return applyTrayOptimizationResult(bestForTrayCount, optimizationFeeds, state, productSpec,
+            componentName, isTopProduct, evaluatedCases, convergedCases);
+      }
+    }
+
+    return createInfeasibleTrayOptimizationResult(productSpec, componentName, isTopProduct,
+        evaluatedCases, convergedCases, "No converged tray/feed-tray candidate met the product spec.");
   }
 
   /**
@@ -944,159 +1744,831 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param productSpec the target purity (mole fraction) of the key component
    * @param componentName the name of the key component
    * @param isTopProduct true if the spec is for the top product (distillate), false for bottom
-   * @param maxTrays the maximum number of trays to try
+   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
    * @return the optimal number of trays, or -1 if the spec could not be met
    */
   public int findOptimalNumberOfTrays(double productSpec, String componentName,
       boolean isTopProduct, int maxTrays) {
-    // Capture existing specs
-    double reboilerReflux = 0.1;
-    boolean reboilerHasSetTemp = false;
-    double reboilerTemp = Double.NaN;
+    TrayOptimizationResult result = findOptimalTrayConfiguration(productSpec, componentName,
+        isTopProduct, maxTrays);
+    return result.isFeasible() ? result.getNumberOfTrays() : -1;
+  }
 
-    double condenserReflux = 0.1;
-    boolean condenserHasSetTemp = false;
-    double condenserTemp = Double.NaN;
+  /**
+   * Find the tray count and feed tray that minimize annualized column cost.
+   *
+   * <p>
+   * This method searches tray count and feed tray for all converged candidates that meet the
+   * product specification, then selects the candidate with the lowest annualized cost. The cost is
+   * calculated as annualized installed capital plus reboiler/condenser utility cost using the column
+   * mechanical design and cost-estimation correlations. Default assumptions are 15%/year capital
+   * charge factor, 8000 operating hours/year, 25 USD/tonne steam, and 0.03 USD/m3 cooling water.
+   * </p>
+   *
+   * @param productSpec the target purity (mole fraction) of the key component
+   * @param componentName the name of the key component
+   * @param isTopProduct true if the spec is for the top product, false for the bottom product
+   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
+   * @return economic optimization result with process, mechanical design, and cost metrics
+   */
+  public EconomicTrayOptimizationResult findEconomicOptimalTrayConfiguration(double productSpec,
+      String componentName, boolean isTopProduct, int maxTrays) {
+    return findEconomicOptimalTrayConfiguration(productSpec, componentName, isTopProduct, maxTrays,
+        0.15, 8000.0, 25.0, 0.03, getCurrentMechanicalDesignTrayEfficiency());
+  }
 
+  /**
+   * Find the annualized-cost optimum for tray count and feed tray using supplied economics.
+   *
+   * @param productSpec the target purity (mole fraction) of the key component
+   * @param componentName the name of the key component
+   * @param isTopProduct true if the spec is for the top product, false for the bottom product
+   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
+   * @param capitalChargeFactor annual capital charge factor in 1/year
+   * @param operatingHoursPerYear operating hours per year for utility costing
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
+   * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
+   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
+   * @return economic optimization result with process, mechanical design, and cost metrics
+   */
+  public EconomicTrayOptimizationResult findEconomicOptimalTrayConfiguration(double productSpec,
+      String componentName, boolean isTopProduct, int maxTrays, double capitalChargeFactor,
+      double operatingHoursPerYear, double steamCostPerTonne, double coolingWaterCostPerM3,
+      double trayEfficiency) {
+    return findEconomicOptimalTrayConfiguration(productSpec, componentName, isTopProduct, maxTrays,
+        null, null, capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne,
+        coolingWaterCostPerM3, trayEfficiency);
+  }
+
+  /**
+   * Find the annualized-cost optimum for tray count, feed tray, and optional ratio candidates.
+   *
+   * <p>
+   * If reflux or reboiler ratio candidate arrays are supplied, each positive finite ratio is tried
+   * for every tray-count/feed-tray case. If an array is {@code null} or empty, the current column
+   * specification is preserved for that end of the column.
+   * </p>
+   *
+   * @param productSpec the target purity (mole fraction) of the key component
+   * @param componentName the name of the key component
+   * @param isTopProduct true if the spec is for the top product, false for the bottom product
+   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
+   * @param condenserRefluxRatios optional condenser reflux-ratio candidates to evaluate
+   * @param reboilerRatios optional reboiler boilup/reflux-ratio candidates to evaluate
+   * @param capitalChargeFactor annual capital charge factor in 1/year
+   * @param operatingHoursPerYear operating hours per year for utility costing
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
+   * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
+   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
+   * @return economic optimization result with process, mechanical design, and cost metrics
+   */
+  public EconomicTrayOptimizationResult findEconomicOptimalTrayConfiguration(double productSpec,
+      String componentName, boolean isTopProduct, int maxTrays, double[] condenserRefluxRatios,
+      double[] reboilerRatios, double capitalChargeFactor, double operatingHoursPerYear,
+      double steamCostPerTonne, double coolingWaterCostPerM3, double trayEfficiency) {
+    ColumnOptimizationState state = captureColumnOptimizationState();
+    List<StreamInterface> optimizationFeeds = collectOptimizationFeeds();
+    if (optimizationFeeds.isEmpty()) {
+      return createInfeasibleEconomicTrayOptimizationResult(productSpec, componentName,
+          isTopProduct, 0, 0, capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne,
+          coolingWaterCostPerM3, trayEfficiency, "No feed streams are connected to the column.");
+    }
+
+    int minimumTrayCount = getMinimumOptimizationTrayCount();
+    if (maxTrays < minimumTrayCount) {
+      return createInfeasibleEconomicTrayOptimizationResult(productSpec, componentName,
+          isTopProduct, 0, 0, capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne,
+          coolingWaterCostPerM3, trayEfficiency,
+          "Maximum tray count is below the minimum searchable column size.");
+    }
+
+    double[] refluxCandidates = getEconomicRatioCandidates(condenserRefluxRatios);
+    double[] reboilerCandidates = getEconomicRatioCandidates(reboilerRatios);
+    int evaluatedCases = 0;
+    int convergedCases = 0;
+    EconomicTrayOptimizationResult bestCandidate = null;
+
+    for (int totalTrayCount = minimumTrayCount; totalTrayCount <= maxTrays; totalTrayCount++) {
+      rebuildColumnForOptimization(totalTrayCount, state);
+      int firstFeedTray = getFirstFeedTrayCandidate();
+      int lastFeedTray = getLastFeedTrayCandidate();
+
+      for (int feedTray = firstFeedTray; feedTray <= lastFeedTray; feedTray++) {
+        for (int refluxIndex = 0; refluxIndex < refluxCandidates.length; refluxIndex++) {
+          for (int reboilerIndex = 0; reboilerIndex < reboilerCandidates.length;
+              reboilerIndex++) {
+            evaluatedCases++;
+            EconomicTrayOptimizationResult candidate = evaluateEconomicTrayOptimizationCandidate(
+                totalTrayCount, feedTray, productSpec, componentName, isTopProduct,
+                optimizationFeeds, state, refluxCandidates[refluxIndex],
+                reboilerCandidates[reboilerIndex], capitalChargeFactor, operatingHoursPerYear,
+                steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency);
+            if (solved()) {
+              convergedCases++;
+            }
+            if (candidate.isFeasible()
+                && isBetterEconomicTrayOptimizationCandidate(candidate, bestCandidate)) {
+              bestCandidate = candidate;
+            }
+          }
+        }
+      }
+    }
+
+    if (bestCandidate != null) {
+      return applyEconomicTrayOptimizationResult(bestCandidate, optimizationFeeds, state,
+          productSpec, componentName, isTopProduct, evaluatedCases, convergedCases,
+          capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3,
+          trayEfficiency);
+    }
+
+    return createInfeasibleEconomicTrayOptimizationResult(productSpec, componentName,
+        isTopProduct, evaluatedCases, convergedCases, capitalChargeFactor, operatingHoursPerYear,
+        steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
+        "No converged economic tray/feed-tray candidate met the product spec.");
+  }
+
+  /**
+   * Capture the current column settings needed to rebuild optimization candidates.
+   *
+   * @return column settings snapshot
+   */
+  private ColumnOptimizationState captureColumnOptimizationState() {
+    ColumnOptimizationState state = new ColumnOptimizationState();
     if (hasReboiler && getReboiler() != null) {
-      reboilerReflux = getReboiler().getRefluxRatio();
-      reboilerHasSetTemp = getReboiler().isSetOutTemperature();
-      if (reboilerHasSetTemp) {
-        reboilerTemp = getReboiler().getOutTemperature();
+      Reboiler reboiler = getReboiler();
+      state.reboilerRefluxSet = reboiler.refluxIsSet;
+      state.reboilerRefluxRatio = reboiler.getRefluxRatio();
+      state.reboilerHasSetTemperature = reboiler.isSetOutTemperature();
+      if (state.reboilerHasSetTemperature) {
+        state.reboilerTemperature = reboiler.getOutTemperature();
       }
+      state.reboilerHeatInput = reboiler.heatInput;
     }
-
     if (hasCondenser && getCondenser() != null) {
-      condenserReflux = getCondenser().getRefluxRatio();
-      condenserHasSetTemp = getCondenser().isSetOutTemperature();
-      if (condenserHasSetTemp) {
-        condenserTemp = getCondenser().getOutTemperature();
+      Condenser condenser = getCondenser();
+      state.condenserRefluxSet = condenser.refluxIsSet;
+      state.condenserRefluxRatio = condenser.getRefluxRatio();
+      state.condenserHasSetTemperature = condenser.isSetOutTemperature();
+      if (state.condenserHasSetTemperature) {
+        state.condenserTemperature = condenser.getOutTemperature();
       }
+      state.condenserHeatInput = condenser.heatInput;
+      state.totalCondenser = condenser.totalCondenser;
     }
+    return state;
+  }
 
-    // Collect all feeds (assigned and unassigned)
-    List<StreamInterface> allFeeds = new ArrayList<>(unassignedFeedStreams);
+  /**
+   * Collect all feeds already assigned or queued for automatic placement.
+   *
+   * @return list of feed streams used in the optimization search
+   */
+  private List<StreamInterface> collectOptimizationFeeds() {
+    List<StreamInterface> optimizationFeeds = new ArrayList<>(unassignedFeedStreams);
     for (List<StreamInterface> feeds : feedStreams.values()) {
-      allFeeds.addAll(feeds);
+      optimizationFeeds.addAll(feeds);
     }
+    return optimizationFeeds;
+  }
 
-    // Start searching from a low number of trays to find the minimum (optimal)
-    int startN = 2;
+  /**
+   * Get the minimum total tray count used by the rigorous tray search.
+   *
+   * @return minimum total tray count including reboiler/condenser if present
+   */
+  private int getMinimumOptimizationTrayCount() {
+    int minimumTrayCount = 2;
     if (hasReboiler) {
-      startN++;
+      minimumTrayCount++;
     }
     if (hasCondenser) {
-      startN++;
+      minimumTrayCount++;
+    }
+    return minimumTrayCount;
+  }
+
+  /**
+   * Evaluate one tray-count/feed-tray candidate.
+   *
+   * @param totalTrayCount total tray count for the candidate
+   * @param feedTray 0-based feed tray used for all optimization feeds
+   * @param productSpec target product mole fraction
+   * @param componentName component used in the purity specification
+   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
+   * @param optimizationFeeds feed streams to connect to the candidate
+   * @param state captured column settings to apply during rebuild
+   * @return candidate result, feasible only when the column converged and met the purity spec
+   */
+  private TrayOptimizationResult evaluateTrayOptimizationCandidate(int totalTrayCount, int feedTray,
+      double productSpec, String componentName, boolean isTopProduct,
+      List<StreamInterface> optimizationFeeds, ColumnOptimizationState state) {
+    rebuildColumnForOptimization(totalTrayCount, state);
+    addOptimizationFeedsToTray(optimizationFeeds, feedTray);
+    try {
+      run();
+    } catch (Exception exception) {
+      logger.debug("Tray optimization candidate failed for trays={}, feedTray={}", totalTrayCount,
+          feedTray, exception);
+      return createTrayOptimizationResult(false, totalTrayCount, feedTray, productSpec,
+          componentName, isTopProduct, Double.NaN, 0, 0, "Candidate run failed.");
     }
 
-    // Ensure we don't exceed maxTrays immediately
-    if (startN > maxTrays) {
-      startN = maxTrays;
+    if (!solved()) {
+      return createTrayOptimizationResult(false, totalTrayCount, feedTray, productSpec,
+          componentName, isTopProduct, Double.NaN, 0, 0, "Candidate did not converge.");
     }
 
-    for (int n = startN; n <= maxTrays; n++) {
-      // Re-initialize column with n trays
-      // We can't easily "reset" the object, so we have to clear trays and rebuild.
-      // This mimics the constructor logic.
-      trays.clear();
-      distoperations = new neqsim.process.processmodel.ProcessSystem();
-      feedStreams.clear();
-      unassignedFeedStreams.clear();
-      unassignedFeedStreams.addAll(allFeeds); // All feeds become unassigned
+    double productPurity = getProductComponentMoleFraction(componentName, isTopProduct);
+    boolean feasible = productPurity >= productSpec;
+    return createTrayOptimizationResult(feasible, totalTrayCount, feedTray, productSpec,
+        componentName, isTopProduct, productPurity, 0, 0,
+        feasible ? "Candidate met product specification." : "Candidate purity below target.");
+  }
 
-      this.numberOfTrays = n;
-      int trayCount = 0;
+  /**
+   * Evaluate one annualized-cost optimization candidate.
+   *
+   * @param totalTrayCount total tray count for the candidate
+   * @param feedTray 0-based feed tray used for all optimization feeds
+   * @param productSpec target product mole fraction
+   * @param componentName component used in the purity specification
+   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
+   * @param optimizationFeeds feed streams to connect to the candidate
+   * @param baseState captured column settings to apply during rebuild
+   * @param condenserRefluxRatio condenser reflux-ratio candidate, or {@link Double#NaN}
+   * @param reboilerRatio reboiler boilup/reflux-ratio candidate, or {@link Double#NaN}
+   * @param capitalChargeFactor annual capital charge factor in 1/year
+   * @param operatingHoursPerYear operating hours per year for utility costing
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
+   * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
+   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
+   * @return economic candidate result, feasible only when converged and meeting the purity spec
+   */
+  private EconomicTrayOptimizationResult evaluateEconomicTrayOptimizationCandidate(
+      int totalTrayCount, int feedTray, double productSpec, String componentName,
+      boolean isTopProduct, List<StreamInterface> optimizationFeeds,
+      ColumnOptimizationState baseState, double condenserRefluxRatio, double reboilerRatio,
+      double capitalChargeFactor, double operatingHoursPerYear, double steamCostPerTonne,
+      double coolingWaterCostPerM3, double trayEfficiency) {
+    ColumnOptimizationState candidateState = baseState.copy();
+    applyEconomicRatioOverrides(candidateState, condenserRefluxRatio, reboilerRatio);
+    TrayOptimizationResult trayResult = evaluateTrayOptimizationCandidate(totalTrayCount, feedTray,
+        productSpec, componentName, isTopProduct, optimizationFeeds, candidateState);
+    if (!trayResult.isFeasible()) {
+      return createEconomicTrayOptimizationResult(trayResult,
+          createEmptyEconomicTrayOptimizationMetrics(), capitalChargeFactor, operatingHoursPerYear,
+          steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
+          getSelectedCondenserRatio(candidateState), getSelectedReboilerRatio(candidateState));
+    }
+    EconomicTrayOptimizationMetrics metrics = calculateEconomicTrayOptimizationMetrics(
+        capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3,
+        trayEfficiency);
+    return createEconomicTrayOptimizationResult(trayResult, metrics, capitalChargeFactor,
+        operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
+        getSelectedCondenserRatio(candidateState), getSelectedReboilerRatio(candidateState));
+  }
 
-      // Reset feedmixer to avoid accumulating feeds across iterations
-      feedmixer = new Mixer("temp mixer");
-      feedmixer.setMultiPhaseCheck(doMultiPhaseCheck);
-
-      if (hasReboiler) {
-        Reboiler reb = new Reboiler("Reboiler");
-        reb.setMultiPhaseCheck(doMultiPhaseCheck);
-        reb.setRefluxRatio(reboilerReflux);
-        if (reboilerHasSetTemp) {
-          reb.setOutTemperature(reboilerTemp);
-        }
-        trays.add(reb);
-        trayCount++;
-      }
-
-      // Middle trays
-      int simpleTrays = n - (hasReboiler ? 1 : 0) - (hasCondenser ? 1 : 0);
-      for (int i = 0; i < simpleTrays; i++) {
-        SimpleTray tray = createMiddleTray("SimpleTray" + (i + 1), i);
-        tray.setMultiPhaseCheck(doMultiPhaseCheck);
-        trays.add(tray);
-        trayCount++;
-      }
-
-      if (hasCondenser) {
-        Condenser cond = new Condenser("Condenser");
-        cond.setMultiPhaseCheck(doMultiPhaseCheck);
-        cond.setRefluxRatio(condenserReflux);
-        if (condenserHasSetTemp) {
-          cond.setOutTemperature(condenserTemp);
-        }
-        trays.add(cond);
-        trayCount++;
-      }
-
-      // Ensure numberOfTrays matches actual list size
-      this.numberOfTrays = trays.size();
-
-      for (int i = 0; i < this.numberOfTrays; i++) {
-        distoperations.add(trays.get(i));
-      }
-
-      // Set pressures immediately if known
-      if (topTrayPressure > 0 && bottomTrayPressure > 0) {
-        double dp = (bottomTrayPressure - topTrayPressure) / (numberOfTrays - 1.0);
-        for (int i = 0; i < numberOfTrays; i++) {
-          trays.get(i).setPressure(bottomTrayPressure - i * dp);
-        }
-      }
-
-      // Set temperatures if known to help feed assignment
-      if (reboilerHasSetTemp && condenserHasSetTemp) {
-        double dt = (condenserTemp - reboilerTemp) / (numberOfTrays - 1.0);
-        for (int i = 0; i < numberOfTrays; i++) {
-          trays.get(i).setTemperature(reboilerTemp + i * dt);
-        }
-      }
-
-      // Reset initialization flag
-      setDoInitializion(true);
-
-      // Run the column
-      try {
-        run();
-      } catch (Exception e) {
-        // If run fails (e.g. convergence error), we might want to continue or log
-        // For now, let's assume it might fail for small N and continue
-        // System.out.println("Run failed for N=" + n + ": " + e.getMessage());
-      }
-
-      if (!solved()) {
-        continue;
-      }
-
-      // Check spec
-      double purity;
-      if (isTopProduct) {
-        purity = gasOutStream.getFluid().getComponent(componentName).getz();
-      } else {
-        purity = liquidOutStream.getFluid().getComponent(componentName).getz();
-      }
-
-      // System.out.println("Trays: " + n + " Purity: " + purity);
-
-      if (purity >= productSpec) {
-        return n;
-      }
+  /**
+   * Apply selected annualized-cost result to the live column and return final diagnostics.
+   *
+   * @param selectedResult selected economic candidate from the search
+   * @param optimizationFeeds feed streams to connect to the selected tray
+   * @param state captured column settings to apply during rebuild
+   * @param productSpec target product mole fraction
+   * @param componentName component used in the purity specification
+   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
+   * @param evaluatedCases number of evaluated candidate cases
+   * @param convergedCases number of converged candidate cases
+   * @param capitalChargeFactor annual capital charge factor in 1/year
+   * @param operatingHoursPerYear operating hours per year for utility costing
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
+   * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
+   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
+   * @return final economic optimization result from the applied selected candidate
+   */
+  private EconomicTrayOptimizationResult applyEconomicTrayOptimizationResult(
+      EconomicTrayOptimizationResult selectedResult, List<StreamInterface> optimizationFeeds,
+      ColumnOptimizationState state, double productSpec, String componentName,
+      boolean isTopProduct, int evaluatedCases, int convergedCases, double capitalChargeFactor,
+      double operatingHoursPerYear, double steamCostPerTonne, double coolingWaterCostPerM3,
+      double trayEfficiency) {
+    ColumnOptimizationState selectedState = state.copy();
+    applyEconomicRatioOverrides(selectedState, selectedResult.getCondenserRefluxRatio(),
+        selectedResult.getReboilerRatio());
+    rebuildColumnForOptimization(selectedResult.getNumberOfTrays(), selectedState);
+    addOptimizationFeedsToTray(optimizationFeeds, selectedResult.getFeedTrayNumber());
+    try {
+      run();
+    } catch (Exception exception) {
+      logger.debug("Selected economic tray optimization candidate failed during final application.",
+          exception);
+      return createInfeasibleEconomicTrayOptimizationResult(productSpec, componentName,
+          isTopProduct, evaluatedCases, convergedCases, capitalChargeFactor, operatingHoursPerYear,
+          steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
+          "Selected economic candidate failed during final application.");
     }
 
-    return -1;
+    if (!solved()) {
+      return createInfeasibleEconomicTrayOptimizationResult(productSpec, componentName,
+          isTopProduct, evaluatedCases, convergedCases, capitalChargeFactor, operatingHoursPerYear,
+          steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
+          "Selected economic candidate did not converge when reapplied.");
+    }
+
+    double productPurity = getProductComponentMoleFraction(componentName, isTopProduct);
+    TrayOptimizationResult trayResult = createTrayOptimizationResult(productPurity >= productSpec,
+        selectedResult.getNumberOfTrays(), selectedResult.getFeedTrayNumber(), productSpec,
+        componentName, isTopProduct, productPurity, evaluatedCases, convergedCases,
+        "Selected annualized-cost optimum candidate.");
+    EconomicTrayOptimizationMetrics metrics = calculateEconomicTrayOptimizationMetrics(
+        capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3,
+        trayEfficiency);
+    return createEconomicTrayOptimizationResult(trayResult, metrics, capitalChargeFactor,
+        operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
+        selectedResult.getCondenserRefluxRatio(), selectedResult.getReboilerRatio());
+  }
+
+  /**
+   * Apply optional reflux/boilup ratio overrides to an optimization state.
+   *
+   * @param state state to modify
+   * @param condenserRefluxRatio condenser reflux-ratio candidate, or {@link Double#NaN}
+   * @param reboilerRatio reboiler boilup/reflux-ratio candidate, or {@link Double#NaN}
+   */
+  private void applyEconomicRatioOverrides(ColumnOptimizationState state,
+      double condenserRefluxRatio, double reboilerRatio) {
+    if (hasCondenser && isPositiveFinite(condenserRefluxRatio)) {
+      state.condenserRefluxSet = true;
+      state.condenserRefluxRatio = condenserRefluxRatio;
+    }
+    if (hasReboiler && isPositiveFinite(reboilerRatio)) {
+      state.reboilerRefluxSet = true;
+      state.reboilerRefluxRatio = reboilerRatio;
+    }
+  }
+
+  /**
+   * Get sanitized economic ratio candidates.
+   *
+   * @param ratios candidate ratios supplied by the caller
+   * @return positive finite ratios, or one {@link Double#NaN} entry to preserve current settings
+   */
+  private double[] getEconomicRatioCandidates(double[] ratios) {
+    if (ratios == null || ratios.length == 0) {
+      return new double[] {Double.NaN};
+    }
+    double[] sanitized = new double[ratios.length];
+    int count = 0;
+    for (int ratioIndex = 0; ratioIndex < ratios.length; ratioIndex++) {
+      if (isPositiveFinite(ratios[ratioIndex])) {
+        sanitized[count] = ratios[ratioIndex];
+        count++;
+      }
+    }
+    if (count == 0) {
+      return new double[] {Double.NaN};
+    }
+    double[] result = new double[count];
+    System.arraycopy(sanitized, 0, result, 0, count);
+    return result;
+  }
+
+  /**
+   * Check whether a value is finite and positive.
+   *
+   * @param value value to check
+   * @return {@code true} when the value is finite and greater than zero
+   */
+  private boolean isPositiveFinite(double value) {
+    return !Double.isNaN(value) && !Double.isInfinite(value) && value > 0.0;
+  }
+
+  /**
+   * Calculate mechanical design and cost metrics for the current solved candidate.
+   *
+   * @param capitalChargeFactor annual capital charge factor in 1/year
+   * @param operatingHoursPerYear operating hours per year for utility costing
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
+   * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
+   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
+   * @return populated economic metrics for the current column state
+   */
+  private EconomicTrayOptimizationMetrics calculateEconomicTrayOptimizationMetrics(
+      double capitalChargeFactor, double operatingHoursPerYear, double steamCostPerTonne,
+      double coolingWaterCostPerM3, double trayEfficiency) {
+    EconomicTrayOptimizationMetrics metrics = new EconomicTrayOptimizationMetrics();
+    DistillationColumnMechanicalDesign design = new DistillationColumnMechanicalDesign(this);
+    design.setTrayEfficiency(trayEfficiency);
+    double designPressure = getEconomicDesignPressure();
+    if (isPositiveFinite(designPressure)) {
+      design.setMaxOperationPressure(designPressure);
+    }
+    design.calcDesign();
+    design.calculateWeights();
+
+    ColumnCostEstimate costEstimate = new ColumnCostEstimate(design);
+    costEstimate.setColumnType("trayed");
+    costEstimate.setTrayType(design.getTrayType());
+    costEstimate.setColumnDiameter(design.getColumnDiameter());
+    costEstimate.setColumnHeight(design.getColumnHeight());
+    costEstimate.setNumberOfTrays(design.getActualTrays());
+    costEstimate.setDesignPressure(design.getMaxDesignPressure());
+    costEstimate.setIncludeReboiler(hasReboiler);
+    costEstimate.setIncludeCondenser(hasCondenser);
+    costEstimate.setReboilerDuty(Math.abs(design.getReboilerDuty()));
+    costEstimate.setCondenserDuty(Math.abs(design.getCondenserDuty()));
+    costEstimate.calculateCostEstimate();
+
+    metrics.capitalCost = costEstimate.getTotalModuleCost();
+    if (!isPositiveFinite(metrics.capitalCost)) {
+      metrics.capitalCost = design.calculateTotalSystemCost();
+    }
+    metrics.annualUtilityCost = costEstimate.calcAnnualUtilityCost(operatingHoursPerYear,
+        steamCostPerTonne, coolingWaterCostPerM3);
+    metrics.annualizedCapitalCost = metrics.capitalCost * capitalChargeFactor;
+    metrics.totalAnnualizedCost = metrics.annualizedCapitalCost + metrics.annualUtilityCost;
+    metrics.actualTrays = design.getActualTrays();
+    metrics.columnDiameter = design.getColumnDiameter();
+    metrics.columnHeight = design.getColumnHeight();
+    return metrics;
+  }
+
+  /**
+   * Create empty economic metrics for infeasible candidates.
+   *
+   * @return economic metrics with not-a-number cost and design fields
+   */
+  private EconomicTrayOptimizationMetrics createEmptyEconomicTrayOptimizationMetrics() {
+    EconomicTrayOptimizationMetrics metrics = new EconomicTrayOptimizationMetrics();
+    metrics.capitalCost = Double.NaN;
+    metrics.annualUtilityCost = Double.NaN;
+    metrics.annualizedCapitalCost = Double.NaN;
+    metrics.totalAnnualizedCost = Double.NaN;
+    metrics.actualTrays = -1;
+    metrics.columnDiameter = Double.NaN;
+    metrics.columnHeight = Double.NaN;
+    return metrics;
+  }
+
+  /**
+   * Create an economic optimization result.
+   *
+   * @param trayResult rigorous tray optimization result
+   * @param metrics economic metrics from the current candidate
+   * @param capitalChargeFactor annual capital charge factor in 1/year
+   * @param operatingHoursPerYear operating hours per year for utility costing
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
+   * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
+   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
+   * @param condenserRefluxRatio selected condenser reflux ratio, or {@link Double#NaN}
+   * @param reboilerRatio selected reboiler boilup/reflux ratio, or {@link Double#NaN}
+   * @return economic optimization result
+   */
+  private EconomicTrayOptimizationResult createEconomicTrayOptimizationResult(
+      TrayOptimizationResult trayResult, EconomicTrayOptimizationMetrics metrics,
+      double capitalChargeFactor, double operatingHoursPerYear, double steamCostPerTonne,
+      double coolingWaterCostPerM3, double trayEfficiency, double condenserRefluxRatio,
+      double reboilerRatio) {
+    return new EconomicTrayOptimizationResult(trayResult, metrics.capitalCost,
+        metrics.annualUtilityCost, metrics.annualizedCapitalCost, metrics.totalAnnualizedCost,
+        capitalChargeFactor, operatingHoursPerYear, steamCostPerTonne, coolingWaterCostPerM3,
+        trayEfficiency, metrics.actualTrays, metrics.columnDiameter, metrics.columnHeight,
+        condenserRefluxRatio, reboilerRatio);
+  }
+
+  /**
+   * Create an infeasible economic optimization result.
+   *
+   * @param productSpec target product mole fraction
+   * @param componentName component used in the purity specification
+   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
+   * @param evaluatedCases number of evaluated candidate cases
+   * @param convergedCases number of converged candidate cases
+   * @param capitalChargeFactor annual capital charge factor in 1/year
+   * @param operatingHoursPerYear operating hours per year for utility costing
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
+   * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
+   * @param trayEfficiency overall tray efficiency used for actual tray count and column height
+   * @param message diagnostic message
+   * @return infeasible economic optimization result
+   */
+  private EconomicTrayOptimizationResult createInfeasibleEconomicTrayOptimizationResult(
+      double productSpec, String componentName, boolean isTopProduct, int evaluatedCases,
+      int convergedCases, double capitalChargeFactor, double operatingHoursPerYear,
+      double steamCostPerTonne, double coolingWaterCostPerM3, double trayEfficiency,
+      String message) {
+    TrayOptimizationResult trayResult = createInfeasibleTrayOptimizationResult(productSpec,
+        componentName, isTopProduct, evaluatedCases, convergedCases, message);
+    return createEconomicTrayOptimizationResult(trayResult,
+        createEmptyEconomicTrayOptimizationMetrics(), capitalChargeFactor, operatingHoursPerYear,
+        steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency, Double.NaN, Double.NaN);
+  }
+
+  /**
+   * Compare two economic candidates.
+   *
+   * @param candidate candidate result to evaluate
+   * @param currentBest current best result, or {@code null}
+   * @return {@code true} if the candidate has a lower annualized cost or better tie-breaker
+   */
+  private boolean isBetterEconomicTrayOptimizationCandidate(
+      EconomicTrayOptimizationResult candidate, EconomicTrayOptimizationResult currentBest) {
+    if (currentBest == null) {
+      return true;
+    }
+    double costDifference = candidate.getTotalAnnualizedCost()
+        - currentBest.getTotalAnnualizedCost();
+    if (Math.abs(costDifference) > 1.0e-6) {
+      return costDifference < 0.0;
+    }
+    if (candidate.getNumberOfTrays() != currentBest.getNumberOfTrays()) {
+      return candidate.getNumberOfTrays() < currentBest.getNumberOfTrays();
+    }
+    return isBetterTrayOptimizationCandidate(candidate, currentBest);
+  }
+
+  /**
+   * Get the tray efficiency currently configured on the mechanical design.
+   *
+   * @return tray efficiency from the column mechanical design, or the default value
+   */
+  private double getCurrentMechanicalDesignTrayEfficiency() {
+    if (mechanicalDesign instanceof DistillationColumnMechanicalDesign) {
+      return ((DistillationColumnMechanicalDesign) mechanicalDesign).getTrayEfficiency();
+    }
+    return 0.65;
+  }
+
+  /**
+   * Estimate the pressure basis for economic mechanical design.
+   *
+   * @return maximum configured tray endpoint pressure in bara, or {@link Double#NaN}
+   */
+  private double getEconomicDesignPressure() {
+    if (isPositiveFinite(topTrayPressure) && isPositiveFinite(bottomTrayPressure)) {
+      return Math.max(topTrayPressure, bottomTrayPressure);
+    }
+    if (isPositiveFinite(bottomTrayPressure)) {
+      return bottomTrayPressure;
+    }
+    if (isPositiveFinite(topTrayPressure)) {
+      return topTrayPressure;
+    }
+    return Double.NaN;
+  }
+
+  /**
+   * Get the reflux ratio recorded as selected by an economic candidate.
+   *
+   * @param state optimization state to inspect
+   * @return selected condenser reflux ratio, or {@link Double#NaN} if no ratio is set
+   */
+  private double getSelectedCondenserRatio(ColumnOptimizationState state) {
+    return state.condenserRefluxSet ? state.condenserRefluxRatio : Double.NaN;
+  }
+
+  /**
+   * Get the reboiler ratio recorded as selected by an economic candidate.
+   *
+   * @param state optimization state to inspect
+   * @return selected reboiler boilup/reflux ratio, or {@link Double#NaN} if no ratio is set
+   */
+  private double getSelectedReboilerRatio(ColumnOptimizationState state) {
+    return state.reboilerRefluxSet ? state.reboilerRefluxRatio : Double.NaN;
+  }
+
+  /**
+   * Apply the selected candidate to the live column and return final diagnostics.
+   *
+   * @param selectedResult selected candidate from the search
+   * @param optimizationFeeds feed streams to connect to the selected tray
+   * @param state captured column settings to apply during rebuild
+   * @param productSpec target product mole fraction
+   * @param componentName component used in the purity specification
+   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
+   * @param evaluatedCases number of evaluated candidate cases
+   * @param convergedCases number of converged candidate cases
+   * @return final optimization result from the applied selected candidate
+   */
+  private TrayOptimizationResult applyTrayOptimizationResult(TrayOptimizationResult selectedResult,
+      List<StreamInterface> optimizationFeeds, ColumnOptimizationState state, double productSpec,
+      String componentName, boolean isTopProduct, int evaluatedCases, int convergedCases) {
+    rebuildColumnForOptimization(selectedResult.getNumberOfTrays(), state);
+    addOptimizationFeedsToTray(optimizationFeeds, selectedResult.getFeedTrayNumber());
+    try {
+      run();
+    } catch (Exception exception) {
+      logger.debug("Selected tray optimization candidate failed during final application.",
+          exception);
+      return createInfeasibleTrayOptimizationResult(productSpec, componentName, isTopProduct,
+          evaluatedCases, convergedCases, "Selected candidate failed during final application.");
+    }
+
+    if (!solved()) {
+      return createInfeasibleTrayOptimizationResult(productSpec, componentName, isTopProduct,
+          evaluatedCases, convergedCases, "Selected candidate did not converge when reapplied.");
+    }
+
+    double productPurity = getProductComponentMoleFraction(componentName, isTopProduct);
+    return createTrayOptimizationResult(productPurity >= productSpec,
+        selectedResult.getNumberOfTrays(), selectedResult.getFeedTrayNumber(), productSpec,
+        componentName, isTopProduct, productPurity, evaluatedCases, convergedCases,
+        "Selected minimum-tray candidate with lowest duty for that tray count.");
+  }
+
+  /**
+   * Rebuild the column internals for an optimization candidate.
+   *
+   * @param totalTrayCount total tray count including reboiler/condenser if present
+   * @param state captured column settings to apply to the rebuilt trays
+   */
+  private void rebuildColumnForOptimization(int totalTrayCount, ColumnOptimizationState state) {
+    trays.clear();
+    distoperations = new neqsim.process.processmodel.ProcessSystem();
+    feedStreams.clear();
+    unassignedFeedStreams.clear();
+    feedmixer = new Mixer("temp mixer");
+    feedmixer.setMultiPhaseCheck(doMultiPhaseCheck);
+    hasBeenSolvedBefore = false;
+    lastTotalFeedFlow = -1.0;
+    lastMeshResidual = null;
+    err = 1.0e10;
+    resetLastSolveMetrics();
+
+    if (hasReboiler) {
+      Reboiler reboiler = new Reboiler("Reboiler");
+      reboiler.setMultiPhaseCheck(doMultiPhaseCheck);
+      reboiler.setHeatInput(state.reboilerHeatInput);
+      if (state.reboilerRefluxSet) {
+        reboiler.setRefluxRatio(state.reboilerRefluxRatio);
+      }
+      if (state.reboilerHasSetTemperature) {
+        reboiler.setOutTemperature(state.reboilerTemperature);
+      }
+      trays.add(reboiler);
+    }
+
+    int middleTrayCount = totalTrayCount - (hasReboiler ? 1 : 0) - (hasCondenser ? 1 : 0);
+    for (int trayIndex = 0; trayIndex < middleTrayCount; trayIndex++) {
+      SimpleTray tray = createMiddleTray("SimpleTray" + (trayIndex + 1), trayIndex);
+      tray.setMultiPhaseCheck(doMultiPhaseCheck);
+      trays.add(tray);
+    }
+
+    if (hasCondenser) {
+      Condenser condenser = new Condenser("Condenser");
+      condenser.setMultiPhaseCheck(doMultiPhaseCheck);
+      condenser.setHeatInput(state.condenserHeatInput);
+      condenser.setTotalCondenser(state.totalCondenser);
+      if (state.condenserRefluxSet) {
+        condenser.setRefluxRatio(state.condenserRefluxRatio);
+      }
+      if (state.condenserHasSetTemperature) {
+        condenser.setOutTemperature(state.condenserTemperature);
+      }
+      trays.add(condenser);
+    }
+
+    numberOfTrays = trays.size();
+    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
+      distoperations.add(trays.get(trayIndex));
+    }
+    applyOptimizationPressureProfile();
+    applyOptimizationTemperatureProfile(state);
+    setDoInitializion(true);
+  }
+
+  /**
+   * Add all optimization feeds to a candidate feed tray.
+   *
+   * @param optimizationFeeds feed streams to connect
+   * @param feedTray 0-based feed tray number
+   */
+  private void addOptimizationFeedsToTray(List<StreamInterface> optimizationFeeds, int feedTray) {
+    for (StreamInterface feed : optimizationFeeds) {
+      addFeedStream(feed, feedTray);
+    }
+  }
+
+  /**
+   * Apply the configured pressure profile to a rebuilt candidate column.
+   */
+  private void applyOptimizationPressureProfile() {
+    if (topTrayPressure <= 0 || bottomTrayPressure <= 0 || numberOfTrays == 0) {
+      return;
+    }
+    if (numberOfTrays == 1) {
+      trays.get(0).setPressure(bottomTrayPressure);
+      return;
+    }
+    double pressureStep = (bottomTrayPressure - topTrayPressure) / (numberOfTrays - 1.0);
+    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
+      trays.get(trayIndex).setPressure(bottomTrayPressure - trayIndex * pressureStep);
+    }
+  }
+
+  /**
+   * Apply a linear endpoint temperature profile when both endpoint temperatures are specified.
+   *
+   * @param state captured column settings to use for endpoint temperatures
+   */
+  private void applyOptimizationTemperatureProfile(ColumnOptimizationState state) {
+    if (!state.reboilerHasSetTemperature || !state.condenserHasSetTemperature
+        || numberOfTrays <= 1) {
+      return;
+    }
+    double temperatureStep =
+        (state.condenserTemperature - state.reboilerTemperature) / (numberOfTrays - 1.0);
+    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
+      trays.get(trayIndex).setTemperature(state.reboilerTemperature + trayIndex * temperatureStep);
+    }
+  }
+
+  /**
+   * Read product mole fraction for the component used in the optimization specification.
+   *
+   * @param componentName component name
+   * @param isTopProduct {@code true} to read top product, {@code false} to read bottom product
+   * @return component mole fraction in the requested product
+   */
+  private double getProductComponentMoleFraction(String componentName, boolean isTopProduct) {
+    if (isTopProduct) {
+      return gasOutStream.getFluid().getComponent(componentName).getz();
+    }
+    return liquidOutStream.getFluid().getComponent(componentName).getz();
+  }
+
+  /**
+   * Create an optimization result from the current column state.
+   *
+   * @param feasible {@code true} if the current candidate meets the target purity
+   * @param totalTrayCount total tray count for the candidate
+   * @param feedTray 0-based feed tray number used by the candidate
+   * @param productSpec target product mole fraction
+   * @param componentName component used in the purity specification
+   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
+   * @param productPurity achieved product mole fraction
+   * @param evaluatedCases number of evaluated candidate cases
+   * @param convergedCases number of converged candidate cases
+   * @param message diagnostic message
+   * @return optimization result populated from current duties and residuals
+   */
+  private TrayOptimizationResult createTrayOptimizationResult(boolean feasible, int totalTrayCount,
+      int feedTray, double productSpec, String componentName, boolean isTopProduct,
+      double productPurity, int evaluatedCases, int convergedCases, String message) {
+    double reboilerDuty = hasReboiler ? getReboiler().getDuty() : 0.0;
+    double condenserDuty = hasCondenser ? getCondenser().getDuty() : 0.0;
+    double totalAbsoluteDuty = Math.abs(reboilerDuty) + Math.abs(condenserDuty);
+    return new TrayOptimizationResult(feasible, feasible ? totalTrayCount : -1,
+        feasible ? feedTray : -1, componentName, isTopProduct, productSpec, productPurity,
+        reboilerDuty, condenserDuty, totalAbsoluteDuty, lastIterationCount,
+        lastTemperatureResidual, lastMassResidual, lastEnergyResidual, evaluatedCases,
+        convergedCases, message);
+  }
+
+  /**
+   * Create an infeasible tray optimization result.
+   *
+   * @param productSpec target product mole fraction
+   * @param componentName component used in the purity specification
+   * @param isTopProduct {@code true} for top product, {@code false} for bottom product
+   * @param evaluatedCases number of evaluated candidate cases
+   * @param convergedCases number of converged candidate cases
+   * @param message diagnostic message
+   * @return infeasible optimization result
+   */
+  private TrayOptimizationResult createInfeasibleTrayOptimizationResult(double productSpec,
+      String componentName, boolean isTopProduct, int evaluatedCases, int convergedCases,
+      String message) {
+    return new TrayOptimizationResult(false, -1, -1, componentName, isTopProduct, productSpec,
+        Double.NaN, 0.0, 0.0, 0.0, lastIterationCount, lastTemperatureResidual,
+        lastMassResidual, lastEnergyResidual, evaluatedCases, convergedCases, message);
+  }
+
+  /**
+   * Compare two feasible tray optimization candidates for the same tray count.
+   *
+   * @param candidate candidate result to evaluate
+   * @param currentBest current best result, or {@code null}
+   * @return {@code true} if the candidate is preferred
+   */
+  private boolean isBetterTrayOptimizationCandidate(TrayOptimizationResult candidate,
+      TrayOptimizationResult currentBest) {
+    if (currentBest == null) {
+      return true;
+    }
+    double dutyDifference = candidate.getTotalAbsoluteDuty() - currentBest.getTotalAbsoluteDuty();
+    if (Math.abs(dutyDifference) > 1.0e-6) {
+      return dutyDifference < 0.0;
+    }
+    if (Math.abs(candidate.getMassResidual() - currentBest.getMassResidual()) > 1.0e-9) {
+      return candidate.getMassResidual() < currentBest.getMassResidual();
+    }
+    if (Math.abs(candidate.getEnergyResidual() - currentBest.getEnergyResidual()) > 1.0e-9) {
+      return candidate.getEnergyResidual() < currentBest.getEnergyResidual();
+    }
+    return candidate.getProductPurity() > currentBest.getProductPurity();
   }
 
   /**
@@ -3435,6 +4907,147 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public double getLastSolveTimeSeconds() {
     return lastSolveTimeSeconds;
+  }
+
+  /**
+   * Build a human-readable convergence diagnostic report for the latest column solve.
+   *
+   * <p>
+   * The report is intended for notebooks, agents, and troubleshooting scripts that need to know
+   * which convergence gate failed and which common modelling choices should be checked first. It
+   * does not change the column state.
+   * </p>
+   *
+   * @return multi-line diagnostic report with residuals, feed-tray placement, and recommendations
+   */
+  public String getConvergenceDiagnostics() {
+    StringBuilder diagnostics = new StringBuilder();
+    boolean solved = solved();
+    diagnostics.append("DistillationColumn Diagnostics:\n");
+    diagnostics.append("  Name: ").append(getName()).append("\n");
+    diagnostics.append("  Solved: ").append(solved).append("\n");
+    diagnostics.append("  Solver: ").append(solverType).append("\n");
+    diagnostics.append("  Trays: ").append(numberOfTrays).append(" total, ")
+        .append(getEffectiveStageCount()).append(" equilibrium stages").append("\n");
+    diagnostics.append("  Iterations: ").append(lastIterationCount).append("\n");
+    diagnostics.append("  Solve time: ").append(lastSolveTimeSeconds).append(" s\n");
+    diagnostics.append("  Residuals:\n");
+    diagnostics.append("    temperature: ").append(lastTemperatureResidual).append(" K (tolerance ")
+        .append(getEffectiveTemperatureTolerance()).append(")\n");
+    diagnostics.append("    mass: ").append(lastMassResidual).append(" (tolerance ")
+        .append(getEffectiveMassBalanceTolerance()).append(")\n");
+    diagnostics.append("    energy: ").append(lastEnergyResidual).append(" (tolerance ")
+        .append(getEffectiveEnthalpyBalanceTolerance()).append(", enforced=")
+        .append(enforceEnergyBalanceTolerance).append(")\n");
+    diagnostics.append("    mesh infinity norm: ").append(getLastMeshResidualNorm())
+        .append(" (tolerance ").append(meshResidualTolerance).append(", enforced=")
+        .append(enforceMeshResidualTolerance).append(")\n");
+
+    diagnostics.append("  Feed trays:\n");
+    if (feedStreams.isEmpty()) {
+      diagnostics.append("    none\n");
+    } else {
+      List<Integer> feedTrayNumbers = new ArrayList<Integer>(feedStreams.keySet());
+      Collections.sort(feedTrayNumbers);
+      for (Integer feedTrayNumber : feedTrayNumbers) {
+        int stagesBelow = Math.max(0, feedTrayNumber.intValue());
+        int stagesAbove = Math.max(0, numberOfTrays - feedTrayNumber.intValue() - 1);
+        diagnostics.append("    tray ").append(feedTrayNumber).append(" with ")
+            .append(feedStreams.get(feedTrayNumber).size()).append(" feed(s), ").append(stagesAbove)
+            .append(" stages above, ").append(stagesBelow).append(" stages below");
+        if (isFeedTrayNearTop(feedTrayNumber.intValue())) {
+          diagnostics.append(" (near top/condenser)");
+        } else if (isFeedTrayNearBottom(feedTrayNumber.intValue())) {
+          diagnostics.append(" (near bottom/reboiler)");
+        }
+        diagnostics.append("\n");
+      }
+    }
+
+    diagnostics.append("  Recommendations:\n");
+    int recommendationCount = appendConvergenceRecommendations(diagnostics, solved);
+    if (recommendationCount == 0) {
+      diagnostics.append("    - No immediate convergence issue detected.\n");
+    }
+    return diagnostics.toString();
+  }
+
+  /**
+   * Append modelling and solver recommendations to a convergence diagnostic report.
+   *
+   * @param diagnostics report builder receiving recommendation lines
+   * @param solved whether the column currently satisfies its convergence gates
+   * @return number of recommendation lines appended
+   */
+  private int appendConvergenceRecommendations(StringBuilder diagnostics, boolean solved) {
+    int count = 0;
+    for (Integer feedTrayNumber : feedStreams.keySet()) {
+      if (isFeedTrayNearTop(feedTrayNumber.intValue())) {
+        diagnostics.append("    - Feed tray ").append(feedTrayNumber)
+            .append(" is close to the condenser. For debutanizer/depropanizer-style ")
+            .append("hydrocarbon splits, start near the middle of the column and move the feed ")
+            .append("only after the base case converges.\n");
+        count++;
+      } else if (isFeedTrayNearBottom(feedTrayNumber.intValue())) {
+        diagnostics.append("    - Feed tray ").append(feedTrayNumber)
+            .append(" is close to the reboiler. Check whether the feed should enter higher in ")
+            .append("the column or whether a side draw/flash should be represented explicitly.\n");
+        count++;
+      }
+    }
+    if (hasCondenser && getCondenser().getRefluxRatio() > 0.0
+        && getCondenser().getRefluxRatio() <= 0.2) {
+      diagnostics.append("    - Condenser reflux ratio is low (")
+          .append(getCondenser().getRefluxRatio())
+          .append("). Low reflux can make tray-temperature substitution oscillatory; ")
+          .append("try a higher reflux during initialization before tightening the spec.\n");
+      count++;
+    }
+    if ((!solved || lastIterationCount > Math.max(20, getEffectiveStageCount() * 3)) && hasCondenser
+        && hasReboiler && solverType != SolverType.MESH_RESIDUAL) {
+      diagnostics.append("    - For full hydrocarbon fractionators, benchmark ")
+          .append(SolverType.MESH_RESIDUAL).append(" or ").append(SolverType.NEWTON)
+          .append(" after checking feed-tray placement. They can be faster than direct ")
+          .append("substitution for well-conditioned columns.\n");
+      count++;
+    }
+    if (!solved) {
+      diagnostics.append("    - Inspect the residual above the tolerance: temperature usually ")
+          .append("points to tray/specification oscillation, while mass residual points to ")
+          .append("stream wiring or divergent internal L/V traffic.\n");
+      count++;
+    }
+    return count;
+  }
+
+  /**
+   * Check whether a feed tray is close to the condenser/top of the column.
+   *
+   * @param feedTrayNumber tray index to inspect
+   * @return {@code true} when the feed has few stages above it in a column with a condenser
+   */
+  private boolean isFeedTrayNearTop(int feedTrayNumber) {
+    if (!hasCondenser || numberOfTrays < 5) {
+      return false;
+    }
+    int stagesAbove = Math.max(0, numberOfTrays - feedTrayNumber - 1);
+    int topLimit = Math.max(1, (int) Math.ceil(getEffectiveStageCount() * 0.25));
+    return stagesAbove <= topLimit;
+  }
+
+  /**
+   * Check whether a feed tray is close to the reboiler/bottom of the column.
+   *
+   * @param feedTrayNumber tray index to inspect
+   * @return {@code true} when the feed has few stages below it in a column with a reboiler
+   */
+  private boolean isFeedTrayNearBottom(int feedTrayNumber) {
+    if (!hasReboiler || numberOfTrays < 5) {
+      return false;
+    }
+    int stagesBelow = Math.max(0, feedTrayNumber);
+    int bottomLimit = Math.max(1, (int) Math.ceil(getEffectiveStageCount() * 0.25));
+    return stagesBelow <= bottomLimit;
   }
 
   /**

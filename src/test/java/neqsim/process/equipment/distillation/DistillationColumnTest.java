@@ -293,6 +293,72 @@ public class DistillationColumnTest {
         "Debutanizer external products must match feed molar flow");
   }
 
+    /**
+    * Regression test for the NGL extraction notebook: the debutanizer converges when the feed is
+    * placed near the middle of the column and the MESH residual solver is used for the full
+    * fractionator.
+     */
+    @Test
+    public void nglDebutanizerMidColumnFeedConvergesWithMeshResidualSolver() {
+    SystemInterface fluid = new neqsim.thermo.system.SystemPrEos(273.15, 1.01325);
+    fluid.addComponent("methane", 24.423);
+    fluid.addComponent("ethane", 38.0634);
+    fluid.addComponent("propane", 14.8);
+    fluid.addComponent("i-butane", 14.9);
+    fluid.addComponent("n-butane", 6.7896);
+    fluid.addComponent("i-pentane", 1.6);
+    fluid.addComponent("n-pentane", 2.8);
+    fluid.addComponent("n-octane", 3.8);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("ngl notebook feed", fluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.run();
+
+    neqsim.process.equipment.heatexchanger.Heater inletHeater =
+      new neqsim.process.equipment.heatexchanger.Heater("ngl notebook heater", feed);
+    inletHeater.setOutletPressure(31.0, "bara");
+    inletHeater.setOutletTemperature(-25.0, "C");
+    inletHeater.run();
+
+    DistillationColumn deethanizer = new DistillationColumn("ngl notebook deethanizer", 5, true,
+      false);
+    deethanizer.addFeedStream(inletHeater.getOutletStream(), 5);
+    deethanizer.getReboiler().setOutTemperature(273.15 + 120.0);
+    deethanizer.setTopPressure(30.0);
+    deethanizer.setBottomPressure(32.0);
+    deethanizer.setMaxNumberOfIterations(80);
+    deethanizer.run();
+
+    neqsim.process.equipment.valve.ThrottlingValve valve =
+      new neqsim.process.equipment.valve.ThrottlingValve("ngl notebook valve",
+        deethanizer.getLiquidOutStream());
+    valve.setOutletPressure(14.0, "bara");
+    valve.run();
+
+    DistillationColumn debutanizer = new DistillationColumn("ngl notebook debutanizer", 10, true,
+      true);
+    debutanizer.addFeedStream(valve.getOutletStream(), 5);
+    debutanizer.getCondenser().setRefluxRatio(0.1);
+    debutanizer.getCondenser().setTotalCondenser(true);
+    debutanizer.getReboiler().setOutTemperature(273.15 + 203.0);
+    debutanizer.setTopPressure(12.8);
+    debutanizer.setBottomPressure(15.0);
+    debutanizer.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
+    debutanizer.setMaxNumberOfIterations(80);
+    debutanizer.run();
+
+    double feedMass = valve.getOutletStream().getFlowRate("kg/hr");
+    double productMass = debutanizer.getGasOutStream().getFlowRate("kg/hr")
+      + debutanizer.getLiquidOutStream().getFlowRate("kg/hr");
+    String diagnostics = debutanizer.getConvergenceDiagnostics();
+
+    assertTrue(deethanizer.solved(), deethanizer.getConvergenceDiagnostics());
+    assertTrue(debutanizer.solved(), diagnostics);
+    assertEquals(feedMass, productMass, feedMass * 1.0e-6,
+      "Debutanizer external products must match feed mass");
+    }
+
   @Test
   public void insideOutSolverMatchesStandardOnDeethanizerCase() {
     SystemInterface baseGas = new SystemSrkEos(216, 30.00);
