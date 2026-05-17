@@ -1001,28 +1001,7 @@ public class ProcessModel implements Runnable, Serializable {
       lastAllProcessesSolved = true;
       lastBoundaryValuesConverged = true;
       lastBoundaryStreamCount = collectBoundaryStreams().size();
-      // Step mode: just run each process once in step mode
-      int areaIdx = 0;
-      for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
-        try {
-          if (Thread.currentThread().isInterrupted()) {
-            logger.debug("Thread was interrupted, exiting run()...");
-            return;
-          }
-          notifyBeforeProcessArea(entry.getKey(), entry.getValue(), areaIdx, totalAreas, 1);
-          entry.getValue().run_step();
-          notifyProcessAreaComplete(entry.getKey(), entry.getValue(), areaIdx, totalAreas, 1);
-        } catch (Exception e) {
-          logger.error("Error running process step: " + e.getMessage(), e);
-          publishModelEvent(ProcessEvent.EventType.ERROR,
-              "Error in process area '" + entry.getKey() + "': " + e.getMessage(),
-              ProcessEvent.Severity.ERROR);
-          if (!notifyProcessAreaError(entry.getKey(), entry.getValue(), e)) {
-            break;
-          }
-        }
-        areaIdx++;
-      }
+      runAllProcessStepsWithHooks(1);
       notifyModelComplete(1, true);
       publishModelEvent(ProcessEvent.EventType.SIMULATION_COMPLETE,
           "ProcessModel step mode completed", ProcessEvent.Severity.INFO);
@@ -1210,6 +1189,68 @@ public class ProcessModel implements Runnable, Serializable {
       logger.error("Error running process " + process.getName() + ": " + e.getMessage(), e);
     } finally {
       process.setUseOptimizedExecution(previousOptimizedExecution);
+    }
+  }
+
+  /**
+   * Runs all ProcessSystems once in step mode using insertion order.
+   */
+  private void runAllProcessSteps() {
+    for (ProcessSystem process : processes.values()) {
+      if (Thread.currentThread().isInterrupted()) {
+        return;
+      }
+      runSingleProcessStep(process);
+    }
+  }
+
+  /**
+   * Runs a single ProcessSystem once in step mode.
+   *
+   * @param process the process to run in step mode
+   */
+  private void runSingleProcessStep(ProcessSystem process) {
+    try {
+      process.run_step();
+    } catch (Exception e) {
+      logger.error("Error running process step " + process.getName() + ": " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Runs all ProcessSystems in step mode with optional progress hooks.
+   *
+   * @param iterationNumber step-mode iteration number reported to progress hooks
+   */
+  private void runAllProcessStepsWithHooks(int iterationNumber) {
+    if (progressListener == null && !publishEvents) {
+      runAllProcessSteps();
+      return;
+    }
+
+    int totalAreas = processes.size();
+    int areaIdx = 0;
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      try {
+        if (Thread.currentThread().isInterrupted()) {
+          logger.debug("Thread was interrupted, exiting run()...");
+          return;
+        }
+        notifyBeforeProcessArea(entry.getKey(), entry.getValue(), areaIdx, totalAreas,
+            iterationNumber);
+        entry.getValue().run_step();
+        notifyProcessAreaComplete(entry.getKey(), entry.getValue(), areaIdx, totalAreas,
+            iterationNumber);
+      } catch (Exception e) {
+        logger.error("Error running process step: " + e.getMessage(), e);
+        publishModelEvent(ProcessEvent.EventType.ERROR,
+            "Error in process area '" + entry.getKey() + "': " + e.getMessage(),
+            ProcessEvent.Severity.ERROR);
+        if (!notifyProcessAreaError(entry.getKey(), entry.getValue(), e)) {
+          break;
+        }
+      }
+      areaIdx++;
     }
   }
 

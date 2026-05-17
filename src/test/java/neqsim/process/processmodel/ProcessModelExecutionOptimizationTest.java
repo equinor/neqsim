@@ -41,6 +41,9 @@ class ProcessModelExecutionOptimizationTest {
     /** Number of sequential runs selected by ProcessSystem.run(). */
     private final AtomicInteger sequentialRuns = new AtomicInteger();
 
+    /** Number of step-mode runs selected by ProcessModel.runStep. */
+    private final AtomicInteger stepRuns = new AtomicInteger();
+
     /** Warm-start setting observed inside optimized runs. */
     private final List<Boolean> warmStartObserved = new CopyOnWriteArrayList<>();
 
@@ -74,6 +77,13 @@ class ProcessModelExecutionOptimizationTest {
 
     /** {@inheritDoc} */
     @Override
+    public void run_step(UUID id) {
+      stepRuns.incrementAndGet();
+      setCalculationIdentifier(id);
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public boolean solved() {
       return true;
     }
@@ -94,6 +104,15 @@ class ProcessModelExecutionOptimizationTest {
      */
     private int getSequentialRuns() {
       return sequentialRuns.get();
+    }
+
+    /**
+     * Gets the number of step-mode runs.
+     *
+     * @return step-mode run count
+     */
+    private int getStepRuns() {
+      return stepRuns.get();
     }
 
     /**
@@ -221,6 +240,28 @@ class ProcessModelExecutionOptimizationTest {
     assertEquals(0, firstProcess.getSequentialRuns(), "first area should not be forced sequential");
     assertEquals(0, secondProcess.getSequentialRuns(),
         "second area should not be forced sequential");
+  }
+
+  /**
+   * Verifies that ProcessModel step mode uses child run_step without invoking run().
+   */
+  @Test
+  void runStepModeUsesChildStepExecution() {
+    RecordingProcessSystem firstProcess = new RecordingProcessSystem("first");
+    RecordingProcessSystem secondProcess = new RecordingProcessSystem("second");
+    ProcessModel model = new ProcessModel();
+    model.setRunStep(true);
+    model.add("first", firstProcess);
+    model.add("second", secondProcess);
+
+    model.run();
+
+    assertTrue(firstProcess.getStepRuns() > 0, "first area should run in step mode");
+    assertTrue(secondProcess.getStepRuns() > 0, "second area should run in step mode");
+    assertEquals(0, firstProcess.getOptimizedRuns(), "first area should not call run()");
+    assertEquals(0, secondProcess.getOptimizedRuns(), "second area should not call run()");
+    assertEquals(0, firstProcess.getSequentialRuns(), "first area should not call run()");
+    assertEquals(0, secondProcess.getSequentialRuns(), "second area should not call run()");
   }
 
   /**
