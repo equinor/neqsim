@@ -28,6 +28,7 @@ import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import neqsim.util.unit.TemperatureUnit;
 import neqsim.util.validation.ValidationResult;
 
 /**
@@ -784,8 +785,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param inputStream the feed stream
    * @param feedTrayNumber the tray number (0-based in the code) to which this feed goes
+   * @throws IllegalArgumentException if the stream is null or the tray index is outside the column
+   *         tray range
    */
   public void addFeedStream(StreamInterface inputStream, int feedTrayNumber) {
+    if (inputStream == null) {
+      throw new IllegalArgumentException("inputStream can not be null");
+    }
+    if (feedTrayNumber < 0 || feedTrayNumber >= numberOfTrays) {
+      throw new IllegalArgumentException(
+          "Feed tray index must be between 0 and " + (numberOfTrays - 1));
+    }
     // Put this feed into our feedStreams list for that trayNumber
     feedStreams.computeIfAbsent(feedTrayNumber, k -> new ArrayList<>()).add(inputStream);
 
@@ -5874,8 +5884,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     for (int w = 0; w < warmUpIterations; w++) {
       iter++;
+      double[] warmUpTemperatures = captureTrayTemperatures();
       performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
-      double tempRes = computeTemperatureResidual();
+      double tempRes = computeTemperatureResidual(warmUpTemperatures);
       err = tempRes;
 
       if (convergenceHistory != null) {
@@ -6083,8 +6094,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     // Final sweep to ensure consistent tray state
+    double[] finalTemperatures = captureTrayTemperatures();
     performFullTraySweep(id, firstFeedTrayNumber, previousGasStreams, previousLiquidStreams, 1.0);
-    err = computeTemperatureResidual();
+    err = computeTemperatureResidual(finalTemperatures);
     massErr = getMassBalanceError();
     energyErr = getEnergyBalanceError();
 
@@ -6138,10 +6150,46 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return average absolute temperature change per tray (K)
    */
   private double computeTemperatureResidual() {
+    return computeTemperatureResidual(captureStoredTrayTemperatures());
+  }
+
+  /**
+   * Capture current tray thermodynamic temperatures.
+   *
+   * @return current tray thermodynamic temperatures in Kelvin
+   */
+  private double[] captureTrayTemperatures() {
+    double[] temperatures = new double[numberOfTrays];
+    for (int i = 0; i < numberOfTrays; i++) {
+      temperatures[i] = trays.get(i).getThermoSystem().getTemperature();
+    }
+    return temperatures;
+  }
+
+  /**
+   * Capture tray stored temperatures.
+   *
+   * @return tray stored temperatures in Kelvin
+   */
+  private double[] captureStoredTrayTemperatures() {
+    double[] temperatures = new double[numberOfTrays];
+    for (int i = 0; i < numberOfTrays; i++) {
+      temperatures[i] = trays.get(i).getTemperature();
+    }
+    return temperatures;
+  }
+
+  /**
+   * Compute average temperature change relative to a reference profile.
+   *
+   * @param referenceTemperatures reference tray temperatures in Kelvin
+   * @return average absolute temperature change in Kelvin
+   */
+  private double computeTemperatureResidual(double[] referenceTemperatures) {
     double residual = 0.0;
     for (int i = 0; i < numberOfTrays; i++) {
-      residual +=
-          Math.abs(trays.get(i).getThermoSystem().getTemperature() - trays.get(i).getTemperature());
+      residual += Math.abs(trays.get(i).getThermoSystem().getTemperature()
+          - referenceTemperatures[i]);
     }
     return residual / Math.max(1, numberOfTrays);
   }
@@ -7875,6 +7923,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public void setReboilerTemperature(double reboilerTemperature) {
     this.reboilerTemperature = reboilerTemperature;
+    if (hasReboiler) {
+      getReboiler().setOutTemperature(reboilerTemperature);
+    }
+  }
+
+  /**
+   * Set the reboiler outlet temperature with unit conversion.
+   *
+   * @param reboilerTemperature reboiler outlet temperature
+   * @param unit temperature unit, for example {@code "K"} or {@code "C"}
+   * @throws IllegalArgumentException if the temperature unit is unsupported
+   */
+  public void setReboilerTemperature(double reboilerTemperature, String unit) {
+    setReboilerTemperature(new TemperatureUnit(reboilerTemperature, unit).getValue("K"));
   }
 
   /**
@@ -7897,6 +7959,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public void setCondenserTemperature(double condenserTemperature) {
     this.condenserTemperature = condenserTemperature;
+    if (hasCondenser) {
+      getCondenser().setOutTemperature(condenserTemperature);
+    }
+  }
+
+  /**
+   * Set the condenser outlet temperature with unit conversion.
+   *
+   * @param condenserTemperature condenser outlet temperature
+   * @param unit temperature unit, for example {@code "K"} or {@code "C"}
+   * @throws IllegalArgumentException if the temperature unit is unsupported
+   */
+  public void setCondenserTemperature(double condenserTemperature, String unit) {
+    setCondenserTemperature(new TemperatureUnit(condenserTemperature, unit).getValue("K"));
   }
 
   /**

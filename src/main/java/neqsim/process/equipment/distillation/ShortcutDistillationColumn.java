@@ -8,6 +8,7 @@ import com.google.gson.JsonObject;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -247,10 +248,12 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass
 
     // Calculate K-values (from equilibrium phases)
     double[] kValues = new double[numComponents];
-    if (feedFluid.getNumberOfPhases() >= 2) {
+    int gasPhaseIndex = findPhaseIndex(feedFluid, "gas");
+    int liquidPhaseIndex = findLiquidPhaseIndex(feedFluid);
+    if (gasPhaseIndex >= 0 && liquidPhaseIndex >= 0 && gasPhaseIndex != liquidPhaseIndex) {
       for (int i = 0; i < numComponents; i++) {
-        double yi = feedFluid.getPhase(0).getComponent(i).getx();
-        double xi = feedFluid.getPhase(1).getComponent(i).getx();
+        double yi = feedFluid.getPhase(gasPhaseIndex).getComponent(i).getx();
+        double xi = feedFluid.getPhase(liquidPhaseIndex).getComponent(i).getx();
         kValues[i] = (xi > 1.0e-20) ? yi / xi : 1.0e10;
       }
     } else {
@@ -292,10 +295,10 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass
     // 1. FENSKE — Minimum Stages
     // ============================
     // Nmin = ln[(xLK_D/xHK_D) * (xHK_B/xLK_B)] / ln(alpha_LK/HK)
-    double xLK_D = lightKeyRecoveryDistillate;
-    double xHK_D = 1.0 - heavyKeyRecoveryBottoms;
-    double xLK_B = 1.0 - lightKeyRecoveryDistillate;
-    double xHK_B = heavyKeyRecoveryBottoms;
+    double xLK_D = boundedSplitFraction(lightKeyRecoveryDistillate);
+    double xHK_D = boundedSplitFraction(1.0 - heavyKeyRecoveryBottoms);
+    double xLK_B = boundedSplitFraction(1.0 - lightKeyRecoveryDistillate);
+    double xHK_B = boundedSplitFraction(heavyKeyRecoveryBottoms);
 
     nMin = Math.log((xLK_D / xHK_D) * (xHK_B / xLK_B)) / Math.log(alphaLKHK);
 
@@ -360,10 +363,10 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass
     // ============================
     // 5. CONDENSER & REBOILER DUTY
     // ============================
-    computeDuties(feedFluid, rActual, zFeed, xD, numComponents, lkIdx, hkIdx);
+    computeDuties(feedFluid, rActual, zFeed, alpha, numComponents, lkIdx, hkIdx);
 
     // Create output streams
-    createOutputStreams(feedFluid, zFeed, xD, numComponents, lkIdx, hkIdx);
+    createOutputStreams(feedFluid, zFeed, alpha, numComponents, lkIdx, hkIdx);
 
     solved = true;
   }
@@ -376,14 +379,63 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass
    */
   private double computeFeedQuality(SystemInterface feedFluid) {
     if (feedFluid.getNumberOfPhases() == 1) {
-      if (feedFluid.getPhase(0).getType() == neqsim.thermo.phase.PhaseType.GAS) {
+      if (feedFluid.getPhase(0).getType() == PhaseType.GAS) {
         return 0.0; // Saturated vapor
       } else {
         return 1.0; // Saturated liquid
       }
     }
-    // q = liquid fraction
+    int gasPhaseIndex = findPhaseIndex(feedFluid, "gas");
+    int liquidPhaseIndex = findLiquidPhaseIndex(feedFluid);
+    if (gasPhaseIndex >= 0 && liquidPhaseIndex >= 0 && gasPhaseIndex != liquidPhaseIndex) {
+      double vaporMoles =
+          Math.max(0.0, feedFluid.getPhase(gasPhaseIndex).getNumberOfMolesInPhase());
+      double liquidMoles =
+          Math.max(0.0, feedFluid.getPhase(liquidPhaseIndex).getNumberOfMolesInPhase());
+      double totalMoles = vaporMoles + liquidMoles;
+      if (totalMoles > 1.0e-20) {
+        return liquidMoles / totalMoles;
+      }
+    }
     return 1.0 - feedFluid.getBeta();
+  }
+
+  /**
+   * Find a phase by phase type name.
+   *
+   * @param system thermodynamic system to inspect
+   * @param phaseTypeName phase type name to find
+   * @return phase index, or {@code -1} if absent
+   */
+  private int findPhaseIndex(SystemInterface system, String phaseTypeName) {
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      if (phaseTypeName.equals(system.getPhase(phaseIndex).getPhaseTypeName())) {
+        return phaseIndex;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Find a liquid-like phase index.
+   *
+   * @param system thermodynamic system to inspect
+   * @return liquid-like phase index, or {@code -1} if absent
+   */
+  private int findLiquidPhaseIndex(SystemInterface system) {
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      String phaseTypeName = system.getPhase(phaseIndex).getPhaseTypeName();
+      if ("liquid".equals(phaseTypeName) || "oil".equals(phaseTypeName)
+          || "aqueous".equals(phaseTypeName)) {
+        return phaseIndex;
+      }
+    }
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      if (!"gas".equals(system.getPhase(phaseIndex).getPhaseTypeName())) {
+        return phaseIndex;
+      }
+    }
+    return -1;
   }
 
   /**
@@ -451,25 +503,11 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass
   private double[] estimateDistillateComposition(double[] zFeed, double[] alpha, int n, int lkIdx,
       int hkIdx) {
     double[] xD = new double[n];
+    double[] distillateFractions = estimateDistillateFractions(alpha, n, lkIdx, hkIdx);
     double totalD = 0.0;
 
     for (int i = 0; i < n; i++) {
-      if (i == lkIdx) {
-        xD[i] = zFeed[i] * lightKeyRecoveryDistillate;
-      } else if (i == hkIdx) {
-        xD[i] = zFeed[i] * (1.0 - heavyKeyRecoveryBottoms);
-      } else if (alpha[i] > alphaLKHK) {
-        // Lighter than LK — goes mostly to distillate
-        xD[i] = zFeed[i] * 0.999;
-      } else if (alpha[i] < 1.0) {
-        // Heavier than HK — goes mostly to bottoms
-        xD[i] = zFeed[i] * 0.001;
-      } else {
-        // Distributing component — use Fenske at Nmin
-        double recovery = 1.0 / (1.0 + Math.pow(alpha[i] / alphaLKHK, -nMin)
-            * (1.0 - lightKeyRecoveryDistillate) / lightKeyRecoveryDistillate);
-        xD[i] = zFeed[i] * recovery;
-      }
+      xD[i] = zFeed[i] * distillateFractions[i];
       totalD += xD[i];
     }
 
@@ -494,26 +532,58 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass
    */
   private double computeBottomsToDistillateRatio(double[] zFeed, double[] alpha, int n, int lkIdx,
       int hkIdx) {
+    double[] distillateFractions = estimateDistillateFractions(alpha, n, lkIdx, hkIdx);
     double totalD = 0.0;
     double totalB = 0.0;
     for (int i = 0; i < n; i++) {
-      double distFrac;
-      if (i == lkIdx) {
-        distFrac = lightKeyRecoveryDistillate;
-      } else if (i == hkIdx) {
-        distFrac = 1.0 - heavyKeyRecoveryBottoms;
-      } else if (alpha[i] > alphaLKHK) {
-        distFrac = 0.999;
-      } else if (alpha[i] < 1.0) {
-        distFrac = 0.001;
-      } else {
-        distFrac = 1.0 / (1.0 + Math.pow(alpha[i] / alphaLKHK, -nMin)
-            * (1.0 - lightKeyRecoveryDistillate) / lightKeyRecoveryDistillate);
-      }
+      double distFrac = distillateFractions[i];
       totalD += zFeed[i] * distFrac;
       totalB += zFeed[i] * (1.0 - distFrac);
     }
     return (totalD > 1.0e-15) ? totalB / totalD : 1.0;
+  }
+
+  /**
+   * Estimate component split fractions to the distillate product.
+   *
+   * @param alpha relative volatilities
+   * @param n number of components
+   * @param lkIdx light key index
+   * @param hkIdx heavy key index
+   * @return fraction of each feed component recovered in the distillate
+   */
+  private double[] estimateDistillateFractions(double[] alpha, int n, int lkIdx, int hkIdx) {
+    double[] distillateFractions = new double[n];
+    for (int i = 0; i < n; i++) {
+      if (i == lkIdx) {
+        distillateFractions[i] = lightKeyRecoveryDistillate;
+      } else if (i == hkIdx) {
+        distillateFractions[i] = 1.0 - heavyKeyRecoveryBottoms;
+      } else if (alpha[i] > alphaLKHK) {
+        distillateFractions[i] = 0.999;
+      } else if (alpha[i] < 1.0) {
+        distillateFractions[i] = 0.001;
+      } else {
+        double recovery = 1.0 / (1.0 + Math.pow(alpha[i] / alphaLKHK, -nMin)
+            * (1.0 - lightKeyRecoveryDistillate) / lightKeyRecoveryDistillate);
+        distillateFractions[i] = recovery;
+      }
+      distillateFractions[i] = boundedSplitFraction(distillateFractions[i]);
+    }
+    return distillateFractions;
+  }
+
+  /**
+   * Bound a component split fraction away from singular zero and one values.
+   *
+   * @param splitFraction split fraction to bound
+   * @return finite split fraction between zero and one
+   */
+  private double boundedSplitFraction(double splitFraction) {
+    if (!Double.isFinite(splitFraction)) {
+      return 0.5;
+    }
+    return Math.max(1.0e-12, Math.min(1.0 - 1.0e-12, splitFraction));
   }
 
   /**
@@ -527,19 +597,13 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass
    * @param lkIdx light key index
    * @param hkIdx heavy key index
    */
-  private void computeDuties(SystemInterface feedFluid, double reflux, double[] zFeed, double[] xD,
-      int n, int lkIdx, int hkIdx) {
+  private void computeDuties(SystemInterface feedFluid, double reflux, double[] zFeed,
+      double[] alpha, int n, int lkIdx, int hkIdx) {
     double feedMoles = feedFluid.getTotalNumberOfMoles();
+    double[] distillateFractions = estimateDistillateFractions(alpha, n, lkIdx, hkIdx);
     double totalDistillateFrac = 0.0;
     for (int i = 0; i < n; i++) {
-      if (i == lkIdx) {
-        totalDistillateFrac += zFeed[i] * lightKeyRecoveryDistillate;
-      } else if (i == hkIdx) {
-        totalDistillateFrac += zFeed[i] * (1.0 - heavyKeyRecoveryBottoms);
-      } else {
-        // Use approximate split
-        totalDistillateFrac += xD[i] * computeDistillateTotalFraction(zFeed, n, lkIdx, hkIdx);
-      }
+      totalDistillateFrac += zFeed[i] * distillateFractions[i];
     }
     totalDistillateFrac = Math.min(totalDistillateFrac, 0.999);
     totalDistillateFrac = Math.max(totalDistillateFrac, 0.001);
@@ -556,85 +620,66 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Compute total distillate fraction.
-   *
-   * @param zFeed feed composition
-   * @param n number of components
-   * @param lkIdx light key index
-   * @param hkIdx heavy key index
-   * @return total distillate fraction
-   */
-  private double computeDistillateTotalFraction(double[] zFeed, int n, int lkIdx, int hkIdx) {
-    double total = 0.0;
-    for (int i = 0; i < n; i++) {
-      if (i == lkIdx) {
-        total += zFeed[i] * lightKeyRecoveryDistillate;
-      } else if (i == hkIdx) {
-        total += zFeed[i] * (1.0 - heavyKeyRecoveryBottoms);
-      }
-    }
-    return total;
-  }
-
-  /**
    * Create output streams for distillate and bottoms.
    *
    * @param feedFluid feed fluid
    * @param zFeed feed composition
-   * @param xD distillate composition
    * @param n number of components
    * @param lkIdx light key index
    * @param hkIdx heavy key index
    */
-  private void createOutputStreams(SystemInterface feedFluid, double[] zFeed, double[] xD, int n,
+  private void createOutputStreams(SystemInterface feedFluid, double[] zFeed, double[] alpha, int n,
       int lkIdx, int hkIdx) {
-    // Create distillate fluid
-    SystemInterface distFluid = feedFluid.clone();
+    double[] feedComponentMoles = getComponentMoles(feedFluid);
+    double[] distillateFractions = estimateDistillateFractions(alpha, n, lkIdx, hkIdx);
     double[] distComp = new double[n];
-    double totalD = 0.0;
+    double[] botComp = new double[n];
     for (int i = 0; i < n; i++) {
-      distComp[i] = xD[i];
-      totalD += xD[i];
+      distComp[i] = Math.max(0.0, feedComponentMoles[i] * distillateFractions[i]);
+      botComp[i] = Math.max(0.0, feedComponentMoles[i] - distComp[i]);
     }
-    if (totalD > 0.0) {
-      for (int i = 0; i < n; i++) {
-        distFluid.getPhase(0).getComponent(i).setz(distComp[i] / totalD);
-      }
-    }
+
+    SystemInterface distFluid = feedFluid.clone();
+    distFluid.setMolarFlowRates(distComp);
     if (condenserPressure > 0) {
       distFluid.setPressure(condenserPressure);
     }
     ThermodynamicOperations distOps = new ThermodynamicOperations(distFluid);
     distOps.TPflash();
+    distFluid.initProperties();
     distillateStream = new Stream(getName() + " distillate", distFluid);
 
-    // Create bottoms fluid
     SystemInterface botFluid = feedFluid.clone();
-    double[] botComp = new double[n];
-    double totalB = 0.0;
-    for (int i = 0; i < n; i++) {
-      double distFrac;
-      if (i == lkIdx) {
-        distFrac = lightKeyRecoveryDistillate;
-      } else if (i == hkIdx) {
-        distFrac = 1.0 - heavyKeyRecoveryBottoms;
-      } else {
-        distFrac = xD[i]; // Already normalized
-      }
-      botComp[i] = Math.max(zFeed[i] - zFeed[i] * distFrac, 1.0e-20);
-      totalB += botComp[i];
-    }
-    if (totalB > 0.0) {
-      for (int i = 0; i < n; i++) {
-        botFluid.getPhase(0).getComponent(i).setz(botComp[i] / totalB);
-      }
-    }
+    botFluid.setMolarFlowRates(botComp);
     if (reboilerPressure > 0) {
       botFluid.setPressure(reboilerPressure);
     }
     ThermodynamicOperations botOps = new ThermodynamicOperations(botFluid);
     botOps.TPflash();
+    botFluid.initProperties();
     bottomsStream = new Stream(getName() + " bottoms", botFluid);
+  }
+
+  /**
+   * Get component mole amounts from all phases in a system.
+   *
+   * @param system thermodynamic system to inspect
+   * @return component mole amounts
+   */
+  private double[] getComponentMoles(SystemInterface system) {
+    double[] componentMoles = new double[system.getNumberOfComponents()];
+    for (int componentIndex = 0; componentIndex < componentMoles.length; componentIndex++) {
+      double componentTotal = 0.0;
+      for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+        componentTotal +=
+            system.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase();
+      }
+      if (componentTotal <= 0.0) {
+        componentTotal = system.getPhase(0).getComponent(componentIndex).getNumberOfmoles();
+      }
+      componentMoles[componentIndex] = Math.max(0.0, componentTotal);
+    }
+    return componentMoles;
   }
 
   /**

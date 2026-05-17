@@ -50,6 +50,23 @@ class ShortcutDistillationColumnTest {
 
     assertNotNull(column.getDistillateStream(), "Distillate stream should not be null");
     assertNotNull(column.getBottomsStream(), "Bottoms stream should not be null");
+
+    double feedMolarFlow = feed.getFlowRate("mole/hr");
+    double productMolarFlow = column.getDistillateStream().getFlowRate("mole/hr")
+        + column.getBottomsStream().getFlowRate("mole/hr");
+    assertEquals(feedMolarFlow, productMolarFlow, feedMolarFlow * 1.0e-10,
+        "Shortcut products should conserve molar feed flow");
+
+    double feedEthane = feed.getFluid().getComponent("ethane").getTotalFlowRate("mole/hr");
+    double distEthane =
+        column.getDistillateStream().getFluid().getComponent("ethane").getTotalFlowRate("mole/hr");
+    double feedPropane = feed.getFluid().getComponent("propane").getTotalFlowRate("mole/hr");
+    double bottomPropane =
+        column.getBottomsStream().getFluid().getComponent("propane").getTotalFlowRate("mole/hr");
+    assertEquals(0.99, distEthane / feedEthane, 1.0e-8,
+        "Light key recovery should be reflected in distillate flow");
+    assertEquals(0.99, bottomPropane / feedPropane, 1.0e-8,
+        "Heavy key recovery should be reflected in bottoms flow");
   }
 
   @Test
@@ -127,8 +144,8 @@ class ShortcutDistillationColumnTest {
     feed.run();
 
     DistillationColumn column = new DistillationColumn("RigorousFromShortcut", 3, true, true);
-    DistillationColumn.ShortcutInitializationResult result = column.initializeFromShortcut(feed,
-        "ethane", "propane", 0.95, 0.95, 1.3);
+    DistillationColumn.ShortcutInitializationResult result =
+        column.initializeFromShortcut(feed, "ethane", "propane", 0.95, 0.95, 1.3);
 
     assertTrue(result.isInitialized(), result.getMessage());
     assertEquals(result, column.getLastShortcutInitializationResult());
