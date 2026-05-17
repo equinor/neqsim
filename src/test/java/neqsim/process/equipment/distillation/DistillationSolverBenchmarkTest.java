@@ -81,8 +81,9 @@ public class DistillationSolverBenchmarkTest {
   public void allSolversConvergeOnDeethanizer() {
     DistillationColumn.SolverType[] solvers = {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
         DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
-        DistillationColumn.SolverType.WEGSTEIN, DistillationColumn.SolverType.SUM_RATES,
-        DistillationColumn.SolverType.NEWTON, DistillationColumn.SolverType.NAPHTALI_SANDHOLM,
+        DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
+        DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.NEWTON,
+        DistillationColumn.SolverType.NAPHTALI_SANDHOLM,
         DistillationColumn.SolverType.MESH_RESIDUAL};
 
     double[] gasFlows = new double[solvers.length];
@@ -142,6 +143,30 @@ public class DistillationSolverBenchmarkTest {
         "Wegstein should not require significantly more iterations than direct substitution. "
             + "Wegstein=" + wegstein.getLastIterationCount() + " Direct="
             + direct.getLastIterationCount());
+  }
+
+  /**
+   * Test matrix inside-out uses the rigorous inside-out polish and matches its product split.
+   */
+  @Test
+  public void matrixInsideOutMatchesRigorousInsideOutOnDeethanizer() {
+    DistillationColumn insideOut = runDeethanizer(DistillationColumn.SolverType.INSIDE_OUT);
+    DistillationColumn matrixInsideOut =
+        runDeethanizer(DistillationColumn.SolverType.MATRIX_INSIDE_OUT);
+
+    assertTrue(insideOut.solved(), "Inside-out should converge");
+    assertTrue(matrixInsideOut.solved(),
+        "Matrix inside-out should converge: " + matrixInsideOut.getConvergenceDiagnostics());
+
+    double gasTolerance = Math.max(0.01, insideOut.getGasOutStream().getFlowRate("kg/hr") * 0.02);
+    double liquidTolerance =
+        Math.max(0.01, insideOut.getLiquidOutStream().getFlowRate("kg/hr") * 0.02);
+    assertEquals(insideOut.getGasOutStream().getFlowRate("kg/hr"),
+        matrixInsideOut.getGasOutStream().getFlowRate("kg/hr"), gasTolerance);
+    assertEquals(insideOut.getLiquidOutStream().getFlowRate("kg/hr"),
+        matrixInsideOut.getLiquidOutStream().getFlowRate("kg/hr"), liquidTolerance);
+    assertTrue(
+        matrixInsideOut.getLastMassResidual() <= insideOut.getLastMassResidual() * 1.25 + 1.0e-9);
   }
 
   /**
@@ -290,8 +315,9 @@ public class DistillationSolverBenchmarkTest {
   public void singleTrayFastPathsReportSolvedState() {
     DistillationColumn.SolverType[] solvers = {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
         DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
-        DistillationColumn.SolverType.WEGSTEIN, DistillationColumn.SolverType.SUM_RATES,
-        DistillationColumn.SolverType.NEWTON, DistillationColumn.SolverType.NAPHTALI_SANDHOLM};
+        DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
+        DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.NEWTON,
+        DistillationColumn.SolverType.NAPHTALI_SANDHOLM};
 
     for (int i = 0; i < solvers.length; i++) {
       DistillationColumn.SolverType solverType = solvers[i];

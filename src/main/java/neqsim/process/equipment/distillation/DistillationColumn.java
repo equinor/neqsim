@@ -134,6 +134,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     DAMPED_SUBSTITUTION,
     /** Inside-out style simultaneous correction of upward/downward flows. */
     INSIDE_OUT,
+    /** Matrix inside-out component-balance warm start followed by rigorous inside-out polishing. */
+    MATRIX_INSIDE_OUT,
     /** Wegstein acceleration of successive substitution. */
     WEGSTEIN,
     /** Sum-rates tearing method with flow correction. */
@@ -3795,6 +3797,66 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
+  }
+
+  /**
+   * Solve the column with matrix inside-out component balances before rigorous polishing.
+   *
+   * <p>
+   * The matrix stage solves component material-balance tridiagonal systems using cached K-values
+   * and cached K-temperature derivatives. It is accepted only as a warm start; the final products
+   * and convergence metrics still come from the rigorous inside-out solver.
+   * </p>
+   *
+   * @param id calculation identifier
+   */
+  void solveMatrixInsideOut(UUID id) {
+    if (feedStreams.isEmpty()) {
+      resetLastSolveMetrics();
+      return;
+    }
+
+    prepareColumnForSolve();
+    if (numberOfTrays == 1) {
+      solveSingleTray(id);
+      return;
+    }
+
+    if (isDoInitializion()) {
+      this.init();
+    }
+
+    boolean wasSolvedBefore = hasBeenSolvedBefore;
+    DistillationColumnMatrixSolver matrixSolver = new DistillationColumnMatrixSolver(this);
+    int matrixIterationLimit =
+        Math.max(2, Math.min(Math.max(4, numberOfTrays), Math.max(2, maxNumberOfIterations / 4)));
+    matrixSolver.setMaxIterations(matrixIterationLimit);
+    matrixSolver.setTolerance(Math.max(getEffectiveTemperatureTolerance(), 5.0e-2));
+    matrixSolver.setDampingFactor(Math.max(0.2, Math.min(0.6, minInsideOutRelaxation)));
+
+    boolean matrixWarmStartAccepted = false;
+    try {
+      matrixWarmStartAccepted = matrixSolver.solve(id);
+    } catch (RuntimeException exception) {
+      logger.debug("Matrix inside-out warm start failed; continuing with rigorous inside-out.",
+          exception);
+    }
+
+    int matrixIterations = matrixSolver.getLastIterationCount();
+    double matrixSolveTime = matrixSolver.getLastSolveTimeSeconds();
+    if (matrixWarmStartAccepted) {
+      hasBeenSolvedBefore = true;
+      setDoInitializion(false);
+    } else {
+      hasBeenSolvedBefore = wasSolvedBefore;
+      setDoInitializion(true);
+    }
+
+    solveInsideOut(id);
+    lastIterationCount += matrixIterations;
+    lastSolveTimeSeconds += matrixSolveTime;
+    logger.debug("Matrix inside-out stage iterations={} residual={} accepted={}", matrixIterations,
+        matrixSolver.getLastTemperatureResidual(), matrixWarmStartAccepted);
   }
 
   /**

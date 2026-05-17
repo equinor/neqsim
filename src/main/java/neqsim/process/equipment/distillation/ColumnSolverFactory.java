@@ -21,6 +21,8 @@ final class ColumnSolverFactory {
   private static final ColumnSolver DAMPED = new DampedSubstitutionSolver();
   /** Inside-out strategy. */
   private static final ColumnSolver INSIDE_OUT = new InsideOutSolver();
+  /** Matrix inside-out strategy. */
+  private static final ColumnSolver MATRIX_INSIDE_OUT = new MatrixInsideOutSolver();
   /** Wegstein strategy. */
   private static final ColumnSolver WEGSTEIN = new WegsteinSolver();
   /** Sum-rates strategy. */
@@ -42,11 +44,16 @@ final class ColumnSolverFactory {
    * @return solver strategy for the requested type
    */
   static ColumnSolver create(DistillationColumn.SolverType solverType) {
+    if (solverType == null) {
+      return DIRECT;
+    }
     switch (solverType) {
       case DAMPED_SUBSTITUTION:
         return DAMPED;
       case INSIDE_OUT:
         return INSIDE_OUT;
+      case MATRIX_INSIDE_OUT:
+        return MATRIX_INSIDE_OUT;
       case WEGSTEIN:
         return WEGSTEIN;
       case SUM_RATES:
@@ -123,6 +130,37 @@ final class ColumnSolverFactory {
     @Override
     public DistillationColumn.SolverType getSolverType() {
       return DistillationColumn.SolverType.INSIDE_OUT;
+    }
+  }
+
+  /** Matrix inside-out adapter. */
+  private static final class MatrixInsideOutSolver implements ColumnSolver {
+    /** {@inheritDoc} */
+    @Override
+    public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      boolean fallbackApplied = false;
+      try {
+        column.solveMatrixInsideOut(id);
+      } catch (RuntimeException exception) {
+        applyDampedFallback(column, null, id, "Matrix inside-out failed", exception);
+        fallbackApplied = true;
+      }
+      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+        applyDampedFallback(column, null, id,
+            "Matrix inside-out required guarded feed-flash product fallback", null);
+        fallbackApplied = true;
+      }
+      if (!fallbackApplied && !column.solved()) {
+        applyDampedFallback(column, null, id,
+            "Matrix inside-out did not satisfy convergence criteria", null);
+      }
+      return ColumnSolveResult.from(column, getSolverType());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public DistillationColumn.SolverType getSolverType() {
+      return DistillationColumn.SolverType.MATRIX_INSIDE_OUT;
     }
   }
 
