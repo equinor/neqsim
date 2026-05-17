@@ -1,5 +1,6 @@
 package neqsim.process.equipment.distillation;
 
+import java.util.List;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,7 +30,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   protected double trayPressure = -1.0;
 
   /**
-   * When {@code true}, the tray uses reactive flash (Modified RAND, simultaneous chemical + phase
+   * When {@code true}, the tray uses reactive flash (Modified RAND, simultaneous
+   * chemical + phase
    * equilibrium) instead of standard VLE flash. Set via
    * {@link DistillationColumn#setReactive(boolean)}.
    */
@@ -64,6 +66,21 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     for (int k = pp; k < streams.size(); k++) {
       (streams.get(k).getThermoSystem()).setTemperature(temperature);
     }
+  }
+
+  /**
+   * Replace all tray inlet streams with the supplied external streams.
+   *
+   * @param externalStreams external feed streams to keep on the tray
+   */
+  void resetInputStreams(List<StreamInterface> externalStreams) {
+    while (getNumberOfInputStreams() > 0) {
+      removeInputStream(getNumberOfInputStreams() - 1);
+    }
+    for (StreamInterface externalStream : externalStreams) {
+      addStream(externalStream);
+    }
+    invalidateOutStreamCache();
   }
 
   /** {@inheritDoc} */
@@ -129,12 +146,14 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    * TPflash.
    * </p>
    */
-  public void TPflash() {}
+  public void TPflash() {
+  }
 
   /**
    * Enable or disable reactive flash on this tray.
    *
-   * @param useReactiveFlash {@code true} to use reactive (chemical + phase) equilibrium
+   * @param useReactiveFlash {@code true} to use reactive (chemical + phase)
+   *                         equilibrium
    */
   public void setUseReactiveFlash(boolean useReactiveFlash) {
     this.useReactiveFlash = useReactiveFlash;
@@ -201,7 +220,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
       } else {
         testOps.TPflash();
       }
-      mixedStream.getThermoSystem().init(2);
+      mixedStream.getThermoSystem().initProperties();
     } else {
       try {
         if (useReactiveFlash) {
@@ -209,6 +228,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
         } else {
           testOps.PHflash(enthalpy, 0);
         }
+        mixedStream.getThermoSystem().initProperties();
       } catch (Exception ex) {
         try {
           if (!Double.isNaN(getOutTemperature())) {
@@ -219,6 +239,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
           } else {
             testOps.TPflash();
           }
+          mixedStream.getThermoSystem().initProperties();
         } catch (Exception ex2) {
           logger.warn("TPflash failed in SimpleTray: " + getName(), ex2);
         }
@@ -247,7 +268,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * Invalidate the cached gas and liquid output streams. Call this after modifying the tray's
+   * Invalidate the cached gas and liquid output streams. Call this after
+   * modifying the tray's
    * thermo system compositions externally (e.g. Murphree efficiency correction).
    */
   public void invalidateOutStreamCache() {
@@ -304,7 +326,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * Create the tray gas outlet from the requested phase type and normalize its inventory.
+   * Create the tray gas outlet from the requested phase type and normalize its
+   * inventory.
    *
    * @param phaseTypeName phase type name to prefer
    * @return stream containing the selected normalized phase
@@ -323,7 +346,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * Create the tray liquid outlet from the liquid or oil phase and normalize its inventory.
+   * Create the tray liquid outlet from the liquid or oil phase and normalize its
+   * inventory.
    *
    * @return stream containing the selected normalized liquid phase
    */
@@ -341,7 +365,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * Create a zero-flow outlet stream when the requested phase is absent on the tray.
+   * Create a zero-flow outlet stream when the requested phase is absent on the
+   * tray.
    *
    * @param traySystem tray thermodynamic system used as a composition template
    * @return stream with zero total moles and zero flow
@@ -354,7 +379,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * Create a phase system without allowing invalid phase roots to escape the tray solve.
+   * Create a phase system without allowing invalid phase roots to escape the tray
+   * solve.
    *
    * @param traySystem tray thermodynamic system
    * @param phaseIndex phase index to extract
@@ -437,9 +463,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     for (int phaseIndex = 0; phaseIndex < phaseSystem.getMaxNumberOfPhases(); phaseIndex++) {
       for (int componentIndex = 0; componentIndex < phaseSystem.getPhase(phaseIndex)
           .getNumberOfComponents(); componentIndex++) {
-        double moles =
-            phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase()
-                * scaleFactor;
+        double moles = phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase()
+            * scaleFactor;
         phaseSystem.getPhase(phaseIndex).getComponent(componentIndex)
             .setNumberOfMolesInPhase(moles);
         phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).setNumberOfmoles(moles);
@@ -513,11 +538,11 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    * @return a double
    */
   public double getLiquidFlowRate(String unit) {
-    if (getFluid().hasPhaseType("aqueous") || getFluid().hasPhaseType("oil")) {
-      return getFluid().getPhase(1).getFlowRate(unit);
-    } else {
-      return 0.0;
+    int liquidPhaseIndex = findLiquidPhaseIndex();
+    if (liquidPhaseIndex >= 0) {
+      return getFluid().getPhase(liquidPhaseIndex).getFlowRate(unit);
     }
+    return 0.0;
   }
 
   /**
