@@ -3,6 +3,7 @@ package neqsim.process.equipment.pipeline;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -42,6 +43,34 @@ public class BeggsAndBrillsPipeTest {
 
     Assertions.assertEquals(testSystem.getPhase("oil").getFlowRate("m3/hr"),
         testSystem.getFlowRate("m3/hr"), 1);
+  }
+
+  @Test
+  public void testVelocityCapacityConstraintUsesRhonePoulencWhenEnabled() {
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(
+        (273.15 + 20), ThermodynamicConstantsInterface.referencePressure);
+    testSystem.addComponent("methane", 1.0);
+    testSystem.setMixingRule(2);
+    testSystem.setPressure(50.0, "bara");
+    testSystem.setTemperature(20.0, "C");
+    testSystem.setTotalFlowRate(10000.0, "kg/hr");
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    testSystem.initPhysicalProperties();
+
+    Stream stream = new Stream("rhone poulenc feed", testSystem);
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("rhone poulenc pipe", stream);
+    pipe.setLength(100.0);
+    pipe.setAngle(0.0);
+    pipe.setDiameter(0.2);
+    pipe.useRhonePoulencVelocity();
+
+    double expectedMaxVelocity = pipe.getMaxAllowableVelocity();
+    CapacityConstraint velocityConstraint = pipe.getCapacityConstraints().get("velocity");
+
+    Assertions.assertNotNull(velocityConstraint);
+    Assertions.assertEquals(expectedMaxVelocity, velocityConstraint.getMaxValue(), 1e-12);
+    Assertions.assertTrue(velocityConstraint.getDescription().contains("RHONE_POULENC"));
   }
 
   @Test

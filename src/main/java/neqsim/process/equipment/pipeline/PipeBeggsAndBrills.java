@@ -3827,8 +3827,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     // Velocity constraint (SOFT limit - uses Rhone-Poulenc if enabled, else erosional)
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("velocity",
         "m/s", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(maxDesignVelocity).setMaxValue(getErosionalVelocity())
-            .setWarningThreshold(0.9).setDescription("Mixture velocity vs erosional limit")
+            .setDesignValue(maxDesignVelocity).setMaxValue(getMaxAllowableVelocity())
+            .setWarningThreshold(0.9)
+            .setDescription("Mixture velocity vs " + getMaxVelocityMethod() + " limit")
             .setValueSupplier(() -> getMixtureVelocity()));
 
     // LOF (Likelihood of Failure) - FIV constraint for multiphase flow

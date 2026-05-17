@@ -1190,6 +1190,8 @@ public class ProcessSystem extends SimulationBaseClass {
   private RuntimeException createUnitRunException(ProcessEquipmentInterface unit, Exception cause) {
     String unitName = unit == null ? "<unknown>" : unit.getName();
     logger.error("equipment: " + unitName + " error: " + cause.getMessage(), cause);
+    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.ERROR, unitName,
+        "Unit error: " + cause.getMessage(), ProcessEvent.Severity.ERROR));
     return new RuntimeException("Failed to run unit operation " + unitName, cause);
   }
 
@@ -4611,10 +4613,50 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   private List<StreamInterface> getReportedInletStreams(ProcessEquipmentInterface unitOp) {
     List<StreamInterface> inletStreams = new ArrayList<>();
-    addStreamsFromGetter(unitOp, "getInletStreams", inletStreams);
+    addUniqueStreams(unitOp.getInletStreams(), inletStreams);
+    if (!inletStreams.isEmpty()) {
+      return inletStreams;
+    }
     addStreamsFromGetter(unitOp, "getInputStreams", inletStreams);
+    if (!inletStreams.isEmpty()) {
+      return inletStreams;
+    }
     addStreamsFromGetter(unitOp, "getInletStream", inletStreams);
     return inletStreams;
+  }
+
+  /**
+   * Adds stream entries to a destination list while preserving identity uniqueness.
+   *
+   * @param sourceStreams source stream entries
+   * @param destination destination stream list
+   */
+  private void addUniqueStreams(Iterable<StreamInterface> sourceStreams,
+      List<StreamInterface> destination) {
+    if (sourceStreams == null) {
+      return;
+    }
+    for (StreamInterface stream : sourceStreams) {
+      addUniqueStream(stream, destination);
+    }
+  }
+
+  /**
+   * Adds a stream if the same stream object is not already present.
+   *
+   * @param stream stream to add
+   * @param streams destination stream list
+   */
+  private void addUniqueStream(StreamInterface stream, List<StreamInterface> streams) {
+    if (stream == null) {
+      return;
+    }
+    for (StreamInterface existing : streams) {
+      if (existing == stream) {
+        return;
+      }
+    }
+    streams.add(stream);
   }
 
   /**
@@ -4631,18 +4673,16 @@ public class ProcessSystem extends SimulationBaseClass {
       getter.setAccessible(true);
       Object value = getter.invoke(unitOp);
       if (value instanceof StreamInterface) {
-        streams.add((StreamInterface) value);
+        addUniqueStream((StreamInterface) value, streams);
       } else if (value instanceof Iterable<?>) {
         for (Object stream : (Iterable<?>) value) {
           if (stream instanceof StreamInterface) {
-            streams.add((StreamInterface) stream);
+            addUniqueStream((StreamInterface) stream, streams);
           }
         }
       } else if (value instanceof StreamInterface[]) {
         for (StreamInterface stream : (StreamInterface[]) value) {
-          if (stream != null) {
-            streams.add(stream);
-          }
+          addUniqueStream(stream, streams);
         }
       }
     } catch (NoSuchMethodException e) {

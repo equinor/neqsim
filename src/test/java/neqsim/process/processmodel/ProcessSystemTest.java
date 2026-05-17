@@ -32,6 +32,9 @@ import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.process.measurementdevice.WaterDewPointAnalyser;
+import neqsim.process.util.event.ProcessEvent;
+import neqsim.process.util.event.ProcessEventBus;
+import neqsim.process.util.event.ProcessEventListener;
 
 /**
  * Class for testing ProcessSystem class.
@@ -77,6 +80,15 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
      */
     public List<StreamInterface> getInletStreams() {
       return java.util.Collections.singletonList(inletStream);
+    }
+
+    /**
+     * Gets the singular inlet stream used by equipment that exposes both stream APIs.
+     *
+     * @return inlet stream
+     */
+    public StreamInterface getInletStream() {
+      return inletStream;
     }
 
     /** {@inheritDoc} */
@@ -199,6 +211,36 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> process.run());
     Assertions.assertTrue(thrown.getMessage().contains("FailingUnit"));
+  }
+
+  @Test
+  public void testRunPublishesUnitFailureEvent() {
+    ProcessSystem process = new ProcessSystem();
+    process.setPublishEvents(true);
+    process.add(new FailingProcessUnit("FailingUnit"));
+
+    ProcessEventBus bus = ProcessEventBus.getInstance();
+    bus.clearHistory();
+    final List<ProcessEvent> captured = new java.util.ArrayList<ProcessEvent>();
+    ProcessEventListener listener = new ProcessEventListener() {
+      @Override
+      public void onEvent(ProcessEvent event) {
+        captured.add(event);
+      }
+    };
+
+    bus.subscribe(ProcessEvent.EventType.ERROR, listener);
+    try {
+      Assertions.assertThrows(RuntimeException.class, () -> process.run());
+      Assertions.assertEquals(1, captured.size());
+      Assertions.assertEquals(ProcessEvent.EventType.ERROR, captured.get(0).getType());
+      Assertions.assertEquals("FailingUnit", captured.get(0).getSource());
+      Assertions
+          .assertTrue(captured.get(0).getDescription().contains("forced process unit failure"));
+    } finally {
+      bus.unsubscribe(ProcessEvent.EventType.ERROR, listener);
+      bus.clearHistory();
+    }
   }
 
   @Test
@@ -1125,6 +1167,26 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     ProcessSystem.MassBalanceResult result = results.get("MassBalanceUnit");
     Assertions.assertNotNull(result);
     assertEquals(5.0, result.getAbsoluteError(), 1e-12);
+    assertEquals(5.0, result.getPercentError(), 1e-12);
+  }
+
+  @Test
+  public void testMassBalancePercentDoesNotDoubleCountSingularAndListInletStreams() {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream inletStream = new Stream("mass balance feed duplicate APIs", fluid);
+    inletStream.setFlowRate(100.0, "kg/hr");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(inletStream);
+    process.add(new MassBalanceTestUnit("MassBalanceUnitDuplicateApis", inletStream));
+
+    ProcessSystem.MassBalanceResult result =
+        process.checkMassBalance("kg/hr").get("MassBalanceUnitDuplicateApis");
+
+    Assertions.assertNotNull(result);
     assertEquals(5.0, result.getPercentError(), 1e-12);
   }
 
