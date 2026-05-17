@@ -30,8 +30,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   protected double trayPressure = -1.0;
 
   /**
-   * When {@code true}, the tray uses reactive flash (Modified RAND, simultaneous
-   * chemical + phase
+   * When {@code true}, the tray uses reactive flash (Modified RAND, simultaneous chemical + phase
    * equilibrium) instead of standard VLE flash. Set via
    * {@link DistillationColumn#setReactive(boolean)}.
    */
@@ -158,14 +157,12 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    * TPflash.
    * </p>
    */
-  public void TPflash() {
-  }
+  public void TPflash() {}
 
   /**
    * Enable or disable reactive flash on this tray.
    *
-   * @param useReactiveFlash {@code true} to use reactive (chemical + phase)
-   *                         equilibrium
+   * @param useReactiveFlash {@code true} to use reactive (chemical + phase) equilibrium
    */
   public void setUseReactiveFlash(boolean useReactiveFlash) {
     this.useReactiveFlash = useReactiveFlash;
@@ -277,8 +274,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * Invalidate the cached gas and liquid output streams. Call this after
-   * modifying the tray's
+   * Invalidate the cached gas and liquid output streams. Call this after modifying the tray's
    * thermo system compositions externally (e.g. Murphree efficiency correction).
    */
   public void invalidateOutStreamCache() {
@@ -332,8 +328,8 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    */
   public StreamInterface getLiquidOutStream() {
     if (cachedLiquidOutStream == null) {
-      cachedLiquidOutStream = createLiquidOutStream(
-          1.0 - liquidSideDrawFraction - liquidPumparoundDrawFraction);
+      cachedLiquidOutStream =
+          createLiquidOutStream(1.0 - liquidSideDrawFraction - liquidPumparoundDrawFraction);
     }
     return cachedLiquidOutStream;
   }
@@ -441,10 +437,10 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * Create the tray gas outlet from the requested phase type and normalize its
-   * inventory.
+   * Create the tray gas outlet from the requested phase type and normalize its inventory.
    *
    * @param phaseTypeName phase type name to prefer
+   * @param outletFraction fraction of the selected phase inventory to route to the outlet
    * @return stream containing the selected normalized phase
    */
   private StreamInterface createPhaseOutStream(String phaseTypeName, double outletFraction) {
@@ -462,9 +458,9 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * Create the tray liquid outlet from the liquid or oil phase and normalize its
-   * inventory.
+   * Create the tray liquid outlet from the liquid or oil phase and normalize its inventory.
    *
+   * @param outletFraction fraction of the selected liquid inventory to route to the outlet
    * @return stream containing the selected normalized liquid phase
    */
   private StreamInterface createLiquidOutStream(double outletFraction) {
@@ -520,8 +516,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * Create a zero-flow outlet stream when the requested phase is absent on the
-   * tray.
+   * Create a zero-flow outlet stream when the requested phase is absent on the tray.
    *
    * @param traySystem tray thermodynamic system used as a composition template
    * @return stream with zero total moles and zero flow
@@ -534,8 +529,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * Create a phase system without allowing invalid phase roots to escape the tray
-   * solve.
+   * Create a phase system without allowing invalid phase roots to escape the tray solve.
    *
    * @param traySystem tray thermodynamic system
    * @param phaseIndex phase index to extract
@@ -618,8 +612,9 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     for (int phaseIndex = 0; phaseIndex < phaseSystem.getMaxNumberOfPhases(); phaseIndex++) {
       for (int componentIndex = 0; componentIndex < phaseSystem.getPhase(phaseIndex)
           .getNumberOfComponents(); componentIndex++) {
-        double moles = phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase()
-            * scaleFactor;
+        double moles =
+            phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase()
+                * scaleFactor;
         phaseSystem.getPhase(phaseIndex).getComponent(componentIndex)
             .setNumberOfMolesInPhase(moles);
         phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).setNumberOfmoles(moles);

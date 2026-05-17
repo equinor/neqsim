@@ -465,7 +465,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       SystemInterface returnSystem = newDrawStream.getThermoSystem().clone();
       double returnTemperature = returnSystem.getTemperature() - temperatureDrop;
       if (!Double.isFinite(returnTemperature) || returnTemperature <= 0.0) {
-        throw new IllegalStateException("Pumparound return temperature must be finite and above 0 K");
+        throw new IllegalStateException(
+            "Pumparound return temperature must be finite and above 0 K");
       }
       returnSystem.setTemperature(returnTemperature);
       if (returnStream == null) {
@@ -1148,7 +1149,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     setDoInitializion(true);
     solveConfiguredColumn(id);
     updateSideDrawSpecificationResidualsOnly();
-    lastColumnTearResidual = Math.max(lastColumnTearResidual, getMaxSideDrawSpecificationResidual());
+    lastColumnTearResidual =
+        Math.max(lastColumnTearResidual, getMaxSideDrawSpecificationResidual());
     lastColumnTearConverged = lastColumnTearResidual <= tolerance;
   }
 
@@ -1203,9 +1205,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double updatePumparoundReturnStreams(UUID id) {
     double maxRelativeChange = 0.0;
     for (ColumnPumparound pumparound : pumparounds) {
-      StreamInterface drawStream = getTray(pumparound.getDrawTrayNumber())
-          .getLiquidPumparoundDrawStream();
-      maxRelativeChange = Math.max(maxRelativeChange, pumparound.updateReturnStream(drawStream, id));
+      StreamInterface drawStream =
+          getTray(pumparound.getDrawTrayNumber()).getLiquidPumparoundDrawStream();
+      maxRelativeChange =
+          Math.max(maxRelativeChange, pumparound.updateReturnStream(drawStream, id));
     }
     lastPumparoundRelativeChange = maxRelativeChange;
     if (maxRelativeChange > 1.0e-12) {
@@ -1222,8 +1225,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double updateSideDrawSpecificationFractions() {
     double maxRelativeResidual = 0.0;
     for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
-      StreamInterface sideDrawStream = getSideDrawStream(specification.getTrayNumber(),
-          specification.getPhase());
+      StreamInterface sideDrawStream =
+          getSideDrawStream(specification.getTrayNumber(), specification.getPhase());
       double actualFlowRate = sideDrawStream.getFlowRate(specification.getFlowUnit());
       double residual = specification.updateActualFlowRate(actualFlowRate);
       maxRelativeResidual = Math.max(maxRelativeResidual, residual);
@@ -1240,8 +1243,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** Update side-draw flow residuals without changing side-draw fractions. */
   private void updateSideDrawSpecificationResidualsOnly() {
     for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
-      StreamInterface sideDrawStream = getSideDrawStream(specification.getTrayNumber(),
-          specification.getPhase());
+      StreamInterface sideDrawStream =
+          getSideDrawStream(specification.getTrayNumber(), specification.getPhase());
       specification.updateActualFlowRate(sideDrawStream.getFlowRate(specification.getFlowUnit()));
     }
   }
@@ -1268,8 +1271,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private double calculateNextSideDrawFraction(ColumnSideDrawSpecification specification,
       double actualFlowRate) {
-    double currentFraction = getSideDrawFraction(specification.getTrayNumber(),
-        specification.getPhase());
+    double currentFraction =
+        getSideDrawFraction(specification.getTrayNumber(), specification.getPhase());
     if (specification.getTargetFlowRate() <= 1.0e-12) {
       return 0.0;
     }
@@ -1303,11 +1306,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param trayNumber bottom-up tray index
    * @param phase side-draw phase
    * @param fraction requested side-draw fraction
+   * @return true if the tray fraction changed, false if the requested value was already set
    */
   private boolean setSideDrawFractionWithinLimit(int trayNumber, SideDrawPhase phase,
       double fraction) {
-    double limitedFraction = Math.max(0.0,
-        Math.min(getMaximumSideDrawFraction(trayNumber, phase), fraction));
+    double limitedFraction =
+        Math.max(0.0, Math.min(getMaximumSideDrawFraction(trayNumber, phase), fraction));
     double currentFraction = getSideDrawFraction(trayNumber, phase);
     if (Math.abs(limitedFraction - currentFraction) <= 1.0e-12) {
       return false;
@@ -3195,8 +3199,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           "No feed stream was supplied for shortcut initialization.");
       return lastShortcutInitializationResult;
     }
-    ShortcutDistillationColumn shortcut = new ShortcutDistillationColumn(getName() + " shortcut",
-        feedStream);
+    ShortcutDistillationColumn shortcut =
+        new ShortcutDistillationColumn(getName() + " shortcut", feedStream);
     shortcut.setLightKey(lightKey);
     shortcut.setHeavyKey(heavyKey);
     shortcut.setLightKeyRecoveryDistillate(lightKeyRecoveryDistillate);
@@ -3220,8 +3224,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     int totalStageCount = getShortcutTotalStageCount(shortcut);
-    int feedTrayNumber = convertShortcutFeedTrayFromTop(shortcut.getFeedTrayNumber(),
-        totalStageCount);
+    int feedTrayNumber =
+        convertShortcutFeedTrayFromTop(shortcut.getFeedTrayNumber(), totalStageCount);
     ColumnOptimizationState state = captureColumnOptimizationState();
     applyShortcutEndpointDuties(state, shortcut);
     rebuildColumnForOptimization(totalStageCount, state);
@@ -3256,8 +3260,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private ShortcutInitializationResult createFailedShortcutInitialization(String lightKey,
       String heavyKey, String message) {
-    return new ShortcutInitializationResult(false, -1, -1, -1, Double.NaN, Double.NaN,
-        Double.NaN, Double.NaN, Double.NaN, Double.NaN, lightKey, heavyKey, message);
+    return new ShortcutInitializationResult(false, -1, -1, -1, Double.NaN, Double.NaN, Double.NaN,
+        Double.NaN, Double.NaN, Double.NaN, lightKey, heavyKey, message);
   }
 
   /**
@@ -3268,10 +3272,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private void applyShortcutPressureBasis(ShortcutDistillationColumn shortcut,
       StreamInterface feedStream) {
-    double feedPressure = feedStream.getFluid() == null ? Double.NaN : feedStream.getPressure("bara");
+    double feedPressure =
+        feedStream.getFluid() == null ? Double.NaN : feedStream.getPressure("bara");
     double condenserPressure = isPositiveFinite(topTrayPressure) ? topTrayPressure : feedPressure;
-    double reboilerPressure = isPositiveFinite(bottomTrayPressure) ? bottomTrayPressure
-        : condenserPressure;
+    double reboilerPressure =
+        isPositiveFinite(bottomTrayPressure) ? bottomTrayPressure : condenserPressure;
     if (isPositiveFinite(condenserPressure)) {
       shortcut.setCondenserPressure(condenserPressure);
       if (!isPositiveFinite(topTrayPressure)) {
@@ -6188,8 +6193,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private double computeTemperatureResidual(double[] referenceTemperatures) {
     double residual = 0.0;
     for (int i = 0; i < numberOfTrays; i++) {
-      residual += Math.abs(trays.get(i).getThermoSystem().getTemperature()
-          - referenceTemperatures[i]);
+      residual +=
+          Math.abs(trays.get(i).getThermoSystem().getTemperature() - referenceTemperatures[i]);
     }
     return residual / Math.max(1, numberOfTrays);
   }
@@ -7251,13 +7256,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param flowRate target flow rate
    * @param unit flow-rate unit
    * @return configured side-draw specification
-     * @throws IllegalArgumentException if the tray number, phase, flow rate, or unit is invalid
+   * @throws IllegalArgumentException if the tray number, phase, flow rate, or unit is invalid
    */
   public ColumnSideDrawSpecification addSideDrawFlowSpecification(int trayNumber,
       SideDrawPhase phase, double flowRate, String unit) {
     validateTrayIndex(trayNumber, "side draw specification tray");
-    ColumnSideDrawSpecification specification = new ColumnSideDrawSpecification(trayNumber,
-        phase, flowRate, unit);
+    ColumnSideDrawSpecification specification =
+        new ColumnSideDrawSpecification(trayNumber, phase, flowRate, unit);
     sideDrawSpecifications.add(specification);
     if (flowRate > 0.0 && getSideDrawFraction(trayNumber, phase) <= 0.0) {
       setSideDrawFractionWithinLimit(trayNumber, phase, 0.05);
@@ -7424,7 +7429,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param drawFraction fraction of tray liquid traffic withdrawn
    * @param temperatureDrop temperature drop from draw to return in Kelvin
    * @return configured pumparound definition
-     * @throws IllegalArgumentException if tray numbers, draw fraction, or temperature drop are invalid
+   * @throws IllegalArgumentException if tray numbers, draw fraction, or temperature drop are
+   *         invalid
    */
   public ColumnPumparound addLiquidPumparound(String name, int drawTrayNumber, int returnTrayNumber,
       double drawFraction, double temperatureDrop) {
@@ -7440,8 +7446,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       throw new IllegalArgumentException("Only one liquid pumparound draw is supported per tray");
     }
 
-    ColumnPumparound pumparound = new ColumnPumparound(name, drawTrayNumber, returnTrayNumber,
-        drawFraction, temperatureDrop);
+    ColumnPumparound pumparound =
+        new ColumnPumparound(name, drawTrayNumber, returnTrayNumber, drawFraction, temperatureDrop);
     pumparounds.add(pumparound);
     getTray(drawTrayNumber).setLiquidPumparoundDrawFraction(drawFraction);
     setDoInitializion(true);
@@ -8777,9 +8783,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Create fallback products from a bounded shortcut equilibrium split.
    *
    * <p>
-  * The split uses bottom terminal K-values and a Rachford-Rice vapor-fraction estimate to place
-  * volatile components preferentially in the vapor and heavy components preferentially in the
-  * liquid. It is only used when an overall TP flash does not expose both gas and liquid phases.
+   * The split uses bottom terminal K-values and a Rachford-Rice vapor-fraction estimate to place
+   * volatile components preferentially in the vapor and heavy components preferentially in the
+   * liquid. It is only used when an overall TP flash does not expose both gas and liquid phases.
    * </p>
    *
    * @param feedSystem combined external feed system
@@ -8804,7 +8810,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     kSystem.init(1);
 
     double vaporFraction = estimateShortcutVaporFraction(feedComponentMoles, kSystem,
-      getCurrentProductVaporFraction());
+        getCurrentProductVaporFraction());
     double vaporToLiquidRatio = vaporFraction / Math.max(1.0e-12, 1.0 - vaporFraction);
     double[] topComponentMoles = new double[feedComponentMoles.length];
     double[] bottomComponentMoles = new double[feedComponentMoles.length];
@@ -8833,8 +8839,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param fallbackVaporFraction vapor fraction to use if the estimate cannot be calculated
    * @return vapor fraction clamped away from zero and one
    */
-  private double estimateShortcutVaporFraction(double[] feedComponentMoles,
-      SystemInterface kSystem, double fallbackVaporFraction) {
+  private double estimateShortcutVaporFraction(double[] feedComponentMoles, SystemInterface kSystem,
+      double fallbackVaporFraction) {
     double totalMoles = 0.0;
     for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
       totalMoles += Math.max(0.0, feedComponentMoles[componentIndex]);
@@ -8843,10 +8849,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return clampShortcutVaporFraction(fallbackVaporFraction);
     }
 
-    double liquidLimitResidual = evaluateRachfordRiceResidual(feedComponentMoles, kSystem,
-        totalMoles, 0.0);
-    double vaporLimitResidual = evaluateRachfordRiceResidual(feedComponentMoles, kSystem,
-        totalMoles, 1.0);
+    double liquidLimitResidual =
+        evaluateRachfordRiceResidual(feedComponentMoles, kSystem, totalMoles, 0.0);
+    double vaporLimitResidual =
+        evaluateRachfordRiceResidual(feedComponentMoles, kSystem, totalMoles, 1.0);
     if (!Double.isFinite(liquidLimitResidual) || !Double.isFinite(vaporLimitResidual)) {
       return clampShortcutVaporFraction(fallbackVaporFraction);
     }
@@ -8861,8 +8867,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double upperVaporFraction = 1.0;
     for (int iteration = 0; iteration < 80; iteration++) {
       double trialVaporFraction = 0.5 * (lowerVaporFraction + upperVaporFraction);
-      double residual = evaluateRachfordRiceResidual(feedComponentMoles, kSystem, totalMoles,
-          trialVaporFraction);
+      double residual =
+          evaluateRachfordRiceResidual(feedComponentMoles, kSystem, totalMoles, trialVaporFraction);
       if (!Double.isFinite(residual)) {
         return clampShortcutVaporFraction(fallbackVaporFraction);
       }
@@ -9214,8 +9220,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       if (componentMoles.length != componentCount) {
         continue;
       }
-      for (int componentIndex = 0; componentIndex < sideDrawComponentMoles.length;
-          componentIndex++) {
+      for (int componentIndex =
+          0; componentIndex < sideDrawComponentMoles.length; componentIndex++) {
         sideDrawComponentMoles[componentIndex] += componentMoles[componentIndex];
       }
     }
@@ -9493,8 +9499,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       result.addWarning("column.pressure", "Bottom pressure is not explicitly set",
           "Call column.setBottomPressure(value) or allow the solver to initialize from feed pressure");
     }
-    if (topTrayPressure > 0.0 && bottomTrayPressure > 0.0
-        && topTrayPressure > bottomTrayPressure) {
+    if (topTrayPressure > 0.0 && bottomTrayPressure > 0.0 && topTrayPressure > bottomTrayPressure) {
       result.addWarning("column.pressure", "Top pressure is higher than bottom pressure",
           "Check the pressure profile; distillation columns normally have bottom pressure >= top pressure");
     }
@@ -9519,7 +9524,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           "Set a positive finite tolerance with column.setTemperatureTolerance(tol)");
     }
     if (!isPositiveFiniteValue(massBalanceTolerance)) {
-      result.addError("solver.massBalanceTolerance", "Mass balance tolerance is not positive finite",
+      result.addError("solver.massBalanceTolerance",
+          "Mass balance tolerance is not positive finite",
           "Set a positive finite tolerance with column.setMassBalanceTolerance(tol)");
     }
     if (!isPositiveFiniteValue(enthalpyBalanceTolerance)) {
@@ -9665,8 +9671,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return;
     }
     if (specification.getLocation() != expectedLocation) {
-      result.addError("specification.location",
-          "Specification is assigned to the wrong column end",
+      result.addError("specification.location", "Specification is assigned to the wrong column end",
           "Use setTopSpecification() for TOP specs and setBottomSpecification() for BOTTOM specs");
     }
     if (!Double.isFinite(specification.getTargetValue())) {

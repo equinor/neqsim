@@ -592,7 +592,7 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass
    * @param feedFluid the feed fluid
    * @param reflux actual reflux ratio
    * @param zFeed feed composition
-   * @param xD distillate composition
+   * @param alpha relative volatility array
    * @param n number of components
    * @param lkIdx light key index
    * @param hkIdx heavy key index
@@ -624,6 +624,7 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass
    *
    * @param feedFluid feed fluid
    * @param zFeed feed composition
+   * @param alpha relative volatility array
    * @param n number of components
    * @param lkIdx light key index
    * @param hkIdx heavy key index

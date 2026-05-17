@@ -55,6 +55,10 @@ public class OptimizedVUflash extends Flash {
 
   /**
    * Constructor for OptimizedVUflash.
+   *
+   * @param system thermodynamic system to flash
+   * @param Vspec specified total volume
+   * @param Uspec specified internal energy
    */
   public OptimizedVUflash(SystemInterface system, double Vspec, double Uspec) {
     this.system = system;
@@ -65,6 +69,8 @@ public class OptimizedVUflash extends Flash {
 
   /**
    * Validates inputs with fast checks.
+   *
+   * @return true if specified volume and internal energy are finite and usable
    */
   private boolean validateInputs() {
     return Vspec > 0 && Double.isFinite(Uspec);
@@ -100,6 +106,8 @@ public class OptimizedVUflash extends Flash {
 
   /**
    * Optimized derivative calculations with safety checks.
+   *
+   * @return derivative of the objective with respect to pressure
    */
   private double calcdQdP() {
     return system.getPressure() * (system.getVolume() - Vspec)
@@ -140,6 +148,8 @@ public class OptimizedVUflash extends Flash {
 
   /**
    * High-performance solver with adaptive convergence and line search.
+   *
+   * @return converged pressure, or the current system pressure if input validation fails
    */
   public double solveQ() {
     if (!validateInputs()) {

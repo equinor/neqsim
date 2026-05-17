@@ -529,6 +529,61 @@ public class DistillationColumnTest {
   }
 
   @Test
+  public void condenserRefluxFlashIncludesAllInletStreams() {
+    Stream firstFeed = createTerminalRegressionStream("condenser first", 100.0);
+    Stream secondFeed = createTerminalRegressionStream("condenser second", 25.0);
+
+    Condenser condenser = new Condenser("multi-feed condenser");
+    condenser.addStream(firstFeed);
+    condenser.addStream(secondFeed);
+    condenser.setTotalCondenser(true);
+    condenser.setRefluxRatio(1.0);
+    condenser.run();
+
+    double expectedFlow = firstFeed.getFlowRate("kg/hr") + secondFeed.getFlowRate("kg/hr");
+    double actualFlow = condenser.getGasOutStream().getFlowRate("kg/hr")
+        + condenser.getLiquidOutStream().getFlowRate("kg/hr");
+    assertEquals(expectedFlow, actualFlow, expectedFlow * 1.0e-8);
+  }
+
+  @Test
+  public void reboilerRefluxFlashIncludesAllInletStreams() {
+    Stream firstFeed = createTerminalRegressionStream("reboiler first", 100.0);
+    Stream secondFeed = createTerminalRegressionStream("reboiler second", 25.0);
+
+    Reboiler reboiler = new Reboiler("multi-feed reboiler");
+    reboiler.addStream(firstFeed);
+    reboiler.addStream(secondFeed);
+    reboiler.setRefluxRatio(1.0);
+    reboiler.run();
+
+    double expectedFlow = firstFeed.getFlowRate("kg/hr") + secondFeed.getFlowRate("kg/hr");
+    double actualFlow = reboiler.getGasOutStream().getFlowRate("kg/hr")
+        + reboiler.getLiquidOutStream().getFlowRate("kg/hr");
+    assertEquals(expectedFlow, actualFlow, expectedFlow * 1.0e-8);
+  }
+
+  /**
+   * Create a binary hydrocarbon stream for terminal tray regression tests.
+   *
+   * @param name stream name
+   * @param flowRateKgPerHour stream mass flow rate in kg/hr
+   * @return stream configured with SRK EOS and classic mixing rule
+   */
+  private Stream createTerminalRegressionStream(String name, double flowRateKgPerHour) {
+    SystemInterface system = new SystemSrkEos(298.15, 5.0);
+    system.addComponent("methane", 0.5);
+    system.addComponent("ethane", 0.5);
+    system.createDatabase(true);
+    system.setMixingRule("classic");
+
+    Stream stream = new Stream(name, system);
+    stream.setFlowRate(flowRateKgPerHour, "kg/hr");
+    stream.run();
+    return stream;
+  }
+
+  @Test
   public void repeatedInitializationDoesNotAccumulateInternalTrayStreams() {
     SystemInterface simpleSystem = new SystemSrkEos(216.0, 30.0);
     simpleSystem.addComponent("methane", 0.514168);
