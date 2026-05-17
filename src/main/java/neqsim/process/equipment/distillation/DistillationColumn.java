@@ -2977,23 +2977,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private void solveSequential(UUID id, double initialRelaxation) {
     if (feedStreams.isEmpty()) {
+      resetLastSolveMetrics();
       return;
     }
 
     int firstFeedTrayNumber = prepareColumnForSolve();
 
     if (numberOfTrays == 1) {
-      trays.get(0).run(id);
-      gasOutStream.setThermoSystem(trays.get(0).getGasOutStream().getThermoSystem().clone());
-      liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
-      gasOutStream.setCalculationIdentifier(id);
-      liquidOutStream.setCalculationIdentifier(id);
-      setCalculationIdentifier(id);
-      lastIterationCount = 1;
-      lastTemperatureResidual = 0.0;
-      lastMassResidual = 0.0;
-      lastEnergyResidual = 0.0;
-      lastSolveTimeSeconds = 0.0;
+      solveSingleTray(id);
       return;
     }
 
@@ -3278,6 +3269,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Solve and finalize a column that contains only one active tray.
+   *
+   * @param id calculation identifier
+   */
+  private void solveSingleTray(UUID id) {
+    long startTime = System.nanoTime();
+    trays.get(0).run(id);
+    err = 0.0;
+    finalizeSolve(id, 1, 0.0, 0.0, 0.0, startTime);
+    hasBeenSolvedBefore = true;
+    lastTotalFeedFlow = getTotalExternalFeedFlowKgPerHour();
+  }
+
+  /**
    * Determine the iteration limit based on configuration and column size.
    *
    * @return maximum number of solver iterations allowed
@@ -3462,17 +3467,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int firstFeedTrayNumber = prepareColumnForSolve();
 
     if (numberOfTrays == 1) {
-      trays.get(0).run(id);
-      gasOutStream.setThermoSystem(trays.get(0).getGasOutStream().getThermoSystem().clone());
-      liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
-      gasOutStream.setCalculationIdentifier(id);
-      liquidOutStream.setCalculationIdentifier(id);
-      setCalculationIdentifier(id);
-      lastIterationCount = 1;
-      lastTemperatureResidual = 0.0;
-      lastMassResidual = 0.0;
-      lastEnergyResidual = 0.0;
-      lastSolveTimeSeconds = 0.0;
+      solveSingleTray(id);
       return;
     }
 
@@ -4245,17 +4240,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int firstFeedTrayNumber = prepareColumnForSolve();
 
     if (numberOfTrays == 1) {
-      trays.get(0).run(id);
-      gasOutStream.setThermoSystem(trays.get(0).getGasOutStream().getThermoSystem().clone());
-      liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
-      gasOutStream.setCalculationIdentifier(id);
-      liquidOutStream.setCalculationIdentifier(id);
-      setCalculationIdentifier(id);
-      lastIterationCount = 1;
-      lastTemperatureResidual = 0.0;
-      lastMassResidual = 0.0;
-      lastEnergyResidual = 0.0;
-      lastSolveTimeSeconds = 0.0;
+      solveSingleTray(id);
       return;
     }
 
@@ -4524,17 +4509,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int firstFeedTrayNumber = prepareColumnForSolve();
 
     if (numberOfTrays == 1) {
-      trays.get(0).run(id);
-      gasOutStream.setThermoSystem(trays.get(0).getGasOutStream().getThermoSystem().clone());
-      liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
-      gasOutStream.setCalculationIdentifier(id);
-      liquidOutStream.setCalculationIdentifier(id);
-      setCalculationIdentifier(id);
-      lastIterationCount = 1;
-      lastTemperatureResidual = 0.0;
-      lastMassResidual = 0.0;
-      lastEnergyResidual = 0.0;
-      lastSolveTimeSeconds = 0.0;
+      solveSingleTray(id);
       return;
     }
 
@@ -4692,17 +4667,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int firstFeedTrayNumber = prepareColumnForSolve();
 
     if (numberOfTrays == 1) {
-      trays.get(0).run(id);
-      gasOutStream.setThermoSystem(trays.get(0).getGasOutStream().getThermoSystem().clone());
-      liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
-      gasOutStream.setCalculationIdentifier(id);
-      liquidOutStream.setCalculationIdentifier(id);
-      setCalculationIdentifier(id);
-      lastIterationCount = 1;
-      lastTemperatureResidual = 0.0;
-      lastMassResidual = 0.0;
-      lastEnergyResidual = 0.0;
-      lastSolveTimeSeconds = 0.0;
+      solveSingleTray(id);
       return;
     }
 
@@ -5229,10 +5194,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Select the algorithm used when solving the column.
    *
-   * @param solverType choice of solver
+   * @param solverType choice of solver, or {@code null} to restore direct substitution
    */
   public void setSolverType(SolverType solverType) {
-    this.solverType = solverType;
+    this.solverType = solverType == null ? SolverType.DIRECT_SUBSTITUTION : solverType;
   }
 
   /**
@@ -7342,11 +7307,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /** Reset cached solve metrics when no calculation is performed. */
   private void resetLastSolveMetrics() {
+    err = 1.0e10;
     lastIterationCount = 0;
     lastTemperatureResidual = 0.0;
     lastMassResidual = 0.0;
     lastEnergyResidual = 0.0;
     lastSolveTimeSeconds = 0.0;
+    lastInternalTrafficRatio = 0.0;
+    lastInternalTrafficGuardReached = false;
+    lastUsedFeedFlashFallback = false;
     terminalGasProductDrawStream = null;
     terminalLiquidProductDrawStream = null;
   }

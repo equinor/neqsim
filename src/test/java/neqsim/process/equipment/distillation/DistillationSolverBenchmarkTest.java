@@ -238,6 +238,9 @@ public class DistillationSolverBenchmarkTest {
 
     column.setSolverType(DistillationColumn.SolverType.WEGSTEIN);
     assertEquals(DistillationColumn.SolverType.WEGSTEIN, column.getSolverType());
+
+    column.setSolverType(null);
+    assertEquals(DistillationColumn.SolverType.DIRECT_SUBSTITUTION, column.getSolverType());
   }
 
   /**
@@ -277,6 +280,44 @@ public class DistillationSolverBenchmarkTest {
       ColumnSolver solver = ColumnSolverFactory.create(solverType);
       assertNotNull(solver, solverType.name() + " should have a solver strategy");
       assertEquals(solverType, solver.getSolverType());
+    }
+  }
+
+  /**
+   * Test that single-tray fast paths update the convergence state used by solved().
+   */
+  @Test
+  public void singleTrayFastPathsReportSolvedState() {
+    DistillationColumn.SolverType[] solvers = {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
+        DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
+        DistillationColumn.SolverType.WEGSTEIN, DistillationColumn.SolverType.SUM_RATES,
+        DistillationColumn.SolverType.NEWTON, DistillationColumn.SolverType.NAPHTALI_SANDHOLM};
+
+    for (int i = 0; i < solvers.length; i++) {
+      DistillationColumn.SolverType solverType = solvers[i];
+      SystemInterface fluid = new SystemSrkEos(273.15, 10.0);
+      fluid.addComponent("propane", 0.5);
+      fluid.addComponent("n-butane", 0.5);
+      fluid.setMixingRule("classic");
+
+      Stream feed = new Stream("single_tray_feed_" + solverType.name(), fluid);
+      feed.setFlowRate(100.0, "kg/hr");
+      feed.run();
+
+      DistillationColumn column =
+          new DistillationColumn("single_tray_" + solverType.name(), 1, false, false);
+      column.addFeedStream(feed, 0);
+      column.setSolverType(solverType);
+      column.run();
+
+      double productMass = column.getGasOutStream().getFlowRate("kg/hr")
+          + column.getLiquidOutStream().getFlowRate("kg/hr");
+      assertTrue(column.solved(),
+          solverType.name() + " should report solved: " + column.getConvergenceDiagnostics());
+      assertEquals(feed.getFlowRate("kg/hr"), productMass, feed.getFlowRate("kg/hr") * 1.0e-6,
+          solverType.name() + " products should close mass balance");
+      assertEquals(0.0, column.getLastTemperatureResidual(), 1.0e-12,
+          solverType.name() + " should report zero single-tray temperature residual");
     }
   }
 
