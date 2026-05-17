@@ -8,8 +8,13 @@ import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.AccelerationMethod;
 import neqsim.process.equipment.util.Recycle;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.ThermodynamicModelSettings;
 
 /**
@@ -102,6 +107,30 @@ class ProcessModelExecutionOptimizationTest {
   }
 
   /**
+   * Creates a small gas system for graph/topology tests.
+   *
+   * @return configured gas fluid
+   */
+  private static SystemInterface createGasFluid() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    return fluid;
+  }
+
+  /**
+   * Adds independent stream nodes so the child ProcessSystem exposes useful inner parallelism.
+   *
+   * @param process process system to populate
+   * @param count number of independent streams to add
+   */
+  private static void addIndependentStreams(ProcessSystem process, int count) {
+    for (int i = 0; i < count; i++) {
+      process.add(new Stream(process.getName() + " stream " + i, createGasFluid()));
+    }
+  }
+
+  /**
    * Verifies that ProcessModel uses the child ProcessSystem run wrapper so warm-start is applied.
    */
   @Test
@@ -171,6 +200,30 @@ class ProcessModelExecutionOptimizationTest {
   }
 
   /**
+   * Verifies that adaptive scheduling preserves child optimized execution for wide child graphs.
+   */
+  @Test
+  void adaptiveParallelismUsesChildOptimizedRunsForWideAreas() {
+    RecordingProcessSystem firstProcess = new RecordingProcessSystem("first");
+    RecordingProcessSystem secondProcess = new RecordingProcessSystem("second");
+    addIndependentStreams(firstProcess, 4);
+    addIndependentStreams(secondProcess, 4);
+    ProcessModel model = new ProcessModel();
+    model.add("first", firstProcess);
+    model.add("second", secondProcess);
+
+    model.run();
+
+    assertTrue(firstProcess.getOptimizedRuns() > 0,
+        "wide first area should keep child optimized execution");
+    assertTrue(secondProcess.getOptimizedRuns() > 0,
+        "wide second area should keep child optimized execution");
+    assertEquals(0, firstProcess.getSequentialRuns(), "first area should not be forced sequential");
+    assertEquals(0, secondProcess.getSequentialRuns(),
+        "second area should not be forced sequential");
+  }
+
+  /**
    * Verifies that removing an area invalidates the cached inter-area execution plan.
    */
   @Test
@@ -193,6 +246,52 @@ class ProcessModelExecutionOptimizationTest {
   }
 
   /**
+   * Verifies that child topology edits invalidate ProcessModel's cached area execution plan.
+   */
+  @Test
+  void childTopologyChangeInvalidatesCachedExecutionPlan() {
+    RecordingProcessSystem upstream = new RecordingProcessSystem("upstream");
+    RecordingProcessSystem downstream = new RecordingProcessSystem("downstream");
+    Stream feed = new Stream("feed", createGasFluid());
+    Separator separator = new Separator("separator", feed);
+    upstream.add(feed);
+    upstream.add(separator);
+    ProcessModel model = new ProcessModel();
+    model.add("upstream", upstream);
+    model.add("downstream", downstream);
+
+    model.run();
+
+    StreamInterface boundaryStream = separator.getGasOutStream();
+    downstream.add(boundaryStream);
+    List<String> events = new CopyOnWriteArrayList<>();
+    model.setProgressListener(new ProcessModel.ModelProgressListener() {
+      /** {@inheritDoc} */
+      @Override
+      public void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex,
+          int totalAreas, int iterationNumber) {
+        events.add("before:" + areaName);
+      }
+
+      /** {@inheritDoc} */
+      @Override
+      public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex,
+          int totalAreas, int iterationNumber) {
+        events.add("after:" + areaName);
+      }
+    });
+
+    model.run();
+
+    int afterUpstream = events.indexOf("after:upstream");
+    int beforeDownstream = events.indexOf("before:downstream");
+    assertTrue(afterUpstream >= 0, "upstream should complete");
+    assertTrue(beforeDownstream >= 0, "downstream should start");
+    assertTrue(beforeDownstream > afterUpstream,
+        "downstream should wait for upstream after child topology change");
+  }
+
+  /**
    * Verifies that fast large-model mode applies warm-start and Wegstein recycle acceleration.
    */
   @Test
@@ -207,7 +306,11 @@ class ProcessModelExecutionOptimizationTest {
 
     assertEquals(1, updatedRecycles, "one recycle should be updated");
     assertTrue(model.isUseFastRecycleConvergence(), "fast recycle convergence should be enabled");
+    assertTrue(model.isUseCoordinatedRecycleAcceleration(),
+        "coordinated recycle acceleration should be enabled in fast mode");
     assertTrue(process.isUseFlashWarmStart(), "warm-start should be enabled on existing area");
+    assertTrue(process.isUseCoordinatedRecycleAcceleration(),
+        "coordinated acceleration should be enabled on existing area");
     assertEquals(AccelerationMethod.WEGSTEIN, recycle.getAccelerationMethod(),
         "existing recycle should use Wegstein acceleration");
 
@@ -217,6 +320,8 @@ class ProcessModelExecutionOptimizationTest {
     model.add("later", laterProcess);
 
     assertTrue(laterProcess.isUseFlashWarmStart(), "warm-start should apply to new area");
+    assertTrue(laterProcess.isUseCoordinatedRecycleAcceleration(),
+        "coordinated acceleration should apply to new area");
     assertEquals(AccelerationMethod.WEGSTEIN, laterRecycle.getAccelerationMethod(),
         "new recycle should inherit Wegstein acceleration");
   }

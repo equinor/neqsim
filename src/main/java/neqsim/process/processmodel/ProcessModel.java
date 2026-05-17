@@ -92,6 +92,9 @@ public class ProcessModel implements Runnable, Serializable {
     /** Areas that consume each boundary stream, keyed by stream identity. */
     private final Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers;
 
+    /** Structure versions observed when this plan was built. */
+    private final Map<ProcessSystem, Long> structureVersions;
+
     /**
      * Creates an immutable execution-plan holder.
      *
@@ -99,15 +102,18 @@ public class ProcessModel implements Runnable, Serializable {
      * @param successors downstream area adjacency map
      * @param boundaryStreams streams crossing process-area boundaries
      * @param boundaryConsumers consumer areas for each boundary stream
+     * @param structureVersions process structure versions observed while building the plan
      */
     private AreaExecutionPlan(List<List<ProcessSystem>> levels,
         Map<ProcessSystem, java.util.Set<ProcessSystem>> successors,
         java.util.Set<Object> boundaryStreams,
-        Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers) {
+        Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers,
+        Map<ProcessSystem, Long> structureVersions) {
       this.levels = levels;
       this.successors = successors;
       this.boundaryStreams = boundaryStreams;
       this.boundaryConsumers = boundaryConsumers;
+      this.structureVersions = structureVersions;
     }
   }
 
@@ -129,6 +135,12 @@ public class ProcessModel implements Runnable, Serializable {
   private boolean preventNestedParallelExecution = true;
 
   /**
+   * When true, ProcessModel chooses per execution level whether outer area parallelism or inner
+   * ProcessSystem parallelism is expected to give better throughput.
+   */
+  private boolean useAdaptiveModelParallelism = true;
+
+  /**
    * When true, clean process areas may be skipped on later outer iterations when their boundary
    * streams did not change beyond convergence tolerances.
    */
@@ -136,6 +148,9 @@ public class ProcessModel implements Runnable, Serializable {
 
   /** Whether fast recycle convergence options have been requested for large models. */
   private boolean useFastRecycleConvergence = false;
+
+  /** Whether coordinated acceleration should be enabled for recycle-heavy child areas. */
+  private boolean useCoordinatedRecycleAcceleration = false;
 
   /**
    * Transient listener for model-level progress callbacks. Marked transient to avoid serialization
@@ -355,6 +370,31 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Returns whether adaptive model-level parallelism is enabled.
+   *
+   * @return true if ProcessModel may choose inner ProcessSystem parallelism for wide child areas
+   */
+  public boolean isUseAdaptiveModelParallelism() {
+    return useAdaptiveModelParallelism;
+  }
+
+  /**
+   * Enable or disable adaptive model-level parallelism.
+   *
+   * <p>
+   * When enabled, a ProcessModel execution level with multiple independent areas may run those
+   * areas sequentially while preserving child ProcessSystem optimized execution if the children
+   * expose substantially more parallel work than the outer area level. This avoids the blunt choice
+   * of always using outer area parallelism with child parallelism disabled.
+   * </p>
+   *
+   * @param useAdaptiveModelParallelism true to enable adaptive outer-vs-inner parallelism choice
+   */
+  public void setUseAdaptiveModelParallelism(boolean useAdaptiveModelParallelism) {
+    this.useAdaptiveModelParallelism = useAdaptiveModelParallelism;
+  }
+
+  /**
    * Returns whether incremental area execution is enabled for outer iterations.
    *
    * @return true if unchanged areas may be skipped on later outer iterations
@@ -392,8 +432,10 @@ public class ProcessModel implements Runnable, Serializable {
    */
   public int enableFastLargeModelMode() {
     preventNestedParallelExecution = true;
+    useAdaptiveModelParallelism = true;
     useIncrementalAreaExecution = true;
     useFastRecycleConvergence = true;
+    setUseCoordinatedRecycleAcceleration(true);
     setUseFlashWarmStart(true);
     return setRecycleAccelerationMethod(AccelerationMethod.WEGSTEIN);
   }
@@ -405,6 +447,27 @@ public class ProcessModel implements Runnable, Serializable {
    */
   public boolean isUseFastRecycleConvergence() {
     return useFastRecycleConvergence;
+  }
+
+  /**
+   * Enable or disable coordinated recycle acceleration across all registered ProcessSystems.
+   *
+   * @param useCoordinatedRecycleAcceleration true to enable coordinated recycle acceleration
+   */
+  public void setUseCoordinatedRecycleAcceleration(boolean useCoordinatedRecycleAcceleration) {
+    this.useCoordinatedRecycleAcceleration = useCoordinatedRecycleAcceleration;
+    for (ProcessSystem p : processes.values()) {
+      p.setUseCoordinatedRecycleAcceleration(useCoordinatedRecycleAcceleration);
+    }
+  }
+
+  /**
+   * Returns whether coordinated recycle acceleration is propagated to child ProcessSystems.
+   *
+   * @return true if coordinated recycle acceleration is enabled at model level
+   */
+  public boolean isUseCoordinatedRecycleAcceleration() {
+    return useCoordinatedRecycleAcceleration;
   }
 
   /**
@@ -661,6 +724,9 @@ public class ProcessModel implements Runnable, Serializable {
     }
     if (useFastRecycleConvergence) {
       process.setRecycleAccelerationMethod(AccelerationMethod.WEGSTEIN);
+    }
+    if (useCoordinatedRecycleAcceleration) {
+      process.setUseCoordinatedRecycleAcceleration(true);
     }
     processes.put(name, process);
     invalidateTopology();
@@ -1101,6 +1167,10 @@ public class ProcessModel implements Runnable, Serializable {
       }
       if (activeLevel.size() == 1) {
         runSingleProcess(activeLevel.get(0));
+      } else if (shouldPreserveInnerParallelism(activeLevel)) {
+        for (ProcessSystem process : activeLevel) {
+          runSingleProcess(process, true);
+        }
       } else {
         List<Future<?>> futures = new ArrayList<>();
         for (ProcessSystem process : activeLevel) {
@@ -1242,6 +1312,21 @@ public class ProcessModel implements Runnable, Serializable {
             return;
           }
         }
+      } else if (shouldPreserveInnerParallelism(activeLevel)) {
+        for (ProcessSystem process : activeLevel) {
+          try {
+            runSingleProcess(process, true);
+            notifyProcessAreaComplete(areaName.get(process), process, areaIndex.get(process),
+                totalAreas, iterationNumber);
+          } catch (Exception e) {
+            publishModelEvent(ProcessEvent.EventType.ERROR,
+                "Error in process area '" + areaName.get(process) + "': " + e.getMessage(),
+                ProcessEvent.Severity.ERROR);
+            if (!notifyProcessAreaError(areaName.get(process), process, e)) {
+              return;
+            }
+          }
+        }
       } else {
         List<Future<?>> futures = new ArrayList<>();
         for (ProcessSystem process : activeLevel) {
@@ -1258,6 +1343,53 @@ public class ProcessModel implements Runnable, Serializable {
               totalAreas, iterationNumber);
         }
       }
+    }
+  }
+
+  /**
+   * Determines whether a parallel area level should preserve child ProcessSystem parallelism.
+   *
+   * @param activeLevel process areas ready to run at the same model dependency level
+   * @return true if the level should run areas sequentially with child optimized execution enabled
+   */
+  private boolean shouldPreserveInnerParallelism(List<ProcessSystem> activeLevel) {
+    if (!useAdaptiveModelParallelism || !preventNestedParallelExecution || !useOptimizedExecution
+        || activeLevel == null || activeLevel.size() <= 1) {
+      return false;
+    }
+    int maxInnerParallelism = 1;
+    int innerParallelismScore = 0;
+    for (ProcessSystem process : activeLevel) {
+      int estimatedParallelism = estimateInnerParallelism(process);
+      maxInnerParallelism = Math.max(maxInnerParallelism, estimatedParallelism);
+      innerParallelismScore += Math.max(0, estimatedParallelism - 1);
+    }
+    return maxInnerParallelism > activeLevel.size() && innerParallelismScore >= activeLevel.size();
+  }
+
+  /**
+   * Estimates useful child-level parallelism for a ProcessSystem.
+   *
+   * @param process process area to inspect
+   * @return estimated maximum child parallelism, with one as the conservative floor
+   */
+  private int estimateInnerParallelism(ProcessSystem process) {
+    if (process == null || process.hasAdjusters()) {
+      return 1;
+    }
+    try {
+      neqsim.process.processmodel.graph.ProcessGraph.ParallelPartition partition =
+          process.getParallelPartition();
+      if (partition == null) {
+        return 1;
+      }
+      return Math.max(1, partition.getMaxParallelism());
+    } catch (Exception exception) {
+      if (logger.isDebugEnabled()) {
+        logger.debug("Could not estimate inner parallelism for process " + process.getName(),
+            exception);
+      }
+      return 1;
     }
   }
 
@@ -1336,11 +1468,45 @@ public class ProcessModel implements Runnable, Serializable {
    * @return cached execution plan for the current model topology
    */
   private AreaExecutionPlan getAreaExecutionPlan() {
-    if (cachedAreaExecutionPlan == null || areaExecutionPlanDirty) {
+    if (cachedAreaExecutionPlan == null || areaExecutionPlanDirty
+        || isAreaExecutionPlanStale(cachedAreaExecutionPlan)) {
       cachedAreaExecutionPlan = buildAreaExecutionPlan();
       areaExecutionPlanDirty = false;
     }
     return cachedAreaExecutionPlan;
+  }
+
+  /**
+   * Checks whether a cached area execution plan is stale.
+   *
+   * @param plan cached plan to inspect
+   * @return true if registered areas or child topology versions differ from the cached plan
+   */
+  private boolean isAreaExecutionPlanStale(AreaExecutionPlan plan) {
+    if (plan == null || plan.structureVersions.size() != processes.size()) {
+      return true;
+    }
+    for (ProcessSystem process : processes.values()) {
+      Long cachedVersion = plan.structureVersions.get(process);
+      if (cachedVersion == null || cachedVersion.longValue() != process.getStructureVersion()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Captures structure versions for all process areas in insertion order.
+   *
+   * @param allProcesses process areas to capture
+   * @return identity map from process area to current structure version
+   */
+  private Map<ProcessSystem, Long> captureStructureVersions(List<ProcessSystem> allProcesses) {
+    Map<ProcessSystem, Long> structureVersions = new java.util.IdentityHashMap<>();
+    for (ProcessSystem process : allProcesses) {
+      structureVersions.put(process, Long.valueOf(process.getStructureVersion()));
+    }
+    return structureVersions;
   }
 
   /**
@@ -1358,6 +1524,7 @@ public class ProcessModel implements Runnable, Serializable {
   private AreaExecutionPlan buildAreaExecutionPlan() {
     List<ProcessSystem> allProcesses = new ArrayList<>(processes.values());
     int n = allProcesses.size();
+    Map<ProcessSystem, Long> structureVersions = captureStructureVersions(allProcesses);
 
     Map<ProcessSystem, java.util.Set<ProcessSystem>> successorMap = new IdentityHashMap<>();
     java.util.Set<Object> boundaryStreams =
@@ -1370,7 +1537,7 @@ public class ProcessModel implements Runnable, Serializable {
 
     if (n == 0) {
       return new AreaExecutionPlan(new ArrayList<>(), successorMap, boundaryStreams,
-          boundaryConsumers);
+          boundaryConsumers, structureVersions);
     }
 
     // Index processes by their position in the insertion order for
@@ -1517,7 +1684,8 @@ public class ProcessModel implements Runnable, Serializable {
         single.add(p);
         fallback.add(single);
       }
-      return new AreaExecutionPlan(fallback, successorMap, boundaryStreams, boundaryConsumers);
+      return new AreaExecutionPlan(fallback, successorMap, boundaryStreams, boundaryConsumers,
+          structureVersions);
     }
 
     int maxLevel = 0;
@@ -1531,7 +1699,8 @@ public class ProcessModel implements Runnable, Serializable {
     for (int i = 0; i < n; i++) {
       levels.get(level[i]).add(allProcesses.get(i));
     }
-    return new AreaExecutionPlan(levels, successorMap, boundaryStreams, boundaryConsumers);
+    return new AreaExecutionPlan(levels, successorMap, boundaryStreams, boundaryConsumers,
+        structureVersions);
   }
 
   /**
