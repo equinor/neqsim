@@ -1206,6 +1206,9 @@ public class ProcessSystem extends SimulationBaseClass {
   private RuntimeException createWorkerExecutionException(String mode,
       java.util.concurrent.ExecutionException exception) {
     Throwable cause = exception.getCause();
+    if (cause instanceof java.util.concurrent.CompletionException && cause.getCause() != null) {
+      cause = cause.getCause();
+    }
     if (cause instanceof RuntimeException) {
       return (RuntimeException) cause;
     }
@@ -1926,7 +1929,7 @@ public class ProcessSystem extends SimulationBaseClass {
             try {
               runUnitProfiled(unit, id);
             } catch (Exception ex) {
-              logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+              throw createUnitRunException(unit, ex);
             }
           }
         }
@@ -2092,7 +2095,7 @@ public class ProcessSystem extends SimulationBaseClass {
             try {
               runUnitProfiled(unit, calcId);
             } catch (Exception ex) {
-              logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+              throw createUnitRunException(unit, ex);
             }
           }
         }
@@ -2119,7 +2122,7 @@ public class ProcessSystem extends SimulationBaseClass {
       java.util.concurrent.CompletableFuture
           .allOf(taskFutures.toArray(new java.util.concurrent.CompletableFuture[0])).get();
     } catch (java.util.concurrent.ExecutionException ex) {
-      logger.error("Dataflow execution error: " + ex.getMessage(), ex);
+      throw createWorkerExecutionException("Dataflow", ex);
     }
 
     for (ProcessEquipmentInterface unit : unitOperations) {

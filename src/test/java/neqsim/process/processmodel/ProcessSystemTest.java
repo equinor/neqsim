@@ -98,6 +98,43 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     }
   }
 
+  private static class SharedInletFailingUnit extends FailingProcessUnit {
+    private static final long serialVersionUID = 1000L;
+    private final List<StreamInterface> inletStreams;
+
+    SharedInletFailingUnit(String name, StreamInterface inletStream) {
+      super(name);
+      this.inletStreams = java.util.Collections.singletonList(inletStream);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public List<StreamInterface> getInletStreams() {
+      return inletStreams;
+    }
+  }
+
+  private static class PassiveMultiInputTestUnit extends ProcessEquipmentBaseClass {
+    private static final long serialVersionUID = 1000L;
+    private final List<StreamInterface> inletStreams;
+
+    PassiveMultiInputTestUnit(String name, StreamInterface firstInlet,
+        StreamInterface secondInlet) {
+      super(name);
+      this.inletStreams = java.util.Arrays.asList(firstInlet, secondInlet);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void run(UUID id) {}
+
+    /** {@inheritDoc} */
+    @Override
+    public List<StreamInterface> getInletStreams() {
+      return inletStreams;
+    }
+  }
+
   @BeforeEach
   public void setUp() {
     p = new ProcessSystem();
@@ -241,6 +278,41 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
       bus.unsubscribe(ProcessEvent.EventType.ERROR, listener);
       bus.clearHistory();
     }
+  }
+
+  @Test
+  public void testRunParallelPropagatesFailureFromSharedInputGroup() throws InterruptedException {
+    neqsim.thermo.system.SystemInterface firstFluid =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    firstFluid.addComponent("methane", 1.0);
+    firstFluid.setMixingRule("classic");
+    Stream firstInlet = new Stream("shared input feed", firstFluid);
+
+    neqsim.thermo.system.SystemInterface secondFluid =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    secondFluid.addComponent("methane", 1.0);
+    secondFluid.setMixingRule("classic");
+    Stream secondInlet = new Stream("second input feed", secondFluid);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(firstInlet);
+    process.add(secondInlet);
+    process.add(new SharedInletFailingUnit("SharedFailingUnit", firstInlet));
+    process.add(new PassiveMultiInputTestUnit("PassiveMultiInputUnit", firstInlet, secondInlet));
+
+    RuntimeException thrown =
+        Assertions.assertThrows(RuntimeException.class, () -> process.runParallel(UUID.randomUUID()));
+    Assertions.assertTrue(thrown.getMessage().contains("SharedFailingUnit"));
+  }
+
+  @Test
+  public void testRunDataflowPropagatesUnitFailure() {
+    ProcessSystem process = new ProcessSystem();
+    process.add(new FailingProcessUnit("DataflowFailingUnit"));
+
+    RuntimeException thrown =
+        Assertions.assertThrows(RuntimeException.class, () -> process.runDataflow(UUID.randomUUID()));
+    Assertions.assertTrue(thrown.getMessage().contains("DataflowFailingUnit"));
   }
 
   @Test
