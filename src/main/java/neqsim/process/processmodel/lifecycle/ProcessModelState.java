@@ -125,6 +125,13 @@ public class ProcessModelState implements Serializable {
     state.executionConfig.temperatureTolerance = model.getTemperatureTolerance();
     state.executionConfig.pressureTolerance = model.getPressureTolerance();
     state.executionConfig.useOptimizedExecution = model.isUseOptimizedExecution();
+    state.executionConfig.preventNestedParallelExecution = model.isPreventNestedParallelExecution();
+    state.executionConfig.useAdaptiveModelParallelism = model.isUseAdaptiveModelParallelism();
+    state.executionConfig.useIncrementalAreaExecution = model.isUseIncrementalAreaExecution();
+    state.executionConfig.useFastRecycleConvergence = model.isUseFastRecycleConvergence();
+    state.executionConfig.useCoordinatedRecycleAcceleration =
+        model.isUseCoordinatedRecycleAcceleration();
+    state.executionConfig.useFlashWarmStart = model.isUseFlashWarmStart();
 
     // Capture each ProcessSystem's state
     for (ProcessSystem process : model.getAllProcesses()) {
@@ -238,6 +245,12 @@ public class ProcessModelState implements Serializable {
     model.setTemperatureTolerance(executionConfig.temperatureTolerance);
     model.setPressureTolerance(executionConfig.pressureTolerance);
     model.setUseOptimizedExecution(executionConfig.useOptimizedExecution);
+    model.setPreventNestedParallelExecution(executionConfig.preventNestedParallelExecution);
+    model.setUseAdaptiveModelParallelism(executionConfig.useAdaptiveModelParallelism);
+    model.setUseIncrementalAreaExecution(executionConfig.useIncrementalAreaExecution);
+    model.setUseFastRecycleConvergence(executionConfig.useFastRecycleConvergence);
+    model.setUseCoordinatedRecycleAcceleration(executionConfig.useCoordinatedRecycleAcceleration);
+    model.setUseFlashWarmStart(executionConfig.useFlashWarmStart);
 
     // Reconstruct each ProcessSystem
     for (Map.Entry<String, ProcessSystemState> entry : processStates.entrySet()) {
@@ -903,6 +916,12 @@ public class ProcessModelState implements Serializable {
     private double temperatureTolerance = 1e-4;
     private double pressureTolerance = 1e-4;
     private boolean useOptimizedExecution = true;
+    private boolean preventNestedParallelExecution = true;
+    private boolean useAdaptiveModelParallelism = true;
+    private boolean useIncrementalAreaExecution = true;
+    private boolean useFastRecycleConvergence = false;
+    private boolean useCoordinatedRecycleAcceleration = false;
+    private boolean useFlashWarmStart = false;
     private String solverType = "sequential";
     private double tolerance = 1e-6;
     private boolean parallelExecution = false;
@@ -996,6 +1015,114 @@ public class ProcessModelState implements Serializable {
      */
     public void setUseOptimizedExecution(boolean useOptimizedExecution) {
       this.useOptimizedExecution = useOptimizedExecution;
+    }
+
+    /**
+     * Checks if nested ProcessSystem parallelism is prevented during model-level parallel runs.
+     *
+     * @return true if nested parallel execution is prevented
+     */
+    public boolean isPreventNestedParallelExecution() {
+      return preventNestedParallelExecution;
+    }
+
+    /**
+     * Sets whether nested ProcessSystem parallelism is prevented during model-level parallel runs.
+     *
+     * @param preventNestedParallelExecution true to prevent nested parallel execution
+     */
+    public void setPreventNestedParallelExecution(boolean preventNestedParallelExecution) {
+      this.preventNestedParallelExecution = preventNestedParallelExecution;
+    }
+
+    /**
+     * Checks if adaptive model-level parallelism is enabled.
+     *
+     * @return true if adaptive outer-vs-inner parallelism selection is enabled
+     */
+    public boolean isUseAdaptiveModelParallelism() {
+      return useAdaptiveModelParallelism;
+    }
+
+    /**
+     * Sets whether adaptive model-level parallelism is enabled.
+     *
+     * @param useAdaptiveModelParallelism true to enable adaptive parallelism selection
+     */
+    public void setUseAdaptiveModelParallelism(boolean useAdaptiveModelParallelism) {
+      this.useAdaptiveModelParallelism = useAdaptiveModelParallelism;
+    }
+
+    /**
+     * Checks if incremental area execution is enabled.
+     *
+     * @return true if unchanged areas may be skipped on later outer iterations
+     */
+    public boolean isUseIncrementalAreaExecution() {
+      return useIncrementalAreaExecution;
+    }
+
+    /**
+     * Sets whether incremental area execution is enabled.
+     *
+     * @param useIncrementalAreaExecution true to allow unchanged areas to be skipped
+     */
+    public void setUseIncrementalAreaExecution(boolean useIncrementalAreaExecution) {
+      this.useIncrementalAreaExecution = useIncrementalAreaExecution;
+    }
+
+    /**
+     * Checks if fast recycle convergence propagation is enabled.
+     *
+     * @return true if fast recycle settings are propagated to ProcessSystems
+     */
+    public boolean isUseFastRecycleConvergence() {
+      return useFastRecycleConvergence;
+    }
+
+    /**
+     * Sets whether fast recycle convergence propagation is enabled.
+     *
+     * @param useFastRecycleConvergence true to propagate fast recycle settings
+     */
+    public void setUseFastRecycleConvergence(boolean useFastRecycleConvergence) {
+      this.useFastRecycleConvergence = useFastRecycleConvergence;
+    }
+
+    /**
+     * Checks if coordinated recycle acceleration is enabled.
+     *
+     * @return true if coordinated recycle acceleration is enabled
+     */
+    public boolean isUseCoordinatedRecycleAcceleration() {
+      return useCoordinatedRecycleAcceleration;
+    }
+
+    /**
+     * Sets whether coordinated recycle acceleration is enabled.
+     *
+     * @param useCoordinatedRecycleAcceleration true to enable coordinated recycle acceleration
+     */
+    public void setUseCoordinatedRecycleAcceleration(boolean useCoordinatedRecycleAcceleration) {
+      this.useCoordinatedRecycleAcceleration = useCoordinatedRecycleAcceleration;
+    }
+
+    /**
+     * Checks if flash warm-start is enabled.
+     *
+     * @return true if flash warm-start is propagated to ProcessSystems
+     */
+    public boolean isUseFlashWarmStart() {
+      return useFlashWarmStart;
+    }
+
+    /**
+     * Sets whether flash warm-start is enabled.
+     *
+     * @param useFlashWarmStart true to enable flash warm-start propagation
+     */
+    public void setUseFlashWarmStart(boolean useFlashWarmStart) {
+      this.useFlashWarmStart = useFlashWarmStart;
     }
 
     /**

@@ -450,6 +450,25 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Enable or disable propagation of fast recycle convergence settings.
+   *
+   * <p>
+   * When enabled, existing and newly added {@link ProcessSystem}s receive Wegstein acceleration on
+   * their {@link neqsim.process.equipment.util.Recycle} units. Disabling this flag stops
+   * propagation to later areas but does not reset acceleration methods already applied to existing
+   * recycles.
+   * </p>
+   *
+   * @param useFastRecycleConvergence true to apply fast recycle settings to registered areas
+   */
+  public void setUseFastRecycleConvergence(boolean useFastRecycleConvergence) {
+    this.useFastRecycleConvergence = useFastRecycleConvergence;
+    if (useFastRecycleConvergence) {
+      setRecycleAccelerationMethod(AccelerationMethod.WEGSTEIN);
+    }
+  }
+
+  /**
    * Enable or disable coordinated recycle acceleration across all registered ProcessSystems.
    *
    * @param useCoordinatedRecycleAcceleration true to enable coordinated recycle acceleration
@@ -2422,6 +2441,13 @@ public class ProcessModel implements Runnable, Serializable {
     root.addProperty("flowTolerance", getFlowTolerance());
     root.addProperty("temperatureTolerance", getTemperatureTolerance());
     root.addProperty("pressureTolerance", getPressureTolerance());
+    root.addProperty("useOptimizedExecution", isUseOptimizedExecution());
+    root.addProperty("preventNestedParallelExecution", isPreventNestedParallelExecution());
+    root.addProperty("useAdaptiveModelParallelism", isUseAdaptiveModelParallelism());
+    root.addProperty("useIncrementalAreaExecution", isUseIncrementalAreaExecution());
+    root.addProperty("useFastRecycleConvergence", isUseFastRecycleConvergence());
+    root.addProperty("useCoordinatedRecycleAcceleration", isUseCoordinatedRecycleAcceleration());
+    root.addProperty("useFlashWarmStart", isUseFlashWarmStart());
 
     JsonArray interAreaLinks = exportInterAreaLinks(producedStreamReferences);
     if (interAreaLinks.size() > 0) {
@@ -2565,6 +2591,29 @@ public class ProcessModel implements Runnable, Serializable {
     if (root.has("pressureTolerance")) {
       model.setPressureTolerance(root.get("pressureTolerance").getAsDouble());
     }
+    if (root.has("useOptimizedExecution")) {
+      model.setUseOptimizedExecution(root.get("useOptimizedExecution").getAsBoolean());
+    }
+    if (root.has("preventNestedParallelExecution")) {
+      model.setPreventNestedParallelExecution(
+          root.get("preventNestedParallelExecution").getAsBoolean());
+    }
+    if (root.has("useAdaptiveModelParallelism")) {
+      model.setUseAdaptiveModelParallelism(root.get("useAdaptiveModelParallelism").getAsBoolean());
+    }
+    if (root.has("useIncrementalAreaExecution")) {
+      model.setUseIncrementalAreaExecution(root.get("useIncrementalAreaExecution").getAsBoolean());
+    }
+    if (root.has("useFastRecycleConvergence")) {
+      model.setUseFastRecycleConvergence(root.get("useFastRecycleConvergence").getAsBoolean());
+    }
+    if (root.has("useCoordinatedRecycleAcceleration")) {
+      model.setUseCoordinatedRecycleAcceleration(
+          root.get("useCoordinatedRecycleAcceleration").getAsBoolean());
+    }
+    if (root.has("useFlashWarmStart")) {
+      model.setUseFlashWarmStart(root.get("useFlashWarmStart").getAsBoolean());
+    }
     com.google.gson.JsonObject areas = root.getAsJsonObject("areas");
 
     for (Map.Entry<String, com.google.gson.JsonElement> entry : areas.entrySet()) {
@@ -2598,12 +2647,17 @@ public class ProcessModel implements Runnable, Serializable {
     if (interAreaLinks == null) {
       return warnings;
     }
+    boolean topologyChanged = false;
     for (JsonElement linkElement : interAreaLinks) {
       if (!linkElement.isJsonObject()) {
         warnings.add("Skipping interAreaLinks entry because it is not a JSON object");
         continue;
       }
-      applyInterAreaLink(linkElement.getAsJsonObject(), warnings);
+      topologyChanged =
+          applyInterAreaLink(linkElement.getAsJsonObject(), warnings) || topologyChanged;
+    }
+    if (topologyChanged) {
+      invalidateTopology();
     }
     return warnings;
   }
@@ -2613,8 +2667,9 @@ public class ProcessModel implements Runnable, Serializable {
    *
    * @param link JSON link definition
    * @param warnings mutable warning list to append to
+   * @return true if the link was applied and model topology changed
    */
-  private void applyInterAreaLink(JsonObject link, List<String> warnings) {
+  private boolean applyInterAreaLink(JsonObject link, List<String> warnings) {
     String sourceArea = getString(link, "sourceArea");
     String sourceReference = getString(link, "source");
     String targetArea = getString(link, "targetArea");
@@ -2626,29 +2681,32 @@ public class ProcessModel implements Runnable, Serializable {
     ProcessSystem targetProcess = processes.get(targetArea);
     if (sourceProcess == null) {
       warnings.add("Inter-area link source area not found: " + sourceArea);
-      return;
+      return false;
     }
     if (targetProcess == null) {
       warnings.add("Inter-area link target area not found: " + targetArea);
-      return;
+      return false;
     }
 
     StreamInterface sourceStream = resolveAreaStreamReference(sourceProcess, sourceReference);
     if (sourceStream == null) {
       warnings
           .add("Inter-area link source stream not found: " + sourceArea + "::" + sourceReference);
-      return;
+      return false;
     }
 
     ProcessEquipmentInterface targetUnit = targetProcess.getUnit(targetUnitName);
     if (targetUnit == null) {
       warnings.add("Inter-area link target unit not found: " + targetArea + "::" + targetUnitName);
-      return;
+      return false;
     }
     if (!replaceInletReference(targetUnit, targetInletIndex, sourceStream)) {
       warnings.add("Could not apply inter-area link to " + targetArea + "::" + targetUnitName
           + " inlet " + targetInletIndex);
+      return false;
     }
+    targetProcess.invalidateGraph();
+    return true;
   }
 
   /**

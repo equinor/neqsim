@@ -8,11 +8,14 @@ import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.AccelerationMethod;
 import neqsim.process.equipment.util.Recycle;
+import neqsim.process.processmodel.lifecycle.ProcessModelState;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.ThermodynamicModelSettings;
@@ -333,6 +336,66 @@ class ProcessModelExecutionOptimizationTest {
   }
 
   /**
+   * Verifies that applying JSON inter-area links invalidates ProcessModel topology caches.
+   */
+  @Test
+  void applyingInterAreaLinksInvalidatesCachedExecutionPlan() {
+    ProcessSystem upstream = new ProcessSystem("upstream");
+    Stream feed = new Stream("feed", createGasFluid());
+    Separator separator = new Separator("separator", feed);
+    upstream.add(feed);
+    upstream.add(separator);
+
+    ProcessSystem downstream = new ProcessSystem("downstream");
+    Stream placeholder = new Stream("placeholder", createGasFluid());
+    Separator consumer = new Separator("consumer", placeholder);
+    downstream.add(placeholder);
+    downstream.add(consumer);
+
+    ProcessModel model = new ProcessModel();
+    model.add("upstream", upstream);
+    model.add("downstream", downstream);
+    model.run();
+
+    JsonObject link = new JsonObject();
+    link.addProperty("sourceArea", "upstream");
+    link.addProperty("source", "separator.gasOut");
+    link.addProperty("targetArea", "downstream");
+    link.addProperty("targetUnit", "consumer");
+    link.addProperty("targetInletIndex", 0);
+    JsonArray links = new JsonArray();
+    links.add(link);
+
+    assertTrue(model.applyInterAreaLinks(links).isEmpty(), "inter-area link should apply");
+
+    List<String> events = new CopyOnWriteArrayList<>();
+    model.setProgressListener(new ProcessModel.ModelProgressListener() {
+      /** {@inheritDoc} */
+      @Override
+      public void onBeforeProcessArea(String areaName, ProcessSystem process, int areaIndex,
+          int totalAreas, int iterationNumber) {
+        events.add("before:" + areaName);
+      }
+
+      /** {@inheritDoc} */
+      @Override
+      public void onProcessAreaComplete(String areaName, ProcessSystem process, int areaIndex,
+          int totalAreas, int iterationNumber) {
+        events.add("after:" + areaName);
+      }
+    });
+
+    model.run();
+
+    int afterUpstream = events.indexOf("after:upstream");
+    int beforeDownstream = events.indexOf("before:downstream");
+    assertTrue(afterUpstream >= 0, "upstream should complete");
+    assertTrue(beforeDownstream >= 0, "downstream should start");
+    assertTrue(beforeDownstream > afterUpstream,
+        "downstream should wait for upstream after inter-area link application");
+  }
+
+  /**
    * Verifies that fast large-model mode applies warm-start and Wegstein recycle acceleration.
    */
   @Test
@@ -365,5 +428,91 @@ class ProcessModelExecutionOptimizationTest {
         "coordinated acceleration should apply to new area");
     assertEquals(AccelerationMethod.WEGSTEIN, laterRecycle.getAccelerationMethod(),
         "new recycle should inherit Wegstein acceleration");
+  }
+
+  /**
+   * Verifies that ProcessModel JSON preserves execution optimization flags.
+   */
+  @Test
+  void executionOptimizationFlagsRoundTripThroughProcessModelJson() {
+    ProcessSystem process = new ProcessSystem("area");
+    process.add(new Stream("feed", createGasFluid()));
+    ProcessModel model = new ProcessModel();
+    model.setUseOptimizedExecution(false);
+    model.setPreventNestedParallelExecution(false);
+    model.setUseAdaptiveModelParallelism(false);
+    model.setUseIncrementalAreaExecution(false);
+    model.setUseFastRecycleConvergence(true);
+    model.setUseCoordinatedRecycleAcceleration(true);
+    model.setUseFlashWarmStart(true);
+    model.add("area", process);
+
+    ProcessModel restored = ProcessModel.fromJson(model.toJson(false));
+
+    assertFalse(restored.isUseOptimizedExecution(), "optimized execution flag should round-trip");
+    assertFalse(restored.isPreventNestedParallelExecution(),
+        "nested-parallel prevention flag should round-trip");
+    assertFalse(restored.isUseAdaptiveModelParallelism(),
+        "adaptive parallelism flag should round-trip");
+    assertFalse(restored.isUseIncrementalAreaExecution(),
+        "incremental execution flag should round-trip");
+    assertTrue(restored.isUseFastRecycleConvergence(),
+        "fast recycle convergence flag should round-trip");
+    assertTrue(restored.isUseCoordinatedRecycleAcceleration(),
+        "coordinated recycle acceleration flag should round-trip");
+    assertTrue(restored.isUseFlashWarmStart(), "flash warm-start flag should round-trip");
+    assertTrue(restored.get("area").isUseFlashWarmStart(),
+        "flash warm-start should propagate to rebuilt areas");
+    assertTrue(restored.get("area").isUseCoordinatedRecycleAcceleration(),
+        "coordinated acceleration should propagate to rebuilt areas");
+  }
+
+  /**
+   * Verifies that ProcessModel lifecycle state preserves execution optimization flags.
+   */
+  @Test
+  void executionOptimizationFlagsRoundTripThroughLifecycleState() {
+    ProcessSystem process = new ProcessSystem("area");
+    ProcessModel model = new ProcessModel();
+    model.setUseOptimizedExecution(false);
+    model.setPreventNestedParallelExecution(false);
+    model.setUseAdaptiveModelParallelism(false);
+    model.setUseIncrementalAreaExecution(false);
+    model.setUseFastRecycleConvergence(true);
+    model.setUseCoordinatedRecycleAcceleration(true);
+    model.setUseFlashWarmStart(true);
+    model.add("area", process);
+
+    ProcessModelState state = model.exportState();
+    ProcessModelState.ExecutionConfig config = state.getExecutionConfig();
+    ProcessModel restored = state.toProcessModel();
+
+    assertFalse(config.isUseOptimizedExecution(), "state should capture optimized execution");
+    assertFalse(config.isPreventNestedParallelExecution(),
+        "state should capture nested-parallel prevention");
+    assertFalse(config.isUseAdaptiveModelParallelism(),
+        "state should capture adaptive parallelism");
+    assertFalse(config.isUseIncrementalAreaExecution(),
+        "state should capture incremental execution");
+    assertTrue(config.isUseFastRecycleConvergence(), "state should capture fast recycle mode");
+    assertTrue(config.isUseCoordinatedRecycleAcceleration(),
+        "state should capture coordinated recycle acceleration");
+    assertTrue(config.isUseFlashWarmStart(), "state should capture flash warm-start");
+
+    assertFalse(restored.isUseOptimizedExecution(), "optimized execution flag should restore");
+    assertFalse(restored.isPreventNestedParallelExecution(),
+        "nested-parallel prevention flag should restore");
+    assertFalse(restored.isUseAdaptiveModelParallelism(),
+        "adaptive parallelism flag should restore");
+    assertFalse(restored.isUseIncrementalAreaExecution(),
+        "incremental execution flag should restore");
+    assertTrue(restored.isUseFastRecycleConvergence(), "fast recycle flag should restore");
+    assertTrue(restored.isUseCoordinatedRecycleAcceleration(),
+        "coordinated acceleration flag should restore");
+    assertTrue(restored.isUseFlashWarmStart(), "flash warm-start flag should restore");
+    assertTrue(restored.get("area").isUseFlashWarmStart(),
+        "flash warm-start should propagate to restored areas");
+    assertTrue(restored.get("area").isUseCoordinatedRecycleAcceleration(),
+        "coordinated acceleration should propagate to restored areas");
   }
 }
