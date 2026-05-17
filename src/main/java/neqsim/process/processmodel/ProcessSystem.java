@@ -671,6 +671,37 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Creates a runtime exception for a failed unit operation run and logs the failure with unit
+   * context.
+   *
+   * @param unit the unit operation that failed
+   * @param cause the exception thrown by the unit operation
+   * @return runtime exception containing the unit name and original cause
+   */
+  private RuntimeException createUnitRunException(ProcessEquipmentInterface unit, Exception cause) {
+    String unitName = unit == null ? "<unknown>" : unit.getName();
+    logger.error("equipment: " + unitName + " error: " + cause.getMessage(), cause);
+    return new RuntimeException("Failed to run unit operation " + unitName, cause);
+  }
+
+  /**
+   * Converts an execution exception from a worker thread into the original runtime failure when
+   * possible.
+   *
+   * @param mode the execution mode that failed
+   * @param exception the execution exception returned by the worker future
+   * @return runtime exception to propagate to the process caller
+   */
+  private RuntimeException createWorkerExecutionException(String mode,
+      java.util.concurrent.ExecutionException exception) {
+    Throwable cause = exception.getCause();
+    if (cause instanceof RuntimeException) {
+      return (RuntimeException) cause;
+    }
+    return new RuntimeException(mode + " execution failed", cause == null ? exception : cause);
+  }
+
+  /**
    * Checks if the process contains any Adjuster units that require iterative convergence.
    *
    * @return true if there are Adjuster units in the process
@@ -823,7 +854,7 @@ public class ProcessSystem extends SimulationBaseClass {
             try {
               unit.run(id);
             } catch (Exception ex) {
-              logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+              throw createUnitRunException(unit, ex);
             }
           }
         }
@@ -840,7 +871,7 @@ public class ProcessSystem extends SimulationBaseClass {
                 try {
                   unit.run(calcId);
                 } catch (Exception ex) {
-                  logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+                  throw createUnitRunException(unit, ex);
                 }
               }
             }
@@ -850,7 +881,7 @@ public class ProcessSystem extends SimulationBaseClass {
           try {
             future.get();
           } catch (java.util.concurrent.ExecutionException ex) {
-            logger.error("Parallel execution error: " + ex.getMessage(), ex);
+            throw createWorkerExecutionException("Parallel", ex);
           }
         }
       }
@@ -902,15 +933,14 @@ public class ProcessSystem extends SimulationBaseClass {
                 unit.run(id);
               }
             } catch (Exception ex) {
-              logger.error("error running unit operation " + unit.getName() + " " + ex.getMessage(),
-                  ex);
+              throw createUnitRunException(unit, ex);
             }
           }
           if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
             try {
               unit.run(id);
             } catch (Exception ex) {
-              logger.error(ex.getMessage(), ex);
+              throw createUnitRunException(unit, ex);
             }
           }
         }
@@ -1103,7 +1133,7 @@ public class ProcessSystem extends SimulationBaseClass {
           try {
             unit.run(id);
           } catch (Exception ex) {
-            logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+            throw createUnitRunException(unit, ex);
           }
         }
       } else if (level.size() > 1) {
@@ -1125,8 +1155,7 @@ public class ProcessSystem extends SimulationBaseClass {
                 try {
                   unitToRun.run(calcId);
                 } catch (Exception ex) {
-                  logger.error("equipment: " + unitToRun.getName() + " error: " + ex.getMessage(),
-                      ex);
+                  throw createUnitRunException(unitToRun, ex);
                 }
               }));
             }
@@ -1141,7 +1170,7 @@ public class ProcessSystem extends SimulationBaseClass {
                   try {
                     unit.run(calcId);
                   } catch (Exception ex) {
-                    logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+                    throw createUnitRunException(unit, ex);
                   }
                 }
               }
@@ -1154,7 +1183,7 @@ public class ProcessSystem extends SimulationBaseClass {
           try {
             future.get();
           } catch (java.util.concurrent.ExecutionException ex) {
-            logger.error("Parallel execution error: " + ex.getMessage(), ex);
+            throw createWorkerExecutionException("Parallel", ex);
           }
         }
       }
@@ -1439,18 +1468,14 @@ public class ProcessSystem extends SimulationBaseClass {
               unit.run(id);
             }
           } catch (Exception ex) {
-            // String error = ex.getMessage();
-            logger.error("error running unit uperation " + unit.getName() + " " + ex.getMessage(),
-                ex);
-            ex.printStackTrace();
+            throw createUnitRunException(unit, ex);
           }
         }
         if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
           try {
             unit.run(id);
           } catch (Exception ex) {
-            // String error = ex.getMessage();
-            logger.error(ex.getMessage(), ex);
+            throw createUnitRunException(unit, ex);
           }
         }
       }
@@ -1506,11 +1531,8 @@ public class ProcessSystem extends SimulationBaseClass {
           break;
         }
         unitOperations.get(i).run(id);
-        // }
       } catch (Exception ex) {
-        // String error = ex.getMessage();
-        logger.error(
-            "equipment: " + unitOperations.get(i).getName() + " errror: " + ex.getMessage(), ex);
+        throw createUnitRunException(unitOperations.get(i), ex);
       }
     }
     for (int i = 0; i < unitOperations.size(); i++) {
@@ -2400,16 +2422,59 @@ public class ProcessSystem extends SimulationBaseClass {
     return minimumFlowForMassBalanceError;
   }
 
+  /**
+   * Calculates total inlet flow for a unit from its reported inlet streams.
+   *
+   * @param unitOp unit operation to inspect
+   * @param unit flow-rate unit
+   * @return total inlet flow in the requested unit, or fallback flow for source units
+   */
   private double calculateInletFlow(ProcessEquipmentInterface unitOp, String unit) {
     try {
-      // Try to get inlet flow from the unit operation's thermodynamic system
+      List<StreamInterface> inletStreams = unitOp.getInletStreams();
+      if (inletStreams != null && !inletStreams.isEmpty()) {
+        return sumStreamFlows(inletStreams, unit);
+      }
+    } catch (Exception e) {
+      logger.debug("Could not read inlet streams for unit {}: {}", unitOp.getName(),
+          e.getMessage());
+    }
+
+    if (unitOp instanceof StreamInterface) {
+      try {
+        return ((StreamInterface) unitOp).getFlowRate(unit);
+      } catch (Exception e) {
+        logger.debug("Could not read stream flow for unit {}: {}", unitOp.getName(),
+            e.getMessage());
+      }
+    }
+
+    try {
       if (unitOp.getThermoSystem() != null) {
         return unitOp.getThermoSystem().getFlowRate(unit);
       }
     } catch (Exception e) {
-      // Ignore and return 0
+      logger.debug("Could not read thermo-system flow for unit {}: {}", unitOp.getName(),
+          e.getMessage());
     }
     return 0.0;
+  }
+
+  /**
+   * Sums flow rates for reported streams.
+   *
+   * @param streams streams to sum
+   * @param unit flow-rate unit
+   * @return total flow rate in the requested unit
+   */
+  private double sumStreamFlows(List<StreamInterface> streams, String unit) {
+    double totalFlow = 0.0;
+    for (StreamInterface stream : streams) {
+      if (stream != null) {
+        totalFlow += stream.getFlowRate(unit);
+      }
+    }
+    return totalFlow;
   }
 
   private double calculatePercentError(double massBalanceError, double inletFlow) {

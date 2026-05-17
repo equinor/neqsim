@@ -197,7 +197,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   /** {@inheritDoc} */
   @Override
   public Stream clone(String name) {
-    if (this.getName() == name) {
+    if (this.getName().equals(name)) {
       throw new RuntimeException(
           new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
     }

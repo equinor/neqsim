@@ -412,4 +412,60 @@ public class BeggsAndBrillsPipeTest {
     // frictionFactor/8 in denominator). With corrected correlation, heat transfer is higher.
     Assertions.assertEquals(temperatureOut2, 52, 5);
   }
+
+  @Test
+  public void testInheritedConstantSurfaceTemperatureSetterActivatesHeatTransfer() {
+    double pressure = 10; // bara
+    double temperature = 20; // C
+    double massFlowRate = 0.25; // kg/s
+    double heatTransferCoeff = 755; // W/m2K
+
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(
+        (273.15 + 45), ThermodynamicConstantsInterface.referencePressure);
+    testSystem.addComponent("water", 1.0);
+    testSystem.setMixingRule(2);
+    testSystem.init(0);
+    testSystem.useVolumeCorrection(true);
+    testSystem.setPressure(pressure, "bara");
+    testSystem.setTemperature(temperature, "C");
+    testSystem.setTotalFlowRate(massFlowRate, "kg/sec");
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    testSystem.initPhysicalProperties();
+
+    Stream stream1 = new Stream("Stream inherited K", testSystem.clone());
+    stream1.setFlowRate(massFlowRate, "kg/sec");
+    PipeBeggsAndBrills inheritedSetterPipe = new PipeBeggsAndBrills("pipe inherited K", stream1);
+    inheritedSetterPipe.setPipeWallRoughness(0);
+    inheritedSetterPipe.setLength(6.0);
+    inheritedSetterPipe.setAngle(0);
+    inheritedSetterPipe.setDiameter(0.05);
+    inheritedSetterPipe.setNumberOfIncrements(10);
+    inheritedSetterPipe.setConstantSurfaceTemperature(373.15);
+    inheritedSetterPipe.setHeatTransferCoefficient(heatTransferCoeff);
+
+    Stream stream2 = new Stream("Stream explicit K", testSystem.clone());
+    stream2.setFlowRate(massFlowRate, "kg/sec");
+    PipeBeggsAndBrills explicitSetterPipe = new PipeBeggsAndBrills("pipe explicit K", stream2);
+    explicitSetterPipe.setPipeWallRoughness(0);
+    explicitSetterPipe.setLength(6.0);
+    explicitSetterPipe.setAngle(0);
+    explicitSetterPipe.setDiameter(0.05);
+    explicitSetterPipe.setNumberOfIncrements(10);
+    explicitSetterPipe.setConstantSurfaceTemperature(373.15, "K");
+    explicitSetterPipe.setHeatTransferCoefficient(heatTransferCoeff);
+
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
+    operations.add(stream1);
+    operations.add(inheritedSetterPipe);
+    operations.add(stream2);
+    operations.add(explicitSetterPipe);
+    operations.run();
+
+    Assertions.assertEquals(explicitSetterPipe.getOutletTemperature(),
+        inheritedSetterPipe.getOutletTemperature(), 1e-9);
+    Assertions.assertTrue(inheritedSetterPipe.getOutletTemperature() > stream1.getTemperature());
+  }
 }

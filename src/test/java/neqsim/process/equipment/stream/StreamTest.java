@@ -62,6 +62,38 @@ class StreamTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  public void testEquilibriumStreamCloneDoesNotReplaceOriginalFluid() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    EquilibriumStream original = new EquilibriumStream("equilibrium stream", fluid);
+
+    EquilibriumStream clone = original.clone();
+    clone.setPressure(20.0, "bara");
+
+    assertTrue(original.getFluid() == fluid, "Original stream fluid reference should be unchanged");
+    assertFalse(clone.getFluid() == original.getFluid(), "Clone should hold an independent fluid");
+    assertEquals(10.0, original.getPressure("bara"), 1e-12);
+    assertEquals(20.0, clone.getPressure("bara"), 1e-12);
+  }
+
+  @Test
+  public void testNeqStreamCloneDoesNotReplaceOriginalFluid() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    NeqStream original = new NeqStream("neq stream", fluid);
+
+    NeqStream clone = original.clone();
+    clone.setPressure(20.0, "bara");
+
+    assertTrue(original.getFluid() == fluid, "Original stream fluid reference should be unchanged");
+    assertFalse(clone.getFluid() == original.getFluid(), "Clone should hold an independent fluid");
+    assertEquals(10.0, original.getPressure("bara"), 1e-12);
+    assertEquals(20.0, clone.getPressure("bara"), 1e-12);
+  }
+
+  @Test
   public void testNeedRecalculation() {
     ((Stream) processOps.getUnit("inlet stream")).setTemperature(298.1, "K");
     assertTrue(((Stream) processOps.getUnit("inlet stream")).needRecalculation());
