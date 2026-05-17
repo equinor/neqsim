@@ -28,6 +28,7 @@ import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import neqsim.util.validation.ValidationResult;
 
 /**
  * Models a tray based distillation column with optional condenser and reboiler.
@@ -121,6 +122,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private int maxTrayOptimizationCandidates = DEFAULT_MAX_TRAY_OPTIMIZATION_CANDIDATES;
   /** Maximum elapsed time allowed in tray optimization searches in seconds. */
   private double maxTrayOptimizationTimeSeconds = DEFAULT_MAX_TRAY_OPTIMIZATION_TIME_SECONDS;
+  /** Latest shortcut-initialization result, or {@code null} if none has been applied. */
+  private transient ShortcutInitializationResult lastShortcutInitializationResult = null;
   /** Track whether temperature tolerance has been manually overridden. */
   private boolean temperatureToleranceCustomized = false;
   /** Track whether mass balance tolerance has been manually overridden. */
@@ -149,11 +152,334 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     /** Naphtali-Sandholm simultaneous correction of full MESH equation blocks. */
     NAPHTALI_SANDHOLM,
     /** MESH residual-monitored solve with inside-out initialization. */
-    MESH_RESIDUAL
+    MESH_RESIDUAL,
+    /** Automatically select a robust solver from the built-in strategy set. */
+    AUTO
+  }
+
+  /** Phase withdrawn by a column side draw. */
+  public enum SideDrawPhase {
+    /** Withdraw vapor traffic from the selected tray. */
+    GAS,
+    /** Withdraw liquid traffic from the selected tray. */
+    LIQUID
+  }
+
+  /** Operating mode for the condenser tray. */
+  public enum CondenserMode {
+    /** Equilibrium partial condenser with vapor product and liquid reflux. */
+    PARTIAL,
+    /** Bubble-point total condenser with split liquid reflux and distillate product. */
+    TOTAL,
+    /** Partial condenser with an explicit fixed liquid reflux stream split. */
+    LIQUID_REFLUX_SPLIT
+  }
+
+  /** Operating mode for the reboiler tray. */
+  public enum ReboilerMode {
+    /** Equilibrium reboiler without an explicit boilup/reflux ratio. */
+    EQUILIBRIUM,
+    /** Reboiler solved with an explicit vapor boilup/reflux ratio. */
+    VAPOR_BOILUP_RATIO
+  }
+
+  /** Dynamic column model formulation. */
+  public enum DynamicColumnModel {
+    /** Experimental explicit-Euler holdup model retained for screening studies. */
+    EXPERIMENTAL_EULER
+  }
+
+  /**
+   * Flow specification for a side-product draw.
+   *
+   * <p>
+   * The column uses this specification as a tear variable by adjusting the corresponding tray
+   * side-draw fraction until the withdrawn stream flow matches the target flow.
+   * </p>
+   *
+   * @author esol
+   * @version 1.0
+   */
+  public static class ColumnSideDrawSpecification implements java.io.Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000L;
+
+    private final int trayNumber;
+    private final SideDrawPhase phase;
+    private final double targetFlowRate;
+    private final String flowUnit;
+    private double tolerance = 1.0e-4;
+    private int maxIterations = 12;
+    private transient double lastActualFlowRate = Double.NaN;
+    private transient double lastRelativeResidual = Double.POSITIVE_INFINITY;
+
+    /**
+     * Create a side-draw flow specification.
+     *
+     * @param trayNumber bottom-up tray index where the draw is located
+     * @param phase side-draw phase
+     * @param targetFlowRate target side-draw flow rate
+     * @param flowUnit flow-rate unit for the target and actual flow
+     */
+    public ColumnSideDrawSpecification(int trayNumber, SideDrawPhase phase, double targetFlowRate,
+        String flowUnit) {
+      if (phase == null) {
+        throw new IllegalArgumentException("Side draw phase cannot be null");
+      }
+      if (!Double.isFinite(targetFlowRate) || targetFlowRate < 0.0) {
+        throw new IllegalArgumentException("Side draw target flow must be finite and >= 0");
+      }
+      if (flowUnit == null || flowUnit.trim().isEmpty()) {
+        throw new IllegalArgumentException("Side draw flow unit cannot be empty");
+      }
+      this.trayNumber = trayNumber;
+      this.phase = phase;
+      this.targetFlowRate = targetFlowRate;
+      this.flowUnit = flowUnit;
+    }
+
+    /**
+     * Get the draw tray number.
+     *
+     * @return bottom-up tray index
+     */
+    public int getTrayNumber() {
+      return trayNumber;
+    }
+
+    /**
+     * Get the side-draw phase.
+     *
+     * @return side-draw phase
+     */
+    public SideDrawPhase getPhase() {
+      return phase;
+    }
+
+    /**
+     * Get the target side-draw flow rate.
+     *
+     * @return target flow rate in {@link #getFlowUnit()}
+     */
+    public double getTargetFlowRate() {
+      return targetFlowRate;
+    }
+
+    /**
+     * Get the flow unit used by this specification.
+     *
+     * @return flow unit string
+     */
+    public String getFlowUnit() {
+      return flowUnit;
+    }
+
+    /**
+     * Get the relative convergence tolerance.
+     *
+     * @return relative tolerance
+     */
+    public double getTolerance() {
+      return tolerance;
+    }
+
+    /**
+     * Set the relative convergence tolerance.
+     *
+     * @param tolerance positive finite relative tolerance
+     */
+    public void setTolerance(double tolerance) {
+      if (!Double.isFinite(tolerance) || tolerance <= 0.0) {
+        throw new IllegalArgumentException("Side draw tolerance must be finite and positive");
+      }
+      this.tolerance = tolerance;
+    }
+
+    /**
+     * Get the maximum number of tear iterations requested by this specification.
+     *
+     * @return maximum iterations
+     */
+    public int getMaxIterations() {
+      return maxIterations;
+    }
+
+    /**
+     * Set the maximum number of tear iterations requested by this specification.
+     *
+     * @param maxIterations positive maximum iteration count
+     */
+    public void setMaxIterations(int maxIterations) {
+      if (maxIterations <= 0) {
+        throw new IllegalArgumentException("Side draw maxIterations must be positive");
+      }
+      this.maxIterations = maxIterations;
+    }
+
+    /**
+     * Get the latest actual flow rate.
+     *
+     * @return latest actual flow rate in {@link #getFlowUnit()}, or {@link Double#NaN}
+     */
+    public double getLastActualFlowRate() {
+      return lastActualFlowRate;
+    }
+
+    /**
+     * Get the latest relative residual.
+     *
+     * @return relative residual from the latest side-draw update
+     */
+    public double getLastRelativeResidual() {
+      return lastRelativeResidual;
+    }
+
+    /**
+     * Store latest actual flow and return its relative residual.
+     *
+     * @param actualFlowRate actual draw flow rate in {@link #getFlowUnit()}
+     * @return relative residual
+     */
+    private double updateActualFlowRate(double actualFlowRate) {
+      lastActualFlowRate = actualFlowRate;
+      double scale = Math.max(1.0e-12, Math.abs(targetFlowRate));
+      lastRelativeResidual = Math.abs(actualFlowRate - targetFlowRate) / scale;
+      return lastRelativeResidual;
+    }
+  }
+
+  /**
+   * Liquid pumparound circuit that withdraws liquid from one tray, changes temperature, and returns
+   * it to another tray.
+   *
+   * @author esol
+   * @version 1.0
+   */
+  public static class ColumnPumparound implements java.io.Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000;
+
+    private final String name;
+    private final int drawTrayNumber;
+    private final int returnTrayNumber;
+    private final double drawFraction;
+    private final double temperatureDrop;
+    private transient StreamInterface drawStream;
+    private transient StreamInterface returnStream;
+    private transient double lastReturnFlowKgPerHour = 0.0;
+
+    /**
+     * Create a liquid pumparound definition.
+     *
+     * @param name pumparound name
+     * @param drawTrayNumber tray index where liquid is withdrawn
+     * @param returnTrayNumber tray index where cooled/heated liquid is returned
+     * @param drawFraction fraction of tray liquid traffic withdrawn
+     * @param temperatureDrop temperature drop from draw to return in Kelvin
+     */
+    public ColumnPumparound(String name, int drawTrayNumber, int returnTrayNumber,
+        double drawFraction, double temperatureDrop) {
+      this.name = name;
+      this.drawTrayNumber = drawTrayNumber;
+      this.returnTrayNumber = returnTrayNumber;
+      this.drawFraction = drawFraction;
+      this.temperatureDrop = temperatureDrop;
+    }
+
+    /**
+     * Get the pumparound name.
+     *
+     * @return pumparound name
+     */
+    public String getName() {
+      return name;
+    }
+
+    /**
+     * Get the draw tray number.
+     *
+     * @return draw tray index
+     */
+    public int getDrawTrayNumber() {
+      return drawTrayNumber;
+    }
+
+    /**
+     * Get the return tray number.
+     *
+     * @return return tray index
+     */
+    public int getReturnTrayNumber() {
+      return returnTrayNumber;
+    }
+
+    /**
+     * Get the liquid draw fraction.
+     *
+     * @return draw fraction
+     */
+    public double getDrawFraction() {
+      return drawFraction;
+    }
+
+    /**
+     * Get the temperature drop from draw to return.
+     *
+     * @return temperature drop in Kelvin
+     */
+    public double getTemperatureDrop() {
+      return temperatureDrop;
+    }
+
+    /**
+     * Get the latest liquid draw stream.
+     *
+     * @return latest draw stream, or {@code null} before the column has been run
+     */
+    public StreamInterface getDrawStream() {
+      return drawStream;
+    }
+
+    /**
+     * Get the latest liquid return stream.
+     *
+     * @return latest return stream, or {@code null} before the first draw update
+     */
+    public StreamInterface getReturnStream() {
+      return returnStream;
+    }
+
+    /**
+     * Update the return stream from a tray liquid draw.
+     *
+     * @param newDrawStream latest liquid draw stream
+     * @param id calculation identifier
+     * @return relative change in return flow rate
+     */
+    private double updateReturnStream(StreamInterface newDrawStream, UUID id) {
+      drawStream = newDrawStream;
+      double previousFlow = lastReturnFlowKgPerHour;
+      SystemInterface returnSystem = newDrawStream.getThermoSystem().clone();
+      double returnTemperature = Math.max(1.0, returnSystem.getTemperature() - temperatureDrop);
+      returnSystem.setTemperature(returnTemperature);
+      Stream newReturnStream = new Stream(name + " return", returnSystem);
+      newReturnStream.run(id);
+      if (returnStream == null) {
+        returnStream = newReturnStream;
+      } else {
+        returnStream.setThermoSystem(newReturnStream.getThermoSystem().clone());
+        returnStream.setCalculationIdentifier(id);
+      }
+      lastReturnFlowKgPerHour = Math.abs(returnStream.getFlowRate("kg/hr"));
+      double scale = Math.max(1.0e-12, Math.max(previousFlow, lastReturnFlowKgPerHour));
+      return Math.abs(lastReturnFlowKgPerHour - previousFlow) / scale;
+    }
   }
 
   /** Selected solver algorithm. Defaults to direct substitution. */
   private SolverType solverType = SolverType.DIRECT_SUBSTITUTION;
+  /** Solver strategy that actually completed the latest solve. */
+  private transient SolverType lastSolverTypeUsed = SolverType.DIRECT_SUBSTITUTION;
 
   /**
    * Relaxation factor used when {@link SolverType#DAMPED_SUBSTITUTION} is active.
@@ -307,6 +633,34 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private Map<Integer, List<StreamInterface>> directExternalFeedStreams = new HashMap<>();
   private List<StreamInterface> unassignedFeedStreams = new ArrayList<>();
+  /** Flow specifications for side-product draws. */
+  private List<ColumnSideDrawSpecification> sideDrawSpecifications = new ArrayList<>();
+  /** Liquid pumparound circuits configured on the column. */
+  private List<ColumnPumparound> pumparounds = new ArrayList<>();
+  /** Maximum outer iterations used to converge pumparound return streams. */
+  private int maxPumparoundIterations = 8;
+  /** Relative return-flow tolerance for pumparound outer iterations. */
+  private double pumparoundTolerance = 1.0e-4;
+  /** Maximum outer iterations used to converge column tear variables. */
+  private int maxColumnTearIterations = 12;
+  /** Relative tolerance used for side-draw and hydraulic tear variables. */
+  private double columnTearTolerance = 1.0e-4;
+  /** Whether tray/packing hydraulic pressure drop should update the pressure profile. */
+  private boolean hydraulicPressureDropCouplingEnabled = false;
+  /** Internals type used when hydraulic pressure-drop coupling is active. */
+  private String hydraulicPressureDropInternalsType = "sieve";
+  /** Latest coupled hydraulic pressure drop in Pa. */
+  private double lastHydraulicPressureDropPa = 0.0;
+  /** Latest relative pressure-profile change from hydraulic coupling. */
+  private double lastHydraulicPressureDropResidual = 0.0;
+  /** Number of outer tear-variable iterations used in the latest run. */
+  private int lastColumnTearIterationCount = 0;
+  /** Maximum relative residual from the latest outer tear-variable solve. */
+  private double lastColumnTearResidual = 0.0;
+  /** Whether the latest outer tear-variable solve satisfied tolerance. */
+  private boolean lastColumnTearConverged = true;
+  /** Latest maximum relative pumparound return-stream change. */
+  private double lastPumparoundRelativeChange = 0.0;
 
   /**
    * <p>
@@ -360,6 +714,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   // ============ Dynamic Simulation Fields ============
   /** Whether the dynamic tray model is enabled for transient simulation. */
   private boolean dynamicColumnEnabled = false;
+  /** Dynamic model formulation currently used by {@link #runTransient(double, UUID)}. */
+  private DynamicColumnModel dynamicColumnModel = DynamicColumnModel.EXPERIMENTAL_EULER;
   /** Liquid holdup per tray in moles. Indexed by tray number. */
   private transient double[] trayLiquidHoldup = null;
   /** Weir height on each tray in metres. */
@@ -704,6 +1060,29 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     assignUnassignedFeeds();
     convergenceHistory = new ArrayList<>();
     applyDirectSpecifications();
+    if (hasActiveColumnTearVariables()) {
+      solveWithColumnTearVariables(id);
+      return;
+    }
+    solveConfiguredColumn(id);
+  }
+
+  /**
+   * Check whether side draws, pumparounds, or hydraulics add outer tear variables.
+   *
+   * @return {@code true} when an outer tear-variable solve is required
+   */
+  private boolean hasActiveColumnTearVariables() {
+    return !sideDrawSpecifications.isEmpty() || !pumparounds.isEmpty()
+        || hydraulicPressureDropCouplingEnabled;
+  }
+
+  /**
+   * Solve the configured column once and update diagnostics.
+   *
+   * @param id calculation identifier
+   */
+  private void solveConfiguredColumn(UUID id) {
     if (hasAdjustableSpecifications()) {
       solveWithSpecifications(id);
       updateSpecificationResiduals();
@@ -713,6 +1092,308 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     solveInner(id);
     updateSpecificationResiduals();
     updateMeshResiduals();
+  }
+
+  /**
+   * Solve the column with outer iterations for side draws, pumparounds, and hydraulics.
+   *
+   * @param id calculation identifier
+   */
+  private void solveWithColumnTearVariables(UUID id) {
+    int iterationLimit = getColumnTearIterationLimit();
+    double tolerance = getColumnTearTolerance();
+    lastColumnTearIterationCount = 0;
+    lastColumnTearResidual = Double.POSITIVE_INFINITY;
+    lastColumnTearConverged = false;
+    for (int iteration = 0; iteration < iterationLimit; iteration++) {
+      solveConfiguredColumn(id);
+      double relativeChange = updateColumnTearVariables(id);
+      lastColumnTearIterationCount = iteration + 1;
+      lastColumnTearResidual = relativeChange;
+      if (iteration > 0 && relativeChange <= tolerance) {
+        setDoInitializion(true);
+        solveConfiguredColumn(id);
+        updateSideDrawSpecificationResidualsOnly();
+        lastColumnTearResidual = Math.max(relativeChange, getMaxSideDrawSpecificationResidual());
+        lastColumnTearConverged = lastColumnTearResidual <= tolerance;
+        return;
+      }
+      if (iteration < iterationLimit - 1) {
+        setDoInitializion(true);
+      }
+    }
+    setDoInitializion(true);
+    solveConfiguredColumn(id);
+    updateSideDrawSpecificationResidualsOnly();
+    lastColumnTearResidual = Math.max(lastColumnTearResidual, getMaxSideDrawSpecificationResidual());
+    lastColumnTearConverged = lastColumnTearResidual <= tolerance;
+  }
+
+  /**
+   * Get the maximum iteration count for all active column tear variables.
+   *
+   * @return maximum outer tear-variable iterations
+   */
+  private int getColumnTearIterationLimit() {
+    int iterationLimit = Math.max(maxColumnTearIterations, maxPumparoundIterations);
+    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
+      iterationLimit = Math.max(iterationLimit, specification.getMaxIterations());
+    }
+    return Math.max(1, iterationLimit);
+  }
+
+  /**
+   * Get the active tolerance for all column tear variables.
+   *
+   * @return active relative tolerance
+   */
+  private double getColumnTearTolerance() {
+    double tolerance = Math.min(columnTearTolerance, pumparoundTolerance);
+    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
+      tolerance = Math.min(tolerance, specification.getTolerance());
+    }
+    return Math.max(1.0e-12, tolerance);
+  }
+
+  /**
+   * Update all outer tear variables from the latest column solution.
+   *
+   * @param id calculation identifier
+   * @return maximum relative change or residual across tear variables
+   */
+  private double updateColumnTearVariables(UUID id) {
+    double maxRelativeChange = 0.0;
+    maxRelativeChange = Math.max(maxRelativeChange, updateSideDrawSpecificationFractions());
+    maxRelativeChange = Math.max(maxRelativeChange, enforceSideDrawFeedInventoryLimit());
+    maxRelativeChange = Math.max(maxRelativeChange, updatePumparoundReturnStreams(id));
+    maxRelativeChange = Math.max(maxRelativeChange, updatePressureProfileFromHydraulics());
+    return maxRelativeChange;
+  }
+
+  /**
+   * Update all pumparound return streams from the latest tray liquid draws.
+   *
+   * @param id calculation identifier
+   * @return maximum relative return-flow change across pumparounds
+   */
+  private double updatePumparoundReturnStreams(UUID id) {
+    double maxRelativeChange = 0.0;
+    for (ColumnPumparound pumparound : pumparounds) {
+      StreamInterface drawStream = getTray(pumparound.getDrawTrayNumber())
+          .getLiquidPumparoundDrawStream();
+      maxRelativeChange = Math.max(maxRelativeChange, pumparound.updateReturnStream(drawStream, id));
+    }
+    lastPumparoundRelativeChange = maxRelativeChange;
+    return maxRelativeChange;
+  }
+
+  /**
+   * Update configured side-draw fractions to meet flow specifications.
+   *
+   * @return maximum relative side-draw flow residual
+   */
+  private double updateSideDrawSpecificationFractions() {
+    double maxRelativeResidual = 0.0;
+    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
+      StreamInterface sideDrawStream = getSideDrawStream(specification.getTrayNumber(),
+          specification.getPhase());
+      double actualFlowRate = sideDrawStream.getFlowRate(specification.getFlowUnit());
+      double residual = specification.updateActualFlowRate(actualFlowRate);
+      maxRelativeResidual = Math.max(maxRelativeResidual, residual);
+      if (residual <= specification.getTolerance()) {
+        continue;
+      }
+      double newFraction = calculateNextSideDrawFraction(specification, actualFlowRate);
+      setSideDrawFractionWithinLimit(specification.getTrayNumber(), specification.getPhase(),
+          newFraction);
+    }
+    return maxRelativeResidual;
+  }
+
+  /** Update side-draw flow residuals without changing side-draw fractions. */
+  private void updateSideDrawSpecificationResidualsOnly() {
+    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
+      StreamInterface sideDrawStream = getSideDrawStream(specification.getTrayNumber(),
+          specification.getPhase());
+      specification.updateActualFlowRate(sideDrawStream.getFlowRate(specification.getFlowUnit()));
+    }
+  }
+
+  /**
+   * Get the maximum residual across side-draw flow specifications.
+   *
+   * @return maximum relative residual, or zero when no side-draw specs are configured
+   */
+  private double getMaxSideDrawSpecificationResidual() {
+    double maxResidual = 0.0;
+    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
+      maxResidual = Math.max(maxResidual, specification.getLastRelativeResidual());
+    }
+    return maxResidual;
+  }
+
+  /**
+   * Calculate the next side-draw fraction for a flow specification.
+   *
+   * @param specification side-draw flow specification
+   * @param actualFlowRate latest actual flow rate
+   * @return next candidate side-draw fraction
+   */
+  private double calculateNextSideDrawFraction(ColumnSideDrawSpecification specification,
+      double actualFlowRate) {
+    double currentFraction = getSideDrawFraction(specification.getTrayNumber(),
+        specification.getPhase());
+    if (specification.getTargetFlowRate() <= 1.0e-12) {
+      return 0.0;
+    }
+    if (Math.abs(actualFlowRate) <= 1.0e-12) {
+      return currentFraction > 0.0 ? currentFraction + 0.05 : 0.05;
+    }
+    return currentFraction * specification.getTargetFlowRate() / actualFlowRate;
+  }
+
+  /**
+   * Get the configured side-draw fraction on a tray.
+   *
+   * @param trayNumber bottom-up tray index
+   * @param phase side-draw phase
+   * @return current side-draw fraction
+   */
+  private double getSideDrawFraction(int trayNumber, SideDrawPhase phase) {
+    SimpleTray tray = getTray(trayNumber);
+    if (phase == SideDrawPhase.GAS) {
+      return tray.getGasSideDrawFraction();
+    }
+    if (phase == SideDrawPhase.LIQUID) {
+      return tray.getLiquidSideDrawFraction();
+    }
+    throw new IllegalArgumentException("Side draw phase cannot be null");
+  }
+
+  /**
+   * Set a side-draw fraction after clamping it to the available tray phase traffic.
+   *
+   * @param trayNumber bottom-up tray index
+   * @param phase side-draw phase
+   * @param fraction requested side-draw fraction
+   */
+  private void setSideDrawFractionWithinLimit(int trayNumber, SideDrawPhase phase,
+      double fraction) {
+    double limitedFraction = Math.max(0.0,
+        Math.min(getMaximumSideDrawFraction(trayNumber, phase), fraction));
+    setSideDrawFraction(trayNumber, phase, limitedFraction);
+  }
+
+  /**
+   * Get the maximum side-draw fraction available for the selected tray phase.
+   *
+   * @param trayNumber bottom-up tray index
+   * @param phase side-draw phase
+   * @return maximum allowed side-draw fraction
+   */
+  private double getMaximumSideDrawFraction(int trayNumber, SideDrawPhase phase) {
+    if (phase == SideDrawPhase.GAS) {
+      return 1.0;
+    }
+    if (phase == SideDrawPhase.LIQUID) {
+      return Math.max(0.0, 1.0 - getTray(trayNumber).getLiquidPumparoundDrawFraction());
+    }
+    throw new IllegalArgumentException("Side draw phase cannot be null");
+  }
+
+  /**
+   * Limit side-product fractions so side draws cannot remove more component inventory than feeds.
+   *
+   * @return relative reduction applied to side-draw fractions, or zero if no reduction was needed
+   */
+  private double enforceSideDrawFeedInventoryLimit() {
+    if (getSideDrawStreams().isEmpty()) {
+      return 0.0;
+    }
+    double[] feedComponentMoles = getFeedComponentMoles();
+    double[] sideDrawComponentMoles = getSideDrawComponentMoles(feedComponentMoles.length);
+    double scaleFactor = 1.0;
+    for (int componentIndex = 0; componentIndex < sideDrawComponentMoles.length; componentIndex++) {
+      double sideDrawMoles = sideDrawComponentMoles[componentIndex];
+      if (sideDrawMoles > feedComponentMoles[componentIndex] + 1.0e-12) {
+        scaleFactor = Math.min(scaleFactor, feedComponentMoles[componentIndex] / sideDrawMoles);
+      }
+    }
+    if (scaleFactor >= 1.0 - 1.0e-10) {
+      return 0.0;
+    }
+    scaleSideDrawFractions(scaleFactor);
+    return 1.0 - scaleFactor;
+  }
+
+  /**
+   * Scale all side-draw fractions by a common factor.
+   *
+   * @param scaleFactor common scale factor from zero to one
+   */
+  private void scaleSideDrawFractions(double scaleFactor) {
+    for (int trayNumber = 0; trayNumber < numberOfTrays; trayNumber++) {
+      SimpleTray tray = getTray(trayNumber);
+      if (tray.getGasSideDrawFraction() > 0.0) {
+        tray.setGasSideDrawFraction(tray.getGasSideDrawFraction() * scaleFactor);
+      }
+      if (tray.getLiquidSideDrawFraction() > 0.0) {
+        tray.setLiquidSideDrawFraction(tray.getLiquidSideDrawFraction() * scaleFactor);
+      }
+    }
+  }
+
+  /**
+   * Update the column pressure profile from tray or packing hydraulic pressure drop.
+   *
+   * @return relative pressure-profile change
+   */
+  private double updatePressureProfileFromHydraulics() {
+    if (!hydraulicPressureDropCouplingEnabled) {
+      return 0.0;
+    }
+    try {
+      ColumnInternalsDesigner designer = calcColumnInternals(hydraulicPressureDropInternalsType);
+      double pressureDropPa = Math.max(0.0, designer.getTotalPressureDrop());
+      lastHydraulicPressureDropPa = pressureDropPa;
+      lastHydraulicPressureDropResidual = applyHydraulicPressureDrop(pressureDropPa);
+      return lastHydraulicPressureDropResidual;
+    } catch (Exception exception) {
+      logger.warn("Could not update hydraulic pressure drop for column {}", getName(), exception);
+      lastHydraulicPressureDropResidual = Double.POSITIVE_INFINITY;
+      return lastHydraulicPressureDropResidual;
+    }
+  }
+
+  /**
+   * Apply a hydraulic pressure drop to the configured pressure profile.
+   *
+   * @param pressureDropPa total hydraulic pressure drop in Pa
+   * @return relative pressure-profile endpoint change
+   */
+  private double applyHydraulicPressureDrop(double pressureDropPa) {
+    double pressureDropBar = pressureDropPa / 1.0e5;
+    if (isPositiveFinite(topTrayPressure)) {
+      double previousBottomPressure = bottomTrayPressure;
+      bottomTrayPressure = topTrayPressure + pressureDropBar;
+      applyOptimizationPressureProfile();
+      if (!isPositiveFinite(previousBottomPressure)) {
+        return 1.0;
+      }
+      return Math.abs(bottomTrayPressure - previousBottomPressure)
+          / Math.max(1.0e-12, Math.abs(previousBottomPressure));
+    }
+    if (isPositiveFinite(bottomTrayPressure)) {
+      double previousTopPressure = topTrayPressure;
+      topTrayPressure = Math.max(1.0e-6, bottomTrayPressure - pressureDropBar);
+      applyOptimizationPressureProfile();
+      if (!isPositiveFinite(previousTopPressure)) {
+        return 1.0;
+      }
+      return Math.abs(topTrayPressure - previousTopPressure)
+          / Math.max(1.0e-12, Math.abs(previousTopPressure));
+    }
+    return 0.0;
   }
 
   /** Apply specifications that map directly to condenser or reboiler controls. */
@@ -820,7 +1501,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return result from the selected column solver
    */
   private ColumnSolveResult solveSelectedSolver(UUID id) {
-    return ColumnSolverFactory.create(solverType).solve(this, id);
+    ColumnSolveResult result = ColumnSolverFactory.create(solverType).solve(this, id);
+    lastSolverTypeUsed = result.getSolverType();
+    return result;
   }
 
   /**
@@ -1208,6 +1891,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.hasBeenSolvedBefore = candidate.hasBeenSolvedBefore;
     this.lastTotalFeedFlow = candidate.lastTotalFeedFlow;
     this.doInitializion = candidate.doInitializion;
+    this.lastSolverTypeUsed = candidate.lastSolverTypeUsed;
+  }
+
+  /**
+   * Accept a candidate produced by the automatic solver selector.
+   *
+   * @param candidate solved or best available candidate state
+   * @param selectedSolver solver strategy used for the candidate
+   */
+  void acceptAutoSolverCandidate(DistillationColumn candidate, SolverType selectedSolver) {
+    acceptSolvedStateCandidate(candidate);
+    lastSolverTypeUsed = selectedSolver;
   }
 
   /**
@@ -1713,6 +2408,191 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * Get the optimization diagnostic message.
      *
      * @return diagnostic message
+     */
+    public String getMessage() {
+      return message;
+    }
+  }
+
+  /**
+   * Result from initializing a rigorous column with shortcut FUG design estimates.
+   *
+   * <p>
+   * The result records the Fenske-Underwood-Gilliland estimates and the translated rigorous-column
+   * settings applied to {@link DistillationColumn}: total stage count, bottom-up feed tray and
+   * condenser reflux ratio.
+   * </p>
+   *
+   * @author esol
+   * @version 1.0
+   */
+  public static class ShortcutInitializationResult implements java.io.Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000;
+
+    private final boolean initialized;
+    private final int totalStageCount;
+    private final int feedTrayNumber;
+    private final int feedTrayNumberFromTop;
+    private final double minimumStages;
+    private final double minimumRefluxRatio;
+    private final double actualStages;
+    private final double actualRefluxRatio;
+    private final double condenserDuty;
+    private final double reboilerDuty;
+    private final String lightKey;
+    private final String heavyKey;
+    private final String message;
+
+    /**
+     * Create a shortcut initialization result.
+     *
+     * @param initialized whether the rigorous column was configured
+     * @param totalStageCount total rigorous stage count including condenser/reboiler if present
+     * @param feedTrayNumber bottom-up rigorous feed tray index
+     * @param feedTrayNumberFromTop shortcut feed tray count from the top product end
+     * @param minimumStages Fenske minimum theoretical stages
+     * @param minimumRefluxRatio Underwood minimum reflux ratio
+     * @param actualStages Gilliland actual theoretical stages
+     * @param actualRefluxRatio selected actual reflux ratio
+     * @param condenserDuty estimated condenser duty in W
+     * @param reboilerDuty estimated reboiler duty in W
+     * @param lightKey light-key component name
+     * @param heavyKey heavy-key component name
+     * @param message diagnostic message
+     */
+    public ShortcutInitializationResult(boolean initialized, int totalStageCount,
+        int feedTrayNumber, int feedTrayNumberFromTop, double minimumStages,
+        double minimumRefluxRatio, double actualStages, double actualRefluxRatio,
+        double condenserDuty, double reboilerDuty, String lightKey, String heavyKey,
+        String message) {
+      this.initialized = initialized;
+      this.totalStageCount = totalStageCount;
+      this.feedTrayNumber = feedTrayNumber;
+      this.feedTrayNumberFromTop = feedTrayNumberFromTop;
+      this.minimumStages = minimumStages;
+      this.minimumRefluxRatio = minimumRefluxRatio;
+      this.actualStages = actualStages;
+      this.actualRefluxRatio = actualRefluxRatio;
+      this.condenserDuty = condenserDuty;
+      this.reboilerDuty = reboilerDuty;
+      this.lightKey = lightKey;
+      this.heavyKey = heavyKey;
+      this.message = message;
+    }
+
+    /**
+     * Check whether initialization succeeded.
+     *
+     * @return {@code true} when shortcut estimates were applied to the rigorous column
+     */
+    public boolean isInitialized() {
+      return initialized;
+    }
+
+    /**
+     * Get the applied total stage count.
+     *
+     * @return total stage count including condenser/reboiler if present, or {@code -1}
+     */
+    public int getTotalStageCount() {
+      return totalStageCount;
+    }
+
+    /**
+     * Get the applied bottom-up feed tray number.
+     *
+     * @return bottom-up feed tray number, or {@code -1}
+     */
+    public int getFeedTrayNumber() {
+      return feedTrayNumber;
+    }
+
+    /**
+     * Get the shortcut feed tray count from the top.
+     *
+     * @return feed tray from top, or {@code -1}
+     */
+    public int getFeedTrayNumberFromTop() {
+      return feedTrayNumberFromTop;
+    }
+
+    /**
+     * Get the Fenske minimum stage count.
+     *
+     * @return minimum theoretical stages
+     */
+    public double getMinimumStages() {
+      return minimumStages;
+    }
+
+    /**
+     * Get the Underwood minimum reflux ratio.
+     *
+     * @return minimum reflux ratio
+     */
+    public double getMinimumRefluxRatio() {
+      return minimumRefluxRatio;
+    }
+
+    /**
+     * Get the Gilliland actual stage estimate.
+     *
+     * @return actual theoretical stages
+     */
+    public double getActualStages() {
+      return actualStages;
+    }
+
+    /**
+     * Get the applied actual reflux ratio.
+     *
+     * @return actual reflux ratio
+     */
+    public double getActualRefluxRatio() {
+      return actualRefluxRatio;
+    }
+
+    /**
+     * Get the shortcut condenser duty estimate.
+     *
+     * @return condenser duty in W
+     */
+    public double getCondenserDuty() {
+      return condenserDuty;
+    }
+
+    /**
+     * Get the shortcut reboiler duty estimate.
+     *
+     * @return reboiler duty in W
+     */
+    public double getReboilerDuty() {
+      return reboilerDuty;
+    }
+
+    /**
+     * Get the light-key component name.
+     *
+     * @return light-key component name
+     */
+    public String getLightKey() {
+      return lightKey;
+    }
+
+    /**
+     * Get the heavy-key component name.
+     *
+     * @return heavy-key component name
+     */
+    public String getHeavyKey() {
+      return heavyKey;
+    }
+
+    /**
+     * Get the diagnostic message.
+     *
+     * @return initialization diagnostic message
      */
     public String getMessage() {
       return message;
@@ -2251,6 +3131,170 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         evaluatedCases, convergedCases, capitalChargeFactor, operatingHoursPerYear,
         steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency,
         "No converged economic tray/feed-tray candidate met the product spec.");
+  }
+
+  /**
+   * Initialize the rigorous column from Fenske-Underwood-Gilliland shortcut estimates.
+   *
+   * <p>
+   * The method runs {@link ShortcutDistillationColumn}, converts its stage and feed-tray estimates
+   * into this column's bottom-up tray indexing, rebuilds the tray stack, adds the feed at the
+   * shortcut-estimated feed tray, applies condenser reflux/duty and reboiler duty estimates, and
+   * stores light-key/heavy-key recovery specifications for later rigorous solving.
+   * </p>
+   *
+   * @param feedStream feed stream used for the shortcut calculation and rigorous column
+   * @param lightKey light-key component name
+   * @param heavyKey heavy-key component name
+   * @param lightKeyRecoveryDistillate light-key recovery to top product, 0 to 1
+   * @param heavyKeyRecoveryBottoms heavy-key recovery to bottom product, 0 to 1
+   * @param refluxRatioMultiplier actual reflux divided by minimum reflux, normally greater than 1
+   * @return shortcut initialization result with applied rigorous-column settings
+   */
+  public ShortcutInitializationResult initializeFromShortcut(StreamInterface feedStream,
+      String lightKey, String heavyKey, double lightKeyRecoveryDistillate,
+      double heavyKeyRecoveryBottoms, double refluxRatioMultiplier) {
+    if (feedStream == null) {
+      lastShortcutInitializationResult = createFailedShortcutInitialization(lightKey, heavyKey,
+          "No feed stream was supplied for shortcut initialization.");
+      return lastShortcutInitializationResult;
+    }
+    ShortcutDistillationColumn shortcut = new ShortcutDistillationColumn(getName() + " shortcut",
+        feedStream);
+    shortcut.setLightKey(lightKey);
+    shortcut.setHeavyKey(heavyKey);
+    shortcut.setLightKeyRecoveryDistillate(lightKeyRecoveryDistillate);
+    shortcut.setHeavyKeyRecoveryBottoms(heavyKeyRecoveryBottoms);
+    shortcut.setRefluxRatioMultiplier(refluxRatioMultiplier);
+    applyShortcutPressureBasis(shortcut, feedStream);
+
+    try {
+      shortcut.run(UUID.randomUUID());
+    } catch (Exception exception) {
+      logger.warn("Shortcut initialization failed for column {}", getName(), exception);
+      lastShortcutInitializationResult = createFailedShortcutInitialization(lightKey, heavyKey,
+          "Shortcut calculation failed: " + exception.getMessage());
+      return lastShortcutInitializationResult;
+    }
+
+    if (!shortcut.isSolved()) {
+      lastShortcutInitializationResult = createFailedShortcutInitialization(lightKey, heavyKey,
+          "Shortcut calculation did not solve. Check key-component order and recoveries.");
+      return lastShortcutInitializationResult;
+    }
+
+    int totalStageCount = getShortcutTotalStageCount(shortcut);
+    int feedTrayNumber = convertShortcutFeedTrayFromTop(shortcut.getFeedTrayNumber(),
+        totalStageCount);
+    ColumnOptimizationState state = captureColumnOptimizationState();
+    applyShortcutEndpointDuties(state, shortcut);
+    rebuildColumnForOptimization(totalStageCount, state);
+    addFeedStream(feedStream, feedTrayNumber);
+    setTopComponentRecovery(lightKey, lightKeyRecoveryDistillate);
+    setBottomComponentRecovery(heavyKey, heavyKeyRecoveryBottoms);
+
+    lastShortcutInitializationResult = new ShortcutInitializationResult(true, totalStageCount,
+        feedTrayNumber, shortcut.getFeedTrayNumber(), shortcut.getMinimumNumberOfStages(),
+        shortcut.getMinimumRefluxRatio(), shortcut.getActualNumberOfStages(),
+        shortcut.getActualRefluxRatio(), shortcut.getCondenserDuty(), shortcut.getReboilerDuty(),
+        lightKey, heavyKey, "Shortcut estimates applied to rigorous column.");
+    return lastShortcutInitializationResult;
+  }
+
+  /**
+   * Get the latest shortcut initialization result.
+   *
+   * @return latest shortcut initialization result, or {@code null} if none has been applied
+   */
+  public ShortcutInitializationResult getLastShortcutInitializationResult() {
+    return lastShortcutInitializationResult;
+  }
+
+  /**
+   * Create an unsuccessful shortcut initialization result.
+   *
+   * @param lightKey light-key component name
+   * @param heavyKey heavy-key component name
+   * @param message diagnostic message
+   * @return failed initialization result
+   */
+  private ShortcutInitializationResult createFailedShortcutInitialization(String lightKey,
+      String heavyKey, String message) {
+    return new ShortcutInitializationResult(false, -1, -1, -1, Double.NaN, Double.NaN,
+        Double.NaN, Double.NaN, Double.NaN, Double.NaN, lightKey, heavyKey, message);
+  }
+
+  /**
+   * Apply pressure defaults to a shortcut calculation and this rigorous column.
+   *
+   * @param shortcut shortcut column to configure
+   * @param feedStream feed stream providing pressure if no endpoint pressure is already set
+   */
+  private void applyShortcutPressureBasis(ShortcutDistillationColumn shortcut,
+      StreamInterface feedStream) {
+    double feedPressure = feedStream.getFluid() == null ? Double.NaN : feedStream.getPressure("bara");
+    double condenserPressure = isPositiveFinite(topTrayPressure) ? topTrayPressure : feedPressure;
+    double reboilerPressure = isPositiveFinite(bottomTrayPressure) ? bottomTrayPressure
+        : condenserPressure;
+    if (isPositiveFinite(condenserPressure)) {
+      shortcut.setCondenserPressure(condenserPressure);
+      if (!isPositiveFinite(topTrayPressure)) {
+        setTopPressure(condenserPressure);
+      }
+    }
+    if (isPositiveFinite(reboilerPressure)) {
+      shortcut.setReboilerPressure(reboilerPressure);
+      if (!isPositiveFinite(bottomTrayPressure)) {
+        setBottomPressure(reboilerPressure);
+      }
+    }
+  }
+
+  /**
+   * Calculate a rigorous total stage count from shortcut stage estimates.
+   *
+   * @param shortcut solved shortcut column
+   * @return rigorous total stage count including condenser/reboiler if present
+   */
+  private int getShortcutTotalStageCount(ShortcutDistillationColumn shortcut) {
+    int totalStageCount = (int) Math.ceil(shortcut.getActualNumberOfStages());
+    totalStageCount = Math.max(totalStageCount, getMinimumOptimizationTrayCount());
+    return totalStageCount;
+  }
+
+  /**
+   * Convert a shortcut feed tray counted from the top to this column's bottom-up tray index.
+   *
+   * @param feedTrayFromTop shortcut feed tray count from the top product end
+   * @param totalStageCount total rigorous stage count
+   * @return bottom-up tray index clamped to feasible feed trays
+   */
+  private int convertShortcutFeedTrayFromTop(int feedTrayFromTop, int totalStageCount) {
+    int bottomUpTrayNumber = totalStageCount - Math.max(1, feedTrayFromTop);
+    int firstFeedTray = hasReboiler ? 1 : 0;
+    int lastFeedTray = totalStageCount - (hasCondenser ? 2 : 1);
+    if (lastFeedTray < firstFeedTray) {
+      lastFeedTray = firstFeedTray;
+    }
+    return Math.max(firstFeedTray, Math.min(lastFeedTray, bottomUpTrayNumber));
+  }
+
+  /**
+   * Apply shortcut endpoint duties and reflux to a rebuild state.
+   *
+   * @param state column optimization state to update before rebuilding trays
+   * @param shortcut solved shortcut column
+   */
+  private void applyShortcutEndpointDuties(ColumnOptimizationState state,
+      ShortcutDistillationColumn shortcut) {
+    if (hasCondenser) {
+      state.condenserRefluxSet = true;
+      state.condenserRefluxRatio = Math.max(0.0, shortcut.getActualRefluxRatio());
+      state.condenserHeatInput = shortcut.getCondenserDuty();
+    }
+    if (hasReboiler) {
+      state.reboilerHeatInput = shortcut.getReboilerDuty();
+    }
   }
 
   /**
@@ -5304,6 +6348,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public void setSolverType(SolverType solverType) {
     this.solverType = solverType == null ? SolverType.DIRECT_SUBSTITUTION : solverType;
+    this.lastSolverTypeUsed =
+        this.solverType == SolverType.AUTO ? SolverType.DIRECT_SUBSTITUTION : this.solverType;
   }
 
   /**
@@ -5338,6 +6384,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Get the configured top tray pressure.
+   *
+   * @return top tray pressure in bara
+   */
+  public double getTopPressure() {
+    return topTrayPressure;
+  }
+
+  /**
    * <p>
    * setBottomPressure.
    * </p>
@@ -5346,6 +6401,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public void setBottomPressure(double bottomPressure) {
     bottomTrayPressure = bottomPressure;
+  }
+
+  /**
+   * Get the configured bottom tray pressure.
+   *
+   * @return bottom tray pressure in bara
+   */
+  public double getBottomPressure() {
+    return bottomTrayPressure;
   }
 
   /** {@inheritDoc} */
@@ -5406,7 +6470,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (enforceMeshResidualToleranceCustomized) {
       return enforceMeshResidualTolerance;
     }
-    return solverType == SolverType.MESH_RESIDUAL || solverType == SolverType.NAPHTALI_SANDHOLM;
+    return solverType == SolverType.MESH_RESIDUAL || solverType == SolverType.NAPHTALI_SANDHOLM
+        || (solverType == SolverType.AUTO && (lastSolverTypeUsed == SolverType.MESH_RESIDUAL
+            || lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM));
   }
 
   void setError(double err) {
@@ -5658,6 +6724,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     diagnostics.append("  Name: ").append(getName()).append("\n");
     diagnostics.append("  Solved: ").append(solved).append("\n");
     diagnostics.append("  Solver: ").append(solverType).append("\n");
+    diagnostics.append("  Last selected solver: ").append(lastSolverTypeUsed).append("\n");
     diagnostics.append("  Trays: ").append(numberOfTrays).append(" total, ")
         .append(getEffectiveStageCount()).append(" equilibrium stages").append("\n");
     diagnostics.append("  Iterations: ").append(lastIterationCount).append("\n");
@@ -6017,6 +7084,337 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Set a gas or liquid side-draw fraction on a tray.
+   *
+   * <p>
+   * Side draws are implemented on the tray outlet itself, so all column solver paths use the
+   * residual gas/liquid traffic for inter-tray flow and expose the withdrawn stream separately.
+   * </p>
+   *
+   * @param trayNumber bottom-up tray index
+   * @param phase phase to withdraw
+   * @param fraction fraction of the selected phase outlet to withdraw, from zero to one
+   */
+  public void setSideDrawFraction(int trayNumber, SideDrawPhase phase, double fraction) {
+    SimpleTray tray = getTray(trayNumber);
+    if (phase == SideDrawPhase.GAS) {
+      tray.setGasSideDrawFraction(fraction);
+    } else if (phase == SideDrawPhase.LIQUID) {
+      tray.setLiquidSideDrawFraction(fraction);
+    } else {
+      throw new IllegalArgumentException("Side draw phase cannot be null");
+    }
+    setDoInitializion(true);
+  }
+
+  /**
+   * Set a vapor side-draw fraction on a tray.
+   *
+   * @param trayNumber bottom-up tray index
+   * @param fraction fraction of vapor outlet to withdraw, from zero to one
+   */
+  public void setGasSideDrawFraction(int trayNumber, double fraction) {
+    setSideDrawFraction(trayNumber, SideDrawPhase.GAS, fraction);
+  }
+
+  /**
+   * Set a liquid side-draw fraction on a tray.
+   *
+   * @param trayNumber bottom-up tray index
+   * @param fraction fraction of liquid outlet to withdraw, from zero to one
+   */
+  public void setLiquidSideDrawFraction(int trayNumber, double fraction) {
+    setSideDrawFraction(trayNumber, SideDrawPhase.LIQUID, fraction);
+  }
+
+  /**
+   * Get a side-draw stream from a tray.
+   *
+   * @param trayNumber bottom-up tray index
+   * @param phase phase to retrieve
+   * @return side-draw stream, or a zero-flow stream when no side draw is configured
+   */
+  public StreamInterface getSideDrawStream(int trayNumber, SideDrawPhase phase) {
+    SimpleTray tray = getTray(trayNumber);
+    if (phase == SideDrawPhase.GAS) {
+      return tray.getGasSideDrawStream();
+    } else if (phase == SideDrawPhase.LIQUID) {
+      return tray.getLiquidSideDrawStream();
+    }
+    throw new IllegalArgumentException("Side draw phase cannot be null");
+  }
+
+  /**
+   * Get all non-zero side-draw streams from the column.
+   *
+   * @return unmodifiable list of side-draw streams currently withdrawn from trays
+   */
+  public List<StreamInterface> getSideDrawStreams() {
+    List<StreamInterface> sideDrawStreams = new ArrayList<>();
+    for (int trayNumber = 0; trayNumber < numberOfTrays; trayNumber++) {
+      SimpleTray tray = getTray(trayNumber);
+      if (tray.getGasSideDrawFraction() > 0.0) {
+        sideDrawStreams.add(tray.getGasSideDrawStream());
+      }
+      if (tray.getLiquidSideDrawFraction() > 0.0) {
+        sideDrawStreams.add(tray.getLiquidSideDrawStream());
+      }
+    }
+    return Collections.unmodifiableList(sideDrawStreams);
+  }
+
+  /**
+   * Add a side-draw flow specification solved as a column tear variable.
+   *
+   * <p>
+   * The solver adjusts the side-draw fraction on the requested tray until the side-product stream
+   * flow matches the target. This turns side draws into formal product specifications while
+   * preserving the existing tray split implementation.
+   * </p>
+   *
+   * @param trayNumber bottom-up tray index
+   * @param phase side-draw phase
+   * @param flowRate target flow rate
+   * @param unit flow-rate unit
+   * @return configured side-draw specification
+   */
+  public ColumnSideDrawSpecification addSideDrawFlowSpecification(int trayNumber,
+      SideDrawPhase phase, double flowRate, String unit) {
+    validateTrayIndex(trayNumber, "side draw specification tray");
+    ColumnSideDrawSpecification specification = new ColumnSideDrawSpecification(trayNumber,
+        phase, flowRate, unit);
+    sideDrawSpecifications.add(specification);
+    if (flowRate > 0.0 && getSideDrawFraction(trayNumber, phase) <= 0.0) {
+      setSideDrawFractionWithinLimit(trayNumber, phase, 0.05);
+    }
+    setDoInitializion(true);
+    return specification;
+  }
+
+  /**
+   * Get configured side-draw flow specifications.
+   *
+   * @return unmodifiable list of side-draw specifications
+   */
+  public List<ColumnSideDrawSpecification> getSideDrawSpecifications() {
+    return Collections.unmodifiableList(sideDrawSpecifications);
+  }
+
+  /**
+   * Set the maximum number of outer tear iterations for side draws and hydraulics.
+   *
+   * @param maxIterations maximum number of tear iterations, minimum one
+   */
+  public void setMaxColumnTearIterations(int maxIterations) {
+    maxColumnTearIterations = Math.max(1, maxIterations);
+  }
+
+  /**
+   * Set the relative tolerance for side-draw and hydraulic tear variables.
+   *
+   * @param tolerance relative tolerance, must be finite and positive
+   */
+  public void setColumnTearTolerance(double tolerance) {
+    if (!Double.isFinite(tolerance) || tolerance <= 0.0) {
+      throw new IllegalArgumentException("Column tear tolerance must be finite and positive");
+    }
+    columnTearTolerance = tolerance;
+  }
+
+  /**
+   * Enable or disable hydraulic pressure-drop coupling.
+   *
+   * @param enabled {@code true} to update the column pressure profile from internals hydraulics
+   */
+  public void setHydraulicPressureDropCouplingEnabled(boolean enabled) {
+    hydraulicPressureDropCouplingEnabled = enabled;
+    setDoInitializion(true);
+  }
+
+  /**
+   * Check whether hydraulic pressure-drop coupling is enabled.
+   *
+   * @return {@code true} when hydraulic pressure drop is coupled into the pressure profile
+   */
+  public boolean isHydraulicPressureDropCouplingEnabled() {
+    return hydraulicPressureDropCouplingEnabled;
+  }
+
+  /**
+   * Set the internals type used for hydraulic pressure-drop coupling.
+   *
+   * @param internalsType tray type (for example "sieve") or "packed"
+   */
+  public void setHydraulicPressureDropInternalsType(String internalsType) {
+    if (internalsType == null || internalsType.trim().isEmpty()) {
+      throw new IllegalArgumentException("Hydraulic internals type cannot be empty");
+    }
+    hydraulicPressureDropInternalsType = internalsType;
+  }
+
+  /**
+   * Convenience method for enabling hydraulic pressure-drop coupling with an internals type.
+   *
+   * @param internalsType tray type or packing mode passed to {@link #calcColumnInternals(String)}
+   */
+  public void enableHydraulicPressureDropCoupling(String internalsType) {
+    setHydraulicPressureDropInternalsType(internalsType);
+    setHydraulicPressureDropCouplingEnabled(true);
+  }
+
+  /**
+   * Get the latest hydraulic pressure drop used for coupling.
+   *
+   * @return latest total pressure drop in Pa
+   */
+  public double getLastHydraulicPressureDropPa() {
+    return lastHydraulicPressureDropPa;
+  }
+
+  /**
+   * Get the latest hydraulic pressure-drop coupling residual.
+   *
+   * @return relative endpoint-pressure change from the latest coupling update
+   */
+  public double getLastHydraulicPressureDropResidual() {
+    return lastHydraulicPressureDropResidual;
+  }
+
+  /**
+   * Get the number of outer tear iterations used in the latest run.
+   *
+   * @return latest side-draw/pumparound/hydraulic tear iteration count
+   */
+  public int getLastColumnTearIterationCount() {
+    return lastColumnTearIterationCount;
+  }
+
+  /**
+   * Get the maximum relative residual from the latest outer tear-variable solve.
+   *
+   * @return latest outer tear residual
+   */
+  public double getLastColumnTearResidual() {
+    return lastColumnTearResidual;
+  }
+
+  /**
+   * Check whether the latest outer tear-variable solve converged.
+   *
+   * @return {@code true} when the latest side-draw/pumparound/hydraulic solve met tolerance
+   */
+  public boolean isLastColumnTearConverged() {
+    return lastColumnTearConverged;
+  }
+
+  /**
+   * Get the latest relative pumparound return-stream change.
+   *
+   * @return maximum relative return-stream flow change from the latest pumparound update
+   */
+  public double getLastPumparoundRelativeChange() {
+    return lastPumparoundRelativeChange;
+  }
+
+  /**
+   * Get the dynamic column model formulation.
+   *
+   * @return dynamic model formulation used for transient calculations
+   */
+  public DynamicColumnModel getDynamicColumnModel() {
+    return dynamicColumnModel;
+  }
+
+  /**
+   * Check whether the active dynamic column model is experimental.
+   *
+   * @return {@code true} because the current dynamic model is an explicit-Euler screening model
+   */
+  public boolean isDynamicColumnModelExperimental() {
+    return dynamicColumnModel == DynamicColumnModel.EXPERIMENTAL_EULER;
+  }
+
+  /**
+   * Add a liquid pumparound circuit.
+   *
+   * <p>
+   * The draw is treated as an internal liquid withdrawal, not as a side-product stream. The return
+   * stream is updated between column solves and added to the configured return tray as an internal
+   * recycle, so external mass-balance reporting continues to use only true feeds and products.
+   * </p>
+   *
+   * @param name pumparound name
+   * @param drawTrayNumber bottom-up tray index where liquid is withdrawn
+   * @param returnTrayNumber bottom-up tray index where liquid is returned
+   * @param drawFraction fraction of tray liquid traffic withdrawn
+   * @param temperatureDrop temperature drop from draw to return in Kelvin
+   * @return configured pumparound definition
+   */
+  public ColumnPumparound addLiquidPumparound(String name, int drawTrayNumber, int returnTrayNumber,
+      double drawFraction, double temperatureDrop) {
+    validateTrayIndex(drawTrayNumber, "pumparound draw tray");
+    validateTrayIndex(returnTrayNumber, "pumparound return tray");
+    if (!Double.isFinite(drawFraction) || drawFraction < 0.0 || drawFraction > 1.0) {
+      throw new IllegalArgumentException("Pumparound draw fraction must be between 0 and 1");
+    }
+    if (!Double.isFinite(temperatureDrop)) {
+      throw new IllegalArgumentException("Pumparound temperature drop must be finite");
+    }
+    if (getTray(drawTrayNumber).getLiquidPumparoundDrawFraction() > 0.0 && drawFraction > 0.0) {
+      throw new IllegalArgumentException("Only one liquid pumparound draw is supported per tray");
+    }
+
+    ColumnPumparound pumparound = new ColumnPumparound(name, drawTrayNumber, returnTrayNumber,
+        drawFraction, temperatureDrop);
+    pumparounds.add(pumparound);
+    getTray(drawTrayNumber).setLiquidPumparoundDrawFraction(drawFraction);
+    setDoInitializion(true);
+    return pumparound;
+  }
+
+  /**
+   * Get configured liquid pumparound circuits.
+   *
+   * @return unmodifiable list of configured pumparounds
+   */
+  public List<ColumnPumparound> getPumparounds() {
+    return Collections.unmodifiableList(pumparounds);
+  }
+
+  /**
+   * Set the maximum outer iterations used to converge pumparound return streams.
+   *
+   * @param maxIterations maximum number of pumparound iterations, minimum one
+   */
+  public void setMaxPumparoundIterations(int maxIterations) {
+    maxPumparoundIterations = Math.max(1, maxIterations);
+  }
+
+  /**
+   * Set the relative return-flow tolerance used for pumparound iterations.
+   *
+   * @param tolerance relative flow tolerance, must be finite and positive
+   */
+  public void setPumparoundTolerance(double tolerance) {
+    if (!Double.isFinite(tolerance) || tolerance <= 0.0) {
+      throw new IllegalArgumentException("Pumparound tolerance must be finite and positive");
+    }
+    pumparoundTolerance = tolerance;
+  }
+
+  /**
+   * Validate that a tray index is inside the column.
+   *
+   * @param trayNumber tray index to validate
+   * @param label diagnostic label for the tray role
+   */
+  private void validateTrayIndex(int trayNumber, String label) {
+    if (trayNumber < 0 || trayNumber >= numberOfTrays) {
+      throw new IllegalArgumentException(label + " must be between 0 and " + (numberOfTrays - 1));
+    }
+  }
+
+  /**
    * <p>
    * Getter for the field <code>gasOutStream</code>.
    * </p>
@@ -6036,6 +7434,31 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public StreamInterface getLiquidOutStream() {
     return liquidOutStream;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    List<StreamInterface> inletStreams = new ArrayList<>();
+    for (StreamInterface feedStream : getAllExternalFeedStreams()) {
+      addStreamIfMissingByIdentity(inletStreams, feedStream);
+    }
+    for (StreamInterface feedStream : unassignedFeedStreams) {
+      addStreamIfMissingByIdentity(inletStreams, feedStream);
+    }
+    return Collections.unmodifiableList(inletStreams);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    List<StreamInterface> outletStreams = new ArrayList<>();
+    addStreamIfMissingByIdentity(outletStreams, getGasOutStream());
+    addStreamIfMissingByIdentity(outletStreams, getLiquidOutStream());
+    for (StreamInterface sideDrawStream : getSideDrawStreams()) {
+      addStreamIfMissingByIdentity(outletStreams, sideDrawStream);
+    }
+    return Collections.unmodifiableList(outletStreams);
   }
 
   /**
@@ -6112,7 +7535,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private void resetTrayInputsToExternalFeeds() {
     for (int trayIndex = 0; trayIndex < trays.size(); trayIndex++) {
-      trays.get(trayIndex).resetInputStreams(getExternalFeedStreams(trayIndex));
+      List<StreamInterface> trayInputs = new ArrayList<>(getExternalFeedStreams(trayIndex));
+      for (ColumnPumparound pumparound : pumparounds) {
+        StreamInterface returnStream = pumparound.getReturnStream();
+        if (pumparound.getReturnTrayNumber() == trayIndex && returnStream != null) {
+          trayInputs.add(returnStream);
+        }
+      }
+      trays.get(trayIndex).resetInputStreams(trayInputs);
     }
   }
 
@@ -6245,6 +7675,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     double outletFlow = getGasOutStream().getThermoSystem().getFlowRate(unit)
         + getLiquidOutStream().getThermoSystem().getFlowRate(unit);
+    for (StreamInterface sideDrawStream : getSideDrawStreams()) {
+      outletFlow += sideDrawStream.getThermoSystem().getFlowRate(unit);
+    }
     return outletFlow - inletFlow;
   }
 
@@ -6268,6 +7701,130 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public Condenser getCondenser() {
     return (Condenser) trays.get(trays.size() - 1);
+  }
+
+  /**
+   * Configure the condenser operating mode.
+   *
+   * @param mode condenser operating mode
+   * @throws IllegalStateException if the column has no condenser
+   * @throws IllegalArgumentException if mode is {@code null} or requires more data
+   */
+  public void setCondenserMode(CondenserMode mode) {
+    Condenser condenser = requireCondenser();
+    if (mode == CondenserMode.PARTIAL) {
+      condenser.setSeparation_with_liquid_reflux(false, 0.0, "kg/hr");
+      condenser.setTotalCondenser(false);
+    } else if (mode == CondenserMode.TOTAL) {
+      condenser.setSeparation_with_liquid_reflux(false, 0.0, "kg/hr");
+      condenser.setTotalCondenser(true);
+    } else if (mode == CondenserMode.LIQUID_REFLUX_SPLIT) {
+      throw new IllegalArgumentException(
+          "Use setCondenserLiquidReflux(value, unit) to configure liquid reflux split mode");
+    } else {
+      throw new IllegalArgumentException("Condenser mode cannot be null");
+    }
+    setDoInitializion(true);
+  }
+
+  /**
+   * Configure a partial condenser with a fixed liquid reflux split.
+   *
+   * @param value fixed liquid reflux flow rate
+   * @param unit flow-rate unit for the fixed reflux value
+   * @throws IllegalStateException if the column has no condenser
+   */
+  public void setCondenserLiquidReflux(double value, String unit) {
+    Condenser condenser = requireCondenser();
+    condenser.setTotalCondenser(false);
+    condenser.setSeparation_with_liquid_reflux(true, value, unit);
+    setDoInitializion(true);
+  }
+
+  /**
+   * Get the configured condenser operating mode.
+   *
+   * @return condenser operating mode
+   * @throws IllegalStateException if the column has no condenser
+   */
+  public CondenserMode getCondenserMode() {
+    Condenser condenser = requireCondenser();
+    if (condenser.isSeparation_with_liquid_reflux()) {
+      return CondenserMode.LIQUID_REFLUX_SPLIT;
+    }
+    return condenser.isTotalCondenser() ? CondenserMode.TOTAL : CondenserMode.PARTIAL;
+  }
+
+  /**
+   * Configure the reboiler operating mode.
+   *
+   * @param mode reboiler operating mode
+   * @throws IllegalStateException if the column has no reboiler
+   * @throws IllegalArgumentException if mode is {@code null} or requires more data
+   */
+  public void setReboilerMode(ReboilerMode mode) {
+    requireReboiler();
+    if (mode == ReboilerMode.EQUILIBRIUM) {
+      getReboiler().clearRefluxRatio();
+      setDoInitializion(true);
+    } else if (mode == ReboilerMode.VAPOR_BOILUP_RATIO) {
+      throw new IllegalArgumentException(
+          "Use setReboilerVaporBoilupRatio(ratio) to configure vapor boilup ratio mode");
+    } else {
+      throw new IllegalArgumentException("Reboiler mode cannot be null");
+    }
+  }
+
+  /**
+   * Configure the reboiler with an explicit vapor boilup/reflux ratio.
+   *
+   * @param ratio finite non-negative boilup/reflux ratio
+   * @throws IllegalArgumentException if ratio is negative or not finite
+   * @throws IllegalStateException if the column has no reboiler
+   */
+  public void setReboilerVaporBoilupRatio(double ratio) {
+    if (!Double.isFinite(ratio) || ratio < 0.0) {
+      throw new IllegalArgumentException("Reboiler vapor boilup ratio must be finite and >= 0");
+    }
+    requireReboiler().setRefluxRatio(ratio);
+    setDoInitializion(true);
+  }
+
+  /**
+   * Get the configured reboiler operating mode.
+   *
+   * @return reboiler operating mode
+   * @throws IllegalStateException if the column has no reboiler
+   */
+  public ReboilerMode getReboilerMode() {
+    return requireReboiler().isRefluxSet() ? ReboilerMode.VAPOR_BOILUP_RATIO
+        : ReboilerMode.EQUILIBRIUM;
+  }
+
+  /**
+   * Get the condenser or fail with a setup-oriented error.
+   *
+   * @return condenser tray
+   * @throws IllegalStateException if the column has no condenser
+   */
+  private Condenser requireCondenser() {
+    if (!hasCondenser) {
+      throw new IllegalStateException("Column has no condenser");
+    }
+    return getCondenser();
+  }
+
+  /**
+   * Get the reboiler or fail with a setup-oriented error.
+   *
+   * @return reboiler tray
+   * @throws IllegalStateException if the column has no reboiler
+   */
+  private Reboiler requireReboiler() {
+    if (!hasReboiler) {
+      throw new IllegalStateException("Column has no reboiler");
+    }
+    return getReboiler();
   }
 
   /**
@@ -6972,6 +8529,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     double[] feedComponentMoles = getFeedComponentMoles();
+    double[] sideDrawComponentMoles = getSideDrawComponentMoles(feedComponentMoles.length);
     double[] topProductComponentMoles = getComponentMoles(gasOutStream.getThermoSystem());
     double[] bottomProductComponentMoles = getComponentMoles(liquidOutStream.getThermoSystem());
     if (feedComponentMoles.length != topProductComponentMoles.length
@@ -6999,8 +8557,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       double currentBottomMoles = Math.max(0.0, bottomProductComponentMoles[componentIndex]);
       double currentComponentMoles = currentTopMoles + currentBottomMoles;
       if (currentComponentMoles > 1.0e-20) {
-        double componentScale =
-            Math.max(0.0, feedComponentMoles[componentIndex]) / currentComponentMoles;
+        double terminalProductMoles = Math.max(0.0,
+            feedComponentMoles[componentIndex] - sideDrawComponentMoles[componentIndex]);
+        double componentScale = terminalProductMoles / currentComponentMoles;
         balancedTopProductComponentMoles[componentIndex] = currentTopMoles * componentScale;
         balancedBottomProductComponentMoles[componentIndex] = currentBottomMoles * componentScale;
       }
@@ -7437,6 +8996,27 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Calculates component mole amounts withdrawn in all side-draw streams.
+   *
+   * @param componentCount number of components expected in the feed/product basis
+   * @return component mole amounts withdrawn through side draws
+   */
+  private double[] getSideDrawComponentMoles(int componentCount) {
+    double[] sideDrawComponentMoles = new double[componentCount];
+    for (StreamInterface sideDrawStream : getSideDrawStreams()) {
+      double[] componentMoles = getComponentMoles(sideDrawStream.getThermoSystem());
+      if (componentMoles.length != componentCount) {
+        continue;
+      }
+      for (int componentIndex = 0; componentIndex < sideDrawComponentMoles.length;
+          componentIndex++) {
+        sideDrawComponentMoles[componentIndex] += componentMoles[componentIndex];
+      }
+    }
+    return sideDrawComponentMoles;
+  }
+
+  /**
    * Gets the number of components from the first available feed stream.
    *
    * @return number of components, or zero when no feeds are connected
@@ -7578,26 +9158,434 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /** {@inheritDoc} */
   @Override
-  public neqsim.util.validation.ValidationResult validateSetup() {
-    neqsim.util.validation.ValidationResult result =
-        new neqsim.util.validation.ValidationResult(getName());
+  public ValidationResult validateSetup() {
+    ValidationResult result = new ValidationResult(getName());
 
     if (getName() == null || getName().trim().isEmpty()) {
       result.addError("equipment", "Equipment has no name", "Set equipment name in constructor");
     }
+
+    validateColumnGeometry(result);
+    validateColumnFeeds(result);
+    validateColumnPressureProfile(result);
+    validateColumnNumerics(result);
+    validateColumnSpecifications(result);
+    validateColumnTearVariables(result);
+
+    return result;
+  }
+
+  /**
+   * Validate only the configured top and bottom column specifications.
+   *
+   * <p>
+   * This focused validator is useful before a solve when users are scripting product-purity,
+   * component-recovery, flow-rate, reflux, or duty specifications and want actionable diagnostics
+   * without validating the full equipment setup.
+   * </p>
+   *
+   * @return validation result containing specification errors and warnings
+   */
+  public ValidationResult validateSpecifications() {
+    ValidationResult result = new ValidationResult(getName() + ":specifications");
+    validateColumnSpecifications(result);
+    return result;
+  }
+
+  /**
+   * Validate tray count and geometric inputs.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validateColumnGeometry(ValidationResult result) {
+    if (numberOfTrays <= 0) {
+      result.addError("column.trays", "Column has no trays",
+          "Create the column with at least one equilibrium tray");
+    }
+    if (!Double.isFinite(internalDiameter) || internalDiameter <= 0.0) {
+      result.addError("column.diameter", "Internal column diameter is not positive and finite",
+          "Set a positive diameter with column.setInternalDiameter(valueInMeters)");
+    }
+    if (!hasCondenser && !hasReboiler) {
+      result.addWarning("configuration",
+          "Column has neither condenser nor reboiler - acting as a stripper/absorber",
+          "Set hasCondenser=true and/or hasReboiler=true in constructor if separation is needed");
+    }
+  }
+
+  /**
+   * Validate feed-stream connectivity and tray assignments.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validateColumnFeeds(ValidationResult result) {
 
     if (feedStreams.isEmpty() && unassignedFeedStreams.isEmpty()) {
       result.addError("stream", "No feed stream connected to distillation column",
           "Add a feed stream: column.addFeedStream(stream, feedTrayNumber)");
     }
 
-    if (!hasCondenser && !hasReboiler) {
-      result.addWarning("configuration",
-          "Column has neither condenser nor reboiler — acting as a stripper/absorber",
-          "Set hasCondenser=true and/or hasReboiler=true in constructor if separation is needed");
+    for (Entry<Integer, List<StreamInterface>> feedEntry : feedStreams.entrySet()) {
+      Integer trayNumber = feedEntry.getKey();
+      if (trayNumber == null || trayNumber.intValue() < 0
+          || trayNumber.intValue() >= numberOfTrays) {
+        result.addError("stream.feedTray", "Feed tray index is outside the column tray range",
+            "Use a feed tray from 0 to numberOfTrays - 1");
+      }
+      List<StreamInterface> streams = feedEntry.getValue();
+      if (streams == null || streams.isEmpty()) {
+        result.addWarning("stream.feedTray", "Feed tray has no streams assigned",
+            "Remove the empty tray assignment or add a feed stream");
+        continue;
+      }
+      for (StreamInterface feedStream : streams) {
+        validateFeedStream(result, feedStream);
+      }
     }
 
-    return result;
+    for (StreamInterface feedStream : unassignedFeedStreams) {
+      validateFeedStream(result, feedStream);
+    }
+  }
+
+  /**
+   * Validate a single feed stream used by the column.
+   *
+   * @param result validation result receiving issues
+   * @param feedStream feed stream to validate
+   */
+  private void validateFeedStream(ValidationResult result, StreamInterface feedStream) {
+    if (feedStream == null) {
+      result.addError("stream.feed", "A null feed stream is connected",
+          "Remove the null feed or replace it with a Stream instance");
+      return;
+    }
+    SystemInterface fluid = feedStream.getFluid();
+    if (fluid == null) {
+      result.addError("stream.feed", "Feed stream has no thermodynamic system",
+          "Construct the stream with a fluid before adding it to the column");
+      return;
+    }
+    if (fluid.getTotalNumberOfMoles() <= 0.0) {
+      result.addWarning("stream.feed", "Feed stream has zero or negative total moles",
+          "Set a positive flow rate on the feed stream before running the column");
+    }
+  }
+
+  /**
+   * Validate top and bottom column pressure inputs.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validateColumnPressureProfile(ValidationResult result) {
+    if (topTrayPressure == 0.0 || (Double.isFinite(topTrayPressure) && topTrayPressure < 0.0)) {
+      result.addWarning("column.pressure", "Top pressure is not explicitly set",
+          "Call column.setTopPressure(value) or allow the solver to initialize from feed pressure");
+    }
+    if (bottomTrayPressure == 0.0
+        || (Double.isFinite(bottomTrayPressure) && bottomTrayPressure < 0.0)) {
+      result.addWarning("column.pressure", "Bottom pressure is not explicitly set",
+          "Call column.setBottomPressure(value) or allow the solver to initialize from feed pressure");
+    }
+    if (topTrayPressure > 0.0 && bottomTrayPressure > 0.0
+        && topTrayPressure > bottomTrayPressure) {
+      result.addWarning("column.pressure", "Top pressure is higher than bottom pressure",
+          "Check the pressure profile; distillation columns normally have bottom pressure >= top pressure");
+    }
+  }
+
+  /**
+   * Validate numerical solver configuration.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validateColumnNumerics(ValidationResult result) {
+    if (solverType == null) {
+      result.addError("solver", "Solver type is null",
+          "Use column.setSolverType(DistillationColumn.SolverType.AUTO) or another solver");
+    }
+    if (maxNumberOfIterations <= 0) {
+      result.addError("solver.iterations", "Maximum iteration count is not positive",
+          "Set a positive value with column.setMaxNumberOfIterations(iterations)");
+    }
+    if (!isPositiveFiniteValue(temperatureTolerance)) {
+      result.addError("solver.temperatureTolerance", "Temperature tolerance is not positive finite",
+          "Set a positive finite tolerance with column.setTemperatureTolerance(tol)");
+    }
+    if (!isPositiveFiniteValue(massBalanceTolerance)) {
+      result.addError("solver.massBalanceTolerance", "Mass balance tolerance is not positive finite",
+          "Set a positive finite tolerance with column.setMassBalanceTolerance(tol)");
+    }
+    if (!isPositiveFiniteValue(enthalpyBalanceTolerance)) {
+      result.addError("solver.enthalpyTolerance", "Enthalpy tolerance is not positive finite",
+          "Set a positive finite tolerance with column.setEnthalpyBalanceTolerance(tol)");
+    }
+    if (!isPositiveFiniteValue(meshResidualTolerance)) {
+      result.addError("solver.meshTolerance", "MESH residual tolerance is not positive finite",
+          "Set a positive finite tolerance with column.setMeshResidualTolerance(tol)");
+    }
+    if (murphreeEfficiency < 0.0 || murphreeEfficiency > 1.0
+        || !Double.isFinite(murphreeEfficiency)) {
+      result.addError("efficiency", "Murphree efficiency is outside 0..1",
+          "Set tray efficiency with column.setMurphreeEfficiency(valueBetweenZeroAndOne)");
+    }
+  }
+
+  /**
+   * Validate top and bottom specification consistency.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validateColumnSpecifications(ValidationResult result) {
+    validateColumnSpecification(result, topSpecification, ColumnSpecification.ProductLocation.TOP);
+    validateColumnSpecification(result, bottomSpecification,
+        ColumnSpecification.ProductLocation.BOTTOM);
+  }
+
+  /**
+   * Validate side-draw, pumparound, hydraulic, and dynamic tear-variable configuration.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validateColumnTearVariables(ValidationResult result) {
+    validateSideDrawSpecifications(result);
+    validatePumparounds(result);
+    validateHydraulicPressureDropCoupling(result);
+    validateDynamicColumnModel(result);
+  }
+
+  /**
+   * Validate configured side-draw flow specifications.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validateSideDrawSpecifications(ValidationResult result) {
+    for (ColumnSideDrawSpecification specification : sideDrawSpecifications) {
+      if (specification.getTrayNumber() < 0 || specification.getTrayNumber() >= numberOfTrays) {
+        result.addError("sidedraw.tray", "Side-draw specification tray is outside the column",
+            "Use a tray number between 0 and column.getNumberOfTrays() - 1");
+      }
+      if (!Double.isFinite(specification.getTargetFlowRate())
+          || specification.getTargetFlowRate() < 0.0) {
+        result.addError("sidedraw.flow", "Side-draw target flow is not finite and non-negative",
+            "Create the side-draw specification with a finite flow rate >= 0");
+      }
+      if (!isPositiveFiniteValue(specification.getTolerance())) {
+        result.addError("sidedraw.tolerance", "Side-draw tolerance is not positive finite",
+            "Set a positive finite tolerance on the side-draw specification");
+      }
+      if (specification.getMaxIterations() <= 0) {
+        result.addError("sidedraw.iterations", "Side-draw iteration limit is not positive",
+            "Set maxIterations to a positive value on the side-draw specification");
+      }
+    }
+  }
+
+  /**
+   * Validate configured pumparound circuits.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validatePumparounds(ValidationResult result) {
+    if (!isPositiveFiniteValue(pumparoundTolerance)) {
+      result.addError("pumparound.tolerance", "Pumparound tolerance is not positive finite",
+          "Set a positive finite tolerance with column.setPumparoundTolerance(tolerance)");
+    }
+    if (maxPumparoundIterations <= 0) {
+      result.addError("pumparound.iterations", "Pumparound iteration limit is not positive",
+          "Set max pumparound iterations to a positive value");
+    }
+    for (ColumnPumparound pumparound : pumparounds) {
+      if (pumparound.getDrawTrayNumber() < 0 || pumparound.getDrawTrayNumber() >= numberOfTrays
+          || pumparound.getReturnTrayNumber() < 0
+          || pumparound.getReturnTrayNumber() >= numberOfTrays) {
+        result.addError("pumparound.tray", "Pumparound tray is outside the column",
+            "Use draw and return tray numbers between 0 and column.getNumberOfTrays() - 1");
+      }
+    }
+  }
+
+  /**
+   * Validate hydraulic pressure-drop coupling configuration.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validateHydraulicPressureDropCoupling(ValidationResult result) {
+    if (!isPositiveFiniteValue(columnTearTolerance)) {
+      result.addError("columntear.tolerance", "Column tear tolerance is not positive finite",
+          "Set a positive finite tolerance with column.setColumnTearTolerance(tolerance)");
+    }
+    if (maxColumnTearIterations <= 0) {
+      result.addError("columntear.iterations", "Column tear iteration limit is not positive",
+          "Set max column tear iterations to a positive value");
+    }
+    if (hydraulicPressureDropCouplingEnabled) {
+      if (hydraulicPressureDropInternalsType == null
+          || hydraulicPressureDropInternalsType.trim().isEmpty()) {
+        result.addError("hydraulics.internals", "Hydraulic coupling has no internals type",
+            "Set the internals type with column.setHydraulicPressureDropInternalsType(type)");
+      }
+      if (!isPositiveFinite(topTrayPressure) && !isPositiveFinite(bottomTrayPressure)) {
+        result.addWarning("hydraulics.pressure",
+            "Hydraulic pressure-drop coupling has no pressure endpoint basis",
+            "Set either top or bottom pressure so hydraulic pressure drop can anchor the profile");
+      }
+    }
+  }
+
+  /**
+   * Validate dynamic model configuration and label experimental behavior.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validateDynamicColumnModel(ValidationResult result) {
+    if (dynamicColumnEnabled && isDynamicColumnModelExperimental()) {
+      result.addWarning("dynamic.model",
+          "Dynamic distillation model is experimental explicit-Euler holdup screening",
+          "Use it for qualitative transients only; rigorous industrial dynamics require a DAE formulation");
+    }
+  }
+
+  /**
+   * Validate one column specification against column hardware and feed components.
+   *
+   * @param result validation result receiving issues
+   * @param specification specification to validate
+   * @param expectedLocation expected product location
+   */
+  private void validateColumnSpecification(ValidationResult result,
+      ColumnSpecification specification, ColumnSpecification.ProductLocation expectedLocation) {
+    if (specification == null) {
+      return;
+    }
+    if (specification.getLocation() != expectedLocation) {
+      result.addError("specification.location",
+          "Specification is assigned to the wrong column end",
+          "Use setTopSpecification() for TOP specs and setBottomSpecification() for BOTTOM specs");
+    }
+    if (!Double.isFinite(specification.getTargetValue())) {
+      result.addError("specification.target", "Specification target is not finite",
+          "Create the specification with a finite target value");
+    }
+    if (!isPositiveFiniteValue(specification.getTolerance())) {
+      result.addError("specification.tolerance", "Specification tolerance is not positive finite",
+          "Set a positive finite tolerance on the ColumnSpecification");
+    }
+    if (specification.getMaxIterations() <= 0) {
+      result.addError("specification.iterations", "Specification iteration limit is not positive",
+          "Set maxIterations to a positive value on the ColumnSpecification");
+    }
+    validateSpecificationHardware(result, specification);
+    validateSpecificationComponent(result, specification);
+  }
+
+  /**
+   * Validate whether a specification can be manipulated by the configured column hardware.
+   *
+   * @param result validation result receiving issues
+   * @param specification specification to validate
+   */
+  private void validateSpecificationHardware(ValidationResult result,
+      ColumnSpecification specification) {
+    boolean topSpecificationLocal =
+        specification.getLocation() == ColumnSpecification.ProductLocation.TOP;
+    boolean hasControllerEnd = topSpecificationLocal ? hasCondenser : hasReboiler;
+    if (!hasControllerEnd && needsAdjustment(specification)) {
+      result.addWarning("specification.hardware",
+          "Adjustable specification has no condenser/reboiler handle on that column end",
+          "Add the matching condenser/reboiler or replace the spec with a directly set temperature/duty");
+    }
+    if (!hasControllerEnd
+        && (specification.getType() == ColumnSpecification.SpecificationType.REFLUX_RATIO
+            || specification.getType() == ColumnSpecification.SpecificationType.DUTY)) {
+      result.addWarning("specification.hardware",
+          "Direct reflux or duty specification has no matching condenser/reboiler",
+          "Enable the matching column end or remove the direct specification");
+    }
+  }
+
+  /**
+   * Validate component references for component-based specifications.
+   *
+   * @param result validation result receiving issues
+   * @param specification specification to validate
+   */
+  private void validateSpecificationComponent(ValidationResult result,
+      ColumnSpecification specification) {
+    if (specification.getType() != ColumnSpecification.SpecificationType.PRODUCT_PURITY
+        && specification.getType() != ColumnSpecification.SpecificationType.COMPONENT_RECOVERY) {
+      return;
+    }
+    String componentName = specification.getComponentName();
+    if (componentName == null || componentName.trim().isEmpty()) {
+      result.addError("specification.component", "Component-based specification has no component",
+          "Pass the component name to the ColumnSpecification constructor");
+      return;
+    }
+    if (!isComponentPresentInAnyFeed(componentName)) {
+      result.addError("specification.component",
+          "Specification component is not present in any feed stream: " + componentName,
+          "Use a component name from the feed fluid or add the component to the feed");
+    }
+  }
+
+  /**
+   * Check whether a named component is present in at least one external feed stream.
+   *
+   * @param componentName component name to search for
+   * @return {@code true} when any feed fluid contains the component name
+   */
+  private boolean isComponentPresentInAnyFeed(String componentName) {
+    if (componentName == null) {
+      return false;
+    }
+    for (StreamInterface feedStream : getAllExternalFeedStreams()) {
+      if (feedStream == null || feedStream.getFluid() == null) {
+        continue;
+      }
+      if (fluidContainsComponent(feedStream.getFluid(), componentName)) {
+        return true;
+      }
+    }
+    for (StreamInterface feedStream : unassignedFeedStreams) {
+      if (feedStream == null || feedStream.getFluid() == null) {
+        continue;
+      }
+      if (fluidContainsComponent(feedStream.getFluid(), componentName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Check whether a thermodynamic system contains a named component.
+   *
+   * @param fluid fluid system to inspect
+   * @param componentName component name to search for
+   * @return {@code true} when the component exists in the fluid
+   */
+  private boolean fluidContainsComponent(SystemInterface fluid, String componentName) {
+    String[] componentNames = fluid.getComponentNames();
+    if (componentNames == null) {
+      return false;
+    }
+    for (String candidateName : componentNames) {
+      if (componentName.equals(candidateName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Check whether a value is positive and finite.
+   *
+   * @param value value to inspect
+   * @return {@code true} when value is finite and greater than zero
+   */
+  private boolean isPositiveFiniteValue(double value) {
+    return Double.isFinite(value) && value > 0.0;
   }
 
   /** {@inheritDoc} */
@@ -7902,6 +9890,21 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Get the solver strategy that completed the latest run.
+   *
+   * <p>
+   * For explicitly selected solvers this is normally the same as {@link #getSolverType()}. When
+   * {@link SolverType#AUTO} is configured, this reports the concrete solver selected by the
+   * automatic solver factory.
+   * </p>
+   *
+   * @return solver strategy used by the latest solve
+   */
+  public SolverType getLastSolverTypeUsed() {
+    return lastSolverTypeUsed;
+  }
+
+  /**
    * Returns the list of trays in this column.
    *
    * @return list of {@link SimpleTray} objects
@@ -8023,6 +10026,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.topSpecification =
         new ColumnSpecification(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
             ColumnSpecification.ProductLocation.TOP, recovery, componentName);
+  }
+
+  /**
+   * Convenience method to specify a target component recovery in the bottom product.
+   *
+   * @param componentName the component to constrain
+   * @param recovery the desired recovery fraction (0 to 1)
+   */
+  public void setBottomComponentRecovery(String componentName, double recovery) {
+    this.bottomSpecification =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
+            ColumnSpecification.ProductLocation.BOTTOM, recovery, componentName);
   }
 
   /**
@@ -8562,6 +10577,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      */
     public Builder insideOut() {
       this.solver = SolverType.INSIDE_OUT;
+      return this;
+    }
+
+    /**
+     * Selects the automatic solver strategy.
+     *
+     * @return this builder
+     */
+    public Builder autoSolver() {
+      this.solver = SolverType.AUTO;
       return this;
     }
 

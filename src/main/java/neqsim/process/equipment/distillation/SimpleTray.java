@@ -41,6 +41,18 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   private transient StreamInterface cachedGasOutStream = null;
   /** Cached liquid out stream, invalidated when run() is called. */
   private transient StreamInterface cachedLiquidOutStream = null;
+  /** Cached gas side-draw stream, invalidated when run() is called. */
+  private transient StreamInterface cachedGasSideDrawStream = null;
+  /** Cached liquid side-draw stream, invalidated when run() is called. */
+  private transient StreamInterface cachedLiquidSideDrawStream = null;
+  /** Cached liquid pumparound draw stream, invalidated when run() is called. */
+  private transient StreamInterface cachedLiquidPumparoundDrawStream = null;
+  /** Fraction of tray vapor outlet withdrawn as a side draw. */
+  private double gasSideDrawFraction = 0.0;
+  /** Fraction of tray liquid outlet withdrawn as a side draw. */
+  private double liquidSideDrawFraction = 0.0;
+  /** Fraction of tray liquid outlet withdrawn as a pumparound draw. */
+  private double liquidPumparoundDrawFraction = 0.0;
 
   /**
    * <p>
@@ -275,6 +287,9 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   public void invalidateOutStreamCache() {
     cachedGasOutStream = null;
     cachedLiquidOutStream = null;
+    cachedGasSideDrawStream = null;
+    cachedLiquidSideDrawStream = null;
+    cachedLiquidPumparoundDrawStream = null;
   }
 
   /**
@@ -306,7 +321,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    */
   public StreamInterface getGasOutStream() {
     if (cachedGasOutStream == null) {
-      cachedGasOutStream = createPhaseOutStream("gas");
+      cachedGasOutStream = createPhaseOutStream("gas", 1.0 - gasSideDrawFraction);
     }
     return cachedGasOutStream;
   }
@@ -320,9 +335,112 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    */
   public StreamInterface getLiquidOutStream() {
     if (cachedLiquidOutStream == null) {
-      cachedLiquidOutStream = createLiquidOutStream();
+      cachedLiquidOutStream = createLiquidOutStream(
+          1.0 - liquidSideDrawFraction - liquidPumparoundDrawFraction);
     }
     return cachedLiquidOutStream;
+  }
+
+  /**
+   * Get the gas side-draw stream withdrawn from this tray.
+   *
+   * @return gas side-draw stream, or a zero-flow stream when no gas side draw is configured
+   */
+  public StreamInterface getGasSideDrawStream() {
+    if (cachedGasSideDrawStream == null) {
+      cachedGasSideDrawStream = createPhaseOutStream("gas", gasSideDrawFraction);
+    }
+    return cachedGasSideDrawStream;
+  }
+
+  /**
+   * Get the liquid side-draw stream withdrawn from this tray.
+   *
+   * @return liquid side-draw stream, or a zero-flow stream when no liquid side draw is configured
+   */
+  public StreamInterface getLiquidSideDrawStream() {
+    if (cachedLiquidSideDrawStream == null) {
+      cachedLiquidSideDrawStream = createLiquidOutStream(liquidSideDrawFraction);
+    }
+    return cachedLiquidSideDrawStream;
+  }
+
+  /**
+   * Get the liquid pumparound draw stream withdrawn from this tray.
+   *
+   * @return liquid pumparound draw stream, or a zero-flow stream when no draw is configured
+   */
+  public StreamInterface getLiquidPumparoundDrawStream() {
+    if (cachedLiquidPumparoundDrawStream == null) {
+      cachedLiquidPumparoundDrawStream = createLiquidOutStream(liquidPumparoundDrawFraction);
+    }
+    return cachedLiquidPumparoundDrawStream;
+  }
+
+  /**
+   * Set the fraction of tray vapor withdrawn as a side draw.
+   *
+   * @param fraction fraction from zero to one
+   * @throws IllegalArgumentException if the fraction is not finite or outside zero to one
+   */
+  public void setGasSideDrawFraction(double fraction) {
+    validateSideDrawFraction(fraction);
+    gasSideDrawFraction = fraction;
+    invalidateOutStreamCache();
+  }
+
+  /**
+   * Set the fraction of tray liquid withdrawn as a side draw.
+   *
+   * @param fraction fraction from zero to one
+   * @throws IllegalArgumentException if the fraction is not finite or outside zero to one
+   */
+  public void setLiquidSideDrawFraction(double fraction) {
+    validateSideDrawFraction(fraction);
+    validateLiquidSplitFractions(fraction, liquidPumparoundDrawFraction);
+    liquidSideDrawFraction = fraction;
+    invalidateOutStreamCache();
+  }
+
+  /**
+   * Set the fraction of tray liquid withdrawn for a pumparound return.
+   *
+   * @param fraction fraction from zero to one
+   * @throws IllegalArgumentException if the fraction is not finite, outside zero to one, or the
+   *         total liquid withdrawal fraction exceeds one
+   */
+  public void setLiquidPumparoundDrawFraction(double fraction) {
+    validateSideDrawFraction(fraction);
+    validateLiquidSplitFractions(liquidSideDrawFraction, fraction);
+    liquidPumparoundDrawFraction = fraction;
+    invalidateOutStreamCache();
+  }
+
+  /**
+   * Get the configured gas side-draw fraction.
+   *
+   * @return gas side-draw fraction
+   */
+  public double getGasSideDrawFraction() {
+    return gasSideDrawFraction;
+  }
+
+  /**
+   * Get the configured liquid side-draw fraction.
+   *
+   * @return liquid side-draw fraction
+   */
+  public double getLiquidSideDrawFraction() {
+    return liquidSideDrawFraction;
+  }
+
+  /**
+   * Get the configured liquid pumparound draw fraction.
+   *
+   * @return liquid pumparound draw fraction
+   */
+  public double getLiquidPumparoundDrawFraction() {
+    return liquidPumparoundDrawFraction;
   }
 
   /**
@@ -332,7 +450,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    * @param phaseTypeName phase type name to prefer
    * @return stream containing the selected normalized phase
    */
-  private StreamInterface createPhaseOutStream(String phaseTypeName) {
+  private StreamInterface createPhaseOutStream(String phaseTypeName, double outletFraction) {
     SystemInterface traySystem = mixedStream.getThermoSystem();
     int phaseIndex = findPhaseIndex(phaseTypeName);
     if (phaseIndex < 0) {
@@ -342,6 +460,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     if (phaseSystem == null) {
       return createZeroOutStream(traySystem);
     }
+    scalePhaseSystemByFraction(phaseSystem, outletFraction);
     return new Stream("", phaseSystem);
   }
 
@@ -351,7 +470,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    *
    * @return stream containing the selected normalized liquid phase
    */
-  private StreamInterface createLiquidOutStream() {
+  private StreamInterface createLiquidOutStream(double outletFraction) {
     SystemInterface traySystem = mixedStream.getThermoSystem();
     int phaseIndex = findLiquidPhaseIndex();
     if (phaseIndex < 0) {
@@ -361,7 +480,46 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     if (phaseSystem == null) {
       return createZeroOutStream(traySystem);
     }
+    scalePhaseSystemByFraction(phaseSystem, outletFraction);
     return new Stream("", phaseSystem);
+  }
+
+  /**
+   * Validate a side-draw fraction.
+   *
+   * @param fraction fraction to validate
+   * @throws IllegalArgumentException if the fraction is not finite or outside zero to one
+   */
+  private void validateSideDrawFraction(double fraction) {
+    if (!Double.isFinite(fraction) || fraction < 0.0 || fraction > 1.0) {
+      throw new IllegalArgumentException("Side draw fraction must be between 0 and 1");
+    }
+  }
+
+  /**
+   * Validate that liquid product and pumparound withdrawals leave non-negative tray traffic.
+   *
+   * @param productFraction liquid product side-draw fraction
+   * @param pumparoundFraction liquid pumparound draw fraction
+   * @throws IllegalArgumentException if total liquid withdrawal exceeds one
+   */
+  private void validateLiquidSplitFractions(double productFraction, double pumparoundFraction) {
+    if (productFraction + pumparoundFraction > 1.0 + 1.0e-12) {
+      throw new IllegalArgumentException(
+          "Total liquid side draw and pumparound fractions cannot exceed 1");
+    }
+  }
+
+  /**
+   * Scale a phase outlet system by a split fraction.
+   *
+   * @param phaseSystem phase outlet system to scale
+   * @param outletFraction fraction of phase flow to keep in the stream
+   */
+  private void scalePhaseSystemByFraction(SystemInterface phaseSystem, double outletFraction) {
+    double clampedFraction = Math.max(0.0, Math.min(1.0, outletFraction));
+    scalePhaseSystemToNormalizedMoles(phaseSystem,
+        phaseSystem.getTotalNumberOfMoles() * clampedFraction);
   }
 
   /**

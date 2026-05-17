@@ -74,6 +74,15 @@ public class Condenser extends SimpleTray {
   }
 
   /**
+   * Checks whether this condenser is configured as a total condenser.
+   *
+   * @return {@code true} when the condenser is configured as total, otherwise {@code false}
+   */
+  public boolean isTotalCondenser() {
+    return totalCondenser;
+  }
+
+  /**
    * <p>
    * Getter for the field <code>refluxRatio</code>.
    * </p>

@@ -111,4 +111,33 @@ class ShortcutDistillationColumnTest {
     assertTrue(json.contains("actualStages"), "JSON should contain actualStages");
     assertTrue(json.contains("ethane"), "JSON should contain light key name");
   }
+
+  @Test
+  void testInitializeRigorousColumnFromShortcut() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 30.0, 20.0);
+    fluid.addComponent("methane", 0.10);
+    fluid.addComponent("ethane", 0.30);
+    fluid.addComponent("propane", 0.30);
+    fluid.addComponent("n-butane", 0.20);
+    fluid.addComponent("n-pentane", 0.10);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("Rigorous Shortcut Feed", fluid);
+    feed.setFlowRate(100.0, "kmol/hr");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("RigorousFromShortcut", 3, true, true);
+    DistillationColumn.ShortcutInitializationResult result = column.initializeFromShortcut(feed,
+        "ethane", "propane", 0.95, 0.95, 1.3);
+
+    assertTrue(result.isInitialized(), result.getMessage());
+    assertEquals(result, column.getLastShortcutInitializationResult());
+    assertTrue(column.getNumberOfTrays() >= 4, "Rigorous column should have endpoint stages");
+    assertEquals(result.getFeedTrayNumber(), column.getFeedTrayNumber(feed));
+    assertEquals(result.getActualRefluxRatio(), column.getCondenser().getRefluxRatio(), 1.0e-12);
+    assertNotNull(column.getTopSpecification(), "Top recovery specification should be configured");
+    assertNotNull(column.getBottomSpecification(),
+        "Bottom recovery specification should be configured");
+    assertTrue(column.validateSetup().isValid(), "Shortcut-initialized column should validate");
+  }
 }

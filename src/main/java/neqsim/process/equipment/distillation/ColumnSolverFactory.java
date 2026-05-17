@@ -33,6 +33,8 @@ final class ColumnSolverFactory {
   private static final ColumnSolver NAPHTALI_SANDHOLM = new NaphtaliSandholmColumnSolver();
   /** MESH residual-monitored strategy. */
   private static final ColumnSolver MESH_RESIDUAL = new MeshResidualSolver();
+  /** Automatic strategy selector. */
+  private static final ColumnSolver AUTO = new AutoSolver();
 
   /** Utility class constructor. */
   private ColumnSolverFactory() {}
@@ -48,6 +50,8 @@ final class ColumnSolverFactory {
       return DIRECT;
     }
     switch (solverType) {
+      case AUTO:
+        return AUTO;
       case DAMPED_SUBSTITUTION:
         return DAMPED;
       case INSIDE_OUT:
@@ -67,6 +71,59 @@ final class ColumnSolverFactory {
       case DIRECT_SUBSTITUTION:
       default:
         return DIRECT;
+    }
+  }
+
+  /** Automatic solver selector. */
+  private static final class AutoSolver implements ColumnSolver {
+    /** {@inheritDoc} */
+    @Override
+    public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      DistillationColumn.SolverType[] candidates = selectCandidateSolvers(column);
+      DistillationColumn bestCandidate = null;
+      ColumnSolveResult bestResult = null;
+      DistillationColumn.SolverType bestSolver = null;
+      double bestScore = Double.POSITIVE_INFINITY;
+
+      for (int index = 0; index < candidates.length; index++) {
+        DistillationColumn.SolverType candidateSolver = candidates[index];
+        DistillationColumn candidate = createAutoCandidate(column);
+        if (candidate == null) {
+          return runAutoFallbackOnLiveColumn(column, id);
+        }
+        candidate.setSolverType(candidateSolver);
+        candidate.setDoInitializion(true);
+        try {
+          ColumnSolveResult result =
+              ColumnSolverFactory.create(candidateSolver).solve(candidate, id);
+          double score = scoreResult(result);
+          if (score < bestScore) {
+            bestScore = score;
+            bestCandidate = candidate;
+            bestResult = result;
+            bestSolver = candidateSolver;
+          }
+          if (result.isSolved()) {
+            column.acceptAutoSolverCandidate(candidate, candidateSolver);
+            return ColumnSolveResult.from(column, candidateSolver);
+          }
+        } catch (RuntimeException exception) {
+          DistillationColumn.logger.debug("AUTO distillation solver candidate {} failed for {}.",
+              candidateSolver, column.getName(), exception);
+        }
+      }
+
+      if (bestCandidate != null && bestResult != null && bestSolver != null) {
+        column.acceptAutoSolverCandidate(bestCandidate, bestSolver);
+        return ColumnSolveResult.from(column, bestResult.getSolverType());
+      }
+      return runAutoFallbackOnLiveColumn(column, id);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public DistillationColumn.SolverType getSolverType() {
+      return DistillationColumn.SolverType.AUTO;
     }
   }
 
@@ -313,6 +370,88 @@ final class ColumnSolverFactory {
     } catch (StackOverflowError error) {
       return null;
     }
+  }
+
+  /**
+   * Create a candidate copy for the automatic selector.
+   *
+   * @param column source column
+   * @return copied column, or {@code null} if copying is unavailable
+   */
+  private static DistillationColumn createAutoCandidate(DistillationColumn column) {
+    return createDampedFallbackCandidate(column);
+  }
+
+  /**
+   * Select candidate solvers for automatic mode.
+   *
+   * @param column column being solved
+   * @return ordered candidate solver types, excluding {@link DistillationColumn.SolverType#AUTO}
+   */
+  private static DistillationColumn.SolverType[] selectCandidateSolvers(
+      DistillationColumn column) {
+    if (column.isReactive()) {
+      return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.NAPHTALI_SANDHOLM,
+          DistillationColumn.SolverType.MESH_RESIDUAL,
+          DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
+    }
+    if (column.hasCondenser && column.hasReboiler) {
+      if (column.numberOfTrays >= 12) {
+        return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
+            DistillationColumn.SolverType.MESH_RESIDUAL,
+            DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
+      }
+      if (column.numberOfTrays >= 6) {
+        return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.MESH_RESIDUAL,
+            DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
+      }
+    }
+    return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+        DistillationColumn.SolverType.DIRECT_SUBSTITUTION};
+  }
+
+  /**
+   * Run the robust fallback directly on the live column when trial copies are unavailable.
+   *
+   * @param column live column
+   * @param id calculation identifier
+   * @return solve result from the fallback solver
+   */
+  private static ColumnSolveResult runAutoFallbackOnLiveColumn(DistillationColumn column, UUID id) {
+    ColumnSolveResult result = DAMPED.solve(column, id);
+    return ColumnSolveResult.from(column, result.getSolverType());
+  }
+
+  /**
+   * Score a candidate result for best-effort automatic fallback.
+   *
+   * @param result candidate result
+   * @return finite scalar score where lower is better
+   */
+  private static double scoreResult(ColumnSolveResult result) {
+    double score = residualScore(result.getTemperatureResidual())
+        + residualScore(result.getMassResidual()) + residualScore(result.getEnergyResidual())
+        + residualScore(result.getProductDrawResidualNorm());
+    if (Double.isFinite(result.getMeshResidualNorm())) {
+      score += residualScore(result.getMeshResidualNorm());
+    }
+    if (!result.isSolved()) {
+      score += 1.0e6;
+    }
+    return score;
+  }
+
+  /**
+   * Convert a residual to a finite scoring contribution.
+   *
+   * @param residual candidate residual value
+   * @return finite non-negative residual score
+   */
+  private static double residualScore(double residual) {
+    if (!Double.isFinite(residual)) {
+      return 1.0e9;
+    }
+    return Math.abs(residual);
   }
 
   /**

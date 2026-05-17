@@ -55,6 +55,22 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   }
 
   /**
+   * Clear the explicit vapor boilup/reflux ratio and return to equilibrium operation.
+   */
+  public void clearRefluxRatio() {
+    refluxIsSet = false;
+  }
+
+  /**
+   * Checks whether an explicit vapor boilup/reflux ratio is configured.
+   *
+   * @return {@code true} when an explicit ratio is active, otherwise {@code false}
+   */
+  public boolean isRefluxSet() {
+    return refluxIsSet;
+  }
+
+  /**
    * <p>
    * Getter for the field <code>duty</code>.
    * </p>
