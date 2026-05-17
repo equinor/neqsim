@@ -1649,8 +1649,8 @@ public class GibbsReactor extends TwoPortEquipment {
       columnScaleFactors[j] = 1.0;
     }
 
-    // Calculate inverse
-    jacobianInverse = calculateJacobianInverse();
+    // Inverse is calculated lazily by getJacobianInverse() for diagnostics only.
+    jacobianInverse = null;
   }
 
   /**
@@ -1697,6 +1697,15 @@ public class GibbsReactor extends TwoPortEquipment {
    * @return The Jacobian inverse matrix, or null if it couldn't be calculated
    */
   public double[][] getJacobianInverse() {
+    if (jacobianMatrix == null) {
+      calculateJacobian();
+    }
+    if (jacobianMatrix == null) {
+      return null;
+    }
+    if (jacobianInverse == null) {
+      jacobianInverse = calculateJacobianInverse();
+    }
     if (jacobianInverse == null) {
       return null;
     }
@@ -1710,7 +1719,7 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Calculate the inverse of the Jacobian matrix using JAMA Matrix library.
+   * Calculate the inverse of the Jacobian matrix using EJML.
    *
    * @return Inverse matrix, or null if matrix is singular
    */
@@ -1993,7 +2002,16 @@ public class GibbsReactor extends TwoPortEquipment {
    * @return True if the inverse is correct (within tolerance)
    */
   public boolean verifyJacobianInverse() {
-    if (jacobianMatrix == null || jacobianInverse == null) {
+    if (jacobianMatrix == null) {
+      calculateJacobian();
+    }
+    if (jacobianMatrix == null) {
+      return false;
+    }
+    if (jacobianInverse == null) {
+      jacobianInverse = calculateJacobianInverse();
+    }
+    if (jacobianInverse == null) {
       return false;
     }
 
@@ -2360,8 +2378,8 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Set minimum number of iterations before convergence is checked. Default is 100. The solver
-   * will not declare convergence before completing this many iterations, even if the convergence
+   * Set minimum number of iterations before convergence is checked. Default is 100. The solver will
+   * not declare convergence before completing this many iterations, even if the convergence
    * criterion is satisfied. Setting this too high wastes iterations; too low may cause premature
    * termination.
    *

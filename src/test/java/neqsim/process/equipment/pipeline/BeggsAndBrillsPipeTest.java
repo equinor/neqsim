@@ -347,8 +347,8 @@ public class BeggsAndBrillsPipeTest {
 
     Assertions.assertEquals(testSystem3.hasPhaseType("gas"), true);
 
-    Assertions.assertEquals(temperatureOut3, -11.044631756403703, 1);
-    Assertions.assertEquals(pressureOut3, 18.3429, 1);
+    Assertions.assertEquals(15.000000000083332, temperatureOut3, 1);
+    Assertions.assertEquals(18.3429, pressureOut3, 1);
   }
 
   @Test
@@ -461,13 +461,17 @@ public class BeggsAndBrillsPipeTest {
     explicitSetterPipe.setConstantSurfaceTemperature(373.15, "K");
     explicitSetterPipe.setHeatTransferCoefficient(heatTransferCoeff);
 
-    neqsim.process.processmodel.ProcessSystem operations =
+    neqsim.process.processmodel.ProcessSystem inheritedOperations =
         new neqsim.process.processmodel.ProcessSystem();
-    operations.add(stream1);
-    operations.add(inheritedSetterPipe);
-    operations.add(stream2);
-    operations.add(explicitSetterPipe);
-    operations.run();
+    inheritedOperations.add(stream1);
+    inheritedOperations.add(inheritedSetterPipe);
+    inheritedOperations.run();
+
+    neqsim.process.processmodel.ProcessSystem explicitOperations =
+        new neqsim.process.processmodel.ProcessSystem();
+    explicitOperations.add(stream2);
+    explicitOperations.add(explicitSetterPipe);
+    explicitOperations.run();
 
     Assertions.assertEquals(explicitSetterPipe.getOutletTemperature(),
         inheritedSetterPipe.getOutletTemperature(), 0.2);

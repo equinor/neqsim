@@ -1109,6 +1109,10 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * </p>
    */
   public void calculateMissingValue() {
+    if (!Double.isNaN(totalLength) && Double.isNaN(totalElevation) && Double.isNaN(angle)) {
+      totalElevation = 0.0;
+      angle = 0.0;
+    }
     if (Double.isNaN(totalLength)) {
       totalLength = calculateLength();
     } else if (Double.isNaN(totalElevation)) {

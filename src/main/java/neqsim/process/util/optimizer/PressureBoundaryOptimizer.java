@@ -454,7 +454,7 @@ public class PressureBoundaryOptimizer implements Serializable {
 
         // Generate chart
         CompressorChartGenerator generator = new CompressorChartGenerator(comp);
-        generator.generateCompressorChart("interpolate");
+        comp.setCompressorChart(generator.generateCompressorChart("interpolate"));
 
         // Configure compressor
         comp.setUsePolytropicCalc(true);

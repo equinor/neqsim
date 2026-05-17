@@ -5,6 +5,8 @@ import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
+import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
+import org.ejml.interfaces.linsol.LinearSolverDense;
 import org.ejml.simple.SimpleMatrix;
 // import org.ejml.data.DenseMatrix64F;
 import neqsim.thermo.component.ComponentCPAInterface;
@@ -72,6 +74,12 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   private SimpleMatrix KlkMatrix = null;
   private SimpleMatrix hessianMatrix = null;
   private SimpleMatrix hessianInvers = null;
+  /** Cached LU factorization of {@code hessianMatrix} for repeated Hessian backsolves. */
+  private transient LinearSolverDense<DMatrixRMaj> hessianLU = null;
+  /** Scratch matrix passed to EJML LU because the solver may decompose its input in place. */
+  private transient DMatrixRMaj hessianLUinput = null;
+  /** Matrix size associated with the cached Hessian LU factorization. */
+  private transient int hessianLUSize = -1;
   private SimpleMatrix KlkVMatrix = null;
   private DMatrixRMaj corr2Matrix = null;
   private DMatrixRMaj corr3Matrix = null;
@@ -100,6 +108,9 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       System.arraycopy(this.activeAccosComp, 0, clonedPhase.activeAccosComp, 0,
           activeAccosComp.length);
     }
+    clonedPhase.hessianLU = null;
+    clonedPhase.hessianLUinput = null;
+    clonedPhase.hessianLUSize = -1;
     // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
     // clonedPhase.cpamix = (CPAMixingInterface) cpamix.clone();
     // clonedPhase.cpamix = cpaSelect.getMixingRule(1, this);
@@ -374,7 +385,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
 
     // dXdV
     SimpleMatrix KlkVMatrixksi = KlkVMatrix.mult(ksiMatrix);
-    SimpleMatrix XV = hessianInvers.mult(KlkVMatrixksi);
+    SimpleMatrix XV = applyHessianInv(KlkVMatrixksi);
     SimpleMatrix XVtranspose = XV.transpose();
 
     FCPA = mVector.transpose().mult(uMatrix.minus(ksiMatrix.elementMult(udotMatrix).scale(0.5)))
@@ -417,7 +428,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     // ksiMatrixTranspose.mult(KlkTVMatrix.mult(ksiMatrix)).scale(-0.5).minus(KlkTMatrixTImesKsi.transpose().mult(XV));
     // dFCPAdTdV = tempMatrixTV.get(0, 0);
     // dXdT
-    SimpleMatrix XT = hessianInvers.mult(KlkTMatrixTImesKsi);
+    SimpleMatrix XT = applyHessianInv(KlkTMatrixTImesKsi);
     // dQdTdT
     SimpleMatrix tempMatrixTT = ksiMatrixTranspose.mult(KlkTTMatrix.mult(ksiMatrix)).scale(-0.5)
         .minus(KlkTMatrixTImesKsi.transpose().mult(XT));
@@ -471,7 +482,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       // System.out.println("temp4 matrix");
       // tempMatrix4.print(10, 10);
       // Matrix tempMatrix5 = amatrix.minus(tempMatrix4);
-      SimpleMatrix tempMatrix6 = hessianInvers.mult(tempMatrix5); // .scale(-1.0);
+      SimpleMatrix tempMatrix6 = applyHessianInv(tempMatrix5); // .scale(-1.0);
       // System.out.println("dXdni");
       // tempMatrix4.print(10, 10);
       // tempMatrix5.print(10, 10);
@@ -854,6 +865,26 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   }
 
   /**
+   * Applies the current Hessian inverse to a right-hand side without forming the inverse when a
+   * cached LU factorization is available.
+   *
+   * @param rhs right-hand-side matrix with one row per association site
+   * @return solution of {@code hessianMatrix * x = rhs}
+   */
+  private SimpleMatrix applyHessianInv(SimpleMatrix rhs) {
+    if (hessianInvers != null) {
+      return hessianInvers.mult(rhs);
+    }
+    if (hessianLU != null && hessianLUSize == totalNumberOfAccociationSites) {
+      DMatrixRMaj rhsMat = rhs.getDDRM();
+      DMatrixRMaj out = new DMatrixRMaj(rhsMat.numRows, rhsMat.numCols);
+      hessianLU.solve(rhsMat, out);
+      return SimpleMatrix.wrap(out);
+    }
+    throw new IllegalStateException("Hessian factorization has not been initialized");
+  }
+
+  /**
    * <p>
    * solveX.
    * </p>
@@ -937,12 +968,17 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
 
       // ksiMatrix = new SimpleMatrix(ksi);
       // SimpleMatrix hessianMatrix = new SimpleMatrix(hessian);
-      try {
-        hessianInvers = hessianMatrix.invert();
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+      int n = totalNumberOfAccociationSites;
+      if (hessianLU == null || hessianLUSize != n) {
+        hessianLU = LinearSolverFactory_DDRM.lu(n);
+        hessianLUinput = new DMatrixRMaj(n, n);
+        hessianLUSize = n;
+      }
+      System.arraycopy(hessianMatrix.getDDRM().getData(), 0, hessianLUinput.getData(), 0, n * n);
+      if (!hessianLU.setA(hessianLUinput)) {
         return false;
       }
+      hessianInvers = null;
       if (solvedX) {
         // System.out.println("solvedX ");
         return true;
@@ -951,7 +987,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       DMatrixRMaj mat2 = ksiMatrix.getMatrix();
       CommonOps_DDRM.mult(mat1, mat2, corr2Matrix);
       CommonOps_DDRM.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix, corr3Matrix);
-      CommonOps_DDRM.mult(hessianInvers.getDDRM(), corr3Matrix, corr4Matrix);
+      hessianLU.solve(corr3Matrix, corr4Matrix);
       // SimpleMatrix gMatrix = udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix));
       // corrMatrix =
       // hessianInvers.mult(udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix)));
@@ -1831,18 +1867,21 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         }
       }
 
-      // ksiMatrix = new SimpleMatrix(ksi);
-      // SimpleMatrix hessianMatrix = new SimpleMatrix(hessian);
-      try {
-        hessianInvers = hessianMatrix.invert();
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+      int n = totalNumberOfAccociationSites;
+      if (hessianLU == null || hessianLUSize != n) {
+        hessianLU = LinearSolverFactory_DDRM.lu(n);
+        hessianLUinput = new DMatrixRMaj(n, n);
+        hessianLUSize = n;
+      }
+      System.arraycopy(hessianMatrix.getDDRM().getData(), 0, hessianLUinput.getData(), 0, n * n);
+      if (!hessianLU.setA(hessianLUinput)) {
         return false;
       }
+      hessianInvers = null;
 
       CommonOps_DDRM.mult(mat1, mat2, corr2Matrix);
       CommonOps_DDRM.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix, corr3Matrix);
-      CommonOps_DDRM.mult(hessianInvers.getDDRM(), corr3Matrix, corr4Matrix);
+      hessianLU.solve(corr3Matrix, corr4Matrix);
       // SimpleMatrix gMatrix = udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix));
       // corrMatrix =
       // hessianInvers.mult(udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix)));
