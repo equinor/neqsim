@@ -184,8 +184,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    cachedGasOutStream = null;
-    cachedLiquidOutStream = null;
+    invalidateOutStreamCache();
     double enthalpy = 0.0;
     // double flowRate = ((Stream)
     // streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
@@ -269,8 +268,6 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     setCalculationIdentifier(id);
 
     if (mixedStream.getFluid().getNumberOfPhases() >= 3) {
-      System.out
-          .println("error...." + mixedStream.getFluid().getNumberOfPhases() + " phases on tray");
       logger.warn("error...." + mixedStream.getFluid().getNumberOfPhases() + " phases on tray");
     }
 

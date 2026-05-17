@@ -128,6 +128,22 @@ public class DistillationColumnModeTest {
         column.getDynamicColumnModel());
     assertTrue(column.isDynamicColumnModelExperimental());
     assertTrue(result.hasWarnings());
+    assertTrue(result.getWarnings().stream()
+        .anyMatch(warning -> warning.getMessage().contains("explicit-Euler holdup screening")));
+  }
+
+  /**
+   * Test that nonphysical pumparound return temperatures fail explicitly.
+   */
+  @Test
+  public void nonPhysicalPumparoundReturnTemperatureThrows() {
+    Stream feed = createLiquidPentaneFeed("cold pumparound feed");
+    DistillationColumn column = new DistillationColumn("cold pumparound column", 1, false,
+        false);
+    column.addFeedStream(feed, 0);
+    column.addLiquidPumparound("PA-cold", 0, 0, 0.20, 400.0);
+
+    assertThrows(IllegalStateException.class, () -> column.run(UUID.randomUUID()));
   }
 
   /**

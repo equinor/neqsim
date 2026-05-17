@@ -1,6 +1,7 @@
 package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
@@ -82,6 +83,51 @@ public class SimpleTraySideDrawTest {
     assertTrue(column.isLastColumnTearConverged());
     assertTrue(column.getLastColumnTearIterationCount() > 0);
     assertEquals(0.0, column.getMassBalance("kg/hr"), feed.getFlowRate("kg/hr") * 1.0e-6);
+  }
+
+  /**
+   * Test that side-draw stream caches are refreshed when a tray is rerun.
+   */
+  @Test
+  public void sideDrawCacheRefreshesAfterTrayRerun() {
+    Stream feed = createMethaneFeed("cache refresh feed");
+    SimpleTray tray = new SimpleTray("cache refresh tray");
+    tray.addStream(feed);
+    tray.setGasSideDrawFraction(0.25);
+    tray.run(UUID.randomUUID());
+    assertEquals(25.0, tray.getGasSideDrawStream().getFlowRate("kg/hr"), 25.0e-4);
+
+    feed.setFlowRate(200.0, "kg/hr");
+    feed.run();
+    tray.run(UUID.randomUUID());
+
+    assertEquals(50.0, tray.getGasSideDrawStream().getFlowRate("kg/hr"), 50.0e-4);
+  }
+
+  /**
+   * Test that impossible side-draw specs are bounded and reported as not converged.
+   */
+  @Test
+  public void impossibleSideDrawFlowSpecIsBoundedAndReportsNonConvergence() {
+    Stream feed = createMethaneFeed("impossible side draw feed");
+    SimpleTray maxDrawTray = new SimpleTray("maximum gas draw tray");
+    maxDrawTray.addStream(feed);
+    maxDrawTray.setGasSideDrawFraction(1.0);
+    maxDrawTray.run(UUID.randomUUID());
+    double maximumGasDrawFlow = maxDrawTray.getGasSideDrawStream().getFlowRate("kg/hr");
+
+    DistillationColumn column = new DistillationColumn("ImpossibleSideDrawColumn", 1, false,
+        false);
+    column.addFeedStream(feed, 0);
+    column.addSideDrawFlowSpecification(0, DistillationColumn.SideDrawPhase.GAS,
+      maximumGasDrawFlow * 2.0, "kg/hr");
+
+    column.run(UUID.randomUUID());
+
+    assertFalse(column.isLastColumnTearConverged());
+    assertTrue(column.getTray(0).getGasSideDrawFraction() <= 1.0);
+    assertTrue(column.getSideDrawStream(0, DistillationColumn.SideDrawPhase.GAS)
+      .getFlowRate("kg/hr") <= maximumGasDrawFlow + 1.0e-8);
   }
 
   /**

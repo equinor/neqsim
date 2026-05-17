@@ -83,6 +83,7 @@ stability during the matrix warm-start stage.
 | `NEWTON` | `solveNewton()` | Finite-difference Newton correction on tray temperatures with line search. | A tray-temperature accelerator, not a full simultaneous MESH Newton solver. |
 | `NAPHTALI_SANDHOLM` | `solveNaphtaliSandholm()` | Inside-out warm start followed by guarded simultaneous Newton correction of liquid component flows, tray temperatures, and vapor flows. | Best for rigorous residual-driven MESH convergence on well-conditioned hydrocarbon fractionators. |
 | `MESH_RESIDUAL` | `solveMeshResidual()` | Inside-out initialization followed by full MESH residual evaluation. | Best for auditing material, equilibrium, summation, energy, specification, and product-draw residuals. |
+| `AUTO` | `ColumnSolverFactory.AutoSolver` | Runs built-in candidate solvers on column copies and accepts the solved or best candidate state. | Useful when an agent or workflow should request robust automatic solver selection while still reporting the concrete solver through `getLastSolverTypeUsed()`. |
 
 ### Sequential substitution details
 
@@ -150,6 +151,25 @@ System.out.println("Solve time:     " + column.getLastSolveTimeSeconds() + " s")
   audit the inside-out trajectory when debugging column stability.
 - Records the peak relaxation factors applied to trays, providing a quick signal when the column
   required aggressive damping to converge.
+
+## Outer tear variables
+
+Some column features are coupled outside the inner tray solver because they change the traffic or
+pressure profile that the tray sweeps depend on:
+
+- side-draw flow specifications adjust tray gas or liquid draw fractions until the target product
+  flow is reached;
+- liquid pumparounds withdraw internal tray liquid, update a cooled or heated return stream, and
+  re-solve the column with that return connected to the configured tray;
+- optional hydraulic pressure-drop coupling rates internals, updates the top/bottom pressure
+  profile from total pressure drop, and re-solves until the pressure-profile change is small.
+
+`solveWithColumnTearVariables()` wraps the selected inner solver for these features. It records
+`getLastColumnTearIterationCount()`, `getLastColumnTearResidual()`,
+`isLastColumnTearConverged()`, `getLastPumparoundRelativeChange()`,
+`getLastHydraulicPressureDropPa()`, and `getLastHydraulicPressureDropResidual()`. If a side-draw
+target is physically impossible, the draw fraction is bounded by available tray traffic and the
+latest tear diagnostics report non-convergence instead of allowing an impossible product draw.
 
 ### Matrix solver specifics
 

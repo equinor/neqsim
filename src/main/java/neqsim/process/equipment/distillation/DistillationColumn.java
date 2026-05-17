@@ -220,6 +220,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * @param phase side-draw phase
      * @param targetFlowRate target side-draw flow rate
      * @param flowUnit flow-rate unit for the target and actual flow
+     * @throws IllegalArgumentException if phase is null, target flow is negative or non-finite, or
+     *         the flow unit is empty
      */
     public ColumnSideDrawSpecification(int trayNumber, SideDrawPhase phase, double targetFlowRate,
         String flowUnit) {
@@ -460,16 +462,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       drawStream = newDrawStream;
       double previousFlow = lastReturnFlowKgPerHour;
       SystemInterface returnSystem = newDrawStream.getThermoSystem().clone();
-      double returnTemperature = Math.max(1.0, returnSystem.getTemperature() - temperatureDrop);
-      returnSystem.setTemperature(returnTemperature);
-      Stream newReturnStream = new Stream(name + " return", returnSystem);
-      newReturnStream.run(id);
-      if (returnStream == null) {
-        returnStream = newReturnStream;
-      } else {
-        returnStream.setThermoSystem(newReturnStream.getThermoSystem().clone());
-        returnStream.setCalculationIdentifier(id);
+      double returnTemperature = returnSystem.getTemperature() - temperatureDrop;
+      if (!Double.isFinite(returnTemperature) || returnTemperature <= 0.0) {
+        throw new IllegalStateException("Pumparound return temperature must be finite and above 0 K");
       }
+      returnSystem.setTemperature(returnTemperature);
+      if (returnStream == null) {
+        returnStream = new Stream(name + " return", returnSystem);
+      } else {
+        returnStream.setThermoSystem(returnSystem);
+      }
+      returnStream.run(id);
       lastReturnFlowKgPerHour = Math.abs(returnStream.getFlowRate("kg/hr"));
       double scale = Math.max(1.0e-12, Math.max(previousFlow, lastReturnFlowKgPerHour));
       return Math.abs(lastReturnFlowKgPerHour - previousFlow) / scale;
@@ -661,6 +664,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private boolean lastColumnTearConverged = true;
   /** Latest maximum relative pumparound return-stream change. */
   private double lastPumparoundRelativeChange = 0.0;
+  /** Whether the latest outer tear update changed any manipulated variable. */
+  private transient boolean columnTearVariablesChanged = false;
 
   /**
    * <p>
@@ -1110,12 +1115,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       double relativeChange = updateColumnTearVariables(id);
       lastColumnTearIterationCount = iteration + 1;
       lastColumnTearResidual = relativeChange;
-      if (iteration > 0 && relativeChange <= tolerance) {
-        setDoInitializion(true);
-        solveConfiguredColumn(id);
+      if (relativeChange <= tolerance) {
+        if (columnTearVariablesChanged) {
+          setDoInitializion(true);
+          solveConfiguredColumn(id);
+        }
         updateSideDrawSpecificationResidualsOnly();
         lastColumnTearResidual = Math.max(relativeChange, getMaxSideDrawSpecificationResidual());
         lastColumnTearConverged = lastColumnTearResidual <= tolerance;
+        return;
+      }
+      if (!columnTearVariablesChanged) {
+        updateSideDrawSpecificationResidualsOnly();
+        lastColumnTearResidual = Math.max(relativeChange, getMaxSideDrawSpecificationResidual());
+        lastColumnTearConverged = false;
         return;
       }
       if (iteration < iterationLimit - 1) {
@@ -1162,6 +1175,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return maximum relative change or residual across tear variables
    */
   private double updateColumnTearVariables(UUID id) {
+    columnTearVariablesChanged = false;
     double maxRelativeChange = 0.0;
     maxRelativeChange = Math.max(maxRelativeChange, updateSideDrawSpecificationFractions());
     maxRelativeChange = Math.max(maxRelativeChange, enforceSideDrawFeedInventoryLimit());
@@ -1184,6 +1198,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       maxRelativeChange = Math.max(maxRelativeChange, pumparound.updateReturnStream(drawStream, id));
     }
     lastPumparoundRelativeChange = maxRelativeChange;
+    if (maxRelativeChange > 1.0e-12) {
+      columnTearVariablesChanged = true;
+    }
     return maxRelativeChange;
   }
 
@@ -1204,8 +1221,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         continue;
       }
       double newFraction = calculateNextSideDrawFraction(specification, actualFlowRate);
-      setSideDrawFractionWithinLimit(specification.getTrayNumber(), specification.getPhase(),
-          newFraction);
+      columnTearVariablesChanged = setSideDrawFractionWithinLimit(specification.getTrayNumber(),
+          specification.getPhase(), newFraction) || columnTearVariablesChanged;
     }
     return maxRelativeResidual;
   }
@@ -1277,11 +1294,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param phase side-draw phase
    * @param fraction requested side-draw fraction
    */
-  private void setSideDrawFractionWithinLimit(int trayNumber, SideDrawPhase phase,
+  private boolean setSideDrawFractionWithinLimit(int trayNumber, SideDrawPhase phase,
       double fraction) {
     double limitedFraction = Math.max(0.0,
         Math.min(getMaximumSideDrawFraction(trayNumber, phase), fraction));
+    double currentFraction = getSideDrawFraction(trayNumber, phase);
+    if (Math.abs(limitedFraction - currentFraction) <= 1.0e-12) {
+      return false;
+    }
     setSideDrawFraction(trayNumber, phase, limitedFraction);
+    return true;
   }
 
   /**
@@ -1323,6 +1345,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return 0.0;
     }
     scaleSideDrawFractions(scaleFactor);
+    columnTearVariablesChanged = true;
     return 1.0 - scaleFactor;
   }
 
@@ -1357,6 +1380,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       double pressureDropPa = Math.max(0.0, designer.getTotalPressureDrop());
       lastHydraulicPressureDropPa = pressureDropPa;
       lastHydraulicPressureDropResidual = applyHydraulicPressureDrop(pressureDropPa);
+      if (lastHydraulicPressureDropResidual > 1.0e-12) {
+        columnTearVariablesChanged = true;
+      }
       return lastHydraulicPressureDropResidual;
     } catch (Exception exception) {
       logger.warn("Could not update hydraulic pressure drop for column {}", getName(), exception);
@@ -7177,6 +7203,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param flowRate target flow rate
    * @param unit flow-rate unit
    * @return configured side-draw specification
+     * @throws IllegalArgumentException if the tray number, phase, flow rate, or unit is invalid
    */
   public ColumnSideDrawSpecification addSideDrawFlowSpecification(int trayNumber,
       SideDrawPhase phase, double flowRate, String unit) {
@@ -7349,6 +7376,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param drawFraction fraction of tray liquid traffic withdrawn
    * @param temperatureDrop temperature drop from draw to return in Kelvin
    * @return configured pumparound definition
+     * @throws IllegalArgumentException if tray numbers, draw fraction, or temperature drop are invalid
    */
   public ColumnPumparound addLiquidPumparound(String name, int drawTrayNumber, int returnTrayNumber,
       double drawFraction, double temperatureDrop) {
@@ -8673,10 +8701,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Create fallback products from a bounded shortcut equilibrium split.
    *
    * <p>
-   * The split preserves the current public product vapor fraction but uses bottom terminal K-values
-   * to place volatile components preferentially in the vapor and heavy components preferentially in
-   * the liquid. It is only used when an overall TP flash does not expose both gas and liquid
-   * phases.
+  * The split uses bottom terminal K-values and a Rachford-Rice vapor-fraction estimate to place
+  * volatile components preferentially in the vapor and heavy components preferentially in the
+  * liquid. It is only used when an overall TP flash does not expose both gas and liquid phases.
    * </p>
    *
    * @param feedSystem combined external feed system
@@ -8700,7 +8727,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     kSystem.init(0);
     kSystem.init(1);
 
-    double vaporFraction = getCurrentProductVaporFraction();
+    double vaporFraction = estimateShortcutVaporFraction(feedComponentMoles, kSystem,
+      getCurrentProductVaporFraction());
     double vaporToLiquidRatio = vaporFraction / Math.max(1.0e-12, 1.0 - vaporFraction);
     double[] topComponentMoles = new double[feedComponentMoles.length];
     double[] bottomComponentMoles = new double[feedComponentMoles.length];
@@ -8719,6 +8747,93 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     updateProductStreamFromComponentMolesAsPhase(liquidOutStream, bottomComponentMoles, "liquid",
         id);
     return true;
+  }
+
+  /**
+   * Estimate a bounded vapor fraction for shortcut fallback products from K-values.
+   *
+   * @param feedComponentMoles feed component mole amounts
+   * @param kSystem initialized system carrying component K-values at fallback conditions
+   * @param fallbackVaporFraction vapor fraction to use if the estimate cannot be calculated
+   * @return vapor fraction clamped away from zero and one
+   */
+  private double estimateShortcutVaporFraction(double[] feedComponentMoles,
+      SystemInterface kSystem, double fallbackVaporFraction) {
+    double totalMoles = 0.0;
+    for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
+      totalMoles += Math.max(0.0, feedComponentMoles[componentIndex]);
+    }
+    if (totalMoles <= 1.0e-20) {
+      return clampShortcutVaporFraction(fallbackVaporFraction);
+    }
+
+    double liquidLimitResidual = evaluateRachfordRiceResidual(feedComponentMoles, kSystem,
+        totalMoles, 0.0);
+    double vaporLimitResidual = evaluateRachfordRiceResidual(feedComponentMoles, kSystem,
+        totalMoles, 1.0);
+    if (!Double.isFinite(liquidLimitResidual) || !Double.isFinite(vaporLimitResidual)) {
+      return clampShortcutVaporFraction(fallbackVaporFraction);
+    }
+    if (liquidLimitResidual <= 0.0) {
+      return 0.05;
+    }
+    if (vaporLimitResidual >= 0.0) {
+      return 0.95;
+    }
+
+    double lowerVaporFraction = 0.0;
+    double upperVaporFraction = 1.0;
+    for (int iteration = 0; iteration < 80; iteration++) {
+      double trialVaporFraction = 0.5 * (lowerVaporFraction + upperVaporFraction);
+      double residual = evaluateRachfordRiceResidual(feedComponentMoles, kSystem, totalMoles,
+          trialVaporFraction);
+      if (!Double.isFinite(residual)) {
+        return clampShortcutVaporFraction(fallbackVaporFraction);
+      }
+      if (residual > 0.0) {
+        lowerVaporFraction = trialVaporFraction;
+      } else {
+        upperVaporFraction = trialVaporFraction;
+      }
+    }
+    return clampShortcutVaporFraction(0.5 * (lowerVaporFraction + upperVaporFraction));
+  }
+
+  /**
+   * Evaluate the Rachford-Rice residual for a trial vapor fraction.
+   *
+   * @param feedComponentMoles feed component mole amounts
+   * @param kSystem initialized system carrying component K-values
+   * @param totalMoles total positive feed moles
+   * @param vaporFraction trial vapor fraction from zero to one
+   * @return Rachford-Rice residual
+   */
+  private double evaluateRachfordRiceResidual(double[] feedComponentMoles, SystemInterface kSystem,
+      double totalMoles, double vaporFraction) {
+    double residual = 0.0;
+    for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
+      double z = Math.max(0.0, feedComponentMoles[componentIndex]) / totalMoles;
+      double kValue = Math.max(1.0e-8, kSystem.getComponent(componentIndex).getK());
+      double denominator = 1.0 + vaporFraction * (kValue - 1.0);
+      if (!Double.isFinite(denominator) || denominator <= 1.0e-12) {
+        return Double.NaN;
+      }
+      residual += z * (kValue - 1.0) / denominator;
+    }
+    return residual;
+  }
+
+  /**
+   * Clamp shortcut vapor fractions to keep both fallback product streams populated.
+   *
+   * @param vaporFraction vapor fraction to clamp
+   * @return finite vapor fraction in the range 0.05 to 0.95
+   */
+  private double clampShortcutVaporFraction(double vaporFraction) {
+    if (!Double.isFinite(vaporFraction)) {
+      return 0.5;
+    }
+    return Math.max(0.05, Math.min(0.95, vaporFraction));
   }
 
   /**
@@ -8751,12 +8866,24 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     productSystem.setTemperature(getFallbackProductTemperature());
     productSystem.setPressure(getFallbackProductPressure(), "bara");
     productSystem.init(0);
-    productSystem.setNumberOfPhases(1);
-    productSystem.setPhaseType(0, getPhaseTypeEnumName(phaseTypeName));
+    setSingleProductPhaseType(productSystem, phaseTypeName);
     productSystem.init(1);
     productSystem.initProperties();
+    setSingleProductPhaseType(productSystem, phaseTypeName);
     productStream.setThermoSystem(productSystem);
     productStream.setCalculationIdentifier(id);
+  }
+
+  /**
+   * Set both the system-level and phase-level type of a single-phase product system.
+   *
+   * @param productSystem product system to update
+   * @param phaseTypeName phase type description or enum name to assign
+   */
+  private void setSingleProductPhaseType(SystemInterface productSystem, String phaseTypeName) {
+    productSystem.setNumberOfPhases(1);
+    productSystem.setPhaseType(0, getPhaseTypeEnumName(phaseTypeName));
+    productSystem.getPhase(0).setPhaseTypeName(phaseTypeName);
   }
 
   /**
@@ -8774,6 +8901,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     if ("oil".equals(phaseTypeName)) {
       return "OIL";
+    }
+    if ("aqueous".equals(phaseTypeName)) {
+      return "AQUEOUS";
     }
     return phaseTypeName;
   }
@@ -8853,7 +8983,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         return phaseIndex;
       }
     }
-    return numberOfPhases > 1 ? 1 : -1;
+    return -1;
   }
 
   /**

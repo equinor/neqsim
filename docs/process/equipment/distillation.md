@@ -1,520 +1,434 @@
 ---
 title: Distillation Equipment
-description: Documentation for distillation column equipment in NeqSim process simulation.
-keywords: "distillation, column, tray, absorber, stripper, deethanizer, debutanizer, reboiler, condenser, reflux, fractionation, NGL, inside-out solver, matrix inside-out, Naphtali-Sandholm, MESH residual, convergence diagnostics"
+description: Documentation for distillation column equipment in NeqSim process simulation. Covers staged columns, solvers, formal specifications, side draws, pumparounds, condenser and reboiler modes, hydraulics, shortcut initialization, tray efficiency, dynamic screening, and rate-based packed columns.
+keywords: "distillation, column, tray, absorber, stripper, deethanizer, debutanizer, reboiler, condenser, reflux, side draw, pumparound, hydraulics, Murphree efficiency, shortcut distillation, rate-based packed column, NGL, inside-out solver, AUTO solver, matrix inside-out, Naphtali-Sandholm, MESH residual, convergence diagnostics"
 ---
 
-# Distillation Equipment
+NeqSim's distillation package provides equilibrium-stage columns, shortcut design,
+hydraulic rating, internal recycles, side products, and a separate rate-based packed
+column model for absorption and stripping. The main implementation lives in
+`neqsim.process.equipment.distillation`.
 
-Documentation for distillation column equipment in NeqSim process simulation.
+## Capability Map
 
-## Table of Contents
-- [Overview](#overview)
-- [Column Types](#column-types)
-- [Configuration](#configuration)
-- [Builder Pattern](#builder-pattern)
-- [Solver Options](#solver-options)
-- [Column Specifications](#column-specifications)
-- [Diagnostics and Residuals](#diagnostics-and-residuals)
-- [Usage Examples](#usage-examples)
+| Area | Main APIs | Notes |
+|------|-----------|-------|
+| Rigorous staged columns | `DistillationColumn`, `SimpleTray`, `Condenser`, `Reboiler` | Equilibrium-stage MESH-style model with tray-by-tray flash calculations. |
+| Solvers | `SolverType` | Direct, damped, inside-out, adaptive matrix inside-out, Wegstein, sum-rates, Newton temperature correction, Naphtali-Sandholm, MESH residual, and `AUTO`. |
+| Formal specifications | `ColumnSpecification`, convenience setters | Product purity, component recovery, reflux ratio, product flow rate, and duty specifications. |
+| Side products | `setGasSideDrawFraction`, `setLiquidSideDrawFraction`, `addSideDrawFlowSpecification` | Side draws are external product streams and are included in outlet stream and mass-balance reporting. |
+| Pumparounds | `addLiquidPumparound` | Internal liquid draw/return circuits solved as column tear variables. |
+| Hardware modes | `CondenserMode`, `ReboilerMode` | Partial or total condenser, fixed liquid reflux split, equilibrium reboiler, and vapor boilup ratio mode. |
+| Hydraulics and sizing | `calcColumnInternals`, `enableHydraulicPressureDropCoupling` | Rates tray or packing hydraulics and can couple total pressure drop back into the pressure profile. |
+| Efficiency | `setMurphreeEfficiency`, `setMurphreeEfficiencies` | Column-wide and per-stage Murphree vapor efficiency correction. |
+| Shortcut design | `ShortcutDistillationColumn`, `initializeFromShortcut` | Fenske-Underwood-Gilliland estimates and rigorous-column initialization. |
+| Tray optimization | `findOptimalNumberOfTrays`, `findEconomicOptimalTrayConfiguration` | Searches tray count and feed tray, optionally with economic ranking. |
+| Dynamics | `runTransient`, `DynamicColumnModel.EXPERIMENTAL_EULER` | Explicit-Euler holdup screening model. It is not a rigorous DAE dynamic column model. |
+| Rate-based packed columns | `RateBasedPackedColumn` | Segment-based packed absorption/stripping with film mass transfer, heat transfer, packing hydraulics, and JSON diagnostics. |
 
----
+## Tray Numbering
 
-## Overview
+The `DistillationColumn` constructor is:
 
-**Location:** `neqsim.process.equipment.distillation`
+```java
+DistillationColumn column = new DistillationColumn(name, simpleTrayCount, hasReboiler,
+    hasCondenser);
+```
 
-**Classes:**
-- `DistillationColumn` - Main distillation column
-- `SimpleTray` - Individual tray
-- `Condenser` - Column condenser
-- `Reboiler` - Column reboiler
+The `simpleTrayCount` argument excludes the optional reboiler and condenser. Tray indices used by
+`addFeedStream`, side draws, pumparounds, and per-stage efficiency are internal bottom-up stage
+indices:
 
----
+| Hardware | Internal index convention |
+|----------|---------------------------|
+| Reboiler present | Index `0` is the reboiler. |
+| Simple trays | Above the reboiler, increasing upward. |
+| Condenser present | Last internal index is the condenser. |
+
+For example, `new DistillationColumn("T-100", 10, true, true)` creates 12 internal stages:
+reboiler, 10 simple trays, and condenser.
 
 ## Basic Usage
 
 ```java
 import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.stream.StreamInterface;
 
-// Create column with 10 trays, reboiler, and condenser
 DistillationColumn column = new DistillationColumn("Deethanizer", 10, true, true);
-column.addFeedStream(feedStream, 5);  // Feed on tray 5
-column.setCondenserTemperature(273.15 + 40.0);  // Kelvin
-column.setReboilerTemperature(273.15 + 120.0);  // Kelvin
+column.addFeedStream(feedStream, 5);
+column.setTopPressure(25.0);
+column.setBottomPressure(26.0);
+column.setCondenserTemperature(273.15 - 10.0);
+column.setReboilerTemperature(273.15 + 105.0);
+column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
 column.run();
 
-// Get products
-Stream overhead = column.getGasOutStream();
-Stream bottoms = column.getLiquidOutStream();
+StreamInterface overhead = column.getGasOutStream();
+StreamInterface bottoms = column.getLiquidOutStream();
 ```
 
----
+Use `getInletStreams()` and `getOutletStreams()` for process-topology introspection. Outlet streams
+include the terminal products plus any configured non-zero side-draw product streams.
 
 ## Builder Pattern
 
-For complex column configurations, use the fluent Builder API:
+The fluent builder covers the common rigorous-column setup path. Use the constructor when only one
+end of the column has hardware, because the builder currently exposes `withCondenserAndReboiler()`
+as the hardware shortcut.
 
 ```java
+import neqsim.process.equipment.distillation.ColumnSpecification;
 import neqsim.process.equipment.distillation.DistillationColumn;
-import neqsim.process.equipment.distillation.DistillationColumn.SolverType;
 
-// Build column with fluent API
 DistillationColumn column = DistillationColumn.builder("Deethanizer")
     .numberOfTrays(15)
     .withCondenserAndReboiler()
     .topPressure(25.0, "bara")
     .bottomPressure(26.0, "bara")
-    .temperatureTolerance(0.001)
-    .massBalanceTolerance(0.01)
+    .temperatureTolerance(1.0e-3)
+    .massBalanceTolerance(1.0e-2)
     .maxIterations(100)
-    .solverType(SolverType.INSIDE_OUT)
+    .insideOut()
     .internalDiameter(2.5)
     .addFeedStream(feedStream, 8)
+    .topProductPurity("ethane", 0.95)
+    .bottomSpecification(new ColumnSpecification(
+        ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+        ColumnSpecification.ProductLocation.BOTTOM, 0.98, "propane"))
     .build();
-
-column.run();
 ```
 
-### Builder Methods
-
-| Method | Description |
-|--------|-------------|
-| `numberOfTrays(int)` | Set number of simple trays (excluding condenser/reboiler) |
-| `withCondenser()` | Add condenser at top |
-| `withReboiler()` | Add reboiler at bottom |
-| `withCondenserAndReboiler()` | Add both |
-| `topPressure(double, String)` | Set top pressure with unit |
-| `bottomPressure(double, String)` | Set bottom pressure with unit |
-| `pressure(double, String)` | Set same pressure top and bottom |
-| `temperatureTolerance(double)` | Convergence tolerance for temperature |
-| `massBalanceTolerance(double)` | Convergence tolerance for mass balance |
-| `tolerance(double)` | Set all tolerances at once |
-| `maxIterations(int)` | Maximum solver iterations |
-| `solverType(SolverType)` | Set solver algorithm |
-| `directSubstitution()` | Use direct substitution solver |
-| `dampedSubstitution()` | Use damped substitution solver |
-| `insideOut()` | Use inside-out solver |
-| `relaxationFactor(double)` | Damping factor for solver |
-| `internalDiameter(double)` | Column internal diameter (meters) |
-| `multiPhaseCheck(boolean)` | Enable/disable multi-phase check |
-| `addFeedStream(Stream, int)` | Add feed stream to specified tray |
-| `topSpecification(ColumnSpecification)` | Set top product specification |
-| `bottomSpecification(ColumnSpecification)` | Set bottom product specification |
-| `topProductPurity(String, double)` | Shortcut: top product purity for named component |
-| `bottomProductPurity(String, double)` | Shortcut: bottom product purity for named component |
-| `build()` | Build the configured column |
-
----
-
-## Column Configuration
-
-### Number of Trays
-
-```java
-// Constructor: (name, numTrays, hasReboiler, hasCondenser)
-DistillationColumn column = new DistillationColumn("T-100", 20, true, true);
-```
-
-### Feed Location
-
-```java
-// Single feed
-column.addFeedStream(feed, 10);  // Tray 10 from bottom
-
-// Multiple feeds
-column.addFeedStream(feed1, 8);
-column.addFeedStream(feed2, 12);
-```
-
-### Condenser Type
-
-```java
-// Total condenser
-column.setCondenserType("total");
-
-// Partial condenser (vapor overhead)
-column.setCondenserType("partial");
-```
-
-### Side Draws
-
-```java
-// Liquid side draw
-column.addSideDraw(7, "liquid", 100.0, "kg/hr");
-
-// Vapor side draw
-column.addSideDraw(15, "vapor", 50.0, "kg/hr");
-```
-
----
+| Builder method | Description |
+|----------------|-------------|
+| `numberOfTrays(int)` | Number of simple trays, excluding condenser and reboiler. |
+| `withCondenserAndReboiler()` | Adds both terminal hardware items. |
+| `topPressure(double, String)`, `bottomPressure(double, String)`, `pressure(double, String)` | Sets endpoint pressures. |
+| `temperatureTolerance(double)`, `massBalanceTolerance(double)`, `tolerance(double)` | Sets convergence tolerances. |
+| `maxIterations(int)` | Sets requested solver iterations. |
+| `dampedSubstitution()`, `insideOut()`, `autoSolver()` | Selects common solver strategies. |
+| `relaxationFactor(double)` | Starting damping factor for damped substitution. |
+| `internalDiameter(double)` | Internal diameter in metres. |
+| `addFeedStream(StreamInterface, int)` | Adds a feed to an internal tray index. |
+| `topProductPurity(String, double)` | Adds a top product purity specification. |
+| `bottomSpecification(ColumnSpecification)` | Adds any bottom-end specification object. |
+| `build()` | Creates the configured column. |
 
 ## Operating Specifications
 
-### Temperature Specifications
+Direct operating specifications are applied before the inner column solver runs.
 
 ```java
-// Condenser temperature
-column.setCondenserTemperature(273.15 + 40.0);  // Kelvin
-
-// Reboiler temperature
-column.setReboilerTemperature(273.15 + 120.0);  // Kelvin
-```
-
-### Pressure Profile
-
-```java
-// Top pressure
-column.setTopPressure(15.0);  // bara
-
-// Bottom pressure (or pressure drop)
-column.setBottomPressure(16.0);  // bara
-```
-
-### Reflux Specifications
-
-```java
-// Reflux ratio
+column.setTopPressure(25.0);
+column.setBottomPressure(26.0);
+column.setCondenserTemperature(263.15);
+column.setReboilerTemperature(378.15);
 column.setCondenserRefluxRatio(3.0);
-
-// Condenser duty
-column.getCondenser().setHeatInput(-5000000.0);  // W (negative = cooling)
-```
-
-### Reboiler Specifications
-
-```java
-// Reboiler duty
-column.getReboiler().setHeatInput(6000000.0);  // W
-
-// Boilup ratio
+column.getCondenser().setHeatInput(-5.0e6);
+column.getReboiler().setHeatInput(6.0e6);
 column.setReboilerBoilupRatio(2.5);
 ```
 
----
-
-## Column Specifications
-
-NeqSim supports flexible column specifications through the `ColumnSpecification` class.
-Instead of specifying condenser/reboiler temperatures or duties directly, you can
-specify desired product quality targets and NeqSim will adjust operating conditions
-automatically using a secant-method outer loop.
-
-### Specification Types
-
-| Type | Description | Example |
-|------|------------|--------|
-| `PRODUCT_PURITY` | Mole-fraction purity of a component in a product stream | 95 mol% ethane overhead |
-| `REFLUX_RATIO` | Condenser reflux ratio (L/D) | Reflux ratio of 3.5 |
-| `COMPONENT_RECOVERY` | Fraction of feed component recovered in a product (0–1) | 99% ethane recovery overhead |
-| `PRODUCT_FLOW_RATE` | Total molar flow rate of a product stream (kmol/h) | 100 kmol/h overhead |
-| `DUTY` | Condenser or reboiler duty (W) | Reboiler duty 5 MW |
-
-### Product Purity Specification
+Product-quality and recovery targets use `ColumnSpecification`. Purity and recovery targets are
+dimensionless fractions from `0` to `1`; product-flow-rate specifications are evaluated internally
+in `mol/hr`.
 
 ```java
-// Specify top and bottom product purities
-column.setTopProductPurity("ethane", 0.95);      // 95 mol% ethane overhead
-column.setBottomProductPurity("propane", 0.98);   // 98 mol% propane in bottoms
-column.run();  // Outer loop adjusts condenser/reboiler temperatures
-```
-
-### Component Recovery Specification
-
-```java
-// Recover 99% of feed ethane in the overhead product
+column.setTopProductPurity("ethane", 0.95);
+column.setBottomProductPurity("propane", 0.98);
 column.setTopComponentRecovery("ethane", 0.99);
-column.run();
+column.setBottomComponentRecovery("propane", 0.99);
+column.setBottomProductFlowRate(1000.0, "mol/hr");
+
+ColumnSpecification topFlow = new ColumnSpecification(
+    ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
+    ColumnSpecification.ProductLocation.TOP, 500.0);
+topFlow.setTolerance(1.0e-3);
+topFlow.setMaxIterations(30);
+column.setTopSpecification(topFlow);
 ```
 
-### Reflux and Boilup Ratio
+For iterative specifications, NeqSim wraps the selected inner solver in an outer adjustment loop and
+uses condenser or reboiler temperature as the manipulated variable where possible.
+
+## Condenser and Reboiler Modes
 
 ```java
-// Set reflux ratio (applied directly, no outer loop needed)
-column.setCondenserRefluxRatio(3.5);
+column.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
+column.setCondenserMode(DistillationColumn.CondenserMode.TOTAL);
+column.setCondenserLiquidReflux(500.0, "kg/hr");
+DistillationColumn.CondenserMode condenserMode = column.getCondenserMode();
 
-// Set boilup ratio
-column.setReboilerBoilupRatio(2.0);
-column.run();
+column.setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM);
+column.setReboilerVaporBoilupRatio(1.8);
+DistillationColumn.ReboilerMode reboilerMode = column.getReboilerMode();
 ```
 
-### Product Flow Rate Specification
-
-```java
-// Set overhead flow rate target
-column.setTopProductFlowRate(100.0);   // kmol/h
-column.run();
-```
-
-### Using ColumnSpecification Directly
-
-```java
-import neqsim.process.equipment.distillation.ColumnSpecification;
-import neqsim.process.equipment.distillation.ColumnSpecification.SpecificationType;
-import neqsim.process.equipment.distillation.ColumnSpecification.ProductLocation;
-
-// Create a custom specification
-ColumnSpecification topSpec = new ColumnSpecification(
-    SpecificationType.PRODUCT_PURITY,
-    ProductLocation.TOP,
-    0.95,        // target value
-    "ethane"     // component name
-);
-topSpec.setTolerance(1e-3);      // convergence tolerance
-topSpec.setMaxIterations(30);    // max outer-loop iterations
-
-column.setTopSpecification(topSpec);
-column.run();
-```
-
-### Builder Pattern with Specifications
-
-```java
-DistillationColumn column = DistillationColumn.builder("Deethanizer")
-    .numberOfTrays(25)
-    .withCondenserAndReboiler()
-    .topPressure(25.0, "bara")
-    .insideOut()
-    .addFeedStream(feed, 12)
-    .topProductPurity("ethane", 0.95)
-    .bottomProductPurity("propane", 0.98)
-    .build();
-column.run();
-```
-
-### How It Works
-
-For **direct specifications** (reflux ratio, duty), the values are applied on
-the condenser or reboiler before the inner column solver runs.
-
-For **iterative specifications** (product purity, component recovery, product
-flow rate), NeqSim wraps the inner solver in a secant-method outer loop that:
-
-1. Runs the column with initial temperature guesses
-2. Evaluates the specification error (current − target)
-3. Adjusts condenser or reboiler temperature using the secant update
-4. Repeats until the error is within tolerance (default 1e-4)
-
----
+`setCondenserLiquidReflux(value, unit)` configures the `LIQUID_REFLUX_SPLIT` mode. Use it instead
+of calling `setCondenserMode(LIQUID_REFLUX_SPLIT)` directly because the fixed reflux flow is
+required.
 
 ## Solver Options
 
-### Available Solvers
-
 | Solver type | Strategy | Typical use |
 |-------------|----------|-------------|
-| `DIRECT_SUBSTITUTION` | Classic tray-by-tray substitution without extra damping. | Default choice for simple and well-posed columns. |
+| `DIRECT_SUBSTITUTION` | Classic tray-by-tray substitution. | Default for simple, well-posed columns. |
 | `DAMPED_SUBSTITUTION` | Sequential substitution with an initial fixed relaxation factor. | Stiffer cases where direct substitution overshoots. |
-| `INSIDE_OUT` | Inside-out style flow correction with K-value tracking and polishing. | General process work, deethanizers, and multi-feed columns. |
-| `MATRIX_INSIDE_OUT` | Adaptive matrix inside-out mode: bypasses matrix setup on small columns and uses a component-balance matrix warm start plus rigorous inside-out polishing on larger columns. | Larger hydrocarbon columns where the matrix warm start may reduce rigorous flash sweeps without changing product acceptance criteria. |
-| `WEGSTEIN` | Accelerated successive substitution after a warm-up phase. | Well-conditioned columns where faster convergence is useful. |
-| `SUM_RATES` | Flow-corrected tearing method using sum-rate style updates. | Absorbers, strippers, and flow-sensitive columns. |
-| `NEWTON` | Tray-temperature correction accelerator with finite-difference Jacobian and line search. | Difficult temperature convergence cases. This is not a full simultaneous MESH Newton solver. |
-| `NAPHTALI_SANDHOLM` | Warm-starts from inside-out and applies guarded simultaneous Newton corrections to liquid component flows, tray temperatures, and vapor flows. | Rigorous MESH residual convergence checks for well-conditioned hydrocarbon columns. |
-| `MESH_RESIDUAL` | Runs inside-out initialization and records full MESH residual diagnostics. | Auditing material, equilibrium, summation, energy, product-draw, and specification residuals. |
-
-### Convergence Settings
-
-| Method | Purpose |
-|--------|---------|
-| `setMaxNumberOfIterations(int)` | Set the minimum requested solver iteration limit; the column may use a larger adaptive limit for complex cases. |
-| `setTemperatureTolerance(double)` | Override the adaptive average tray-temperature tolerance in Kelvin. |
-| `setMassBalanceTolerance(double)` | Override the adaptive relative mass-balance tolerance. |
-| `setEnthalpyBalanceTolerance(double)` | Override the adaptive relative enthalpy-balance tolerance. |
-| `setEnforceEnergyBalanceTolerance(boolean)` | Require the energy residual to pass before `solved()` returns true. Disabled by default for backward compatibility. |
-| `setRelaxationFactor(double)` | Set the starting relaxation factor for `DAMPED_SUBSTITUTION`. |
-| `setSeedTemperature(int, double)` | Set a non-binding per-stage temperature guess in Kelvin for residual solvers such as `NAPHTALI_SANDHOLM`; use `Double.NaN` to clear one stage. |
-| `setMeshResidualTolerance(double)` | Set the scaled MESH residual norm tolerance used by the optional MESH convergence gate. |
-| `setMeshProductDrawResidualTolerance(double)` | Set the scaled terminal product-draw residual tolerance used when MESH residual gating is enabled. |
-| `setEnforceMeshResidualTolerance(boolean)` | Require the latest MESH residual vector to pass before `solved()` returns true. This gate is effective by default for `NAPHTALI_SANDHOLM` and `MESH_RESIDUAL`. |
-
-### Initialization
-
-Column initialization is automatic. `init()` runs the feed streams, places any unassigned feed near
-the closest tray temperature, seeds a pressure profile from top and bottom pressure settings, and
-links the neighboring vapor and liquid streams used by the tray sweeps. User-controlled condenser
-and reboiler temperatures or duties remain the main practical way to influence the starting profile.
-
----
-
-## Diagnostics and Residuals
-
-Every `DistillationColumn.run()` records scalar convergence metrics and a scaled MESH residual
-vector for the final column state. The residual vector groups equations into material,
-equilibrium, summation, energy, terminal product-draw, and active specification residuals.
-
-| Getter | Description |
-|--------|-------------|
-| `getLastIterationCount()` | Number of iterations used by the active solver. |
-| `getLastTemperatureResidual()` | Average tray-temperature residual in Kelvin. |
-| `getLastMassResidual()` | Relative mass-balance residual. |
-| `getLastEnergyResidual()` | Relative enthalpy-balance residual. |
-| `getLastSpecificationResidual()` | Largest absolute active top/bottom specification residual. |
-| `wasMatrixInsideOutWarmStartUsed()` | Whether `MATRIX_INSIDE_OUT` accepted a matrix warm-start state before rigorous polishing. |
-| `wasMatrixInsideOutWarmStartBypassed()` | Whether `MATRIX_INSIDE_OUT` skipped matrix setup and ran rigorous inside-out directly. This is expected for small columns where setup overhead dominates. |
-| `getLastMatrixInsideOutIterationCount()` | Number of matrix warm-start iterations, or zero when the matrix stage did not run. |
-| `getLastMatrixInsideOutTemperatureResidual()` | Average matrix-stage tray-temperature residual in Kelvin, or `Double.NaN` when no matrix stage ran. |
-| `getLastMatrixInsideOutSolveTimeSeconds()` | Matrix warm-start wall time in seconds, or zero when no matrix stage ran. |
-| `getLastMeshResidualNorm()` | Infinity norm of the full scaled MESH residual vector. |
-| `getLastMeshMaterialResidualNorm()` | Infinity norm of component material residuals. |
-| `getLastMeshEquilibriumResidualNorm()` | Infinity norm of fugacity-equilibrium residuals. |
-| `getLastMeshSummationResidualNorm()` | Infinity norm of vapor/liquid mole-fraction summation residuals. |
-| `getLastMeshEnergyResidualNorm()` | Infinity norm of tray energy residuals. |
-| `getLastMeshProductDrawResidualNorm()` | Infinity norm of terminal product-draw residuals between exposed products and tray traffic. |
-| `getLastMeshSpecificationResidualNorm()` | Infinity norm of active specification residuals. |
-| `getLastMeshResidualVector()` | Copy of the full residual vector, ordered by internal equation metadata. |
-
-The MESH residual convergence gate is diagnostic-only for legacy sequential solvers by default, but
-is effective by default for `NAPHTALI_SANDHOLM` and `MESH_RESIDUAL`. Enable it explicitly for other
-solvers when a workflow should treat the full residual vector and terminal product-draw residual as
-part of the convergence contract; disable it explicitly only when residual diagnostics should not
-affect `solved()`.
-
-`MATRIX_INSIDE_OUT` is adaptive. For small benchmark-style columns it bypasses the matrix warm-start
-stage and follows the rigorous `INSIDE_OUT` path directly, avoiding fixed matrix setup overhead. For
-larger columns it attempts the tridiagonal component-balance warm start, records the matrix-stage
-diagnostics above, then still finishes with rigorous inside-out polishing so final products use the
-same convergence and fallback checks as `INSIDE_OUT`.
-
----
-
-## Column Results
-
-### Tray-by-Tray Profiles
+| `INSIDE_OUT` | Inside-out style flow correction with K-value tracking and polishing. | General deethanizer/depropanizer and multi-feed work. |
+| `MATRIX_INSIDE_OUT` | Adaptive matrix warm start plus rigorous inside-out polishing. | Larger hydrocarbon fractionators where matrix setup cost is justified. |
+| `WEGSTEIN` | Accelerated successive substitution after warm-up. | Well-conditioned fixed-point problems. |
+| `SUM_RATES` | Flow-corrected tearing method. | Absorbers, strippers, and flow-sensitive columns. |
+| `NEWTON` | Tray-temperature Newton accelerator. | Difficult temperature convergence. It is not full simultaneous MESH Newton. |
+| `NAPHTALI_SANDHOLM` | Guarded simultaneous correction of MESH blocks after inside-out warm start. | Residual-driven hydrocarbon fractionators. |
+| `MESH_RESIDUAL` | Inside-out initialization plus full residual auditing. | Material, equilibrium, summation, energy, product-draw, and spec residual checks. |
+| `AUTO` | Runs candidate strategies on column copies and accepts the solved/best candidate. | Agent workflows and uncertain cases where robust automatic selection is useful. |
 
 ```java
+column.setSolverType(DistillationColumn.SolverType.AUTO);
+column.run();
+DistillationColumn.SolverType selected = column.getLastSolverTypeUsed();
+```
+
+## Side Draws
+
+Side draws withdraw a fraction of tray vapor or liquid traffic. They are true external product
+streams: `getOutletStreams()` includes them, and `getMassBalance(unit)` subtracts them from the
+feed-product balance.
+
+```java
+column.setGasSideDrawFraction(6, 0.05);
+column.setLiquidSideDrawFraction(4, 0.10);
+
+StreamInterface gasSideDraw = column.getSideDrawStream(6,
+    DistillationColumn.SideDrawPhase.GAS);
+List<StreamInterface> allSideDraws = column.getSideDrawStreams();
+```
+
+For target side-product flow rates, use side-draw flow specifications. The column adjusts the
+corresponding tray split fraction as an outer tear variable.
+
+```java
+DistillationColumn.ColumnSideDrawSpecification spec = column.addSideDrawFlowSpecification(6,
+    DistillationColumn.SideDrawPhase.GAS, 100.0, "kg/hr");
+spec.setTolerance(1.0e-4);
+spec.setMaxIterations(15);
+column.setMaxColumnTearIterations(20);
+column.setColumnTearTolerance(1.0e-4);
 column.run();
 
-// Temperature profile
-for (int i = 0; i < column.getTrays().size(); i++) {
-    double temperatureC = column.getTray(i).getTemperature() - 273.15;
-    double vaporFlow = column.getTray(i).getVaporFlowRate("kg/hr");
-    double liquidFlow = column.getTray(i).getLiquidFlowRate("kg/hr");
-    System.out.println("Tray " + i + ": " + temperatureC + " C, V=" + vaporFlow
-        + " kg/hr, L=" + liquidFlow + " kg/hr");
+double actualDraw = spec.getLastActualFlowRate();
+double drawResidual = spec.getLastRelativeResidual();
+boolean tearConverged = column.isLastColumnTearConverged();
+```
+
+If the requested side-draw flow is physically impossible, the split is bounded by available tray
+traffic and the latest tear-variable diagnostics report non-convergence.
+
+## Pumparounds
+
+Liquid pumparounds are internal draw/return circuits. They are not external products and do not
+appear in `getOutletStreams()`.
+
+```java
+DistillationColumn.ColumnPumparound pumparound = column.addLiquidPumparound("PA-1", 4, 6,
+    0.15, 10.0);
+column.setMaxPumparoundIterations(12);
+column.setPumparoundTolerance(1.0e-4);
+column.run();
+
+StreamInterface returnStream = pumparound.getReturnStream();
+double latestChange = column.getLastPumparoundRelativeChange();
+```
+
+The `temperatureDrop` argument is in Kelvin. Positive values cool the returned liquid; negative
+values heat it. A non-finite or below-zero-K return temperature fails explicitly.
+
+## Hydraulics and Pressure-Drop Coupling
+
+`calcColumnInternals()` evaluates tray or packing hydraulics for the latest column state.
+
+```java
+import neqsim.process.equipment.distillation.internals.ColumnInternalsDesigner;
+
+column.setInternalDiameter(2.5);
+ColumnInternalsDesigner designer = column.calcColumnInternals("sieve");
+double totalPressureDropPa = designer.getTotalPressureDrop();
+```
+
+Hydraulic coupling is opt-in. When enabled, the column rates internals, converts total hydraulic
+pressure drop to a linear pressure profile between top and bottom, and re-solves until the hydraulic
+tear variable is within tolerance.
+
+```java
+column.enableHydraulicPressureDropCoupling("sieve");
+column.run();
+double coupledPressureDropPa = column.getLastHydraulicPressureDropPa();
+double hydraulicResidual = column.getLastHydraulicPressureDropResidual();
+```
+
+Supported internals names include common tray types such as `"sieve"`, `"valve"`,
+`"bubble-cap"`, and packed-column mode `"packed"`, depending on available internals data.
+
+## Efficiency and Internals
+
+Murphree vapor efficiency can be set globally or per stage.
+
+```java
+column.setMurphreeEfficiency(0.70);
+column.setMurphreeEfficiency(3, 0.65);
+double stageEfficiency = column.getMurphreeEfficiency(3);
+column.clearPerStageMurphreeEfficiency();
+```
+
+Use mechanical-design classes and `calcColumnInternals()` for actual-tray counts, HETP-style
+height estimates, flooding, weeping, entrainment, downcomer backup, and pressure-drop checks. The
+`findEconomicOptimalTrayConfiguration` methods also use tray efficiency to convert theoretical
+stages to actual trays for cost ranking.
+
+## Shortcut Initialization and Tray Optimization
+
+`ShortcutDistillationColumn` provides Fenske-Underwood-Gilliland estimates. A rigorous column can
+use those estimates directly as a starting design.
+
+```java
+DistillationColumn.ShortcutInitializationResult init = column.initializeFromShortcut(feedStream,
+    "ethane", "propane", 0.98, 0.98, 1.3);
+if (init.isFeasible()) {
+  column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
+  column.run();
 }
 ```
 
-### Duties
+Search utilities are available for tray count, feed tray, and economic ranking.
 
 ```java
-double Qcond = column.getCondenser().getDuty();  // W
-double Qreb = column.getReboiler().getDuty();    // W
-
-System.out.println("Condenser duty: " + (-Qcond/1e6) + " MW");
-System.out.println("Reboiler duty: " + (Qreb/1e6) + " MW");
+column.setMaxTrayOptimizationCandidates(200);
+column.setMaxTrayOptimizationTimeSeconds(20.0);
+int trays = column.findOptimalNumberOfTrays(0.95, "ethane", true, 30);
+DistillationColumn.EconomicTrayOptimizationResult economic =
+    column.findEconomicOptimalTrayConfiguration(0.95, "ethane", true, 30);
 ```
 
-### Separation Performance
+Optimization mutates the column to the selected feasible candidate. Capture or copy the model first
+if the current tray count must be preserved.
+
+## Dynamic Screening Model
+
+The current distillation dynamics are explicitly experimental:
+`getDynamicColumnModel()` returns `DynamicColumnModel.EXPERIMENTAL_EULER`, and
+`isDynamicColumnModelExperimental()` returns `true`.
 
 ```java
-// Product purities
-double overheadEthaneMoleFraction = overhead.getFluid().getComponent("ethane").getx();
-double bottomsPropaneMoleFraction = bottoms.getFluid().getComponent("propane").getx();
+column.setDynamicColumnEnabled(true);
+column.setDynamicEnergyEnabled(true);
+column.setTrayWeirHeight(0.05);
+column.setTrayWeirLength(1.0);
+column.setTrayDryPressureDrop(200.0);
 ```
 
----
+The transient model uses explicit-Euler tray holdup updates, Francis-weir liquid overflow, optional
+per-tray energy tracking, and a simplified vapor hydraulic relation. Treat it as a screening tool
+for qualitative inventory response, not as a replacement for commercial DAE dynamic simulators in
+control-system design or safety-critical trip studies.
 
-## Example: NGL Fractionation
+## Rate-Based Packed Column
 
-### Deethanizer
+Use `RateBasedPackedColumn` for counter-current packed absorption and stripping when equilibrium
+stages are not the right model.
 
 ```java
-// Feed: NGL from gas plant
-SystemInterface ngl = new SystemSrkEos(273.15 + 30, 25.0);
-ngl.addComponent("methane", 0.02);
-ngl.addComponent("ethane", 0.25);
-ngl.addComponent("propane", 0.35);
-ngl.addComponent("i-butane", 0.10);
-ngl.addComponent("n-butane", 0.18);
-ngl.addComponent("n-pentane", 0.10);
-ngl.setMixingRule("classic");
+import neqsim.process.equipment.distillation.RateBasedPackedColumn;
 
-Stream feed = new Stream("NGL Feed", ngl);
-feed.setFlowRate(5000.0, "kg/hr");
+RateBasedPackedColumn absorber = new RateBasedPackedColumn("CO2 absorber", gasIn, liquidIn);
+absorber.setColumnDiameter(1.2);
+absorber.setPackedHeight(6.0);
+absorber.setNumberOfSegments(12);
+absorber.setPackingType("Pall-Ring-50");
+absorber.setTransferComponents("CO2");
+absorber.run();
 
-ProcessSystem process = new ProcessSystem();
-process.add(feed);
-
-// Deethanizer column
-DistillationColumn deethanizer = new DistillationColumn("Deethanizer", 25, true, true);
-deethanizer.addFeedStream(feed, 12);
-deethanizer.setTopPressure(25.0);  // bara
-deethanizer.setCondenserTemperature(273.15 - 10.0);  // Kelvin
-deethanizer.setReboilerTemperature(273.15 + 100.0);  // Kelvin
-deethanizer.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
-process.add(deethanizer);
-
-process.run();
-
-// Results
-Stream ethaneProduct = deethanizer.getGasOutStream();
-Stream c3plusProduct = deethanizer.getLiquidOutStream();
-
-System.out.println("Ethane product:");
-System.out.println("  Flow: " + ethaneProduct.getFlowRate("kg/hr") + " kg/hr");
-System.out.println("  C2 purity: " +
-    ethaneProduct.getFluid().getComponent("ethane").getx() * 100 + " mol%");
-
-System.out.println("C3+ product:");
-System.out.println("  Flow: " + c3plusProduct.getFlowRate("kg/hr") + " kg/hr");
-System.out.println("  C2 content: " +
-    c3plusProduct.getFluid().getComponent("ethane").getx() * 100 + " mol%");
+StreamInterface treatedGas = absorber.getGasOutStream();
+String report = absorber.toJson();
 ```
 
-### Depropanizer
+The rate-based model exposes segment profiles, component-transfer totals, pressure-drop and flood
+fraction diagnostics, film/heat-transfer model choices, and equation-oriented residual diagnostics.
 
-```java
-// Feed from deethanizer bottoms
-DistillationColumn depropanizer = new DistillationColumn("Depropanizer", 30, true, true);
-depropanizer.addFeedStream(c3plusProduct, 15);
-depropanizer.setTopPressure(18.0);  // bara
-depropanizer.setCondenserTemperature(273.15 + 45.0);  // Kelvin
-depropanizer.setReboilerTemperature(273.15 + 110.0);  // Kelvin
-process.add(depropanizer);
+## Diagnostics and Results
 
-process.run();
+| Getter | Description |
+|--------|-------------|
+| `solved()` | Current convergence flag. |
+| `getLastSolverTypeUsed()` | Concrete solver that completed the latest run, especially useful when requested solver is `AUTO`. |
+| `getLastIterationCount()` | Inner solver iteration count. |
+| `getLastSolveTimeSeconds()` | Latest solve wall time. |
+| `getLastTemperatureResidual()` | Average tray-temperature residual in Kelvin. |
+| `getLastMassResidual()` | Relative mass-balance residual. |
+| `getLastEnergyResidual()` | Relative enthalpy-balance residual. |
+| `getLastTopSpecificationResidual()`, `getLastBottomSpecificationResidual()` | Endpoint spec errors. |
+| `getLastSpecificationResidual()` | Maximum absolute endpoint spec error. |
+| `getLastColumnTearIterationCount()` | Outer side-draw, pumparound, and hydraulic tear iterations. |
+| `getLastColumnTearResidual()` | Maximum outer tear residual. |
+| `isLastColumnTearConverged()` | Whether active side-draw, pumparound, and hydraulic tear variables met tolerance. |
+| `getLastPumparoundRelativeChange()` | Maximum latest pumparound return-flow change. |
+| `getLastHydraulicPressureDropPa()` | Latest coupled hydraulic pressure drop in Pa. |
+| `getLastHydraulicPressureDropResidual()` | Relative pressure-profile change from hydraulic coupling. |
+| `getLastMeshResidualNorm()` | Full scaled MESH residual infinity norm. |
+| `getLastMeshMaterialResidualNorm()` | Component material residual norm. |
+| `getLastMeshEquilibriumResidualNorm()` | Phase-equilibrium residual norm. |
+| `getLastMeshSummationResidualNorm()` | Mole-fraction summation residual norm. |
+| `getLastMeshEnergyResidualNorm()` | Tray energy residual norm. |
+| `getLastMeshProductDrawResidualNorm()` | Terminal product-draw residual norm. |
+| `getLastMeshSpecificationResidualNorm()` | Active endpoint specification residual norm. |
+| `getLastMeshResidualVector()` | Copy of the complete scaled residual vector. |
 
-Stream propaneProduct = depropanizer.getGasOutStream();
-Stream c4plusProduct = depropanizer.getLiquidOutStream();
-```
+The MESH residual gate is diagnostic-only for legacy sequential solvers by default. It is effective
+by default for `NAPHTALI_SANDHOLM` and `MESH_RESIDUAL`; call
+`setEnforceMeshResidualTolerance(true)` to make it part of the convergence contract for other
+solvers.
 
----
+## Common Workflows
 
-## Absorber Column
+### NGL Fractionation
 
-For absorption without reboiler:
+1. Build the feed with an EOS suitable for the hydrocarbon range, set mixing rule, and run the feed
+   stream.
+2. Initialize with `ShortcutDistillationColumn` or `initializeFromShortcut` when light and heavy
+   keys are known.
+3. Run `INSIDE_OUT` or `AUTO` first; use `MESH_RESIDUAL` or `NAPHTALI_SANDHOLM` for residual audit.
+4. Add product purity or component recovery specs.
+5. Rate internals and enable hydraulic pressure-drop coupling only after a stable base case exists.
+
+### Absorber or Stripper
+
+Use `DistillationColumn` without condenser/reboiler for simple equilibrium-stage absorber or
+stripper studies, or `RateBasedPackedColumn` for packed mass-transfer studies.
 
 ```java
 DistillationColumn absorber = new DistillationColumn("Absorber", 10, false, false);
-absorber.addFeedStream(gasStream, 1);      // Gas at bottom
-absorber.addFeedStream(leanSolvent, 10);   // Solvent at top
+absorber.addFeedStream(gasStream, 0);
+absorber.addFeedStream(leanSolvent, 9);
+absorber.setSolverType(DistillationColumn.SolverType.SUM_RATES);
 absorber.run();
-
-Stream richSolvent = absorber.getLiquidOutStream();
-Stream sweetGas = absorber.getGasOutStream();
 ```
 
----
+For a stripper with a reboiler and no condenser, use `new DistillationColumn("Stripper", 8, true,
+false)`.
 
-## Stripper Column
+## Troubleshooting
 
-For stripping without condenser:
-
-```java
-DistillationColumn stripper = new DistillationColumn("Stripper", 8, false, true);
-stripper.addFeedStream(richSolvent, 1);
-stripper.setReboilerTemperature(273.15 + 120.0);  // Kelvin
-stripper.run();
-
-Stream acidGas = stripper.getGasOutStream();
-Stream leanSolvent = stripper.getLiquidOutStream();
-```
-
----
+| Symptom | Recommended checks |
+|---------|--------------------|
+| No convergence | Verify tray numbering, feed condition, endpoint temperatures, pressure profile, and component list. Start with `DIRECT_SUBSTITUTION`, `DAMPED_SUBSTITUTION`, or `AUTO`. |
+| Oscillation | Reduce aggressive condenser/reboiler specs, set a lower relaxation factor, or use `DAMPED_SUBSTITUTION`. |
+| Specification does not close | Check `getLastTopSpecificationResidual()`, `getLastBottomSpecificationResidual()`, feasible product split, and whether the required condenser/reboiler exists. |
+| Side-draw spec reports non-converged | The target may exceed available tray traffic or feed component inventory. Inspect `getSideDrawStream(...)`, side-draw fraction, and `getLastColumnTearResidual()`. |
+| Pumparound fails | Check draw fraction, tray numbers, and return temperature. A return below 0 K is rejected. |
+| Hydraulic coupling fails | Run without coupling first, set a positive internal diameter, and verify `calcColumnInternals(...)` succeeds for the selected internals type. |
+| Unexpected dynamic result | Confirm the model is acceptable for screening. The current formulation is `EXPERIMENTAL_EULER`, not a rigorous industrial DAE. |
 
 ## Related Documentation
 
-- [Process Package](../) - Package overview
-- [Heat Exchangers](heat_exchangers) - Condensers and reboilers
-- [Absorbers](absorbers) - Absorption columns
+- [Distillation column algorithm](../../wiki/distillation_column.md)
+- [Reactive distillation](../reactive_distillation.md)
+- [Absorbers](absorbers.md)
+- [Heat exchangers](heat_exchangers.md)
