@@ -1,6 +1,6 @@
 ---
 title: "Distillation column algorithm"
-description: "Mathematical model, solver implementations, MESH residual diagnostics, and convergence behavior for NeqSim distillation columns."
+description: "Mathematical model, solver implementations, adaptive matrix inside-out warm starts, MESH residual diagnostics, and convergence behavior for NeqSim distillation columns."
 ---
 
 # Distillation column algorithm
@@ -50,14 +50,16 @@ $
 
 with stripping factors $S_j = K_{i,j} V_j / L_j$ embedded in the diagonal terms.
 
-Temperature updates rely on the log-Newton step derived from $\sum_i y_{i,j}=1$:
+The matrix inside-out warm-start updates tray temperatures from the bubble-sum residual
+$\sum_i K_{i,j} x_{i,j} - 1$ and cached derivatives of $\ln K$ with respect to temperature:
 
-$
-\Delta T_j = -\frac{\ln(\sum_i K_{i,j} x_{i,j}) R T_j^2}{h_j^{V} - h_j^{L}}
-$
+$$
+\Delta T_j = -\frac{\sum_i K_{i,j} x_{i,j} - 1}
+{\sum_i x_{i,j} K_{i,j} \frac{\partial \ln K_{i,j}}{\partial T}}
+$$
 
-The code limits $\Delta T_j$ to ±5 K and enforces bounds of 50–1000 K for numerical
-stability.
+The code limits $\Delta T_j$ to ±8 K and enforces bounds of 50–1000 K for numerical
+stability during the matrix warm-start stage.
 
 ## Column preparation
 
@@ -75,6 +77,7 @@ stability.
 | `DIRECT_SUBSTITUTION` | `solveSequential()` | Classic two-sweep sequential substitution (liquids down, vapours up) with adaptive relaxation on temperatures and streams. | Converges robustly for well-behaved systems; default choice. |
 | `DAMPED_SUBSTITUTION` | `runDamped()` | Same equations as direct substitution but starts with a user-defined fixed relaxation factor before enabling adaptation. | Useful for stiff columns where the default step overshoots. |
 | `INSIDE_OUT` | `solveInsideOut()` | Quadrat-structure inside-out method: streams are relaxed against previous iterates while tray properties update using enthalpy-driven temperature corrections. | Balances mass/energy less frequently to reduce cost and supports a polishing phase for tight tolerances. |
+| `MATRIX_INSIDE_OUT` | `solveMatrixInsideOut()` | Adaptive matrix inside-out mode that bypasses matrix setup for small columns and otherwise solves component-balance tridiagonal systems as a warm start before rigorous inside-out polishing. | Avoids warm-start overhead on small columns while preserving a matrix path for larger hydrocarbon fractionators. |
 | `WEGSTEIN` | `solveWegstein()` | Wegstein acceleration on the sequential temperature map after direct-substitution warm-up. | Speeds up well-conditioned fixed-point problems. |
 | `SUM_RATES` | `solveSumRates()` | Flow-corrected tearing method that adjusts relaxation from tray sum-rate behavior. | Useful for absorber and stripper style columns. |
 | `NEWTON` | `solveNewton()` | Finite-difference Newton correction on tray temperatures with line search. | A tray-temperature accelerator, not a full simultaneous MESH Newton solver. |
@@ -150,14 +153,18 @@ System.out.println("Solve time:     " + column.getLastSolveTimeSeconds() + " s")
 
 ### Matrix solver specifics
 
-- Precomputes feed molar contributions (`feedFlows`, vapor/liquid split) per tray.
-- Builds stripping factors $S_j$ to couple component molar flows between neighbouring trays.
-- Uses constant molar overflow anchors (bottom vapour, top liquid) blended with instantaneous
-  sum-rate flows: $L_j = w L_{\text{CMO},j} + (1-w) L_{\text{SR},j}$ with default
-  $w = 0.95$.
-- Applies damping on both component flows and total holdups to keep the linear update stable.
-- Temperature correction follows the same log-Newton formula, requiring `system.init(2)` for
-  enthalpy data and `system.init(1)` afterwards to refresh K-values.
+- `MATRIX_INSIDE_OUT` is adaptive. Below 12 trays it bypasses the matrix stage and runs rigorous
+  `INSIDE_OUT` directly because benchmark columns showed matrix setup overhead dominating runtime.
+- For larger columns, the matrix stage precomputes feed component, feed vapor, and feed liquid
+  molar contributions by tray.
+- It builds one tridiagonal component-balance system per component using stripping factors
+  $S_j = K_{i,j} V_j / L_j$ based on current tray vapor and liquid traffic.
+- Vapor component flows follow from cached stripping factors, while liquid component flows come
+  from the Thomas-algorithm solution of each tridiagonal system.
+- Tray compositions, cached outlet streams, K-values, and K-temperature derivatives are updated
+  without a rigorous PH flash inside the matrix loop.
+- Final products are still accepted only after the rigorous inside-out polish and the normal mass,
+  product, internal-traffic, fallback, and optional MESH residual gates.
 
 ### Naphtali-Sandholm solver specifics
 
@@ -186,6 +193,12 @@ diagnostics expose the full norm and group norms through `getLastMeshResidualNor
 `getLastMeshMaterialResidualNorm()`, `getLastMeshEquilibriumResidualNorm()`,
 `getLastMeshSummationResidualNorm()`, `getLastMeshEnergyResidualNorm()`,
 `getLastMeshProductDrawResidualNorm()`, and `getLastMeshSpecificationResidualNorm()`.
+
+For `MATRIX_INSIDE_OUT`, diagnostics also expose the adaptive warm-start decision:
+`wasMatrixInsideOutWarmStartUsed()`, `wasMatrixInsideOutWarmStartBypassed()`,
+`getLastMatrixInsideOutIterationCount()`, `getLastMatrixInsideOutTemperatureResidual()`, and
+`getLastMatrixInsideOutSolveTimeSeconds()`. These values make it clear whether a run paid the
+matrix setup cost or intentionally followed the rigorous inside-out path directly.
 
 By default, the MESH residual vector is diagnostic for sequential solver modes. For
 `NAPHTALI_SANDHOLM` and `MESH_RESIDUAL`, the residual gate is effective unless explicitly disabled.
@@ -227,6 +240,7 @@ for any equation of state available in NeqSim (SRK, CPA, GERG-2008, etc.). The
 | `DIRECT_SUBSTITUTION` | Classic tray-by-tray without damping (default) | General use |
 | `DAMPED_SUBSTITUTION` | Adaptive relaxation controller | Difficult polar/CPA systems |
 | `INSIDE_OUT` | Three-sweep IO with stripping factor correction and K-value tracking | Multi-feed, general-purpose, debugging |
+| `MATRIX_INSIDE_OUT` | Adaptive matrix warm start plus rigorous inside-out polish; bypasses matrix setup for small columns | Larger hydrocarbon columns where the matrix warm start can help |
 | `WEGSTEIN` | Wegstein acceleration of successive substitution | Fast convergence on well-posed problems |
 | `SUM_RATES` | Flow-corrected tearing method | Absorbers and strippers |
 | `NEWTON` | Newton-Raphson tray-temperature correction accelerator | Difficult temperature convergence cases |

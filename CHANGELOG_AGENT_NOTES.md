@@ -9,6 +9,45 @@
 
 ---
 
+## 2026-05-17 — Adaptive Matrix Inside-Out Distillation Solver
+
+### Summary
+
+`DistillationColumn.SolverType.MATRIX_INSIDE_OUT` is now an adaptive matrix warm-start mode.
+For small columns it bypasses matrix setup and runs the rigorous inside-out path directly, avoiding
+the fixed overhead seen in benchmark columns. For larger columns it attempts a tridiagonal
+component-balance matrix warm start, records matrix-stage diagnostics, and then finishes with the
+same rigorous inside-out polishing and product acceptance checks used by `INSIDE_OUT`.
+
+### New API
+
+| Method | Description |
+|--------|-------------|
+| `wasMatrixInsideOutWarmStartUsed()` | Reports whether the latest `MATRIX_INSIDE_OUT` run accepted a matrix warm-start state. |
+| `wasMatrixInsideOutWarmStartBypassed()` | Reports whether the adaptive solver skipped matrix setup and used rigorous inside-out directly. |
+| `getLastMatrixInsideOutIterationCount()` | Matrix warm-start iteration count, or zero if no matrix stage ran. |
+| `getLastMatrixInsideOutTemperatureResidual()` | Matrix-stage average tray-temperature residual in Kelvin, or `Double.NaN` if no matrix stage ran. |
+| `getLastMatrixInsideOutSolveTimeSeconds()` | Matrix-stage wall time in seconds, or zero if no matrix stage ran. |
+
+### Agent Guidance
+
+- Use `INSIDE_OUT` as the default robust hydrocarbon-column solver.
+- Use `MATRIX_INSIDE_OUT` for larger hydrocarbon fractionators where a component-balance matrix
+  warm start may reduce rigorous flash sweeps. Expect it to bypass the matrix stage on small
+  columns.
+- Use the new matrix diagnostics before claiming a matrix-stage speedup; `solved()` still reflects
+  the rigorous inside-out polish and the standard mass/product/fallback gates.
+- Keep using `MESH_RESIDUAL` or `NAPHTALI_SANDHOLM` when a task needs explicit residual-oriented
+  MESH convergence checks.
+
+### Affected Guidance
+
+- `.github/skills/neqsim-distillation-design/SKILL.md`
+- `docs/process/equipment/distillation.md`
+- `docs/wiki/distillation_column.md`
+- `docs/development/CODE_PATTERNS.md`
+- `docs/modules.md`
+
 ## 2026-05-16 — Naphtali-Sandholm Distillation Solver
 
 ### Summary

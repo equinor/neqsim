@@ -1,7 +1,7 @@
 ---
 title: Distillation Equipment
 description: Documentation for distillation column equipment in NeqSim process simulation.
-keywords: "distillation, column, tray, absorber, stripper, deethanizer, debutanizer, reboiler, condenser, reflux, fractionation, NGL, inside-out solver, Naphtali-Sandholm, MESH residual, convergence diagnostics"
+keywords: "distillation, column, tray, absorber, stripper, deethanizer, debutanizer, reboiler, condenser, reflux, fractionation, NGL, inside-out solver, matrix inside-out, Naphtali-Sandholm, MESH residual, convergence diagnostics"
 ---
 
 # Distillation Equipment
@@ -306,6 +306,7 @@ flow rate), NeqSim wraps the inner solver in a secant-method outer loop that:
 | `DIRECT_SUBSTITUTION` | Classic tray-by-tray substitution without extra damping. | Default choice for simple and well-posed columns. |
 | `DAMPED_SUBSTITUTION` | Sequential substitution with an initial fixed relaxation factor. | Stiffer cases where direct substitution overshoots. |
 | `INSIDE_OUT` | Inside-out style flow correction with K-value tracking and polishing. | General process work, deethanizers, and multi-feed columns. |
+| `MATRIX_INSIDE_OUT` | Adaptive matrix inside-out mode: bypasses matrix setup on small columns and uses a component-balance matrix warm start plus rigorous inside-out polishing on larger columns. | Larger hydrocarbon columns where the matrix warm start may reduce rigorous flash sweeps without changing product acceptance criteria. |
 | `WEGSTEIN` | Accelerated successive substitution after a warm-up phase. | Well-conditioned columns where faster convergence is useful. |
 | `SUM_RATES` | Flow-corrected tearing method using sum-rate style updates. | Absorbers, strippers, and flow-sensitive columns. |
 | `NEWTON` | Tray-temperature correction accelerator with finite-difference Jacobian and line search. | Difficult temperature convergence cases. This is not a full simultaneous MESH Newton solver. |
@@ -349,6 +350,11 @@ equilibrium, summation, energy, terminal product-draw, and active specification 
 | `getLastMassResidual()` | Relative mass-balance residual. |
 | `getLastEnergyResidual()` | Relative enthalpy-balance residual. |
 | `getLastSpecificationResidual()` | Largest absolute active top/bottom specification residual. |
+| `wasMatrixInsideOutWarmStartUsed()` | Whether `MATRIX_INSIDE_OUT` accepted a matrix warm-start state before rigorous polishing. |
+| `wasMatrixInsideOutWarmStartBypassed()` | Whether `MATRIX_INSIDE_OUT` skipped matrix setup and ran rigorous inside-out directly. This is expected for small columns where setup overhead dominates. |
+| `getLastMatrixInsideOutIterationCount()` | Number of matrix warm-start iterations, or zero when the matrix stage did not run. |
+| `getLastMatrixInsideOutTemperatureResidual()` | Average matrix-stage tray-temperature residual in Kelvin, or `Double.NaN` when no matrix stage ran. |
+| `getLastMatrixInsideOutSolveTimeSeconds()` | Matrix warm-start wall time in seconds, or zero when no matrix stage ran. |
 | `getLastMeshResidualNorm()` | Infinity norm of the full scaled MESH residual vector. |
 | `getLastMeshMaterialResidualNorm()` | Infinity norm of component material residuals. |
 | `getLastMeshEquilibriumResidualNorm()` | Infinity norm of fugacity-equilibrium residuals. |
@@ -363,6 +369,12 @@ is effective by default for `NAPHTALI_SANDHOLM` and `MESH_RESIDUAL`. Enable it e
 solvers when a workflow should treat the full residual vector and terminal product-draw residual as
 part of the convergence contract; disable it explicitly only when residual diagnostics should not
 affect `solved()`.
+
+`MATRIX_INSIDE_OUT` is adaptive. For small benchmark-style columns it bypasses the matrix warm-start
+stage and follows the rigorous `INSIDE_OUT` path directly, avoiding fixed matrix setup overhead. For
+larger columns it attempts the tridiagonal component-balance warm start, records the matrix-stage
+diagnostics above, then still finishes with rigorous inside-out polishing so final products use the
+same convergence and fallback checks as `INSIDE_OUT`.
 
 ---
 

@@ -53,6 +53,11 @@ column.setSolverType(DistillationColumn.SolverType.DIRECT_SUBSTITUTION);
 // Inside-Out — faster for ideal/near-ideal systems
 column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
 
+// Adaptive matrix inside-out — bypasses matrix setup on small columns,
+// tries a component-balance matrix warm start on larger columns, then
+// finishes with rigorous inside-out polishing
+column.setSolverType(DistillationColumn.SolverType.MATRIX_INSIDE_OUT);
+
 // Damped substitution - for difficult convergence
 column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
 
@@ -72,6 +77,7 @@ column.setMaxNumberOfIterations(200);
 | System Type | Recommended Solver | Notes |
 |------------|-------------------|-------|
 | Ideal HC (demethanizer, deethanizer) | `INSIDE_OUT` | Fast, robust |
+| Larger HC fractionators | `MATRIX_INSIDE_OUT` | Adaptive: small columns bypass matrix overhead; larger columns try the matrix warm start before rigorous inside-out polishing |
 | Non-ideal (alcohols, water) | `DAMPED_SUBSTITUTION` or `DIRECT_SUBSTITUTION` | More conservative for non-ideal K-values |
 | Absorbers (no condenser/reboiler) | `SUM_RATES` or `DIRECT_SUBSTITUTION` | Flow-corrected updates can help absorber/stripper cases |
 | Wide-boiling (C1 to C20+) | `DAMPED_SUBSTITUTION` | Increase iterations and monitor residuals |
@@ -126,6 +132,9 @@ for (int stage = 0; stage < column.getTrays().size(); stage++) {
 int iterations = column.getLastIterationCount();
 double massResidual = column.getLastMassResidual();
 double energyResidual = column.getLastEnergyResidual();
+boolean matrixWarmStartUsed = column.wasMatrixInsideOutWarmStartUsed();
+boolean matrixWarmStartBypassed = column.wasMatrixInsideOutWarmStartBypassed();
+int matrixIterations = column.getLastMatrixInsideOutIterationCount();
 ```
 
 ## Feed Tray Location Rules

@@ -13,6 +13,12 @@ import neqsim.thermo.system.SystemInterface;
 public class PSFlash extends QfuncFlash {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Absolute entropy tolerance floor in J/K for total-system entropy residuals. */
+  private static final double MIN_ENTROPY_TOLERANCE = 1.0e-5;
+  /** Entropy residual level where repeated non-improving iterations are numerical noise. */
+  private static final double STAGNANT_ENTROPY_TOLERANCE = 1.0e-4;
+  /** Number of low-residual stagnant iterations allowed before accepting the solution. */
+  private static final int STAGNANT_ITERATION_LIMIT = 5;
 
   double Sspec = 0;
   Flash tpFlash;
@@ -64,7 +70,8 @@ public class PSFlash extends QfuncFlash {
     double error = 1.0;
     double errorOld = 10.0e10;
     double factor = 0.8;
-    double entropyTolerance = Math.max(1e-8, Math.abs(Sspec) * 1e-10);
+    double entropyTolerance = Math.max(MIN_ENTROPY_TOLERANCE, Math.abs(Sspec) * 1e-10);
+    int stagnantIterations = 0;
 
     boolean correctFactor = true;
     double newCorr = 1.0;
@@ -110,11 +117,18 @@ public class PSFlash extends QfuncFlash {
       }
       errorOld = error;
       error = Math.abs(calcdQdT()); // Math.abs((nyTemp - oldTemp) / (nyTemp));
+      if (iterations > 3 && Math.abs(error - errorOld) <= entropyTolerance
+          && error <= STAGNANT_ENTROPY_TOLERANCE) {
+        stagnantIterations++;
+      } else {
+        stagnantIterations = 0;
+      }
       // if(error>errorOld) factor *= -1.0;
       // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
       // " error "+ error + " correction " + newCorr + " factor "+ factor);
       // newCorr = Math.abs(factor * calcdQdT() / calcdQdTT());
-    } while (((error + errorOld) > entropyTolerance || iterations < 3) && iterations < 200);
+    } while (((error + errorOld) > entropyTolerance || iterations < 3)
+        && stagnantIterations < STAGNANT_ITERATION_LIMIT && iterations < 200);
     return nyTemp;
   }
 
