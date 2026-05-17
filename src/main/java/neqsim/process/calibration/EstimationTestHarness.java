@@ -34,20 +34,20 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * <b>Usage Example:</b>
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Create test harness
  * EstimationTestHarness harness = new EstimationTestHarness(processSystem);
- * 
+ *
  * // Define parameters and measurements
  * harness.addParameter("Pipe1.heatTransferCoefficient", 12.0); // true value = 12.0
  * harness.addParameter("Pipe2.heatTransferCoefficient", 18.0);
  * harness.addMeasurement("HPManifold.temperature", "C", 0.5);
- * 
+ *
  * // Run convergence test
  * TestReport report = harness.runConvergenceTest(estimator, 50);
- * 
+ *
  * // Check results
  * if (report.passes(criteria)) {
  *   System.out.println("Ready for deployment!");

@@ -40,7 +40,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Enhanced integrated safety system example using the complete NeqSim process logic framework.
- * 
+ *
  * <p>
  * This example demonstrates:
  * <ul>
@@ -50,7 +50,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>ProcessSafetyScenario for systematic perturbation testing</li>
  * <li>Integration of safety instrumented functions (SIF)</li>
  * </ul>
- * 
+ *
  * <p>
  * Safety architecture:
  * <ul>
@@ -72,6 +72,8 @@ public class ProcessLogicIntegratedExample {
 
   /**
    * Main method demonstrating process logic integration.
+   *
+   * @param args command-line arguments (not used)
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
@@ -107,6 +109,8 @@ public class ProcessLogicIntegratedExample {
 
   /**
    * Builds the complete process system.
+   *
+   * @return the configured process system
    */
   private static ProcessSystem buildProcessSystem() {
     ProcessSystem system = new ProcessSystem();
@@ -204,6 +208,9 @@ public class ProcessLogicIntegratedExample {
 
   /**
    * Sets up instrumentation for the process.
+   *
+   * @param system the process system to set up instrumentation for
+   * @return the configured instrumentation setup
    */
   private static InstrumentationSetup setupInstrumentation(ProcessSystem system) {
     InstrumentationSetup setup = new InstrumentationSetup();
@@ -246,6 +253,10 @@ public class ProcessLogicIntegratedExample {
 
   /**
    * Sets up process logic sequences.
+   *
+   * @param system the process system containing equipment
+   * @param instruments the instrumentation setup with sensors and actuators
+   * @return the configured process logic setup
    */
   private static ProcessLogicSetup setupProcessLogic(ProcessSystem system,
       InstrumentationSetup instruments) {
@@ -308,6 +319,8 @@ public class ProcessLogicIntegratedExample {
 
   /**
    * Runs comprehensive test scenarios using the batch execution API.
+   *
+   * @param runner the process scenario runner to execute scenarios
    */
   private static void runTestScenarios(ProcessScenarioRunner runner) {
     // Create test runner with automatic KPI collection
@@ -358,6 +371,9 @@ public class ProcessLogicIntegratedExample {
 
   /**
    * Creates independent HIPPS logic - fast-acting pressure protection.
+   *
+   * @param hippsValve the HIPPS valve to control
+   * @return configured ESD logic for HIPPS protection
    */
   private static ESDLogic createHIPPSLogic(HIPPSValve hippsValve) {
     // Use ESDLogic as base for HIPPS (similar fast-acting safety function)
@@ -371,17 +387,17 @@ public class ProcessLogicIntegratedExample {
 
   /**
    * Example: Custom logic class for gradual pressure reduction.
-   * 
+   *
    * <p>
    * This demonstrates how to create custom logic not in the library by implementing the
    * ProcessLogic interface. For production use, move this to a separate file like:
    * neqsim/process/logic/control/GradualPressureReductionLogic.java
    * </p>
-   * 
+   *
    * <p>
    * Usage example:
    * </p>
-   * 
+   *
    * <pre>
    * // Create instance
    * ProcessLogic customLogic =
@@ -389,10 +405,10 @@ public class ProcessLogicIntegratedExample {
    *                                                                              // %
    *         2.0 // step size %
    *     );
-   * 
+   *
    * // Add to runner
    * runner.addLogic(customLogic);
-   * 
+   *
    * // Activate and execute
    * customLogic.activate();
    * while (!customLogic.isComplete()) {
@@ -402,6 +418,7 @@ public class ProcessLogicIntegratedExample {
    * </pre>
    */
   private static class GradualPressureReductionLogic implements ProcessLogic {
+    private static final long serialVersionUID = 1L;
     private final String name;
     private final ControlValve valve;
     private final double targetOpening;
@@ -411,7 +428,7 @@ public class ProcessLogicIntegratedExample {
 
     /**
      * Creates gradual pressure reduction logic.
-     * 
+     *
      * @param name logic name
      * @param valve control valve to adjust
      * @param targetOpening target valve opening (%)

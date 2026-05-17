@@ -1,3 +1,8 @@
+---
+title: "Sales Contracts"
+description: "The sales contract system enables specification verification and compliance checking for natural gas quality."
+---
+
 # Sales Contracts
 
 The sales contract system enables specification verification and compliance checking for natural gas quality.

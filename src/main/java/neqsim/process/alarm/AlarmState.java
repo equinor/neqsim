@@ -18,6 +18,13 @@ public class AlarmState implements Serializable {
   private double lastValue = Double.NaN;
   private double lastUpdateTime = Double.NaN;
 
+  /** Whether this alarm point is shelved (suppressed). */
+  private boolean shelved;
+  /** Simulation time when shelving expires (Double.NaN if indefinite). */
+  private double shelveExpiry = Double.NaN;
+  /** Reason recorded when alarm was shelved. */
+  private String shelveReason = "";
+
   /**
    * Evaluates the alarm state using the supplied configuration and measurement.
    *
@@ -31,6 +38,18 @@ public class AlarmState implements Serializable {
   public List<AlarmEvent> evaluate(AlarmConfig config, double value, double dt, double currentTime,
       String source) {
     updateLast(value, currentTime);
+
+    // Check shelve expiry
+    if (shelved && !Double.isNaN(shelveExpiry) && currentTime >= shelveExpiry) {
+      shelved = false;
+      shelveExpiry = Double.NaN;
+      shelveReason = "";
+    }
+
+    // When shelved, suppress alarm evaluation — no new alarms fire
+    if (shelved) {
+      return Collections.emptyList();
+    }
 
     if (config == null) {
       reset();
@@ -83,8 +102,8 @@ public class AlarmState implements Serializable {
     return events;
   }
 
-  private void handlePending(AlarmConfig config, AlarmLevel candidate, double dt, double currentTime,
-      String source, List<AlarmEvent> events) {
+  private void handlePending(AlarmConfig config, AlarmLevel candidate, double dt,
+      double currentTime, String source, List<AlarmEvent> events) {
     if (pendingLevel != candidate) {
       pendingLevel = candidate;
       pendingTimer = 0.0;
@@ -183,7 +202,8 @@ public class AlarmState implements Serializable {
   }
 
   /**
-   * Returns the last measured value supplied to {@link #evaluate(AlarmConfig, double, double, double, String)}.
+   * Returns the last measured value supplied to
+   * {@link #evaluate(AlarmConfig, double, double, double, String)}.
    *
    * @return last measured value
    */
@@ -227,5 +247,66 @@ public class AlarmState implements Serializable {
       return null;
     }
     return new AlarmStatusSnapshot(source, activeLevel, acknowledged, lastValue, lastUpdateTime);
+  }
+
+  /**
+   * Shelves (suppresses) this alarm point indefinitely. While shelved, no alarm events are
+   * generated during evaluation. The underlying measurement continues to be tracked.
+   *
+   * @param reason operator-provided reason for shelving
+   */
+  public void shelve(String reason) {
+    this.shelved = true;
+    this.shelveExpiry = Double.NaN;
+    this.shelveReason = reason == null ? "" : reason;
+  }
+
+  /**
+   * Shelves this alarm point until the specified simulation time. After expiry, normal alarm
+   * evaluation resumes automatically.
+   *
+   * @param reason operator-provided reason for shelving
+   * @param expiryTime simulation time when shelving expires
+   */
+  public void shelve(String reason, double expiryTime) {
+    this.shelved = true;
+    this.shelveExpiry = expiryTime;
+    this.shelveReason = reason == null ? "" : reason;
+  }
+
+  /**
+   * Removes the alarm shelve, resuming normal alarm evaluation.
+   */
+  public void unshelve() {
+    this.shelved = false;
+    this.shelveExpiry = Double.NaN;
+    this.shelveReason = "";
+  }
+
+  /**
+   * Returns whether this alarm point is currently shelved.
+   *
+   * @return {@code true} if shelved
+   */
+  public boolean isShelved() {
+    return shelved;
+  }
+
+  /**
+   * Returns the reason given when the alarm was shelved.
+   *
+   * @return shelve reason or empty string
+   */
+  public String getShelveReason() {
+    return shelveReason;
+  }
+
+  /**
+   * Returns the simulation time when the shelve expires, or {@code Double.NaN} if indefinite.
+   *
+   * @return shelve expiry time
+   */
+  public double getShelveExpiry() {
+    return shelveExpiry;
   }
 }

@@ -13,15 +13,18 @@ import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.heatexchanger.UtilityStreamSpecification;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.heatexchanger.TEMAStandard.TEMAClass;
 
 /**
  * Mechanical design for a generic heat exchanger. Provides detailed sizing estimates for supported
  * exchanger configurations and selects a preferred option based on configurable criteria.
  *
- * <p>The implementation supports both full two-stream heat exchangers and single-stream heaters or
+ * <p>
+ * The implementation supports both full two-stream heat exchangers and single-stream heaters or
  * coolers that only know their process-side conditions. When the utility side is described through
  * {@link UtilityStreamSpecification} the sizing routine derives approximate UA and approach
- * temperatures before computing a simplified geometric layout.</p>
+ * temperatures before computing a simplified geometric layout.
+ * </p>
  */
 public class HeatExchangerMechanicalDesign extends MechanicalDesign {
   /** Serialization version UID. */
@@ -33,6 +36,122 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
   private double calculatedUA = Double.NaN;
   private double logMeanTemperatureDifference = Double.NaN;
   private double approachTemperature = Double.NaN;
+
+  // ============================================================================
+  // Process Design Parameters
+  // ============================================================================
+
+  /** Design pressure margin factor (e.g., 1.10 for 10% margin). */
+  private double designPressureMargin = 1.10;
+
+  /** Design temperature margin above max operating in Celsius. */
+  private double designTemperatureMarginC = 25.0;
+
+  /** Minimum approach temperature in Celsius. */
+  private double minApproachTemperatureC = 10.0;
+
+  /** Design duty margin factor (e.g., 1.10 for 10% margin). */
+  private double dutyMargin = 1.10;
+
+  /** Area margin factor (e.g., 1.15 for 15% excess area). */
+  private double areaMargin = 1.15;
+
+  // ============================================================================
+  // Fouling Resistance Parameters (m²K/W per TEMA standards)
+  // ============================================================================
+
+  /** Shell side fouling resistance for water service. */
+  private double foulingResistanceShellWater = 0.000176;
+
+  /** Shell side fouling resistance for hydrocarbon service. */
+  private double foulingResistanceShellHC = 0.000352;
+
+  /** Tube side fouling resistance for water service. */
+  private double foulingResistanceTubeWater = 0.000176;
+
+  /** Tube side fouling resistance for hydrocarbon service. */
+  private double foulingResistanceTubeHC = 0.000352;
+
+  // ============================================================================
+  // Velocity Limits (m/s per TEMA standards)
+  // ============================================================================
+
+  /** Maximum tube side velocity to prevent erosion. */
+  private double maxTubeVelocity = 3.0;
+
+  /** Minimum tube side velocity to prevent excessive fouling. */
+  private double minTubeVelocity = 0.9;
+
+  /** Maximum shell side velocity. */
+  private double maxShellVelocity = 2.0;
+
+  // ============================================================================
+  // TEMA Classification
+  // ============================================================================
+
+  /**
+   * TEMA class: "R" (refinery/severe), "C" (commercial), "B" (chemical).
+   */
+  private String temaClass = "R";
+
+  /** TEMA shell type: "E", "F", "G", "H", "J", "K", "X". */
+  private String temaShellType = "E";
+
+  /** TEMA front head type: "A", "B", "C", "N", "D". */
+  private String temaFrontHeadType = "A";
+
+  /** TEMA rear head type: "L", "M", "N", "P", "S", "T", "U", "W". */
+  private String temaRearHeadType = "S";
+
+  // ============================================================================
+  // Tube Bundle Parameters
+  // ============================================================================
+
+  /** Tube outer diameter in mm (standard sizes: 19.05, 25.4 mm). */
+  private double tubeOuterDiameterMm = 19.05;
+
+  /** Tube wall thickness in mm (BWG gauge). */
+  private double tubeWallThicknessMm = 2.11;
+
+  /** Maximum tube length in m. */
+  private double maxTubeLengthM = 6.0;
+
+  /** Tube pitch ratio (pitch/OD), typically 1.25-1.50. */
+  private double tubePitchRatio = 1.25;
+
+  /** Tube layout pattern: "triangular", "rotated_triangular", "square", "rotated_square". */
+  private String tubeLayoutPattern = "triangular";
+
+  /** Number of tube passes. */
+  private int tubePasses = 2;
+
+  /** Number of shell passes. */
+  private int shellPasses = 1;
+
+  /** Baffle cut as percentage of shell diameter (typically 20-35%). */
+  private double baffleCutPercent = 25.0;
+
+  /** Baffle spacing as fraction of shell diameter (typically 0.2-1.0). */
+  private double baffleSpacingRatio = 0.4;
+
+  // ============================================================================
+  // Material and NACE Parameters
+  // ============================================================================
+
+  /** Shell material grade for property lookup from HeatExchangerTubeMaterials table. */
+  private String shellMaterialGrade = "SA-516-70";
+
+  /** Tube material grade for property lookup from HeatExchangerTubeMaterials table. */
+  private String tubeMaterialGrade = "SA-179";
+
+  /** H2S partial pressure in bar for NACE sour service determination. */
+  private double h2sPartialPressure = 0.0;
+
+  /** Whether to perform NACE MR0175 sour service assessment. */
+  private boolean sourServiceAssessment = false;
+
+  /** Shell joint efficiency per ASME VIII (0.65-1.0). */
+  private double shellJointEfficiency = 0.85;
 
   /**
    * Ranking metric for automatic exchanger-type selection.
@@ -50,8 +169,9 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
       new ArrayList<>(Arrays.asList(HeatExchangerType.values()));
   private SelectionCriterion selectionCriterion = SelectionCriterion.MIN_AREA;
   private HeatExchangerType manualSelection;
-  private List<HeatExchangerSizingResult> sizingResults = new ArrayList<>();
-  private HeatExchangerSizingResult selectedSizingResult;
+  private transient List<HeatExchangerSizingResult> sizingResults = new ArrayList<>();
+  private transient HeatExchangerSizingResult selectedSizingResult;
+  private transient ShellAndTubeDesignCalculator shellAndTubeCalculator;
 
   /**
    * Constructor for HeatExchangerMechanicalDesign.
@@ -93,6 +213,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
 
     selectPreferredResult();
     applySelectedSizing();
+    runShellAndTubeCalculator(equipment);
   }
 
   private void handleTwoStreamThermalData(HeatExchanger exchanger, double duty) {
@@ -138,10 +259,10 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
       logMeanTemperatureDifference = calculateLmtd(deltaT1, deltaT2);
       approachTemperature = Math.min(deltaT1, deltaT2);
     } else {
-      double processIn = heater.getInletStream() != null
-          ? heater.getInletStream().getTemperature() : Double.NaN;
-      double processOut = heater.getOutletStream() != null
-          ? heater.getOutletStream().getTemperature() : Double.NaN;
+      double processIn =
+          heater.getInletStream() != null ? heater.getInletStream().getTemperature() : Double.NaN;
+      double processOut =
+          heater.getOutletStream() != null ? heater.getOutletStream().getTemperature() : Double.NaN;
       double delta = Math.abs(processOut - processIn);
       if (delta > 0.0) {
         logMeanTemperatureDifference = delta;
@@ -196,10 +317,10 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
         uaForType = type.getTypicalOverallHeatTransferCoefficient();
       }
 
-      double sizingCoefficient = useTypeSpecificCoefficient
-          ? type.getTypicalOverallHeatTransferCoefficient()
-          : Math.max(usedOverallHeatTransferCoefficient,
-              type.getTypicalOverallHeatTransferCoefficient());
+      double sizingCoefficient =
+          useTypeSpecificCoefficient ? type.getTypicalOverallHeatTransferCoefficient()
+              : Math.max(usedOverallHeatTransferCoefficient,
+                  type.getTypicalOverallHeatTransferCoefficient());
       double requiredArea = Math.max(uaForType / Math.max(sizingCoefficient, 1e-6), 0.1);
 
       HeatExchangerSizingResult result =
@@ -226,14 +347,13 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
       return;
     }
     if (manualSelection != null) {
-      selectedSizingResult = sizingResults.stream()
-          .filter(result -> result.getType() == manualSelection).findFirst()
-          .orElse(sizingResults.get(0));
+      selectedSizingResult =
+          sizingResults.stream().filter(result -> result.getType() == manualSelection).findFirst()
+              .orElse(sizingResults.get(0));
       return;
     }
-    selectedSizingResult = sizingResults.stream()
-        .min((a, b) -> Double.compare(a.getMetric(selectionCriterion),
-            b.getMetric(selectionCriterion)))
+    selectedSizingResult = sizingResults.stream().min(
+        (a, b) -> Double.compare(a.getMetric(selectionCriterion), b.getMetric(selectionCriterion)))
         .orElse(sizingResults.get(0));
   }
 
@@ -305,9 +425,10 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
     if (sizingResults.isEmpty()) {
       return "No sizing results available.";
     }
-    return sizingResults.stream().map(result -> result.getType().getDisplayName() + ": area="
-        + String.format("%.2f", result.getRequiredArea()) + " m2, weight="
-        + String.format("%.1f", result.getEstimatedWeight()) + " kg")
+    return sizingResults.stream()
+        .map(result -> result.getType().getDisplayName() + ": area="
+            + String.format("%.2f", result.getRequiredArea()) + " m2, weight="
+            + String.format("%.1f", result.getEstimatedWeight()) + " kg")
         .collect(Collectors.joining("; "));
   }
 
@@ -418,6 +539,907 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
       return (safeDeltaT1 + safeDeltaT2) / 2.0;
     }
     return Math.abs((safeDeltaT1 - safeDeltaT2) / Math.log(safeDeltaT1 / safeDeltaT2));
+  }
+
+  // ============================================================================
+  // Process Design Parameter Getters/Setters
+  // ============================================================================
+
+  /**
+   * Gets the design pressure margin factor.
+   *
+   * @return design pressure margin (e.g., 1.10 for 10% margin)
+   */
+  public double getDesignPressureMargin() {
+    return designPressureMargin;
+  }
+
+  /**
+   * Sets the design pressure margin factor.
+   *
+   * @param margin margin factor (e.g., 1.10 for 10%)
+   */
+  public void setDesignPressureMargin(double margin) {
+    this.designPressureMargin = margin;
+  }
+
+  /**
+   * Gets the design temperature margin in Celsius.
+   *
+   * @return temperature margin in Celsius
+   */
+  public double getDesignTemperatureMarginC() {
+    return designTemperatureMarginC;
+  }
+
+  /**
+   * Sets the design temperature margin in Celsius.
+   *
+   * @param marginC temperature margin in Celsius
+   */
+  public void setDesignTemperatureMarginC(double marginC) {
+    this.designTemperatureMarginC = marginC;
+  }
+
+  /**
+   * Gets the minimum approach temperature.
+   *
+   * @return minimum approach temperature in Celsius
+   */
+  public double getMinApproachTemperatureC() {
+    return minApproachTemperatureC;
+  }
+
+  /**
+   * Sets the minimum approach temperature.
+   *
+   * @param tempC minimum approach temperature in Celsius
+   */
+  public void setMinApproachTemperatureC(double tempC) {
+    this.minApproachTemperatureC = tempC;
+  }
+
+  /**
+   * Gets the duty margin factor.
+   *
+   * @return duty margin factor
+   */
+  public double getDutyMargin() {
+    return dutyMargin;
+  }
+
+  /**
+   * Sets the duty margin factor.
+   *
+   * @param margin duty margin factor
+   */
+  public void setDutyMargin(double margin) {
+    this.dutyMargin = margin;
+  }
+
+  /**
+   * Gets the area margin factor.
+   *
+   * @return area margin factor
+   */
+  public double getAreaMarginFactor() {
+    return areaMargin;
+  }
+
+  /**
+   * Sets the area margin factor.
+   *
+   * @param margin area margin factor
+   */
+  public void setAreaMarginFactor(double margin) {
+    this.areaMargin = margin;
+  }
+
+  // ============================================================================
+  // Fouling Resistance Getters/Setters
+  // ============================================================================
+
+  /**
+   * Gets the shell side fouling resistance for water service.
+   *
+   * @return fouling resistance in m²K/W
+   */
+  public double getFoulingResistanceShellWater() {
+    return foulingResistanceShellWater;
+  }
+
+  /**
+   * Sets the shell side fouling resistance for water service.
+   *
+   * @param resistance fouling resistance in m²K/W
+   */
+  public void setFoulingResistanceShellWater(double resistance) {
+    this.foulingResistanceShellWater = resistance;
+  }
+
+  /**
+   * Gets the shell side fouling resistance for hydrocarbon service.
+   *
+   * @return fouling resistance in m²K/W
+   */
+  public double getFoulingResistanceShellHC() {
+    return foulingResistanceShellHC;
+  }
+
+  /**
+   * Sets the shell side fouling resistance for hydrocarbon service.
+   *
+   * @param resistance fouling resistance in m²K/W
+   */
+  public void setFoulingResistanceShellHC(double resistance) {
+    this.foulingResistanceShellHC = resistance;
+  }
+
+  /**
+   * Gets the tube side fouling resistance for water service.
+   *
+   * @return fouling resistance in m²K/W
+   */
+  public double getFoulingResistanceTubeWater() {
+    return foulingResistanceTubeWater;
+  }
+
+  /**
+   * Sets the tube side fouling resistance for water service.
+   *
+   * @param resistance fouling resistance in m²K/W
+   */
+  public void setFoulingResistanceTubeWater(double resistance) {
+    this.foulingResistanceTubeWater = resistance;
+  }
+
+  /**
+   * Gets the tube side fouling resistance for hydrocarbon service.
+   *
+   * @return fouling resistance in m²K/W
+   */
+  public double getFoulingResistanceTubeHC() {
+    return foulingResistanceTubeHC;
+  }
+
+  /**
+   * Sets the tube side fouling resistance for hydrocarbon service.
+   *
+   * @param resistance fouling resistance in m²K/W
+   */
+  public void setFoulingResistanceTubeHC(double resistance) {
+    this.foulingResistanceTubeHC = resistance;
+  }
+
+  /**
+   * Calculates the overall fouling resistance for given service types.
+   *
+   * @param shellServiceWater true if shell side is water service
+   * @param tubeServiceWater true if tube side is water service
+   * @return total fouling resistance in m²K/W
+   */
+  public double calculateTotalFoulingResistance(boolean shellServiceWater,
+      boolean tubeServiceWater) {
+    double shellFouling =
+        shellServiceWater ? foulingResistanceShellWater : foulingResistanceShellHC;
+    double tubeFouling = tubeServiceWater ? foulingResistanceTubeWater : foulingResistanceTubeHC;
+    return shellFouling + tubeFouling;
+  }
+
+  // ============================================================================
+  // Velocity Limit Getters/Setters
+  // ============================================================================
+
+  /**
+   * Gets the maximum tube side velocity.
+   *
+   * @return maximum velocity in m/s
+   */
+  public double getMaxTubeVelocity() {
+    return maxTubeVelocity;
+  }
+
+  /**
+   * Sets the maximum tube side velocity.
+   *
+   * @param velocity maximum velocity in m/s
+   */
+  public void setMaxTubeVelocity(double velocity) {
+    this.maxTubeVelocity = velocity;
+  }
+
+  /**
+   * Gets the minimum tube side velocity.
+   *
+   * @return minimum velocity in m/s
+   */
+  public double getMinTubeVelocity() {
+    return minTubeVelocity;
+  }
+
+  /**
+   * Sets the minimum tube side velocity.
+   *
+   * @param velocity minimum velocity in m/s
+   */
+  public void setMinTubeVelocity(double velocity) {
+    this.minTubeVelocity = velocity;
+  }
+
+  /**
+   * Gets the maximum shell side velocity.
+   *
+   * @return maximum velocity in m/s
+   */
+  public double getMaxShellVelocity() {
+    return maxShellVelocity;
+  }
+
+  /**
+   * Sets the maximum shell side velocity.
+   *
+   * @param velocity maximum velocity in m/s
+   */
+  public void setMaxShellVelocity(double velocity) {
+    this.maxShellVelocity = velocity;
+  }
+
+  // ============================================================================
+  // TEMA Classification Getters/Setters
+  // ============================================================================
+
+  /**
+   * Gets the TEMA class.
+   *
+   * @return TEMA class ("R", "C", or "B")
+   */
+  public String getTemaClass() {
+    return temaClass;
+  }
+
+  /**
+   * Sets the TEMA class.
+   *
+   * @param temaClass TEMA class ("R" refinery, "C" commercial, "B" chemical)
+   */
+  public void setTemaClass(String temaClass) {
+    this.temaClass = temaClass;
+  }
+
+  /**
+   * Gets the TEMA shell type.
+   *
+   * @return TEMA shell type code
+   */
+  public String getTemaShellType() {
+    return temaShellType;
+  }
+
+  /**
+   * Sets the TEMA shell type.
+   *
+   * @param shellType TEMA shell type ("E", "F", "G", "H", "J", "K", "X")
+   */
+  public void setTemaShellType(String shellType) {
+    this.temaShellType = shellType;
+  }
+
+  /**
+   * Gets the TEMA front head type.
+   *
+   * @return TEMA front head type code
+   */
+  public String getTemaFrontHeadType() {
+    return temaFrontHeadType;
+  }
+
+  /**
+   * Sets the TEMA front head type.
+   *
+   * @param headType TEMA front head type ("A", "B", "C", "N", "D")
+   */
+  public void setTemaFrontHeadType(String headType) {
+    this.temaFrontHeadType = headType;
+  }
+
+  /**
+   * Gets the TEMA rear head type.
+   *
+   * @return TEMA rear head type code
+   */
+  public String getTemaRearHeadType() {
+    return temaRearHeadType;
+  }
+
+  /**
+   * Sets the TEMA rear head type.
+   *
+   * @param headType TEMA rear head type
+   */
+  public void setTemaRearHeadType(String headType) {
+    this.temaRearHeadType = headType;
+  }
+
+  /**
+   * Gets the full TEMA designation (e.g., "AES").
+   *
+   * @return TEMA designation string
+   */
+  public String getTemaDesignation() {
+    return temaFrontHeadType + temaShellType + temaRearHeadType;
+  }
+
+  // ============================================================================
+  // Tube Bundle Parameter Getters/Setters
+  // ============================================================================
+
+  /**
+   * Gets the tube outer diameter.
+   *
+   * @return tube OD in mm
+   */
+  public double getTubeOuterDiameterMm() {
+    return tubeOuterDiameterMm;
+  }
+
+  /**
+   * Sets the tube outer diameter.
+   *
+   * @param diameterMm tube OD in mm
+   */
+  public void setTubeOuterDiameterMm(double diameterMm) {
+    this.tubeOuterDiameterMm = diameterMm;
+  }
+
+  /**
+   * Gets the tube wall thickness.
+   *
+   * @return tube wall thickness in mm
+   */
+  public double getTubeWallThicknessMm() {
+    return tubeWallThicknessMm;
+  }
+
+  /**
+   * Sets the tube wall thickness.
+   *
+   * @param thicknessMm tube wall thickness in mm
+   */
+  public void setTubeWallThicknessMm(double thicknessMm) {
+    this.tubeWallThicknessMm = thicknessMm;
+  }
+
+  /**
+   * Gets the maximum tube length.
+   *
+   * @return maximum tube length in m
+   */
+  public double getMaxTubeLengthM() {
+    return maxTubeLengthM;
+  }
+
+  /**
+   * Sets the maximum tube length.
+   *
+   * @param lengthM maximum tube length in m
+   */
+  public void setMaxTubeLengthM(double lengthM) {
+    this.maxTubeLengthM = lengthM;
+  }
+
+  /**
+   * Gets the tube pitch ratio.
+   *
+   * @return tube pitch ratio (pitch/OD)
+   */
+  public double getTubePitchRatio() {
+    return tubePitchRatio;
+  }
+
+  /**
+   * Sets the tube pitch ratio.
+   *
+   * @param ratio tube pitch ratio (typically 1.25-1.50)
+   */
+  public void setTubePitchRatio(double ratio) {
+    this.tubePitchRatio = ratio;
+  }
+
+  /**
+   * Gets the tube layout pattern.
+   *
+   * @return tube layout pattern
+   */
+  public String getTubeLayoutPattern() {
+    return tubeLayoutPattern;
+  }
+
+  /**
+   * Sets the tube layout pattern.
+   *
+   * @param pattern layout pattern ("triangular", "rotated_triangular", "square", "rotated_square")
+   */
+  public void setTubeLayoutPattern(String pattern) {
+    this.tubeLayoutPattern = pattern;
+  }
+
+  /**
+   * Gets the number of tube passes.
+   *
+   * @return number of tube passes
+   */
+  public int getTubePasses() {
+    return tubePasses;
+  }
+
+  /**
+   * Sets the number of tube passes.
+   *
+   * @param passes number of tube passes
+   */
+  public void setTubePasses(int passes) {
+    this.tubePasses = passes;
+  }
+
+  /**
+   * Gets the number of shell passes.
+   *
+   * @return number of shell passes
+   */
+  public int getShellPasses() {
+    return shellPasses;
+  }
+
+  /**
+   * Sets the number of shell passes.
+   *
+   * @param passes number of shell passes
+   */
+  public void setShellPasses(int passes) {
+    this.shellPasses = passes;
+  }
+
+  /**
+   * Gets the baffle cut percentage.
+   *
+   * @return baffle cut as percentage of shell diameter
+   */
+  public double getBaffleCutPercent() {
+    return baffleCutPercent;
+  }
+
+  /**
+   * Sets the baffle cut percentage.
+   *
+   * @param percent baffle cut as percentage (typically 20-35)
+   */
+  public void setBaffleCutPercent(double percent) {
+    this.baffleCutPercent = percent;
+  }
+
+  /**
+   * Gets the baffle spacing ratio.
+   *
+   * @return baffle spacing as fraction of shell diameter
+   */
+  public double getBaffleSpacingRatio() {
+    return baffleSpacingRatio;
+  }
+
+  /**
+   * Sets the baffle spacing ratio.
+   *
+   * @param ratio baffle spacing as fraction of shell diameter (0.2-1.0)
+   */
+  public void setBaffleSpacingRatio(double ratio) {
+    this.baffleSpacingRatio = ratio;
+  }
+
+  /**
+   * Runs the ShellAndTubeDesignCalculator with current settings to perform ASME VIII and NACE
+   * calculations.
+   *
+   * @param equipment the process equipment
+   */
+  private void runShellAndTubeCalculator(ProcessEquipmentInterface equipment) {
+    shellAndTubeCalculator = new ShellAndTubeDesignCalculator(equipment);
+    shellAndTubeCalculator.setTemaDesignation(getTemaDesignation());
+
+    TEMAClass temaClassEnum = TEMAClass.R;
+    if ("C".equals(temaClass)) {
+      temaClassEnum = TEMAClass.C;
+    } else if ("B".equals(temaClass)) {
+      temaClassEnum = TEMAClass.B;
+    }
+    shellAndTubeCalculator.setTemaClass(temaClassEnum);
+
+    // Transfer process conditions
+    double maxPressure = getMaxOperationPressure();
+    if (maxPressure > 0) {
+      shellAndTubeCalculator.setShellSidePressure(maxPressure * designPressureMargin);
+      shellAndTubeCalculator.setTubeSidePressure(maxPressure * designPressureMargin);
+    }
+    double maxTemp = getMaxOperationTemperature();
+    if (maxTemp > 0) {
+      shellAndTubeCalculator.setDesignTemperature(maxTemp - 273.15 + designTemperatureMarginC);
+    }
+
+    // Transfer area from sizing results
+    if (selectedSizingResult != null && selectedSizingResult.getRequiredArea() > 0) {
+      shellAndTubeCalculator.setRequiredArea(selectedSizingResult.getRequiredArea() * areaMargin);
+    }
+
+    // Transfer material grades
+    shellAndTubeCalculator.setShellMaterialGrade(shellMaterialGrade);
+    shellAndTubeCalculator.setTubeMaterialGrade(tubeMaterialGrade);
+    shellAndTubeCalculator.setShellJointEfficiency(shellJointEfficiency);
+
+    // Transfer NACE settings
+    shellAndTubeCalculator.setSourServiceAssessment(sourServiceAssessment);
+    shellAndTubeCalculator.setH2sPartialPressure(h2sPartialPressure);
+
+    // Transfer fluid properties from streams for thermal-hydraulic calculation
+    transferFluidProperties(equipment);
+
+    // Transfer fouling resistances
+    shellAndTubeCalculator.setFoulingTube(foulingResistanceTubeHC);
+    shellAndTubeCalculator.setFoulingShell(foulingResistanceShellHC);
+
+    // Run the full calculation
+    shellAndTubeCalculator.calculate();
+  }
+
+  /**
+   * Extracts fluid properties from the heat exchanger streams and passes them to the
+   * ShellAndTubeDesignCalculator for thermal-hydraulic analysis.
+   *
+   * @param equipment the process equipment
+   */
+  private void transferFluidProperties(ProcessEquipmentInterface equipment) {
+    if (!(equipment instanceof HeatExchanger)) {
+      return;
+    }
+
+    HeatExchanger hx = (HeatExchanger) equipment;
+
+    // Stream 0 = tube side (process), Stream 1 = shell side (utility)
+    try {
+      neqsim.process.equipment.stream.StreamInterface tubeStream = hx.getInStream(0);
+      if (tubeStream != null && tubeStream.getThermoSystem() != null) {
+        neqsim.thermo.system.SystemInterface tubeFluid = tubeStream.getThermoSystem();
+        tubeFluid.initProperties();
+        double density = tubeFluid.getDensity("kg/m3");
+        double viscosity = tubeFluid.getViscosity("kg/msec");
+        double cp = tubeFluid.getCp("J/kgK");
+        double conductivity = tubeFluid.getThermalConductivity("W/mK");
+        double massFlow = tubeFluid.getFlowRate("kg/sec");
+        boolean heating = false;
+        if (hx.getOutStream(0) != null) {
+          heating = hx.getOutStream(0).getTemperature() > tubeStream.getTemperature();
+        }
+        if (density > 0 && viscosity > 0 && cp > 0 && conductivity > 0 && massFlow > 0) {
+          shellAndTubeCalculator.setTubeSideFluidProperties(density, viscosity, cp, conductivity,
+              massFlow, heating);
+        }
+      }
+    } catch (Exception ex) {
+      // Fluid property extraction can fail for unconfigured streams
+    }
+
+    try {
+      neqsim.process.equipment.stream.StreamInterface shellStream = hx.getInStream(1);
+      if (shellStream != null && shellStream.getThermoSystem() != null) {
+        neqsim.thermo.system.SystemInterface shellFluid = shellStream.getThermoSystem();
+        shellFluid.initProperties();
+        double density = shellFluid.getDensity("kg/m3");
+        double viscosity = shellFluid.getViscosity("kg/msec");
+        double cp = shellFluid.getCp("J/kgK");
+        double conductivity = shellFluid.getThermalConductivity("W/mK");
+        double massFlow = shellFluid.getFlowRate("kg/sec");
+        if (density > 0 && viscosity > 0 && cp > 0 && conductivity > 0 && massFlow > 0) {
+          shellAndTubeCalculator.setShellSideFluidProperties(density, viscosity, cp, conductivity,
+              massFlow);
+        }
+      }
+    } catch (Exception ex) {
+      // Fluid property extraction can fail for unconfigured streams
+    }
+  }
+
+  /**
+   * Gets the ShellAndTubeDesignCalculator for accessing ASME VIII results, MAWP, hydro test, and
+   * NACE assessment.
+   *
+   * @return the calculator, or null if calcDesign has not been called
+   */
+  public ShellAndTubeDesignCalculator getShellAndTubeCalculator() {
+    return shellAndTubeCalculator;
+  }
+
+  // ============================================================================
+  // Material and NACE Getters/Setters
+  // ============================================================================
+
+  /**
+   * Gets the shell material grade.
+   *
+   * @return shell material grade (e.g., "SA-516-70")
+   */
+  public String getShellMaterialGrade() {
+    return shellMaterialGrade;
+  }
+
+  /**
+   * Sets the shell material grade for property lookup from HeatExchangerTubeMaterials.
+   *
+   * @param grade material grade
+   */
+  public void setShellMaterialGrade(String grade) {
+    this.shellMaterialGrade = grade;
+  }
+
+  /**
+   * Gets the tube material grade.
+   *
+   * @return tube material grade
+   */
+  public String getTubeMaterialGrade() {
+    return tubeMaterialGrade;
+  }
+
+  /**
+   * Sets the tube material grade for property lookup from HeatExchangerTubeMaterials.
+   *
+   * @param grade material grade (e.g., "SA-179", "SA-213-TP316")
+   */
+  public void setTubeMaterialGrade(String grade) {
+    this.tubeMaterialGrade = grade;
+  }
+
+  /**
+   * Gets the H2S partial pressure for sour service determination.
+   *
+   * @return H2S partial pressure in bar
+   */
+  public double getH2sPartialPressure() {
+    return h2sPartialPressure;
+  }
+
+  /**
+   * Sets the H2S partial pressure for NACE assessment.
+   *
+   * @param pressure H2S partial pressure in bar
+   */
+  public void setH2sPartialPressure(double pressure) {
+    this.h2sPartialPressure = pressure;
+  }
+
+  /**
+   * Gets whether NACE sour service assessment is enabled.
+   *
+   * @return true if enabled
+   */
+  public boolean isSourServiceAssessment() {
+    return sourServiceAssessment;
+  }
+
+  /**
+   * Enables or disables NACE MR0175 sour service assessment.
+   *
+   * @param enabled true to enable
+   */
+  public void setSourServiceAssessment(boolean enabled) {
+    this.sourServiceAssessment = enabled;
+  }
+
+  /**
+   * Gets the shell joint efficiency per ASME VIII.
+   *
+   * @return joint efficiency (0.65 to 1.0)
+   */
+  public double getShellJointEfficiency() {
+    return shellJointEfficiency;
+  }
+
+  /**
+   * Sets the shell joint efficiency per ASME VIII.
+   *
+   * @param efficiency joint efficiency (0.65 to 1.0)
+   */
+  public void setShellJointEfficiency(double efficiency) {
+    this.shellJointEfficiency = efficiency;
+  }
+
+  /**
+   * Loads heat exchanger design parameters from the database.
+   */
+  public void loadProcessDesignParameters() {
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database =
+            new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet =
+            database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
+                + "EQUIPMENTTYPE='HeatExchanger' AND Company='"
+                + getCompanySpecificDesignStandards() + "'")) {
+
+      while (dataSet.next()) {
+        String spec = dataSet.getString("SPECIFICATION");
+        double minVal = dataSet.getDouble("MINVALUE");
+        double maxVal = dataSet.getDouble("MAXVALUE");
+        double value = (minVal + maxVal) / 2.0;
+
+        switch (spec) {
+          case "DesignPressureMargin":
+            this.designPressureMargin = value;
+            break;
+          case "DesignTemperatureMargin":
+            this.designTemperatureMarginC = value;
+            break;
+          case "MinApproachTemperature":
+            this.minApproachTemperatureC = value;
+            break;
+          case "FoulingResistanceShellWater":
+            this.foulingResistanceShellWater = value;
+            break;
+          case "FoulingResistanceShellHC":
+            this.foulingResistanceShellHC = value;
+            break;
+          case "FoulingResistanceTubeWater":
+            this.foulingResistanceTubeWater = value;
+            break;
+          case "FoulingResistanceTubeHC":
+            this.foulingResistanceTubeHC = value;
+            break;
+          case "MaxTubeVelocity":
+            this.maxTubeVelocity = value;
+            break;
+          case "MinTubeVelocity":
+            this.minTubeVelocity = value;
+            break;
+          case "MaxShellVelocity":
+            this.maxShellVelocity = value;
+            break;
+          case "MaxTubeLength":
+            this.maxTubeLengthM = value;
+            break;
+          case "AreaMargin":
+            this.areaMargin = value;
+            break;
+          default:
+            // Ignore unknown parameters
+            break;
+        }
+      }
+    } catch (Exception ex) {
+      // Use default values if database lookup fails
+    }
+  }
+
+  // ============================================================================
+  // Validation Methods
+  // ============================================================================
+
+  /**
+   * Validates that tube side velocity is within acceptable limits.
+   *
+   * @param actualVelocity actual tube side velocity in m/s
+   * @return true if velocity is within acceptable range
+   */
+  public boolean validateTubeVelocity(double actualVelocity) {
+    return actualVelocity >= minTubeVelocity && actualVelocity <= maxTubeVelocity;
+  }
+
+  /**
+   * Validates that shell side velocity is within acceptable limits.
+   *
+   * @param actualVelocity actual shell side velocity in m/s
+   * @return true if velocity is acceptable
+   */
+  public boolean validateShellVelocity(double actualVelocity) {
+    return actualVelocity <= maxShellVelocity;
+  }
+
+  /**
+   * Validates that approach temperature meets minimum requirements.
+   *
+   * @param actualApproach actual approach temperature in Celsius
+   * @return true if approach temperature is acceptable
+   */
+  public boolean validateApproachTemperature(double actualApproach) {
+    return actualApproach >= minApproachTemperatureC;
+  }
+
+  /**
+   * Validates that tube length is within acceptable limits.
+   *
+   * @param actualLengthM actual tube length in meters
+   * @return true if tube length is acceptable
+   */
+  public boolean validateTubeLength(double actualLengthM) {
+    return actualLengthM <= maxTubeLengthM;
+  }
+
+  /**
+   * Calculates the clean overall heat transfer coefficient (without fouling).
+   *
+   * @param shellHTC shell side heat transfer coefficient in W/(m²K)
+   * @param tubeHTC tube side heat transfer coefficient in W/(m²K)
+   * @param wallThicknessMm tube wall thickness in mm
+   * @param wallConductivity tube wall thermal conductivity in W/(mK), typically 45 for CS
+   * @return clean U-value in W/(m²K)
+   */
+  public double calculateCleanU(double shellHTC, double tubeHTC, double wallThicknessMm,
+      double wallConductivity) {
+    double wallResistance = (wallThicknessMm / 1000.0) / wallConductivity;
+    return 1.0 / (1.0 / shellHTC + wallResistance + 1.0 / tubeHTC);
+  }
+
+  /**
+   * Calculates the fouled overall heat transfer coefficient.
+   *
+   * @param cleanU clean U-value in W/(m²K)
+   * @param shellServiceWater true if shell side is water service
+   * @param tubeServiceWater true if tube side is water service
+   * @return fouled U-value in W/(m²K)
+   */
+  public double calculateFouledU(double cleanU, boolean shellServiceWater,
+      boolean tubeServiceWater) {
+    double totalFouling = calculateTotalFoulingResistance(shellServiceWater, tubeServiceWater);
+    return 1.0 / (1.0 / cleanU + totalFouling);
+  }
+
+  /**
+   * Performs comprehensive validation of heat exchanger design.
+   *
+   * @return HeatExchangerValidationResult with status and any issues found
+   */
+  public HeatExchangerValidationResult validateDesign() {
+    HeatExchangerValidationResult result = new HeatExchangerValidationResult();
+
+    // Validate approach temperature
+    if (approachTemperature > 0 && !validateApproachTemperature(approachTemperature)) {
+      result.addIssue("Approach temperature " + String.format("%.1f", approachTemperature)
+          + " °C below minimum " + String.format("%.1f", minApproachTemperatureC) + " °C");
+    }
+
+    // Validate tube length if set
+    if (tantanLength > 0 && !validateTubeLength(tantanLength)) {
+      result.addIssue("Tube length " + String.format("%.1f", tantanLength) + " m exceeds maximum "
+          + String.format("%.1f", maxTubeLengthM) + " m");
+    }
+
+    // Validate design margins
+    if (designPressureMargin < 1.05) {
+      result.addIssue("Design pressure margin " + String.format("%.2f", designPressureMargin)
+          + " below recommended 1.05");
+    }
+
+    result.setValid(result.getIssues().isEmpty());
+    return result;
+  }
+
+  /**
+   * Inner class to hold validation results.
+   */
+  public static class HeatExchangerValidationResult {
+    private boolean valid = true;
+    private java.util.List<String> issues = new java.util.ArrayList<>();
+
+    public boolean isValid() {
+      return valid;
+    }
+
+    public void setValid(boolean valid) {
+      this.valid = valid;
+    }
+
+    public java.util.List<String> getIssues() {
+      return issues;
+    }
+
+    public void addIssue(String issue) {
+      issues.add(issue);
+    }
   }
 }
 

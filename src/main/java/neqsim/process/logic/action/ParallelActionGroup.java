@@ -6,7 +6,7 @@ import neqsim.process.logic.LogicAction;
 
 /**
  * Executes multiple actions in parallel and tracks completion.
- * 
+ *
  * <p>
  * Parallel action groups allow simultaneous execution of multiple operations, which is useful for:
  * <ul>
@@ -15,23 +15,23 @@ import neqsim.process.logic.LogicAction;
  * <li>Coordinated equipment activation</li>
  * <li>Reducing total sequence time</li>
  * </ul>
- * 
+ *
  * <p>
  * The parallel group is considered complete only when ALL actions have completed.
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * // Create parallel group to open multiple valves at once
  * ParallelActionGroup parallelOpen = new ParallelActionGroup("Open All Valves");
  * parallelOpen.addAction(new OpenValveAction(valve1));
  * parallelOpen.addAction(new OpenValveAction(valve2));
  * parallelOpen.addAction(new OpenValveAction(valve3));
- * 
+ *
  * // Add to sequence
  * startupLogic.addAction(parallelOpen, 0.0);
- * 
+ *
  * // Execute - all valves open simultaneously
  * parallelOpen.execute();
  * if (parallelOpen.isComplete()) {

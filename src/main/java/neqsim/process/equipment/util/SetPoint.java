@@ -40,7 +40,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   String targetUnit = "";
   double inputValue = 0.0;
   double oldInputValue = 0.0;
-  private Function<ProcessEquipmentInterface, Double> sourceValueCalculator;
+  private transient Function<ProcessEquipmentInterface, Double> sourceValueCalculator;
 
   /**
    * <p>

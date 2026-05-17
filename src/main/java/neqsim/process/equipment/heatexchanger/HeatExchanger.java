@@ -6,6 +6,8 @@
 
 package neqsim.process.equipment.heatexchanger;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.process.ml.StateVector;
@@ -30,9 +32,25 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class HeatExchanger extends Heater implements HeatExchangerInterface, StateVectorProvider {
+public class HeatExchanger extends Heater implements HeatExchangerInterface, StateVectorProvider,
+    neqsim.process.equipment.capacity.CapacityConstrainedEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  /**
+   * Design mode for the heat exchanger.
+   *
+   * @author NeqSim Development Team
+   * @version 1.0
+   */
+  public enum DesignMode {
+    /** Sizing mode: given UA, compute outlet temperatures (default). */
+    SIZING,
+    /**
+     * Rating mode: compute UA from geometry and fluid properties, then find outlet temperatures.
+     */
+    RATING
+  }
 
   boolean setTemperature = false;
   StreamInterface[] outStream = new Stream[2];
@@ -55,6 +73,74 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   private String flowArrangement = "concentric tube counterflow";
   private boolean useDeltaT = false;
   private double deltaT = 1.0;
+
+  /** Design mode: SIZING (default, uses user-supplied UA) or RATING (calculates UA). */
+  private DesignMode designMode = DesignMode.SIZING;
+
+  /** Tube-side shell-and-tube geometry for rating mode. */
+  private transient neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator ratingCalculator;
+
+  /** Number of shell passes for LMTD correction (1 = TEMA E, 2 = TEMA F). */
+  private int shellPasses = 1;
+
+  /** Calculated overall U value from rating mode (W/(m2*K)). */
+  private double ratingU = 0.0;
+
+  /** Heat transfer area used in rating mode (m2). */
+  private double ratingArea = 0.0;
+
+  // ============ Capacity Constraint Fields ============
+  /** Design duty in Watts for capacity constraint. */
+  private double designDuty = 0.0;
+  /** Design UA value in W/K for capacity constraint. */
+  private double designUAValue = 0.0;
+  /** Minimum approach temperature in K. */
+  private double minApproachTemperature = 5.0;
+  /** Maximum shell-side pressure drop in bar. */
+  private double maxShellPressureDrop = 0.5;
+  /** Maximum tube-side pressure drop in bar. */
+  private double maxTubePressureDrop = 0.5;
+  /** Capacity constraints map. */
+  private java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> hxCapacityConstraints =
+      new java.util.LinkedHashMap<String, neqsim.process.equipment.capacity.CapacityConstraint>();
+  /** Flag for HX-specific capacity analysis. */
+  private boolean hxCapacityAnalysisEnabled = true;
+
+  /** Cached inlet stream 2 temperature for needRecalculation check. */
+  private double lastInStream2Temperature = 0.0;
+  /** Cached inlet stream 2 pressure for needRecalculation check. */
+  private double lastInStream2Pressure = 0.0;
+  /** Cached inlet stream 2 flow rate for needRecalculation check. */
+  private double lastInStream2FlowRate = 0.0;
+  /** Cached UA value for needRecalculation check. */
+  private double lastUAvalue = 0.0;
+  /** Cached inlet stream 2 composition for needRecalculation check. */
+  private double[] lastInStream2Composition = null;
+
+  // Dynamic simulation fields
+  /** Metal wall mass in kg. */
+  private double wallMass = 0.0;
+  /** Metal wall specific heat capacity in J/(kg*K). */
+  private double wallCp = 500.0;
+  /** Metal wall temperature in Kelvin — state variable for dynamic simulation. */
+  private double wallTemperature = Double.NaN;
+  /** Shell-side fluid holdup volume in m3. */
+  private double shellHoldupVolume = 0.0;
+  /** Tube-side fluid holdup volume in m3. */
+  private double tubeHoldupVolume = 0.0;
+  /** Shell-side heat transfer coefficient in W/(m2*K). */
+  private double shellSideHtc = 500.0;
+  /** Tube-side heat transfer coefficient in W/(m2*K). */
+  private double tubeSideHtc = 1000.0;
+  /** Heat transfer area in m2 (for dynamic model). */
+  private double heatTransferArea = 0.0;
+  /** Whether the dynamic heat exchanger model is enabled. */
+  private boolean dynamicModelEnabled = false;
+
+  /** Shell-side fluid temperature in K — state variable for fluid accumulation model. */
+  private double shellFluidTemperature = Double.NaN;
+  /** Tube-side fluid temperature in K — state variable for fluid accumulation model. */
+  private double tubeFluidTemperature = Double.NaN;
 
   /**
    * Constructor for HeatExchanger.
@@ -135,8 +221,12 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   @Override
   public void setName(String name) {
     super.setName(name);
-    outStream[0].setName(name + "_Sout1");
-    outStream[1].setName(name + "_Sout2");
+    if (outStream[0] != null) {
+      outStream[0].setName(name + "_Sout1");
+    }
+    if (outStream[1] != null) {
+      outStream[1].setName(name + "_Sout2");
+    }
   }
 
   /** {@inheritDoc} */
@@ -149,6 +239,55 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   @Override
   public StreamInterface getOutStream(int i) {
     return outStream[i];
+  }
+
+  /**
+   * Returns both inlet streams of the heat exchanger.
+   *
+   * @return a list containing the non-null inlet streams for side 0 and side 1
+   */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    List<StreamInterface> inlets = new ArrayList<StreamInterface>();
+    if (inStream[0] != null) {
+      inlets.add(inStream[0]);
+    }
+    if (inStream[1] != null) {
+      inlets.add(inStream[1]);
+    }
+    return inlets;
+  }
+
+  /**
+   * Returns the first outlet stream (side 0) of the heat exchanger.
+   *
+   * <p>
+   * HeatExchanger has two outlet streams corresponding to the two feed sides. This method returns
+   * the outlet for feed side 0. Use {@link #getOutStream(int)} to access a specific side.
+   * </p>
+   *
+   * @return the outlet stream for feed side 0
+   */
+  @Override
+  public StreamInterface getOutletStream() {
+    return outStream[0];
+  }
+
+  /**
+   * Returns both outlet streams of the heat exchanger.
+   *
+   * @return a list containing both outlet streams (side 0 and side 1)
+   */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    List<StreamInterface> outlets = new ArrayList<StreamInterface>();
+    if (outStream[0] != null) {
+      outlets.add(outStream[0]);
+    }
+    if (outStream[1] != null) {
+      outlets.add(outStream[1]);
+    }
+    return outlets;
   }
 
   /**
@@ -330,7 +469,80 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
           - inStream[streamToSet].getThermoSystem().getTemperature());
     }
 
+    updateLastState();
     setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean needRecalculation() {
+    if (firstTime || inStream[0] == null || inStream[1] == null) {
+      return true;
+    }
+    if (super.needRecalculation()) {
+      return true;
+    }
+    if (inStream[1].getThermoSystem() == null) {
+      return true;
+    }
+    SystemInterface sys2 = inStream[1].getThermoSystem();
+    if (sys2.getTemperature() != lastInStream2Temperature
+        || sys2.getPressure() != lastInStream2Pressure || UAvalue != lastUAvalue) {
+      return true;
+    }
+    double flow2 = sys2.getFlowRate("kg/hr");
+    if (flow2 > 0 && Math.abs(flow2 - lastInStream2FlowRate) / flow2 > 1e-6) {
+      return true;
+    }
+    if (lastInStream2Composition == null) {
+      return true;
+    }
+    // Allocation-free composition comparison.
+    neqsim.thermo.phase.PhaseInterface ph0 = sys2.getPhase(0);
+    int n = ph0.getNumberOfComponents();
+    if (n != lastInStream2Composition.length) {
+      return true;
+    }
+    for (int i = 0; i < n; i++) {
+      if (ph0.getComponent(i).getz() != lastInStream2Composition[i]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Updates cached state for needRecalculation checks. Saves both HeatExchanger stream-2 state and
+   * Heater base-class stream-1 state so that super.needRecalculation() returns false when inputs
+   * are unchanged.
+   */
+  private void updateLastState() {
+    // Save stream 2 state (HeatExchanger-specific)
+    if (inStream[1] != null && inStream[1].getThermoSystem() != null) {
+      lastInStream2Temperature = inStream[1].getThermoSystem().getTemperature();
+      lastInStream2Pressure = inStream[1].getThermoSystem().getPressure();
+      lastInStream2FlowRate = inStream[1].getThermoSystem().getFlowRate("kg/hr");
+    }
+    lastUAvalue = UAvalue;
+
+    // Save Heater base-class state (stream 0) so super.needRecalculation() works correctly.
+    // The Heater's inStream field (not shadowed array) refers to stream 0 via the constructor.
+    if (inStream[0] != null && inStream[0].getThermoSystem() != null) {
+      lastTemperature = inStream[0].getThermoSystem().getTemperature();
+      lastPressure = inStream[0].getThermoSystem().getPressure();
+      lastFlowRate = inStream[0].getThermoSystem().getFlowRate("kg/hr");
+    }
+    lastDuty = getDuty();
+    lastOutPressure = pressureOut;
+    lastOutTemperature = temperatureOut;
+    lastPressureDrop = getPressureDrop();
+    // Composition tracking for both streams
+    if (inStream[0] != null && inStream[0].getThermoSystem() != null) {
+      lastComposition = inStream[0].getThermoSystem().getMolarComposition().clone();
+    }
+    if (inStream[1] != null && inStream[1].getThermoSystem() != null) {
+      lastInStream2Composition = inStream[1].getThermoSystem().getMolarComposition().clone();
+    }
   }
 
   /** {@inheritDoc} */
@@ -338,6 +550,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   public void run(UUID id) {
     if (useDeltaT) {
       runDeltaT(id);
+      updateLastState();
       return;
     }
     if (getSpecification().equals("out stream")) {
@@ -409,6 +622,17 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
 
       double dEntalphy = outStream[streamToSet].getThermoSystem().getEnthalpy()
           - inStream[streamToSet].getThermoSystem().getEnthalpy();
+
+      // Rating mode: compute UA from correlations instead of using user-supplied value
+      if (designMode == DesignMode.RATING && ratingCalculator != null && ratingArea > 0) {
+        updateRatingCalculatorFromStreams();
+        ratingCalculator.calculate();
+        ratingU = ratingCalculator.getOverallU();
+        if (ratingU > 0) {
+          UAvalue = ratingU * ratingArea;
+        }
+      }
+
       NTU = UAvalue / Cmin;
 
       thermalEffectiveness = calcThermalEffectivenes(NTU, Cr);
@@ -453,6 +677,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
        */
     }
 
+    updateLastState();
     setCalculationIdentifier(id);
   }
 
@@ -668,6 +893,132 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
+   * Gets the design mode.
+   *
+   * @return SIZING or RATING
+   */
+  public DesignMode getDesignMode() {
+    return designMode;
+  }
+
+  /**
+   * Updates the rating calculator with current stream fluid properties. Extracts density,
+   * viscosity, Cp, and thermal conductivity from both inlet streams.
+   */
+  private void updateRatingCalculatorFromStreams() {
+    if (ratingCalculator == null) {
+      return;
+    }
+
+    // Tube-side properties from stream 0 (process side)
+    try {
+      SystemInterface tubeFluid = inStream[0].getThermoSystem();
+      tubeFluid.initProperties();
+      double tubeDensity = tubeFluid.getDensity("kg/m3");
+      double tubeViscosity = tubeFluid.getViscosity("kg/msec");
+      double tubeCp = tubeFluid.getCp("J/kgK");
+      double tubeConductivity = tubeFluid.getThermalConductivity("W/mK");
+      double tubeMassFlow = tubeFluid.getFlowRate("kg/sec");
+      boolean heating = outStream[0].getTemperature() > inStream[0].getTemperature();
+      ratingCalculator.setTubeSideFluid(tubeDensity, tubeViscosity, tubeCp, tubeConductivity,
+          tubeMassFlow, heating);
+    } catch (Exception ex) {
+      // Use defaults if property extraction fails
+    }
+
+    // Shell-side properties from stream 1 (utility side)
+    try {
+      SystemInterface shellFluid = inStream[1].getThermoSystem();
+      shellFluid.initProperties();
+      double shellDensity = shellFluid.getDensity("kg/m3");
+      double shellViscosity = shellFluid.getViscosity("kg/msec");
+      double shellCp = shellFluid.getCp("J/kgK");
+      double shellConductivity = shellFluid.getThermalConductivity("W/mK");
+      double shellMassFlow = shellFluid.getFlowRate("kg/sec");
+      ratingCalculator.setShellSideFluid(shellDensity, shellViscosity, shellCp, shellConductivity,
+          shellMassFlow);
+    } catch (Exception ex) {
+      // Use defaults if property extraction fails
+    }
+  }
+
+  /**
+   * Sets the design mode. In RATING mode, the exchanger computes UA from geometry and fluid
+   * properties instead of using a user-supplied value.
+   *
+   * @param mode SIZING or RATING
+   */
+  public void setDesignMode(DesignMode mode) {
+    this.designMode = mode;
+  }
+
+  /**
+   * Gets the ThermalDesignCalculator used in rating mode.
+   *
+   * @return rating calculator, or null if not in rating mode or not yet run
+   */
+  public neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator getRatingCalculator() {
+    return ratingCalculator;
+  }
+
+  /**
+   * Sets the ThermalDesignCalculator for rating mode. The caller should configure the calculator
+   * with geometry and fluid properties before calling run().
+   *
+   * @param calculator configured thermal design calculator
+   */
+  public void setRatingCalculator(
+      neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator calculator) {
+    this.ratingCalculator = calculator;
+    this.designMode = DesignMode.RATING;
+  }
+
+  /**
+   * Sets the heat transfer area for rating mode.
+   *
+   * @param area heat transfer area (m2)
+   */
+  public void setRatingArea(double area) {
+    this.ratingArea = area;
+  }
+
+  /**
+   * Gets the heat transfer area used in rating mode.
+   *
+   * @return area (m2)
+   */
+  public double getRatingArea() {
+    return ratingArea;
+  }
+
+  /**
+   * Gets the overall U value computed from rating mode correlations.
+   *
+   * @return overall U (W/(m2*K)), or 0 if not in rating mode
+   */
+  public double getRatingU() {
+    return ratingU;
+  }
+
+  /**
+   * Sets the number of shell passes for LMTD correction factor calculation.
+   *
+   * @param shellPasses number of shell passes (1, 2, 3, ...)
+   */
+  public void setShellPasses(int shellPasses) {
+    this.shellPasses = shellPasses;
+  }
+
+  /**
+   * Gets the number of shell passes.
+   *
+   * @return number of shell passes
+   */
+  public int getShellPasses() {
+    return shellPasses;
+  }
+
+  /**
    * <p>
    * calcThermalEffectivenes.
    * </p>
@@ -756,12 +1107,18 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     // Apply safety factor to duty
     double designDuty = calculatedDuty * safetyFactor;
 
+    // Update instance field so constraint init picks it up
+    this.designDuty = designDuty;
+
     // Initialize and calculate mechanical design
     HeatExchangerMechanicalDesign mechDesign = getMechanicalDesign();
     if (mechDesign != null) {
       mechDesign.maxDesignDuty = designDuty;
       mechDesign.calcDesign();
     }
+
+    // Reinitialize capacity constraints with the new design values
+    initializeHxCapacityConstraints();
 
     // Mark as auto-sized (don't call super.autoSize as it will fail on inStream check)
     setAutoSized(true);
@@ -932,7 +1289,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * HeatExchanger hx = HeatExchanger.builder("E-100").hotStream(hotFeed).coldStream(coldFeed)
    *     .UAvalue(5000.0).flowArrangement("counterflow").build();
@@ -943,6 +1300,527 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
    */
   public static Builder builder(String name) {
     return new Builder(name);
+  }
+
+  // ============================================================================
+  // CapacityConstrainedEquipment Implementation
+  // ============================================================================
+
+  /**
+   * Sets the design duty for capacity calculations.
+   *
+   * @param duty design duty in Watts
+   */
+  public void setDesignDuty(double duty) {
+    this.designDuty = duty;
+    initializeHxCapacityConstraints();
+  }
+
+  /**
+   * Gets the design duty.
+   *
+   * @return design duty in Watts
+   */
+  public double getDesignDuty() {
+    return designDuty;
+  }
+
+  /**
+   * Sets the design UA value for capacity calculations.
+   *
+   * @param uaValue design UA value in W/K
+   */
+  public void setDesignUAValue(double uaValue) {
+    this.designUAValue = uaValue;
+    initializeHxCapacityConstraints();
+  }
+
+  /**
+   * Gets the design UA value.
+   *
+   * @return design UA value in W/K
+   */
+  public double getDesignUAValue() {
+    return designUAValue;
+  }
+
+  /**
+   * Sets the minimum approach temperature.
+   *
+   * @param temperature minimum approach temperature in K
+   */
+  public void setMinApproachTemperature(double temperature) {
+    this.minApproachTemperature = temperature;
+    initializeHxCapacityConstraints();
+  }
+
+  /**
+   * Gets the minimum approach temperature.
+   *
+   * @return minimum approach temperature in K
+   */
+  public double getMinApproachTemperature() {
+    return minApproachTemperature;
+  }
+
+  /**
+   * Sets the maximum shell-side pressure drop.
+   *
+   * @param pressureDrop maximum pressure drop in bar
+   */
+  public void setMaxShellPressureDrop(double pressureDrop) {
+    this.maxShellPressureDrop = pressureDrop;
+    initializeHxCapacityConstraints();
+  }
+
+  /**
+   * Sets the maximum tube-side pressure drop.
+   *
+   * @param pressureDrop maximum pressure drop in bar
+   */
+  public void setMaxTubePressureDrop(double pressureDrop) {
+    this.maxTubePressureDrop = pressureDrop;
+    initializeHxCapacityConstraints();
+  }
+
+  /**
+   * Calculates the current approach temperature.
+   *
+   * @return current approach temperature in K
+   */
+  public double getApproachTemperature() {
+    if (inStream[0] == null || inStream[1] == null || outStream[0] == null
+        || outStream[1] == null) {
+      return Double.MAX_VALUE;
+    }
+    double hotOut = outStream[0].getTemperature("K");
+    double coldIn = inStream[1].getTemperature("K");
+    double hotIn = inStream[0].getTemperature("K");
+    double coldOut = outStream[1].getTemperature("K");
+
+    // For counterflow: min of (hot_out - cold_in) and (hot_in - cold_out)
+    // For parallel flow: (hot_out - cold_out)
+    if (flowArrangement.contains("counter")) {
+      return Math.min(hotOut - coldIn, hotIn - coldOut);
+    } else {
+      return hotOut - coldOut;
+    }
+  }
+
+  /**
+   * Initialize heat exchanger specific capacity constraints.
+   */
+  private void initializeHxCapacityConstraints() {
+    hxCapacityConstraints.clear();
+
+    // Duty utilization constraint
+    if (designDuty > 0) {
+      neqsim.process.equipment.capacity.CapacityConstraint dutyConstraint =
+          new neqsim.process.equipment.capacity.CapacityConstraint("dutyUtilization", "W",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN);
+      dutyConstraint.setDesignValue(designDuty);
+      dutyConstraint.setDescription("Heat duty utilization");
+      dutyConstraint.setValueSupplier(() -> Math.abs(this.duty));
+      hxCapacityConstraints.put("dutyUtilization", dutyConstraint);
+    }
+
+    // UA utilization constraint
+    if (designUAValue > 0) {
+      neqsim.process.equipment.capacity.CapacityConstraint uaConstraint =
+          new neqsim.process.equipment.capacity.CapacityConstraint("uaUtilization", "W/K",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      uaConstraint.setDesignValue(designUAValue);
+      uaConstraint.setDescription("UA value utilization");
+      uaConstraint.setValueSupplier(() -> this.UAvalue);
+      hxCapacityConstraints.put("uaUtilization", uaConstraint);
+    }
+
+    // Approach temperature constraint (inverse - we want to be above minimum)
+    if (minApproachTemperature > 0) {
+      neqsim.process.equipment.capacity.CapacityConstraint approachConstraint =
+          new neqsim.process.equipment.capacity.CapacityConstraint("approachTemperature", "K",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      approachConstraint.setDesignValue(minApproachTemperature);
+      approachConstraint.setDescription("Minimum temperature approach");
+      // Utilization is inverted: approaches 100% as we get close to minimum
+      approachConstraint.setValueSupplier(() -> {
+        double approach = getApproachTemperature();
+        return approach > 0 ? minApproachTemperature / approach : 1.0;
+      });
+      hxCapacityConstraints.put("approachTemperature", approachConstraint);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityAnalysisEnabled() {
+    return hxCapacityAnalysisEnabled;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCapacityAnalysisEnabled(boolean enabled) {
+    this.hxCapacityAnalysisEnabled = enabled;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> getCapacityConstraints() {
+    return java.util.Collections.unmodifiableMap(hxCapacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public neqsim.process.equipment.capacity.CapacityConstraint getBottleneckConstraint() {
+    neqsim.process.equipment.capacity.CapacityConstraint bottleneck = null;
+    double maxUtil = 0.0;
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : hxCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()) {
+        double util = constraint.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+          bottleneck = constraint;
+        }
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : hxCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled() && constraint.getUtilization() > 1.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : hxCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()
+          && constraint
+              .getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
+          && constraint.getUtilization() > 1.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    double maxUtil = 0.0;
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : hxCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()) {
+        maxUtil = Math.max(maxUtil, constraint.getUtilization());
+      }
+    }
+    return maxUtil;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(
+      neqsim.process.equipment.capacity.CapacityConstraint constraint) {
+    hxCapacityConstraints.put(constraint.getName(), constraint);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean removeCapacityConstraint(String constraintName) {
+    return hxCapacityConstraints.remove(constraintName) != null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearCapacityConstraints() {
+    hxCapacityConstraints.clear();
+  }
+
+  // ============ Dynamic Simulation Getters/Setters ============
+
+  /**
+   * Gets the metal wall mass used in the dynamic heat exchanger model.
+   *
+   * @return wall mass in kg
+   */
+  public double getWallMass() {
+    return wallMass;
+  }
+
+  /**
+   * Sets the metal wall mass for the dynamic heat exchanger model.
+   *
+   * @param wallMass wall mass in kg (must be non-negative)
+   */
+  public void setWallMass(double wallMass) {
+    this.wallMass = Math.max(0.0, wallMass);
+  }
+
+  /**
+   * Gets the metal wall specific heat capacity.
+   *
+   * @return wall Cp in J/(kg*K)
+   */
+  public double getWallCp() {
+    return wallCp;
+  }
+
+  /**
+   * Sets the metal wall specific heat capacity.
+   *
+   * @param wallCp specific heat in J/(kg*K)
+   */
+  public void setWallCp(double wallCp) {
+    this.wallCp = wallCp;
+  }
+
+  /**
+   * Gets the current metal wall temperature (dynamic state variable).
+   *
+   * @return wall temperature in Kelvin (NaN if not yet initialized)
+   */
+  public double getWallTemperature() {
+    return wallTemperature;
+  }
+
+  /**
+   * Sets the metal wall temperature.
+   *
+   * @param wallTemperature wall temperature in Kelvin
+   */
+  public void setWallTemperature(double wallTemperature) {
+    this.wallTemperature = wallTemperature;
+  }
+
+  /**
+   * Gets the shell-side holdup volume.
+   *
+   * @return shell holdup volume in m3
+   */
+  public double getShellHoldupVolume() {
+    return shellHoldupVolume;
+  }
+
+  /**
+   * Sets the shell-side holdup volume.
+   *
+   * @param shellHoldupVolume volume in m3
+   */
+  public void setShellHoldupVolume(double shellHoldupVolume) {
+    this.shellHoldupVolume = Math.max(0.0, shellHoldupVolume);
+  }
+
+  /**
+   * Gets the tube-side holdup volume.
+   *
+   * @return tube holdup volume in m3
+   */
+  public double getTubeHoldupVolume() {
+    return tubeHoldupVolume;
+  }
+
+  /**
+   * Sets the tube-side holdup volume.
+   *
+   * @param tubeHoldupVolume volume in m3
+   */
+  public void setTubeHoldupVolume(double tubeHoldupVolume) {
+    this.tubeHoldupVolume = Math.max(0.0, tubeHoldupVolume);
+  }
+
+  /**
+   * Gets the shell-side heat transfer coefficient.
+   *
+   * @return heat transfer coefficient in W/(m2*K)
+   */
+  public double getShellSideHtc() {
+    return shellSideHtc;
+  }
+
+  /**
+   * Sets the shell-side heat transfer coefficient.
+   *
+   * @param shellSideHtc heat transfer coefficient in W/(m2*K)
+   */
+  public void setShellSideHtc(double shellSideHtc) {
+    this.shellSideHtc = shellSideHtc;
+  }
+
+  /**
+   * Gets the tube-side heat transfer coefficient.
+   *
+   * @return heat transfer coefficient in W/(m2*K)
+   */
+  public double getTubeSideHtc() {
+    return tubeSideHtc;
+  }
+
+  /**
+   * Sets the tube-side heat transfer coefficient.
+   *
+   * @param tubeSideHtc heat transfer coefficient in W/(m2*K)
+   */
+  public void setTubeSideHtc(double tubeSideHtc) {
+    this.tubeSideHtc = tubeSideHtc;
+  }
+
+  /**
+   * Gets the heat transfer area used in the dynamic model.
+   *
+   * @return heat transfer area in m2
+   */
+  public double getHeatTransferArea() {
+    return heatTransferArea;
+  }
+
+  /**
+   * Sets the heat transfer area for the dynamic model.
+   *
+   * @param heatTransferArea area in m2
+   */
+  public void setHeatTransferArea(double heatTransferArea) {
+    this.heatTransferArea = Math.max(0.0, heatTransferArea);
+  }
+
+  /**
+   * Returns whether the dynamic heat exchanger model is enabled.
+   *
+   * @return true if dynamic model is active
+   */
+  public boolean isDynamicModelEnabled() {
+    return dynamicModelEnabled;
+  }
+
+  /**
+   * Enables or disables the dynamic heat exchanger model. When enabled, the runTransient method
+   * integrates the metal wall energy balance instead of using steady-state calculations.
+   *
+   * @param enabled true to enable
+   */
+  public void setDynamicModelEnabled(boolean enabled) {
+    this.dynamicModelEnabled = enabled;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Dynamic heat exchanger model. When {@code dynamicModelEnabled} is true, integrates the metal
+   * wall energy ODE using forward Euler:
+   * </p>
+   *
+   * <p>
+   * M_wall * Cp_wall * dT_wall/dt = h_shell * A * (T_shell - T_wall) - h_tube * A * (T_wall -
+   * T_tube)
+   * </p>
+   *
+   * <p>
+   * The heat duty to each fluid side is then calculated and applied via enthalpy adjustment.
+   * </p>
+   *
+   * @param dt time step in seconds
+   * @param id calculation identifier
+   */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (!dynamicModelEnabled || wallMass <= 0.0 || heatTransferArea <= 0.0) {
+      super.runTransient(dt, id);
+      return;
+    }
+
+    // Initialize wall temperature on first call to the average of inlet temperatures
+    if (Double.isNaN(wallTemperature)) {
+      double tShellIn = inStream[0].getThermoSystem().getTemperature();
+      double tTubeIn = inStream[1].getThermoSystem().getTemperature();
+      wallTemperature = 0.5 * (tShellIn + tTubeIn);
+    }
+
+    double tShellIn = inStream[0].getThermoSystem().getTemperature();
+    double tTubeIn = inStream[1].getThermoSystem().getTemperature();
+
+    // --- Shell-side fluid accumulation ODE (CSTR model) ---
+    // When shellHoldupVolume > 0, track shell-side fluid temperature as a state
+    // variable. The fluid temperature evolves via mixing with incoming fluid and
+    // heat exchange with the wall. This adds thermal inertia from the fluid mass.
+    double tShellForWall = tShellIn; // default: no holdup → use inlet T
+    if (shellHoldupVolume > 0.0) {
+      if (Double.isNaN(shellFluidTemperature)) {
+        shellFluidTemperature = tShellIn;
+      }
+      double shellRho = inStream[0].getThermoSystem().getDensity("kg/m3");
+      double shellCp = inStream[0].getThermoSystem().getCp("J/kgK");
+      double shellFluidMass = shellRho * shellHoldupVolume;
+      if (shellFluidMass > 0.0 && shellCp > 0.0) {
+        double shellMassFlow = inStream[0].getThermoSystem().getFlowRate("kg/sec");
+        double qInletMixing = shellMassFlow * shellCp * (tShellIn - shellFluidTemperature);
+        double qFluidToWall =
+            shellSideHtc * heatTransferArea * (shellFluidTemperature - wallTemperature);
+        double dTshellFluid = (qInletMixing - qFluidToWall) / (shellFluidMass * shellCp);
+        shellFluidTemperature += dTshellFluid * dt;
+      }
+      tShellForWall = shellFluidTemperature;
+    }
+
+    // --- Tube-side fluid accumulation ODE (CSTR model) ---
+    double tTubeForWall = tTubeIn; // default: no holdup → use inlet T
+    if (tubeHoldupVolume > 0.0) {
+      if (Double.isNaN(tubeFluidTemperature)) {
+        tubeFluidTemperature = tTubeIn;
+      }
+      double tubeRho = inStream[1].getThermoSystem().getDensity("kg/m3");
+      double tubeCp = inStream[1].getThermoSystem().getCp("J/kgK");
+      double tubeFluidMass = tubeRho * tubeHoldupVolume;
+      if (tubeFluidMass > 0.0 && tubeCp > 0.0) {
+        double tubeMassFlow = inStream[1].getThermoSystem().getFlowRate("kg/sec");
+        double qInletMixing = tubeMassFlow * tubeCp * (tTubeIn - tubeFluidTemperature);
+        double qWallToFluid =
+            tubeSideHtc * heatTransferArea * (wallTemperature - tubeFluidTemperature);
+        double dTtubeFluid = (qInletMixing + qWallToFluid) / (tubeFluidMass * tubeCp);
+        tubeFluidTemperature += dTtubeFluid * dt;
+      }
+      tTubeForWall = tubeFluidTemperature;
+    }
+
+    // Metal wall energy balance (forward Euler) — uses fluid temperatures when holdup is active
+    double qShellToWall = shellSideHtc * heatTransferArea * (tShellForWall - wallTemperature);
+    double qWallToTube = tubeSideHtc * heatTransferArea * (wallTemperature - tTubeForWall);
+    double dTwall = (qShellToWall - qWallToTube) / (wallMass * wallCp);
+    wallTemperature += dTwall * dt;
+
+    // Apply duty to each fluid side using PH flash
+    // Shell side loses heat: outlet enthalpy = inlet enthalpy - qShellToWall * dt_effective
+    SystemInterface shellOut = inStream[0].getThermoSystem().clone();
+    double shellInletH = inStream[0].getThermoSystem().getEnthalpy();
+    double shellOutH = shellInletH - qShellToWall;
+    neqsim.thermodynamicoperations.ThermodynamicOperations shellOps =
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(shellOut);
+    shellOps.PHflash(shellOutH);
+    outStream[0].setThermoSystem(shellOut);
+    outStream[0].setCalculationIdentifier(id);
+
+    // Tube side gains heat: outlet enthalpy = inlet enthalpy + qWallToTube * dt_effective
+    SystemInterface tubeOut = inStream[1].getThermoSystem().clone();
+    double tubeInletH = inStream[1].getThermoSystem().getEnthalpy();
+    double tubeOutH = tubeInletH + qWallToTube;
+    neqsim.thermodynamicoperations.ThermodynamicOperations tubeOps =
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(tubeOut);
+    tubeOps.PHflash(tubeOutH);
+    outStream[1].setThermoSystem(tubeOut);
+    outStream[1].setCalculationIdentifier(id);
+
+    duty = qShellToWall;
+    increaseTime(dt);
+    setCalculationIdentifier(id);
   }
 
   /**

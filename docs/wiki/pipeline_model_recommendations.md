@@ -1,3 +1,8 @@
+---
+title: "Pipeline Model Recommendations"
+description: "AdiabaticPipe pipe = new AdiabaticPipe(\"transmission\", feed);"
+---
+
 # Pipeline Model Recommendations
 
 ## Quick Reference Guide
@@ -238,8 +243,8 @@ Before trusting results, verify:
 
 ## See Also
 
-- [Pipeline Pressure Drop Overview](pipeline_pressure_drop.md)
-- [Beggs & Brill Correlation](beggs_and_brill_correlation.md)
-- [Friction Factor Models](friction_factor_models.md)
-- [Heat Transfer in Pipelines](pipeline_heat_transfer.md)
-- [Transient Simulation](pipeline_transient_simulation.md)
+- [Pipeline Pressure Drop Overview](pipeline_pressure_drop)
+- [Beggs & Brill Correlation](beggs_and_brill_correlation)
+- [Friction Factor Models](friction_factor_models)
+- [Heat Transfer in Pipelines](pipeline_heat_transfer)
+- [Transient Simulation](pipeline_transient_simulation)

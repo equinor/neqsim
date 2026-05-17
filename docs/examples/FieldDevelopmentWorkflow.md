@@ -8,9 +8,9 @@ nav_order: 1
 
 # FieldDevelopmentWorkflow
 
-> **Note:** This is an auto-generated Markdown version of the Jupyter notebook 
+> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`FieldDevelopmentWorkflow.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb).
-> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb) 
+> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb).
 
 ---
@@ -31,21 +31,21 @@ The `FieldDevelopmentWorkflow` class provides a unified interface for:
 Make sure you have jpype installed with neqsim:
 
 ```python
-import jpype
-import jpype.imports
-from jpype.types import *
+# Import NeqSim - Direct Java Access via jneqsim
+from neqsim import jneqsim
 
-# Start JVM with NeqSim
-if not jpype.isJVMStarted():
-    jpype.startJVM(classpath=['path/to/neqsim.jar'])
+# Import Java classes through the jneqsim gateway
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+SystemSrkCPAstatoil = jneqsim.thermo.system.SystemSrkCPAstatoil
+Stream = jneqsim.process.equipment.stream.Stream
+WellSystem = jneqsim.process.equipment.reservoir.WellSystem
+SimpleReservoir = jneqsim.process.equipment.reservoir.SimpleReservoir
+FieldDevelopmentWorkflow = jneqsim.process.fielddevelopment.workflow.FieldDevelopmentWorkflow
+CashFlowEngine = jneqsim.process.fielddevelopment.economics.CashFlowEngine
+NorwegianTaxModel = jneqsim.process.fielddevelopment.economics.NorwegianTaxModel
+FlowAssuranceResult = jneqsim.process.fielddevelopment.screening.FlowAssuranceResult
 
-# Import NeqSim classes
-from neqsim.thermo.system import SystemSrkEos, SystemSrkCPAstatoil
-from neqsim.process.equipment.stream import Stream
-from neqsim.process.equipment.reservoir import WellSystem, SimpleReservoir
-from neqsim.process.fielddevelopment.workflow import FieldDevelopmentWorkflow
-from neqsim.process.fielddevelopment.economics import CashFlowEngine, NorwegianTaxModel
-from neqsim.process.fielddevelopment.screening import FlowAssuranceResult
+print("NeqSim Field Development Framework loaded successfully!")
 ```
 
 ## 1. Screening Level Study
@@ -60,7 +60,7 @@ The screening level uses correlations and empirical models for quick assessment.
 ```python
 # Create a quick gas tieback screening study
 workflow = FieldDevelopmentWorkflow.quickGasTieback(
-    "Snorre_Satellite",
+    "Satellite_Field",
     50.0,    # reserves in GSm3
     120.0,   # distance to host in km
     350.0,   # water depth in m
@@ -242,7 +242,7 @@ The FieldDevelopmentWorkflow provides:
 
 Key integration points:
 - PVT: `SystemSrkEos`, `SystemSrkCPAstatoil`
-- Reservoir: `SimpleReservoir`, `WellSystem`  
+- Reservoir: `SimpleReservoir`, `WellSystem`
 - Process: `ProcessSystem`, unit operations
 - Economics: `CashFlowEngine`, tax models
 

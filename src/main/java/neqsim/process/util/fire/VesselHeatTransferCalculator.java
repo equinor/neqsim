@@ -37,7 +37,7 @@ public final class VesselHeatTransferCalculator {
    *
    * <p>
    * The Grashof number represents the ratio of buoyancy to viscous forces:
-   * 
+   *
    * <pre>
    * Gr = g * beta * |Twall - Tfluid| * L^3 / nu^2
    * </pre>
@@ -72,7 +72,7 @@ public final class VesselHeatTransferCalculator {
    *
    * <p>
    * The Prandtl number represents the ratio of momentum diffusivity to thermal diffusivity:
-   * 
+   *
    * <pre>
    * Pr = Cp * mu / k = nu / alpha
    * </pre>
@@ -96,7 +96,7 @@ public final class VesselHeatTransferCalculator {
    *
    * <p>
    * The Rayleigh number is the product of Grashof and Prandtl numbers:
-   * 
+   *
    * <pre>
    * Ra = Gr * Pr
    * </pre>
@@ -114,7 +114,7 @@ public final class VesselHeatTransferCalculator {
    *
    * <p>
    * Uses the Churchill-Chu correlation valid for all Ra:
-   * 
+   *
    * <pre>
    * Nu = {0.825 + 0.387 * Ra^(1/6) / [1 + (0.492/Pr)^(9/16)]^(8/27)}^2
    * </pre>
@@ -147,7 +147,7 @@ public final class VesselHeatTransferCalculator {
    *
    * <p>
    * Uses the Churchill-Chu correlation for horizontal cylinders:
-   * 
+   *
    * <pre>
    * Nu = {0.60 + 0.387 * Ra^(1/6) / [1 + (0.559/Pr)^(9/16)]^(8/27)}^2
    * </pre>
@@ -201,12 +201,43 @@ public final class VesselHeatTransferCalculator {
     // For ideal gas, beta = 1/T
     double beta = 1.0 / filmTemperatureK;
 
+    return calculateInternalFilmCoefficient(characteristicLength, wallTemperatureK,
+        fluidTemperatureK, thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical,
+        beta);
+  }
+
+  /**
+   * Calculates the internal heat transfer coefficient for natural convection inside a vessel.
+   *
+   * <p>
+   * Overload that accepts an explicit thermal expansion coefficient for real-gas accuracy at high
+   * pressures. At low pressures the ideal-gas approximation beta = 1/T is adequate, but at 100-350
+   * bar the real-gas value (from the equation of state) can differ by 30-300 %, leading to a
+   * proportional change in the Grashof and Rayleigh numbers and hence the Nusselt number.
+   * </p>
+   *
+   * @param characteristicLength Characteristic length [m] (height for vertical vessels)
+   * @param wallTemperatureK Wall temperature [K]
+   * @param fluidTemperatureK Bulk fluid temperature [K]
+   * @param thermalConductivity Fluid thermal conductivity [W/(m*K)]
+   * @param heatCapacity Fluid heat capacity [J/(kg*K)]
+   * @param dynamicViscosity Fluid dynamic viscosity [Pa*s]
+   * @param density Fluid density [kg/m^3]
+   * @param isVertical true for vertical vessel orientation
+   * @param thermalExpansionCoeff Volumetric thermal expansion coefficient [1/K] (real-gas value:
+   *        beta = -(1/rho)*(drho/dT)_P)
+   * @return Internal film heat transfer coefficient [W/(m^2*K)]
+   */
+  public static double calculateInternalFilmCoefficient(double characteristicLength,
+      double wallTemperatureK, double fluidTemperatureK, double thermalConductivity,
+      double heatCapacity, double dynamicViscosity, double density, boolean isVertical,
+      double thermalExpansionCoeff) {
     // Kinematic viscosity
     double nu = dynamicViscosity / density;
 
     // Calculate dimensionless numbers
-    double Gr =
-        calculateGrashofNumber(characteristicLength, fluidTemperatureK, wallTemperatureK, beta, nu);
+    double Gr = calculateGrashofNumber(characteristicLength, fluidTemperatureK, wallTemperatureK,
+        thermalExpansionCoeff, nu);
     double Pr = calculatePrandtlNumber(heatCapacity, dynamicViscosity, thermalConductivity);
     double Ra = calculateRayleighNumber(Gr, Pr);
 
@@ -247,7 +278,7 @@ public final class VesselHeatTransferCalculator {
    *
    * <p>
    * Uses the Gnielinski correlation for turbulent flow (Re &gt; 2300):
-   * 
+   *
    * <pre>
    * Nu = (f/8) * (Re - 1000) * Pr / [1 + 12.7 * sqrt(f/8) * (Pr^(2/3) - 1)]
    * </pre>
@@ -282,17 +313,118 @@ public final class VesselHeatTransferCalculator {
   }
 
   /**
+   * Calculates the Nusselt number for an axisymmetric impinging jet on a flat surface.
+   *
+   * <p>
+   * Uses the Martin correlation for a single round nozzle (VDI Heat Atlas):
+   * </p>
+   *
+   * <pre>
+   * Nu = F(Re) * K(H/D, D/r) * Pr^0.42
+   * F(Re) = 2 * Re^0.5 * (1 + 0.005 * Re^0.55)^0.5
+   * K = (1 - 1.1 * D/r) / (1 + 0.1 * (H/D - 6) * D/r)
+   * </pre>
+   *
+   * <p>
+   * Valid for 2000 &lt; Re &lt; 400000, 2 &lt; H/D &lt; 12, 2.5 &lt; r/D &lt; 7.5. Outside these
+   * ranges the result is clamped or falls back to Gnielinski.
+   * </p>
+   *
+   * @param reynoldsNumber Reynolds number based on nozzle diameter and exit velocity
+   * @param prandtlNumber Prandtl number
+   * @param hOverD Nozzle-to-surface distance divided by nozzle diameter (H/D)
+   * @param rOverD Radial distance from stagnation point divided by nozzle diameter (r/D); use
+   *        vessel diameter / (2 * nozzle diameter) for area-average
+   * @return Nusselt number (dimensionless) based on nozzle diameter
+   */
+  public static double calculateNusseltImpingingJet(double reynoldsNumber, double prandtlNumber,
+      double hOverD, double rOverD) {
+    // Clamp H/D and r/D to correlation validity range
+    double hd = Math.max(2.0, Math.min(hOverD, 12.0));
+    double rd = Math.max(2.5, Math.min(rOverD, 7.5));
+
+    // Below Re 2000 fall back to Gnielinski (pipe-flow laminar/turbulent)
+    if (reynoldsNumber < 2000.0) {
+      return calculateNusseltForcedConvection(reynoldsNumber, prandtlNumber);
+    }
+    // Above Re 400000 cap at 400000 to avoid extrapolation
+    double reClamped = Math.min(reynoldsNumber, 400000.0);
+
+    double fRe = 2.0 * Math.sqrt(reClamped) * Math.sqrt(1.0 + 0.005 * Math.pow(reClamped, 0.55));
+    double dOverR = 1.0 / rd;
+    double kGeom = (1.0 - 1.1 * dOverR) / (1.0 + 0.1 * (hd - 6.0) * dOverR);
+    if (kGeom < 0.1) {
+      kGeom = 0.1; // Prevent non-physical negative values at extreme geometry
+    }
+
+    return fRe * kGeom * Math.pow(prandtlNumber, 0.42);
+  }
+
+  /**
    * Calculates the mixed convection heat transfer coefficient for vessel filling.
    *
    * <p>
    * During filling operations, both forced convection (from inlet jet) and natural convection
    * contribute to heat transfer. This method combines both effects using an asymptotic approach:
-   * 
+   *
    * <pre>
-   * Nu_mixed = (Nu_forced ^ n + Nu_natural ^ n) ^ (1 / n)
+   * h_mixed = (h_forced ^ n + h_natural ^ n) ^ (1 / n)
    * </pre>
    *
    * where n is typically 3-4 for assisting flows.
+   *
+   * <p>
+   * The forced convection component estimates a bulk circulation velocity from the inlet jet
+   * momentum (area-ratio scaling) and uses the vessel diameter as the length scale. A 1.5x filling
+   * enhancement factor accounts for the stronger mixing produced by an incoming jet compared to
+   * discharge outflow.
+   * </p>
+   *
+   * @param characteristicLength Characteristic length [m]
+   * @param wallTemperatureK Wall temperature [K]
+   * @param fluidTemperatureK Bulk fluid temperature [K]
+   * @param massFlowRate Mass flow rate [kg/s]
+   * @param inletDiameter Inlet/nozzle diameter [m]
+   * @param vesselDiameter Vessel inner diameter [m]
+   * @param thermalConductivity Fluid thermal conductivity [W/(m*K)]
+   * @param heatCapacity Fluid heat capacity [J/(kg*K)]
+   * @param dynamicViscosity Fluid dynamic viscosity [Pa*s]
+   * @param density Fluid density [kg/m^3]
+   * @param isVertical true for vertical vessel orientation
+   * @return Mixed convection film coefficient [W/(m^2*K)]
+   */
+  public static double calculateMixedConvectionCoefficient(double characteristicLength,
+      double wallTemperatureK, double fluidTemperatureK, double massFlowRate, double inletDiameter,
+      double vesselDiameter, double thermalConductivity, double heatCapacity,
+      double dynamicViscosity, double density, boolean isVertical) {
+    // Natural convection component
+    double hNatural =
+        calculateInternalFilmCoefficient(characteristicLength, wallTemperatureK, fluidTemperatureK,
+            thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical);
+
+    // Forced convection via momentum-based circulation velocity
+    double inletArea = Math.PI * inletDiameter * inletDiameter / 4.0;
+    double vesselArea = Math.PI * vesselDiameter * vesselDiameter / 4.0;
+    double orificeVelocity = massFlowRate / (density * inletArea);
+    // Filling enhancement: inlet jet creates ~1.5x stronger circulation than discharge
+    double fillingEnhancement = 1.5;
+    double circulationVelocity = orificeVelocity * inletArea / vesselArea * fillingEnhancement;
+
+    double Re =
+        calculateReynoldsNumber(circulationVelocity, vesselDiameter, density, dynamicViscosity);
+    double Pr = calculatePrandtlNumber(heatCapacity, dynamicViscosity, thermalConductivity);
+    double NuForced = calculateNusseltForcedConvection(Re, Pr);
+    double hForced = NuForced * thermalConductivity / vesselDiameter;
+
+    // Combine using asymptotic method (n=3 for assisting flow)
+    double n = 3.0;
+    double hMixed = Math.pow(Math.pow(hForced, n) + Math.pow(hNatural, n), 1.0 / n);
+
+    return hMixed;
+  }
+
+  /**
+   * Backward-compatible overload that assumes vesselDiameter equals characteristicLength.
    *
    * @param characteristicLength Characteristic length [m]
    * @param wallTemperatureK Wall temperature [K]
@@ -305,26 +437,164 @@ public final class VesselHeatTransferCalculator {
    * @param density Fluid density [kg/m^3]
    * @param isVertical true for vertical vessel orientation
    * @return Mixed convection film coefficient [W/(m^2*K)]
+   * @deprecated Use the overload that accepts vesselDiameter explicitly.
    */
+  @Deprecated
   public static double calculateMixedConvectionCoefficient(double characteristicLength,
       double wallTemperatureK, double fluidTemperatureK, double massFlowRate, double inletDiameter,
       double thermalConductivity, double heatCapacity, double dynamicViscosity, double density,
       boolean isVertical) {
+    return calculateMixedConvectionCoefficient(characteristicLength, wallTemperatureK,
+        fluidTemperatureK, massFlowRate, inletDiameter, characteristicLength, thermalConductivity,
+        heatCapacity, dynamicViscosity, density, isVertical);
+  }
+
+  /**
+   * Calculates the mixed convection heat transfer coefficient for vessel filling with real-gas
+   * thermal expansion coefficient.
+   *
+   * <p>
+   * Same as
+   * {@link #calculateMixedConvectionCoefficient(double, double, double, double, double, double, double, double, double, double, boolean)}
+   * but uses the provided thermal expansion coefficient instead of the ideal-gas approximation beta
+   * = 1/T.
+   * </p>
+   *
+   * @param characteristicLength Characteristic length [m]
+   * @param wallTemperatureK Wall temperature [K]
+   * @param fluidTemperatureK Bulk fluid temperature [K]
+   * @param massFlowRate Mass flow rate [kg/s]
+   * @param inletDiameter Inlet/nozzle diameter [m]
+   * @param vesselDiameter Vessel inner diameter [m]
+   * @param thermalConductivity Fluid thermal conductivity [W/(m*K)]
+   * @param heatCapacity Fluid heat capacity [J/(kg*K)]
+   * @param dynamicViscosity Fluid dynamic viscosity [Pa*s]
+   * @param density Fluid density [kg/m^3]
+   * @param isVertical true for vertical vessel orientation
+   * @param thermalExpansionCoeff Volumetric thermal expansion coefficient [1/K]
+   * @return Mixed convection film coefficient [W/(m^2*K)]
+   */
+  public static double calculateMixedConvectionCoefficient(double characteristicLength,
+      double wallTemperatureK, double fluidTemperatureK, double massFlowRate, double inletDiameter,
+      double vesselDiameter, double thermalConductivity, double heatCapacity,
+      double dynamicViscosity, double density, boolean isVertical, double thermalExpansionCoeff) {
+    // Natural convection component with real-gas beta
+    double hNatural = calculateInternalFilmCoefficient(characteristicLength, wallTemperatureK,
+        fluidTemperatureK, thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical,
+        thermalExpansionCoeff);
+
+    // Forced convection via momentum-based circulation velocity
+    double inletArea = Math.PI * inletDiameter * inletDiameter / 4.0;
+    double vesselArea = Math.PI * vesselDiameter * vesselDiameter / 4.0;
+    double orificeVelocity = massFlowRate / (density * inletArea);
+    double fillingEnhancement = 1.5;
+    double circulationVelocity = orificeVelocity * inletArea / vesselArea * fillingEnhancement;
+
+    double Re =
+        calculateReynoldsNumber(circulationVelocity, vesselDiameter, density, dynamicViscosity);
+    double Pr = calculatePrandtlNumber(heatCapacity, dynamicViscosity, thermalConductivity);
+    double NuForced = calculateNusseltForcedConvection(Re, Pr);
+    double hForced = NuForced * thermalConductivity / vesselDiameter;
+
+    double n = 3.0;
+    double hMixed = Math.pow(Math.pow(hForced, n) + Math.pow(hNatural, n), 1.0 / n);
+
+    return hMixed;
+  }
+
+  /**
+   * Calculates the mixed convection heat transfer coefficient during vessel discharge.
+   *
+   * <p>
+   * During blowdown the outflow jet and resulting internal circulation augment heat transfer beyond
+   * pure natural convection. The internal circulation velocity is estimated from the outflow
+   * momentum. The forced and natural components are blended asymptotically.
+   * </p>
+   *
+   * @param characteristicLength Characteristic length [m]
+   * @param wallTemperatureK Wall temperature [K]
+   * @param fluidTemperatureK Bulk fluid temperature [K]
+   * @param massFlowRate Discharge mass flow rate (positive) [kg/s]
+   * @param orificeDiameter Orifice / outlet nozzle diameter [m]
+   * @param vesselDiameter Vessel inner diameter [m]
+   * @param thermalConductivity Fluid thermal conductivity [W/(m*K)]
+   * @param heatCapacity Fluid heat capacity [J/(kg*K)]
+   * @param dynamicViscosity Fluid dynamic viscosity [Pa*s]
+   * @param density Fluid density [kg/m^3]
+   * @param isVertical true for vertical vessel orientation
+   * @return Mixed convection film coefficient [W/(m^2*K)]
+   */
+  public static double calculateDischargeConvectionCoefficient(double characteristicLength,
+      double wallTemperatureK, double fluidTemperatureK, double massFlowRate,
+      double orificeDiameter, double vesselDiameter, double thermalConductivity,
+      double heatCapacity, double dynamicViscosity, double density, boolean isVertical) {
     // Natural convection component
     double hNatural =
         calculateInternalFilmCoefficient(characteristicLength, wallTemperatureK, fluidTemperatureK,
             thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical);
 
-    // Forced convection component
-    double inletArea = Math.PI * inletDiameter * inletDiameter / 4.0;
-    double velocity = massFlowRate / (density * inletArea);
+    // Estimate internal circulation velocity from momentum balance.
+    // Orifice velocity:
+    double orificeArea = Math.PI * orificeDiameter * orificeDiameter / 4.0;
+    double orificeVelocity = Math.abs(massFlowRate) / (density * orificeArea);
+    // Bulk circulation in vessel cross-section (momentum conservation, ~area ratio):
+    double vesselArea = Math.PI * vesselDiameter * vesselDiameter / 4.0;
+    double circulationVelocity = orificeVelocity * orificeArea / vesselArea;
 
-    double Re = calculateReynoldsNumber(velocity, inletDiameter, density, dynamicViscosity);
+    // Use vessel diameter as length scale for the internal circulation
+    double Re =
+        calculateReynoldsNumber(circulationVelocity, vesselDiameter, density, dynamicViscosity);
     double Pr = calculatePrandtlNumber(heatCapacity, dynamicViscosity, thermalConductivity);
     double NuForced = calculateNusseltForcedConvection(Re, Pr);
-    double hForced = NuForced * thermalConductivity / inletDiameter;
+    double hForced = NuForced * thermalConductivity / vesselDiameter;
 
-    // Combine using asymptotic method (n=3 for assisting flow)
+    // Asymptotic blend (n = 3)
+    double n = 3.0;
+    double hMixed = Math.pow(Math.pow(hForced, n) + Math.pow(hNatural, n), 1.0 / n);
+
+    return hMixed;
+  }
+
+  /**
+   * Calculates the mixed convection heat transfer coefficient during vessel discharge with real-gas
+   * thermal expansion coefficient.
+   *
+   * @param characteristicLength Characteristic length [m]
+   * @param wallTemperatureK Wall temperature [K]
+   * @param fluidTemperatureK Bulk fluid temperature [K]
+   * @param massFlowRate Discharge mass flow rate (positive) [kg/s]
+   * @param orificeDiameter Orifice / outlet nozzle diameter [m]
+   * @param vesselDiameter Vessel inner diameter [m]
+   * @param thermalConductivity Fluid thermal conductivity [W/(m*K)]
+   * @param heatCapacity Fluid heat capacity [J/(kg*K)]
+   * @param dynamicViscosity Fluid dynamic viscosity [Pa*s]
+   * @param density Fluid density [kg/m^3]
+   * @param isVertical true for vertical vessel orientation
+   * @param thermalExpansionCoeff Volumetric thermal expansion coefficient [1/K]
+   * @return Mixed convection film coefficient [W/(m^2*K)]
+   */
+  public static double calculateDischargeConvectionCoefficient(double characteristicLength,
+      double wallTemperatureK, double fluidTemperatureK, double massFlowRate,
+      double orificeDiameter, double vesselDiameter, double thermalConductivity,
+      double heatCapacity, double dynamicViscosity, double density, boolean isVertical,
+      double thermalExpansionCoeff) {
+    // Natural convection component with real-gas beta
+    double hNatural = calculateInternalFilmCoefficient(characteristicLength, wallTemperatureK,
+        fluidTemperatureK, thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical,
+        thermalExpansionCoeff);
+
+    // Circulation velocity (same as ideal-gas version)
+    double orificeArea = Math.PI * orificeDiameter * orificeDiameter / 4.0;
+    double orificeVelocity = Math.abs(massFlowRate) / (density * orificeArea);
+    double vesselArea = Math.PI * vesselDiameter * vesselDiameter / 4.0;
+    double circulationVelocity = orificeVelocity * orificeArea / vesselArea;
+
+    double Re =
+        calculateReynoldsNumber(circulationVelocity, vesselDiameter, density, dynamicViscosity);
+    double Pr = calculatePrandtlNumber(heatCapacity, dynamicViscosity, thermalConductivity);
+    double NuForced = calculateNusseltForcedConvection(Re, Pr);
+    double hForced = NuForced * thermalConductivity / vesselDiameter;
+
     double n = 3.0;
     double hMixed = Math.pow(Math.pow(hForced, n) + Math.pow(hNatural, n), 1.0 / n);
 
@@ -336,7 +606,7 @@ public final class VesselHeatTransferCalculator {
    *
    * <p>
    * Uses the Rohsenow correlation for nucleate pool boiling:
-   * 
+   *
    * <pre>
    * q = mu_l * h_fg * [g * (rho_l - rho_v) / sigma]^0.5 * [Cp_l * (Twall - Tsat) / (Csf * h_fg * Pr^n)]^3
    * </pre>
@@ -404,18 +674,39 @@ public final class VesselHeatTransferCalculator {
         calculateInternalFilmCoefficient(characteristicLength, wallTemperatureK, fluidTemperatureK,
             thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical);
 
-    // If wall is significantly above saturation, boiling dominates
-    // Use higher of convection or an estimated boiling coefficient
-    // For simplicity, wetted walls typically have h = 500-3000 W/(m^2*K) for boiling
+    // If wall is above saturation, check for nucleate boiling contribution.
+    // Compute boiling heat flux via the Rohsenow correlation when enough liquid properties are
+    // available; fall back to simplified estimate otherwise.
     double deltaT = wallTemperatureK - saturationTemperatureK;
     double hBoiling = 0.0;
     if (deltaT > 0) {
-      // Simplified boiling estimate: h_boil ~ 1000 * deltaT^0.3 for moderate superheat
-      hBoiling = 1000.0 * Math.pow(deltaT, 0.3);
+      // Use Rohsenow correlation. Default surface-fluid combination constants (water-steel).
+      // Estimate missing properties from the values already passed in.
+      double liquidPrandtl =
+          calculatePrandtlNumber(heatCapacity, dynamicViscosity, thermalConductivity);
+      // Approximate latent heat from Clausius-Clapeyron if not given; use 2.0 MJ/kg as
+      // reasonable fallback for many fluids.
+      double latentHeat = 2.0e6;
+      // Rough surface tension ~ 0.02 N/m (hydrocarbon liquids / water at moderate T)
+      double surfaceTension = 0.02;
+      // Assume vapour density is small compared to liquid density
+      double vaporDensity = density * 0.01;
+
+      double qBoiling =
+          calculateNucleateBoilingHeatFlux(wallTemperatureK, saturationTemperatureK, latentHeat,
+              density, vaporDensity, dynamicViscosity, heatCapacity, surfaceTension, liquidPrandtl);
+
+      if (qBoiling > 0.0 && deltaT > 0.0) {
+        hBoiling = qBoiling / deltaT;
+      }
+      // If Rohsenow gives unreasonably small values (missing data), use simplified estimate
+      if (hBoiling < 100.0) {
+        hBoiling = Math.max(hBoiling, 1000.0 * Math.pow(deltaT, 0.3));
+      }
     }
 
-    // Return higher of the two, capped at 3000 W/(m^2*K) for safety
-    return Math.min(Math.max(hConv, hBoiling), 3000.0);
+    // Return higher of the two, capped at 5000 W/(m^2*K) (raised from 3000 for stronger boiling)
+    return Math.min(Math.max(hConv, hBoiling), 5000.0);
   }
 
   /**
@@ -491,11 +782,34 @@ public final class VesselHeatTransferCalculator {
       double wallTemperatureK, double fluidTemperatureK, double thermalConductivity,
       double heatCapacity, double dynamicViscosity, double density, boolean isVertical) {
     double filmTemperatureK = (wallTemperatureK + fluidTemperatureK) / 2.0;
-    double beta = 1.0 / filmTemperatureK;
+    double beta = 1.0 / filmTemperatureK; // ideal-gas fallback
+    return calculateCompleteHeatTransfer(characteristicLength, wallTemperatureK, fluidTemperatureK,
+        thermalConductivity, heatCapacity, dynamicViscosity, density, isVertical, beta);
+  }
+
+  /**
+   * Performs a complete internal heat transfer calculation for a vessel with real-gas thermal
+   * expansion coefficient.
+   *
+   * @param characteristicLength Characteristic length [m]
+   * @param wallTemperatureK Wall temperature [K]
+   * @param fluidTemperatureK Bulk fluid temperature [K]
+   * @param thermalConductivity Fluid thermal conductivity [W/(m*K)]
+   * @param heatCapacity Fluid heat capacity [J/(kg*K)]
+   * @param dynamicViscosity Fluid dynamic viscosity [Pa*s]
+   * @param density Fluid density [kg/m^3]
+   * @param isVertical true for vertical vessel orientation
+   * @param thermalExpansionCoeff Volumetric thermal expansion coefficient [1/K]
+   * @return Complete heat transfer calculation result
+   */
+  public static HeatTransferResult calculateCompleteHeatTransfer(double characteristicLength,
+      double wallTemperatureK, double fluidTemperatureK, double thermalConductivity,
+      double heatCapacity, double dynamicViscosity, double density, boolean isVertical,
+      double thermalExpansionCoeff) {
     double nu = dynamicViscosity / density;
 
-    double Gr =
-        calculateGrashofNumber(characteristicLength, fluidTemperatureK, wallTemperatureK, beta, nu);
+    double Gr = calculateGrashofNumber(characteristicLength, fluidTemperatureK, wallTemperatureK,
+        thermalExpansionCoeff, nu);
     double Pr = calculatePrandtlNumber(heatCapacity, dynamicViscosity, thermalConductivity);
     double Ra = calculateRayleighNumber(Gr, Pr);
 

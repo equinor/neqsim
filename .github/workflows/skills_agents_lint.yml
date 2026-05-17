@@ -1,0 +1,45 @@
+name: Skills and agents lint
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    paths:
+      - ".github/skills/**"
+      - ".github/agents/**"
+      - "devtools/verify_skills_agents.py"
+      - "devtools/generate_agent_skill_map.py"
+      - ".github/workflows/skills_agents_lint.yml"
+  push:
+    branches: [master]
+    paths:
+      - ".github/skills/**"
+      - ".github/agents/**"
+
+jobs:
+  verify:
+    name: Verify skills + agents structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Verify front-matter and skill-index references
+        run: python devtools/verify_skills_agents.py
+
+      - name: Regenerate agent → skill map
+        run: python devtools/generate_agent_skill_map.py
+
+      - name: Fail if AGENT_SKILL_MAP.md is stale
+        shell: bash
+        run: |
+          if ! git diff --quiet -- docs/development/AGENT_SKILL_MAP.md; then
+            echo "::error::docs/development/AGENT_SKILL_MAP.md is out of date."
+            echo "Run: python devtools/generate_agent_skill_map.py"
+            git diff -- docs/development/AGENT_SKILL_MAP.md
+            exit 1
+          fi

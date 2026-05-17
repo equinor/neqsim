@@ -335,28 +335,41 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void addSolidComplexPhase(String type);
 
   /**
-   * method to add true boiling point fraction.
+   * Add a true boiling point (TBP) fraction.
+   *
+   * <p>
+   * The density parameter is the <b>specific gravity</b> (relative density) of the fraction, which
+   * numerically equals the density in g/cm3. Typical values for petroleum fractions range from 0.65
+   * (light naphtha) to about 1.1 (heavy residues). If a value greater than 1.5 is supplied (e.g.
+   * 738.0), it is assumed to be density in kg/m3 and is automatically converted by dividing by
+   * 1000.
+   * </p>
    *
    * @param componentName selected name of the component to be added
    * @param numberOfMoles number of moles to be added
    * @param molarMass molar mass of the component in kg/mol
-   * @param density density of the component in g/cm3
+   * @param density specific gravity (relative density) of the component, i.e. density in g/cm3.
+   *        Typical range: 0.65 to 1.1. Values above 1.5 are auto-converted from kg/m3.
    */
   public void addTBPfraction(String componentName, double numberOfMoles, double molarMass,
       double density);
 
   /**
+   * Add a true boiling point (TBP) fraction with user-specified critical properties.
+   *
    * <p>
-   * addTBPfraction.
+   * The density parameter is the <b>specific gravity</b> (relative density) of the fraction, i.e.
+   * density in g/cm3. Values above 1.5 are auto-converted from kg/m3.
    * </p>
    *
-   * @param componentName a {@link java.lang.String} object
-   * @param numberOfMoles a double
-   * @param molarMass a double
-   * @param density a double
-   * @param criticalTemperature a double
-   * @param criticalPressure a double
-   * @param acentricFactor a double
+   * @param componentName name of the TBP fraction (e.g. "C7", "C10")
+   * @param numberOfMoles number of moles to be added
+   * @param molarMass molar mass in kg/mol
+   * @param density specific gravity (relative density), i.e. density in g/cm3. Typical range: 0.65
+   *        to 1.1. Values above 1.5 are auto-converted from kg/m3.
+   * @param criticalTemperature critical temperature in K
+   * @param criticalPressure critical pressure in Pa
+   * @param acentricFactor acentric factor (dimensionless)
    */
   public void addTBPfraction(String componentName, double numberOfMoles, double molarMass,
       double density, double criticalTemperature, double criticalPressure, double acentricFactor);
@@ -809,6 +822,41 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getDensity(String unit);
 
   /**
+   * Calculates density at specified reference conditions without modifying the current fluid state.
+   *
+   * <p>
+   * This method clones the fluid, performs a TP flash at the reference conditions, initializes
+   * physical properties, and returns the density. The original fluid is not modified.
+   * </p>
+   *
+   * <p>
+   * Common reference conditions:
+   * </p>
+   * <ul>
+   * <li>Standard: 15 deg C, 1.01325 bara (ISO 5024)</li>
+   * <li>Normal: 0 deg C, 1.01325 bara</li>
+   * <li>API 60F: 15.56 deg C, 1.01325 bara</li>
+   * </ul>
+   *
+   * @param refTemperature reference temperature
+   * @param tempUnit temperature unit, e.g. "C" or "K"
+   * @param refPressure reference pressure
+   * @param pressUnit pressure unit, e.g. "bara" or "atm"
+   * @return density at reference conditions in kg/m3
+   */
+  public default double getDensityAtReferenceConditions(double refTemperature, String tempUnit,
+      double refPressure, String pressUnit) {
+    SystemInterface refFluid = clone();
+    refFluid.setTemperature(refTemperature, tempUnit);
+    refFluid.setPressure(refPressure, pressUnit);
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(refFluid);
+    ops.TPflash();
+    refFluid.initProperties();
+    return refFluid.getDensity("kg/m3");
+  }
+
+  /**
    * <p>
    * getdVdPtn.
    * </p>
@@ -886,7 +934,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * method to return flow rate of fluid.
    *
    * @param flowunit Supported units are kg/sec, kg/min, kg/hr, kg/day, m3/sec, m3/min, m3/hr,
-   *        idSm3/hr, Sm3/sec, Sm3/hr, Sm3/day, MSm3/day, mole/sec, mole/min, mole/hr
+   *        idSm3/hr, Sm3/sec, Sm3/hr, Sm3/day, MSm3/day, MSm3/hr, mole/sec, mol/sec, mole/min,
+   *        mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr,
+   *        kmole/day, kmol/day, lbmole/hr, lb/hr, barrel/day, gallons/min
    * @return flow rate in specified unit
    */
   public double getFlowRate(String flowunit);
@@ -1165,14 +1215,19 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * Get molar mass of system.
    *
+   * <p>
+   * Note: the return value is in kg/mol (SI), not g/mol. Multiply by 1000 to convert to g/mol, or
+   * use {@link #getMolarMass(String)} with unit "g/mol".
+   * </p>
+   *
    * @return molar mass in unit kg/mol
    */
   public double getMolarMass();
 
   /**
-   * Get molar mass of a fluid phase.
+   * Get molar mass of a fluid in the specified unit.
    *
-   * @param unit Supported units are kg/mol, gr/mol
+   * @param unit Supported units are kg/mol, g/mol, gr/mol, lbm/lbmol
    * @return molar mass in specified unit
    */
   public double getMolarMass(String unit);
@@ -1809,6 +1864,26 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
       return getPhase(PhaseType.HYDRATE);
     }
     return null;
+  }
+
+  /**
+   * Convenience method to get the pH of the aqueous phase.
+   *
+   * <p>
+   * Returns the pH calculated from H3O+ activity in the aqueous phase if one exists. Returns
+   * {@link Double#NaN} if no aqueous phase is present. Delegates to {@link PhaseInterface#getpH()}.
+   * </p>
+   *
+   * @return pH of the aqueous phase, or NaN if no aqueous phase exists
+   */
+  public default double getpH() {
+    if (hasPhaseType("aqueous")) {
+      PhaseInterface aq = getPhaseOfType("aqueous");
+      if (aq != null) {
+        return aq.getpH();
+      }
+    }
+    return Double.NaN;
   }
 
   /**
@@ -2504,8 +2579,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    *
    * @param componentFlowRates an array of type double
-   * @param unit a {@link java.lang.String} object. Allowed units are: "mol/sec", "kmol/sec",
-   *        "kmol/hr", "mol/hr", "kg/hr", "kg/sec", "kmol/day"
+   * @param unit a {@link java.lang.String} object. Allowed units are: "mol/sec", "mole/sec",
+   *        "kmol/sec", "kmole/sec", "kmol/hr", "kmole/hr", "mol/hr", "mole/hr", "mol/min",
+   *        "mole/min", "kg/hr", "kg/sec", "kmol/day", "kmole/day" (case-insensitive)
    */
   public void setComponentFlowRates(double[] componentFlowRates, String unit);
 
@@ -2536,6 +2612,26 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param multiphaseWaxCheck a boolean
    */
   public void setMultiphaseWaxCheck(boolean multiphaseWaxCheck);
+
+  /**
+   * Sets the wax thermodynamic model to use. Must be called before
+   * {@link #addSolidComplexPhase(String)} to take effect.
+   *
+   * <p>
+   * Available models:
+   * </p>
+   * <ul>
+   * <li>"Pedersen" (default) - Clausius-Clapeyron with heat capacity correction</li>
+   * <li>"Won" - Won activity coefficient model (1986, 1989)</li>
+   * <li>"Wilson" - Wilson local-composition model</li>
+   * <li>"Coutinho" - Predictive UNIQUAC solid-solution model (1998)</li>
+   * </ul>
+   *
+   * @param modelName the wax model name
+   */
+  public default void setWaxModelType(String modelName) {
+    // Default no-op for backward compatibility
+  }
 
   /**
    * <p>
@@ -2679,6 +2775,102 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   }
 
   /**
+   * Set the liquid density model for all liquid phases. Must be called after
+   * {@code initPhysicalProperties()} or {@code initProperties()}.
+   *
+   * <p>
+   * Supported models:
+   * </p>
+   * <ul>
+   * <li>"COSTALD" or "Costald" - Hankinson-Thomson COSTALD method</li>
+   * <li>"COSTALD-polar" or "NASTALD" - COSTALD with NBS polar correction (Thomson et al. 1982)</li>
+   * <li>"Rackett" - Spencer-Danner modified Rackett equation</li>
+   * <li>"Peneloux" - Peneloux volume shift (default EOS correction)</li>
+   * </ul>
+   *
+   * @param model density model name, e.g. "COSTALD", "Rackett", or "Peneloux"
+   */
+  public default void setLiquidDensityModel(String model) {
+    String modelName;
+    if ("COSTALD".equalsIgnoreCase(model) || "Costald".equalsIgnoreCase(model)) {
+      modelName = "Costald";
+    } else if ("COSTALD-polar".equalsIgnoreCase(model) || "NASTALD".equalsIgnoreCase(model)
+        || "Costald polar".equalsIgnoreCase(model)) {
+      modelName = "Costald polar";
+    } else if ("Rackett".equalsIgnoreCase(model)) {
+      modelName = "Rackett";
+    } else if ("Peneloux".equalsIgnoreCase(model)) {
+      modelName = "Peneloux volume shift";
+    } else {
+      modelName = model;
+    }
+
+    for (int i = 0; i < getNumberOfPhases(); i++) {
+      neqsim.thermo.phase.PhaseType pt = getPhase(i).getType();
+      if (pt == neqsim.thermo.phase.PhaseType.LIQUID || pt == neqsim.thermo.phase.PhaseType.OIL
+          || pt == neqsim.thermo.phase.PhaseType.AQUEOUS) {
+        if (getPhase(i).getPhysicalProperties() != null) {
+          getPhase(i).getPhysicalProperties().setDensityModel(modelName);
+        }
+      }
+    }
+  }
+
+  /**
+   * Sets the liquid density model for a specific phase type only.
+   *
+   * <p>
+   * This allows using different density models for different liquid phases. For example, COSTALD
+   * for the oil phase and the default Peneloux for the aqueous phase.
+   * </p>
+   *
+   * <p>
+   * Supported model names:
+   * </p>
+   * <ul>
+   * <li>"COSTALD" - Hankinson-Thomson COSTALD method</li>
+   * <li>"COSTALD-polar" or "NASTALD" - COSTALD with NBS polar correction</li>
+   * <li>"Rackett" - Spencer-Danner modified Rackett equation</li>
+   * <li>"Peneloux" - Peneloux volume shift (default EOS correction)</li>
+   * </ul>
+   *
+   * @param model density model name
+   * @param phaseTypeName phase type to apply to: "oil", "aqueous", or "liquid"
+   */
+  public default void setLiquidDensityModel(String model, String phaseTypeName) {
+    String modelName;
+    if ("COSTALD".equalsIgnoreCase(model) || "Costald".equalsIgnoreCase(model)) {
+      modelName = "Costald";
+    } else if ("COSTALD-polar".equalsIgnoreCase(model) || "NASTALD".equalsIgnoreCase(model)
+        || "Costald polar".equalsIgnoreCase(model)) {
+      modelName = "Costald polar";
+    } else if ("Rackett".equalsIgnoreCase(model)) {
+      modelName = "Rackett";
+    } else if ("Peneloux".equalsIgnoreCase(model)) {
+      modelName = "Peneloux volume shift";
+    } else {
+      modelName = model;
+    }
+
+    neqsim.thermo.phase.PhaseType targetType;
+    if ("oil".equalsIgnoreCase(phaseTypeName)) {
+      targetType = neqsim.thermo.phase.PhaseType.OIL;
+    } else if ("aqueous".equalsIgnoreCase(phaseTypeName)) {
+      targetType = neqsim.thermo.phase.PhaseType.AQUEOUS;
+    } else {
+      targetType = neqsim.thermo.phase.PhaseType.LIQUID;
+    }
+
+    for (int i = 0; i < getNumberOfPhases(); i++) {
+      if (getPhase(i).getType() == targetType) {
+        if (getPhase(i).getPhysicalProperties() != null) {
+          getPhase(i).getPhysicalProperties().setDensityModel(modelName);
+        }
+      }
+    }
+  }
+
+  /**
    * method to set the pressure of a fluid (same pressure for all phases).
    *
    * @param pres pressure in unit bara (absolute pressure in bar)
@@ -2762,8 +2954,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    *
    * @param flowRate a double
-   * @param flowunit a {@link java.lang.String} object. flow units are: kg/sec, kg/min, kg/hr
-   *        m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr, Sm3/hr, Sm3/day, idSm3/hr, idSm3/day
+   * @param flowunit a {@link java.lang.String} object. flow units are: kg/sec, kg/min, kg/hr,
+   *        kg/day, m3/sec, m3/min, m3/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr,
+   *        kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, kmole/day, kmol/day,
+   *        Sm3/sec, Sm3/hr, Sm3/day, MSm3/day, MSm3/hr, idSm3/sec, idSm3/hr, idSm3/day
    */
   public void setTotalFlowRate(double flowRate, String flowunit);
 
@@ -2925,7 +3119,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * Validate the thermodynamic system setup before use.
-   * 
+   *
    * <p>
    * Checks for common setup errors:
    * <ul>
@@ -2934,7 +3128,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * <li>Temperature and pressure in valid ranges</li>
    * <li>Composition normalized</li>
    * </ul>
-   * 
+   *
    * @return validation result with errors and warnings
    */
   public default neqsim.util.validation.ValidationResult validateSetup() {

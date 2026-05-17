@@ -1,0 +1,97 @@
+{
+  "key_results": {
+    "total_flash_cases": 1664,
+    "overall_convergence_rate_pct": 100.0,
+    "median_cpu_time_ms": 0.088,
+    "p95_cpu_time_ms": 0.371,
+    "two_phase_cases_pct": 22.42,
+    "fluid_families_tested": 6,
+    "eos_model": "SRK"
+  },
+  "validation": {
+    "all_cases_completed": true,
+    "convergence_rate_above_95_pct": true,
+    "timing_reproducible": true,
+    "phase_id_consistent": true
+  },
+  "approach": "Systematic TPflash benchmark using NeqSim with SRK EOS across 6 natural gas families (lean gas, rich gas, gas condensate, CO2-rich, wide-boiling, sour gas). 1664 total cases with Dirichlet-perturbed compositions and log-spaced PT grids. Timing from 3 repeated trials per case.",
+  "conclusions": "NeqSim's TPflash achieves 100.0% overall convergence across 1664 cases spanning 6 natural gas families. Best performance: co2 rich (100.0%). Most challenging: co2 rich (100.0%). Median computation time: 0.09 ms. Two-phase conditions comprise 22.4% of the test matrix.",
+  "figure_captions": {
+    "fig1_convergence_by_family.png": "TPflash convergence rate and two-phase case distribution across 6 fluid families (SRK EOS, 1664 total cases).",
+    "fig2_convergence_maps.png": "Convergence success/failure mapped in temperature-pressure space. Green: single-phase converged; blue: two-phase converged; red cross: failed to converge.",
+    "fig3_timing_distribution.png": "CPU timing distribution: (left) box plots by fluid family; (right) overall histogram with median and 95th percentile markers.",
+    "fig4_beta_distribution.png": "Distribution of vapor fraction (beta) in two-phase cases by family.",
+    "fig5_time_vs_components.png": "Median flash computation time vs number of components, showing expected scaling with system size.",
+    "fig6_near_critical_analysis.png": "Near-critical analysis: (left) timing by phase fraction region; (right) timing vs pressure colored by number of phases."
+  },
+  "tables": [
+    {
+      "title": "Convergence Summary by Fluid Family",
+      "headers": [
+        "Family",
+        "Nc",
+        "Cases",
+        "Conv (%)",
+        "2-Phase (%)",
+        "Median t (ms)",
+        "P95 t (ms)"
+      ],
+      "rows": [
+        [
+          "Co2 Rich",
+          4,
+          256,
+          100.0,
+          5.9,
+          0.039,
+          0.078
+        ],
+        [
+          "Gas Condensate",
+          10,
+          256,
+          100.0,
+          50.4,
+          0.155,
+          0.446
+        ],
+        [
+          "Lean Gas",
+          5,
+          320,
+          100.0,
+          4.1,
+          0.085,
+          0.342
+        ],
+        [
+          "Rich Gas",
+          7,
+          320,
+          100.0,
+          25.9,
+          0.148,
+          0.393
+        ],
+        [
+          "Sour Gas",
+          4,
+          256,
+          100.0,
+          2.7,
+          0.041,
+          0.146
+        ],
+        [
+          "Wide Boiling",
+          11,
+          256,
+          100.0,
+          49.2,
+          0.119,
+          0.467
+        ]
+      ]
+    }
+  ]
+}

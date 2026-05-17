@@ -54,6 +54,12 @@ public final class ReservoirInput implements Serializable {
   private final double reservoirTemperature; // degC
   private final double apiGravity; // API for oil
   private final double gasGravity; // specific gravity for gas
+  private final double resourceEstimate;
+  private final String resourceUnit;
+  private final double recoveryFactor;
+  private final double resourceP10;
+  private final double resourceP50;
+  private final double resourceP90;
   private final Map<String, Double> customComposition;
 
   private ReservoirInput(Builder builder) {
@@ -69,6 +75,12 @@ public final class ReservoirInput implements Serializable {
     this.reservoirTemperature = builder.reservoirTemperature;
     this.apiGravity = builder.apiGravity;
     this.gasGravity = builder.gasGravity;
+    this.resourceEstimate = builder.resourceEstimate;
+    this.resourceUnit = builder.resourceUnit;
+    this.recoveryFactor = builder.recoveryFactor;
+    this.resourceP10 = builder.resourceP10;
+    this.resourceP50 = builder.resourceP50;
+    this.resourceP90 = builder.resourceP90;
     this.customComposition = new LinkedHashMap<>(builder.customComposition);
   }
 
@@ -88,7 +100,7 @@ public final class ReservoirInput implements Serializable {
    */
   public static Builder leanGas() {
     return new Builder().fluidType(FluidType.LEAN_GAS).gasGravity(0.60).co2Percent(0.5)
-        .h2sPercent(0.0);
+        .h2sPercent(0.0).resourceEstimate(15.0, "GSm3").recoveryFactor(0.75);
   }
 
   /**
@@ -98,7 +110,7 @@ public final class ReservoirInput implements Serializable {
    */
   public static Builder richGas() {
     return new Builder().fluidType(FluidType.RICH_GAS).gasGravity(0.75).co2Percent(1.0)
-        .h2sPercent(0.0);
+        .h2sPercent(0.0).resourceEstimate(25.0, "GSm3").recoveryFactor(0.70);
   }
 
   /**
@@ -108,7 +120,7 @@ public final class ReservoirInput implements Serializable {
    */
   public static Builder gasCondensate() {
     return new Builder().fluidType(FluidType.GAS_CONDENSATE).gor(5000, "Sm3/Sm3").gasGravity(0.80)
-        .apiGravity(50.0).co2Percent(2.0);
+        .apiGravity(50.0).co2Percent(2.0).resourceEstimate(20.0, "GSm3").recoveryFactor(0.65);
   }
 
   /**
@@ -118,7 +130,7 @@ public final class ReservoirInput implements Serializable {
    */
   public static Builder blackOil() {
     return new Builder().fluidType(FluidType.BLACK_OIL).gor(100, "Sm3/m3").apiGravity(30.0)
-        .co2Percent(0.5);
+        .co2Percent(0.5).resourceEstimate(80.0, "MMbbl").recoveryFactor(0.45);
   }
 
   // Getters
@@ -169,6 +181,105 @@ public final class ReservoirInput implements Serializable {
 
   public double getGasGravity() {
     return gasGravity;
+  }
+
+  /**
+   * Gets the in-place resource estimate.
+   *
+   * @return resource estimate in {@link #getResourceUnit()}
+   */
+  public double getResourceEstimate() {
+    return resourceEstimate;
+  }
+
+  /**
+   * Gets the resource estimate unit.
+   *
+   * @return resource estimate unit such as GSm3, MMbbl, or MMboe
+   */
+  public String getResourceUnit() {
+    return resourceUnit;
+  }
+
+  /**
+   * Gets the target recovery factor.
+   *
+   * @return recovery factor as a fraction from 0 to 1
+   */
+  public double getRecoveryFactor() {
+    return recoveryFactor;
+  }
+
+  /**
+   * Gets the recoverable resource estimate.
+   *
+   * @return recoverable resource estimate in {@link #getResourceUnit()}
+   */
+  public double getRecoverableResourceEstimate() {
+    return resourceEstimate * recoveryFactor;
+  }
+
+  /**
+   * Checks whether P10/P50/P90 resource uncertainty is available.
+   *
+   * @return true if resource uncertainty has been specified
+   */
+  public boolean hasResourceUncertainty() {
+    return !Double.isNaN(resourceP10) && !Double.isNaN(resourceP50) && !Double.isNaN(resourceP90);
+  }
+
+  /**
+   * Gets the P10 resource estimate.
+   *
+   * @return P10 resource estimate in {@link #getResourceUnit()}
+   */
+  public double getResourceP10() {
+    return hasResourceUncertainty() ? resourceP10 : resourceEstimate;
+  }
+
+  /**
+   * Gets the P50 resource estimate.
+   *
+   * @return P50 resource estimate in {@link #getResourceUnit()}
+   */
+  public double getResourceP50() {
+    return hasResourceUncertainty() ? resourceP50 : resourceEstimate;
+  }
+
+  /**
+   * Gets the P90 resource estimate.
+   *
+   * @return P90 resource estimate in {@link #getResourceUnit()}
+   */
+  public double getResourceP90() {
+    return hasResourceUncertainty() ? resourceP90 : resourceEstimate;
+  }
+
+  /**
+   * Gets the P10 recoverable resource estimate.
+   *
+   * @return P10 recoverable resource in {@link #getResourceUnit()}
+   */
+  public double getRecoverableResourceP10() {
+    return getResourceP10() * recoveryFactor;
+  }
+
+  /**
+   * Gets the P50 recoverable resource estimate.
+   *
+   * @return P50 recoverable resource in {@link #getResourceUnit()}
+   */
+  public double getRecoverableResourceP50() {
+    return getResourceP50() * recoveryFactor;
+  }
+
+  /**
+   * Gets the P90 recoverable resource estimate.
+   *
+   * @return P90 recoverable resource in {@link #getResourceUnit()}
+   */
+  public double getRecoverableResourceP90() {
+    return getResourceP90() * recoveryFactor;
   }
 
   public Map<String, Double> getCustomComposition() {
@@ -252,6 +363,12 @@ public final class ReservoirInput implements Serializable {
     private double reservoirTemperature = 80.0;
     private double apiGravity = 45.0;
     private double gasGravity = 0.65;
+    private double resourceEstimate = 25.0;
+    private String resourceUnit = "GSm3";
+    private double recoveryFactor = 0.65;
+    private double resourceP10 = Double.NaN;
+    private double resourceP50 = Double.NaN;
+    private double resourceP90 = Double.NaN;
     private final Map<String, Double> customComposition = new LinkedHashMap<>();
 
     private Builder() {}
@@ -317,6 +434,69 @@ public final class ReservoirInput implements Serializable {
 
     public Builder gasGravity(double sg) {
       this.gasGravity = sg;
+      return this;
+    }
+
+    /**
+     * Sets the in-place resource estimate.
+     *
+     * @param estimate resource estimate value
+     * @param unit resource unit such as GSm3, MMbbl, or MMboe
+     * @return this builder
+     */
+    public Builder resourceEstimate(double estimate, String unit) {
+      if (estimate < 0.0) {
+        throw new IllegalArgumentException("Resource estimate cannot be negative");
+      }
+      this.resourceEstimate = estimate;
+      this.resourceUnit = unit;
+      return this;
+    }
+
+    /**
+     * Sets the probabilistic in-place resource estimate.
+     *
+     * @param p10 P10 resource estimate
+     * @param p50 P50 resource estimate
+     * @param p90 P90 resource estimate
+     * @param unit resource unit such as GSm3, MMbbl, or MMboe
+     * @return this builder
+     */
+    public Builder resourceUncertainty(double p10, double p50, double p90, String unit) {
+      if (p10 < 0.0 || p50 < 0.0 || p90 < 0.0) {
+        throw new IllegalArgumentException("Resource uncertainty values cannot be negative");
+      }
+      this.resourceP10 = p10;
+      this.resourceP50 = p50;
+      this.resourceP90 = p90;
+      this.resourceEstimate = p50;
+      this.resourceUnit = unit;
+      return this;
+    }
+
+    /**
+     * Sets the probabilistic in-place resource estimate using the current resource unit.
+     *
+     * @param p10 P10 resource estimate
+     * @param p50 P50 resource estimate
+     * @param p90 P90 resource estimate
+     * @return this builder
+     */
+    public Builder resourceUncertainty(double p10, double p50, double p90) {
+      return resourceUncertainty(p10, p50, p90, resourceUnit);
+    }
+
+    /**
+     * Sets the target recovery factor.
+     *
+     * @param factor recovery factor as a fraction from 0 to 1
+     * @return this builder
+     */
+    public Builder recoveryFactor(double factor) {
+      if (factor < 0.0 || factor > 1.0) {
+        throw new IllegalArgumentException("Recovery factor must be between 0 and 1");
+      }
+      this.recoveryFactor = factor;
       return this;
     }
 

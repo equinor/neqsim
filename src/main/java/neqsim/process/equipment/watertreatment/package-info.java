@@ -16,7 +16,7 @@
  * </ul>
  *
  * <h2>Typical Treatment Train</h2>
- * 
+ *
  * <pre>
  * Production Separator → Hydrocyclone → Flotation → Skim Tank → Discharge
  *       1000 mg/L           50 mg/L      10 mg/L     &lt;30 mg/L

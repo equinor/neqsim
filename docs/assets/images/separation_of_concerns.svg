@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320" font-family="Segoe UI, Arial, sans-serif">
+  <!-- Background -->
+  <rect width="800" height="320" rx="12" fill="#f8f9fa" stroke="#dee2e6" stroke-width="1.5"/>
+
+  <!-- Title -->
+  <text x="400" y="36" text-anchor="middle" font-size="18" font-weight="bold" fill="#212529">Separation of Concerns</text>
+
+  <!-- LLM Box -->
+  <rect x="40" y="60" width="320" height="200" rx="10" fill="#e3f2fd" stroke="#1976d2" stroke-width="2"/>
+  <text x="200" y="92" text-anchor="middle" font-size="16" font-weight="bold" fill="#1565c0">LLM / AI Agent</text>
+  <text x="200" y="92" text-anchor="middle" font-size="16" font-weight="bold" fill="#1565c0">LLM / AI Agent</text>
+  <line x1="60" y1="102" x2="340" y2="102" stroke="#90caf9" stroke-width="1"/>
+  <text x="200" y="128" text-anchor="middle" font-size="13" fill="#37474f">Engineering reasoning</text>
+  <text x="200" y="150" text-anchor="middle" font-size="13" fill="#37474f">Task decomposition</text>
+  <text x="200" y="172" text-anchor="middle" font-size="13" fill="#37474f">Standards &amp; best practices</text>
+  <text x="200" y="194" text-anchor="middle" font-size="13" fill="#37474f">Report generation</text>
+  <text x="200" y="216" text-anchor="middle" font-size="13" fill="#37474f">Uncertainty &amp; risk analysis</text>
+  <text x="200" y="244" text-anchor="middle" font-size="11" font-style="italic" fill="#78909c">Excellent at intent, context &amp; workflow</text>
+
+  <!-- NeqSim Box -->
+  <rect x="440" y="60" width="320" height="200" rx="10" fill="#e8f5e9" stroke="#388e3c" stroke-width="2"/>
+  <text x="600" y="92" text-anchor="middle" font-size="16" font-weight="bold" fill="#2e7d32">NeqSim Engine</text>
+  <line x1="460" y1="102" x2="740" y2="102" stroke="#a5d6a7" stroke-width="1"/>
+  <text x="600" y="128" text-anchor="middle" font-size="13" fill="#37474f">Equations of state (SRK, PR, CPA)</text>
+  <text x="600" y="150" text-anchor="middle" font-size="13" fill="#37474f">Phase equilibrium &amp; flash</text>
+  <text x="600" y="172" text-anchor="middle" font-size="13" fill="#37474f">Transport properties</text>
+  <text x="600" y="194" text-anchor="middle" font-size="13" fill="#37474f">Process equipment models</text>
+  <text x="600" y="216" text-anchor="middle" font-size="13" fill="#37474f">Multiphase pipe flow</text>
+  <text x="600" y="244" text-anchor="middle" font-size="11" font-style="italic" fill="#78909c">Exact on physics &amp; thermodynamics</text>
+
+  <!-- Arrows -->
+  <defs>
+    <marker id="arrowR" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#546e7a"/>
+    </marker>
+    <marker id="arrowL" markerWidth="10" markerHeight="7" refX="1" refY="3.5" orient="auto">
+      <polygon points="10 0, 0 3.5, 10 7" fill="#546e7a"/>
+    </marker>
+  </defs>
+  <line x1="365" y1="140" x2="435" y2="140" stroke="#546e7a" stroke-width="2" marker-end="url(#arrowR)"/>
+  <line x1="435" y1="170" x2="365" y2="170" stroke="#546e7a" stroke-width="2" marker-end="url(#arrowL)"/>
+  <text x="400" y="132" text-anchor="middle" font-size="10" fill="#546e7a">call</text>
+  <text x="400" y="188" text-anchor="middle" font-size="10" fill="#546e7a">results</text>
+
+  <!-- Bottom label -->
+  <text x="400" y="296" text-anchor="middle" font-size="13" font-weight="bold" fill="#455a64">Together: a complete reasoning + physics engine</text>
+</svg>

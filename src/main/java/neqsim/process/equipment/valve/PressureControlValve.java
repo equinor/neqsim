@@ -4,13 +4,13 @@ import neqsim.process.equipment.stream.StreamInterface;
 
 /**
  * Pressure control valve (PCV) for automatic pressure regulation.
- * 
+ *
  * <p>
  * PressureControlValve automatically modulates its opening to maintain a downstream pressure
  * setpoint. It extends ControlValve and adds pressure control logic with proportional control
  * action.
  * </p>
- * 
+ *
  * <p>
  * Key features:
  * <ul>
@@ -20,7 +20,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Configurable control gain</li>
  * <li>Min/max opening limits</li>
  * </ul>
- * 
+ *
  * <p>
  * Control modes:
  * <ul>
@@ -28,7 +28,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>UPSTREAM: Maintains upstream (inlet) pressure at setpoint (back-pressure control)</li>
  * <li>DIFFERENTIAL: Maintains pressure difference across valve</li>
  * </ul>
- * 
+ *
  * <p>
  * Common applications:
  * <ul>
@@ -38,10 +38,10 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Back-pressure control on vessels</li>
  * <li>Steam pressure regulation</li>
  * </ul>
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * PressureControlValve pcv = new PressureControlValve("PCV-101", inletStream);
  * pcv.setPressureSetpoint(25.0); // Control to 25 bara downstream
@@ -49,7 +49,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * pcv.setControllerGain(5.0); // Proportional gain
  * pcv.setCv(300.0);
  * pcv.run();
- * 
+ *
  * System.out.println("Valve opening: " + pcv.getPercentValveOpening() + "%");
  * System.out.println("Process variable: " + pcv.getProcessVariable() + " bara");
  * </pre>

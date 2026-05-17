@@ -1,3 +1,8 @@
+---
+title: Electrolyzer Equipment
+description: Documentation for electrolyzer equipment in NeqSim process simulation.
+---
+
 # Electrolyzer Equipment
 
 Documentation for electrolyzer equipment in NeqSim process simulation.
@@ -293,7 +298,7 @@ double current = electrolyzer.getCurrent();  // A
 
 ## Related Documentation
 
-- [Reactors](reactors.md) - Chemical reactors
-- [Compressors](compressors.md) - H2 compression
-- [Membrane Separators](membranes.md) - Gas purification
-- [Process Package](../README.md) - Package overview
+- [Reactors](reactors) - Chemical reactors
+- [Compressors](compressors) - H2 compression
+- [Membrane Separators](membranes) - Gas purification
+- [Process Package](../) - Package overview

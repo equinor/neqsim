@@ -1,3 +1,8 @@
+---
+title: Differentiable Thermodynamics
+description: NeqSim provides automatic differentiation capabilities for thermodynamic calculations through the `neqsim.thermo.util.derivatives` package. This enables gradient-based optimization, integration with M...
+---
+
 # Differentiable Thermodynamics
 
 NeqSim provides automatic differentiation capabilities for thermodynamic calculations through the `neqsim.thermo.util.derivatives` package. This enables gradient-based optimization, integration with ML frameworks, and sensitivity analysis.
@@ -117,6 +122,7 @@ def flash_density(T, P, z):
     
     ops = ThermodynamicOperations(system)
     ops.TPflash()
+    system.initProperties()  # Required for volume-corrected density
     
     return system.getDensity("kg/m3")
 
@@ -207,5 +213,5 @@ See `DifferentiableFlashTest.java` for validation tests.
 
 ## See Also
 
-- [AI Platform Integration Guide](../integration/ai_platform_integration.md) for ML workflows
-- [MPC Integration Guide](../integration/mpc_integration.md) for model predictive control
+- [AI Platform Integration Guide](../integration/ai_platform_integration) for ML workflows
+- [MPC Integration Guide](../integration/mpc_integration) for model predictive control

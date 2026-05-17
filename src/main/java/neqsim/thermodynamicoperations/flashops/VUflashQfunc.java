@@ -163,7 +163,7 @@ public class VUflashQfunc extends Flash {
       }
 
       // Apply damping factor that increases with iterations
-      double factor = (double) iterations / (iterations + 5.0);
+      double factor = iterations / (iterations + 5.0);
 
       // Limit step sizes for stability
       double maxDeltaT = 0.2 * oldTemp;
@@ -199,10 +199,21 @@ public class VUflashQfunc extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    tpFlash.run();
-    // logger.info("internaleng: " + system.getInternalEnergy());
-    // logger.info("volume: " + system.getVolume());
-    solveQ();
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values
+    // left by a previous unrelated flash. Warm-start is then enabled for the
+    // inner TPflash iterations within the outer VU-flash loop — safe because
+    // the outer loop converges on T,P via volume/internal-energy residuals.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      // logger.info("internaleng: " + system.getInternalEnergy());
+      // logger.info("volume: " + system.getVolume());
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */

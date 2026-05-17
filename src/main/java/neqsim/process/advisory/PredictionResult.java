@@ -22,7 +22,7 @@ import java.util.Map;
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * // Run look-ahead simulation
  * PredictionResult prediction = processSystem.predictAhead(Duration.ofHours(2));

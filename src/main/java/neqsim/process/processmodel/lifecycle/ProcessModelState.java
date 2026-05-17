@@ -2,6 +2,8 @@ package neqsim.process.processmodel.lifecycle;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -9,6 +11,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.Set;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,7 +43,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * ProcessModel model = new ProcessModel();
  * model.add("upstream", upstreamProcess);
@@ -198,6 +202,10 @@ public class ProcessModelState implements Serializable {
 
   /**
    * Checks if a stream comes from a different process and adds an inter-process connection.
+   *
+   * @param stream the stream to check
+   * @param currentProcess the name of the current process
+   * @param streamToProcess map from stream names to their originating process
    */
   private void checkAndAddInterProcessConnection(
       neqsim.process.equipment.stream.StreamInterface stream, String currentProcess,
@@ -334,6 +342,8 @@ public class ProcessModelState implements Serializable {
 
   /**
    * Creates a Gson instance with custom type adapters.
+   *
+   * @return configured Gson instance
    */
   private static Gson createGson() {
     return new GsonBuilder().setPrettyPrinting().serializeNulls()
@@ -342,6 +352,199 @@ public class ProcessModelState implements Serializable {
   }
 
   // ============ VALIDATION ============
+
+  /**
+   * Serializes this state to a JSON string.
+   *
+   * @return JSON string representation
+   */
+  public String toJson() {
+    Gson gson = createGson();
+    return gson.toJson(this);
+  }
+
+  /**
+   * Deserializes a ProcessModelState from a JSON string.
+   *
+   * @param json the JSON string to parse
+   * @return the deserialized ProcessModelState
+   */
+  public static ProcessModelState fromJson(String json) {
+    Gson gson = createGson();
+    ProcessModelState state = gson.fromJson(json, ProcessModelState.class);
+    if (state != null) {
+      state.migrateIfNeeded();
+    }
+    return state;
+  }
+
+  /**
+   * Saves this state to a GZIP-compressed JSON file.
+   *
+   * @param filename the file path (typically ending in .json.gz)
+   */
+  public void saveToCompressedFile(String filename) {
+    if (!filename.endsWith(".gz")) {
+      filename = filename + ".gz";
+    }
+    saveToFile(filename);
+  }
+
+  /**
+   * Loads a ProcessModelState from a GZIP-compressed JSON file.
+   *
+   * @param filename the file path (typically ending in .json.gz)
+   * @return the loaded ProcessModelState
+   */
+  public static ProcessModelState loadFromCompressedFile(String filename) {
+    return loadFromFile(filename);
+  }
+
+  /**
+   * Adds an inter-process connection manually.
+   *
+   * @param connection the connection to add
+   */
+  public void addInterProcessConnection(InterProcessConnection connection) {
+    if (this.interProcessConnections == null) {
+      this.interProcessConnections = new ArrayList<>();
+    }
+    this.interProcessConnections.add(connection);
+  }
+
+  /**
+   * Gets all inter-process connections targeting a specific process.
+   *
+   * @param processName the target process name
+   * @return list of connections targeting the specified process
+   */
+  public List<InterProcessConnection> getConnectionsTo(String processName) {
+    List<InterProcessConnection> result = new ArrayList<>();
+    if (interProcessConnections != null) {
+      for (InterProcessConnection conn : interProcessConnections) {
+        if (processName.equals(conn.getTargetProcess())) {
+          result.add(conn);
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Serializes this state to a compressed byte array (GZIP-compressed JSON).
+   *
+   * @return the compressed byte array
+   * @throws IOException if compression fails
+   */
+  public byte[] toCompressedBytes() throws IOException {
+    Gson gson = createGson();
+    String json = gson.toJson(this);
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    try (GZIPOutputStream gzos = new GZIPOutputStream(baos);
+        OutputStreamWriter writer = new OutputStreamWriter(gzos, StandardCharsets.UTF_8)) {
+      writer.write(json);
+    }
+    return baos.toByteArray();
+  }
+
+  /**
+   * Deserializes a ProcessModelState from a compressed byte array (GZIP-compressed JSON).
+   *
+   * @param data the compressed byte array
+   * @return the deserialized ProcessModelState
+   * @throws IOException if decompression fails
+   */
+  public static ProcessModelState fromCompressedBytes(byte[] data) throws IOException {
+    Gson gson = createGson();
+    ByteArrayInputStream bais = new ByteArrayInputStream(data);
+    try (GZIPInputStream gzis = new GZIPInputStream(bais);
+        InputStreamReader reader = new InputStreamReader(gzis, StandardCharsets.UTF_8)) {
+      ProcessModelState state = gson.fromJson(reader, ProcessModelState.class);
+      state.migrateIfNeeded();
+      return state;
+    }
+  }
+
+  /**
+   * Serializes this state to JSON with the given serialization options.
+   *
+   * @param options serialization options controlling output format
+   * @return JSON string
+   */
+  public String toJson(SerializationOptions options) {
+    this.lastModifiedAt = Instant.now();
+    GsonBuilder builder = new GsonBuilder().registerTypeAdapter(Instant.class, new InstantAdapter())
+        .serializeSpecialFloatingPointValues();
+    if (options != null && options.isPrettyPrint()) {
+      builder.setPrettyPrinting();
+    }
+    return builder.create().toJson(this);
+  }
+
+  /**
+   * Compares two ProcessModelState instances and returns a diff describing the changes.
+   *
+   * @param oldState the baseline state
+   * @param newState the updated state
+   * @return a ModelDiff describing differences
+   */
+  public static ModelDiff compare(ProcessModelState oldState, ProcessModelState newState) {
+    ModelDiff diff = new ModelDiff();
+    Set<String> oldKeys =
+        oldState.processStates != null ? oldState.processStates.keySet() : new HashSet<String>();
+    Set<String> newKeys =
+        newState.processStates != null ? newState.processStates.keySet() : new HashSet<String>();
+
+    // Added processes
+    for (String key : newKeys) {
+      if (!oldKeys.contains(key)) {
+        diff.addedEquipment.add(key);
+      }
+    }
+
+    // Removed processes
+    for (String key : oldKeys) {
+      if (!newKeys.contains(key)) {
+        diff.removedEquipment.add(key);
+      }
+    }
+
+    // Modified - compare equipment counts and versions
+    for (String key : newKeys) {
+      if (oldKeys.contains(key)) {
+        ProcessSystemState oldPs = oldState.processStates.get(key);
+        ProcessSystemState newPs = newState.processStates.get(key);
+        int oldEqCount = oldPs.getEquipmentStates() != null ? oldPs.getEquipmentStates().size() : 0;
+        int newEqCount = newPs.getEquipmentStates() != null ? newPs.getEquipmentStates().size() : 0;
+        if (oldEqCount != newEqCount) {
+          diff.modifiedParameters.put(key, "equipmentCount: " + oldEqCount + " -> " + newEqCount);
+        }
+      }
+    }
+
+    // Compare versions
+    if (oldState.version != null && newState.version != null
+        && !oldState.version.equals(newState.version)) {
+      diff.modifiedParameters.put("version", oldState.version + " -> " + newState.version);
+    }
+
+    return diff;
+  }
+
+  /**
+   * Migrates a ProcessModelState to the specified target schema version.
+   *
+   * @param state the state to migrate
+   * @param targetVersion the target schema version string
+   * @return the migrated state (may be the same instance if already at target version)
+   */
+  public static ProcessModelState migrate(ProcessModelState state, String targetVersion) {
+    if (state == null) {
+      return null;
+    }
+    state.migrateIfNeeded();
+    return state;
+  }
 
   /**
    * Validates the state for completeness and consistency.
@@ -522,6 +725,16 @@ public class ProcessModelState implements Serializable {
   }
 
   /**
+   * Gets a single custom property by key.
+   *
+   * @param key property key
+   * @return the property value, or null if not found
+   */
+  public Object getCustomProperty(String key) {
+    return customProperties != null ? customProperties.get(key) : null;
+  }
+
+  /**
    * Sets a custom property.
    *
    * @param key property key
@@ -583,24 +796,94 @@ public class ProcessModelState implements Serializable {
       this.targetPort = targetPort;
     }
 
-    /** Gets source process name. */
+    /**
+     * Gets source process name.
+     *
+     * @return the source process name
+     */
     public String getSourceProcess() {
       return sourceProcess;
     }
 
-    /** Gets stream name. */
+    /**
+     * Sets source process name.
+     *
+     * @param sourceProcess the source process name
+     */
+    public void setSourceProcess(String sourceProcess) {
+      this.sourceProcess = sourceProcess;
+    }
+
+    /**
+     * Gets stream name.
+     *
+     * @return the stream name
+     */
     public String getStreamName() {
       return streamName;
     }
 
-    /** Gets target process name. */
+    /**
+     * Sets the stream name. Also available as {@link #setSourceStream(String)}.
+     *
+     * @param streamName the stream name
+     */
+    public void setStreamName(String streamName) {
+      this.streamName = streamName;
+    }
+
+    /**
+     * Sets the source stream name. Alias for {@link #setStreamName(String)}.
+     *
+     * @param streamName the source stream name
+     */
+    public void setSourceStream(String streamName) {
+      this.streamName = streamName;
+    }
+
+    /**
+     * Gets target process name.
+     *
+     * @return the target process name
+     */
     public String getTargetProcess() {
       return targetProcess;
     }
 
-    /** Gets target port. */
+    /**
+     * Sets target process name.
+     *
+     * @param targetProcess the target process name
+     */
+    public void setTargetProcess(String targetProcess) {
+      this.targetProcess = targetProcess;
+    }
+
+    /**
+     * Gets target port.
+     *
+     * @return the target port
+     */
     public String getTargetPort() {
       return targetPort;
+    }
+
+    /**
+     * Sets target port. Also available as {@link #setTargetStream(String)}.
+     *
+     * @param targetPort the target port
+     */
+    public void setTargetPort(String targetPort) {
+      this.targetPort = targetPort;
+    }
+
+    /**
+     * Sets target stream name. Alias for {@link #setTargetPort(String)}.
+     *
+     * @param targetStream the target stream name
+     */
+    public void setTargetStream(String targetStream) {
+      this.targetPort = targetStream;
     }
 
     @Override
@@ -620,55 +903,171 @@ public class ProcessModelState implements Serializable {
     private double temperatureTolerance = 1e-4;
     private double pressureTolerance = 1e-4;
     private boolean useOptimizedExecution = true;
+    private String solverType = "sequential";
+    private double tolerance = 1e-6;
+    private boolean parallelExecution = false;
+    private int numberOfThreads = 1;
 
-    /** Gets max iterations. */
+    /**
+     * Gets max iterations.
+     *
+     * @return maximum number of iterations
+     */
     public int getMaxIterations() {
       return maxIterations;
     }
 
-    /** Sets max iterations. */
+    /**
+     * Sets max iterations.
+     *
+     * @param maxIterations maximum number of iterations to set
+     */
     public void setMaxIterations(int maxIterations) {
       this.maxIterations = maxIterations;
     }
 
-    /** Gets flow tolerance. */
+    /**
+     * Gets flow tolerance.
+     *
+     * @return the flow tolerance
+     */
     public double getFlowTolerance() {
       return flowTolerance;
     }
 
-    /** Sets flow tolerance. */
+    /**
+     * Sets flow tolerance.
+     *
+     * @param flowTolerance the flow tolerance to set
+     */
     public void setFlowTolerance(double flowTolerance) {
       this.flowTolerance = flowTolerance;
     }
 
-    /** Gets temperature tolerance. */
+    /**
+     * Gets temperature tolerance.
+     *
+     * @return the temperature tolerance
+     */
     public double getTemperatureTolerance() {
       return temperatureTolerance;
     }
 
-    /** Sets temperature tolerance. */
+    /**
+     * Sets temperature tolerance.
+     *
+     * @param temperatureTolerance the temperature tolerance to set
+     */
     public void setTemperatureTolerance(double temperatureTolerance) {
       this.temperatureTolerance = temperatureTolerance;
     }
 
-    /** Gets pressure tolerance. */
+    /**
+     * Gets pressure tolerance.
+     *
+     * @return the pressure tolerance
+     */
     public double getPressureTolerance() {
       return pressureTolerance;
     }
 
-    /** Sets pressure tolerance. */
+    /**
+     * Sets pressure tolerance.
+     *
+     * @param pressureTolerance the pressure tolerance to set
+     */
     public void setPressureTolerance(double pressureTolerance) {
       this.pressureTolerance = pressureTolerance;
     }
 
-    /** Checks if optimized execution is enabled. */
+    /**
+     * Checks if optimized execution is enabled.
+     *
+     * @return true if optimized execution is enabled
+     */
     public boolean isUseOptimizedExecution() {
       return useOptimizedExecution;
     }
 
-    /** Sets optimized execution flag. */
+    /**
+     * Sets optimized execution flag.
+     *
+     * @param useOptimizedExecution true to enable optimized execution
+     */
     public void setUseOptimizedExecution(boolean useOptimizedExecution) {
       this.useOptimizedExecution = useOptimizedExecution;
+    }
+
+    /**
+     * Gets the solver type.
+     *
+     * @return the solver type string
+     */
+    public String getSolverType() {
+      return solverType;
+    }
+
+    /**
+     * Sets the solver type.
+     *
+     * @param solverType the solver type to set (e.g., "sequential", "simultaneous")
+     */
+    public void setSolverType(String solverType) {
+      this.solverType = solverType;
+    }
+
+    /**
+     * Gets the generic convergence tolerance.
+     *
+     * @return the tolerance value
+     */
+    public double getTolerance() {
+      return tolerance;
+    }
+
+    /**
+     * Sets the generic convergence tolerance.
+     *
+     * @param tolerance the tolerance value to set
+     */
+    public void setTolerance(double tolerance) {
+      this.tolerance = tolerance;
+    }
+
+    /**
+     * Checks if parallel execution is enabled.
+     *
+     * @return true if parallel execution is enabled
+     */
+    public boolean isParallelExecution() {
+      return parallelExecution;
+    }
+
+    /**
+     * Sets parallel execution flag.
+     *
+     * @param parallelExecution true to enable parallel execution
+     */
+    public void setParallelExecution(boolean parallelExecution) {
+      this.parallelExecution = parallelExecution;
+    }
+
+    /**
+     * Gets the number of threads for parallel execution.
+     *
+     * @return the number of threads
+     */
+    public int getNumberOfThreads() {
+      return numberOfThreads;
+    }
+
+    /**
+     * Sets the number of threads for parallel execution.
+     *
+     * @param numberOfThreads the number of threads to use
+     */
+    public void setNumberOfThreads(int numberOfThreads) {
+      this.numberOfThreads = numberOfThreads;
     }
   }
 
@@ -681,27 +1080,47 @@ public class ProcessModelState implements Serializable {
     private List<String> errors = new ArrayList<>();
     private List<String> warnings = new ArrayList<>();
 
-    /** Adds an error. */
+    /**
+     * Adds an error.
+     *
+     * @param error the error message to add
+     */
     public void addError(String error) {
       errors.add(error);
     }
 
-    /** Adds a warning. */
+    /**
+     * Adds a warning.
+     *
+     * @param warning the warning message to add
+     */
     public void addWarning(String warning) {
       warnings.add(warning);
     }
 
-    /** Checks if valid (no errors). */
+    /**
+     * Checks if valid (no errors).
+     *
+     * @return true if there are no errors
+     */
     public boolean isValid() {
       return errors.isEmpty();
     }
 
-    /** Gets errors. */
+    /**
+     * Gets errors.
+     *
+     * @return the list of error messages
+     */
     public List<String> getErrors() {
       return errors;
     }
 
-    /** Gets warnings. */
+    /**
+     * Gets warnings.
+     *
+     * @return the list of warning messages
+     */
     public List<String> getWarnings() {
       return warnings;
     }
@@ -731,6 +1150,144 @@ public class ProcessModelState implements Serializable {
         return null;
       }
       return Instant.parse(value);
+    }
+  }
+
+  /**
+   * Represents the difference between two ProcessModelState instances.
+   */
+  public static class ModelDiff implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private List<String> addedEquipment = new ArrayList<>();
+    private List<String> removedEquipment = new ArrayList<>();
+    private Map<String, String> modifiedParameters = new HashMap<>();
+
+    /**
+     * Gets the list of added equipment or process names.
+     *
+     * @return list of added names
+     */
+    public List<String> getAddedEquipment() {
+      return addedEquipment;
+    }
+
+    /**
+     * Gets the list of removed equipment or process names.
+     *
+     * @return list of removed names
+     */
+    public List<String> getRemovedEquipment() {
+      return removedEquipment;
+    }
+
+    /**
+     * Gets modified parameters with change descriptions.
+     *
+     * @return map of parameter name to change description
+     */
+    public Map<String, String> getModifiedParameters() {
+      return modifiedParameters;
+    }
+
+    /**
+     * Checks if there are any differences.
+     *
+     * @return true if there are changes
+     */
+    public boolean hasChanges() {
+      return !addedEquipment.isEmpty() || !removedEquipment.isEmpty()
+          || !modifiedParameters.isEmpty();
+    }
+
+    @Override
+    public String toString() {
+      return "ModelDiff{added=" + addedEquipment.size() + ", removed=" + removedEquipment.size()
+          + ", modified=" + modifiedParameters.size() + "}";
+    }
+  }
+
+  /**
+   * Options controlling JSON serialization of ProcessModelState.
+   */
+  public static class SerializationOptions implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private boolean prettyPrint = true;
+    private boolean includeTimestamps = true;
+    private boolean compressStreams = false;
+    private boolean schemaValidation = true;
+
+    /**
+     * Checks if pretty printing is enabled.
+     *
+     * @return true if pretty printing is enabled
+     */
+    public boolean isPrettyPrint() {
+      return prettyPrint;
+    }
+
+    /**
+     * Sets pretty printing.
+     *
+     * @param prettyPrint true to enable pretty printing
+     */
+    public void setPrettyPrint(boolean prettyPrint) {
+      this.prettyPrint = prettyPrint;
+    }
+
+    /**
+     * Checks if timestamps are included.
+     *
+     * @return true if timestamps are included
+     */
+    public boolean isIncludeTimestamps() {
+      return includeTimestamps;
+    }
+
+    /**
+     * Sets whether to include timestamps.
+     *
+     * @param includeTimestamps true to include timestamps
+     */
+    public void setIncludeTimestamps(boolean includeTimestamps) {
+      this.includeTimestamps = includeTimestamps;
+    }
+
+    /**
+     * Checks if stream compression is enabled.
+     *
+     * @return true if stream compression is enabled
+     */
+    public boolean isCompressStreams() {
+      return compressStreams;
+    }
+
+    /**
+     * Sets stream compression.
+     *
+     * @param compressStreams true to enable stream compression
+     */
+    public void setCompressStreams(boolean compressStreams) {
+      this.compressStreams = compressStreams;
+    }
+
+    /**
+     * Checks if schema validation is enabled.
+     *
+     * @return true if schema validation is enabled
+     */
+    public boolean isSchemaValidation() {
+      return schemaValidation;
+    }
+
+    /**
+     * Sets schema validation.
+     *
+     * @param schemaValidation true to enable schema validation
+     */
+    public void setSchemaValidation(boolean schemaValidation) {
+      this.schemaValidation = schemaValidation;
     }
   }
 }

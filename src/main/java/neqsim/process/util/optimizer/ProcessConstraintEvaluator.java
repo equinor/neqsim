@@ -30,18 +30,18 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * <strong>Example Usage</strong>
  * </p>
- * 
+ *
  * <pre>
  * ProcessConstraintEvaluator evaluator = new ProcessConstraintEvaluator(processSystem);
- * 
+ *
  * // Evaluate all constraints
  * ConstraintEvaluationResult result = evaluator.evaluate();
  * System.out.println("Bottleneck: " + result.getBottleneckEquipment());
  * System.out.println("Utilization: " + result.getOverallUtilization());
- * 
+ *
  * // Calculate sensitivities
  * Map&lt;String, Double&gt; sensitivities = evaluator.calculateFlowSensitivities(5000.0, "kg/hr");
- * 
+ *
  * // Estimate max flow
  * double maxFlow = evaluator.estimateMaxFlow(5000.0, "kg/hr");
  * </pre>
@@ -864,6 +864,11 @@ public class ProcessConstraintEvaluator implements Serializable {
 
   /**
    * Gets constraints with caching support.
+   *
+   * @param equipment the process equipment to get constraints for
+   * @param strategy the capacity strategy to use
+   * @param processRunCount the current process run count for cache validation
+   * @return map of constraint name to capacity constraint
    */
   private Map<String, CapacityConstraint> getConstraintsWithCaching(
       ProcessEquipmentInterface equipment, EquipmentCapacityStrategy strategy,
@@ -892,6 +897,9 @@ public class ProcessConstraintEvaluator implements Serializable {
 
   /**
    * Gets process run count (approximate) for cache invalidation.
+   *
+   * @param processSystem the process system to get run count for
+   * @return an approximate run count based on the system hash code
    */
   private int getProcessRunCount(ProcessSystem processSystem) {
     return processSystem.hashCode();
@@ -899,6 +907,9 @@ public class ProcessConstraintEvaluator implements Serializable {
 
   /**
    * Sets the feed flow rate on the process system.
+   *
+   * @param processSystem the process system to modify
+   * @param flowKgPerHr the feed flow rate in kg/hr
    */
   private void setFeedFlowRate(ProcessSystem processSystem, double flowKgPerHr) {
     if (processSystem == null || processSystem.getUnitOperations().isEmpty()) {

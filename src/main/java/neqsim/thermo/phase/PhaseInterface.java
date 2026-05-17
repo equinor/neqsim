@@ -392,7 +392,9 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * method to return flow rate of a phase.
    *
    * @param flowunit Supported units are kg/sec, kg/min, kg/hr, m3/sec, m3/min, m3/hr, ft3/sec,
-   *        mole/sec, mole/min, mole/hr
+   *        Sm3/sec, Sm3/hr, Sm3/day, MSm3/day, mole/sec, mol/sec, mole/min, mol/min, mole/hr,
+   *        mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, kmole/day,
+   *        kmol/day, lbmole/hr, lb/hr, barrel/day
    * @return flow rate in specified unit
    */
   public double getFlowRate(String flowunit);
@@ -1649,34 +1651,39 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   /**
    * Get molar mass of phase.
    *
+   * <p>
+   * Note: the return value is in kg/mol (SI), not g/mol. Multiply by 1000 to convert to g/mol, or
+   * use {@link #getMolarMass(String)} with unit "g/mol".
+   * </p>
+   *
    * @return molar mass in unit kg/mol
    */
   public double getMolarMass();
 
   /**
-   * Get molar mass of a fluid phase.
+   * Get molar mass of a fluid phase in the specified unit.
    *
-   * @param unit Supported units are kg/mol, gr/mol
+   * @param unit Supported units are kg/mol, g/mol, gr/mol, lbm/lbmol
    * @return molar mass in specified unit
    */
   public double getMolarMass(String unit);
 
   /**
    * <p>
-   * getInternalEnergy.
+   * Calcualte the total internal energy for the phase in Joules.
    * </p>
    *
-   * @return a double
+   * @return internal energy for the phase in Joules
    */
   public double getInternalEnergy();
 
   /**
    * <p>
-   * getInternalEnergy.
+   * Calculates the internal energy in the specified units.
    * </p>
    *
    * @param unit a {@link java.lang.String} object
-   * @return a double
+   * @return internal energy for the phase in specified unit
    */
   public double getInternalEnergy(String unit);
 
@@ -2008,11 +2015,11 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   /**
    * Get the osmotic coefficient of water on the molality scale. This is the definition used by
    * Robinson and Stokes (1965):
-   * 
+   *
    * <pre>
    * φ = -ln(a_w) / (M_w * Σm_i)
    * </pre>
-   * 
+   *
    * where:
    * <ul>
    * <li>a_w = water activity</li>

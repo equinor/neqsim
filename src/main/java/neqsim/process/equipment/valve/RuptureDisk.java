@@ -6,13 +6,13 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <p>
  * RuptureDisk class - represents a rupture disk (bursting disc) safety device.
  * </p>
- * 
+ *
  * <p>
  * A rupture disk is a non-reclosing pressure relief device that bursts at a set pressure and
  * remains fully open. Unlike a safety valve, a rupture disk is a one-time use device that cannot
  * reseat after activation.
  * </p>
- * 
+ *
  * <p>
  * Typical applications:
  * </p>

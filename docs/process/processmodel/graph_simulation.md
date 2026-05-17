@@ -1,3 +1,8 @@
+---
+title: Graph-Based Process Simulation
+description: Documentation for graph-based execution in NeqSim.
+---
+
 # Graph-Based Process Simulation
 
 Documentation for graph-based execution in NeqSim.
@@ -487,10 +492,10 @@ compressionGraph.execute();
 
 ## Related Documentation
 
-- [ProcessSystem](process_system.md) - Process system management
-- [ProcessModel](process_model.md) - Multi-process model management
-- [ProcessModule](process_module.md) - Modular process units
-- [Parallel Simulation](../../simulation/parallel_process_simulation.md) - Parallel execution guide
+- [ProcessSystem](process_system) - Process system management
+- [ProcessModel](process_model) - Multi-process model management
+- [ProcessModule](process_module) - Modular process units
+- [Parallel Simulation](../../simulation/parallel_process_simulation) - Parallel execution guide
 
 ---
 

@@ -86,15 +86,19 @@ public class AddIonToScaleSaturation extends ConstantDutyTemperatureFlash {
         iterations++;
         stoc1 = Double.parseDouble(dataSet.getString("stoc1"));
         stoc2 = Double.parseDouble(dataSet.getString("stoc2"));
-        double temperatureC = system.getPhase(phaseNumber).getTemperature();
-        ksp = Math.exp(Double.parseDouble(dataSet.getString("Ksp-water")) / temperatureC
+        // Temperature in Kelvin from system (getTemperature() returns Kelvin)
+        double temperatureK = system.getPhase(phaseNumber).getTemperature();
+        double temperatureC = temperatureK - 273.15;
+        // Ksp correlation: lnKsp = A/T + B + C*ln(T) + D*T + E/T² (T in Kelvin)
+        ksp = Math.exp(Double.parseDouble(dataSet.getString("Ksp-water")) / temperatureK
             + Double.parseDouble(dataSet.getString("Ksp-water2"))
-            + Math.log(temperatureC) * Double.parseDouble(dataSet.getString("Ksp-water3"))
-            + temperatureC * Double.parseDouble(dataSet.getString("Ksp-water4"))
-            + Double.parseDouble(dataSet.getString("Ksp-water5")) / (temperatureC * temperatureC));
+            + Math.log(temperatureK) * Double.parseDouble(dataSet.getString("Ksp-water3"))
+            + temperatureK * Double.parseDouble(dataSet.getString("Ksp-water4"))
+            + Double.parseDouble(dataSet.getString("Ksp-water5")) / (temperatureK * temperatureK));
         if (saltName.equals("NaCl")) {
-          ksp = -814.18 + 7.4685 * temperatureC - 2.3262e-2 * temperatureC * temperatureC
-              + 3.0536e-5 * Math.pow(temperatureC, 3.0) - 1.4573e-8 * Math.pow(temperatureC, 4.0);
+          // NaCl Ksp correlation using temperature in Kelvin
+          // Fitted to CRC Handbook solubility data: Ksp = m² ≈ 37-45 over 0-100°C
+          ksp = 92.78 - 0.407 * temperatureK + 0.000747 * temperatureK * temperatureK;
         }
 
         if (system.getPhase(phaseNumber).hasComponent(name1)

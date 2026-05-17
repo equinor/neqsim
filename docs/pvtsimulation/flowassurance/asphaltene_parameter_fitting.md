@@ -1,3 +1,8 @@
+---
+title: Asphaltene Parameter Fitting
+description: The `AsphalteneOnsetFitting` class provides automated CPA parameter tuning using the Levenberg-Marquardt optimization algorithm. This enables matching CPA model predictions to experimental asphaltene ...
+---
+
 # Asphaltene Parameter Fitting
 
 ## Overview
@@ -329,9 +334,9 @@ public class AsphalteneParameterTuning {
 
 ## See Also
 
-- [CPA-Based Calculations](asphaltene_cpa_calculations.md) - Theory and implementation
-- [Method Comparison](asphaltene_method_comparison.md) - When to use CPA vs De Boer
-- [Validation](asphaltene_validation.md) - Model validation results
+- [CPA-Based Calculations](asphaltene_cpa_calculations) - Theory and implementation
+- [Method Comparison](asphaltene_method_comparison) - When to use CPA vs De Boer
+- [Validation](asphaltene_validation) - Model validation results
 
 ## References
 

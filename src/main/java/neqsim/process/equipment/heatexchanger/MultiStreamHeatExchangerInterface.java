@@ -70,9 +70,20 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   /**
    * Sets the outlet temperature for the heat exchanger.
    *
-   * @param temperature Desired outlet temperature
+   * @param temperature Desired outlet temperature in Kelvin
    */
-  void setOutTemperature(double temperature);
+  void setOutletTemperature(double temperature);
+
+  /**
+   * Sets the outlet temperature for the heat exchanger.
+   *
+   * @param temperature Desired outlet temperature in Kelvin
+   * @deprecated use {@link #setOutletTemperature(double)} instead
+   */
+  @Deprecated
+  default void setOutTemperature(double temperature) {
+    setOutletTemperature(temperature);
+  }
 
   /**
    * Gets the outlet temperature of a specific output stream.

@@ -1,3 +1,8 @@
+---
+title: "NeqSim Well Simulation Guide"
+description: "This guide covers NeqSim's well simulation capabilities, providing functionality for"
+---
+
 # NeqSim Well Simulation Guide
 
 This guide covers NeqSim's well simulation capabilities, providing functionality for
@@ -692,7 +697,7 @@ System.out.println("Zone C: " + zoneFlows[2] + " MSm³/day");
 ## Complete Production System Example
 
 For a comprehensive example demonstrating the full integration of well simulation with
-downstream processing, see [WellToOilStabilizationExample.java](examples/WellToOilStabilizationExample.java).
+downstream processing, see [WellToOilStabilizationExample.java](../examples/WellToOilStabilizationExample.java).
 
 This example includes:
 - **Reservoir**: SimpleReservoir with oil, gas, and water phases
@@ -809,10 +814,10 @@ well.setVLPSolverMode(VLPSolverMode.TWO_FLUID);   // Separate momentum equations
 
 ## See Also
 
-- [Wells Documentation](../process/equipment/wells.md) - Well models and IPR
-- [Pipeline Modeling](../process/PipeBeggsAndBrills.md) - PipeBeggsAndBrills correlation
-- [Process System](../process/processmodel/process_system.md) - ProcessSystem class
-- [NeqSim Modules](../modules.md) - Module overview
+- [Wells Documentation](../process/equipment/wells) - Well models and IPR
+- [Pipeline Modeling](../process/PipeBeggsAndBrills) - PipeBeggsAndBrills correlation
+- [Process System](../process/processmodel/process_system) - ProcessSystem class
+- [NeqSim Modules](../modules) - Module overview
 
 ## References
 

@@ -1,3 +1,8 @@
+---
+title: "Field Development Planning Module"
+description: "The Field Development Planning module provides a comprehensive set of tools for modeling, scheduling, and optimizing oil and gas field development projects. This module integrates with NeqSim's existi..."
+---
+
 # Field Development Planning Module
 
 The Field Development Planning module provides a comprehensive set of tools for modeling, scheduling, and optimizing oil and gas field development projects. This module integrates with NeqSim's existing process simulation capabilities to enable full-lifecycle field development planning.
@@ -530,16 +535,10 @@ public class FieldDevelopmentExample {
 
 ## Related Documentation
 
-- [Bottleneck Analysis Guide](bottleneck_analysis.md)
-- [ProductionOptimizer Reference](../javadoc/ProductionOptimizer.html)
-- [Monte Carlo Statistics](../thermo/statistics/MonteCarloSimulation.html)
+- [Bottleneck Analysis Guide](bottleneck_analysis)
+- [Process Optimization Overview](../process/optimization/)
 
 ## API Reference
 
-See the Javadoc documentation for complete API details:
-
-- [`ProductionProfile`](../javadoc/neqsim/process/util/fielddevelopment/ProductionProfile.html)
-- [`WellScheduler`](../javadoc/neqsim/process/util/fielddevelopment/WellScheduler.html)
-- [`FacilityCapacity`](../javadoc/neqsim/process/util/fielddevelopment/FacilityCapacity.html)
-- [`SensitivityAnalysis`](../javadoc/neqsim/process/util/fielddevelopment/SensitivityAnalysis.html)
+See the [JavaDoc API Documentation](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html) for complete API details.
 

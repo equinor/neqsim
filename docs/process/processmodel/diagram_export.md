@@ -1,3 +1,8 @@
+---
+title: Process Flow Diagram (PFD) Export
+description: NeqSim can generate professional oil & gas style process flow diagrams (PFDs) that follow industry conventions, comparable to UniSim, Aspen, and HYSYS.
+---
+
 # Process Flow Diagram (PFD) Export
 
 NeqSim can generate professional oil & gas style process flow diagrams (PFDs) that follow industry conventions, comparable to UniSim, Aspen, and HYSYS.
@@ -17,8 +22,30 @@ String dot = process.toDOT();
 process.createDiagramExporter()
     .setTitle("Gas Processing Plant")
     .setDetailLevel(DiagramDetailLevel.STANDARD)
-    .exportAsSVG(Path.of("diagram.svg"));
+    .exportSVG(Paths.get("diagram.svg"));
 ```
+
+## Multi-Area ProcessModel Export
+
+For full plant models built as a `ProcessModel`, NeqSim can generate both a common DOT graph and
+one DOT file per process area.
+
+```java
+ProcessModel plant = ProcessModel.fromJsonAndRun(modelJsonString);
+
+// Common plant-wide DOT with one cluster per ProcessSystem area.
+String commonDot = plant.toDOT();
+plant.exportToGraphviz("plant.dot");
+
+// Detailed per-area DOT files written automatically to the directory.
+Map<String, Path> areaFiles = plant.exportAreaDOT(Paths.get("plant-diagrams"));
+```
+
+The common graph is useful for plotting the whole plant in one view. The per-area files keep large
+models readable and are named from the area names, for example `separation.dot` and
+`compression.dot`. Cross-area edges are drawn when one `ProcessSystem` consumes a live stream
+produced by another area; JSON builder round-trips recreate these shared streams from
+`interAreaLinks`.
 
 ## Features
 
@@ -58,6 +85,7 @@ For **three-phase separators** (gas, oil, aqueous), outlets follow gravity:
 The diagram system supports all NeqSim equipment types with industry-standard shapes:
 
 #### Separators & Vessels
+
 | Equipment | Shape | Color |
 |-----------|-------|-------|
 | Separator | Cylinder | Green |
@@ -68,6 +96,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | Flash | Cylinder | Light Green |
 
 #### Columns
+
 | Equipment | Shape | Color |
 |-----------|-------|-------|
 | DistillationColumn | Tall Cylinder | Green |
@@ -76,6 +105,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | WaterStripperColumn | Rectangle | Light Green |
 
 #### Compressors & Expanders
+
 | Equipment | Shape | Symbol |
 |-----------|-------|--------|
 | Compressor | Trapezoid | Standard P&ID trapezoid |
@@ -84,6 +114,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | TurbineExpander | Inverted Trapezium | Inverted trapezoid |
 
 #### Pumps
+
 | Equipment | Shape | Symbol |
 |-----------|-------|--------|
 | Pump | Circle with impeller | Circle on triangle base |
@@ -91,6 +122,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | ESP (Electrical Submersible Pump) | Circle with impeller | Circle on triangle base |
 
 #### Heat Exchangers
+
 | Equipment | Shape | Symbol |
 |-----------|-------|--------|
 | HeatExchanger | Circle | Simple circle |
@@ -102,6 +134,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | DirectContactHeater | Circle | Simple circle |
 
 #### Valves
+
 | Equipment | Shape | Symbol |
 |-----------|-------|--------|
 | ThrottlingValve | Bowtie (▶◀) | Two triangles tip-to-tip |
@@ -113,6 +146,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | HIPPSValve | Bowtie (▶◀) | Two triangles tip-to-tip |
 
 #### Reactors
+
 | Equipment | Shape | Color |
 |-----------|-------|-------|
 | Reactor | Hexagon | Orange |
@@ -121,6 +155,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | ElectrolyzerCell | Hexagon | Light Blue |
 
 #### Other Equipment
+
 | Equipment | Shape | Color |
 |-----------|-------|-------|
 | Mixer | Triangle | Light Gray |
@@ -136,6 +171,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | GasGenerator/GasTurbine | Octagon | Steel Blue |
 
 #### Control Equipment
+
 | Equipment | Shape | Color |
 |-----------|-------|-------|
 | Recycle | Rectangle (dashed) | Gray |
@@ -203,7 +239,7 @@ exporter.setShowStreamValues(true)
 Generates HTML tables with:
 - Stream name header
 - Temperature (T)
-- Pressure (P)  
+- Pressure (P)
 - Flow rate (F)
 
 ### Control Equipment Filtering
@@ -510,7 +546,7 @@ ProcessDiagramExporter exporter = DexpiDiagramBridge.createExporter(system);
 ProcessDiagramExporter detailed = DexpiDiagramBridge.createDetailedExporter(system);
 ```
 
-See [DEXPI XML Reader](../../integration/dexpi-reader.md) for complete DEXPI import/export documentation.
+See [DEXPI XML Reader](../../integration/dexpi-reader) for complete DEXPI import/export documentation.
 
 ## Customization
 

@@ -144,4 +144,119 @@ public class PumpMechanicalDesignTest {
     assertTrue(inletNozzle >= outletNozzle, "Inlet nozzle should typically be >= outlet nozzle");
     System.out.println("Inlet nozzle: " + inletNozzle + " mm, Outlet: " + outletNozzle + " mm");
   }
+
+  // ============================================================================
+  // Process Design Parameter Tests
+  // ============================================================================
+
+  @Test
+  public void testNpshMarginFactor() {
+    double factor = mechDesign.getNpshMarginFactor();
+    assertTrue(factor >= 1.0, "NPSH margin factor should be >= 1.0");
+    assertTrue(factor <= 2.0, "NPSH margin factor should be reasonable (<= 2.0)");
+    System.out.println("NPSH margin factor: " + factor);
+  }
+
+  @Test
+  public void testPorFractions() {
+    double porLow = mechDesign.getPorLowFraction();
+    double porHigh = mechDesign.getPorHighFraction();
+    assertTrue(porLow > 0 && porLow < 1.0, "POR low fraction should be between 0 and 1");
+    assertTrue(porHigh > 1.0, "POR high fraction should be > 1");
+    assertTrue(porHigh < porLow + 0.8, "POR range should be reasonable");
+    System.out.println("POR: " + porLow + " - " + porHigh + " of BEP");
+  }
+
+  @Test
+  public void testAorFractions() {
+    double aorLow = mechDesign.getAorLowFraction();
+    double aorHigh = mechDesign.getAorHighFraction();
+    double porLow = mechDesign.getPorLowFraction();
+    double porHigh = mechDesign.getPorHighFraction();
+    assertTrue(aorLow <= porLow, "AOR low should be <= POR low");
+    assertTrue(aorHigh >= porHigh, "AOR high should be >= POR high");
+    System.out.println("AOR: " + aorLow + " - " + aorHigh + " of BEP");
+  }
+
+  @Test
+  public void testMaxSuctionSpecificSpeed() {
+    double maxNss = mechDesign.getMaxSuctionSpecificSpeed();
+    assertTrue(maxNss >= 8000, "Max Nss should be >= 8000");
+    assertTrue(maxNss <= 15000, "Max Nss should be <= 15000");
+    System.out.println("Max suction specific speed: " + maxNss);
+  }
+
+  @Test
+  public void testHeadMarginFactor() {
+    double factor = mechDesign.getHeadMarginFactor();
+    assertTrue(factor >= 1.0, "Head margin factor should be >= 1.0");
+    assertTrue(factor <= 1.2, "Head margin factor should be reasonable (<= 1.2)");
+    System.out.println("Head margin factor: " + factor);
+  }
+
+  // ============================================================================
+  // Validation Method Tests
+  // ============================================================================
+
+  @Test
+  public void testValidateNpshMargin() {
+    // Test with adequate NPSH margin
+    boolean result1 = mechDesign.validateNpshMargin(10.0, 5.0);
+    assertTrue(result1, "Should pass with NPSH available > required * margin");
+
+    // Test with inadequate NPSH margin
+    boolean result2 = mechDesign.validateNpshMargin(5.0, 5.0);
+    assertTrue(!result2 || mechDesign.getNpshMarginFactor() <= 1.0,
+        "Should fail when NPSH margin is not met");
+  }
+
+  @Test
+  public void testValidateOperatingInPOR() {
+    // Test at BEP (100% of BEP)
+    boolean atBep = mechDesign.validateOperatingInPOR(100.0, 100.0);
+    assertTrue(atBep, "Operating at BEP should be within POR");
+
+    // Test at very low flow
+    boolean lowFlow = mechDesign.validateOperatingInPOR(30.0, 100.0);
+    assertTrue(!lowFlow, "30% of BEP should typically be outside POR");
+
+    // Test at very high flow
+    boolean highFlow = mechDesign.validateOperatingInPOR(150.0, 100.0);
+    assertTrue(!highFlow, "150% of BEP should typically be outside POR");
+  }
+
+  @Test
+  public void testValidateOperatingInAOR() {
+    // Test at BEP
+    boolean atBep = mechDesign.validateOperatingInAOR(100.0, 100.0);
+    assertTrue(atBep, "Operating at BEP should be within AOR");
+
+    // Test outside AOR
+    boolean extremeLow = mechDesign.validateOperatingInAOR(10.0, 100.0);
+    assertTrue(!extremeLow, "10% of BEP should be outside AOR");
+  }
+
+  @Test
+  public void testValidateSuctionSpecificSpeed() {
+    // Test with acceptable Nss
+    boolean acceptable = mechDesign.validateSuctionSpecificSpeed(10000.0);
+    assertTrue(acceptable, "Nss of 10000 should be acceptable");
+
+    // Test with high Nss
+    boolean high = mechDesign.validateSuctionSpecificSpeed(15000.0);
+    assertTrue(!high, "Nss of 15000 should exceed maximum");
+  }
+
+  @Test
+  public void testComprehensiveValidation() {
+    PumpMechanicalDesign.PumpValidationResult result = mechDesign.validateDesign();
+    assertNotNull(result, "Validation result should not be null");
+    assertNotNull(result.getIssues(), "Issues list should not be null");
+    System.out.println("Validation valid: " + result.isValid());
+    if (!result.isValid()) {
+      for (String issue : result.getIssues()) {
+        System.out.println("  Issue: " + issue);
+      }
+    }
+  }
 }

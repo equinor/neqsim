@@ -138,8 +138,8 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
 
     try {
       clonedHandler = (PhysicalPropertyHandler) super.clone();
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+    } catch (CloneNotSupportedException ex) {
+      throw new AssertionError("Clone failed for PhysicalPropertyHandler", ex);
     }
     try {
       if (gasPhysicalProperties != null) {

@@ -1,3 +1,8 @@
+---
+title: "TurboExpanderCompressor Model"
+description: "This document summarizes the mathematical basis of the coupled expander/compressor model, how reference curves are applied (and can be replaced), and provides a usage walkthrough for configuring and r..."
+---
+
 # TurboExpanderCompressor Model
 
 This document summarizes the mathematical basis of the coupled expander/compressor model, how reference curves are applied (and can be replaced), and provides a usage walkthrough for configuring and running the unit in a process simulation.

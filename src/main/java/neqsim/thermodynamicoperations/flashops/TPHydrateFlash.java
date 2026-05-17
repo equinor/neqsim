@@ -13,7 +13,6 @@ import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * TPHydrateFlash performs a TP flash that includes hydrate phase equilibrium calculation.

@@ -490,4 +490,149 @@ public class InterfacialFriction implements Serializable {
 
     return result.interfacialShear * result.interfacialAreaPerLength;
   }
+
+  // ============ Hart Correlation (1989) for Stratified Wavy Flow ============
+
+  /**
+   * Calculate interfacial friction using the Hart et al. (1989) correlation.
+   *
+   * <p>
+   * The Hart correlation provides an alternative to Andritsos-Hanratty for stratified wavy flow,
+   * particularly suited for oil-gas systems. Reference: Hart, J., Hamersma, P.J., and Fortuin,
+   * J.M.H. (1989), "Correlations predicting frictional pressure drop and liquid holdup during
+   * horizontal gas-liquid pipe flow with a small liquid holdup", Int. J. Multiphase Flow.
+   * </p>
+   *
+   * <p>
+   * The correlation is:
+   * </p>
+   *
+   * $$f_i = 0.0142 + 22.0 \cdot \left(\frac{h_L}{D}\right)^{1.5} \cdot \left(\frac{v_G -
+   * v_L}{v_G}\right)^{0.9}$$
+   *
+   * @param vG Gas velocity (m/s)
+   * @param vL Liquid velocity (m/s)
+   * @param rhoG Gas density (kg/m³)
+   * @param rhoL Liquid density (kg/m³)
+   * @param muG Gas viscosity (Pa·s)
+   * @param muL Liquid viscosity (Pa·s)
+   * @param alphaL Liquid holdup (0-1)
+   * @param D Pipe diameter (m)
+   * @return Interfacial friction result with Hart correlation
+   */
+  public InterfacialFrictionResult calcHartCorrelation(double vG, double vL, double rhoG,
+      double rhoL, double muG, double muL, double alphaL, double D) {
+    InterfacialFrictionResult result = new InterfacialFrictionResult();
+
+    // Get geometry
+    StratifiedGeometry geom = geometryCalc.calculateFromHoldup(alphaL, D);
+
+    result.slipVelocity = vG - vL;
+    result.interfacialAreaPerLength = geom.interfacialWidth;
+
+    if (Math.abs(result.slipVelocity) < 1e-10 || geom.interfacialWidth < 1e-10) {
+      return result;
+    }
+
+    // Dimensionless liquid level
+    double hL_D = geom.liquidLevel / D;
+    hL_D = Math.max(0.01, Math.min(0.99, hL_D)); // Bound for numerical stability
+
+    // Slip velocity ratio
+    double slipRatio = 0.0;
+    if (Math.abs(vG) > 1e-6) {
+      slipRatio = Math.abs(result.slipVelocity / vG);
+      slipRatio = Math.min(slipRatio, 2.0); // Cap for stability
+    }
+
+    // Hart correlation: f_i = 0.0142 + 22.0 * (h_L/D)^1.5 * ((v_G - v_L)/v_G)^0.9
+    result.frictionFactor = 0.0142 + 22.0 * Math.pow(hL_D, 1.5) * Math.pow(slipRatio, 0.9);
+
+    // Cap friction factor to reasonable range
+    result.frictionFactor = Math.min(result.frictionFactor, 0.5);
+
+    // Interfacial shear stress
+    result.interfacialShear =
+        0.5 * result.frictionFactor * rhoG * result.slipVelocity * Math.abs(result.slipVelocity);
+
+    return result;
+  }
+
+  /**
+   * Calculate interfacial friction using enhanced Andreussi-Persen (1987) correlation.
+   *
+   * <p>
+   * The Andreussi-Persen correlation is commonly used in commercial codes like OLGA. Reference:
+   * Andreussi, P. and Persen, L.N. (1987), "Stratified gas-liquid flow in downwardly inclined
+   * pipes", Int. J. Multiphase Flow.
+   * </p>
+   *
+   * @param vG Gas velocity (m/s)
+   * @param vL Liquid velocity (m/s)
+   * @param rhoG Gas density (kg/m³)
+   * @param rhoL Liquid density (kg/m³)
+   * @param muG Gas viscosity (Pa·s)
+   * @param liquidHoldup Liquid holdup (0-1)
+   * @param D Pipe diameter (m)
+   * @param inclination Pipe inclination angle (radians, positive = uphill)
+   * @return Interfacial friction result
+   */
+  public InterfacialFrictionResult calcAndreussiPersenCorrelation(double vG, double vL, double rhoG,
+      double rhoL, double muG, double liquidHoldup, double D, double inclination) {
+    InterfacialFrictionResult result = new InterfacialFrictionResult();
+
+    // Get geometry
+    StratifiedGeometry geom = geometryCalc.calculateFromHoldup(liquidHoldup, D);
+
+    result.slipVelocity = vG - vL;
+    result.interfacialAreaPerLength = geom.interfacialWidth;
+
+    if (Math.abs(result.slipVelocity) < 1e-10 || geom.interfacialWidth < 1e-10) {
+      return result;
+    }
+
+    // Gas hydraulic diameter
+    double D_G = geom.gasHydraulicDiameter;
+    if (D_G < 1e-10) {
+      D_G = D * (1 - liquidHoldup);
+    }
+
+    // Gas Reynolds number
+    double Re_G = rhoG * Math.abs(result.slipVelocity) * D_G / muG;
+
+    // Base friction factor (smooth)
+    double f_base;
+    if (Re_G < 2300) {
+      f_base = 16.0 / Math.max(Re_G, 1.0);
+    } else {
+      f_base = 0.079 / Math.pow(Re_G, 0.25);
+    }
+
+    // Andreussi-Persen enhancement
+    // Accounts for wave formation and inclination effects
+    double hL_D = geom.liquidLevel / D;
+    double Fr_L = Math.abs(vL) / Math.sqrt(GRAVITY * geom.liquidLevel + 1e-10);
+
+    // Enhancement factor depends on Froude number and inclination
+    double enhancement = 1.0;
+    if (inclination > 0.01) {
+      // Uphill: waves grow faster
+      enhancement = 1.0 + 10.0 * Math.sqrt(hL_D) * (1.0 + Fr_L);
+    } else if (inclination < -0.01) {
+      // Downhill: waves damped
+      enhancement = 1.0 + 5.0 * Math.sqrt(hL_D) * Math.max(0.5, 1.0 - Fr_L);
+    } else {
+      // Horizontal
+      enhancement = 1.0 + 8.0 * Math.sqrt(hL_D) * (1.0 + 0.5 * Fr_L);
+    }
+
+    enhancement = Math.min(enhancement, 25.0);
+    result.frictionFactor = f_base * enhancement;
+
+    // Interfacial shear stress
+    result.interfacialShear =
+        0.5 * result.frictionFactor * rhoG * result.slipVelocity * Math.abs(result.slipVelocity);
+
+    return result;
+  }
 }

@@ -40,7 +40,7 @@ import java.util.Map;
  * <p>
  * Example integration with an external control system:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Create data exchange interface

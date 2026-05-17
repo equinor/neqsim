@@ -248,6 +248,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
    *
    * @return a double
    */
+  @Override
   public double calc_hCPA() {
     double htot = 0.0;
     double tot = 0.0;
@@ -327,6 +328,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
    *
    * @return a double
    */
+  @Override
   public double calc_g() {
     double x = 1.9 / 4.0 * getB() / getTotalVolume();
     double g = 1.0 / (1.0 - x);
@@ -356,6 +358,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
    *
    * @return a double
    */
+  @Override
   public double calc_lngV() {
     double x = 1.9 / 4.0 * getB() / getTotalVolume();
     double gv = (x / getTotalVolume()) / (1.0 - x);
@@ -369,6 +372,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
    *
    * @return a double
    */
+  @Override
   public double calc_lngVV() {
     double x = 1.9 / 4.0 * getB() / getTotalVolume();
     double xV = -1.9 / 4.0 * getB() / Math.pow(getTotalVolume(), 2.0);
@@ -391,6 +395,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
    *
    * @return a double
    */
+  @Override
   public double calc_lngVVV() {
     double gvv = -0.21434375 / Math.pow(1.0 - 0.475 * getB() / getTotalVolume(), 3.0)
         * Math.pow(getB(), 3.0) / (Math.pow(getTotalVolume(), 6.0))

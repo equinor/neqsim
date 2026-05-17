@@ -1,0 +1,16 @@
+name: positive gain robust fit
+experimentType: GENERIC
+objectiveFunctionType: HUBER
+robustTuningConstant: 1.345
+maxRobustIterations: 2
+maxNumberOfIterations: 40
+multiStartCount: 3
+randomSeed: 7
+parameters:
+  - name: gain
+    initialValue: 1.0
+    lowerBound: 0.1
+    upperBound: 10.0
+    unit: '-'
+    transform: LOG
+    category: scale

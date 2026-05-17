@@ -8,7 +8,6 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.streaming.TimestampedValue;
 
 /**
  * Exports process simulation data as time series for external ML/AI platforms.

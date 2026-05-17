@@ -1,3 +1,8 @@
+---
+title: HIPPS Implementation Summary for NeqSim
+description: A complete **HIPPS (High Integrity Pressure Protection System)** implementation has been added to NeqSim for safety simulation and analysis. HIPPS is a Safety Instrumented System (SIS) that prevents o...
+---
+
 # HIPPS Implementation Summary for NeqSim
 
 ## Executive Summary
@@ -352,6 +357,7 @@ boolean trippedCorrectly = hipps.hasTripped();
 - Consider pressure surge effects
 
 ### 2. Voting Logic Selection
+
 | Application | Recommended Voting | SIL Level |
 |-------------|-------------------|-----------|
 | Low risk, simple | 1oo1 | SIL 1 |

@@ -6,7 +6,6 @@
 
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel;
 
-import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactorAlg;
@@ -69,11 +68,21 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
   /** {@inheritDoc} */
   @Override
   public void calcTotalMassTransferCoefficientMatrix(int phase) {
+    // First compute the corrected total mass transfer coefficient matrix (parent applies
+    // thermodynamic and flux-type corrections via phi matrix and bootstrap)
     super.calcTotalMassTransferCoefficientMatrix(phase);
+
+    // Apply per-component enhancement factors to the corrected matrix.
+    // Enhancement is applied as a diagonal scaling: E_i * [k*]_ij for each row i.
     enhancementFactor.calcEnhancementVec(phase);
-    Matrix enhancementvec = new Matrix(enhancementFactor.getEnhancementVec(), 1);
-    totalMassTransferCoefficientMatrix[phase] = massTransferCoefficientMatrix[phase]
-        .times(enhancementvec.get(0, getBulkSystem().getPhase(0).getNumberOfComponents() - 1));
+    double[] enhVec = enhancementFactor.getEnhancementVec();
+    int n = getBulkSystem().getPhase(0).getNumberOfComponents() - 1;
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        double val = totalMassTransferCoefficientMatrix[phase].get(i, j);
+        totalMassTransferCoefficientMatrix[phase].set(i, j, val * enhVec[i]);
+      }
+    }
   }
 
   /** {@inheritDoc} */

@@ -12,7 +12,7 @@ package neqsim.process.design;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * ThreePhaseSeparator separator = new ThreePhaseSeparator("HP-Sep", feedStream);
  * separator.autoSize(1.2); // Size with 20% safety factor

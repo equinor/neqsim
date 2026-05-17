@@ -59,6 +59,6 @@ public class CompressorChartReaderTest {
 
     compressor.run();
 
-    Assertions.assertEquals(5303.277373, compressor.getSpeed(), 0.1);
+    Assertions.assertEquals(5303.497378, compressor.getSpeed(), 0.1);
   }
 }

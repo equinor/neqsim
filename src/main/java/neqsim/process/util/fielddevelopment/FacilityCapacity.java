@@ -38,11 +38,11 @@ import neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord;
  * <h2>Bottleneck Analysis Concepts</h2>
  * <p>
  * The facility capacity is limited by the equipment with the highest utilization ratio:
- * 
+ *
  * <pre>
  * Utilization = Current Duty / Maximum Capacity
  * </pre>
- * 
+ *
  * The equipment with the highest utilization is the "bottleneck". Equipment with utilization above
  * a threshold (typically 80%) are "near-bottlenecks" that may become constraints if the current
  * bottleneck is relieved.
@@ -67,7 +67,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * FacilityCapacity capacity = new FacilityCapacity(facilityProcess);
  *
@@ -471,7 +471,7 @@ public class FacilityCapacity implements Serializable {
     private final String rateUnit;
     private final String currentBottleneck;
     private final double bottleneckUtilization;
-    private final List<UtilizationRecord> utilizationRecords;
+    private final transient List<UtilizationRecord> utilizationRecords;
     private final List<String> nearBottlenecks;
     private final List<DebottleneckOption> debottleneckOptions;
     private final Map<String, Double> equipmentHeadroom;
@@ -727,6 +727,13 @@ public class FacilityCapacity implements Serializable {
 
   /**
    * Generates debottleneck options for near-bottleneck equipment.
+   *
+   * @param baseResult the optimization result containing bottleneck and utilization data
+   * @param feedStream the feed stream used for capacity calculations
+   * @param lowerBound the lower bound of the rate range
+   * @param upperBound the upper bound of the rate range
+   * @param rateUnit the unit of measurement for the rate
+   * @return list of debottleneck options sorted by NPV (best first)
    */
   private List<DebottleneckOption> generateDebottleneckOptions(OptimizationResult baseResult,
       StreamInterface feedStream, double lowerBound, double upperBound, String rateUnit) {
@@ -764,6 +771,14 @@ public class FacilityCapacity implements Serializable {
 
   /**
    * Creates a debottleneck option for a piece of equipment.
+   *
+   * @param equipment the equipment to evaluate for debottlenecking
+   * @param baseResult the baseline optimization result
+   * @param feedStream the feed stream to the facility
+   * @param lowerBound the lower bound of the rate range
+   * @param upperBound the upper bound of the rate range
+   * @param rateUnit the unit for production rates
+   * @return the debottleneck option, or null if not applicable
    */
   private DebottleneckOption createDebottleneckOption(ProcessEquipmentInterface equipment,
       OptimizationResult baseResult, StreamInterface feedStream, double lowerBound,
@@ -821,6 +836,11 @@ public class FacilityCapacity implements Serializable {
 
   /**
    * Estimates CAPEX for a capacity upgrade.
+   *
+   * @param equipment the equipment being upgraded
+   * @param currentCapacity the current capacity
+   * @param upgradedCapacity the target upgraded capacity
+   * @return the estimated capital expenditure in currency units
    */
   private double estimateCapex(ProcessEquipmentInterface equipment, double currentCapacity,
       double upgradedCapacity) {
@@ -840,6 +860,13 @@ public class FacilityCapacity implements Serializable {
 
   /**
    * Calculates simplified NPV for a debottleneck investment.
+   *
+   * @param dailyIncrementalProduction daily incremental production from the upgrade
+   * @param revenuePerUnit revenue per unit of production
+   * @param capex capital expenditure for the upgrade
+   * @param discountRate annual discount rate for NPV calculation
+   * @param years number of years for NPV calculation
+   * @return the net present value of the investment
    */
   private double calculateSimpleNPV(double dailyIncrementalProduction, double revenuePerUnit,
       double capex, double discountRate, int years) {
@@ -855,6 +882,9 @@ public class FacilityCapacity implements Serializable {
 
   /**
    * Finds equipment by name in the facility.
+   *
+   * @param name the equipment name to search for
+   * @return the matching equipment, or null if not found
    */
   private ProcessEquipmentInterface findEquipment(String name) {
     for (ProcessEquipmentInterface equipment : facility.getUnitOperations()) {

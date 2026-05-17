@@ -1,3 +1,8 @@
+---
+title: "Mathematical Models in NeqSim"
+description: "NeqSim bundles several thermodynamic and transport models so you can switch between correlations without rewriting system setup code. The sections below summarize the most commonly used options and wh..."
+---
+
 # Mathematical Models in NeqSim
 
 NeqSim bundles several thermodynamic and transport models so you can switch between correlations without rewriting system setup code. The sections below summarize the most commonly used options and when to consider them.
@@ -6,9 +11,9 @@ NeqSim bundles several thermodynamic and transport models so you can switch betw
 
 NeqSim primarily uses cubic equations of state of the general form:
 
-\[
+$$
 P = \frac{RT}{v - b} - \frac{a(T)}{(v + \epsilon b)(v + \sigma b)}
-\]
+$$
 
 where $P$ is pressure, $T$ is temperature, $v$ is molar volume, $R$ is the gas constant, and $a(T), b$ are the energy and co-volume parameters.
 
@@ -22,9 +27,11 @@ where $P$ is pressure, $T$ is temperature, $v$ is molar volume, $R$ is the gas c
 
 - **Cubic-Plus-Association (CPA)**:
   Adds an association term to the SRK or PR equation to represent hydrogen bonding:
-  \[
+  
+  $$
   P = P_{\text{cubic}} - \frac{1}{2} RT \rho \sum_i x_i \sum_{A_i} \left( 1 - X_{A_i} \right) \frac{\partial \ln g}{\partial v}
-  \]
+  $$
+  
   where $X_{A_i}$ is the fraction of site A on molecule i not bonded to other active sites.
 
 - **Activity-coefficient hybrids**:
@@ -46,7 +53,7 @@ For high-accuracy applications involving natural gas or CCS mixtures, NeqSim sup
 - **GERG-2008** (`SystemGERG2008Eos`): The ISO 20765-2 standard for natural gas.
 - **EOS-CG** (`SystemEOSCGEos`): An extension of GERG-2008 for combustion gases and CCS mixtures (including impurities like SO2, NO, NO2).
 
-See the [GERG-2008 and EOS-CG guide](gerg2008_eoscg.md) for details.
+See the [GERG-2008 and EOS-CG guide](gerg2008_eoscg) for details.
 
 ## Activity-Coefficient Models
 NeqSim provides NRTL/UNIQUAC/UNIFAC variants for non-ideal liquid mixtures. They can be used directly for gamma-phi flashes or combined with cubic EoS via Wong–Sandler mixing rules.

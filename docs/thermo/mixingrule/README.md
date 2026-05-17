@@ -1,3 +1,8 @@
+---
+title: "Mixing Rules Package"
+description: "Documentation for mixing rules in NeqSim equations of state."
+---
+
 # Mixing Rules Package
 
 Documentation for mixing rules in NeqSim equations of state.
@@ -129,6 +134,6 @@ $$k_{ij}(T) = k_{ij}^0 + k_{ij}^1 \cdot T + k_{ij}^2 \cdot T^2$$
 
 ## Related Documentation
 
-- [INTER Table Guide](../inter_table_guide.md) - Binary parameters database
-- [Mixing Rules Guide](../mixing_rules_guide.md) - Detailed guide
-- [Thermo Package](../README.md) - Package overview
+- [INTER Table Guide](../inter_table_guide) - Binary parameters database
+- [Mixing Rules Guide](../mixing_rules_guide) - Detailed guide
+- [Thermo Package](../) - Package overview

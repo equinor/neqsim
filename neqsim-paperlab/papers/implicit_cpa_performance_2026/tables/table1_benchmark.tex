@@ -1,0 +1,22 @@
+\begin{table}[htbp]
+\centering
+\caption{Benchmark results: fully implicit vs.\ standard nested CPA solver.}
+\label{tab:benchmark}
+\begin{tabular}{llccccr}
+\toprule
+System & $N_c$ & $n_s$ & Phase type & Ratio & Speedup & Match \\
+\midrule
+Pure water & 1 & 4 & single-phase liquid & 0.496 & 2.0$\times$ & 100\% \\
+Water-Methanol (50/50 mol%) & 2 & 6 & VLE binary & 0.145 & 6.9$\times$ & 100\% \\
+Water-Methanol (80/20 mol%) & 2 & 6 & VLE binary & 0.130 & 7.7$\times$ & 100\% \\
+Water-Ethanol-Acetic Acid (33/33/34) & 3 & 8 & VLE ternary & 0.030 & 32.8$\times$ & 47\% \\
+Natural gas + Water & 5 & 4 & VLE (gas + aqueous) & 0.514 & 1.9$\times$ & 100\% \\
+Natural gas + Water + MEG & 6 & 8 & VLE/LLE (gas + aqueous + MEG) & 0.353 & 2.8$\times$ & 97\% \\
+Gas condensate + Water & 8 & 4 & VLE (gas + condensate + aqueous) & 0.422 & 2.4$\times$ & 97\% \\
+Oil + Gas + Water + MEG & 10 & 8 & VLLE (gas + oil + aqueous) & 0.304 & 3.3$\times$ & 100\% \\
+CO2 + Water & 2 & 4 & VLE (CO2 + aqueous) & 0.175 & 5.7$\times$ & 100\% \\
+MEG + Water & 2 & 8 & single-phase aqueous & 0.119 & 8.4$\times$ & 100\% \\
+Natural gas + Water + TEG & 6 & 8 & VLE (gas + aqueous/TEG) & 0.276 & 3.6$\times$ & 100\% \\
+\bottomrule
+\end{tabular}
+\end{table}

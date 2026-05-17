@@ -15,13 +15,13 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <p>
  * SlugFlowNode class.
  * </p>
- * 
+ *
  * <p>
  * Represents a flow node for slug flow regime in two-phase pipe flow. Slug flow is characterized by
  * alternating liquid slugs and elongated gas bubbles (Taylor bubbles). This regime is common in
  * horizontal and near-horizontal pipelines at intermediate gas and liquid flow rates.
  * </p>
- * 
+ *
  * <p>
  * The model accounts for:
  * <ul>
@@ -122,7 +122,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
    * <p>
    * Calculates slug flow characteristics including frequency and translational velocity.
    * </p>
-   * 
+   *
    * <p>
    * Uses correlations from Gregory and Scott (1969) and Bendiksen (1984).
    * </p>
@@ -231,7 +231,6 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
     double bubbleFraction = 1.0 - slugUnitFraction;
 
     // Interfacial area in Taylor bubble region (annular-like film)
-    double alphaFilm = phaseFraction[1] * 0.3; // Film holdup in bubble region
     double aTaylor = 4.0 / diameter; // Simplified annular-like interface
 
     // Interfacial area in slug body (dispersed bubbles)

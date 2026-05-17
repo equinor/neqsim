@@ -96,7 +96,8 @@ public class ProcessLoader {
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      org.apache.logging.log4j.LogManager.getLogger(ProcessLoader.class)
+          .error("Error setting property: " + e.getMessage(), e);
     }
   }
 }

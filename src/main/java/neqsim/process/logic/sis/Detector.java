@@ -2,7 +2,7 @@ package neqsim.process.logic.sis;
 
 /**
  * Represents a fire or gas detector in a Safety Instrumented System.
- * 
+ *
  * <p>
  * Detectors monitor process conditions and can trigger safety actions when thresholds are exceeded.
  * Each detector has:
@@ -95,7 +95,7 @@ public class Detector {
 
   /**
    * Resets the detector after acknowledgment.
-   * 
+   *
    * <p>
    * In safety systems, reset typically requires operator action and may have permissive conditions.
    * </p>

@@ -1,3 +1,8 @@
+---
+title: Riser Mechanical Design
+description: Comprehensive documentation for riser mechanical design in NeqSim, including catenary mechanics, VIV analysis, fatigue life estimation, and dynamic response calculations per industry standards.
+---
+
 # Riser Mechanical Design
 
 Comprehensive documentation for riser mechanical design in NeqSim, including catenary mechanics, VIV analysis, fatigue life estimation, and dynamic response calculations per industry standards.
@@ -471,7 +476,7 @@ design.readDesignSpecifications();
 design.calcDesign();
 
 // Results
-var calc = design.getRiserCalculator();
+RiserDesignCalculator calc = design.getRiserCalculator();
 System.out.println("=== SCR Design Results ===");
 System.out.println("Top Tension: " + calc.getTopTension() + " kN");
 System.out.println("TDP Stress: " + calc.getTouchdownPointStress() + " MPa");
@@ -495,7 +500,7 @@ ttrDesign.setMaxOperationPressure(200.0);
 ttrDesign.setMaterialGrade("X65");
 ttrDesign.calcDesign();
 
-var ttrCalc = ttrDesign.getRiserCalculator();
+RiserDesignCalculator ttrCalc = ttrDesign.getRiserCalculator();
 System.out.println("TTR Tension: " + ttrCalc.getTopTension() + " kN");
 System.out.println("Min Tension: " + ttrCalc.getMinTopTension() + " kN");
 System.out.println("Stroke Req: " + ttrCalc.getStrokeRequirement() + " m");
@@ -523,7 +528,7 @@ System.out.println("Lazy-Wave Top Tension: " +
 
 ## Related Documentation
 
-- [Pipelines](equipment/pipelines.md) - Riser class and configuration
-- [Pipeline Mechanical Design](pipeline_mechanical_design.md) - Base calculations
-- [Pipeline Design Math](pipeline_mechanical_design_math.md) - Formula reference
-- [Subsea Systems](equipment/subsea_systems.md) - Subsea wells and flowlines
+- [Pipelines](equipment/pipelines) - Riser class and configuration
+- [Pipeline Mechanical Design](pipeline_mechanical_design) - Base calculations
+- [Pipeline Design Math](pipeline_mechanical_design_math) - Formula reference
+- [Subsea Systems](equipment/subsea_systems) - Subsea wells and flowlines

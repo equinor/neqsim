@@ -1,3 +1,8 @@
+---
+title: Recycles
+description: Documentation for recycle handling in NeqSim process simulation.
+---
+
 # Recycles
 
 Documentation for recycle handling in NeqSim process simulation.
@@ -101,7 +106,9 @@ For faster convergence, acceleration methods can be used:
 ### Wegstein Acceleration
 
 ```java
-recycle.setAccelerationMethod("wegstein");
+import neqsim.process.equipment.util.AccelerationMethod;
+
+recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
 ```
 
 ### Broyden Acceleration
@@ -272,7 +279,7 @@ for (int i = 0; i < errorHistory.length; i++) {
 
 ```java
 // Try Wegstein acceleration
-recycle.setAccelerationMethod("wegstein");
+recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
 recycle.setDampingFactor(0.8);
 ```
 
@@ -315,6 +322,6 @@ process.run();
 
 ## Related Documentation
 
-- [Adjusters](adjusters.md) - Variable adjustment
-- [Calculators](calculators.md) - Custom calculations
-- [Process System](../../processmodel/README.md) - Process execution
+- [Adjusters](adjusters) - Variable adjustment
+- [Calculators](calculators) - Custom calculations
+- [Process System](../../processmodel/) - Process execution

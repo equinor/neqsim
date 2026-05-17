@@ -49,12 +49,12 @@ public interface ComponentGEInterface extends ComponentInterface {
 
   /**
    * <p>
-   * getlnGamma.
+   * getLnGamma.
    * </p>
    *
    * @return a double
    */
-  public double getlnGamma();
+  public double getLnGamma();
 
   /**
    * <p>
@@ -67,39 +67,39 @@ public interface ComponentGEInterface extends ComponentInterface {
 
   /**
    * <p>
-   * getlnGammadt.
+   * getLnGammadt.
    * </p>
    *
    * @return a double
    */
-  public double getlnGammadt();
+  public double getLnGammadt();
 
   /**
    * <p>
-   * getlnGammadtdt.
+   * getLnGammadtdt.
    * </p>
    *
    * @return a double
    */
-  public double getlnGammadtdt();
+  public double getLnGammadtdt();
 
   /**
    * <p>
-   * getlnGammadn.
+   * getLnGammadn.
    * </p>
    *
    * @param k a int
    * @return a double
    */
-  public double getlnGammadn(int k);
+  public double getLnGammadn(int k);
 
   /**
    * <p>
-   * setlnGammadn.
+   * setLnGammadn.
    * </p>
    *
    * @param k a int
    * @param val a double
    */
-  public void setlnGammadn(int k, double val);
+  public void setLnGammadn(int k, double val);
 }

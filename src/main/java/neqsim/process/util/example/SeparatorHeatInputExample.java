@@ -9,7 +9,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Example demonstrating separator heat input capabilities with flare integration.
- * 
+ *
  * This example shows: 1. Basic separator heat input functionality 2. Integration with flare
  * radiation calculations 3. Three-phase separator heat input 4. Practical use cases for external
  * heating

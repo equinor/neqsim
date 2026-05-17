@@ -34,9 +34,15 @@ public class DewPointPressureFlash extends ConstantDutyTemperatureFlash {
       if (system.getTemperature() >= comp.getTC()) {
         // throw new IllegalStateException("System is supercritical");
       }
+      // For single-component systems, dew point pressure equals bubble point pressure,
+      // so we reuse the bubble point calculation to find the saturation pressure.
       BubblePointPressureFlash bubble = new BubblePointPressureFlash(system);
       bubble.run();
       setSuperCritical(bubble.isSuperCritical());
+      // BubblePointPressureFlash sets phase fractions for bubble point (nearly all
+      // liquid). For dew point, we need nearly all gas, so invert the phase fractions.
+      system.setBeta(0, 1.0 - 1e-10);
+      system.setBeta(1, 1e-10);
       return;
     }
 

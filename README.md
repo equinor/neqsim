@@ -1,36 +1,299 @@
-![NeqSim Logo](https://github.com/equinor/neqsim/blob/master/docs/wiki/neqsimlogocircleflatsmall.png)
+<h1>
+  <img src="https://github.com/equinor/neqsim/blob/master/docs/wiki/neqsimlogocircleflatsmall.png" alt="NeqSim Logo" width="120" valign="middle">&nbsp;NeqSim
+</h1>
 
-<!-- Badges -->
-[![Azure DevOps Build](https://neqsim.visualstudio.com/neqsim_cicd/_apis/build/status/neqsim_build?branchName=master)](https://neqsim.visualstudio.com/neqsim_cicd/_build/latest?definitionId=1&branchName=master)
-[![GitHub CI Build](https://github.com/equinor/neqsim/actions/workflows/verify_build.yml/badge.svg?branch=master)](https://github.com/equinor/neqsim/actions/workflows/verify_build.yml?query=branch%3Amaster)
-[![CodeQL Analysis](https://github.com/equinor/neqsim/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/equinor/neqsim/security/code-scanning)
-[![Coverage Status](https://codecov.io/gh/equinor/neqsim/branch/master/graph/badge.svg)](https://codecov.io/gh/equinor/neqsim)
-[![Dep Vulns](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/equinor/neqsim/master/.github/metrics/dependabot-metrics.json)](https://github.com/equinor/neqsim/security/dependabot)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Total Security Alerts](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/equinor/neqsim/master/.github/metrics/security-metrics.json)](https://github.com/equinor/neqsim/security)
+<p align="center">
+  <strong>Industrial Agentic Engineering with NeqSim<br>AI Agents for Engineering Task Solving in Industry</strong>
+</p>
 
+<p align="center">
+  <a href="https://github.com/equinor/neqsim/actions/workflows/verify_build.yml?query=branch%3Amaster"><img src="https://img.shields.io/github/actions/workflow/status/equinor/neqsim/verify_build.yml?branch=master&label=CI%20Build&logo=github" alt="CI Build"></a>
+  <a href="https://search.maven.org/search?q=g:%22com.equinor.neqsim%22%20AND%20a:%22neqsim%22"><img src="https://img.shields.io/maven-central/v/com.equinor.neqsim/neqsim.svg?label=Maven%20Central" alt="Maven Central"></a>
+  <a href="https://codecov.io/gh/equinor/neqsim"><img src="https://codecov.io/gh/equinor/neqsim/branch/master/graph/badge.svg" alt="Coverage"></a>
+  <a href="https://github.com/equinor/neqsim/security/code-scanning"><img src="https://img.shields.io/github/actions/workflow/status/equinor/neqsim/codeql.yml?branch=master&label=CodeQL&logo=github" alt="CodeQL"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License"></a>
+</p>
 
-NeqSim is the main part of the [NeqSim project](https://equinor.github.io/neqsimhome/). NeqSim (Non-Equilibrium Simulator) is a Java library for estimating fluid properties and process design.
-The basis for NeqSim is a library of fundamental mathematical models related to phase behavior and physical properties of fluids.  NeqSim is easily extended with new models. NeqSim development was initiated at the [Norwegian University of Science and Technology (NTNU)](https://www.ntnu.edu/employees/even.solbraa).
+<p align="center">
+  <a href="https://github.com/codespaces/new?hide_repo_select=true&ref=master&repo=equinor/neqsim"><img src="https://img.shields.io/badge/Open_in-Codespaces-blue?logo=github" alt="Open in Codespaces"></a>
+  <a href="https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL"><img src="https://img.shields.io/badge/Open_in-Colab-F9AB00?logo=googlecolab" alt="Open in Colab"></a>
+</p>
 
-## Documentation
-[NeqSim User Documentation](https://equinor.github.io/neqsim/)
+<p align="center">
+  <a href="#quick-start">Quick Start</a> | <a href="#what-can-you-do-with-neqsim">Use Cases</a> | <a href="#agentic-engineering--mcp-server">AI / MCP</a> | <a href="#use-neqsim-in-java">Java</a> | <a href="#use-neqsim-in-python">Python</a> | <a href="#develop--contribute">Contribute</a> | <a href="https://equinor.github.io/neqsim/">Docs</a>
+</p>
 
-[Index of reference manual](https://github.com/equinor/neqsim/blob/master/docs/REFERENCE_MANUAL_INDEX.md)
+---
 
-## Releases
+## What is NeqSim?
 
-[NeqSim releases](https://github.com/equinor/neqsim/releases) are available as a packaged jar file and as source code. NeqSim can be used in a third party application by adding NeqSim jar to the classpath.
+**NeqSim** (Non-Equilibrium Simulator) is a comprehensive Java library for fluid property estimation, process simulation, and engineering design. It covers the full process engineering workflow, from thermodynamic modeling and PVT analysis through equipment sizing, pipeline flow, safety studies, and field development economics.
 
-## Getting started as a NeqSim Java user
+Developed at [NTNU](https://www.ntnu.edu/employees/even.solbraa) and maintained by [Equinor](https://www.equinor.com/), NeqSim is used for real-world oil & gas, carbon capture, hydrogen, and energy applications.
 
-NeqSim can be used in a Java application by adding the neqsim-x.x.x.jar found in [NeqSim releases](https://github.com/equinor/neqsim/releases) to the classpath. A demonstration of downloading the library and running a TPflash  benchmark is illustrated in this [NeqSim Colab demo](https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL). Learn and ask questions in [Discussions for use and development of NeqSim](https://github.com/equinor/neqsim/discussions). Also see the [NeqSim JavaDoc](https://htmlpreview.github.io/?https://github.com/equinor/neqsimhome/blob/master/javadoc/site/apidocs/index.html).
+Use it from **Java**, **Python**, **Jupyter notebooks**, **.NET**, **MATLAB**, or let an **AI agent** drive it via natural language.
 
-## Use of the NeqSim package
-NeqSim can be set up as a dependency in a Java project via the [NeqSim GitHub package distribution](https://github.com/equinor/neqsim/packages/42822).
+### Key capabilities
 
-### Using NeqSim from the GitHub Maven package repository
-1. Configure authentication for the GitHub Packages repository in your Maven `settings.xml` (use a Personal Access Token with at least the `read:packages` scope):
+| Domain | What NeqSim provides |
+|--------|---------------------|
+| **Thermodynamics** | 60+ equation-of-state models (SRK, PR, CPA, GERG-2008, and more), flash calculations (TP, PH, PS, dew, bubble), phase envelopes |
+| **Physical properties** | Density, viscosity, thermal conductivity, surface tension, diffusion coefficients |
+| **Process simulation** | 33+ equipment types: separators, compressors, heat exchangers, valves, distillation columns, pumps, reactors |
+| **Pipeline & flow** | Steady-state and transient multiphase pipe flow (Beggs & Brill, two-fluid model), pipe networks |
+| **PVT simulation** | CME, CVD, differential liberation, separator tests, swelling tests, saturation pressure |
+| **Safety** | Depressurization/blowdown, PSV sizing (API 520/521), source term generation, safety envelopes |
+| **Standards** | ISO 6976 (gas quality), NORSOK, DNV, API, ASME compliance checks |
+| **Mechanical design** | Wall thickness, weight estimation, cost analysis for pipelines, vessels, wells (SURF) |
+| **Field development** | Production forecasting, concept screening, NPV/IRR economics, Monte Carlo uncertainty |
+
+See the [full documentation](https://equinor.github.io/neqsim/), [Java Wiki](https://github.com/equinor/neqsim/wiki), or ask questions in [Discussions](https://github.com/equinor/neqsim/discussions).
+
+## Quick Start
+
+### Python - try it in 30 seconds
+
+```bash
+pip install neqsim
+```
+
+```python
+from neqsim import jneqsim
+
+# Create a natural gas fluid
+fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 60.0)  # 25 C, 60 bara
+fluid.addComponent("methane", 0.85)
+fluid.addComponent("ethane", 0.10)
+fluid.addComponent("propane", 0.05)
+fluid.setMixingRule("classic")
+
+# Run a flash calculation
+ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
+ops.TPflash()
+fluid.initProperties()
+
+print(f"Gas density:    {fluid.getPhase('gas').getDensity('kg/m3'):.2f} kg/m3")
+print(f"Gas viscosity:  {fluid.getPhase('gas').getViscosity('kg/msec'):.6f} kg/(m*s)")
+print(f"Z-factor:       {fluid.getPhase('gas').getZ():.4f}")
+```
+
+### Java - add to your project
+
+**Maven Central** (simplest - no authentication needed):
+
+```xml
+<dependency>
+  <groupId>com.equinor.neqsim</groupId>
+  <artifactId>neqsim</artifactId>
+  <version>3.10.0</version>
+</dependency>
+```
+
+```java
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+SystemSrkEos fluid = new SystemSrkEos(273.15 + 25.0, 60.0);
+fluid.addComponent("methane", 0.85);
+fluid.addComponent("ethane", 0.10);
+fluid.addComponent("propane", 0.05);
+fluid.setMixingRule("classic");
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
+fluid.initProperties();
+
+System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
+```
+
+### AI agent - describe your problem in plain English
+
+```
+@solve.task hydrate formation temperature for wet gas at 100 bara
+```
+
+The agent scopes the task, builds a NeqSim simulation, validates results, and generates a Word + HTML report with no coding required.
+
+---
+
+## What can you do with NeqSim?
+
+<details>
+<summary><strong>Calculate fluid properties</strong></summary>
+
+```python
+from neqsim import jneqsim
+
+fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 15.0, 100.0)
+fluid.addComponent("methane", 0.90)
+fluid.addComponent("CO2", 0.05)
+fluid.addComponent("nitrogen", 0.05)
+fluid.setMixingRule("classic")
+
+ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
+ops.TPflash()
+fluid.initProperties()
+
+print(f"Density:      {fluid.getDensity('kg/m3'):.2f} kg/m3")
+print(f"Molar mass:   {fluid.getMolarMass('kg/mol'):.4f} kg/mol")
+print(f"Phases:       {fluid.getNumberOfPhases()}")
+```
+</details>
+
+<details>
+<summary><strong>Simulate a process flowsheet</strong></summary>
+
+```python
+from neqsim import jneqsim
+
+fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 30.0, 80.0)
+fluid.addComponent("methane", 0.80)
+fluid.addComponent("ethane", 0.12)
+fluid.addComponent("propane", 0.05)
+fluid.addComponent("n-butane", 0.03)
+fluid.setMixingRule("classic")
+
+Stream = jneqsim.process.equipment.stream.Stream
+Separator = jneqsim.process.equipment.separator.Separator
+Compressor = jneqsim.process.equipment.compressor.Compressor
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+
+feed = Stream("Feed", fluid)
+feed.setFlowRate(50000.0, "kg/hr")
+
+separator = Separator("HP Separator", feed)
+compressor = Compressor("Export Compressor", separator.getGasOutStream())
+compressor.setOutletPressure(150.0, "bara")
+
+process = ProcessSystem()
+process.add(feed)
+process.add(separator)
+process.add(compressor)
+process.run()
+
+print(f"Compressor power: {compressor.getPower('kW'):.0f} kW")
+print(f"Gas out temp:     {compressor.getOutletStream().getTemperature() - 273.15:.1f} C")
+```
+</details>
+
+<details>
+<summary><strong>Predict hydrate formation temperature</strong></summary>
+
+```python
+from neqsim import jneqsim
+
+fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 5.0, 80.0)
+fluid.addComponent("methane", 0.90)
+fluid.addComponent("ethane", 0.06)
+fluid.addComponent("propane", 0.03)
+fluid.addComponent("water", 0.01)
+fluid.setMixingRule("classic")
+fluid.setMultiPhaseCheck(True)
+
+ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
+ops.hydrateFormationTemperature()
+
+print(f"Hydrate T: {fluid.getTemperature() - 273.15:.2f} C")
+```
+</details>
+
+<details>
+<summary><strong>Run pipeline pressure-drop calculations</strong></summary>
+
+```python
+from neqsim import jneqsim
+
+fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 40.0, 120.0)
+fluid.addComponent("methane", 0.95)
+fluid.addComponent("ethane", 0.05)
+fluid.setMixingRule("classic")
+
+Stream = jneqsim.process.equipment.stream.Stream
+PipeBeggsAndBrills = jneqsim.process.equipment.pipeline.PipeBeggsAndBrills
+
+feed = Stream("Inlet", fluid)
+feed.setFlowRate(200000.0, "kg/hr")
+
+pipe = PipeBeggsAndBrills("Export Pipeline", feed)
+pipe.setPipeWallRoughness(5e-5)
+pipe.setLength(50000.0)       # 50 km
+pipe.setDiameter(0.508)        # 20 inch
+pipe.setNumberOfIncrements(20)
+pipe.run()
+
+outlet = pipe.getOutletStream()
+print(f"Outlet pressure: {outlet.getPressure():.1f} bara")
+print(f"Outlet temp:     {outlet.getTemperature() - 273.15:.1f} C")
+```
+</details>
+
+<details>
+<summary><strong>More examples</strong></summary>
+
+Explore **30+ Jupyter notebooks** in [`examples/notebooks/`](examples/notebooks/):
+
+- Phase envelope calculation
+- TEG dehydration process
+- Vessel depressurization / blowdown
+- Heat exchanger thermal-hydraulic design
+- Production bottleneck analysis
+- Risk simulation and visualization
+- Data reconciliation and parameter estimation
+- Reservoir-to-export integrated workflows
+- Multiphase transient pipe flow
+
+</details>
+
+---
+
+## Agentic Engineering & MCP Server
+
+LLMs reason well but hallucinate physics. NeqSim is exact on thermodynamics but needs context. **Together, they form a complete engineering system.** The LLM reasons. NeqSim computes. Provenance proves it.
+
+### MCP Server - give any LLM access to rigorous thermodynamics
+
+The [NeqSim MCP Server](neqsim-mcp-server/) lets any MCP-compatible client (VS Code Copilot, Claude Desktop, Cursor, etc.) run real calculations. Install in seconds:
+
+```bash
+# Docker (no Java needed)
+docker pull ghcr.io/equinor/neqsim-mcp-server:latest
+```
+
+| Ask the LLM | MCP Tool |
+|---|---|
+| *"Dew point of 85% methane, 10% ethane, 5% propane at 50 bara?"* | `runFlash` |
+| *"How does density change from 0 to 50 C at 80 bara?"* | `runBatch` |
+| *"Phase envelope for this natural gas"* | `getPhaseEnvelope` |
+| *"Simulate gas through a separator then compressor to 120 bara"* | `runProcess` |
+
+Every response includes provenance metadata (EOS model, convergence, assumptions, limitations). See the [MCP Server docs](neqsim-mcp-server/) and [setup guide](neqsim-mcp-server/#install-from-github-release-3-steps).
+
+### AI task-solving workflow
+
+```
+@solve.task TEG dehydration sizing for 50 MMSCFD wet gas
+```
+
+The agent creates a task folder, runs NeqSim simulations, validates results, and generates a Word + HTML report with no coding required. See the [tutorial](docs/tutorials/solve-engineering-task.md) or [workflow reference](docs/development/TASK_SOLVING_GUIDE.md).
+
+---
+
+## Use NeqSim in Java
+
+```xml
+<dependency>
+  <groupId>com.equinor.neqsim</groupId>
+  <artifactId>neqsim</artifactId>
+  <version>3.10.0</version>
+</dependency>
+```
+
+The Quick Start above shows the core pattern (create a fluid, run a flash, and read properties). For process simulation, add equipment to a `ProcessSystem` and call `run()`; see the [Java Getting Started Guide](docs/java-getting-started.md) for full examples.
+
+<details>
+<summary>GitHub Packages setup (latest snapshots)</summary>
+
+1. Configure authentication in your Maven `settings.xml`:
 
 ```xml
 <servers>
@@ -42,7 +305,7 @@ NeqSim can be set up as a dependency in a Java project via the [NeqSim GitHub pa
 </servers>
 ```
 
-2. Add the GitHub Packages repository and NeqSim dependency to your project's `pom.xml`:
+2. Add to your `pom.xml`:
 
 ```xml
 <repositories>
@@ -51,161 +314,219 @@ NeqSim can be set up as a dependency in a Java project via the [NeqSim GitHub pa
     <url>https://maven.pkg.github.com/equinor/neqsim</url>
   </repository>
 </repositories>
+```
+</details>
 
-<dependencies>
-  <dependency>
-    <groupId>com.equinor.neqsim</groupId>
-    <artifactId>neqsim</artifactId>
-    <version>3.1.2</version>
-  </dependency>
-</dependencies>
+**Learn more:** [Java Getting Started Guide](docs/java-getting-started.md) | [JavaDoc](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html) | [Wiki](https://github.com/equinor/neqsim/wiki) | [Colab demo](https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL)
+
+---
+
+## Use NeqSim in Python
+
+```bash
+pip install neqsim
 ```
 
-3. Build your project as normal (`mvn clean install`). Maven will fetch NeqSim from the GitHub Maven package repository using the credentials configured in step 1.
+NeqSim Python gives you direct access to the full Java API via the `jneqsim` gateway. All Java classes are available, including thermodynamics, process equipment, PVT, standards, and more.
 
-### Using NeqSim from Maven Central
-If you prefer to pull NeqSim from Maven Central, you only need to declare the dependency because Maven Central is enabled by default in Maven builds:
+```python
+from neqsim import jneqsim
 
-```xml
-<dependencies>
-  <dependency>
-    <groupId>com.equinor.neqsim</groupId>
-    <artifactId>neqsim</artifactId>
-    <version>3.1.2</version>
-  </dependency>
-</dependencies>
+# All Java classes accessible through jneqsim
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+Stream = jneqsim.process.equipment.stream.Stream
+# ... 200+ classes available
 ```
 
-Run your Maven build (`mvn clean install`) and NeqSim will be resolved from the Central repository without additional repository configuration.
+Explore **30+ ready-to-run Jupyter notebooks** in [`examples/notebooks/`](examples/notebooks/).
 
-## Getting Started as a NeqSim Java developer
+### Other language bindings
 
-See the [NeqSim Java Wiki](https://github.com/equinor/neqsim/wiki) for how to use the NeqSim API.
-Additional pages are available in the [local wiki](docs/wiki/index.md).
-NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file. Learn and ask questions in [Discussions for use and development of NeqSim](https://github.com/equinor/neqsim/discussions).
+| Language | Repository |
+|----------|-----------|
+| Python | [`pip install neqsim`](https://github.com/equinor/neqsimpython) |
+| MATLAB | [equinor/neqsimmatlab](https://github.com/equinor/neqsimmatlab) |
+| .NET (C#) | [equinor/neqsimcapeopen](https://github.com/equinor/neqsimcapeopen) |
 
-### Initial setup
+---
 
-The NeqSim source code is downloaded by cloning the library to your local computer (alternatively fork it to your private repository). The following commands are dependent on a local installation of [GIT](https://git-scm.com/) and [Maven](https://maven.apache.org/).
+## Develop & Contribute
+
+### Clone and build
 
 ```bash
 git clone https://github.com/equinor/neqsim.git
 cd neqsim
-./mvnw install
+./mvnw install        # Linux/macOS
+mvnw.cmd install      # Windows
 ```
-> **Note**
-> The maven wrapper command is dependent on your OS, for Unix use: ```./mvnw```
-> Windows:
-> ```mvnw.cmd ```
 
-An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).
+### Run tests
 
-### Opening in VS Code
+```bash
+./mvnw test                                    # all tests
+./mvnw test -Dtest=SeparatorTest               # single class
+./mvnw test -Dtest=SeparatorTest#testTwoPhase  # single method
+./mvnw checkstyle:check spotbugs:check pmd:check  # static analysis
+```
 
-The repository contains a ready‑to‑use [dev container](.devcontainer/) configuration. After cloning
-the project you can open it in VS Code with container support enabled:
+### Open in VS Code
+
+The repository includes a ready-to-use [dev container](.devcontainer/); just open the repo in VS Code with container support:
 
 ```bash
 git clone https://github.com/equinor/neqsim.git
 cd neqsim
-# Open in VS Code with container support
 code .
 ```
 
-The container image comes with Maven and the recommended extensions already installed.
+### Architecture
 
-## Running the tests
+```mermaid
+graph TB
+    subgraph core["NeqSim Core (Java 8+)"]
+        THERMO["Thermodynamics<br/>60+ EOS models"]
+        PROCESS["Process Simulation<br/>33+ equipment types"]
+        PVT["PVT Simulation"]
+        MECH["Mechanical Design<br/>& Standards"]
+    end
 
-The test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsim/tree/master/src/test). Test code should be written for all new code added to the project, and all tests have to pass before merging into the master branch.  
+    subgraph access["Access Layers"]
+        PYTHON["Python / Jupyter<br/>pip install neqsim"]
+        JAVA["Java / Maven<br/>Direct API"]
+        MCP["MCP Server (Java 17+)<br/>LLM integration"]
+        AGENTS["AI Agents<br/>VS Code Copilot"]
+    end
 
-Test coverage can be examined using [jacoco](https://www.eclemma.org/jacoco/) from maven.  
-Generate a coverage report using `./mvnw jacoco:prepare-agent test install jacoco:report` and see results in target/site/jacoco/index.html.
-Run `./mvnw checkstyle:check` to verify that your code follows the project's formatting rules.
-> **Note**
-> The maven wrapper command is dependent on your OS, for Unix use: ```./mvnw```
-> Windows:
-> ```mvnw.cmd ```
+    PYTHON --> THERMO
+    PYTHON --> PROCESS
+    JAVA --> THERMO
+    JAVA --> PROCESS
+    MCP --> THERMO
+    MCP --> PROCESS
+    AGENTS --> MCP
+    AGENTS --> PYTHON
+```
 
+#### Which entry point should I use?
 
-## Deployment
+| I want to... | Use | Requires |
+|---|---|---|
+| Quick property lookup via LLM | [MCP Server](neqsim-mcp-server/) + any LLM client | Java 17+ (or Docker) |
+| Python scripting / Jupyter notebooks | `pip install neqsim` | Python 3.8+, JVM |
+| Embed in a Java application | Maven dependency | Java 8+ |
+| Full engineering study with reports | `@solve.task` agent in VS Code | VS Code + GitHub Copilot |
+| .NET / MATLAB integration | [Language bindings](#other-language-bindings) | See linked repos |
 
-The NeqSim source code is compiled and distributed as a Java library. [NeqSim releases](https://github.com/equinor/neqsim/releases) are available for download from the release pages.
+#### Java version matrix
 
-## Built With
+| Component | Java Version | Notes |
+|---|---|---|
+| **NeqSim core library** | 8+ | All thermodynamics, process equipment, PVT |
+| **MCP server** | 17+ | Quarkus-based; thin wrapper around core |
+| **Python users** | No Java coding | JVM bundled via jpype |
+| **Running prebuilt MCP jar** | 17+ | Download from [releases](https://github.com/equinor/neqsim/releases) |
 
-[Maven](https://maven.apache.org/) - Dependency Management
+#### Core modules
 
-## Contributing
-See the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests. An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).
-See [docs/DEVELOPER_SETUP.md](docs/DEVELOPER_SETUP.md) for a summary of how to clone the project, build it and run the tests. For more details see the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests. An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).
-Pull requests will only be accepted if all tests and `./mvnw checkstyle:check` pass.
+| Module | Package | Purpose |
+|--------|---------|---------|
+| **Thermodynamics** | `thermo/` | 60+ EOS implementations, flash calculations, phase equilibria |
+| **Physical properties** | `physicalproperties/` | Density, viscosity, thermal conductivity, surface tension |
+| **Fluid mechanics** | `fluidmechanics/` | Single- and multiphase pipe flow, pipeline networks |
+| **Process equipment** | `process/equipment/` | 33+ unit operations (separators, compressors, HX, valves, ...) |
+| **Chemical reactions** | `chemicalreactions/` | Equilibrium and kinetic reaction models |
+| **Parameter fitting** | `statistics/` | Regression, parameter estimation, Monte Carlo |
+| **Process simulation** | `process/` | Flowsheet assembly, dynamic simulation, recycle/adjuster coordination |
 
-For guidance on where to place production code, tests, and resources, see [docs/contributing-structure.md](docs/contributing-structure.md).
+For details see [docs/modules.md](docs/modules.md).
 
-## Discussion forum
+### Contributing
 
-Questions related to neqsim can be posted in the [github discussion pages](https://github.com/equinor/neqsim/discussions).
+We welcome contributions of all kinds: bug fixes, new models, examples, documentation, and notebook recipes.
+**AI-assisted PRs are first-class contributions**; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Versioning
+**New here?** Three commands to get started:
 
-NeqSim uses [SemVer](https://semver.org/) for versioning.
+```bash
+git clone https://github.com/equinor/neqsim.git && cd neqsim
+pip install -e devtools/    # one-time: registers the `neqsim` command
+neqsim onboard             # interactive setup (Java, Maven, build, Python, agents)
+```
 
-## Authors and contact persons
+> **Tip:** Using a virtual environment (`python -m venv .venv` then activate it) avoids
+> PATH issues on all platforms. See [devtools/README.md](devtools/README.md#troubleshooting-neqsim-not-found)
+> if `neqsim` is not found, or use `python -m neqsim_cli` as a fallback.
 
-Even Solbraa (esolbraa@gmail.com),  Marlene Louise Lund
+Or skip local setup entirely: **[Open in GitHub Codespaces](https://github.com/codespaces/new?hide_repo_select=true&ref=master&repo=equinor/neqsim)**, with everything pre-installed in the browser.
 
-## Licence
+Then explore and contribute:
 
-NeqSim is distributed under the [Apache-2.0](https://github.com/equinor/neqsim/blob/master/LICENSE) licence.
+```bash
+neqsim try                 # interactive playground - experiment with NeqSim instantly
+neqsim contribute          # guided wizard - picks the right path for you
+neqsim doctor              # quick diagnostic if something isn't working
+```
 
-## Acknowledgments
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Code of conduct, PR process, AI-assisted contributions
+- [VISION_AGENTS.md](VISION_AGENTS.md) - What belongs in the agentic system (core vs. community)
+- [Developer setup guide](docs/DEVELOPER_SETUP.md) - Build, test, and project structure
+- [Contributing structure](docs/contributing-structure.md) - Where to place code, tests, and resources
 
-A number of master and PhD students at NTNU have contributed to development of NeqSim. We greatly acknowledge their contributions.
+#### Where to start
 
-## NeqSim modules
+**Skills** are markdown files containing engineering knowledge (code patterns, design rules, troubleshooting tips) that AI agents load automatically when solving related tasks. Contributing a skill is the easiest way to make the agentic system smarter, with no Java required.
 
-NeqSim is built upon seven base modules, each covering a key part of the library:
+| # | First Contribution | Difficulty | What to do |
+|---|---|---|---|
+| 1 | **Contribute a skill** | Easy | Write a SKILL.md with domain knowledge - `neqsim new-skill "name"` ([guide](.github/skills/README.md#how-to-contribute-a-skill), [example skill](.github/skills/neqsim-input-validation/SKILL.md)) |
+| 2 | Add a NIST validation benchmark | Easy | Compare NeqSim flash results to NIST data in `docs/benchmarks/` |
+| 3 | Create a Jupyter notebook example | Medium | Add a worked example to `examples/notebooks/` |
+| 4 | Add an MCP example to the catalog | Easy | Add a new entry in `ExampleCatalog.java` |
+| 5 | Fix a broken doc link | Easy | Search `docs/**/*.md` for dead links and fix them |
+| 6 | Add a unit test for existing equipment | Medium | Add tests under `src/test/java/neqsim/` |
 
-1. **Thermodynamic routines** – phase-equilibrium models, equation-of-state implementations and flash calculations.
-2. **Physical properties routines** – transport and thermophysical property calculations such as density and viscosity.
-3. **Fluid mechanic routines** – models for single- and multiphase flow in pipes and networks.
-4. **Unit operations** – reusable models of separators, heat exchangers and other equipment.
-5. **Chemical reactions routines** – equilibrium and kinetic reaction calculations.
-6. **Parameter fitting routines** – tools for estimating model parameters from experimental data.
-7. **Process simulation routines** – framework for assembling unit operations into steady-state or dynamic flowsheets.
+#### Community Skill Catalog
 
-For a deeper introduction to each module, see [docs/modules.md](docs/modules.md).
+Browse and install community-contributed skills, or publish your own:
 
-## File System
+```bash
+neqsim skill list                    # browse the catalog
+neqsim skill install <name>          # install a skill
+neqsim skill publish user/repo-name  # publish yours (creates a draft PR)
+```
 
->neqsim/: main library with all modules
->
->neqsim/thermo/: Main path for thermodynamic routines
->neqsim/thermo/util/examples/: examples of use of Thermodynamic Models and Routines
->
->neqsim/thermodynamicoperation: Main path for flash routines (TPflash, phase envelopes, etc.)
->neqsim/thermodynamicoperation/util/example/: examples of use of thermodynamic operations (eg. flash calculations etc.)
->
->neqsim/physicalproperties: Main path for Physical Property methods
->neqsim/physicalproperties/util/examples/: Examples of use of physical properties calculations
->
->neqsim/physicalproperties: Main path for Physical Property methods
->neqsim/physicalproperties/util/examples/: Examples of use of physical properties calculations
->
->neqsim/processsimulation: Main path for Process Simulation Calculations
->neqsim/processsimulation/util/examples/: Examples of use of Process Simulation calculations
->
->changelog.txt : History of what changed between each version.
->license.txt: license document
+See the [Skills Guide](docs/integration/skills_guide.md) for the full walkthrough,
+[community-skills.yaml](community-skills.yaml) for the catalog, and
+[.github/skills/README.md](.github/skills/README.md) for the quick contribution guide.
 
-## Toolboxes
+All tests and `./mvnw checkstyle:check` must pass before a PR is merged.
 
-See [NeqSim homepage](https://equinor.github.io/neqsimhome/). NeqSim toolboxes are available via GitHub for alternative programming languages.
+---
 
-* [Matlab](https://github.com/equinor/neqsimmatlab)
-* [Python](https://github.com/equinor/neqsimpython)
-* [.NET (C#)](https://github.com/equinor/neqsimcapeopen)
+## Documentation & Resources
 
-## Related open source projects
+| Resource | Link |
+|----------|------|
+| **User documentation** | [equinor.github.io/neqsim](https://equinor.github.io/neqsim/) |
+| **Benchmark gallery** | [docs/benchmarks/](docs/benchmarks/index.md) - validation against NIST, published data |
+| **Reference manual index** | [REFERENCE_MANUAL_INDEX.md](docs/REFERENCE_MANUAL_INDEX.md) (350+ pages) |
+| **MCP tool contract** | [MCP_CONTRACT.md](neqsim-mcp-server/MCP_CONTRACT.md) - stable API for agent builders |
+| **JavaDoc API** | [JavaDoc](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html) |
+| **Jupyter notebooks** | [examples/notebooks/](examples/notebooks/) (30+ examples) |
+| **Discussion forum** | [GitHub Discussions](https://github.com/equinor/neqsim/discussions) |
+| **Releases** | [GitHub Releases](https://github.com/equinor/neqsim/releases) |
+| **NeqSim homepage** | [equinor.github.io/neqsimhome](https://equinor.github.io/neqsimhome/) |
 
-[NeqSim Python/Colab](https://github.com/EvenSol/NeqSim-Colab)
+---
+
+## Authors
+
+Even Solbraa (esolbraa@gmail.com), Marlene Louise Lund
+
+NeqSim development was initiated at [NTNU](https://www.ntnu.edu/employees/even.solbraa). A number of master and PhD students have contributed to its development, and we greatly acknowledge their contributions.
+
+## License
+
+[Apache-2.0](LICENSE)

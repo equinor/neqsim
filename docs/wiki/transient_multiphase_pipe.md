@@ -1,3 +1,8 @@
+---
+title: "Transient Multiphase Pipe Model"
+description: "The `TransientPipe` class provides a 1D transient multiphase (gas-liquid) flow simulator for pipelines. It uses the drift-flux formulation combined with mechanistic flow regime detection to model comp..."
+---
+
 # Transient Multiphase Pipe Model
 
 ## Overview
@@ -180,8 +185,8 @@ pipe.setElevationProfile(elevations);
 pipe.run();
 
 // Check for liquid accumulation
-var accumTracker = pipe.getAccumulationTracker();
-for (var zone : accumTracker.getAccumulationZones()) {
+AccumulationTracker accumTracker = pipe.getAccumulationTracker();
+for (AccumulationZone zone : accumTracker.getAccumulationZones()) {
     System.out.println("Accumulation at position: " + zone.getPosition());
     System.out.println("Accumulated volume: " + zone.getAccumulatedVolume() + " m³");
 }
@@ -315,14 +320,14 @@ String stats = slugTracker.getStatisticsString();
 System.out.println(stats);
 ```
 
-**Note:** Both `TransientPipe` (drift-flux) and `TwoFluidPipe` (two-fluid) use the same `SlugTracker` and `LiquidAccumulationTracker` components, but may predict different slug frequencies due to their underlying holdup models. See the [Two-Fluid Model documentation](two_fluid_model.md#comparison-with-drift-flux-model-transientpipe) for a detailed comparison.
+**Note:** Both `TransientPipe` (drift-flux) and `TwoFluidPipe` (two-fluid) use the same `SlugTracker` and `LiquidAccumulationTracker` components, but may predict different slug frequencies due to their underlying holdup models. See the [Two-Fluid Model documentation](two_fluid_model#comparison-with-drift-flux-model-transientpipe) for a detailed comparison.
 
 ### Accumulation Zones
 
 ```java
 LiquidAccumulationTracker tracker = pipe.getAccumulationTracker();
 
-for (var zone : tracker.getAccumulationZones()) {
+for (AccumulationZone zone : tracker.getAccumulationZones()) {
     System.out.println("Zone position: " + zone.getPosition() + " m");
     System.out.println("Accumulated volume: " + zone.getAccumulatedVolume() + " m³");
     System.out.println("Current holdup: " + zone.getCurrentHoldup());
@@ -581,6 +586,6 @@ System.out.println("TransientPipe: " + dpTransient + " bar");
 
 ## See Also
 
-- [Pipeline Flow Equations](pipeline_flow_equations.md)
-- [Pipeline Model Recommendations](pipeline_model_recommendations.md)
-- [Process Simulation](advanced_process_simulation.md)
+- [Pipeline Flow Equations](pipeline_flow_equations)
+- [Pipeline Model Recommendations](pipeline_model_recommendations)
+- [Process Simulation](advanced_process_simulation)

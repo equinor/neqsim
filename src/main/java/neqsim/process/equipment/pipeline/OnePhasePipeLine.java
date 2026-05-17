@@ -33,7 +33,7 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Example: Gas Switching Simulation</h2>
- * 
+ *
  * <pre>{@code
  * // Create pipeline
  * OnePhasePipeLine pipe = new OnePhasePipeLine("GasPipe", inletStream);

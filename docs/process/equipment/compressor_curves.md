@@ -1,3 +1,8 @@
+---
+title: Compressor Curves and Performance Maps
+description: Detailed documentation for compressor performance curves in NeqSim, including multi-speed and single-speed compressor handling, automatic curve generation, and predefined templates.
+---
+
 # Compressor Curves and Performance Maps
 
 Detailed documentation for compressor performance curves in NeqSim, including multi-speed and single-speed compressor handling, automatic curve generation, and predefined templates.
@@ -2718,5 +2723,5 @@ print(str(comp.getOperatingHistory().generateSummary()))
 
 ## Related Documentation
 
-- [Compressor Equipment](compressors.md) - Basic compressor usage
-- [Process Simulation](../../simulation/README.md) - Process simulation overview
+- [Compressor Equipment](compressors) - Basic compressor usage
+- [Process Simulation](../../simulation/) - Process simulation overview

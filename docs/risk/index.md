@@ -1,0 +1,203 @@
+---
+layout: default
+title: Risk Simulation Framework
+nav_order: 7
+description: "NeqSim risk and reliability simulation framework. Covers equipment failure modeling, Monte Carlo simulation, bow-tie analysis, SIS integration, risk matrix, and production impact analysis."
+---
+
+# Risk Simulation Framework Documentation
+
+This documentation covers NeqSim's comprehensive **Operational Risk Simulation Framework** for equipment failure analysis, production impact assessment, and process topology analysis.
+
+---
+
+## 📚 Documentation Structure
+
+### Core Framework
+
+| Section | Description |
+|---------|-------------|
+| [Overview](overview) | Framework architecture and key concepts |
+| [Equipment Failure Modeling](equipment-failure) | Failure modes, types, and reliability data |
+| [Risk Matrix](risk-matrix) | 5×5 risk matrix with probability, consequence, and cost |
+| [Monte Carlo Simulation](monte-carlo) | Stochastic simulation for availability analysis |
+| [Production Impact Analysis](production-impact) | Analyzing failure effects on production |
+| [Degraded Operation](degraded-operation) | Optimizing plant operation during outages |
+| [Process Topology](topology) | Graph structure extraction and analysis |
+| [STID & Functional Location](stid-tagging) | Equipment tagging following ISO 14224 |
+| [Dependency Analysis](dependency-analysis) | Cascade failure and cross-installation effects |
+| [Mathematical Reference](mathematical-reference) | Formulas and statistical methods |
+| [API Reference](api-reference) | Complete Java API documentation |
+
+### Advanced Risk Framework (P1-P7)
+
+| Section | Description |
+|---------|-------------|
+| [**Advanced Framework Overview**](./ | Overview of all 7 priority packages |
+| [P1: Dynamic Simulation](dynamic-simulation) | Monte Carlo with transient modeling |
+| [P2: SIS/SIF Integration](sis-integration) | IEC 61508/61511, LOPA, SIL verification |
+| [P4: Bow-Tie Analysis](bowtie-analysis) | Barrier analysis, threat/consequence visualization |
+| [P6: Condition-Based Reliability](condition-based) | Health monitoring, RUL estimation |
+
+---
+
+## 🚀 Quick Start
+
+### Java
+
+```java
+import neqsim.process.safety.risk.*;
+import neqsim.process.util.topology.*;
+import neqsim.process.equipment.failure.*;
+
+// Create process system
+ProcessSystem process = new ProcessSystem();
+// ... add equipment ...
+
+// Risk analysis
+RiskMatrix matrix = new RiskMatrix(process);
+matrix.buildRiskMatrix();
+System.out.println(matrix.toVisualization());
+
+// Monte Carlo simulation
+OperationalRiskSimulator simulator = new OperationalRiskSimulator(process);
+simulator.addEquipmentReliability("Compressor A", 0.5, 24.0);
+OperationalRiskResult result = simulator.runSimulation(10000, 365);
+System.out.println("Availability: " + result.getAvailability() + "%");
+
+// Topology analysis
+ProcessTopologyAnalyzer topology = new ProcessTopologyAnalyzer(process);
+topology.buildTopology();
+topology.setFunctionalLocation("Compressor A", "1775-KA-23011A");
+```
+
+### Advanced Risk Framework (Python)
+
+```python
+# Dynamic simulation with transients
+from neqsim.process.safety.risk.dynamic import DynamicRiskSimulator
+
+sim = DynamicRiskSimulator("Platform Risk")
+sim.setBaseProductionRate(100.0)
+sim.addEquipment("Compressor", 8760, 72, 1.0)
+sim.setShutdownProfile(DynamicRiskSimulator.RampProfile.S_CURVE)
+result = sim.runSimulation()
+print(f"Transient losses: {result.getTransientLoss().getTotalTransientLoss()}")
+
+# SIS/LOPA Analysis
+from neqsim.process.safety.risk.sis import SISIntegratedRiskModel, SafetyInstrumentedFunction
+
+model = SISIntegratedRiskModel("Overpressure Protection")
+model.setInitiatingEventFrequency(0.1)
+model.addIPL("BPCS Alarm", 10)
+model.addIPL("Operator", 10)
+sif = SafetyInstrumentedFunction("SIF-001", "PAHH")
+sif.setSILTarget(2)
+model.addSIF(sif)
+lopa = model.performLOPA()
+print(f"LOPA: {'PASS' if lopa.isAcceptable() else 'FAIL'}")
+```
+
+### Python (neqsim-python)
+
+```python
+import jpype
+import neqsim
+
+from neqsim.process.safety.risk import RiskMatrix, OperationalRiskSimulator
+from neqsim.process.util.topology import ProcessTopologyAnalyzer, FunctionalLocation
+
+# Build topology
+topology = ProcessTopologyAnalyzer(process)
+topology.buildTopology()
+
+# STID tagging
+topology.setFunctionalLocation("Compressor A", "1775-KA-23011A")
+
+# Risk matrix
+matrix = RiskMatrix()
+matrix.addRiskItem("Compressor Trip",
+    RiskMatrix.ProbabilityCategory.POSSIBLE,
+    RiskMatrix.ConsequenceCategory.MAJOR,
+    500000.0)
+print(matrix.toVisualization())
+```
+
+---
+
+## 📊 Framework Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    NeqSim Process Simulation                        │
+│                         ProcessSystem                               │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+           ┌───────────────────┼───────────────────┐
+           ▼                   ▼                   ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│  Equipment      │  │  Production     │  │  Process        │
+│  Failure        │  │  Impact         │  │  Topology       │
+│  Modeling       │  │  Analysis       │  │  Analysis       │
+└────────┬────────┘  └────────┬────────┘  └────────┬────────┘
+         │                    │                    │
+         ▼                    ▼                    ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│  Reliability    │  │  Degraded       │  │  Dependency     │
+│  Data           │  │  Operation      │  │  Analysis       │
+│  (OREDA)        │  │  Optimizer      │  │                 │
+└────────┬────────┘  └────────┬────────┘  └────────┬────────┘
+         │                    │                    │
+         └────────────────────┼────────────────────┘
+                              ▼
+              ┌───────────────────────────────┐
+              │      Risk Assessment          │
+              │  ┌─────────────────────────┐  │
+              │  │    Monte Carlo          │  │
+              │  │    Simulation           │  │
+              │  └─────────────────────────┘  │
+              │  ┌─────────────────────────┐  │
+              │  │    Risk Matrix          │  │
+              │  │    (5×5 Visualization)  │  │
+              │  └─────────────────────────┘  │
+              └───────────────────────────────┘
+```
+
+---
+
+## 📦 Package Structure
+
+```
+neqsim.process
+├── equipment.failure
+│   ├── EquipmentFailureMode      - Failure type definitions
+│   ├── ReliabilityDataSource     - OREDA reliability data
+│   └── package-info.java
+├── safety.risk
+│   ├── OperationalRiskSimulator  - Monte Carlo engine
+│   ├── OperationalRiskResult     - Simulation results
+│   └── RiskMatrix                - 5×5 risk matrix
+└── util
+    ├── optimizer
+    │   ├── ProductionImpactAnalyzer   - Impact analysis
+    │   ├── ProductionImpactResult     - Impact results
+    │   ├── DegradedOperationOptimizer - Degraded optimization
+    │   └── DegradedOperationResult    - Optimization results
+    └── topology
+        ├── ProcessTopologyAnalyzer    - Graph extraction
+        ├── FunctionalLocation         - STID parsing
+        ├── DependencyAnalyzer         - Cascade analysis
+        └── package-info.java
+```
+
+---
+
+## 🔗 Related Resources
+
+- [NeqSim Main Documentation](../index)
+- [Process Simulation Guide](../process/)
+- [Advanced Risk Framework Tutorial (Jupyter)](../examples/AdvancedRiskFramework_Tutorial.ipynb)
+- [Examples Index](../examples/index)
+- [OREDA Handbook](https://www.oreda.com/)
+- [ISO 14224 - Petroleum and natural gas industries](https://www.iso.org/standard/64076.html)
+- [NORSOK Z-013 - Risk and emergency preparedness assessment](https://www.standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/z-regularity--emergency/z-0132/)

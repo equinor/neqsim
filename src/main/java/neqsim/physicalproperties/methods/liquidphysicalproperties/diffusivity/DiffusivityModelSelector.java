@@ -46,6 +46,10 @@ public class DiffusivityModelSelector {
     SIDDIQI_LUCAS,
     /** Hayduk-Minhas for hydrocarbon systems. */
     HAYDUK_MINHAS,
+    /** Wilke-Chang for general liquid systems. */
+    WILKE_CHANG,
+    /** Tyn-Calus for non-polar / hydrocarbon systems. */
+    TYN_CALUS,
     /** High-pressure corrected model. */
     HIGH_PRESSURE_CORRECTED,
     /** Specialized amine diffusivity. */
@@ -123,6 +127,10 @@ public class DiffusivityModelSelector {
         return new SiddiqiLucasMethod(liquidPhase);
       case HAYDUK_MINHAS:
         return new HaydukMinhasDiffusivity(liquidPhase);
+      case WILKE_CHANG:
+        return new WilkeChangDiffusivity(liquidPhase);
+      case TYN_CALUS:
+        return new TynCalusDiffusivity(liquidPhase);
       case HIGH_PRESSURE_CORRECTED:
         return new HighPressureDiffusivity(liquidPhase);
       case AMINE:

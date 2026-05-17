@@ -31,7 +31,23 @@ public enum GERG2008Type {
    * Phase Equilibria, 557, 113411.
    * </p>
    */
-  HYDROGEN_ENHANCED("GERG-2008-H2", "GERG-2008 with improved hydrogen parameters");
+  HYDROGEN_ENHANCED("GERG-2008-H2", "GERG-2008 with improved hydrogen parameters"),
+
+  /**
+   * GERG-2008-NH3 equation of state extended with ammonia as the 22nd component.
+   *
+   * <p>
+   * Reference: Neumann, T., Herrig, S., Bell, I.H., Beckmüller, R., Span, R., Thol, M. (2020).
+   * "Ammonia as a constituent in natural gases - Tables for the GERG-2008 mixture model". Fluid
+   * Phase Equilibria, 511, 112496.
+   * </p>
+   *
+   * <p>
+   * Pure ammonia EOS: Tillner-Roth, R., Harms-Watzenberg, F., Baehr, H.D. (1993). "A Fundamental
+   * Equation of State for Ammonia". DKV-Tagungsbericht, 20, 167-181.
+   * </p>
+   */
+  AMMONIA_EXTENDED("GERG-2008-NH3", "GERG-2008 extended with ammonia (22nd component)");
 
   private final String name;
   private final String description;

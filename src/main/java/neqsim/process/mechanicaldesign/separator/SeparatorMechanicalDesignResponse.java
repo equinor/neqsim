@@ -6,8 +6,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
  * Response class for separator mechanical design JSON export.
  *
  * <p>
- * Extends {@link MechanicalDesignResponse} with separator-specific parameters
- * including vessel
+ * Extends {@link MechanicalDesignResponse} with separator-specific parameters including vessel
  * sizing, internals, and process design data per API 12J and ASME VIII.
  * </p>
  *
@@ -131,6 +130,47 @@ public class SeparatorMechanicalDesignResponse extends MechanicalDesignResponse 
   /** Effective length for gas separation [m]. */
   private double effectiveLengthGas;
 
+  // ============================================================================
+  // Process Design Parameters (added for TR3500 compliance)
+  // ============================================================================
+
+  /** Foam allowance factor. */
+  private double foamAllowanceFactor;
+
+  /** Design droplet diameter for gas-liquid separation [um]. */
+  private double dropletDiameterGasLiquid;
+
+  /** Design droplet diameter for liquid-liquid separation [um]. */
+  private double dropletDiameterLiquidLiquid;
+
+  /** Design pressure margin factor. */
+  private double designPressureMarginFactor;
+
+  /** Design temperature margin [C]. */
+  private double designTemperatureMarginC;
+
+  /** Maximum gas velocity [m/s]. */
+  private double maxGasVelocity;
+
+  /** Maximum liquid velocity [m/s]. */
+  private double maxLiquidVelocity;
+
+  /** Demister pressure drop [mbar]. */
+  private double demisterPressureDrop;
+
+  /** Demister void fraction. */
+  private double demisterVoidFraction;
+
+  /** Minimum oil retention time [min]. */
+  private double minOilRetentionTime;
+
+  /** Minimum water retention time [min]. */
+  private double minWaterRetentionTime;
+
+  // ============================================================================
+  // Liquid Level Design Parameters (added January 2026)
+  // ============================================================================
+
   /** High-High Liquid Level fraction of ID. */
   private double hhllFraction;
 
@@ -154,6 +194,41 @@ public class SeparatorMechanicalDesignResponse extends MechanicalDesignResponse 
 
   /** Low Interface Level fraction of ID. */
   private double lilFraction;
+
+  // ============================================================================
+  // Entrainment Performance Results
+  // ============================================================================
+
+  /** Whether detailed entrainment calculation was used. */
+  private boolean detailedEntrainmentUsed;
+  /** Oil-in-gas entrainment fraction [0-1]. */
+  private double oilInGasFraction;
+  /** Water-in-gas entrainment fraction [0-1]. */
+  private double waterInGasFraction;
+  /** Gas-in-oil carry-under fraction [0-1]. */
+  private double gasInOilFraction;
+  /** Gas-in-water carry-under fraction [0-1]. */
+  private double gasInWaterFraction;
+  /** Oil-in-water entrainment fraction [0-1]. */
+  private double oilInWaterFraction;
+  /** Water-in-oil entrainment fraction [0-1]. */
+  private double waterInOilFraction;
+  /** Overall gas-liquid separation efficiency [0-1]. */
+  private double overallGasLiquidEfficiency;
+  /** Mist eliminator efficiency [0-1]. */
+  private double mistEliminatorEfficiency;
+  /** K-factor utilization (actual/design) [0-1]. */
+  private double kFactorUtilization;
+  /** Whether the mist eliminator is flooded. */
+  private boolean mistEliminatorFlooded;
+  /** Liquid-in-gas calibration factor. */
+  private double liquidInGasCalibrationFactor = 1.0;
+  /** Gas carry-under calibration factor. */
+  private double gasCarryUnderCalibrationFactor = 1.0;
+  /** Liquid-liquid calibration factor. */
+  private double liquidLiquidCalibrationFactor = 1.0;
+  /** Detailed entrainment JSON (transient, not serialized in response). */
+  private transient String entrainmentDetailJson;
 
   /** High-High Liquid Level [m]. */
   private double hhll;
@@ -187,7 +262,6 @@ public class SeparatorMechanicalDesignResponse extends MechanicalDesignResponse 
    * Default constructor.
    */
   public SeparatorMechanicalDesignResponse() {
-    super();
     setEquipmentType("Separator");
     setDesignStandard("ASME VIII / API 12J");
   }
@@ -253,6 +327,36 @@ public class SeparatorMechanicalDesignResponse extends MechanicalDesignResponse 
     this.hil = mecDesign.getHIL();
     this.nil = mecDesign.getNIL();
     this.lil = mecDesign.getLIL();
+
+    // Populate process design parameters
+    this.foamAllowanceFactor = mecDesign.getFoamAllowanceFactor();
+    this.dropletDiameterGasLiquid = mecDesign.getDropletDiameterGasLiquid();
+    this.dropletDiameterLiquidLiquid = mecDesign.getDropletDiameterLiquidLiquid();
+    this.designPressureMarginFactor = mecDesign.getDesignPressureMargin();
+    this.designTemperatureMarginC = mecDesign.getDesignTemperatureMarginC();
+    this.maxGasVelocity = mecDesign.getMaxGasVelocityLimit();
+    this.maxLiquidVelocity = mecDesign.getMaxLiquidVelocity();
+    this.demisterPressureDrop = mecDesign.getDemisterPressureDrop();
+    this.demisterVoidFraction = mecDesign.getDemisterVoidFraction();
+    this.minOilRetentionTime = mecDesign.getMinOilRetentionTime();
+    this.minWaterRetentionTime = mecDesign.getMinWaterRetentionTime();
+
+    // Populate entrainment performance results
+    this.detailedEntrainmentUsed = mecDesign.isDetailedEntrainmentUsed();
+    this.oilInGasFraction = mecDesign.getOilInGasFraction();
+    this.waterInGasFraction = mecDesign.getWaterInGasFraction();
+    this.gasInOilFraction = mecDesign.getGasInOilFraction();
+    this.gasInWaterFraction = mecDesign.getGasInWaterFraction();
+    this.oilInWaterFraction = mecDesign.getOilInWaterFraction();
+    this.waterInOilFraction = mecDesign.getWaterInOilFraction();
+    this.overallGasLiquidEfficiency = mecDesign.getOverallGasLiquidEfficiency();
+    this.mistEliminatorEfficiency = mecDesign.getMistEliminatorEfficiency();
+    this.kFactorUtilization = mecDesign.getKFactorUtilization();
+    this.mistEliminatorFlooded = mecDesign.isMistEliminatorFlooded();
+    this.liquidInGasCalibrationFactor = mecDesign.getLiquidInGasCalibrationFactor();
+    this.gasCarryUnderCalibrationFactor = mecDesign.getGasCarryUnderCalibrationFactor();
+    this.liquidLiquidCalibrationFactor = mecDesign.getLiquidLiquidCalibrationFactor();
+    this.entrainmentDetailJson = mecDesign.getEntrainmentDetailJson();
   }
 
   // ============================================================================
@@ -521,5 +625,161 @@ public class SeparatorMechanicalDesignResponse extends MechanicalDesignResponse 
 
   public void setGasDensity(double gasDensity) {
     this.gasDensity = gasDensity;
+  }
+
+  // ============================================================================
+  // Getters and Setters for Process Design Parameters
+  // ============================================================================
+
+  public double getFoamAllowanceFactor() {
+    return foamAllowanceFactor;
+  }
+
+  public void setFoamAllowanceFactor(double foamAllowanceFactor) {
+    this.foamAllowanceFactor = foamAllowanceFactor;
+  }
+
+  public double getDropletDiameterGasLiquid() {
+    return dropletDiameterGasLiquid;
+  }
+
+  public void setDropletDiameterGasLiquid(double dropletDiameterGasLiquid) {
+    this.dropletDiameterGasLiquid = dropletDiameterGasLiquid;
+  }
+
+  public double getDropletDiameterLiquidLiquid() {
+    return dropletDiameterLiquidLiquid;
+  }
+
+  public void setDropletDiameterLiquidLiquid(double dropletDiameterLiquidLiquid) {
+    this.dropletDiameterLiquidLiquid = dropletDiameterLiquidLiquid;
+  }
+
+  public double getDesignPressureMarginFactor() {
+    return designPressureMarginFactor;
+  }
+
+  public void setDesignPressureMarginFactor(double designPressureMarginFactor) {
+    this.designPressureMarginFactor = designPressureMarginFactor;
+  }
+
+  public double getDesignTemperatureMarginC() {
+    return designTemperatureMarginC;
+  }
+
+  public void setDesignTemperatureMarginC(double designTemperatureMarginC) {
+    this.designTemperatureMarginC = designTemperatureMarginC;
+  }
+
+  public double getMaxGasVelocity() {
+    return maxGasVelocity;
+  }
+
+  public void setMaxGasVelocity(double maxGasVelocity) {
+    this.maxGasVelocity = maxGasVelocity;
+  }
+
+  public double getMaxLiquidVelocity() {
+    return maxLiquidVelocity;
+  }
+
+  public void setMaxLiquidVelocity(double maxLiquidVelocity) {
+    this.maxLiquidVelocity = maxLiquidVelocity;
+  }
+
+  public double getDemisterPressureDrop() {
+    return demisterPressureDrop;
+  }
+
+  public void setDemisterPressureDrop(double demisterPressureDrop) {
+    this.demisterPressureDrop = demisterPressureDrop;
+  }
+
+  public double getDemisterVoidFraction() {
+    return demisterVoidFraction;
+  }
+
+  public void setDemisterVoidFraction(double demisterVoidFraction) {
+    this.demisterVoidFraction = demisterVoidFraction;
+  }
+
+  public double getMinOilRetentionTime() {
+    return minOilRetentionTime;
+  }
+
+  public void setMinOilRetentionTime(double minOilRetentionTime) {
+    this.minOilRetentionTime = minOilRetentionTime;
+  }
+
+  public double getMinWaterRetentionTime() {
+    return minWaterRetentionTime;
+  }
+
+  public void setMinWaterRetentionTime(double minWaterRetentionTime) {
+    this.minWaterRetentionTime = minWaterRetentionTime;
+  }
+
+  // ============================================================================
+  // Getters for Entrainment Performance Results
+  // ============================================================================
+
+  public boolean isDetailedEntrainmentUsed() {
+    return detailedEntrainmentUsed;
+  }
+
+  public double getOilInGasFraction() {
+    return oilInGasFraction;
+  }
+
+  public double getWaterInGasFraction() {
+    return waterInGasFraction;
+  }
+
+  public double getGasInOilFraction() {
+    return gasInOilFraction;
+  }
+
+  public double getGasInWaterFraction() {
+    return gasInWaterFraction;
+  }
+
+  public double getOilInWaterFraction() {
+    return oilInWaterFraction;
+  }
+
+  public double getWaterInOilFraction() {
+    return waterInOilFraction;
+  }
+
+  public double getOverallGasLiquidEfficiency() {
+    return overallGasLiquidEfficiency;
+  }
+
+  public double getMistEliminatorEfficiency() {
+    return mistEliminatorEfficiency;
+  }
+
+  public double getKFactorUtilization() {
+    return kFactorUtilization;
+  }
+
+  public boolean isMistEliminatorFlooded() {
+    return mistEliminatorFlooded;
+  }
+
+  public double getLiquidInGasCalibrationFactor() {
+    return liquidInGasCalibrationFactor;
+  }
+
+  public double getGasCarryUnderCalibrationFactor() {
+    return gasCarryUnderCalibrationFactor;
+  }
+
+  public double getLiquidLiquidCalibrationFactor() {
+    return liquidLiquidCalibrationFactor;
+  }
+
+  public String getEntrainmentDetailJson() {
+    return entrainmentDetailJson;
   }
 }

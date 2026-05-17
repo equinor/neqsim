@@ -36,7 +36,7 @@ import com.google.gson.GsonBuilder;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Configure and identify model

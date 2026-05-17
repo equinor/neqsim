@@ -268,13 +268,13 @@ public class PTphaseEnvelope extends BaseOperation {
           Tcfirst = system.getTC();
           Pcfirst = system.getPC();
 
-          cricondenBarfirst = cricondenBar;
-          cricondenBarXfirst = cricondenBarX;
-          cricondenBarYfirst = cricondenBarY;
+          cricondenBarfirst = cricondenBar.clone();
+          cricondenBarXfirst = cricondenBarX.clone();
+          cricondenBarYfirst = cricondenBarY.clone();
 
-          cricondenThermfirst = cricondenTherm;
-          cricondenThermXfirst = cricondenThermX;
-          cricondenThermYfirst = cricondenThermY;
+          cricondenThermfirst = cricondenTherm.clone();
+          cricondenThermXfirst = cricondenThermX.clone();
+          cricondenThermYfirst = cricondenThermY.clone();
 
           hascopiedPoints = true;
           copiedPoints = new double[5][np - 1];
@@ -293,7 +293,36 @@ public class PTphaseEnvelope extends BaseOperation {
           } else {
             bubblePointFirst = true;
           }
+
+          // Reset cricondenTherm/Bar tracking arrays for the second branch
+          cricondenTherm = new double[3];
+          cricondenBar = new double[3];
+          cricondenThermX = new double[100];
+          cricondenThermY = new double[100];
+          cricondenBarX = new double[100];
+          cricondenBarY = new double[100];
+
+          // Reset K-values using Wilson correlation so the second run
+          // starts from valid initial estimates (the crash may have left
+          // NaN K-values in the system which would cause the second run
+          // to crash immediately)
+          double restartTemp = tempKWilson(phaseFraction, lowPres);
+          if (Double.isNaN(restartTemp)) {
+            restartTemp = system.getPhase(0).getComponent(speceq).getTC() - 20.0;
+          }
+          for (int ic = 0; ic < system.getPhase(0).getNumberOfComponents(); ic++) {
+            double Kwil =
+                system.getPhase(0).getComponent(ic).getPC() / lowPres
+                    * Math.exp(WILSON_CONST
+                        * (1.0 + system.getPhase(0).getComponent(ic).getAcentricFactor())
+                        * (1.0 - system.getPhase(0).getComponent(ic).getTC() / restartTemp));
+            system.getPhase(0).getComponent(ic).setK(Kwil);
+            system.getPhase(1).getComponent(ic).setK(Kwil);
+          }
+
+          int npSaved = np;
           run();
+          np = npSaved;
           /**/
           break;
         } else {
@@ -381,6 +410,11 @@ public class PTphaseEnvelope extends BaseOperation {
         ncr = np;
       }
       int ncr2 = np - ncr;
+
+      // Save second-run ncr/ncr2 before the copiedPoints block overwrites them
+      int ncrSecondRun = ncr;
+      int ncr2SecondRun = ncr2;
+
       if (hascopiedPoints) {
         // if it enters here the envelope crashed and restarted
         // reallocate to have all values
@@ -446,33 +480,35 @@ public class PTphaseEnvelope extends BaseOperation {
       }
 
       if (hascopiedPoints) {
+        int ncrCopied;
+        int ncr2Copied;
         if (ncrfirst > npfirst) {
-          ncr = copiedPoints[0].length - 1;
-          ncr2 = npfirst - ncr;
+          ncrCopied = copiedPoints[0].length - 1;
+          ncr2Copied = npfirst - ncrCopied;
           npfirst = npfirst - 1;
         } else {
-          ncr = ncrfirst;
-          ncr2 = npfirst - ncr;
+          ncrCopied = ncrfirst;
+          ncr2Copied = npfirst - ncrCopied;
         }
 
-        points2[4] = new double[ncr + 1];
-        points2[5] = new double[ncr + 1];
-        pointsH2[4] = new double[ncr + 1];
-        pointsH2[5] = new double[ncr + 1];
-        pointsS2[4] = new double[ncr + 1];
-        pointsS2[5] = new double[ncr + 1];
-        pointsV2[4] = new double[ncr + 1];
-        pointsV2[5] = new double[ncr + 1];
+        points2[4] = new double[ncrCopied + 1];
+        points2[5] = new double[ncrCopied + 1];
+        pointsH2[4] = new double[ncrCopied + 1];
+        pointsH2[5] = new double[ncrCopied + 1];
+        pointsS2[4] = new double[ncrCopied + 1];
+        pointsS2[5] = new double[ncrCopied + 1];
+        pointsV2[4] = new double[ncrCopied + 1];
+        pointsV2[5] = new double[ncrCopied + 1];
 
-        if (ncr2 > 2) {
-          points2[6] = new double[ncr2 - 2];
-          points2[7] = new double[ncr2 - 2];
-          pointsH2[6] = new double[ncr2 - 2];
-          pointsH2[7] = new double[ncr2 - 2];
-          pointsS2[6] = new double[ncr2 - 2];
-          pointsS2[7] = new double[ncr2 - 2];
-          pointsV2[6] = new double[ncr2 - 2];
-          pointsV2[7] = new double[ncr2 - 2];
+        if (ncr2Copied > 2) {
+          points2[6] = new double[ncr2Copied - 2];
+          points2[7] = new double[ncr2Copied - 2];
+          pointsH2[6] = new double[ncr2Copied - 2];
+          pointsH2[7] = new double[ncr2Copied - 2];
+          pointsS2[6] = new double[ncr2Copied - 2];
+          pointsS2[7] = new double[ncr2Copied - 2];
+          pointsV2[6] = new double[ncr2Copied - 2];
+          pointsV2[7] = new double[ncr2Copied - 2];
         } else {
           points2[6] = new double[0];
           points2[7] = new double[0];
@@ -484,7 +520,7 @@ public class PTphaseEnvelope extends BaseOperation {
           pointsV2[7] = new double[0];
         }
 
-        for (int i = 0; i < ncr; i++) {
+        for (int i = 0; i < ncrCopied; i++) {
           // first branch up to the critical point
           points2[4][i] = copiedPoints[0][i];
           points2[5][i] = copiedPoints[1][i];
@@ -495,35 +531,64 @@ public class PTphaseEnvelope extends BaseOperation {
           pointsV2[5][i] = copiedPoints[1][i];
           pointsV2[4][i] = copiedPoints[4][i];
         }
-        if (ncr2 > 2) {
-          for (int i = 1; i < (ncr2 - 2); i++) {
+        if (ncr2Copied > 2) {
+          for (int i = 1; i < (ncr2Copied - 2); i++) {
             // first branch after the critical point
-            points2[6][i] = copiedPoints[0][i + ncr - 1];
-            points2[7][i] = copiedPoints[1][i + ncr - 1];
-            pointsH2[7][i] = copiedPoints[1][i + ncr - 1];
-            pointsH2[6][i] = copiedPoints[2][i + ncr - 1];
-            pointsS2[7][i] = copiedPoints[1][i + ncr - 1];
-            pointsS2[6][i] = copiedPoints[3][i + ncr - 1];
-            pointsV2[7][i] = copiedPoints[1][i + ncr - 1];
-            pointsV2[6][i] = copiedPoints[4][i + ncr - 1];
+            points2[6][i] = copiedPoints[0][i + ncrCopied - 1];
+            points2[7][i] = copiedPoints[1][i + ncrCopied - 1];
+            pointsH2[7][i] = copiedPoints[1][i + ncrCopied - 1];
+            pointsH2[6][i] = copiedPoints[2][i + ncrCopied - 1];
+            pointsS2[7][i] = copiedPoints[1][i + ncrCopied - 1];
+            pointsS2[6][i] = copiedPoints[3][i + ncrCopied - 1];
+            pointsV2[7][i] = copiedPoints[1][i + ncrCopied - 1];
+            pointsV2[6][i] = copiedPoints[4][i + ncrCopied - 1];
           }
-          points2[6][0] = copiedPoints[0][ncr - 1];
-          points2[7][0] = copiedPoints[1][ncr - 1];
+          points2[6][0] = copiedPoints[0][ncrCopied - 1];
+          points2[7][0] = copiedPoints[1][ncrCopied - 1];
+        }
+
+        // Set critical point on first branch using saved Tc/Pc
+        if (ncrCopied < points2[4].length) {
+          points2[4][ncrCopied] = Tcfirst;
+          points2[5][ncrCopied] = Pcfirst;
+        }
+        if (ncr2Copied > 2 && points2[6].length > 0) {
+          points2[6][0] = Tcfirst;
+          points2[7][0] = Pcfirst;
         }
       }
 
-      // critical point
+      // critical point for the current (second or only) branch
       system.setTemperature(system.getTC());
       system.setPressure(system.getPC());
 
-      points2[0][ncr] = system.getTC();
-      points2[1][ncr] = system.getPC();
-      if (ncr2 > 2) {
+      if (ncrSecondRun >= 0 && ncrSecondRun < points2[0].length) {
+        points2[0][ncrSecondRun] = system.getTC();
+        points2[1][ncrSecondRun] = system.getPC();
+      }
+      if (ncr2SecondRun > 2) {
         points2[2][0] = system.getTC();
         points2[3][0] = system.getPC();
       }
     } catch (Exception e2) {
     }
+
+    // Merge cricondenTherm/Bar from first and second branches (keep the best)
+    if (hascopiedPoints) {
+      // Cricondentherm: keep whichever branch found the highest temperature
+      if (cricondenThermfirst[0] > cricondenTherm[0]) {
+        cricondenTherm = cricondenThermfirst;
+        cricondenThermX = cricondenThermXfirst;
+        cricondenThermY = cricondenThermYfirst;
+      }
+      // Cricondenbar: keep whichever branch found the highest pressure
+      if (cricondenBarfirst[1] > cricondenBar[1]) {
+        cricondenBar = cricondenBarfirst;
+        cricondenBarX = cricondenBarXfirst;
+        cricondenBarY = cricondenBarYfirst;
+      }
+    }
+
     if (!Double.isFinite(cricondenBar[0]) || !Double.isFinite(cricondenBar[1])
         || (cricondenBar[0] == 0.0 && cricondenBar[1] == 0.0)) {
       cricondenBar[0] = initialTemp;
@@ -800,8 +865,8 @@ public class PTphaseEnvelope extends BaseOperation {
   /**
    * Estimate the initial temperature using the Wilson correlation.
    * <p>
-   * The implementation follows the approach described by Michelsen and Mollerup
-   * (1981) for phase envelope calculations.
+   * The implementation follows the approach described by Michelsen and Mollerup (1981) for phase
+   * envelope calculations.
    * </p>
    *
    * @param beta overall vapor fraction
@@ -864,8 +929,9 @@ public class PTphaseEnvelope extends BaseOperation {
         dinitT = 0.;
         for (int j = 0; j < numberOfComponents; j++) {
           Kwil[j] = system.getPhase(0).getComponent(j).getPC() / P
-              * Math.exp(WILSON_CONST * (1. + system.getPhase(0).getComponent(j).getAcentricFactor())
-                  * (1. - system.getPhase(0).getComponent(j).getTC() / Tstart));
+              * Math
+                  .exp(WILSON_CONST * (1. + system.getPhase(0).getComponent(j).getAcentricFactor())
+                      * (1. - system.getPhase(0).getComponent(j).getTC() / Tstart));
           // system.getPhases()[0].getComponent(j).setK(Kwil[j]);
         }
 

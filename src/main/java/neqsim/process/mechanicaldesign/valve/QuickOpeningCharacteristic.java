@@ -2,25 +2,25 @@ package neqsim.process.mechanicaldesign.valve;
 
 /**
  * Represents a valve with a quick opening flow characteristic.
- * 
+ *
  * <p>
  * Quick opening valves provide a large change in flow for a small initial valve opening, with the
  * flow rate approaching maximum at relatively low travel. This provides a high gain at low openings
  * and low gain at high openings.
  * </p>
- * 
+ *
  * <p>
  * The characteristic follows the equation:
  * </p>
- * 
+ *
  * <pre>
  * Cv = Cv_max * sqrt(x)
  * </pre>
- * 
+ *
  * <p>
  * where x is the fractional valve opening (0 to 1).
  * </p>
- * 
+ *
  * <p>
  * Quick opening valves are typically used for:
  * </p>
@@ -47,7 +47,7 @@ public class QuickOpeningCharacteristic implements ValveCharacteristic {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * <p>
    * Calculates the actual Kv based on quick opening characteristic.
    * </p>
@@ -59,15 +59,15 @@ public class QuickOpeningCharacteristic implements ValveCharacteristic {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * <p>
    * Returns the opening factor for quick opening characteristic using the formula:
    * </p>
-   * 
+   *
    * <pre>
    * factor = sqrt(x)
    * </pre>
-   * 
+   *
    * <p>
    * where x is the fractional opening (0 to 1).
    * </p>

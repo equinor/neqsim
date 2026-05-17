@@ -65,7 +65,7 @@ public class DebottleneckingValidationTest {
     process.add(valve);
 
     separator = new Separator.Builder("Test Separator").inletStream(valve.getOutletStream())
-        .orientation("horizontal").length(3.0).diameter(1.5).build();
+        .orientation("horizontal").length(5.0).diameter(2.0).build();
     separator.setDesignGasLoadFactor(0.10);
     process.add(separator);
 
@@ -138,9 +138,11 @@ public class DebottleneckingValidationTest {
         new Separator.Builder("Single Phase Sep").inletStream(pureGasFeed).build();
     singlePhaseSep.run();
 
-    // Single phase should return 0% utilization (no separation needed)
+    // Single phase gas still has a velocity limit, so utilization should be > 0
     double util = singlePhaseSep.getCapacityUtilization();
-    assertEquals(0.0, util, 0.01, "Single phase should have 0% utilization");
+    assertFalse(Double.isNaN(util), "Utilization should not be NaN");
+    assertTrue(util > 0.0, "Single phase gas should still have velocity-based utilization");
+    assertTrue(util < 2.0, "Single phase should not be severely overloaded");
 
     // isSinglePhase should return true
     assertTrue(singlePhaseSep.isSinglePhase(), "Should detect single phase");

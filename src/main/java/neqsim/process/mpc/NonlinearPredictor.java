@@ -27,7 +27,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * NonlinearPredictor predictor = new NonlinearPredictor(processSystem);

@@ -1,3 +1,8 @@
+---
+title: NeqSim Field Development - Mathematical Reference
+description: This document provides the complete mathematical foundations for the field development framework, linking thermodynamic calculations to economic evaluation and decision support.
+---
+
 # NeqSim Field Development - Mathematical Reference
 
 This document provides the complete mathematical foundations for the field development framework, linking thermodynamic calculations to economic evaluation and decision support.

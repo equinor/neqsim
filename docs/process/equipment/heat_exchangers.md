@@ -1,3 +1,9 @@
+---
+title: Heat Exchanger Equipment
+description: Documentation for heat transfer equipment in NeqSim process simulation.
+keywords: "heat exchanger, heater, cooler, shell and tube, plate, TEMA, LMTD, UA, duty, condenser, reboiler, intercooler, aftercooler, air cooler"
+---
+
 # Heat Exchanger Equipment
 
 Documentation for heat transfer equipment in NeqSim process simulation.
@@ -7,6 +13,15 @@ Documentation for heat transfer equipment in NeqSim process simulation.
 - [Equipment Types](#equipment-types)
 - [Usage Examples](#usage-examples)
 - [Heat Exchanger Networks](#heat-exchanger-networks)
+
+> **Thermal-Hydraulic Design:** For detailed tube-side/shell-side HTC calculations,
+> pressure drops, LMTD correction factors, Bell-Delaware method, vibration screening,
+> and rating mode, see the
+> [Thermal-Hydraulic Design Guide](../mechanical_design/thermal_hydraulic_design).
+
+> **Two-Phase Services:** For condensation, boiling, two-phase pressure drop,
+> dynamic fouling, and tube insert enhancement, see the
+> [Two-Phase Heat Transfer Guide](../mechanical_design/two_phase_heat_transfer).
 
 ---
 
@@ -20,6 +35,14 @@ Documentation for heat transfer equipment in NeqSim process simulation.
 - `HeatExchanger` - Shell-tube heat exchanger
 - `NeqHeater` - Non-equilibrium heater
 - `Condenser` - Overhead condenser
+- `WaterCooler` - Seawater/cooling water cooler with IAPWS
+- `ReBoiler` - Column reboiler with duty specification
+
+> **📖 Additional Heat Exchanger Documentation:**
+> - [Multi-Stream Heat Exchanger](multistream_heat_exchanger) - Comprehensive MSHE guide with composite curves, pinch analysis
+> - [Water Cooler and Reboiler](water_cooler_reboiler) - WaterCooler and ReBoiler documentation
+> - [Air Cooler](../../wiki/air_cooler) - Air-cooled heat exchangers
+> - [Steam Heater](../../wiki/steam_heater) - Steam heating with IAPWS
 
 ---
 
@@ -83,16 +106,31 @@ double LMTD = hx.getLMTD();
 
 ### Multi-Stream Heat Exchanger
 
+For detailed documentation including mathematical foundations, composite curves, and advanced usage, see:
+
+> **📖 [Multi-Stream Heat Exchanger Guide](multistream_heat_exchanger.md)**
+
+Quick example:
+
 ```java
-import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger;
+import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2;
 
-MultiStreamHeatExchanger mshx = new MultiStreamHeatExchanger("LNG-100");
-mshx.addStream(stream1, "hot");
-mshx.addStream(stream2, "hot");
-mshx.addStream(stream3, "cold");
+MultiStreamHeatExchanger2 mshx = new MultiStreamHeatExchanger2("LNG-100");
 
-mshx.setUAvalue(50000.0);
+// Add streams: (stream, "hot"/"cold", outletTemp or null for unknown)
+mshx.addInStreamMSHE(stream1, "hot", 40.0);    // Known outlet
+mshx.addInStreamMSHE(stream2, "hot", null);    // Solve for this
+mshx.addInStreamMSHE(stream3, "cold", null);   // Solve for this
+mshx.addInStreamMSHE(stream4, "cold", 80.0);   // Known outlet
+
+// Set approach temperature (required for 2+ unknowns)
+mshx.setTemperatureApproach(5.0);
+
 mshx.run();
+
+// Get results
+double solvedTemp = mshx.getOutStream(1).getTemperature("C");
+double ua = mshx.getUA();
 ```
 
 ---
@@ -218,6 +256,31 @@ System.out.println("Trim cooler duty: " + trimDuty + " MW");
 HeatExchanger hx = new HeatExchanger("E-400", hotIn, coldIn);
 hx.setUAvalue(ua);
 hx.run();
+```
+
+### Thermal-Hydraulic Design (Shell-and-Tube)
+
+For rigorous tube-side and shell-side heat transfer coefficient calculations,
+pressure drops, LMTD correction factors, Bell-Delaware method, flow-induced
+vibration screening, and TEMA-level mechanical design, see the dedicated guide:
+
+> **[Thermal-Hydraulic Design Guide](../mechanical_design/thermal_hydraulic_design)**
+
+Key classes in `neqsim.process.mechanicaldesign.heatexchanger`:
+
+| Class | Purpose |
+|-------|---------|
+| `ThermalDesignCalculator` | Tube/shell-side HTCs (Gnielinski, Kern, Bell-Delaware), overall U, pressure drops |
+| `BellDelawareMethod` | Shell-side HTC with J-factor corrections (Jc, Jl, Jb, Js, Jr) |
+| `LMTDcorrectionFactor` | F_t for multi-pass configurations (Bowman-Mueller-Nagle 1940) |
+| `VibrationAnalysis` | Vortex shedding, fluid-elastic instability, acoustic resonance per TEMA RCB-4.6 |
+| `ShellAndTubeDesignCalculator` | Full TEMA + ASME VIII Div.1 design with NACE sour service, cost, BOM |
+
+### Mechanical Design
+
+For equipment sizing (area, weight, type selection), see:
+
+> **[Heat Exchanger Mechanical Design](../../wiki/heat_exchanger_mechanical_design)**
 
 double LMTD = hx.getLMTD();
 double duty = hx.getDuty();
@@ -317,6 +380,6 @@ for (HeatExchangerSizingResult result : results) {
 
 ## Related Documentation
 
-- [Process Package](../README.md) - Package overview
-- [Compressors](compressors.md) - Compression equipment
-- [Design Framework](../DESIGN_FRAMEWORK.md) - AutoSizeable interface
+- [Process Package](../) - Package overview
+- [Compressors](compressors) - Compression equipment
+- [Design Framework](../DESIGN_FRAMEWORK) - AutoSizeable interface

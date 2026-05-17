@@ -219,6 +219,10 @@ public final class BlackOilTableValidator {
 
   /**
    * Validate gas viscosity array.
+   *
+   * @param pressures the pressure array in bar
+   * @param gasVisc the gas viscosity array
+   * @param result the validation result to update
    */
   private static void validateGasViscosityArray(double[] pressures, double[] gasVisc,
       ValidationResult result) {
@@ -241,6 +245,11 @@ public final class BlackOilTableValidator {
    * At stock-tank conditions (Rs ≈ 0), Bo should approach a minimum value (dead oil FVF). The
    * relationship between Bo and Rs should be smooth.
    * </p>
+   *
+   * @param pressures the pressure array in bar
+   * @param Bo the oil formation volume factor array
+   * @param Rs the solution gas-oil ratio array
+   * @param result the validation result to update
    */
   private static void validateBoRsConsistency(double[] pressures, double[] Bo, double[] Rs,
       ValidationResult result) {

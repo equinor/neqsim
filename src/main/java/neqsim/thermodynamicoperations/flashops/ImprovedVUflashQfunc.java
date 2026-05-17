@@ -1,6 +1,6 @@
 /*
  * ImprovedVUflashQfunc.java
- * 
+ *
  * Enhanced VU flash with better numerical stability for separator applications
  */
 
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * ImprovedVUflashQfunc class with enhanced numerical stability.
  * </p>
- * 
+ *
  * Improvements: - Bounds checking for pressure and temperature - Better damping and convergence
  * criteria - Validation of inputs and outputs - Fallback mechanisms for problematic cases
  *
@@ -232,8 +232,17 @@ public class ImprovedVUflashQfunc extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    tpFlash.run();
-    solveQ();
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values;
+    // warm-start enabled only for inner iterations within the outer V/U loop.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */

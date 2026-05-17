@@ -38,7 +38,7 @@ public interface HeaterInterface extends SimulationInterface {
    * @param temperature Outlet temperature.
    * @param unit a {@link java.lang.String} object
    */
-  public void setOutTemperature(double temperature, String unit);
+  public void setOutletTemperature(double temperature, String unit);
 
   /**
    * <p>
@@ -48,5 +48,5 @@ public interface HeaterInterface extends SimulationInterface {
    * @param pressure Outlet pressure.
    * @param unit a {@link java.lang.String} object
    */
-  public void setOutPressure(double pressure, String unit);
+  public void setOutletPressure(double pressure, String unit);
 }

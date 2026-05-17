@@ -37,11 +37,11 @@ import java.util.Map;
  * <p>
  * The engine supports any country's fiscal regime via the {@link TaxModel} interface:
  * </p>
- * 
+ *
  * <pre>{@code
  * // Use Norwegian tax model (default)
  * CashFlowEngine engine = new CashFlowEngine();
- * 
+ *
  * // Use any country from the registry
  * engine.setTaxModel(TaxModelRegistry.createModel("BR-PSA")); // Brazil Pre-Salt
  * engine.setTaxModel(TaxModelRegistry.createModel("UK")); // UK Continental Shelf
@@ -49,27 +49,27 @@ import java.util.Map;
  * }</pre>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Create engine with Brazilian tax model
  * CashFlowEngine engine = new CashFlowEngine("BR");
- * 
+ *
  * // Set project parameters
  * engine.setCapex(800, 2025); // 800 MUSD in 2025
  * engine.setOpexPercentOfCapex(0.04); // 4% of CAPEX per year
- * 
+ *
  * // Set price assumptions
  * engine.setOilPrice(75.0); // USD/bbl
  * engine.setGasPrice(0.25); // USD/Sm3
- * 
+ *
  * // Add production profile
  * engine.addAnnualProduction(2026, 0, 5.0e6, 0); // 5 MSm3 gas in 2026
  * engine.addAnnualProduction(2027, 0, 10.0e6, 0); // 10 MSm3 gas in 2027
  * // ... more years
- * 
+ *
  * // Calculate cash flow
  * CashFlowResult result = engine.calculate(0.08); // 8% discount rate
- * 
+ *
  * // Results
  * System.out.println("NPV: " + result.getNpv() + " MUSD");
  * System.out.println("IRR: " + result.getIrr() * 100 + "%");
@@ -726,6 +726,171 @@ public class CashFlowEngine implements Serializable {
    */
   public double getTotalCapex() {
     return totalCapex;
+  }
+
+  /**
+   * Gets the oil price.
+   *
+   * @return oil price in USD per barrel
+   */
+  public double getOilPrice() {
+    return oilPriceUsdPerBbl;
+  }
+
+  /**
+   * Gets the gas price.
+   *
+   * @return gas price in USD per Sm3
+   */
+  public double getGasPrice() {
+    return gasPriceUsdPerSm3;
+  }
+
+  /**
+   * Gets the NGL price.
+   *
+   * @return NGL price in USD per barrel
+   */
+  public double getNglPrice() {
+    return nglPriceUsdPerBbl;
+  }
+
+  /**
+   * Gets the gas transport tariff.
+   *
+   * @return gas tariff in USD per Sm3
+   */
+  public double getGasTariff() {
+    return gasTariffUsdPerSm3;
+  }
+
+  /**
+   * Gets the oil transport tariff.
+   *
+   * @return oil tariff in USD per barrel
+   */
+  public double getOilTariff() {
+    return oilTariffUsdPerBbl;
+  }
+
+  /**
+   * Gets OPEX as a fraction of total CAPEX per year.
+   *
+   * @return OPEX fraction of CAPEX
+   */
+  public double getOpexPercentOfCapex() {
+    return opexPercentOfCapex;
+  }
+
+  /**
+   * Gets fixed annual OPEX.
+   *
+   * @return fixed OPEX in MUSD per year
+   */
+  public double getFixedOpexPerYear() {
+    return fixedOpexPerYear;
+  }
+
+  /**
+   * Gets variable OPEX.
+   *
+   * @return variable OPEX in USD per BOE
+   */
+  public double getVariableOpexPerBoe() {
+    return variableOpexPerBoe;
+  }
+
+  /**
+   * Gets the CAPEX schedule.
+   *
+   * @return defensive copy of year-to-CAPEX map in MUSD
+   */
+  public Map<Integer, Double> getCapexSchedule() {
+    return new LinkedHashMap<Integer, Double>(capexByYear);
+  }
+
+  /**
+   * Gets the annual oil production profile.
+   *
+   * @return defensive copy of year-to-oil-production map in barrels
+   */
+  public Map<Integer, Double> getOilProductionProfile() {
+    return new LinkedHashMap<Integer, Double>(oilProductionByYear);
+  }
+
+  /**
+   * Gets the annual gas production profile.
+   *
+   * @return defensive copy of year-to-gas-production map in Sm3
+   */
+  public Map<Integer, Double> getGasProductionProfile() {
+    return new LinkedHashMap<Integer, Double>(gasProductionByYear);
+  }
+
+  /**
+   * Gets the annual NGL production profile.
+   *
+   * @return defensive copy of year-to-NGL-production map in barrels
+   */
+  public Map<Integer, Double> getNglProductionProfile() {
+    return new LinkedHashMap<Integer, Double>(nglProductionByYear);
+  }
+
+  /**
+   * Gets the first project year represented by CAPEX or production data.
+   *
+   * @return first project year, or 0 if no project data is set
+   */
+  public int getFirstYear() {
+    return firstYear;
+  }
+
+  /**
+   * Gets the last project year represented by CAPEX or production data.
+   *
+   * @return last project year, or 0 if no project data is set
+   */
+  public int getLastYear() {
+    return lastYear;
+  }
+
+  /**
+   * Creates a defensive copy preserving prices, tariffs, OPEX, CAPEX timing, and production.
+   *
+   * @return copied cash-flow engine with independent maps and tax model state reset
+   */
+  public CashFlowEngine copy() {
+    CashFlowEngine clone = new CashFlowEngine(copyTaxModel(taxModel));
+    clone.setOilPrice(oilPriceUsdPerBbl);
+    clone.setGasPrice(gasPriceUsdPerSm3);
+    clone.setNglPrice(nglPriceUsdPerBbl);
+    clone.setGasTariff(gasTariffUsdPerSm3);
+    clone.setOilTariff(oilTariffUsdPerBbl);
+    clone.setOpexPercentOfCapex(opexPercentOfCapex);
+    clone.setFixedOpexPerYear(fixedOpexPerYear);
+    clone.setVariableOpexPerBoe(variableOpexPerBoe);
+    clone.setCapexSchedule(capexByYear);
+    clone.setProductionProfile(oilProductionByYear, gasProductionByYear, nglProductionByYear);
+    return clone;
+  }
+
+  /**
+   * Copies a tax model configuration while resetting accumulated calculation state.
+   *
+   * @param source tax model to copy
+   * @return copied tax model
+   */
+  private TaxModel copyTaxModel(TaxModel source) {
+    if (source instanceof NorwegianTaxModel) {
+      NorwegianTaxModel norwegian = (NorwegianTaxModel) source;
+      NorwegianTaxModel copy =
+          new NorwegianTaxModel(norwegian.getCorporateTaxRate(), norwegian.getPetroleumTaxRate());
+      copy.setUpliftRate(norwegian.getUpliftRate());
+      copy.setUpliftYears(norwegian.getUpliftYears());
+      copy.setDepreciationYears(norwegian.getDepreciationYears());
+      return copy;
+    }
+    return TaxModelRegistry.createModel(source.getCountryCode());
   }
 
   // ============================================================================

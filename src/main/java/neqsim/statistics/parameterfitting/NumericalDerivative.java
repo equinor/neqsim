@@ -44,18 +44,15 @@ public final class NumericalDerivative implements java.io.Serializable {
     double errt;
     double fac;
     double hh;
-    double h = Math.abs(system.getSampleSet().getSample(sampleNumber).getFunction()
-        .getFittingParams(parameterNumber)) / 1.0e3;
+    double oldFittingParam1 = system.getSampleSet().getSample(sampleNumber).getFunction()
+        .getFittingParams(parameterNumber);
+    double h = Math.abs(oldFittingParam1) / 1.0e3;
     if (h == 0.0) {
-      System.out.println("h must be larger than 0!");
-      System.out.println("setting it to 1.0e-10");
       h = 1.0e-10;
     }
 
     hh = h;
     // System.out.println("hh " + hh);
-    double oldFittingParam1 = system.getSampleSet().getSample(sampleNumber).getFunction()
-        .getFittingParams(parameterNumber);
     system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
         oldFittingParam1 + hh);
     double val1 = system.calcValue(system.getSample(sampleNumber));
@@ -70,21 +67,19 @@ public final class NumericalDerivative implements java.io.Serializable {
     double ans = a[0][0];
     double err = BIG;
 
-    for (int i = 1; i <= 0 * NTAB - 1; i++) {
+    for (int i = 1; i < NTAB; i++) {
       hh /= CON;
 
-      double oldFittingParam = system.getSampleSet().getSample(sampleNumber).getFunction()
-          .getFittingParams(parameterNumber);
       system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
-          oldFittingParam + hh);
+          oldFittingParam1 + hh);
       val1 = system.calcValue(system.getSample(sampleNumber));
       // system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
       // oldFittingParam);
       system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
-          oldFittingParam - hh);
+          oldFittingParam1 - hh);
       val2 = system.calcValue(system.getSample(sampleNumber));
       system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
-          oldFittingParam);
+          oldFittingParam1);
 
       a[0][i] = (val1 - val2) / (2.0 * hh);
       fac = CON2;

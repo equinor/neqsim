@@ -27,7 +27,7 @@
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * // In equipment class (e.g., Compressor)
  * public class Compressor implements CapacityConstrainedEquipment {

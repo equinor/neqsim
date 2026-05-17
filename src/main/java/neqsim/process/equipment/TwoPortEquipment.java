@@ -1,5 +1,7 @@
 package neqsim.process.equipment;
 
+import java.util.Collections;
+import java.util.List;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -83,7 +85,12 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
   @Override
   public void setInletStream(StreamInterface stream) {
     this.inStream = stream;
-    this.outStream = inStream.clone(this.getName() + " out stream");
+    StreamInterface newOutletStream = inStream.clone(this.getName() + " out stream");
+    if (this.outStream == null) {
+      this.outStream = newOutletStream;
+    } else {
+      this.outStream.setThermoSystem(newOutletStream.getThermoSystem());
+    }
   }
 
   /** {@inheritDoc} */
@@ -100,6 +107,12 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public void setOutletPressure(double pressure, String unit) {
+    this.outStream.setPressure(pressure, unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setOutletStream(StreamInterface stream) {
     this.outStream = stream;
   }
@@ -107,7 +120,13 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public void setOutletTemperature(double temperature) {
-    this.outStream.setTemperature(temperature, "unit");
+    this.outStream.setTemperature(temperature, "K");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setOutletTemperature(double temperature, String unit) {
+    this.outStream.setTemperature(temperature, unit);
   }
 
   /** {@inheritDoc} */
@@ -115,6 +134,24 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
   public double getMassBalance(String unit) {
     return outStream.getThermoSystem().getFlowRate(unit)
         - inStream.getThermoSystem().getFlowRate(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    if (inStream != null) {
+      return Collections.singletonList(inStream);
+    }
+    return Collections.emptyList();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    if (outStream != null) {
+      return Collections.singletonList(outStream);
+    }
+    return Collections.emptyList();
   }
 
   /** {@inheritDoc} */

@@ -320,7 +320,7 @@ public class PipeSection implements Cloneable, Serializable {
 
   /**
    * Get effective liquid holdup, considering slug overlay when in a slug.
-   * 
+   *
    * @return Effective liquid holdup (dimensionless, 0-1)
    */
   public double getEffectiveLiquidHoldup() {
@@ -336,7 +336,7 @@ public class PipeSection implements Cloneable, Serializable {
 
   /**
    * Get effective mixture density, considering slug overlay when in a slug.
-   * 
+   *
    * @return Effective mixture density (kg/m³)
    */
   public double getEffectiveMixtureDensity() {

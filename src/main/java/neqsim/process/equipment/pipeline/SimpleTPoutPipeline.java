@@ -59,13 +59,13 @@ public class SimpleTPoutPipeline extends Pipeline {
 
   /** {@inheritDoc} */
   @Override
-  public void setOutTemperature(double temperature) {
+  public void setOutletTemperature(double temperature) {
     this.temperatureOutValue = temperature;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setOutPressure(double pressure) {
+  public void setOutletPressure(double pressure) {
     this.pressureOutValue = pressure;
   }
 

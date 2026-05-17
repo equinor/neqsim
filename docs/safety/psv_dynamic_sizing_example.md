@@ -1,3 +1,8 @@
+---
+title: PSV Dynamic Sizing Example
+description: This example demonstrates how to perform a dynamic safety calculation for a pressure safety valve (PSV) sizing using NeqSim's transient simulation capabilities.
+---
+
 # PSV Dynamic Sizing Example
 
 This example demonstrates how to perform a dynamic safety calculation for a pressure safety valve (PSV) sizing using NeqSim's transient simulation capabilities.

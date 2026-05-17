@@ -148,7 +148,7 @@ public class ChungViscosityMethod extends Viscosity {
       pureComponentViscosity[i] = chungviskstar * 36.344
           * Math.pow(gasPhase.getPhase().getComponent(i).getMolarMass() * 1000.0
               * gasPhase.getPhase().getComponent(i).getTC(), 0.5)
-          / (Math.pow(gasPhase.getPhase().getPhase().getComponent(i).getCriticalVolume(),
+          / (Math.pow(gasPhase.getPhase().getComponent(i).getCriticalVolume(),
               2.0 / 3.0));
     }
   }

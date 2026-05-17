@@ -25,7 +25,7 @@ public class ProcessSafetyAnalyzer implements Serializable {
   private final DisposalNetwork disposalNetwork = new DisposalNetwork();
   private final List<ProcessSafetyLoadCase> loadCases = new ArrayList<>();
   private final ProcessSystem baseProcessSystem;
-  private final ProcessSafetyResultRepository resultRepository;
+  private final transient ProcessSafetyResultRepository resultRepository;
 
   public ProcessSafetyAnalyzer() {
     this(null, null);
@@ -66,6 +66,7 @@ public class ProcessSafetyAnalyzer implements Serializable {
     ProcessSystem referenceSystem = requireBaseProcessSystem();
     ProcessSystem scenarioSystem = referenceSystem.copy();
     scenario.applyTo(scenarioSystem);
+    scenarioSystem.run();
 
     ProcessSafetyAnalysisSummary summary = buildSummary(scenario, referenceSystem, scenarioSystem);
     if (resultRepository != null) {
@@ -74,8 +75,7 @@ public class ProcessSafetyAnalyzer implements Serializable {
     return summary;
   }
 
-  public List<ProcessSafetyAnalysisSummary> analyze(
-      Collection<ProcessSafetyScenario> scenarios) {
+  public List<ProcessSafetyAnalysisSummary> analyze(Collection<ProcessSafetyScenario> scenarios) {
     Objects.requireNonNull(scenarios, "scenarios");
     List<ProcessSafetyAnalysisSummary> summaries = new ArrayList<>();
     for (ProcessSafetyScenario scenario : scenarios) {
@@ -124,9 +124,9 @@ public class ProcessSafetyAnalyzer implements Serializable {
           new ProcessSafetyAnalysisSummary.UnitKpiSnapshot(massBalance, pressure, temperature));
     }
 
-    String conditionReport = conditionMessages.values().stream()
-        .filter(message -> message != null && !message.isEmpty())
-        .collect(Collectors.joining(System.lineSeparator()));
+    String conditionReport =
+        conditionMessages.values().stream().filter(message -> message != null && !message.isEmpty())
+            .collect(Collectors.joining(System.lineSeparator()));
 
     return new ProcessSafetyAnalysisSummary(scenario.getName(), affectedUnits, conditionReport,
         conditionMessages, unitKpis);

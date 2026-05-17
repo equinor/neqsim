@@ -20,17 +20,17 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * {@code
  * SystemInterface fluid = new SystemSrkEos(373.15, 100.0);
  * fluid.addComponent("methane", 1.0);
  * fluid.addComponent("n-heptane", 0.1);
- * 
+ *
  * // Calculate BIP using Chueh-Prausnitz
  * double kij = BIPEstimator.estimateChuehPrausnitz(fluid.getComponent("methane"),
  *     fluid.getComponent("n-heptane"));
- * 
+ *
  * // Or apply to entire system
  * BIPEstimator.applyEstimatedBIPs(fluid, BIPEstimationMethod.CHUEH_PRAUSNITZ);
  * }

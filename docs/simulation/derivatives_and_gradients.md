@@ -1,3 +1,8 @@
+---
+title: Derivatives and Gradients in NeqSim
+description: NeqSim provides two complementary approaches for computing derivatives of simulation results. This guide covers both methods with mathematical background, usage examples, and guidance on when to use e...
+---
+
 # Derivatives and Gradients in NeqSim
 
 NeqSim provides two complementary approaches for computing derivatives of simulation results. This guide covers both methods with mathematical background, usage examples, and guidance on when to use each approach.
@@ -422,6 +427,7 @@ def flash_density(T, P, z):
     
     ops = ThermodynamicOperations(system)
     ops.TPflash()
+    system.initProperties()  # Required for volume-corrected density
     
     return system.getDensity("kg/m3")
 
@@ -431,6 +437,7 @@ def flash_density_fwd(T, P, z):
     system = create_system(T, P, z)
     ops = ThermodynamicOperations(system)
     ops.TPflash()
+    system.initProperties()  # Required for volume-corrected density
     
     value = system.getDensity("kg/m3")
     
@@ -468,6 +475,7 @@ class FlashDensity(Function):
         system = create_system(T.item(), P.item(), z.numpy())
         ops = ThermodynamicOperations(system)
         ops.TPflash()
+        system.initProperties()  # Required for volume-corrected density
         
         value = system.getDensity("kg/m3")
         
@@ -531,10 +539,12 @@ double analyticalGrad = densityGrad.getDerivativeWrtTemperature();
 double h = 1e-4;
 system.setTemperature(T + h);
 ops.TPflash();
+system.initProperties();  // Required before getting density
 double rhoPlus = system.getDensity("kg/m3");
 
 system.setTemperature(T - h);
 ops.TPflash();
+system.initProperties();  // Required before getting density
 double rhoMinus = system.getDensity("kg/m3");
 
 double numericalGrad = (rhoPlus - rhoMinus) / (2 * h);
@@ -551,7 +561,7 @@ See test classes for comprehensive validation:
 
 ## 7. See Also
 
-- [Differentiable Thermodynamics](differentiable_thermodynamics.md) — detailed thermodynamic derivatives
-- [MPC Integration Guide](../integration/mpc_integration.md) — using derivatives for control
-- [AI Platform Integration](../integration/ai_platform_integration.md) — ML framework integration
-- [DifferentiableThermodynamics.ipynb](../../notebooks/DifferentiableThermodynamics.ipynb) — interactive examples
+- [Differentiable Thermodynamics](differentiable_thermodynamics) — detailed thermodynamic derivatives
+- [MPC Integration Guide](../integration/mpc_integration) — using derivatives for control
+- [AI Platform Integration](../integration/ai_platform_integration) — ML framework integration
+- [MPC Integration Tutorial](../examples/MPC_Integration_Tutorial.ipynb) — interactive examples

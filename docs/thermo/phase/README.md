@@ -1,3 +1,8 @@
+---
+title: "Phase Package"
+description: "Documentation for phase modeling in NeqSim."
+---
+
 # Phase Package
 
 Documentation for phase modeling in NeqSim.
@@ -443,6 +448,6 @@ for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
 
 ## Related Documentation
 
-- [System Package](../system/README.md) - Fluid systems
-- [Component Package](../component/README.md) - Component properties
-- [Thermo Package](../README.md) - Package overview
+- [System Package](../system/) - Fluid systems
+- [Component Package](../component/) - Component properties
+- [Thermo Package](../) - Package overview

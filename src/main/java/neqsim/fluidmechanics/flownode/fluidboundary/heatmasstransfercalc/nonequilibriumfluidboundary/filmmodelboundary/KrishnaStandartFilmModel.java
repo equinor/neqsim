@@ -98,15 +98,20 @@ public class KrishnaStandartFilmModel extends
   public double calcBinarySchmidtNumbers(int phaseNum) {
     for (int i = 0; i < getBulkSystem().getPhase(phaseNum).getNumberOfComponents(); i++) {
       for (int j = 0; j < getBulkSystem().getPhase(phaseNum).getNumberOfComponents(); j++) {
-        binarySchmidtNumber[phaseNum][i][j] =
-            getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
-                / getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
-                    .getDiffusionCoefficient(i, j);
-        // System.out.println("i j " + i +" j " + j);
-        // System.out.println("phase " + phase + " diff" +
-        // getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getDiffusionCoefficient(i,j));
-        // System.out.println("phase " + phase + " visk" +
-        // getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity());
+        double diffCoeff = getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
+            .getDiffusionCoefficient(i, j);
+        if (Double.isNaN(diffCoeff) || Double.isInfinite(diffCoeff)
+            || Math.abs(diffCoeff) < 1e-30) {
+          binarySchmidtNumber[phaseNum][i][j] = 1.0;
+        } else {
+          binarySchmidtNumber[phaseNum][i][j] =
+              getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity()
+                  / diffCoeff;
+        }
+        if (Double.isNaN(binarySchmidtNumber[phaseNum][i][j])
+            || Double.isInfinite(binarySchmidtNumber[phaseNum][i][j])) {
+          binarySchmidtNumber[phaseNum][i][j] = 1.0;
+        }
       }
     }
     return 1;
@@ -161,6 +166,10 @@ public class KrishnaStandartFilmModel extends
               / binaryMassTransferCoefficient[phaseNum][i][n]);
     }
     massTransferCoefficientMatrix[phaseNum] = massTransferCoefficientMatrix[phaseNum].inverse();
+    if (hasNaN(massTransferCoefficientMatrix[phaseNum])) {
+      int dim = getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1;
+      massTransferCoefficientMatrix[phaseNum] = Matrix.identity(dim, dim);
+    }
     return 1;
   }
 
@@ -284,14 +293,31 @@ public class KrishnaStandartFilmModel extends
    */
   public void initCorrections(int phase) {
     calcPhiMatrix(phase);
-    // phiMatrix.print(10,10);
+    if (hasNaN(phiMatrix)) {
+      int n = getBulkSystem().getPhase(phase).getNumberOfComponents() - 1;
+      rateCorrectionMatrix[phase] = Matrix.identity(n, n);
+      return;
+    }
     calcRedPhiMatrix(phase);
-    // redPhiMatrix.print(10,10);
     calcRedCorrectionMatrix(phase);
-    // redCorrectionMatrix.print(10,10);
     calcCorrectionMatrix(phase);
-    // System.out.println("corr mat: " + phase);
-    // rateCorrectionMatrix[phase].print(10,10);
+  }
+
+  /**
+   * Checks whether a matrix contains any NaN or Infinite values.
+   *
+   * @param mat the matrix to check
+   * @return true if any element is NaN or Infinite
+   */
+  private boolean hasNaN(Matrix mat) {
+    for (int i = 0; i < mat.getRowDimension(); i++) {
+      for (int j = 0; j < mat.getColumnDimension(); j++) {
+        if (Double.isNaN(mat.get(i, j)) || Double.isInfinite(mat.get(i, j))) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /** {@inheritDoc} */

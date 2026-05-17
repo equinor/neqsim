@@ -547,13 +547,4 @@ public class ComponentGeDuanSun extends ComponentGE {
   public double getq() {
     return q;
   }
-
-  /**
-   * Getter for property lngamma.
-   *
-   * @return Value of property lngamma.
-   */
-  public double getLngamma() {
-    return lngamma;
-  }
 }

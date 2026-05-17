@@ -105,8 +105,22 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
    * @param i a int
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
-  public StreamInterface getOutStream(int i) {
+  public StreamInterface getOutletStream(int i) {
     return outStream[i];
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>outStream</code>.
+   * </p>
+   *
+   * @param i a int
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @deprecated use {@link #getOutletStream(int)} instead
+   */
+  @Deprecated
+  public StreamInterface getOutStream(int i) {
+    return getOutletStream(i);
   }
 
   /**
@@ -123,13 +137,26 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
 
   /**
    * <p>
+   * Set the outlet temperature.
+   * </p>
+   *
+   * @param temperature outlet temperature in Kelvin
+   */
+  public void setOutletTemperature(double temperature) {
+    this.temperatureOut = temperature;
+  }
+
+  /**
+   * <p>
    * setOutTemperature.
    * </p>
    *
-   * @param temperature a double
+   * @param temperature outlet temperature in Kelvin
+   * @deprecated use {@link #setOutletTemperature(double)} instead
    */
+  @Deprecated
   public void setOutTemperature(double temperature) {
-    this.temperatureOut = temperature;
+    setOutletTemperature(temperature);
   }
 
   /**
@@ -138,10 +165,24 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param i a int
-   * @return a double
+   * @return outlet temperature in Kelvin
    */
-  public double getOutTemperature(int i) {
+  public double getOutletTemperature(int i) {
     return outStream[i].getThermoSystem().getTemperature();
+  }
+
+  /**
+   * <p>
+   * Get temperature of outstream i.
+   * </p>
+   *
+   * @param i a int
+   * @return outlet temperature in Kelvin
+   * @deprecated use {@link #getOutletTemperature(int)} instead
+   */
+  @Deprecated
+  public double getOutTemperature(int i) {
+    return getOutletTemperature(i);
   }
 
   /**
@@ -150,7 +191,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
    * </p>
    *
    * @param i a int
-   * @return a double
+   * @return inlet temperature in Kelvin
    */
   public double getInTemperature(int i) {
     return inStream[i].getThermoSystem().getTemperature();

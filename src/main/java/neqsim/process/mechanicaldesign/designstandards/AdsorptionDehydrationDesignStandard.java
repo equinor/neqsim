@@ -31,34 +31,20 @@ public class AdsorptionDehydrationDesignStandard extends DesignStandard {
   public AdsorptionDehydrationDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
 
-    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
-      java.sql.ResultSet dataSet = null;
-      try {
-        dataSet = database.getResultSet(
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database =
+            new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet(
             ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Adsorber Dehydration' AND Company='"
-                + standardName + "'"));
-        while (dataSet.next()) {
-          String specName = dataSet.getString("SPECIFICATION");
-          if (specName.equals("MolecularSieve3AWaterCapacity")) {
-            molecularSieveWaterCapacity = Double.parseDouble(dataSet.getString("MAXVALUE"));
-          }
-        }
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
-      } finally {
-        try {
-          if (dataSet != null) {
-            dataSet.close();
-          }
-        } catch (Exception ex) {
-          System.out.println("error closing database.....GasScrubberDesignStandard");
-          logger.error(ex.getMessage(), ex);
+                + standardName + "'"))) {
+      while (dataSet.next()) {
+        String specName = dataSet.getString("SPECIFICATION");
+        if (specName.equals("MolecularSieve3AWaterCapacity")) {
+          molecularSieveWaterCapacity = Double.parseDouble(dataSet.getString("MAXVALUE"));
         }
       }
-    } catch (Exception e) {
-      // TODO Auto-generated catch block
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
   }
 

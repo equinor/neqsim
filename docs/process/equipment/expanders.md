@@ -1,3 +1,8 @@
+---
+title: Expanders and Turbines
+description: Documentation for expansion equipment in NeqSim.
+---
+
 # Expanders and Turbines
 
 Documentation for expansion equipment in NeqSim.
@@ -17,11 +22,11 @@ Documentation for expansion equipment in NeqSim.
 **Location:** `neqsim.process.equipment.expander`
 
 **Classes:**
-| Class | Description |
-|-------|-------------|
-| `Expander` | General gas expander |
-| `TurboExpander` | Turboexpander with shaft coupling |
-| `ExpanderCompressorModule` | Compander unit |
+| Class                      | Description                       |
+| -------------------------- | --------------------------------- |
+| `Expander`                 | General gas expander              |
+| `TurboExpander`            | Turboexpander with shaft coupling |
+| `ExpanderCompressorModule` | Compander unit                    |
 
 Gas expanders are used for:
 - Power recovery from high-pressure gas
@@ -261,7 +266,7 @@ System.out.println("Power recovered: " + expander.getPower("kW") + " kW");
 
 ## Related Documentation
 
-- [Equipment Index](README.md) - All equipment
-- [Compressors](compressors.md) - Gas compression
-- [Valves](valves.md) - JT valves
-- [Heat Exchangers](heat_exchangers.md) - Heat integration
+- [Equipment Index](index.md) - All equipment
+- [Compressors](compressors) - Gas compression
+- [Valves](valves) - JT valves
+- [Heat Exchangers](heat_exchangers) - Heat integration

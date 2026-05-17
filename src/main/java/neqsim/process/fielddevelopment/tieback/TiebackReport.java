@@ -19,17 +19,17 @@ import java.util.List;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * TiebackAnalyzer analyzer = new TiebackAnalyzer();
  * TiebackReport report = analyzer.analyze(discovery, hosts, 61.5, 2.3);
- * 
+ *
  * // Get best option
  * TiebackOption best = report.getBestOption();
- * 
+ *
  * // Get all feasible options
  * List<TiebackOption> feasible = report.getFeasibleOptions();
- * 
+ *
  * // Print summary
  * System.out.println(report.getSummary());
  * }</pre>

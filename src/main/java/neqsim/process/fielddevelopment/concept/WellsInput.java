@@ -172,7 +172,6 @@ public final class WellsInput implements Serializable {
    */
   public double getRatePerWellSm3d() {
     if ("Sm3/d".equals(rateUnit) || "Sm3/day".equals(rateUnit)) {
-      return ratePerWell;
     } else if ("MSm3/d".equals(rateUnit)) {
       return ratePerWell * 1e6;
     } else if ("bbl/d".equals(rateUnit) || "bopd".equals(rateUnit)) {

@@ -18,7 +18,7 @@ import neqsim.process.safety.risk.RiskResult.EventResult;
  *
  * <p>
  * <b>Typical Usage:</b>
- * 
+ *
  * <pre>
  * {@code
  * RiskModel model = new RiskModel("HP Separator Study");

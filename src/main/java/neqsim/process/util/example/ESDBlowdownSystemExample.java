@@ -17,7 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 /**
  * Example demonstrating Emergency Shutdown (ESD) system with Control Valve, ESD Valve, Blowdown
  * Valve and Push Button.
- * 
+ *
  * <p>
  * This example shows:
  * <ul>

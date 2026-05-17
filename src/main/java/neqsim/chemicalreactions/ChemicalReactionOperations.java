@@ -336,7 +336,7 @@ public class ChemicalReactionOperations
    * <p>
    * addNewComponents.
    * </p>
-   * 
+   *
    * <p>
    * Adds new reactive components (typically ionic species from chemical reactions) to the system.
    * Components are initialized with a small but numerically reasonable amount to enable the
@@ -413,7 +413,7 @@ public class ChemicalReactionOperations
    * <p>
    * calcNVector.
    * </p>
-   * 
+   *
    * <p>
    * Calculate the mole vector for reactive species in the reactive phase. This reads from the
    * current phase state to get the actual moles in the aqueous/reactive phase where chemical
@@ -457,7 +457,7 @@ public class ChemicalReactionOperations
    * <p>
    * calcAmatrix.
    * </p>
-   * 
+   *
    * <p>
    * Calculates the stoichiometry matrix (A) based on the components and elements in the system.
    * This matrix includes an additional row for ionic charge balance (electroneutrality constraint),
@@ -534,7 +534,7 @@ public class ChemicalReactionOperations
    * <p>
    * updateMoles.
    * </p>
-   * 
+   *
    * <p>
    * Updates moles in the reactive phase based on the LP solver solution. Uses
    * Phase.addMolesChemReac with totdn=0 to only affect phase moles without corrupting the total
@@ -715,7 +715,7 @@ public class ChemicalReactionOperations
    * <p>
    * getAmatrix.
    * </p>
-   * 
+   *
    * <p>
    * Returns the stoichiometry matrix (A) that relates components to elements. The matrix has
    * dimensions (elements.length + 1) x components.length, where the last row contains ionic charges

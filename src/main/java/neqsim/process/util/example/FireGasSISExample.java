@@ -24,7 +24,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Example demonstrating Safety Instrumented System (SIS) for fire and gas detection.
- * 
+ *
  * <p>
  * This example implements IEC 61511 compliant safety logic including:
  * <ul>
@@ -35,7 +35,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>Manual push button override</li>
  * <li>Coordinated valve operations</li>
  * </ul>
- * 
+ *
  * <p>
  * Safety Integrity Level (SIL) considerations:
  * <ul>

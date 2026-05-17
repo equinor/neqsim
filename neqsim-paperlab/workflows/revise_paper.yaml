@@ -1,0 +1,144 @@
+# Revision Workflow
+# Handles peer review revision rounds
+
+workflow_name: "revise_paper"
+version: "1.0"
+description: "Process reviewer comments and produce revised manuscript"
+
+stages:
+
+  - name: "parse_comments"
+    agent: "reviewer_response"
+    description: "Parse and classify reviewer comments"
+    inputs:
+      - reviewer_comments.md  # Raw reviewer comments pasted in
+      - paper.md              # Current manuscript
+    outputs:
+      - revision_N/parsed_comments.json
+    validation:
+      - All comments categorized (major/minor/editorial)
+      - All comments mapped to manuscript sections
+
+  - name: "triage"
+    agent: "reviewer_response"
+    description: "Decide which comments need new experiments"
+    inputs:
+      - revision_N/parsed_comments.json
+      - approved_claims.json
+    outputs:
+      - revision_N/response_plan.json
+    validation:
+      - Each comment has an action (revise/experiment/explain/acknowledge)
+    gate: "human_approval"  # Author reviews response plan
+
+  - name: "new_experiments"
+    agent: "benchmark"
+    description: "Run additional experiments if needed"
+    condition: "response_plan has experiments_needed = true"
+    inputs:
+      - revision_N/response_plan.json
+      - benchmark_config.json
+    outputs:
+      - revision_N/new_results/
+    validation:
+      - New results pass validation agent
+
+  - name: "revise_manuscript"
+    agent: "scientific_writer"
+    description: "Apply revisions to manuscript"
+    inputs:
+      - paper.md
+      - revision_N/response_plan.json
+      - revision_N/new_results/  # if any
+      - approved_claims.json     # updated if new experiments
+    tools:
+      - "paperflow.py check-prose — verify writing quality after revisions"
+      - "paperflow.py suggest-refs — find references requested by reviewers"
+    outputs:
+      - revision_N/paper_rN.md
+      - revision_N/claims_manifest_rN.json
+    validation:
+      - All changes tracked
+      - No new unlinked claims
+      - check-prose overall score >= 50
+
+  - name: "generate_diff"
+    agent: "reviewer_response"
+    description: "Generate visual diff between baseline and revised manuscript"
+    inputs:
+      - revision_N/paper_r<N-1>_baseline.md
+      - paper.md
+    tools:
+      - "paperflow.py diff — generate HTML diff report"
+    outputs:
+      - revision_N/diff_r<N-1>_vs_paper.html
+    validation:
+      - HTML diff report exists and is non-empty
+
+  - name: "adversarial_review"
+    agent: "adversarial_reviewer"
+    description: "Internal hostile review of the revised draft before submission"
+    inputs:
+      - revision_N/paper_rN.md
+      - revision_N/claims_manifest_rN.json
+      - approved_claims.json
+      - results.json
+    outputs:
+      - revision_N/adversarial_review.md
+      - revision_N/required_fixes.json
+    validation:
+      - required_fixes.json has zero items with severity=BLOCKER and status=OPEN
+
+  - name: "quality_rubric_check"
+    agent: "reviewer_response"
+    description: >
+      Structured human checkpoint. Author scores the revised draft on a
+      five-axis rubric. Submission is blocked unless every axis scores >= 3
+      and the replication gate passes.
+    inputs:
+      - revision_N/paper_rN.md
+      - revision_N/adversarial_review.md
+      - revision_N/required_fixes.json
+    outputs:
+      - revision_N/quality_rubric.json
+    rubric:
+      novelty:          "1-5 — is the contribution genuinely new?"
+      evidence:         "1-5 — does every claim trace to data?"
+      framing:          "1-5 — does abstract/intro/discussion tell a story?"
+      discussion_depth: "1-5 — does discussion explain mechanism + scope + falsifiability?"
+      figure_narrative: "1-5 — does every figure follow obs/mech/impl/rec?"
+      replication:      "pass/fail — does paperlab_replication_gate pass on this commit?"
+    validation:
+      - All five numeric axes >= 3
+      - replication == pass
+      - All BLOCKER items in required_fixes.json marked status=ADDRESSED
+    gate: "human_approval"
+
+  - name: "draft_response"
+    agent: "reviewer_response"
+    description: "Write response-to-reviewers letter"
+    inputs:
+      - revision_N/parsed_comments.json
+      - revision_N/paper_rN.md
+      - revision_N/response_plan.json
+    outputs:
+      - revision_N/response_to_reviewers.md
+      - revision_N/revision_changelog.json
+    validation:
+      - Every comment addressed
+      - Changes clearly described with section references
+
+  - name: "reformat"
+    agent: "journal_formatter"
+    description: "Reformat revised manuscript"
+    inputs:
+      - revision_N/paper_rN.md
+      - journal profile
+    tools:
+      - "paperflow.py validate-figures — check updated figures"
+      - "paperflow.py validate-bib — check updated bibliography"
+    outputs:
+      - revision_N/submission/paper_rN.tex
+      - revision_N/submission/paper_rN.pdf
+      - revision_N/submission/response_to_reviewers.pdf
+    gate: "human_approval"

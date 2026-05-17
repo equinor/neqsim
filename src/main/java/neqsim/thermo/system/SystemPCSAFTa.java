@@ -71,6 +71,17 @@ public class SystemPCSAFTa extends SystemSrkEos {
       phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
     }
     this.useVolumeCorrection(false);
+    commonInitialization();
+  }
+
+  /**
+   * Common initialization for PC-SAFT with association. Enables fugacity derivative flags for
+   * Newton-Raphson flash convergence.
+   */
+  private void commonInitialization() {
+    setImplementedCompositionDeriativesofFugacity(true);
+    setImplementedPressureDeriativesofFugacity(true);
+    setImplementedTemperatureDeriativesofFugacity(true);
   }
 
   /** {@inheritDoc} */

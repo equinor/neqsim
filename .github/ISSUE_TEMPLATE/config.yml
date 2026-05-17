@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: NeqSim Discussions
+    url: https://github.com/equinor/neqsim/discussions
+    about: Ask questions, share ideas, or get help from the community
+  - name: NeqSim Documentation
+    url: https://equinor.github.io/neqsim/
+    about: Check the docs before filing — your answer might already be there

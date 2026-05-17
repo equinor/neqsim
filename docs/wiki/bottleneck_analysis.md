@@ -1,3 +1,8 @@
+---
+title: "Bottleneck Analysis and Capacity Utilization"
+description: "NeqSim provides functionality to analyze capacity utilization and identify bottlenecks in a process simulation. This feature is useful for production optimization and debottlenecking studies."
+---
+
 # Bottleneck Analysis and Capacity Utilization
 
 NeqSim provides functionality to analyze capacity utilization and identify bottlenecks in a process simulation. This feature is useful for production optimization and debottlenecking studies.
@@ -234,7 +239,7 @@ if (process.isAnyEquipmentOverloaded()) {
 | **Separator** | Gas load factor (vs design K-factor) |
 | **Compressor** | Speed, Power, Surge margin |
 
-For detailed documentation on extending to other equipment, see [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md).
+For detailed documentation on extending to other equipment, see [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK).
 
 ## Production Optimization
 
@@ -298,7 +303,7 @@ config.equipmentConstraintRule(new EquipmentConstraintRule(Compressor.class, "pr
     "Keep pressure ratio within design"));
 
 OptimizationResult result = optimizer.optimize(process, inletStream, config,
-    List.of(objective), List.of(keepPowerLow));
+    Arrays.asList(objective), Arrays.asList(keepPowerLow));
 
 System.out.println("Optimal rate: " + result.getOptimalRate() + " " + result.getRateUnit());
 System.out.println("Bottleneck: " + result.getBottleneck().getName());
@@ -335,9 +340,9 @@ ManipulatedVariable feedSouth = new ManipulatedVariable("south", 100.0, 800.0, "
 ManipulatedVariable compressorSetPoint = new ManipulatedVariable("compressor pressure", 40.0,
     80.0, "bara", (proc, value) -> compressor.setOutletPressure(value));
 
-OptimizationResult multiVar = optimizer.optimize(process, List.of(feedNorth, feedSouth,
-    compressorSetPoint), config.searchMode(SearchMode.PARTICLE_SWARM_SCORE), List.of(objective),
-    List.of(keepPowerLow));
+OptimizationResult multiVar = optimizer.optimize(process, Arrays.asList(feedNorth, feedSouth,
+    compressorSetPoint), config.searchMode(SearchMode.PARTICLE_SWARM_SCORE), Arrays.asList(objective),
+    Arrays.asList(keepPowerLow));
 ```
 
 ### Multi-Variable Optimization with `ManipulatedVariable`
@@ -511,13 +516,13 @@ report-ready table:
 
 ```java
 ScenarioRequest baseCase = new ScenarioRequest("base", baseProcess, baseFeed, baseConfig,
-    List.of(objective), List.of(keepPowerLow));
+    Arrays.asList(objective), Arrays.asList(keepPowerLow));
 ScenarioRequest upgradeCase = new ScenarioRequest("upgrade", upgradedProcess, upgradedFeed,
-    baseConfig, List.of(objective), List.of(keepPowerLow));
+    baseConfig, Arrays.asList(objective), Arrays.asList(keepPowerLow));
 
-List<ScenarioKpi> kpis = List.of(ScenarioKpi.optimalRate("kg/hr"), ScenarioKpi.score());
+List<ScenarioKpi> kpis = Arrays.asList(ScenarioKpi.optimalRate("kg/hr"), ScenarioKpi.score());
 ScenarioComparisonResult comparison = optimizer.compareScenarios(
-    List.of(baseCase, upgradeCase), kpis);
+    Arrays.asList(baseCase, upgradeCase), kpis);
 
 System.out.println(ProductionOptimizer.formatScenarioComparisonTable(comparison, kpis));
 ```

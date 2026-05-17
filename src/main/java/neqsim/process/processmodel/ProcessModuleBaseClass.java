@@ -205,7 +205,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public double getEntropyProduction(String unit) {
-    return 0.0;
+    return getOperations().getEntropyProduction(unit);
   }
 
   /** {@inheritDoc} */
@@ -217,7 +217,18 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public double getExergyChange(String unit, double surroundingTemperature) {
-    return 0.0;
+    return getOperations().getExergyChange(unit, surroundingTemperature);
+  }
+
+  /**
+   * Exergy destruction rate aggregated over all unit operations contained in this module.
+   *
+   * @param unit energy / power unit of the returned value
+   * @param surroundingTemperature dead-state temperature in K
+   * @return total exergy destruction in the requested unit
+   */
+  public double getExergyDestruction(String unit, double surroundingTemperature) {
+    return getOperations().getExergyDestruction(unit, surroundingTemperature);
   }
 
   /** {@inheritDoc} */
@@ -274,5 +285,33 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   @Override
   public void setTemperature(double temperature) {
     getFluid().setTemperature(temperature);
+  }
+
+  /**
+   * Disables all capacity constraints on all equipment in this module.
+   *
+   * <p>
+   * Use this for what-if scenarios where you want to ignore capacity limits. Delegates to the
+   * internal {@link ProcessSystem#disableAllConstraints()}.
+   * </p>
+   *
+   * @return the total number of constraints that were disabled
+   */
+  public int disableAllConstraints() {
+    return getOperations().disableAllConstraints();
+  }
+
+  /**
+   * Enables all capacity constraints on all equipment in this module.
+   *
+   * <p>
+   * Re-enables all constraints that were previously disabled. Delegates to the internal
+   * {@link ProcessSystem#enableAllConstraints()}.
+   * </p>
+   *
+   * @return the total number of constraints that were enabled
+   */
+  public int enableAllConstraints() {
+    return getOperations().enableAllConstraints();
   }
 }

@@ -27,14 +27,14 @@ import neqsim.thermo.phase.PhaseType;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * ProductionAllocator allocator = new ProductionAllocator();
  * allocator.addSource("Well-A", wellAStream, MeteringType.MULTIPHASE);
  * allocator.addSource("Well-B", wellBStream, MeteringType.MULTIPHASE);
  * allocator.setExportMeter("Export", exportStream, MeteringType.ULTRASONIC);
- * 
+ *
  * Map<String, Double> allocation = allocator.allocateByOil();
  * }
  * </pre>

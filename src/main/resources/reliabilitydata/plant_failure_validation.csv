@@ -1,0 +1,68 @@
+# Plant Equipment Failure Validation Dataset
+# Purpose: Validation of risk models against real plant failure data patterns
+# Format: EquipmentTag,EquipmentType,FailureDate,FailureMode,DowntimeHours,ProductionLoss_bbl,CausedBy,RepairCost_USD
+# Note: Synthetic data based on typical offshore platform failure patterns
+
+# Compressor failures
+COMP-001A,Centrifugal Compressor,2024-01-15,Vibration high trip,48,12000,Bearing wear,85000
+COMP-001A,Centrifugal Compressor,2024-06-22,Seal failure,72,18000,Dry gas seal degradation,125000
+COMP-001B,Centrifugal Compressor,2024-03-08,Motor overload,24,6000,Electrical fault,45000
+COMP-002,Reciprocating Compressor,2024-02-14,Valve failure,96,24000,Suction valve damage,65000
+COMP-002,Reciprocating Compressor,2024-08-30,Piston ring wear,120,30000,Normal wear,95000
+
+# Pump failures
+PUMP-101,Centrifugal Pump,2024-01-28,Mechanical seal leak,16,4000,Seal face damage,22000
+PUMP-101,Centrifugal Pump,2024-07-15,Impeller erosion,36,9000,Sand erosion,55000
+PUMP-102,Centrifugal Pump,2024-04-02,Bearing failure,24,6000,Lubrication issue,18000
+PUMP-201,ESP Pump,2024-05-18,Motor burnout,168,42000,Electrical insulation failure,350000
+PUMP-201,ESP Pump,2024-11-05,Cable damage,240,60000,Thermal degradation,420000
+
+# Separator issues
+SEP-001,Three-phase Separator,2024-02-20,Level control failure,8,2000,LT malfunction,12000
+SEP-001,Three-phase Separator,2024-09-12,Internals damage,48,12000,Foam carryover,85000
+SEP-002,Two-phase Separator,2024-06-05,Pressure control issue,4,1000,PCV stuck,8000
+SEP-003,Gas Scrubber,2024-04-18,Demister pad fouling,24,6000,Liquid carryover,35000
+
+# Heat exchanger problems
+HX-001,Shell and Tube,2024-03-25,Tube leak,72,18000,Corrosion,145000
+HX-001,Shell and Tube,2024-10-08,Fouling severe,48,12000,Scale buildup,65000
+HX-002,Plate Heat Exchanger,2024-05-30,Gasket failure,12,3000,Thermal cycling,18000
+HX-003,Air Cooler,2024-07-22,Fan motor failure,36,9000,Motor bearing,28000
+
+# Valve failures
+V-001,ESD Valve,2024-01-10,Fail to close,4,1000,Actuator fault,15000
+V-002,Control Valve,2024-02-28,Positioner failure,8,2000,Electronic fault,12000
+V-003,Safety Relief Valve,2024-04-15,Set point drift,2,500,Spring relaxation,8000
+V-004,Check Valve,2024-06-08,Internal leak,6,1500,Seat erosion,5000
+V-005,Ball Valve,2024-08-20,Stem leak,4,1000,Packing wear,3000
+
+# Instrumentation failures
+PT-101,Pressure Transmitter,2024-01-22,Drift out of range,2,500,Sensor degradation,4500
+TT-201,Temperature Transmitter,2024-03-15,Open circuit,1,250,Thermocouple break,3200
+FT-301,Flow Transmitter,2024-05-08,Spurious signal,4,1000,Impulse line blocked,6500
+LT-401,Level Transmitter,2024-07-28,False high reading,3,750,Process buildup,5000
+AT-501,Gas Analyzer,2024-09-18,Calibration drift,8,2000,Cell contamination,12000
+
+# Electrical equipment
+XFMR-001,Power Transformer,2024-04-10,Overheating,24,6000,Cooling fan failure,45000
+SWG-001,Switchgear,2024-06-25,Breaker trip,4,1000,Overcurrent protection,8500
+UPS-001,UPS System,2024-08-05,Battery failure,2,500,Battery end of life,25000
+GEN-001,Diesel Generator,2024-10-15,Start failure,6,1500,Fuel system issue,18000
+
+# Subsea equipment
+XT-001,Subsea Tree,2024-02-05,SCSSV closure issue,168,42000,Hydraulic system,650000
+UM-001,Umbilical,2024-05-22,Fiber optic damage,720,180000,External damage,1800000
+FR-001,Flexible Riser,2024-08-12,Annulus breach alarm,96,24000,Integrity monitoring,350000
+PLEM-001,PLEM,2024-11-20,Connector leak,240,60000,Seal degradation,480000
+
+# Common cause events
+PLATFORM,All Equipment,2024-03-01,Power blackout,12,3000,Grid failure,25000
+PLATFORM,All Equipment,2024-07-08,Hurricane shutdown,168,42000,Weather,0
+PLATFORM,All Equipment,2024-09-25,Process upset,8,2000,Feed composition change,5000
+PLATFORM,All Equipment,2024-12-10,Planned shutdown,240,0,Turnaround maintenance,0
+
+# Near misses (no production loss)
+COMP-001A,Centrifugal Compressor,2024-04-05,High vibration alarm,0,0,Coupling misalignment,5000
+SEP-001,Three-phase Separator,2024-06-18,High level alarm,0,0,Operator response,0
+V-001,ESD Valve,2024-08-28,Partial stroke test fail,0,0,Actuator adjustment,2500
+PT-101,Pressure Transmitter,2024-10-30,Calibration check fail,0,0,Recalibrated,500

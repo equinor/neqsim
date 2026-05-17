@@ -58,45 +58,29 @@ public class SeparatorDesignStandard extends DesignStandard {
   public SeparatorDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
     safetyMargins = computeSafetyMargins();
-    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
-      java.sql.ResultSet dataSet = null;
-      try {
-        dataSet = database.getResultSet(
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database =
+            new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet(
             ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Separator' AND Company='"
-                + resolveCompanyIdentifier() + "'"));
-        while (dataSet.next()) {
-          String specName = dataSet.getString("SPECIFICATION");
-          if (specName.equals("GasLoadFactor")) {
-            gasLoadFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
-                + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
-          }
-          if (specName.equals("Fg")) {
-            Fg = (Double.parseDouble(dataSet.getString("MAXVALUE"))
-                + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
-          }
-          if (specName.equals("VolumetricDesignFactor")) {
-            volumetricDesignFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
-                + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
-          }
+                + resolveCompanyIdentifier() + "'"))) {
+      while (dataSet.next()) {
+        String specName = dataSet.getString("SPECIFICATION");
+        if (specName.equals("GasLoadFactor")) {
+          gasLoadFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
+              + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
         }
-
-        // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
-      } finally {
-        try {
-          if (dataSet != null) {
-            dataSet.close();
-          }
-        } catch (Exception ex) {
-          System.out.println("error closing database.....GasScrubberDesignStandard");
-          logger.error(ex.getMessage(), ex);
+        if (specName.equals("Fg")) {
+          Fg = (Double.parseDouble(dataSet.getString("MAXVALUE"))
+              + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
+        }
+        if (specName.equals("VolumetricDesignFactor")) {
+          volumetricDesignFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
+              + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
         }
       }
-    } catch (Exception e) {
-      // TODO Auto-generated catch block
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
   }
 

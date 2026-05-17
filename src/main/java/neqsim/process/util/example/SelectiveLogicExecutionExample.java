@@ -19,7 +19,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Example demonstrating selective logic execution in ProcessScenarioRunner.
- * 
+ *
  * <p>
  * Shows how to:
  * <ul>

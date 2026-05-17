@@ -28,7 +28,7 @@
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * FieldConcept concept = FieldConcept.builder().name("North Sea Gas Development")
  *     .reservoir(ReservoirInput.builder().fluidType(FluidType.RICH_GAS).reservoirTempC(85.0)

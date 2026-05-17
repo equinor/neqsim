@@ -1,0 +1,131 @@
+# Energy & Fuels — Journal Profile
+# ACS Publications — ISSN: 0887-0624
+# https://pubs.acs.org/journal/enfuem
+
+journal_name: "Energy & Fuels"
+journal_abbrev: "Energy Fuels"
+publisher: "American Chemical Society (ACS)"
+issn: "0887-0624"
+eissn: "1520-5029"
+url: "https://pubs.acs.org/journal/enfuem"
+submit_url: "https://publish.acs.org/"
+impact_factor: 5.2
+citescore: 8.3
+scope: >
+  Chemistry and engineering of fossil and renewable fuels, petroleum
+  processing, natural gas, coal, biomass, nuclear, hydrogen, and solar
+  energy sources. Covers phase behavior, asphaltenes, wax, hydrates,
+  corrosion, flow assurance, CCS, enhanced oil recovery, and digital
+  twins for upstream operations. Strong bridge between fundamental
+  thermodynamics and field application.
+
+# Structure
+abstract_words_max: 250
+keywords_min: null  # ACS Topics system
+keywords_max: null
+section_order:
+  - Abstract
+  - TOC Graphic
+  - Introduction
+  - Theory / Methods
+  - Experimental / Computational Details
+  - Results and Discussion
+  - Conclusions
+  - Associated Content (Supporting Information)
+  - Author Information
+  - Acknowledgements
+  - References
+
+# Formatting
+latex_class: "achemso"
+latex_options: null
+reference_style: "achemso"
+citation_style: "numbered_superscript"  # ¹, ², ³⁻⁵
+figure_formats:
+  - "tiff"
+  - "eps"
+  - "pdf"
+  - "png"
+  - "jpeg"
+figure_dpi_min: 300
+figure_width_single_column_in: 3.25
+figure_width_double_column_in: 7.0
+table_style: "acs_standard"
+equation_numbering: "sequential"
+line_numbering_required: false
+double_spacing_required: true
+page_size: "US_Letter"
+
+# Requirements
+toc_graphic_required: true
+toc_graphic_size: "3.25 x 1.75 inches"
+highlights_required: false
+highlights_min: null
+highlights_max: null
+highlights_max_chars_each: null
+graphical_abstract_required: false
+cover_letter_required: false
+conflict_of_interest_required: true
+data_availability_required: false  # Via Supporting Information
+credit_statement_required: false
+orcid_required: true
+supporting_information_encouraged: true
+nomenclature_section: "optional"
+
+# Page/Content Limits
+pages_max: null
+figures_max: null
+tables_max: null
+references_max: null
+word_count_typical: "5000-10000"
+
+# Submission Types
+paper_types:
+  - "Article"
+  - "Review"
+  - "Perspective"
+  - "Energy Express"  # Short, urgent-interest papers (~2000 words)
+
+# Peer Review
+peer_review_model: "single_anonymous"
+
+# Typical Topics for NeqSim Papers
+relevant_topics:
+  - "Asphaltene phase behavior and deposition prediction"
+  - "Wax appearance temperature and precipitation modeling"
+  - "Hydrate formation and inhibitor dosing"
+  - "CO2-EOR phase behavior and MMP prediction"
+  - "Natural gas processing and conditioning"
+  - "Flow assurance in subsea and deepwater pipelines"
+  - "Digital twins for upstream oil and gas operations"
+  - "Hydrogen blending in natural gas infrastructure"
+  - "TEG dehydration and glycol regeneration"
+  - "Crude oil characterization and C7+ modeling"
+  - "Corrosion prediction in sour systems"
+  - "Gas hydrate phase equilibria with inhibitors"
+
+# Distinctive Features
+distinctive_features:
+  - "Highest IF among NeqSim-relevant ACS journals — high visibility"
+  - "Bridges fundamental thermo with field/industrial applications"
+  - "Strong home for asphaltene, wax, and hydrate modeling papers"
+  - "Energy Express format for rapid high-impact findings"
+  - "Accepts digital twin and field case study papers"
+  - "Good venue for CCS-related transport and injection papers"
+
+# Key Policies
+policies:
+  ai_disclosure: "Must disclose AI tools; AI cannot be listed as author"
+  preprints: "Allowed on ChemRxiv and other recognized servers"
+  color_figures: "Free online; potential charges for print"
+  open_access_apc: "Check ACS Read & Publish agreements"
+
+# Reviewer Expertise
+reviewer_expertise:
+  - "Petroleum thermodynamics and phase behavior"
+  - "Flow assurance (hydrate, wax, asphaltene)"
+  - "CO2 capture, transport, and storage"
+  - "Natural gas processing"
+  - "Hydrogen energy systems"
+  - "Enhanced oil recovery"
+  - "Digital twins and process simulation"

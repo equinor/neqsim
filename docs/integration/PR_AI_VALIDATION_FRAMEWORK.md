@@ -1,3 +1,8 @@
+---
+title: "Pull Request: AI-Friendly Validation Framework"
+description: "This PR introduces a comprehensive validation and AI integration framework for NeqSim, designed to make the library more accessible to AI/ML agents and provide structured error handling with actionable remediation hints."
+---
+
 # Pull Request: AI-Friendly Validation Framework
 
 ## Summary
@@ -19,6 +24,7 @@ This framework addresses all these needs.
 ### New Packages
 
 #### `neqsim.util.validation`
+
 | File | Description |
 |------|-------------|
 | `ValidationResult.java` | Structured container for validation issues with severity levels |
@@ -26,6 +32,7 @@ This framework addresses all these needs.
 | `AIIntegrationHelper.java` | Unified entry point combining validation, RL, and documentation |
 
 #### `neqsim.util.validation.contracts`
+
 | File | Description |
 |------|-------------|
 | `ModuleContract.java` | Base interface for pre/post-condition checking |
@@ -35,6 +42,7 @@ This framework addresses all these needs.
 | `ProcessSystemContract.java` | Validates `ProcessSystem` flowsheets |
 
 #### `neqsim.util.annotation`
+
 | File | Description |
 |------|-------------|
 | `AIExposable.java` | Annotation marking methods for AI discovery |
@@ -305,6 +313,6 @@ Run all tests:
 
 ## Related Documentation
 
-- [AI Validation Framework Reference](ai_validation_framework.md)
-- [NeqSim ML Integration](ml_integration.md)
-- [MPC Integration Guide](mpc_integration.md)
+- [AI Validation Framework Reference](ai_validation_framework)
+- [NeqSim ML Integration](ml_integration)
+- [MPC Integration Guide](mpc_integration)

@@ -1,3 +1,8 @@
+---
+title: Well and Reservoir Equipment
+description: Documentation for well and reservoir equipment in NeqSim process simulation.
+---
+
 # Well and Reservoir Equipment
 
 Documentation for well and reservoir equipment in NeqSim process simulation.
@@ -98,7 +103,7 @@ well.setBackpressureExponent(0.85);
 ```java
 well.setWellDepth(3000.0, "m");
 well.setTubingDiameter(0.1, "m");
-well.setWallRoughness(0.00005, "m");
+well.setRoughness(0.00005);  // meters
 
 // Correlation selection
 well.setPressureDropCorrelation("beggs-brill");
@@ -299,7 +304,7 @@ System.out.println("Water cut: " + (waterCut * 100) + " %");
 
 ## Related Documentation
 
-- [Process Package](../README.md) - Package overview
-- [Valves](valves.md) - Choke valve details
-- [Separators](separators.md) - Production separators
-- [Well Simulation Guide](../../simulation/well_simulation_guide.md) - Detailed well modeling
+- [Process Package](../) - Package overview
+- [Valves](valves) - Choke valve details
+- [Separators](separators) - Production separators
+- [Well Simulation Guide](../../simulation/well_simulation_guide) - Detailed well modeling

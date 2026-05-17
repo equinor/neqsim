@@ -213,7 +213,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
         ans1 += componentArray[i].getNumberOfMolesInPhase()
-            * componentArray[i].getDiElectricConstant(temperature);
+            * componentArray[i].getDielectricConstant(temperature);
         ans2 += componentArray[i].getNumberOfMolesInPhase();
       }
     }
@@ -234,7 +234,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
         ans1 += componentArray[i].getNumberOfMolesInPhase()
-            * componentArray[i].getDiElectricConstantdT(temperature);
+            * componentArray[i].getDielectricConstantdT(temperature);
         ans2 += componentArray[i].getNumberOfMolesInPhase();
       }
     }
@@ -255,7 +255,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
         ans1 += componentArray[i].getNumberOfMolesInPhase()
-            * componentArray[i].getDiElectricConstantdTdT(temperature);
+            * componentArray[i].getDielectricConstantdTdT(temperature);
         ans2 += componentArray[i].getNumberOfMolesInPhase();
       }
     }
@@ -518,13 +518,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
       BonV = 1.0 - 1.0e-6;
     }
     double BonVold = BonV;
-    double Btemp = 0;
-    double h = 0;
-    double dh = 0;
-    double dhh = 0;
-    double d1 = 0;
-    double d2 = 0;
-    Btemp = getB();
+    double Btemp = getB();
     if (Btemp <= 0) {
       logger.info("b negative in volume calc");
     }
@@ -535,15 +529,15 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
       iterations++;
       this.volInit();
       BonVold = BonV;
-      h = BonV - Btemp / numberOfMolesInPhase * dFdV()
+      double h = BonV - Btemp / numberOfMolesInPhase * dFdV()
           - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
-      dh = 1.0 + Btemp / Math.pow(BonV, 2.0) * (Btemp / numberOfMolesInPhase * dFdVdV());
-      dhh = -2.0 * Btemp / Math.pow(BonV, 3.0) * (Btemp / numberOfMolesInPhase * dFdVdV())
+      double dh = 1.0 + Btemp / Math.pow(BonV, 2.0) * (Btemp / numberOfMolesInPhase * dFdVdV());
+      double dhh = -2.0 * Btemp / Math.pow(BonV, 3.0) * (Btemp / numberOfMolesInPhase * dFdVdV())
           - Math.pow(Btemp, 2.0) / Math.pow(BonV, 4.0)
               * (Btemp / numberOfMolesInPhase * dFdVdVdV());
 
-      d1 = -h / dh;
-      d2 = -dh / dhh;
+      double d1 = -h / dh;
+      double d2 = -dh / dhh;
 
       if (Math.abs(d1 / d2) <= 1.0) {
         BonV += d1 * (1.0 + 0.5 * d1 / d2);
@@ -1627,7 +1621,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    *
    * @return a double
    */
-  public double getDiElectricConstantdT() {
+  public double getDielectricConstantdT() {
     return diElectricConstantdT;
   }
 
@@ -1638,7 +1632,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    *
    * @return a double
    */
-  public double getDiElectricConstantdV() {
+  public double getDielectricConstantdV() {
     return diElectricConstantdV;
   }
 
@@ -1706,17 +1700,6 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
    */
   public double getDielectricV() {
     return diElectricConstantdV;
-  }
-
-  /**
-   * <p>
-   * getDielectricConstant.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getDielectricConstant() {
-    return diElectricConstant;
   }
 
   /**

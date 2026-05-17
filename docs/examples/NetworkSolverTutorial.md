@@ -28,18 +28,17 @@ The `NetworkSolver` solves pressure-flow equilibrium in gathering networks:
 - Rate allocation optimization
 
 ```python
-import jpype
-import jpype.imports
-from jpype.types import *
+# Import NeqSim - Direct Java Access via jneqsim
+from neqsim import jneqsim
 
-# Start JVM with NeqSim
-if not jpype.isJVMStarted():
-    jpype.startJVM(classpath=['path/to/neqsim.jar'])
+# Import Java classes through the jneqsim gateway
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+WellSystem = jneqsim.process.equipment.reservoir.WellSystem
+SimpleReservoir = jneqsim.process.equipment.reservoir.SimpleReservoir
+NetworkSolver = jneqsim.process.fielddevelopment.network.NetworkSolver
+NetworkResult = jneqsim.process.fielddevelopment.network.NetworkResult
 
-# Import NeqSim classes
-from neqsim.thermo.system import SystemSrkEos
-from neqsim.process.equipment.reservoir import WellSystem, SimpleReservoir
-from neqsim.process.fielddevelopment.network import NetworkSolver, NetworkResult
+print("NeqSim Network Solver loaded successfully!")
 ```
 
 ## 1. Setting Up the Reservoir and Wells

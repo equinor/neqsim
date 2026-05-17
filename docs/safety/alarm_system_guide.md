@@ -1,3 +1,8 @@
+---
+title: NeqSim Alarm System Configuration Guide
+description: The NeqSim alarm system provides a comprehensive framework for monitoring process variables and managing alarm states throughout the lifecycle of process operations. This guide demonstrates how to con...
+---
+
 # NeqSim Alarm System Configuration Guide
 
 ## Overview
@@ -97,7 +102,7 @@ alarmManager.register(tt);
 ### Flow Alarms (with Low Limits)
 
 ```java
-FlowTransmitter ft = new FlowTransmitter("FT-201", stream);
+VolumeFlowTransmitter ft = new VolumeFlowTransmitter("FT-201", stream);
 
 AlarmConfig flowAlarms = AlarmConfig.builder()
     .lowLowLimit(100.0)       // LOLO: 100 kg/hr

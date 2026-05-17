@@ -1,3 +1,8 @@
+---
+title: CPA-Based Asphaltene Calculations
+description: The **Cubic Plus Association (CPA)** equation of state extends classical cubic equations (SRK or PR) with an association term to handle self-associating and cross-associating compounds. This makes CPA...
+---
+
 # CPA-Based Asphaltene Calculations
 
 ## Overview
@@ -510,7 +515,7 @@ System.out.println(analyzer.comprehensiveAssessment());
 
 ## See Also
 
-- [Asphaltene Modeling Overview](asphaltene_modeling.md)
-- [De Boer Screening](asphaltene_deboer_screening.md)
-- [Method Comparison](asphaltene_method_comparison.md)
-- [Electrolyte CPA Model](../../thermo/ElectrolyteCPAModel.md)
+- [Asphaltene Modeling Overview](asphaltene_modeling)
+- [De Boer Screening](asphaltene_deboer_screening)
+- [Method Comparison](asphaltene_method_comparison)
+- [Electrolyte CPA Model](../../thermo/ElectrolyteCPAModel)

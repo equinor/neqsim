@@ -6,14 +6,14 @@ import java.util.List;
 
 /**
  * Common validation result container for NeqSim components.
- * 
+ *
  * <p>
  * Used to collect validation errors and warnings with remediation advice. Compatible with AI agents
  * that can use error messages to self-correct simulation setup.
  * </p>
- * 
+ *
  * <h2>Usage:</h2>
- * 
+ *
  * <pre>
  * {@code
  * ValidationResult result = system.validate();
@@ -23,7 +23,7 @@ import java.util.List;
  * }
  * }
  * </pre>
- * 
+ *
  * @author NeqSim
  * @version 1.0
  */
@@ -53,7 +53,7 @@ public class ValidationResult {
 
     /**
      * Create a validation issue.
-     * 
+     *
      * @param severity issue severity
      * @param category issue category (e.g., "thermo", "equipment", "stream")
      * @param message description of the issue
@@ -94,7 +94,7 @@ public class ValidationResult {
 
   /**
    * Create a validation result for the specified object.
-   * 
+   *
    * @param validatedObject name or description of validated object
    */
   public ValidationResult(String validatedObject) {
@@ -110,7 +110,7 @@ public class ValidationResult {
 
   /**
    * Add a critical error.
-   * 
+   *
    * @param category issue category
    * @param message error description
    * @param remediation how to fix
@@ -121,7 +121,7 @@ public class ValidationResult {
 
   /**
    * Add an error with simple message (no remediation).
-   * 
+   *
    * @param message error description
    */
   public void addError(String message) {
@@ -130,7 +130,7 @@ public class ValidationResult {
 
   /**
    * Add a warning.
-   * 
+   *
    * @param category issue category
    * @param message warning description
    * @param suggestion how to improve
@@ -141,7 +141,7 @@ public class ValidationResult {
 
   /**
    * Add a warning with simple message.
-   * 
+   *
    * @param message warning description
    */
   public void addWarning(String message) {
@@ -150,7 +150,7 @@ public class ValidationResult {
 
   /**
    * Add an informational note.
-   * 
+   *
    * @param message info description
    */
   public void addInfo(String message) {
@@ -159,7 +159,7 @@ public class ValidationResult {
 
   /**
    * Check if validation passed (no critical or major errors).
-   * 
+   *
    * @return true if valid
    */
   public boolean isValid() {
@@ -168,7 +168,7 @@ public class ValidationResult {
 
   /**
    * Check if validation is ready for execution (no errors, warnings OK).
-   * 
+   *
    * @return true if ready
    */
   public boolean isReady() {
@@ -177,7 +177,7 @@ public class ValidationResult {
 
   /**
    * Check if validation has any warnings.
-   * 
+   *
    * @return true if warnings present
    */
   public boolean hasWarnings() {
@@ -186,7 +186,7 @@ public class ValidationResult {
 
   /**
    * Get all validation issues.
-   * 
+   *
    * @return unmodifiable list of issues
    */
   public List<ValidationIssue> getIssues() {
@@ -195,7 +195,7 @@ public class ValidationResult {
 
   /**
    * Get only error issues.
-   * 
+   *
    * @return list of errors
    */
   public List<ValidationIssue> getErrors() {
@@ -210,7 +210,7 @@ public class ValidationResult {
 
   /**
    * Get only warning issues.
-   * 
+   *
    * @return list of warnings
    */
   public List<ValidationIssue> getWarnings() {
@@ -225,7 +225,7 @@ public class ValidationResult {
 
   /**
    * Set the validation time.
-   * 
+   *
    * @param timeMs time in milliseconds
    */
   public void setValidationTimeMs(long timeMs) {
@@ -234,7 +234,7 @@ public class ValidationResult {
 
   /**
    * Get the validation time.
-   * 
+   *
    * @return time in milliseconds
    */
   public long getValidationTimeMs() {
@@ -243,7 +243,7 @@ public class ValidationResult {
 
   /**
    * Get a formatted validation report.
-   * 
+   *
    * @return formatted report string
    */
   public String getReport() {

@@ -40,35 +40,35 @@ GITHUB_PAGES_SCRIPT = """
 // Converts .md links to open on GitHub where they render correctly
 document.addEventListener('DOMContentLoaded', function() {
     'use strict';
-    
+
     // GitHub repository info
     var githubBase = 'https://github.com/equinor/neqsim/blob/master/docs/';
-    
+
     // Handle all clicks on links
     document.addEventListener('click', function(e) {
         var target = e.target.closest('a');
         if (!target) return;
-        
+
         var href = target.getAttribute('href');
         if (!href) return;
-        
+
         // Only handle relative .md links
         if (href.endsWith('.md') && !href.startsWith('http')) {
             e.preventDefault();
             e.stopPropagation();
-            
+
             // Resolve relative paths (remove ../ and get clean path)
             var resolvedPath = href;
             if (href.startsWith('../')) {
                 resolvedPath = href.replace(/^(\\.\\.\\/)+/, '');
             }
-            
+
             // Always open on GitHub - this guarantees the markdown renders correctly
             window.open(githubBase + resolvedPath, '_blank');
             return false;
         }
     }, true); // Use capture phase to intercept before default behavior
-    
+
     // Add visual indicator for .md links
     var links = document.querySelectorAll('a[href$=".md"]');
     links.forEach(function(link) {
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
             link.title = 'Opens on GitHub';
         }
     });
-    
+
     console.log('NeqSim link handler loaded. Found ' + links.length + ' .md links.');
 });
 </script>
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
 CSS_STYLE = """
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&family=Source+Code+Pro:wght@400;500&display=swap');
-    
+
     :root {
         --primary-color: #0066cc;
         --secondary-color: #004a94;
@@ -97,11 +97,11 @@ CSS_STYLE = """
         --border-color: #e0e0e0;
         --code-bg: #f8f9fa;
     }
-    
+
     * {
         box-sizing: border-box;
     }
-    
+
     body {
         font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         line-height: 1.7;
@@ -111,7 +111,7 @@ CSS_STYLE = """
         padding: 40px 60px;
         background: white;
     }
-    
+
     /* Cover Page */
     .cover-page {
         text-align: center;
@@ -123,7 +123,7 @@ CSS_STYLE = """
         justify-content: center;
         border-bottom: 4px solid var(--primary-color);
     }
-    
+
     .cover-page h1 {
         font-size: 3.5em;
         font-weight: 700;
@@ -131,55 +131,55 @@ CSS_STYLE = """
         margin-bottom: 20px;
         letter-spacing: -1px;
     }
-    
+
     .cover-page .subtitle {
         font-size: 1.5em;
         color: #666;
         margin-bottom: 60px;
     }
-    
+
     .cover-page .version {
         font-size: 1.2em;
         color: #888;
         margin-top: 40px;
     }
-    
+
     .cover-page .logo {
         font-size: 4em;
         margin-bottom: 30px;
     }
-    
+
     /* Table of Contents */
     .toc {
         page-break-after: always;
         padding: 40px 0;
     }
-    
+
     .toc h2 {
         color: var(--primary-color);
         border-bottom: 3px solid var(--primary-color);
         padding-bottom: 10px;
     }
-    
+
     .toc ul {
         list-style: none;
         padding: 0;
     }
-    
+
     .toc li {
         padding: 8px 0;
         border-bottom: 1px dotted var(--border-color);
     }
-    
+
     .toc a {
         color: var(--text-color);
         text-decoration: none;
     }
-    
+
     .toc a:hover {
         color: var(--primary-color);
     }
-    
+
     /* Headings */
     h1 {
         font-size: 2.5em;
@@ -191,7 +191,7 @@ CSS_STYLE = """
         border-bottom: 3px solid var(--primary-color);
         padding-bottom: 15px;
     }
-    
+
     h2 {
         font-size: 1.8em;
         font-weight: 600;
@@ -202,7 +202,7 @@ CSS_STYLE = """
         border-bottom: 2px solid var(--border-color);
         padding-bottom: 10px;
     }
-    
+
     h3 {
         font-size: 1.4em;
         font-weight: 600;
@@ -211,7 +211,7 @@ CSS_STYLE = """
         margin-bottom: 12px;
         page-break-after: avoid;
     }
-    
+
     h4 {
         font-size: 1.2em;
         font-weight: 600;
@@ -219,23 +219,23 @@ CSS_STYLE = """
         margin-top: 25px;
         margin-bottom: 10px;
     }
-    
+
     /* Paragraphs and text */
     p {
         margin: 15px 0;
         text-align: justify;
     }
-    
+
     /* Links */
     a {
         color: var(--primary-color);
         text-decoration: none;
     }
-    
+
     a:hover {
         text-decoration: underline;
     }
-    
+
     /* Code blocks */
     pre {
         background: var(--code-bg);
@@ -250,7 +250,7 @@ CSS_STYLE = """
         margin: 20px 0;
         page-break-inside: avoid;
     }
-    
+
     code {
         font-family: 'Source Code Pro', 'Consolas', 'Monaco', monospace;
         background: var(--code-bg);
@@ -258,12 +258,12 @@ CSS_STYLE = """
         border-radius: 3px;
         font-size: 0.9em;
     }
-    
+
     pre code {
         background: none;
         padding: 0;
     }
-    
+
     /* Tables */
     table {
         width: 100%;
@@ -272,7 +272,7 @@ CSS_STYLE = """
         font-size: 0.95em;
         page-break-inside: avoid;
     }
-    
+
     th {
         background: var(--primary-color);
         color: white;
@@ -280,30 +280,30 @@ CSS_STYLE = """
         padding: 14px 12px;
         text-align: left;
     }
-    
+
     td {
         padding: 12px;
         border-bottom: 1px solid var(--border-color);
     }
-    
+
     tr:nth-child(even) {
         background: var(--light-gray);
     }
-    
+
     tr:hover {
         background: #e8f4fc;
     }
-    
+
     /* Lists */
     ul, ol {
         margin: 15px 0;
         padding-left: 30px;
     }
-    
+
     li {
         margin: 8px 0;
     }
-    
+
     /* Blockquotes */
     blockquote {
         border-left: 4px solid var(--accent-color);
@@ -313,7 +313,7 @@ CSS_STYLE = """
         font-style: italic;
         color: #555;
     }
-    
+
     /* Horizontal rules */
     hr {
         border: none;
@@ -321,13 +321,13 @@ CSS_STYLE = """
         background: linear-gradient(to right, var(--primary-color), var(--accent-color));
         margin: 50px 0;
     }
-    
+
     /* Section dividers */
     .section-divider {
         page-break-before: always;
         padding-top: 30px;
     }
-    
+
     /* Chapter headers */
     .chapter-header {
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
@@ -337,14 +337,14 @@ CSS_STYLE = """
         text-align: center;
         page-break-before: always;
     }
-    
+
     .chapter-header h1 {
         color: white;
         border: none;
         margin: 0;
         padding: 0;
     }
-    
+
     /* Info boxes */
     .note {
         background: #e7f3ff;
@@ -353,7 +353,7 @@ CSS_STYLE = """
         margin: 20px 0;
         border-radius: 0 4px 4px 0;
     }
-    
+
     .warning {
         background: #fff3cd;
         border-left: 4px solid #ffc107;
@@ -361,27 +361,27 @@ CSS_STYLE = """
         margin: 20px 0;
         border-radius: 0 4px 4px 0;
     }
-    
+
     /* Print styles */
     @media print {
         body {
             padding: 20px 40px;
         }
-        
+
         pre {
             white-space: pre-wrap;
             word-wrap: break-word;
         }
-        
+
         a {
             color: var(--text-color);
         }
-        
+
         .no-print {
             display: none;
         }
     }
-    
+
     /* Page numbers (for PDF) */
     @page {
         margin: 2cm;
@@ -410,10 +410,10 @@ def process_markdown(content, base_path=None):
     """Process markdown content and fix relative links."""
     if content is None:
         return ""
-    
+
     # Remove the first H1 heading if present (we'll add chapter headers)
     # content = re.sub(r'^# .+\n', '', content, count=1)
-    
+
     return content
 
 
@@ -425,7 +425,7 @@ def create_cover_page(title, subtitle, version):
         <h1>{title}</h1>
         <p class="subtitle">{subtitle}</p>
         <p class="version">Version {version}</p>
-        <p class="version">Generated: January 2026</p>
+        <p class="version">Generated: March 2026</p>
     </div>
     """
 
@@ -433,11 +433,11 @@ def create_cover_page(title, subtitle, version):
 def create_toc(sections):
     """Generate table of contents."""
     toc_html = '<div class="toc"><h2>Table of Contents</h2><ul>'
-    
+
     for i, (title, _) in enumerate(sections, 1):
         anchor = title.lower().replace(' ', '-').replace('&', 'and')
         toc_html += f'<li><strong>{i}.</strong> <a href="#{anchor}">{title}</a></li>'
-    
+
     toc_html += '</ul></div>'
     return toc_html
 
@@ -459,7 +459,7 @@ def markdown_to_html(md_content):
 
 def generate_manual(sections, title, subtitle, version, output_file):
     """Generate the complete HTML manual."""
-    
+
     # Start building HTML
     html_parts = [
         '<!DOCTYPE html>',
@@ -474,7 +474,7 @@ def generate_manual(sections, title, subtitle, version, output_file):
         create_cover_page(title, subtitle, version),
         create_toc(sections)
     ]
-    
+
     # Add each section
     for section_title, content in sections:
         anchor = section_title.lower().replace(' ', '-').replace('&', 'and')
@@ -482,18 +482,18 @@ def generate_manual(sections, title, subtitle, version, output_file):
         html_parts.append(f'<div class="chapter-header"><h1>{section_title}</h1></div>')
         html_parts.append(markdown_to_html(content))
         html_parts.append('</div>')
-    
+
     # Add GitHub Pages link handler script before closing body
     html_parts.append(GITHUB_PAGES_SCRIPT)
     html_parts.extend(['</body>', '</html>'])
-    
+
     # Write output
     output_path = OUTPUT_DIR / output_file
     OUTPUT_DIR.mkdir(exist_ok=True)
-    
+
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(html_parts))
-    
+
     print(f"Generated: {output_path}")
     return output_path
 
@@ -524,6 +524,7 @@ FULL_MANUAL_STRUCTURE = {
         ],
         "Chapter 5: Fluid Creation & Components": [
             ("Fluid Creation Guide", "thermo/fluid_creation_guide.md"),
+            ("Fluid Classification", "thermo/fluid_classification.md"),
             ("Component Database", "thermo/component_database_guide.md"),
             ("Component Package", "thermo/component/README.md"),
             ("Mathematical Models", "thermo/mathematical_models.md"),
@@ -568,6 +569,8 @@ FULL_MANUAL_STRUCTURE = {
         "Chapter 10: Hydrates & Flow Assurance": [
             ("Hydrate Models", "thermo/hydrate_models.md"),
             ("Hydrate Flash", "thermodynamicoperations/hydrate_flash_operations.md"),
+            ("Wax Characterization", "thermo/characterization/wax_characterization.md"),
+            ("Asphaltene Characterization", "thermo/characterization/asphaltene_characterization.md"),
         ],
     },
     "Part III: Process Simulation": {
@@ -600,6 +603,7 @@ FULL_MANUAL_STRUCTURE = {
             ("Membrane", "wiki/membrane_separation.md"),
             ("Membrane Equipment", "process/equipment/membranes.md"),
             ("Filters", "process/equipment/filters.md"),
+            ("Water Treatment", "process/equipment/water_treatment.md"),
         ],
         "Chapter 15: Rotating Equipment": [
             ("Compressors", "process/equipment/compressors.md"),
@@ -614,6 +618,7 @@ FULL_MANUAL_STRUCTURE = {
         ],
         "Chapter 16: Heat Transfer Equipment": [
             ("Heat Exchangers", "process/equipment/heat_exchangers.md"),
+            ("Thermal-Hydraulic Design", "process/mechanical_design/thermal_hydraulic_design.md"),
             ("Air Cooler", "wiki/air_cooler.md"),
             ("Water Cooler", "wiki/water_cooler.md"),
             ("Steam Heater", "wiki/steam_heater.md"),
@@ -625,6 +630,8 @@ FULL_MANUAL_STRUCTURE = {
             ("Flow Meters", "wiki/flow_meter_models.md"),
             ("Venturi", "wiki/venturi_calculation.md"),
             ("Tanks", "process/equipment/tanks.md"),
+            ("Vessel Depressurization", "process/equipment/vessel_depressurization.md"),
+            ("Measurement Devices", "process/equipment/measurement_devices.md"),
         ],
         "Chapter 18: Special Equipment": [
             ("Reactors", "process/equipment/reactors.md"),
@@ -643,17 +650,28 @@ FULL_MANUAL_STRUCTURE = {
             ("Wells", "process/equipment/wells.md"),
             ("Well Simulation", "simulation/well_simulation_guide.md"),
             ("Well & Choke", "simulation/well_and_choke_simulation.md"),
+            ("Well Allocation", "process/equipment/well_allocation.md"),
             ("Pipelines", "process/equipment/pipelines.md"),
+            ("Piping Route Builder", "process/piping_route_builder.md"),
+            ("Pipeline Simulation", "process/equipment/pipeline_simulation.md"),
+            ("TwoFluidPipe Model", "process/TWOFLUIDPIPE_MODEL.md"),
+            ("TwoFluidPipe OLGA Comparison", "wiki/two_fluid_model_olga_comparison.md"),
             ("Beggs & Brill", "process/PipeBeggsAndBrills.md"),
+            ("Multiphase Choke Flow", "process/MultiphaseChokeFlow.md"),
             ("Networks", "process/equipment/networks.md"),
+            ("Looped Network Solver", "process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT.md"),
+            ("Pipe Fittings Equivalent Length", "process/PIPE_FITTINGS_EQUIVALENT_LENGTH.md"),
             ("Reservoirs", "process/equipment/reservoirs.md"),
             ("Subsea Systems", "process/equipment/subsea_systems.md"),
+            ("Subsea Equipment", "process/equipment/subsea_equipment.md"),
+            ("SURF Subsea Equipment", "process/SURF_SUBSEA_EQUIPMENT.md"),
         ],
         "Chapter 20: Utility Equipment": [
             ("Utility Overview", "process/equipment/util/README.md"),
             ("Adjusters", "process/equipment/util/adjusters.md"),
             ("Recycles", "process/equipment/util/recycles.md"),
             ("Calculators", "process/equipment/util/calculators.md"),
+            ("Stream Fitters", "process/equipment/util/stream_fitters.md"),
         ],
         "Chapter 21: Process Control": [
             ("Controllers", "process/controllers.md"),
@@ -663,13 +681,25 @@ FULL_MANUAL_STRUCTURE = {
         ],
         "Chapter 22: Mechanical Design": [
             ("Mechanical Design", "process/mechanical_design.md"),
+            ("Equipment Design Parameters", "process/EQUIPMENT_DESIGN_PARAMETERS.md"),
             ("Design Standards", "process/mechanical_design_standards.md"),
             ("Design Database", "process/mechanical_design_database.md"),
+            ("Pipeline Mechanical Design", "process/pipeline_mechanical_design.md"),
+            ("Topside Piping Design", "process/topside_piping_design.md"),
+            ("Manifold Design", "process/equipment/manifold_design.md"),
+            ("Riser Mechanical Design", "process/riser_mechanical_design.md"),
+            ("Pipeline Design Math", "process/pipeline_mechanical_design_math.md"),
+            ("TEMA Standard Guide", "process/mechanical_design/tema_standard_guide.md"),
+            ("Cost Estimation Framework", "process/COST_ESTIMATION_FRAMEWORK.md"),
+            ("Cost Estimation API", "process/COST_ESTIMATION_API_REFERENCE.md"),
             ("TORG Integration", "process/torg_integration.md"),
-            ("Field Development", "process/field_development_orchestration.md"),
+            ("Field Development Orchestration", "process/field_development_orchestration.md"),
+            ("Design Framework", "process/DESIGN_FRAMEWORK.md"),
+            ("Templates Guide", "process/design/templates_guide.md"),
         ],
         "Chapter 23: Serialization & Persistence": [
             ("Process Serialization", "simulation/process_serialization.md"),
+            ("Process Model Lifecycle", "process/lifecycle/process_model_lifecycle.md"),
         ],
     },
     "Part IV: Pipeline & Multiphase Flow": {
@@ -678,6 +708,7 @@ FULL_MANUAL_STRUCTURE = {
             ("Pipeline Index", "wiki/pipeline_index.md"),
             ("Flow Equations", "wiki/pipeline_flow_equations.md"),
             ("Single Phase Flow", "fluidmechanics/single_phase_pipe_flow.md"),
+            ("Flow Pattern Detection", "fluidmechanics/flow_pattern_detection.md"),
         ],
         "Chapter 25: Pressure Drop Calculations": [
             ("Pressure Drop", "wiki/pipeline_pressure_drop.md"),
@@ -690,10 +721,14 @@ FULL_MANUAL_STRUCTURE = {
             ("Pipe Wall", "wiki/pipe_wall_heat_transfer.md"),
             ("Interphase", "fluidmechanics/InterphaseHeatMassTransfer.md"),
             ("Mass Transfer", "fluidmechanics/mass_transfer.md"),
+            ("Mass Transfer API", "fluidmechanics/MassTransferAPI.md"),
+            ("Evaporation & Dissolution Tutorial", "fluidmechanics/EvaporationDissolutionTutorial.md"),
+            ("Model Improvements", "fluidmechanics/MASS_TRANSFER_MODEL_IMPROVEMENTS.md"),
         ],
         "Chapter 27: Two-Phase & Multiphase Flow": [
             ("Two-Phase Model", "fluidmechanics/TwoPhasePipeFlowModel.md"),
             ("Two-Fluid Model", "wiki/two_fluid_model.md"),
+            ("Pipeline Recipes", "cookbook/pipeline-recipes.md"),
             ("Multiphase Transient", "wiki/multiphase_transient_model.md"),
             ("Transient Pipe Wiki", "wiki/transient_multiphase_pipe.md"),
             ("Development Plan", "fluidmechanics/TwoPhasePipeFlowSystem_Development_Plan.md"),
@@ -740,9 +775,32 @@ FULL_MANUAL_STRUCTURE = {
             ("Safety Chain Tests", "safety/integration_safety_chain_tests.md"),
             ("Scenario Generation", "process/safety/scenario-generation.md"),
         ],
+        "Chapter 35: Risk Simulation Framework": [
+            ("Risk Framework Index", "risk/index.md"),
+            ("Framework Overview", "risk/overview.md"),
+            ("Equipment Failure Modeling", "risk/equipment-failure.md"),
+            ("Risk Matrix", "risk/risk-matrix.md"),
+            ("Monte Carlo Simulation", "risk/monte-carlo.md"),
+            ("Production Impact Analysis", "risk/production-impact.md"),
+            ("Degraded Operation", "risk/degraded-operation.md"),
+            ("Process Topology", "risk/topology.md"),
+            ("STID Tagging", "risk/stid-tagging.md"),
+            ("Dependency Analysis", "risk/dependency-analysis.md"),
+            ("Mathematical Reference", "risk/mathematical-reference.md"),
+            ("API Reference", "risk/api-reference.md"),
+            ("Reliability Data Guide", "risk/RELIABILITY_DATA_GUIDE.md"),
+            ("Physics-Based Integration", "risk/PHYSICS_BASED_RISK_INTEGRATION.md"),
+        ],
+        "Chapter 36: Advanced Risk Framework": [
+            ("Advanced Framework Overview", "risk/README.md"),
+            ("Dynamic Simulation", "risk/dynamic-simulation.md"),
+            ("SIS/SIF Integration", "risk/sis-integration.md"),
+            ("Bow-Tie Analysis", "risk/bowtie-analysis.md"),
+            ("Condition-Based Reliability", "risk/condition-based.md"),
+        ],
     },
     "Part VI: PVT & Flow Assurance": {
-        "Chapter 35: PVT Simulation": [
+        "Chapter 37: PVT Simulation": [
             ("PVT Overview", "pvtsimulation/README.md"),
             ("PVT Workflows", "wiki/pvt_simulation_workflows.md"),
             ("PVT Workflow Module", "pvtsimulation/pvt_workflow.md"),
@@ -750,12 +808,12 @@ FULL_MANUAL_STRUCTURE = {
             ("Whitson Reader", "pvtsimulation/whitson_pvt_reader.md"),
             ("Solution Gas-Water Ratio", "pvtsimulation/SolutionGasWaterRatio.md"),
         ],
-        "Chapter 36: Black Oil Models": [
+        "Chapter 38: Black Oil Models": [
             ("Black Oil Overview", "blackoil/README.md"),
             ("Flash Playbook", "wiki/black_oil_flash_playbook.md"),
             ("Black Oil Export", "pvtsimulation/blackoil_pvt_export.md"),
         ],
-        "Chapter 37: Flow Assurance": [
+        "Chapter 39: Flow Assurance": [
             ("Flow Assurance", "pvtsimulation/flowassurance/README.md"),
             ("Asphaltene Modeling", "pvtsimulation/flowassurance/asphaltene_modeling.md"),
             ("Asphaltene CPA", "pvtsimulation/flowassurance/asphaltene_cpa_calculations.md"),
@@ -764,13 +822,13 @@ FULL_MANUAL_STRUCTURE = {
             ("Parameter Fitting", "pvtsimulation/flowassurance/asphaltene_parameter_fitting.md"),
             ("Validation", "pvtsimulation/flowassurance/asphaltene_validation.md"),
         ],
-        "Chapter 38: Gas Quality": [
+        "Chapter 40: Gas Quality": [
             ("Gas Quality Standards", "wiki/gas_quality_standards_from_tests.md"),
             ("Humid Air", "wiki/humid_air_math.md"),
         ],
     },
     "Part VII: Standards & Quality": {
-        "Chapter 39: ISO Standards": [
+        "Chapter 41: ISO Standards": [
             ("Standards Overview", "standards/README.md"),
             ("ISO 6976", "standards/iso6976_calorific_values.md"),
             ("ISO 6578", "standards/iso6578_lng_density.md"),
@@ -781,26 +839,99 @@ FULL_MANUAL_STRUCTURE = {
         ],
     },
     "Part VIII: Advanced Topics": {
-        "Chapter 40: Future Infrastructure": [
+        "Chapter 42: Process Optimization": [
+            ("Optimization Overview", "process/optimization/README.md"),
+            ("Optimization & Constraints Guide", "process/optimization/OPTIMIZATION_AND_CONSTRAINTS.md"),
+            ("Optimization Start Guide", "process/optimization/OPTIMIZATION_OVERVIEW.md"),
+            ("Capacity Constraint Framework", "process/CAPACITY_CONSTRAINT_FRAMEWORK.md"),
+            ("Optimizer Plugin Architecture", "process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md"),
+            ("Flow Rate Optimization", "process/optimization/flow-rate-optimization.md"),
+            ("Multi-Objective Optimization", "process/optimization/multi-objective-optimization.md"),
+            ("Compressor Optimization Guide", "process/optimization/COMPRESSOR_OPTIMIZATION_GUIDE.md"),
+            ("Practical Examples", "process/optimization/PRACTICAL_EXAMPLES.md"),
+            ("Batch Studies", "process/optimization/batch-studies.md"),
+            ("Bottleneck Analysis", "wiki/bottleneck_analysis.md"),
+        ],
+        "Chapter 43: Field Development": [
+            ("Field Development Overview", "fielddevelopment/README.md"),
+            ("Digital Field Twin", "fielddevelopment/DIGITAL_FIELD_TWIN.md"),
+            ("Mathematical Reference", "fielddevelopment/MATHEMATICAL_REFERENCE.md"),
+            ("API Guide", "fielddevelopment/API_GUIDE.md"),
+            ("Integrated Framework", "fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md"),
+            ("Strategy", "fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md"),
+            ("Late-Life Operations", "fielddevelopment/LATE_LIFE_OPERATIONS.md"),
+            ("Field Planning", "wiki/field_development_planning.md"),
+            ("Field Engine", "simulation/field_development_engine.md"),
+            ("Economics", "process/economics/README.md"),
+        ],
+        "Chapter 44: Future Infrastructure": [
             ("Future Infrastructure", "process/future-infrastructure.md"),
             ("API Reference", "process/future-api-reference.md"),
         ],
-        "Chapter 41: Integration & APIs": [
-            ("Digital Twins", "integration/README.md"),
+        "Chapter 45: Integration & APIs": [
+            ("Integration Overview", "integration/README.md"),
+            ("Digital Twins", "process/digital-twin-integration.md"),
             ("AI Platform Integration", "integration/ai_platform_integration.md"),
             ("AI Validation Framework", "integration/ai_validation_framework.md"),
+            ("Real-Time Integration", "integration/REAL_TIME_INTEGRATION_GUIDE.md"),
+            ("MPC Integration", "integration/mpc_integration.md"),
+            ("Industrial MPC", "integration/neqsim_industrial_mpc_integration.md"),
+            ("External Optimizer Integration", "integration/EXTERNAL_OPTIMIZER_INTEGRATION.md"),
+            ("DEXPI Reader", "integration/dexpi-reader.md"),
+            ("QRA Integration", "integration/QRA_INTEGRATION_GUIDE.md"),
         ],
-        "Chapter 42: Chemical Reactions": [
+        "Chapter 46: Chemical Reactions": [
             ("Chemical Reactions", "chemicalreactions/README.md"),
         ],
-        "Chapter 43: Statistics & Fitting": [
+        "Chapter 47: Statistics & Fitting": [
             ("Statistics Overview", "statistics/README.md"),
+            ("Parameter Fitting", "statistics/parameter_fitting.md"),
+            ("Monte Carlo", "statistics/monte_carlo_simulation.md"),
+            ("Data Analysis", "statistics/data_analysis.md"),
         ],
-        "Chapter 44: Utilities": [
+        "Chapter 48: Utilities": [
             ("Utilities Overview", "util/README.md"),
+            ("Unit Conversion", "util/unit_conversion.md"),
+            ("Optimizer Guide", "util/optimizer_guide.md"),
         ],
-        "Chapter 45: Math Library": [
+        "Chapter 49: Math Library": [
             ("Math Library", "mathlib/README.md"),
+        ],
+    },
+    "Part IX: Developer Guide": {
+        "Chapter 50: Contributing": [
+            ("Development Overview", "development/README.md"),
+            ("Contributing Structure", "development/contributing-structure.md"),
+            ("Developer Setup", "development/DEVELOPER_SETUP.md"),
+        ],
+        "Chapter 51: Testing": [
+            ("Test Overview", "wiki/test-overview.md"),
+            ("Flash Tests", "wiki/flash_equations_and_tests.md"),
+            ("Safety Tests", "safety/integration_safety_chain_tests.md"),
+        ],
+        "Chapter 52: Cookbook Recipes": [
+            ("Cookbook Index", "cookbook/index.md"),
+            ("Thermodynamics Recipes", "cookbook/thermodynamics-recipes.md"),
+            ("Process Recipes", "cookbook/process-recipes.md"),
+            ("Pipeline Recipes", "cookbook/pipeline-recipes.md"),
+            ("Unit Conversion Recipes", "cookbook/unit-conversion-recipes.md"),
+            ("Adsorption Recipes", "cookbook/adsorption-recipes.md"),
+        ],
+        "Chapter 53: Process Logic Framework": [
+            ("Simulation Overview", "simulation/README.md"),
+            ("Process Logic", "simulation/process_logic_framework.md"),
+            ("Advanced Logic", "simulation/advanced_process_logic.md"),
+            ("Implementation", "simulation/process_logic_implementation_summary.md"),
+            ("Enhancements", "simulation/ProcessLogicEnhancements.md"),
+            ("Runtime Flexibility", "simulation/RuntimeLogicFlexibility.md"),
+            ("Graph-Based", "simulation/graph_based_process_simulation.md"),
+            ("Parallel Simulation", "simulation/parallel_process_simulation.md"),
+            ("Recycle Acceleration", "simulation/recycle_acceleration_guide.md"),
+            ("Process Calculator", "simulation/process_calculator.md"),
+            ("Integrated Workflow", "simulation/INTEGRATED_WORKFLOW_GUIDE.md"),
+            ("Differentiable Thermo", "simulation/differentiable_thermodynamics.md"),
+            ("Derivatives", "simulation/derivatives_and_gradients.md"),
+            ("Equipment Factory", "simulation/equipment_factory.md"),
         ],
     },
 }
@@ -811,18 +942,18 @@ def load_all_sections():
     sections = []
     file_count = 0
     missing_count = 0
-    
+
     for part_name, chapters in FULL_MANUAL_STRUCTURE.items():
         print(f"\n{part_name}")
-        
+
         for chapter_name, documents in chapters.items():
             print(f"  {chapter_name}")
             chapter_content = []
-            
+
             for doc_title, doc_path in documents:
                 full_path = DOCS_DIR / doc_path
                 content = read_markdown_file(full_path)
-                
+
                 if content:
                     # Add sub-section header
                     chapter_content.append(f"\n\n## {doc_title}\n\n")
@@ -832,42 +963,42 @@ def load_all_sections():
                 else:
                     missing_count += 1
                     print(f"    ✗ {doc_title} (missing)")
-            
+
             if chapter_content:
                 combined_content = "\n".join(chapter_content)
                 sections.append((chapter_name, combined_content))
-    
+
     print(f"\n{'='*40}")
     print(f"Loaded: {file_count} files")
     print(f"Missing: {missing_count} files")
-    
+
     return sections
 
 
 def main():
     """Main function to generate the full reference manual."""
-    
+
     print("=" * 60)
     print("  NeqSim Reference Manual Generator")
     print("  Full Manual with Equation Support")
     print("=" * 60)
-    
+
     # Load all sections
     sections = load_all_sections()
-    
+
     if not sections:
         print("Error: No content found!")
         return
-    
+
     # Generate the complete manual
     output_file = generate_manual(
         sections=sections,
         title="NeqSim Reference Manual",
-        subtitle="Complete Technical Documentation",
-        version="3.0.0",
+        subtitle="AI Agents for Engineering Task Solving in Industry",
+        version="3.4.0",
         output_file="neqsim_reference_manual.html"
     )
-    
+
     print(f"\n{'='*60}")
     print(f"SUCCESS! Full reference manual generated.")
     print(f"Output: {output_file}")

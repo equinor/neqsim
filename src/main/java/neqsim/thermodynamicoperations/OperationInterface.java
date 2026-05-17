@@ -73,6 +73,21 @@ public interface OperationInterface extends Runnable, java.io.Serializable {
   public double[] get(String name);
 
   /**
+   * Returns the named result array, or the supplied default if the key is not found or the result
+   * is {@code null}. This overload makes Python/JPype usage natural:
+   * {@code pe_data.get("dewT", emptyArray)} mirrors the Python dict {@code .get(key, default)}
+   * idiom.
+   *
+   * @param name the result key (e.g. "dewT", "bubP")
+   * @param defaultValue the array to return when the key is absent or maps to {@code null}
+   * @return the result array, or {@code defaultValue} if not found
+   */
+  default double[] get(String name, double[] defaultValue) {
+    double[] result = get(name);
+    return result != null ? result : defaultValue;
+  }
+
+  /**
    * <p>
    * getJFreeChart.
    * </p>

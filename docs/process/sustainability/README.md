@@ -1,3 +1,8 @@
+---
+title: Sustainability and Emissions Tracking
+description: This module provides CO2 equivalent emissions tracking and energy consumption monitoring for process systems.
+---
+
 # Sustainability and Emissions Tracking
 
 This module provides CO2 equivalent emissions tracking and energy consumption monitoring for process systems.
@@ -178,5 +183,5 @@ for (ProcessSystem alternative : alternatives) {
 
 ## Related Documentation
 
-- [Batch Studies](../optimization/README.md) - Multi-objective optimization including emissions
-- [Lifecycle Management](../lifecycle/README.md) - Track emissions over model lifecycle
+- [Batch Studies](../optimization/) - Multi-objective optimization including emissions
+- [Lifecycle Management](../lifecycle/) - Track emissions over model lifecycle

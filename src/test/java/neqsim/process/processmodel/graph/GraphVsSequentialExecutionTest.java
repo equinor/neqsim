@@ -20,7 +20,7 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * Test class to verify that graph-based execution produces identical results to sequential
  * execution.
- * 
+ *
  * <p>
  * These tests ensure that the graph-based parallel and optimized execution strategies don't
  * introduce numerical differences compared to the traditional sequential execution.
@@ -227,29 +227,61 @@ public class GraphVsSequentialExecutionTest {
   }
 
   /**
-   * Test that runOptimized correctly detects multi-input equipment.
+   * Test that runOptimized handles multi-input equipment correctly via parallel execution.
    */
   @Test
-  void testRunOptimizedDetectsMultiInputEquipment() {
-    ProcessSystem system = new ProcessSystem("Multi-input Test");
+  void testRunOptimizedHandlesMultiInputEquipment() {
+    // Multi-input equipment (like Mixer) is now handled by level-based parallel
+    // execution. The graph places the Mixer at a level after both its inputs,
+    // so all inputs complete before the Mixer runs.
 
-    Stream feed1 = new Stream("feed1", testFluid.clone());
-    feed1.setFlowRate(500.0, "kg/hr");
-    system.add(feed1);
+    // Sequential reference
+    ProcessSystem seqSystem = new ProcessSystem("Sequential Multi-input");
+    seqSystem.setUseOptimizedExecution(false);
 
-    Stream feed2 = new Stream("feed2", testFluid.clone());
-    feed2.setFlowRate(500.0, "kg/hr");
-    system.add(feed2);
+    Stream seqFeed1 = new Stream("feed1", testFluid.clone());
+    seqFeed1.setFlowRate(500.0, "kg/hr");
+    seqSystem.add(seqFeed1);
 
-    Mixer mixer = new Mixer("mixer");
-    mixer.addStream(feed1);
-    mixer.addStream(feed2);
-    system.add(mixer);
+    Stream seqFeed2 = new Stream("feed2", testFluid.clone());
+    seqFeed2.setFlowRate(500.0, "kg/hr");
+    seqSystem.add(seqFeed2);
 
-    // Should detect multi-input equipment and NOT recommend parallel execution
-    assertTrue(system.hasMultiInputEquipment(), "Should detect mixer as multi-input");
-    assertFalse(system.isParallelExecutionBeneficial(),
-        "Parallel should not be beneficial with mixer");
+    Mixer seqMixer = new Mixer("mixer");
+    seqMixer.addStream(seqFeed1);
+    seqMixer.addStream(seqFeed2);
+    seqSystem.add(seqMixer);
+
+    seqSystem.run();
+    double seqMixerFlow = seqMixer.getOutletStream().getFlowRate("kg/hr");
+    double seqMixerTemp = seqMixer.getOutletStream().getTemperature("K");
+
+    // Optimized (uses parallel execution even with mixer)
+    ProcessSystem optSystem = new ProcessSystem("Optimized Multi-input");
+
+    Stream optFeed1 = new Stream("feed1", testFluid.clone());
+    optFeed1.setFlowRate(500.0, "kg/hr");
+    optSystem.add(optFeed1);
+
+    Stream optFeed2 = new Stream("feed2", testFluid.clone());
+    optFeed2.setFlowRate(500.0, "kg/hr");
+    optSystem.add(optFeed2);
+
+    Mixer optMixer = new Mixer("mixer");
+    optMixer.addStream(optFeed1);
+    optMixer.addStream(optFeed2);
+    optSystem.add(optMixer);
+
+    optSystem.runOptimized();
+    double optMixerFlow = optMixer.getOutletStream().getFlowRate("kg/hr");
+    double optMixerTemp = optMixer.getOutletStream().getTemperature("K");
+
+    // Verify multi-input detection still works
+    assertTrue(optSystem.hasMultiInputEquipment(), "Should detect mixer as multi-input");
+
+    // Verify results match between sequential and optimized (parallel) execution
+    assertEquals(seqMixerFlow, optMixerFlow, 1e-4, "Mixer flow should match");
+    assertEquals(seqMixerTemp, optMixerTemp, 1e-4, "Mixer temp should match");
   }
 
   /**

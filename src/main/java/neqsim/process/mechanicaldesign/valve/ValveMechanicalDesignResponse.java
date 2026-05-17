@@ -110,7 +110,6 @@ public class ValveMechanicalDesignResponse extends MechanicalDesignResponse {
    * Default constructor.
    */
   public ValveMechanicalDesignResponse() {
-    super();
     setEquipmentType("Valve");
     setDesignStandard("IEC 60534 / ANSI/ISA-75");
   }

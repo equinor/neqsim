@@ -69,7 +69,6 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    * Default constructor for CompressorChartMWInterpolation.
    */
   public CompressorChartMWInterpolation() {
-    super();
   }
 
   /**
@@ -237,6 +236,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    *
    * @param mw the operating molecular weight in g/mol
    */
+  @Override
   public void setOperatingMW(double mw) {
     this.operatingMW = mw;
   }
@@ -246,6 +246,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    *
    * @return the operating molecular weight in g/mol
    */
+  @Override
   public double getOperatingMW() {
     return operatingMW;
   }
@@ -378,6 +379,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    *
    * @param stream the inlet stream
    */
+  @Override
   public void setInletStream(StreamInterface stream) {
     this.inletStream = stream;
   }
@@ -387,6 +389,7 @@ public class CompressorChartMWInterpolation extends CompressorChart {
    *
    * @return the inlet stream, or null if not set
    */
+  @Override
   public StreamInterface getInletStream() {
     return inletStream;
   }

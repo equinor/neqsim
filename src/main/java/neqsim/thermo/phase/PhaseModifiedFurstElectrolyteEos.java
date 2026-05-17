@@ -272,7 +272,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
         ans1 += componentArray[i].getNumberOfMolesInPhase()
-            * componentArray[i].getDiElectricConstant(temperature);
+            * componentArray[i].getDielectricConstant(temperature);
         ans2 += componentArray[i].getNumberOfMolesInPhase();
       }
     }
@@ -310,7 +310,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
         double moles = componentArray[i].getNumberOfMolesInPhase();
         double molarVolume = componentArray[i].getCriticalVolume();
         double volumeFraction = (moles * molarVolume) / totalVolume;
-        weightedSum += volumeFraction * componentArray[i].getDiElectricConstant(temperature);
+        weightedSum += volumeFraction * componentArray[i].getDielectricConstant(temperature);
       }
     }
     return weightedSum;
@@ -346,7 +346,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
         double moles = componentArray[i].getNumberOfMolesInPhase();
         double molarVolume = componentArray[i].getCriticalVolume();
         double volumeFraction = (moles * molarVolume) / totalVolume;
-        double eps_i = componentArray[i].getDiElectricConstant(temperature);
+        double eps_i = componentArray[i].getDielectricConstant(temperature);
         looyengaSum += volumeFraction * Math.pow(eps_i, 1.0 / 3.0);
       }
     }
@@ -391,7 +391,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
         ans1 += componentArray[i].getNumberOfMolesInPhase()
-            * componentArray[i].getDiElectricConstantdT(temperature);
+            * componentArray[i].getDielectricConstantdT(temperature);
         ans2 += componentArray[i].getNumberOfMolesInPhase();
       }
     }
@@ -412,7 +412,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getIonicCharge() == 0) {
         ans1 += componentArray[i].getNumberOfMolesInPhase()
-            * componentArray[i].getDiElectricConstantdTdT(temperature);
+            * componentArray[i].getDielectricConstantdTdT(temperature);
         ans2 += componentArray[i].getNumberOfMolesInPhase();
       }
     }
@@ -589,8 +589,9 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * Calculates the temperature derivative of the shielding parameter using implicit
    * differentiation. The shielding parameter gamma satisfies: f(γ) = 4γ²/NA - αLR2 * Σ(ni/V *
    * zi²/(1+γσi)²) = 0
-   *
+   * <p>
    * By implicit differentiation: dγ/dT = -∂f/∂T / (∂f/∂γ)
+   * </p>
    *
    * @return dγ/dT
    */
@@ -996,13 +997,16 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * dFLRdT. Temperature derivative of the long-range MSA contribution at constant V.
    * </p>
    * FLR = -αLR*XLR/(4π) + n*V*γ³/(3π*NA) * 1e-5
-   * 
+   *
+   * <p>
    * dFLR/dT|V = -1/(4π) * (dαLR/dT * XLR + αLR * dXLR/dT) + n*V*1e-5/(3π*NA) * 3γ² * dγ/dT
-   * 
+   * </p>
+   * <p>
    * Note: This derivative is computed at constant V, which is correct for the Helmholtz free energy
    * formulation. The relationship between constant-P and constant-V derivatives is handled through
    * the pressure equation of state: dF/dT|P = dF/dT|V + (dF/dV)*dV/dT|P. Numerical tests at
    * constant P will show ~15% difference which is expected behavior.
+   * </p>
    *
    * @return a double
    */
@@ -1880,7 +1884,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    *
    * @return a double
    */
-  public double getDiElectricConstantdT() {
+  public double getDielectricConstantdT() {
     return diElectricConstantdT;
   }
 
@@ -1891,7 +1895,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    *
    * @return a double
    */
-  public double getDiElectricConstantdV() {
+  public double getDielectricConstantdV() {
     return diElectricConstantdV;
   }
 
@@ -1959,17 +1963,6 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    */
   public double getDielectricV() {
     return diElectricConstantdV;
-  }
-
-  /**
-   * <p>
-   * getDielectricConstant.
-   * </p>
-   *
-   * @return a double
-   */
-  public double getDielectricConstant() {
-    return diElectricConstant;
   }
 
   /**

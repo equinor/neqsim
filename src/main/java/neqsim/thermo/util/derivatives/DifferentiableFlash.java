@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
  * through the iterative flash solver. At equilibrium, the residual equations F(y; θ) = 0 are
  * satisfied. The implicit function theorem gives:
  * </p>
- * 
+ *
  * <pre>
  * dy/dθ = -(∂F/∂y)^(-1) * (∂F/∂θ)
  * </pre>
@@ -25,7 +25,7 @@ import org.apache.logging.log4j.Logger;
  * </p>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * {@code
  * // Run flash calculation

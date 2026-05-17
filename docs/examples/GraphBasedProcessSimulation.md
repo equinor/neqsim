@@ -20,25 +20,22 @@ nav_order: 1
 First, import NeqSim using jpype for direct Java access.
 
 ```python
-import jpype
-import jpype.imports
-from jpype.types import *
+# Import NeqSim - Direct Java Access via jneqsim
+from neqsim import jneqsim
 
-# Start JVM with NeqSim
-if not jpype.isJVMStarted():
-    jpype.startJVM(classpath=['path/to/neqsim.jar'])
-
-# Import Java classes
-from neqsim.thermo.system import SystemSrkEos
-from neqsim.process.processmodel import ProcessSystem
-from neqsim.process.processmodel.graph import ProcessGraph, ProcessGraphBuilder
-from neqsim.process.equipment.stream import Stream
-from neqsim.process.equipment.heatexchanger import Heater, Cooler
-from neqsim.process.equipment.separator import Separator
-from neqsim.process.equipment.splitter import Splitter
-from neqsim.process.equipment.mixer import Mixer
-from neqsim.process.equipment.compressor import Compressor
-from neqsim.process.equipment.valve import ThrottlingValve
+# Import Java classes through the jneqsim gateway
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+ProcessGraph = jneqsim.process.processmodel.graph.ProcessGraph
+ProcessGraphBuilder = jneqsim.process.processmodel.graph.ProcessGraphBuilder
+Stream = jneqsim.process.equipment.stream.Stream
+Heater = jneqsim.process.equipment.heatexchanger.Heater
+Cooler = jneqsim.process.equipment.heatexchanger.Cooler
+Separator = jneqsim.process.equipment.separator.Separator
+Splitter = jneqsim.process.equipment.splitter.Splitter
+Mixer = jneqsim.process.equipment.mixer.Mixer
+Compressor = jneqsim.process.equipment.compressor.Compressor
+ThrottlingValve = jneqsim.process.equipment.valve.ThrottlingValve
 
 print("NeqSim loaded successfully!")
 ```

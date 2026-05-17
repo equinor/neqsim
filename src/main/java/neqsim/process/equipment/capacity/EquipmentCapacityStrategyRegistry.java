@@ -17,15 +17,17 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * registry uses a priority-based selection when multiple strategies support the same equipment.
  * </p>
  *
- * <p><strong>Usage</strong></p>
- * 
+ * <p>
+ * <strong>Usage</strong>
+ * </p>
+ *
  * <pre>
  * // Get the singleton instance
  * EquipmentCapacityStrategyRegistry registry = EquipmentCapacityStrategyRegistry.getInstance();
- * 
+ *
  * // Register a custom strategy
  * registry.register(new MyCustomCompressorStrategy());
- * 
+ *
  * // Find strategy for equipment
  * EquipmentCapacityStrategy strategy = registry.findStrategy(myCompressor);
  * if (strategy != null) {
@@ -85,6 +87,16 @@ public class EquipmentCapacityStrategyRegistry {
     register(new PumpCapacityStrategy());
     register(new ExpanderCapacityStrategy());
     register(new EjectorCapacityStrategy());
+    register(new MixerCapacityStrategy());
+    register(new SplitterCapacityStrategy());
+    register(new TankCapacityStrategy());
+    register(new DistillationColumnCapacityStrategy());
+    register(new ReactorCapacityStrategy());
+    register(new PowerGenerationCapacityStrategy());
+    register(new SubseaEquipmentCapacityStrategy());
+    register(new FilterAdsorberCapacityStrategy());
+    register(new ElectrolyzerCapacityStrategy());
+    register(new WellFlowCapacityStrategy());
   }
 
   /**

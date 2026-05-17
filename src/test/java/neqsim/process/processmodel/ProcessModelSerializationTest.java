@@ -1,15 +1,21 @@
 package neqsim.process.processmodel;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -34,9 +40,19 @@ public class ProcessModelSerializationTest {
 
   @AfterEach
   public void tearDown() throws Exception {
-    // Clean up temp files
+    // Clean up temp files - ignore errors from locked files on Windows
     if (tempDir != null) {
-      Files.walk(tempDir).sorted((a, b) -> -a.compareTo(b)).map(Path::toFile).forEach(File::delete);
+      try {
+        Files.walk(tempDir).sorted((a, b) -> -a.compareTo(b)).forEach(p -> {
+          try {
+            Files.deleteIfExists(p);
+          } catch (Exception ignored) {
+            // Best-effort cleanup
+          }
+        });
+      } catch (Exception ignored) {
+        // Best-effort cleanup
+      }
     }
   }
 
@@ -243,9 +259,104 @@ public class ProcessModelSerializationTest {
   }
 
   @Test
+  public void testProcessSystemBuilderJsonRoundTrip() {
+    ProcessSystem upstream = createUpstreamProcess();
+    upstream.run();
+
+    String json = upstream.toJson();
+    ProcessJsonValidator.ValidationReport validation = ProcessSystem.validateJson(json);
+    assertTrue(validation.isValid(), "Exported process JSON should be valid");
+
+    SimulationResult rebuiltResult = ProcessSystem.fromJsonAndRun(json);
+    assertTrue(rebuiltResult.isSuccess(),
+        "Exported ProcessSystem should rebuild from JSON: " + rebuiltResult.toJson());
+    ProcessSystem rebuilt = rebuiltResult.getProcessSystem();
+
+    assertNotNull(rebuilt.getUnit("upstream-feed"));
+    assertNotNull(rebuilt.getUnit("upstream-valve"));
+    assertNotNull(rebuilt.getUnit("upstream-separator"));
+    assertNotNull(rebuilt.resolveStreamReference("upstream-valve.outlet"));
+  }
+
+  @Test
+  public void testProcessModelBuilderJsonRoundTrip() {
+    String json = testModel.toJson();
+    JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+    assertTrue(root.has("areas"), "ProcessModel builder JSON should contain areas");
+    ProcessJsonValidator.ValidationReport validation = ProcessJsonValidator.validate(json);
+    assertTrue(validation.isValid(), "Exported ProcessModel JSON should be valid");
+
+    ProcessModel rebuilt = ProcessModel.fromJsonAndRun(json);
+
+    assertEquals(2, rebuilt.getAllProcesses().size(), "Round-tripped model should keep areas");
+    assertNotNull(rebuilt.get("upstream"));
+    assertNotNull(rebuilt.get("downstream"));
+    assertNotNull(rebuilt.get("upstream").getUnit("upstream-valve"));
+    assertNotNull(rebuilt.get("downstream").getUnit("downstream-valve"));
+    assertEquals(25, rebuilt.getMaxIterations(), "Max iterations should round-trip");
+    assertEquals(1e-5, rebuilt.getFlowTolerance(), 1e-10, "Flow tolerance should round-trip");
+  }
+
+  @Test
+  public void testProcessModelGraphvizCommonAndAreaDotExport() throws Exception {
+    String commonDot = testModel.toDOT();
+
+    assertTrue(commonDot.contains("digraph"), "Common DOT should be a Graphviz graph");
+    assertTrue(commonDot.contains("subgraph cluster_0"), "Common DOT should use area clusters");
+    assertTrue(commonDot.contains("upstream"), "Common DOT should include upstream area");
+    assertTrue(commonDot.contains("downstream"), "Common DOT should include downstream area");
+    assertTrue(commonDot.contains("upstream-valve"), "Common DOT should include upstream units");
+    assertTrue(commonDot.contains("downstream-valve"),
+        "Common DOT should include downstream units");
+
+    Path commonDotFile = tempDir.resolve("plant.dot");
+    testModel.exportToGraphviz(commonDotFile.toString());
+    assertTrue(Files.exists(commonDotFile), "Common DOT file should be written");
+
+    Path areaDirectory = tempDir.resolve("area-dots");
+    Map<String, Path> areaFiles = testModel.exportAreaDOT(areaDirectory);
+
+    assertEquals(2, areaFiles.size(), "One DOT file should be written per area");
+    assertTrue(Files.exists(areaFiles.get("upstream")), "Upstream area DOT should exist");
+    assertTrue(Files.exists(areaFiles.get("downstream")), "Downstream area DOT should exist");
+    assertTrue(new String(Files.readAllBytes(areaFiles.get("upstream")), StandardCharsets.UTF_8)
+        .contains("upstream-valve"), "Upstream DOT should contain upstream equipment");
+    assertTrue(new String(Files.readAllBytes(areaFiles.get("downstream")), StandardCharsets.UTF_8)
+        .contains("downstream-valve"), "Downstream DOT should contain downstream equipment");
+  }
+
+  @Test
+  public void testProcessModelCommonDotConnectsSharedInterAreaStream() {
+    ProcessSystem upstream = createUpstreamProcess();
+    upstream.run();
+    Separator upstreamSeparator = (Separator) upstream.getUnit("upstream-separator");
+
+    ThrottlingValve downstreamValve =
+        new ThrottlingValve("downstream-inlet-valve", upstreamSeparator.getGasOutStream());
+    downstreamValve.setOutletPressure(20.0, "bara");
+    ProcessSystem downstream = new ProcessSystem("downstream");
+    downstream.add(downstreamValve);
+
+    ProcessModel linkedModel = new ProcessModel();
+    linkedModel.add("separation", upstream);
+    linkedModel.add("compression", downstream);
+
+    String commonDot = linkedModel.toDOT();
+
+    assertTrue(
+        commonDot.contains(
+            "\"separation::upstream-separator\" -> " + "\"compression::downstream-inlet-valve\""),
+        "Common DOT should connect shared streams across ProcessSystem areas");
+    assertTrue(commonDot.contains("penwidth=2.0"),
+        "Cross-area stream edges should be highlighted in the common DOT");
+  }
+
+  @Test
   public void testLoadFromNeqsimReturnsNullForNonExistent() {
-    ProcessModel loaded = ProcessModel.loadFromNeqsim("non_existent_file.neqsim");
-    assertNotNull(loaded == null || loaded != null); // Should handle gracefully
+    ProcessModel loaded =
+        assertDoesNotThrow(() -> ProcessModel.loadFromNeqsim("non_existent_file.neqsim"),
+            "Should handle non-existent file gracefully");
+    assertNull(loaded, "Should return null for non-existent file");
   }
 
   @Test

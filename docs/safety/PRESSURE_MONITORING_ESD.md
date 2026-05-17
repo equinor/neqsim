@@ -1,3 +1,8 @@
+---
+title: Pressure Monitoring in ESD Blowdown System
+description: The ESD blowdown system now includes comprehensive **pressure monitoring** during transient calculations to verify that the separator pressure is properly released via the blowdown valve.
+---
+
 # Pressure Monitoring in ESD Blowdown System
 
 ## Overview

@@ -126,31 +126,31 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
 
   /** {@inheritDoc} */
   @Override
-  public double getlnGamma() {
+  public double getLnGamma() {
     return lngamma;
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getlnGammadt() {
+  public double getLnGammadt() {
     return dlngammadt;
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getlnGammadtdt() {
+  public double getLnGammadtdt() {
     return dlngammadtdt;
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getlnGammadn(int k) {
+  public double getLnGammadn(int k) {
     return dlngammadn[k];
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setlnGammadn(int k, double val) {
+  public void setLnGammadn(int k, double val) {
     dlngammadn[k] = val;
   }
 

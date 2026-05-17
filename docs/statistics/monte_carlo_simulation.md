@@ -1,3 +1,8 @@
+---
+title: "Monte Carlo Simulation"
+description: "Monte Carlo simulation provides uncertainty quantification for fitted parameters by propagating experimental uncertainties through the fitting process."
+---
+
 # Monte Carlo Simulation
 
 Monte Carlo simulation provides uncertainty quantification for fitted parameters by propagating experimental uncertainties through the fitting process.

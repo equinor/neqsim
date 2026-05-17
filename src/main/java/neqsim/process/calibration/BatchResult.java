@@ -21,19 +21,19 @@ import org.apache.commons.lang3.StringUtils;
  * </ul>
  *
  * <h2>Usage:</h2>
- * 
+ *
  * <pre>
  * {@code
  * BatchResult result = estimator.solve();
- * 
+ *
  * double[] estimates = result.getEstimates();
  * double[] uncertainties = result.getUncertainties();
  * double rmse = result.getRMSE();
- * 
+ *
  * // Get 95% confidence intervals
  * double[] lowerCI = result.getConfidenceIntervalLower();
  * double[] upperCI = result.getConfidenceIntervalUpper();
- * 
+ *
  * // Check convergence
  * if (result.isConverged()) {
  *   System.out.println("Optimization converged in " + result.getIterations() + " iterations");

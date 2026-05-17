@@ -77,6 +77,14 @@ public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
     }
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public void applyFieldValue() {
+    if (getTagRole() == InstrumentTagRole.INPUT && hasFieldValue()) {
+      stream.setFlowRate(getFieldValue(), getUnit());
+    }
+  }
+
   /**
    * <p>
    * Getter for the field <code>measuredPhaseNumber</code>.

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -89,6 +90,63 @@ public class PVTRegressionTest {
 
     assertEquals(1, regression.getSeparatorData().size());
     assertEquals(100.0, regression.getSeparatorData().get(0).getGor(), 1e-6);
+  }
+
+  @Test
+  public void testAddViscosityData() {
+    PVTRegression regression = new PVTRegression(testFluid);
+
+    double[] pressures = {1.0, 5.0, 10.0};
+    double[] viscosities = {3.0e-4, 3.2e-4, 3.5e-4};
+    double temperature = 320.0;
+
+    regression.addViscosityData(pressures, viscosities, temperature, "oil");
+
+    assertEquals(3, regression.getViscosityData().size());
+    assertEquals(5.0, regression.getViscosityData().get(1).getPressure(), 1e-6);
+    assertEquals(3.2e-4, regression.getViscosityData().get(1).getViscosity(), 1e-10);
+    assertEquals(1, regression.getViscosityData().get(1).getPhaseIndex());
+  }
+
+  @Test
+  public void testCspViscosityRegressionParametersApplyToFluid() {
+    SystemInterface viscosityFluid = createViscosityFluid();
+
+    RegressionParameter.VISCOSITY_CSP_1.applyToFluid(viscosityFluid, 0.6232);
+    RegressionParameter.VISCOSITY_CSP_2.applyToFluid(viscosityFluid, 1.1507);
+    RegressionParameter.VISCOSITY_CSP_3.applyToFluid(viscosityFluid, 1.1);
+    RegressionParameter.VISCOSITY_CSP_4.applyToFluid(viscosityFluid, 0.9);
+
+    double[] correctionFactors =
+        viscosityFluid.getPhase(0).getPhysicalProperties().getCspViscosityCorrectionFactors();
+    assertEquals(0.6232, correctionFactors[0], 1e-6);
+    assertEquals(1.1507, correctionFactors[1], 1e-6);
+    assertEquals(1.1, correctionFactors[2], 1e-6);
+    assertEquals(0.9, correctionFactors[3], 1e-6);
+  }
+
+  @Test
+  public void testRegressionFitsSingleCspViscosityParameter() {
+    double temperature = 320.0;
+    double[] pressures = {1.0, 5.0, 15.0};
+    double targetFactor = 1.35;
+    double[] viscosities = new double[pressures.length];
+
+    for (int i = 0; i < pressures.length; i++) {
+      viscosities[i] =
+          calculateOilViscosity(createViscosityFluid(), pressures[i], temperature, targetFactor);
+    }
+
+    PVTRegression regression = new PVTRegression(createViscosityFluid());
+    regression.addRegressionParameter(RegressionParameter.VISCOSITY_CSP_3, 0.5, 2.0, 1.0);
+    regression.addViscosityData(pressures, viscosities, temperature, "oil");
+    regression.setMaxIterations(8);
+    regression.setVerbose(false);
+
+    RegressionResult result = regression.runRegression();
+
+    assertEquals(targetFactor, result.getOptimizedValue(RegressionParameter.VISCOSITY_CSP_3), 0.15);
+    assertTrue(result.getObjectiveValue(ExperimentType.VISCOSITY) < 0.01);
   }
 
   @Test
@@ -251,14 +309,17 @@ public class PVTRegressionTest {
     regression.addCCEData(new double[] {200.0}, new double[] {1.0}, 373.15);
     regression.addDLEData(new double[] {200.0}, new double[] {100.0}, new double[] {1.3},
         new double[] {750.0}, 373.15);
+    regression.addViscosityData(new double[] {10.0}, new double[] {3.5e-4}, 320.0, "oil");
 
     assertEquals(1, regression.getCCEData().size());
     assertEquals(1, regression.getDLEData().size());
+    assertEquals(1, regression.getViscosityData().size());
 
     regression.clearData();
 
     assertEquals(0, regression.getCCEData().size());
     assertEquals(0, regression.getDLEData().size());
+    assertEquals(0, regression.getViscosityData().size());
   }
 
   @Test
@@ -312,5 +373,42 @@ public class PVTRegressionTest {
     assertTrue(summary.contains("PVT Regression Results"));
     assertTrue(summary.contains("CCE"));
     assertTrue(summary.contains("BIP_METHANE_C7PLUS"));
+  }
+
+  /**
+   * Create a liquid hydrocarbon fluid for viscosity regression tests.
+   *
+   * @return initialized n-heptane system using the PFCT viscosity model
+   */
+  private SystemInterface createViscosityFluid() {
+    SystemInterface fluid = new SystemSrkEos(320.0, 1.0);
+    fluid.addComponent("n-heptane", 1.0);
+    fluid.setMixingRule("classic");
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("PFCT");
+    fluid.initProperties();
+    return fluid;
+  }
+
+  /**
+   * Calculate oil viscosity for one pressure, temperature and CSP factor.
+   *
+   * @param fluid fluid to calculate with
+   * @param pressure pressure in bara
+   * @param temperature temperature in K
+   * @param cspFactor third CSP viscosity correction factor
+   * @return calculated oil viscosity in Pa s
+   */
+  private double calculateOilViscosity(SystemInterface fluid, double pressure, double temperature,
+      double cspFactor) {
+    fluid.setPressure(pressure);
+    fluid.setTemperature(temperature);
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("PFCT");
+    fluid.getPhase("oil").getPhysicalProperties().setCspViscosityCorrectionFactor(2, cspFactor);
+    fluid.initProperties();
+    return fluid.getPhase("oil").getPhysicalProperties().getViscosity();
   }
 }

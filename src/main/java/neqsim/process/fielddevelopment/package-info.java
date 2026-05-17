@@ -21,7 +21,7 @@
  * </ul>
  *
  * <h2>Quick Start</h2>
- * 
+ *
  * <pre>
  * // 1. Define the concept
  * FieldConcept concept = FieldConcept.builder("Marginal Gas Tieback")
@@ -41,7 +41,7 @@
  * </pre>
  *
  * <h2>Batch Processing</h2>
- * 
+ *
  * <pre>
  * BatchConceptRunner runner = new BatchConceptRunner();
  * runner.addConcept(concept1);

@@ -60,6 +60,7 @@ public class IntegratedSafetySystemExample {
    * HIPPS controller implementing SIL-3 logic.
    */
   static class HIPPSController extends ControllerDeviceBaseClass {
+    private static final long serialVersionUID = 1L;
     private PressureTransmitter pt1;
     private PressureTransmitter pt2;
     private ThrottlingValve hippsValve;
@@ -112,6 +113,7 @@ public class IntegratedSafetySystemExample {
    * ESD controller implementing SIL-2 logic.
    */
   static class ESDController extends ControllerDeviceBaseClass {
+    private static final long serialVersionUID = 1L;
     private PressureTransmitter pressureMonitor;
     private TemperatureTransmitter tempMonitor;
     private PushButton manualESD;
@@ -198,6 +200,8 @@ public class IntegratedSafetySystemExample {
 
   /**
    * Main method demonstrating integrated safety systems and scenarios.
+   *
+   * @param args command-line arguments (not used)
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
@@ -612,6 +616,29 @@ public class IntegratedSafetySystemExample {
 
   /**
    * Scenario 4: PSV relief (final protection layer).
+   *
+   * @param highPressureFeed the high pressure feed stream
+   * @param hippsValve the HIPPS valve
+   * @param esdInletValve the ESD inlet valve
+   * @param separatorInlet the separator inlet stream
+   * @param separator the separator equipment
+   * @param separatorGasOut the separator gas outlet stream
+   * @param gasSplitter the gas splitter
+   * @param processStream the main process stream
+   * @param blowdownStream the blowdown stream
+   * @param bdValve the blowdown valve
+   * @param psv the pressure safety valve
+   * @param psvOutlet the PSV outlet stream
+   * @param flareHeader the flare header mixer
+   * @param flareHeaderOutlet the flare header outlet stream
+   * @param flare the flare equipment
+   * @param hippsPT1 the first HIPPS pressure transmitter
+   * @param hippsPT2 the second HIPPS pressure transmitter
+   * @param separatorPT the separator pressure transmitter
+   * @param separatorTT the separator temperature transmitter
+   * @param hippsController the HIPPS controller
+   * @param esdController the ESD controller
+   * @param fireSystem the fire detection system
    */
   private static void runScenario4_PSVRelief(Stream highPressureFeed, ThrottlingValve hippsValve,
       ThrottlingValve esdInletValve, Stream separatorInlet, Separator separator,
@@ -689,6 +716,15 @@ public class IntegratedSafetySystemExample {
 
   /**
    * Reset system to normal operation.
+   *
+   * @param hippsValve the HIPPS isolation valve to reset
+   * @param esdInletValve the ESD inlet valve to reset
+   * @param gasSplitter the gas splitter to reset split factors
+   * @param bdValve the blowdown valve to reset
+   * @param separator the separator to reset to steady-state calculation
+   * @param hippsController the HIPPS controller to reset
+   * @param esdController the ESD controller to reset
+   * @param esdButton the ESD push button to reset
    */
   private static void resetSystem(ThrottlingValve hippsValve, ThrottlingValve esdInletValve,
       Splitter gasSplitter, BlowdownValve bdValve, Separator separator,

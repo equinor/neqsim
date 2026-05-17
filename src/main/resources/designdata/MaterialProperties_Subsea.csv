@@ -1,0 +1,24 @@
+MaterialGrade,MaterialType,SMYS_MPa,SMTS_MPa,Density_kg_m3,Standard,Description,EquipmentType
+X52,CarbonSteel,358,455,7850,API-5L,Pipeline grade X52,Pipeline
+X60,CarbonSteel,414,517,7850,API-5L,Pipeline grade X60,Pipeline
+X65,CarbonSteel,448,530,7850,API-5L,Pipeline grade X65,Pipeline
+X70,CarbonSteel,483,565,7850,API-5L,Pipeline grade X70,Pipeline
+X80,CarbonSteel,552,620,7850,API-5L,Pipeline grade X80,Pipeline
+316L,StainlessSteel,205,515,8000,ASTM-A312,316L stainless steel,Umbilical
+6Mo,SuperAustenitic,300,650,8000,ASTM-A312,6Mo super austenitic,Umbilical
+Duplex-2205,DuplexSteel,450,620,7800,ASTM-A789,Duplex 2205,Manifold
+SuperDuplex-2507,SuperDuplex,550,750,7800,ASTM-A789,Super duplex 2507,Umbilical
+Inconel-625,NickelAlloy,415,830,8440,ASTM-B446,Inconel 625 clad,SubseaTree
+Inconel-718,NickelAlloy,1034,1240,8190,ASTM-B637,Inconel 718,SubseaBooster
+F22,LowAlloyCr-Mo,517,655,7850,ASTM-A182,F22 forging (2.25Cr-1Mo),SubseaTree
+4130,LowAlloyCr-Mo,758,862,7850,ASTM-A322,4130 alloy steel,Manifold
+AISI-4140,LowAlloyCr-Mo,655,860,7850,ASTM-A322,4140 quench and temper,SubseaTree
+SA-516-70,CarbonSteel,260,485,7850,ASME-SA516,Pressure vessel plate,Separator
+SA-240-316L,StainlessSteel,170,485,8000,ASME-SA240,316L plate,Vessel
+HDPE-PE100,Polymer,25,40,950,ISO-4427,High density polyethylene,FlexiblePipe
+PVDF,Polymer,40,55,1780,API-17J,Polyvinylidene fluoride,FlexiblePipe
+PA-11,Polymer,35,55,1040,API-17J,Polyamide 11,FlexiblePipe
+PressureArmor,HighStrength,700,850,7850,API-17J,Pressure armor wire,FlexiblePipe
+TensileArmor,HighStrength,1400,1700,7850,API-17J,Tensile armor wire,FlexiblePipe
+CarcassStrip,StainlessSteel,205,515,8000,API-17J,Carcass interlocked strip,FlexiblePipe
+ArmorWire,GalvanizedSteel,1400,1600,7850,API-17E,Umbilical armor wire,Umbilical

@@ -330,6 +330,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
    * @param flow an array of type double
    * @param head an array of type double
    */
+  @Override
   public void addSurgeCurve(double[] flow, double[] head) {
     surgeCurve = new SafeSplineSurgeCurve(flow, head);
   }
@@ -377,6 +378,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
   }
 
   /** {@inheritDoc} */
+  @Override
   public double polytropicEfficiency(double flow, double speed) {
     return 100.0;
   }
@@ -400,6 +402,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
    * @param head the required polytropic head in the chart's head unit (kJ/kg or meter)
    * @return the calculated speed in RPM (as double for precision)
    */
+  @Override
   public double getSpeedValue(double flow, double head) {
     // Get speed bounds from chart
     double minSpeed = getMinSpeedCurve();
@@ -513,6 +516,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
    * checkSurge1.
    * </p>
    */
+  @Override
   public boolean checkSurge1(double flow, double head) {
     return false;
   }
@@ -524,6 +528,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
    * checkSurge2.
    * </p>
    */
+  @Override
   public boolean checkSurge2(double flow, double speed) {
     return false;
   }
@@ -535,6 +540,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
    * checkStoneWall.
    * </p>
    */
+  @Override
   public boolean checkStoneWall(double flow, double speed) {
     return false;
   }

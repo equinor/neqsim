@@ -238,6 +238,7 @@ public class RiserMechanicalDesign extends PipelineMechanicalDesign {
    *
    * @return design life
    */
+  @Override
   public double getDesignLifeYears() {
     return 25.0; // Default 25 years
   }

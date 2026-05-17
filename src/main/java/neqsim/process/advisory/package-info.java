@@ -23,7 +23,7 @@
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * // Create prediction engine for a process
  * AdvisoryEngine engine = new AdvisoryEngine(processSystem);

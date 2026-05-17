@@ -1,13 +1,17 @@
 package neqsim.process.mechanicaldesign.pipeline;
 
+import neqsim.process.corrosion.NorsokM001MaterialSelection;
+import neqsim.process.corrosion.NorsokM506CorrosionRate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pipeline.PipeLineInterface;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 import neqsim.process.mechanicaldesign.designstandards.MaterialPipeDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.PipelineDesignStandard;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
@@ -19,13 +23,15 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * </p>
  * <ul>
  * <li>Wall thickness calculation per ASME B31.3/B31.4/B31.8 and DNV-OS-F101</li>
+ * <li>CO2 corrosion rate assessment per NORSOK M-506</li>
+ * <li>Material selection and corrosion allowance per NORSOK M-001</li>
  * <li>Integration with TORG (Technical Requirements Documents)</li>
  * <li>JSON export for data exchange</li>
  * <li>Database lookup for material properties and design standards</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * AdiabaticPipe pipe = new AdiabaticPipe("pipeline", stream);
  * pipe.setDiameter(0.508); // 20 inch
@@ -77,6 +83,21 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
 
   /** Data source for loading from database. */
   private transient PipelineMechanicalDesignDataSource dataSource;
+
+  /** NORSOK M-506 corrosion rate model. */
+  private transient NorsokM506CorrosionRate corrosionModel;
+
+  /** NORSOK M-001 material selection model. */
+  private transient NorsokM001MaterialSelection materialSelector;
+
+  /** Design life in years for corrosion allowance calculation. */
+  private double designLifeYears = 25.0;
+
+  /** Inhibitor efficiency (0 to 1) for corrosion rate calculation. */
+  private double inhibitorEfficiency = 0.0;
+
+  /** Glycol (MEG) weight fraction in aqueous phase (0 to 1). */
+  private double glycolWeightFraction = 0.0;
 
   /**
    * Constructor for PipelineMechanicalDesign.
@@ -364,6 +385,233 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     this.pipelineLength = length;
   }
 
+  // ============================================================================
+  // CORROSION EVALUATION (NORSOK M-506 / M-001)
+  // ============================================================================
+
+  /**
+   * Returns the NORSOK M-506 corrosion rate model for this pipeline.
+   *
+   * <p>
+   * The model is lazily initialized with default parameters. Use the setter methods on the returned
+   * model to configure conditions, or call {@link #runCorrosionAnalysis()} to auto-populate from
+   * the pipeline's operating stream.
+   * </p>
+   *
+   * @return the corrosion rate model
+   */
+  public NorsokM506CorrosionRate getCorrosionModel() {
+    if (corrosionModel == null) {
+      corrosionModel = new NorsokM506CorrosionRate();
+    }
+    return corrosionModel;
+  }
+
+  /**
+   * Returns the NORSOK M-001 material selection model for this pipeline.
+   *
+   * @return the material selection model
+   */
+  public NorsokM001MaterialSelection getMaterialSelector() {
+    if (materialSelector == null) {
+      materialSelector = new NorsokM001MaterialSelection();
+    }
+    return materialSelector;
+  }
+
+  /**
+   * Sets the design life for corrosion allowance calculations.
+   *
+   * @param years design life in years (typically 20-30)
+   */
+  public void setDesignLifeYears(double years) {
+    this.designLifeYears = Math.max(1.0, years);
+  }
+
+  /**
+   * Gets the design life for corrosion allowance calculations.
+   *
+   * @return design life in years
+   */
+  public double getDesignLifeYears() {
+    return designLifeYears;
+  }
+
+  /**
+   * Sets the inhibitor efficiency for corrosion calculations.
+   *
+   * @param efficiency inhibitor efficiency (0.0 = none, 1.0 = perfect)
+   */
+  public void setInhibitorEfficiency(double efficiency) {
+    this.inhibitorEfficiency = Math.max(0.0, Math.min(1.0, efficiency));
+  }
+
+  /**
+   * Sets the glycol (MEG/DEG) weight fraction for corrosion calculations.
+   *
+   * @param fraction glycol weight fraction (0.0 to 1.0)
+   */
+  public void setGlycolWeightFraction(double fraction) {
+    this.glycolWeightFraction = Math.max(0.0, Math.min(1.0, fraction));
+  }
+
+  /**
+   * Runs a complete corrosion analysis using the pipeline's operating conditions.
+   *
+   * <p>
+   * This method extracts temperature, pressure, fluid composition, and flow velocity from the
+   * pipeline equipment and its inlet/outlet streams. It then runs the NORSOK M-506 corrosion rate
+   * calculation followed by the NORSOK M-001 material selection evaluation.
+   * </p>
+   *
+   * <p>
+   * The corrosion allowance result is automatically applied to the mechanical design calculator
+   * so that subsequent wall thickness calculations include the correct corrosion allowance.
+   * </p>
+   */
+  public void runCorrosionAnalysis() {
+    NorsokM506CorrosionRate model = getCorrosionModel();
+
+    // Extract conditions from pipeline equipment
+    double streamTempC = 20.0; // default if no stream available
+    if (getProcessEquipment() instanceof PipeLineInterface) {
+      PipeLineInterface pipe = (PipeLineInterface) getProcessEquipment();
+      model.setPipeDiameterM(pipe.getDiameter());
+
+      // Try to get conditions from the outlet stream (post-simulation)
+      StreamInterface outStream = pipe.getOutletStream();
+      if (outStream != null && outStream.getFluid() != null) {
+        populateFromStream(model, outStream);
+        streamTempC = outStream.getFluid().getTemperature() - 273.15;
+      }
+    }
+
+    model.setInhibitorEfficiency(inhibitorEfficiency);
+    model.setGlycolWeightFraction(glycolWeightFraction);
+    model.calculate();
+
+    // Run material selection based on corrosion results
+    NorsokM001MaterialSelection selector = getMaterialSelector();
+    selector.setCO2CorrosionRateMmyr(model.getCorrectedCorrosionRate());
+    selector.setH2SPartialPressureBar(model.getH2SPartialPressureBar());
+    selector.setCO2PartialPressureBar(model.getCO2PartialPressureBar());
+    selector.setDesignTemperatureC(streamTempC);
+    selector.setMaxDesignTemperatureC(streamTempC);
+    selector.setDesignLifeYears(designLifeYears);
+    selector.evaluate();
+
+    // Apply the corrosion allowance to the mechanical design
+    double caMm = selector.getRecommendedCorrosionAllowanceMm();
+    setCorrosionAllowance(caMm);
+    getCalculator().setCorrosionAllowance(caMm / 1000.0); // mm to m
+  }
+
+  /**
+   * Populates the corrosion model with conditions extracted from a process stream.
+   *
+   * @param model the corrosion rate model to populate
+   * @param stream the process stream to extract conditions from
+   */
+  private void populateFromStream(NorsokM506CorrosionRate model, StreamInterface stream) {
+    SystemInterface fluid = stream.getFluid();
+    if (fluid == null) {
+      return;
+    }
+
+    double tempC = fluid.getTemperature() - 273.15;
+    double pressBar = fluid.getPressure();
+    model.setTemperatureCelsius(tempC);
+    model.setTotalPressureBara(pressBar);
+
+    // Extract CO2 and H2S mole fractions from the gas phase
+    if (fluid.hasPhaseType("gas")) {
+      int gasPhaseNum = fluid.getPhaseNumberOfPhase("gas");
+      double co2Frac = getMoleFractionSafe(fluid, gasPhaseNum, "CO2");
+      double h2sFrac = getMoleFractionSafe(fluid, gasPhaseNum, "H2S");
+      model.setCO2MoleFraction(co2Frac);
+      model.setH2SMoleFraction(h2sFrac);
+    } else {
+      // Single-phase liquid — use overall composition
+      double co2Frac = getMoleFractionSafe(fluid, 0, "CO2");
+      double h2sFrac = getMoleFractionSafe(fluid, 0, "H2S");
+      model.setCO2MoleFraction(co2Frac);
+      model.setH2SMoleFraction(h2sFrac);
+    }
+
+    // Extract liquid density and viscosity if liquid phase exists
+    if (fluid.hasPhaseType("aqueous") || fluid.hasPhaseType("oil")) {
+      String liquidType = fluid.hasPhaseType("aqueous") ? "aqueous" : "oil";
+      try {
+        fluid.initPhysicalProperties();
+        double density = fluid.getPhase(liquidType).getDensity("kg/m3");
+        if (density > 0) {
+          model.setLiquidDensityKgM3(density);
+        }
+        double viscosity = fluid.getPhase(liquidType).getViscosity("kg/msec");
+        if (viscosity > 0) {
+          model.setLiquidViscosityPas(viscosity);
+        }
+      } catch (Exception ex) {
+        // Use defaults if property extraction fails
+      }
+    }
+  }
+
+  /**
+   * Safely gets a component mole fraction from a fluid phase.
+   *
+   * @param fluid the fluid system
+   * @param phaseNum the phase number
+   * @param componentName the component name
+   * @return mole fraction, or 0 if component not present
+   */
+  private double getMoleFractionSafe(SystemInterface fluid, int phaseNum, String componentName) {
+    try {
+      if (fluid.getPhase(phaseNum).hasComponent(componentName)) {
+        return fluid.getPhase(phaseNum).getComponent(componentName).getx();
+      }
+    } catch (Exception ex) {
+      // Component not present
+    }
+    return 0.0;
+  }
+
+  /**
+   * Gets the calculated corrosion rate after running corrosion analysis.
+   *
+   * @return corrected corrosion rate in mm/yr, or -1 if not yet calculated
+   */
+  public double getCorrosionRate() {
+    if (corrosionModel == null) {
+      return -1.0;
+    }
+    return corrosionModel.getCorrectedCorrosionRate();
+  }
+
+  /**
+   * Gets the recommended material grade from corrosion analysis.
+   *
+   * @return recommended material string, or empty string if not yet evaluated
+   */
+  public String getRecommendedMaterial() {
+    if (materialSelector == null) {
+      return "";
+    }
+    return materialSelector.getRecommendedMaterial();
+  }
+
+  /**
+   * Gets the recommended corrosion allowance from corrosion analysis.
+   *
+   * @return corrosion allowance in mm, or -1 if not yet evaluated
+   */
+  public double getRecommendedCorrosionAllowanceMm() {
+    if (materialSelector == null) {
+      return -1.0;
+    }
+    return materialSelector.getRecommendedCorrosionAllowanceMm();
+  }
+
   /** {@inheritDoc} */
   @Override
   public String toJson() {
@@ -385,6 +633,18 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     jsonObj.addProperty("locationClass", locationClass);
     jsonObj.addProperty("designStandardCode", designStandardCode);
     jsonObj.add("pipelineDesignCalculations", calcObj);
+
+    // Add corrosion analysis results if available
+    if (corrosionModel != null) {
+      com.google.gson.JsonObject corrosionObj =
+          com.google.gson.JsonParser.parseString(corrosionModel.toJson()).getAsJsonObject();
+      jsonObj.add("corrosionAnalysis_NORSOK_M506", corrosionObj);
+    }
+    if (materialSelector != null) {
+      com.google.gson.JsonObject materialObj =
+          com.google.gson.JsonParser.parseString(materialSelector.toJson()).getAsJsonObject();
+      jsonObj.add("materialSelection_NORSOK_M001", materialObj);
+    }
 
     return new com.google.gson.GsonBuilder().setPrettyPrinting()
         .serializeSpecialFloatingPointValues().create().toJson(jsonObj);

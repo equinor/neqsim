@@ -46,7 +46,6 @@ public class PipeWall extends Wall {
    * Default constructor for PipeWall.
    */
   public PipeWall() {
-    super();
   }
 
   /**
@@ -55,7 +54,6 @@ public class PipeWall extends Wall {
    * @param innerRadius Inner pipe radius in meters
    */
   public PipeWall(double innerRadius) {
-    super();
     this.innerRadius = innerRadius;
   }
 
@@ -100,6 +98,7 @@ public class PipeWall extends Wall {
    *
    * @return Total wall thickness in meters
    */
+  @Override
   public double getTotalThickness() {
     return getOuterRadius() - innerRadius;
   }
@@ -314,6 +313,7 @@ public class PipeWall extends Wall {
    *
    * @return Number of layers
    */
+  @Override
   public int getNumberOfLayers() {
     return layerOuterRadii.size();
   }

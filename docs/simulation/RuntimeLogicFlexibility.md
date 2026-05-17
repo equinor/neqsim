@@ -1,3 +1,8 @@
+---
+title: "Runtime Logic Flexibility in NeqSim Process Framework"
+description: "The NeqSim process logic framework is designed with excellent runtime flexibility through its interface-based architecture. You can create, modify, and execute complex process logic sequences entirely..."
+---
+
 # Runtime Logic Flexibility in NeqSim Process Framework
 
 ## Summary

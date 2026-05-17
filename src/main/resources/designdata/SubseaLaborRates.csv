@@ -1,0 +1,12 @@
+LaborCategory,RatePerHourUSD,RegionFactor_Norway,RegionFactor_UK,RegionFactor_GoM,RegionFactor_Brazil,RegionFactor_WestAfrica,Description
+DesignEngineering,150,1.3,1.2,1.0,0.8,0.9,Design and engineering hours
+ProjectManagement,180,1.3,1.2,1.0,0.8,0.9,Project management hours
+Procurement,120,1.2,1.1,1.0,0.9,1.0,Procurement and logistics
+FabricationSupervision,130,1.4,1.3,1.0,0.7,0.8,Fabrication supervision
+OffshoreInstallation,250,1.5,1.4,1.0,0.8,1.1,Offshore installation crew
+Commissioning,200,1.4,1.3,1.0,0.8,1.0,Commissioning specialists
+ROVOperations,180,1.3,1.2,1.0,0.9,1.0,ROV pilot and technicians
+DivingOperations,300,1.6,1.5,1.0,0.7,0.9,Saturation diving operations
+Welding,100,1.4,1.3,1.0,0.6,0.7,Welding labor
+NDT,110,1.3,1.2,1.0,0.7,0.8,Non-destructive testing
+Coating,80,1.3,1.2,1.0,0.6,0.7,Coating application

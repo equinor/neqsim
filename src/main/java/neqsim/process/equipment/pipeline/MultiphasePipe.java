@@ -34,7 +34,7 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * // Create a multiphase fluid
  * SystemInterface fluid = new SystemSrkEos(295.0, 50.0);
@@ -43,11 +43,11 @@ import neqsim.thermo.system.SystemInterface;
  * fluid.addComponent("nC10", 0.1);
  * fluid.createDatabase(true);
  * fluid.setMixingRule(2);
- * 
+ *
  * Stream inlet = new Stream("inlet", fluid);
  * inlet.setFlowRate(50000, "kg/hr");
  * inlet.run();
- * 
+ *
  * // Create multiphase pipe
  * MultiphasePipe pipe = new MultiphasePipe("pipeline", inlet);
  * pipe.setLength(5000.0); // 5 km
@@ -57,7 +57,7 @@ import neqsim.thermo.system.SystemInterface;
  * pipe.setInsulationThickness(0.05);
  * pipe.setAmbientTemperature(278.0);
  * pipe.run();
- * 
+ *
  * double pressureDrop = pipe.getPressureDrop();
  * String flowRegime = pipe.getFlowRegime();
  * }</pre>

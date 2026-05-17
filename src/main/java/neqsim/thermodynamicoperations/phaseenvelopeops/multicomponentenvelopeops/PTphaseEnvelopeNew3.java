@@ -12,6 +12,7 @@ import neqsim.thermodynamicoperations.OperationInterface;
  * @author esol
  */
 public class PTphaseEnvelopeNew3 implements OperationInterface {
+  private static final long serialVersionUID = 1L;
   // Fields
   private final SystemInterface system;
   private double[][] betta;
@@ -66,6 +67,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
    * run.
    * </p>
    */
+  @Override
   public void run() {
     coarse();
     findBettaTransitionsAndRefine();
