@@ -1,3 +1,8 @@
+---
+title: "Pipeline Modeling Documentation"
+description: "This documentation covers pipeline pressure drop, flow, and heat transfer calculations in NeqSim."
+---
+
 # Pipeline Modeling Documentation
 
 ## Documentation Index
@@ -8,18 +13,19 @@ This documentation covers pipeline pressure drop, flow, and heat transfer calcul
 
 | Document | Description |
 |----------|-------------|
-| [Pipeline Pressure Drop](pipeline_pressure_drop.md) | Overview of all pipeline models, quick start examples |
-| [Model Recommendations](pipeline_model_recommendations.md) | Which model to use for your application |
+| [Pipeline Pressure Drop](pipeline_pressure_drop) | Overview of all pipeline models, quick start examples |
+| [Model Recommendations](pipeline_model_recommendations) | Which model to use for your application |
 
 ### Detailed Model Documentation
 
 | Document | Description |
 |----------|-------------|
-| [Beggs & Brill Correlation](beggs_and_brill_correlation.md) | Multiphase flow correlation theory and usage |
-| [Friction Factor Models](friction_factor_models.md) | Haaland, Colebrook-White, laminar/turbulent |
-| [Heat Transfer](pipeline_heat_transfer.md) | Non-adiabatic operation, cooling, Gnielinski |
-| [Transient Simulation](pipeline_transient_simulation.md) | Dynamic simulation, slow wave propagation |
-| [Water Hammer](water_hammer_implementation.md) | Fast transients, pressure surges, MOC solver |
+| [Beggs & Brill Correlation](beggs_and_brill_correlation) | Multiphase flow correlation theory and usage |
+| [Two-Fluid Transient Model](two_fluid_model) | 7-equation two-fluid model with slug tracking, virtual mass, and local losses |
+| [Friction Factor Models](friction_factor_models) | Haaland, Colebrook-White, laminar/turbulent |
+| [Heat Transfer](pipeline_heat_transfer) | Non-adiabatic operation, cooling, Gnielinski |
+| [Transient Simulation](pipeline_transient_simulation) | Dynamic simulation, slow wave propagation |
+| [Water Hammer](water_hammer_implementation) | Fast transients, pressure surges, MOC solver |
 
 ## Quick Model Selection
 
@@ -31,10 +37,11 @@ This documentation covers pipeline pressure drop, flow, and heat transfer calcul
 │  Single-Phase Gas         →  AdiabaticPipe                     │
 │  Single-Phase Liquid      →  PipeBeggsAndBrills                │
 │  Two-Phase (Gas-Liquid)   →  PipeBeggsAndBrills                │
-│  Three-Phase (G-O-W)      →  PipeBeggsAndBrills                │
+│  Three-Phase (G-O-W)      →  PipeBeggsAndBrills / TwoFluidPipe │
 │  With Elevation           →  PipeBeggsAndBrills                │
 │  With Heat Transfer       →  PipeBeggsAndBrills                │
 │  Slow Transient/Dynamic   →  PipeBeggsAndBrills                │
+│  Detailed Transient       →  TwoFluidPipe (slug, terrain)      │
 │  Water Hammer/Fast Trans. →  WaterHammerPipe                   │
 │  Quick Estimate           →  AdiabaticTwoPhasePipe             │
 │                                                                 │
@@ -63,7 +70,7 @@ For detailed non-equilibrium mass and heat transfer calculations, the `TwoPhaseP
 - **Wall heat transfer** with multiple boundary conditions
 - **Bidirectional mass transfer** (evaporation and dissolution)
 
-See [Fluid Mechanics README](../fluidmechanics/README.md) and [Two-Phase Pipe Flow Model](../fluidmechanics/TwoPhasePipeFlowModel.md) for details.
+See [Fluid Mechanics README](../fluidmechanics/) and [Two-Phase Pipe Flow Model](../fluidmechanics/TwoPhasePipeFlowModel) for details.
 
 ## Common Parameters
 

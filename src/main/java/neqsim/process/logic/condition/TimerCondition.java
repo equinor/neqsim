@@ -5,7 +5,7 @@ import neqsim.process.logic.LogicCondition;
 
 /**
  * Condition that becomes true after a specified time delay.
- * 
+ *
  * <p>
  * Used for:
  * <ul>
@@ -14,15 +14,15 @@ import neqsim.process.logic.LogicCondition;
  * <li>Stabilization delays</li>
  * <li>Timeout detection</li>
  * </ul>
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * // Wait 30 seconds before starting pump
  * TimerCondition warmUp = new TimerCondition(30.0);
  * warmUp.start();
- * 
+ *
  * // In simulation loop
  * warmUp.update(timeStep);
  * if (warmUp.evaluate()) {

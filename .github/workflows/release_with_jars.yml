@@ -3,7 +3,7 @@ permissions:
   contents: read
 
 on:
-  workflow_dispatch:  
+  workflow_dispatch:
   push:
     branches:
       - master
@@ -16,35 +16,35 @@ jobs:
   get_versions:
     name: Get version numbers from pom-files
     runs-on: ubuntu-latest
-    
+
     outputs:
       version_8: ${{ steps.java-8-fix.outputs.version }}
       version: ${{ steps.java.outputs.version }}
-    
+
     steps:
     - name: Check out neqsim java project
       uses: actions/checkout@v6
     - name: Get version number for pomJava8.xml
       id: java-8
       uses: JActions/maven-version@v1.2.0
-      with: 
-        pom: ./pomJava8.xml 
+      with:
+        pom: ./pomJava8.xml
     - name: Get version number for pom.xml
       id: java
       uses: JActions/maven-version@v1.2.0
-      with: 
+      with:
         pom: ./pom.xml
     - name: Fix java 8 version number
       id: java-8-fix
       run: echo "version=$(echo ${{ steps.java-8.outputs.version }} | cut -f 1 -d "-")" >> $GITHUB_OUTPUT
-  
+
   compile_java_8:
     name: Build Neqsim ${{ needs.get_versions.outputs.version_8 }} with java 8
     needs: get_versions
-    
+
     if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
     runs-on: ubuntu-latest
-       
+
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v6
@@ -58,18 +58,18 @@ jobs:
         run: mvn -B package --file pomJava8.xml
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*Java8.jar staging
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: jarfiles-java8
           path: staging
-        
+
   compile_java_11:
     name: Build Neqsim ${{ needs.get_versions.outputs.version }} with java 11
     needs: get_versions
 
     if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v6
@@ -83,7 +83,7 @@ jobs:
         run: mvn -B package --file pom.xml
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*.jar staging
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: jarfiles-java11
           path: staging
@@ -94,7 +94,7 @@ jobs:
 
     if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v6
@@ -110,9 +110,46 @@ jobs:
         run: cd target && find . -type f -name "neqsim-*.jar" -exec sh -c 'mv -f $0 ${0%.jar}-Java21.jar' {} \; && cd ..
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*Java21.jar staging
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: jarfiles-java21
+          path: staging
+
+  compile_mcp_server:
+    name: Build MCP Server (Java 17)
+    needs: get_versions
+
+    if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out neqsim java project
+        uses: actions/checkout@v6
+      - name: Set up JDK 17 environment
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+      - name: Install NeqSim core to local Maven repo
+        run: mvn -B install -DskipTests -Dmaven.javadoc.skip=true
+      - name: Build MCP server uber-jar
+        run: |
+          NEQSIM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          cd neqsim-mcp-server && mvn -B package -Dneqsim.version="$NEQSIM_VERSION" -DskipTests -Dmaven.javadoc.skip=true
+      - name: Rename and checksum MCP jar
+        run: |
+          VERSION=${{ needs.get_versions.outputs.version }}
+          mkdir staging
+          # Rename to clearly versioned name
+          cp neqsim-mcp-server/target/neqsim-mcp-server-*-runner.jar "staging/neqsim-mcp-server-${VERSION}-runner.jar"
+          # Generate per-file SHA-256 checksum
+          cd staging
+          sha256sum "neqsim-mcp-server-${VERSION}-runner.jar" > "neqsim-mcp-server-${VERSION}-runner.jar.sha256"
+          cat "neqsim-mcp-server-${VERSION}-runner.jar.sha256"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: jarfiles-mcp-server
           path: staging
 
   create_release:
@@ -120,29 +157,100 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    needs: [get_versions, compile_java_8, compile_java_11, compile_java_21]
-    
+    needs: [get_versions, compile_java_8, compile_java_11, compile_java_21, compile_mcp_server]
+
     steps:
       - name: Download java 8 jar files
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: jarfiles-java8
       - name: Download java 11 jar files
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: jarfiles-java11
       - name: Download java 21 jar files
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: jarfiles-java21
-        
+      - name: Download MCP server jar
+        uses: actions/download-artifact@v8
+        with:
+          name: jarfiles-mcp-server
+
       - name: Create release v${{ needs.get_versions.outputs.version_8 }}
-        uses: ncipollo/release-action@v1.20.0
+        uses: ncipollo/release-action@v1.21.0
         with:
           name: NeqSim ${{ needs.get_versions.outputs.version_8 }}
-          tag: v${{ needs.get_versions.outputs.version_8 }} 
+          tag: v${{ needs.get_versions.outputs.version_8 }}
           draft: true
-          generateReleaseNotes: true          
+          generateReleaseNotes: true
           skipIfReleaseExists: true
-          artifacts: "*.jar"
+          artifacts: "*.jar,*.sha256"
           artifactContentType: application/java-archive
+          body: |
+            ## What is NeqSim?
+
+            NeqSim is an open-source Java library for thermodynamic fluid properties, phase equilibrium, PVT calculations, and process simulation. It is used to model fluids and process equipment such as separators, compressors, heat exchangers, pipelines, wells, and complete flowsheets.
+
+            This release ships both the core NeqSim simulation engine and the MCP server distribution that lets MCP-compatible AI clients call governed NeqSim calculation tools.
+
+            ## What is included in this release
+
+            | Distribution | Asset | Runtime | Use this when |
+            |--------------|-------|---------|---------------|
+            | NeqSim core library | `neqsim-${{ needs.get_versions.outputs.version }}.jar` | Java 11+ | You want the default standalone Java library. |
+            | NeqSim core library | `neqsim-${{ needs.get_versions.outputs.version }}-Java8.jar` | Java 8+ | You need Java 8 or Python `neqsim-python` compatibility. |
+            | NeqSim core library | `neqsim-${{ needs.get_versions.outputs.version }}-Java21.jar` | Java 21+ | You run on the latest LTS JDK. |
+            | NeqSim MCP server | `neqsim-mcp-server-${{ needs.get_versions.outputs.version }}-runner.jar` | Java 17+ | You want VS Code Copilot, Claude Desktop, Cursor, or another MCP client to use NeqSim tools. |
+            | NeqSim MCP server checksum | `neqsim-mcp-server-${{ needs.get_versions.outputs.version }}-runner.jar.sha256` | - | You want to verify the downloaded MCP runner jar. |
+            | NeqSim MCP server container | `ghcr.io/equinor/neqsim-mcp-server:${{ needs.get_versions.outputs.version }}` | Docker | You want to run the MCP server without installing Java locally. |
+
+            ## Install the MCP server
+
+            The MCP server gives MCP-compatible LLM clients access to validated thermodynamic and process simulation tools through a governed tool interface.
+
+            ### Jar install (requires Java 17+)
+
+            ```bash
+            VERSION=${{ needs.get_versions.outputs.version }}
+            curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar"
+            curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar.sha256"
+            sha256sum -c neqsim-mcp-server-${VERSION}-runner.jar.sha256
+            ```
+
+            ### Docker install
+
+            ```bash
+            docker pull ghcr.io/equinor/neqsim-mcp-server:${{ needs.get_versions.outputs.version }}
+            ```
+
+            ### Claude Desktop example
+
+            ```json
+            {
+              "mcpServers": {
+                "neqsim": {
+                  "command": "java",
+                  "args": ["-jar", "/path/to/neqsim-mcp-server-${{ needs.get_versions.outputs.version }}-runner.jar"]
+                }
+              }
+            }
+            ```
+
+            See the [MCP Server README](https://github.com/equinor/neqsim/tree/master/neqsim-mcp-server#readme) for VS Code Copilot, Cursor, Docker, Streamable HTTP, and deployment-profile configuration.
+
+            ## Use the core Java library
+
+            Use the release assets above when you need standalone jars. For Maven projects, use the published package dependency:
+
+            ```xml
+            <dependency>
+              <groupId>com.equinor.neqsim</groupId>
+              <artifactId>neqsim</artifactId>
+              <version>${{ needs.get_versions.outputs.version }}</version>
+            </dependency>
+            ```
+
+            ## Release notes
+
+            GitHub-generated release notes are included with this release and list the commits and pull requests since the previous version.

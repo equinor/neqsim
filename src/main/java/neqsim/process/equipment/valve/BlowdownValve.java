@@ -5,12 +5,12 @@ import neqsim.process.equipment.stream.StreamInterface;
 
 /**
  * Blowdown Valve (BDValve) for emergency depressurization systems (ESD).
- * 
+ *
  * <p>
  * A blowdown valve is a normally closed isolation valve that opens during emergency shutdown (ESD)
  * events to rapidly depressurize process equipment. The flow through the valve is controlled by a
  * downstream orifice to ensure safe and controlled depressurization rates.
- * 
+ *
  * <p>
  * Key features:
  * <ul>
@@ -20,32 +20,32 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Manual activation and reset capability</li>
  * <li>Typically used with downstream orifice for flow control</li>
  * </ul>
- * 
+ *
  * <p>
  * Typical usage in ESD system:
- * 
+ *
  * <pre>
  * // Create separator with gas outlet
  * Separator separator = new Separator("HP Separator", feedStream);
  * separator.run();
- * 
+ *
  * // Split gas outlet - one to normal process, one to blowdown
  * Splitter splitter = new Splitter("Gas Splitter", separator.getGasOutStream());
  * splitter.setSplitFactors(new double[] {1.0, 0.0}); // Initially all to process
- * 
+ *
  * // Create blowdown valve (normally closed)
  * BlowdownValve bdValve = new BlowdownValve("BD-101", splitter.getSplitStream(1));
  * bdValve.setOpeningTime(5.0); // 5 seconds to fully open
- * 
+ *
  * // Create orifice to control blowdown flow rate
  * ThrottlingValve orifice = new ThrottlingValve("BD Orifice", bdValve.getOutletStream());
  * orifice.setCv(150.0); // Size for controlled depressurization
  * orifice.setOutletPressure(1.5); // Flare header pressure
- * 
+ *
  * // In emergency situation
  * bdValve.activate(); // Open blowdown valve
  * splitter.setSplitFactors(new double[] {0.0, 1.0}); // Redirect flow to blowdown
- * 
+ *
  * // In dynamic simulation loop
  * system.runTransient(dt, UUID.randomUUID());
  * // Valve gradually opens and gas flows to flare through orifice
@@ -124,7 +124,7 @@ public class BlowdownValve extends ThrottlingValve {
 
   /**
    * Activates the blowdown valve (simulates ESD trigger).
-   * 
+   *
    * <p>
    * When activated, the valve will begin opening according to the configured opening time. This
    * simulates the emergency shutdown system triggering the blowdown valve to depressurize the
@@ -143,7 +143,7 @@ public class BlowdownValve extends ThrottlingValve {
 
   /**
    * Resets the blowdown valve to its initial closed state.
-   * 
+   *
    * <p>
    * This simulates the process of resetting the ESD system after an emergency event. In real
    * operations, this would require operator action and verification that the system is safe to
@@ -159,7 +159,7 @@ public class BlowdownValve extends ThrottlingValve {
 
   /**
    * Manually closes the blowdown valve.
-   * 
+   *
    * <p>
    * This allows manual closure of the valve after depressurization is complete.
    * </p>
@@ -180,7 +180,7 @@ public class BlowdownValve extends ThrottlingValve {
 
   /**
    * Performs dynamic simulation step with automatic opening logic.
-   * 
+   *
    * <p>
    * If the valve has been activated, it will gradually open according to the configured opening
    * time until fully open (100%).

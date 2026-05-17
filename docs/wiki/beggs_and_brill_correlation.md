@@ -1,3 +1,8 @@
+---
+title: "Beggs & Brill Correlation for Multiphase Pipe Flow"
+description: "The Beggs & Brill correlation (1973) is a widely-used empirical method for predicting pressure drop and liquid holdup in multiphase pipe flow. It handles:"
+---
+
 # Beggs & Brill Correlation for Multiphase Pipe Flow
 
 ## Overview
@@ -181,6 +186,6 @@ NeqSim's implementation has been validated against:
 
 ## See Also
 
-- [Pipeline Pressure Drop Overview](pipeline_pressure_drop.md)
-- [Friction Factor Models](friction_factor_models.md)
-- [Pipeline Transient Simulation](pipeline_transient_simulation.md)
+- [Pipeline Pressure Drop Overview](pipeline_pressure_drop)
+- [Friction Factor Models](friction_factor_models)
+- [Pipeline Transient Simulation](pipeline_transient_simulation)

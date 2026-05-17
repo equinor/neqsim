@@ -32,18 +32,18 @@ import neqsim.thermo.system.SystemSrkEos;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Create concept
  * FieldConcept concept = FieldConcept.oilDevelopment("Field A", 150.0, 8, 5000);
- * 
+ *
  * // Link to process
  * ConceptToProcessLinker linker = new ConceptToProcessLinker();
  * ProcessSystem process = linker.generateProcessSystem(concept, FidelityLevel.SCREENING);
- * 
+ *
  * // Run simulation
  * process.run();
- * 
+ *
  * // Get results
  * double powerMW = linker.getTotalPowerMW(process);
  * double heatingMW = linker.getTotalHeatingMW(process);

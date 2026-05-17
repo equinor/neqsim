@@ -13,10 +13,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.NamedBaseClass;
 
 /**
- * Base implementation for measurement devices supplying values to controllers
- * and process equipment. The class offers unit handling as well as configurable
- * Gaussian noise and discrete sample delay to mimic realistic transmitter
- * behaviour.
+ * Base implementation for measurement devices supplying values to controllers and process
+ * equipment. The class offers unit handling as well as configurable Gaussian noise and discrete
+ * sample delay to mimic realistic transmitter behaviour.
  *
  * @author ESOL
  * @version $Id: $Id
@@ -40,14 +39,28 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   private final Deque<Double> delayBuffer = new LinkedList<>();
   private int delaySteps = 0;
   private double noiseStdDev = 0.0;
-  private transient Random random = new Random();
+  private transient volatile Random random = new Random();
+
+  /** First-order filter time constant in seconds (0 = disabled). */
+  private double firstOrderTimeConstant = 0.0;
+  /** Previous filtered value used by the first-order filter. */
+  private double filteredPreviousValue = Double.NaN;
 
   private boolean conditionAnalysis = true;
   private String conditionAnalysisMessage = "";
   private double conditionAnalysisMaxDeviation = 0.0;
 
+  private SensorFaultType faultType = SensorFaultType.NONE;
+  private double faultParameter = 0.0;
+  private double faultAccumulator = 0.0;
+
   private AlarmConfig alarmConfig;
   private final AlarmState alarmState = new AlarmState();
+
+  private String tag = "";
+  private InstrumentTagRole tagRole = InstrumentTagRole.VIRTUAL;
+  private double fieldValue = Double.NaN;
+  private boolean fieldValueSet = false;
 
   /**
    * Constructor for MeasurementDeviceBaseClass.
@@ -192,16 +205,67 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   }
 
   /**
-   * Apply configured noise and delay to a raw measurement value.
+   * Shelves (suppresses) the alarm on this measurement point indefinitely. While shelved, alarm
+   * evaluations continue to track the value but no events are generated.
+   *
+   * @param reason operator-provided reason for shelving
+   */
+  public void shelveAlarm(String reason) {
+    alarmState.shelve(reason);
+  }
+
+  /**
+   * Shelves (suppresses) the alarm on this measurement point until the given simulation time.
+   *
+   * @param reason operator-provided reason for shelving
+   * @param expiryTime simulation time when shelving expires
+   */
+  public void shelveAlarm(String reason, double expiryTime) {
+    alarmState.shelve(reason, expiryTime);
+  }
+
+  /**
+   * Removes the alarm shelve, resuming normal alarm evaluation.
+   */
+  public void unshelveAlarm() {
+    alarmState.unshelve();
+  }
+
+  /**
+   * Returns whether the alarm on this measurement point is currently shelved.
+   *
+   * @return {@code true} if shelved
+   */
+  public boolean isAlarmShelved() {
+    return alarmState.isShelved();
+  }
+
+  /**
+   * Apply configured noise, delay and sensor fault to a raw measurement value.
    *
    * @param rawValue unmodified measurement value
-   * @return value after noise and delay are applied
+   * @return value after noise, fault injection and delay are applied
    */
   protected double applySignalModifiers(double rawValue) {
-    if (random == null) {
-      random = new Random();
+    double faultedValue = applyFault(rawValue);
+    Random r = random;
+    if (r == null) {
+      r = new Random();
+      random = r;
     }
-    double noisyValue = rawValue + random.nextGaussian() * noiseStdDev;
+    double noisyValue = faultedValue + r.nextGaussian() * noiseStdDev;
+
+    // First-order exponential filter: y(k) = alpha * x(k) + (1-alpha) * y(k-1)
+    if (firstOrderTimeConstant > 0.0) {
+      if (Double.isNaN(filteredPreviousValue)) {
+        filteredPreviousValue = noisyValue;
+      }
+      // Use a default dt of 1.0 second for per-sample filtering
+      double alpha = 1.0 - Math.exp(-1.0 / firstOrderTimeConstant);
+      noisyValue = alpha * noisyValue + (1.0 - alpha) * filteredPreviousValue;
+      filteredPreviousValue = noisyValue;
+    }
+
     delayBuffer.addLast(noisyValue);
     if (delayBuffer.size() > delaySteps) {
       return delayBuffer.removeFirst();
@@ -228,6 +292,28 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   }
 
   /**
+   * Sets the first-order filter time constant for smoothing measurement readings. A value of 0 (the
+   * default) disables the filter. Typical transmitter time constants range from 0.5 to 10 seconds.
+   *
+   * @param timeConstant time constant in seconds (0 = disabled)
+   */
+  public void setFirstOrderTimeConstant(double timeConstant) {
+    this.firstOrderTimeConstant = Math.max(0.0, timeConstant);
+    if (timeConstant <= 0.0) {
+      filteredPreviousValue = Double.NaN;
+    }
+  }
+
+  /**
+   * Gets the configured first-order filter time constant.
+   *
+   * @return time constant in seconds (0 = disabled)
+   */
+  public double getFirstOrderTimeConstant() {
+    return firstOrderTimeConstant;
+  }
+
+  /**
    * Configure discrete delay in number of samples.
    *
    * @param delaySteps number of samples delay
@@ -247,13 +333,56 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   }
 
   /**
-   * Set the random seed used for noise generation to achieve deterministic
-   * measurements when required.
+   * Set the random seed used for noise generation to achieve deterministic measurements when
+   * required.
    *
    * @param seed random seed
    */
   public void setRandomSeed(long seed) {
     random = new Random(seed);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTag() {
+    return tag;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setTag(String tag) {
+    this.tag = tag != null ? tag : "";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public InstrumentTagRole getTagRole() {
+    return tagRole;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setTagRole(InstrumentTagRole role) {
+    this.tagRole = role != null ? role : InstrumentTagRole.VIRTUAL;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getFieldValue() {
+    return fieldValue;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setFieldValue(double value) {
+    this.fieldValue = value;
+    this.fieldValueSet = !Double.isNaN(value);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean hasFieldValue() {
+    return fieldValueSet;
   }
 
   /** {@inheritDoc} */
@@ -296,6 +425,81 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
    */
   public boolean doConditionAnalysis() {
     return conditionAnalysis;
+  }
+
+  /**
+   * Apply a sensor fault to the raw measurement value. The fault transformation depends on the
+   * currently configured {@link SensorFaultType}.
+   *
+   * @param rawValue true process measurement before fault injection
+   * @return measurement value after fault transformation
+   */
+  private double applyFault(double rawValue) {
+    switch (faultType) {
+      case STUCK_AT_VALUE:
+        return faultParameter;
+      case LINEAR_DRIFT:
+        faultAccumulator += faultParameter;
+        return rawValue + faultAccumulator;
+      case BIAS:
+        return rawValue + faultParameter;
+      case NOISE_BURST:
+        Random r = random;
+        if (r == null) {
+          r = new Random();
+          random = r;
+        }
+        return rawValue + r.nextGaussian() * faultParameter;
+      case SATURATION:
+        if (faultParameter >= 0) {
+          return Math.min(rawValue, faultParameter);
+        } else {
+          return Math.max(rawValue, faultParameter);
+        }
+      case NONE:
+      default:
+        return rawValue;
+    }
+  }
+
+  /**
+   * Inject a sensor fault into this measurement device. While a fault is active, the measured value
+   * will be transformed according to the specified fault type and parameter.
+   *
+   * @param type the type of sensor fault to inject
+   * @param parameter fault-specific parameter (e.g. stuck value, drift rate, bias)
+   */
+  public void setFault(SensorFaultType type, double parameter) {
+    this.faultType = type != null ? type : SensorFaultType.NONE;
+    this.faultParameter = parameter;
+    this.faultAccumulator = 0.0;
+  }
+
+  /**
+   * Remove any active sensor fault and return to normal operation.
+   */
+  public void clearFault() {
+    this.faultType = SensorFaultType.NONE;
+    this.faultParameter = 0.0;
+    this.faultAccumulator = 0.0;
+  }
+
+  /**
+   * Get the currently active sensor fault type.
+   *
+   * @return the active fault type, or {@link SensorFaultType#NONE} if no fault is injected
+   */
+  public SensorFaultType getFaultType() {
+    return faultType;
+  }
+
+  /**
+   * Get the parameter associated with the currently active sensor fault.
+   *
+   * @return the fault parameter value
+   */
+  public double getFaultParameter() {
+    return faultParameter;
   }
 
   /**

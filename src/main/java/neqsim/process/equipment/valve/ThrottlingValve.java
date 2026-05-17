@@ -1,11 +1,13 @@
 package neqsim.process.equipment.valve;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.physicalproperties.PhysicalPropertyType;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
@@ -51,6 +53,18 @@ public class ThrottlingValve extends TwoPortEquipment
   private double valveClosingTravelTimeSec = Double.NaN;
   private double valveTimeConstantSec = 0.0;
   private ValveTravelModel travelModel = ValveTravelModel.NONE;
+  /** Valve deadband in percent — signal changes smaller than this are ignored. */
+  private double valveDeadband = 0.0;
+  /** Valve stiction band in percent — valve sticks until force overcomes this threshold. */
+  private double valveStiction = 0.0;
+  /** Hysteresis band in percent — position offset between increasing/decreasing signal. */
+  private double valveHysteresis = 0.0;
+  /** Last direction the valve moved: +1 = opening, -1 = closing, 0 = initial. */
+  private int lastMoveDirection = 0;
+  /** Whether the valve is currently stuck due to stiction. */
+  private boolean isStuck = true;
+  /** The valve position when it last became stuck. */
+  private double stuckPosition = Double.NaN;
   double molarFlow = 0.0;
   private String pressureUnit = "bara";
   private boolean acceptNegativeDP = true;
@@ -85,9 +99,8 @@ public class ThrottlingValve extends TwoPortEquipment
    * Constructor for ThrottlingValve.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *                    object
+   * @param name a {@link java.lang.String} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public ThrottlingValve(String name, StreamInterface inletStream) {
     this(name);
@@ -149,7 +162,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setPressure(double pressure, String unit) {
     setOutletPressure(pressure, unit);
@@ -168,8 +181,9 @@ public class ThrottlingValve extends TwoPortEquipment
    * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     pressureUnit = unit;
     this.pressure = pressure;
@@ -179,10 +193,14 @@ public class ThrottlingValve extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
-    if (getInletStream().getThermoSystem().getTemperature() == thermoSystem.getTemperature()
-        && getInletStream().getThermoSystem().getPressure() == thermoSystem.getPressure()
-        && getInletStream().getThermoSystem().getFlowRate("kg/hr") == thermoSystem
-            .getFlowRate("kg/hr")
+    if (thermoSystem == null || getInletStream() == null
+        || getInletStream().getThermoSystem() == null) {
+      return true;
+    }
+    SystemInterface inThermo = getInletStream().getThermoSystem();
+    if (inThermo.getTemperature() == thermoSystem.getTemperature()
+        && inThermo.getPressure() == thermoSystem.getPressure()
+        && inThermo.getFlowRate("kg/hr") == thermoSystem.getFlowRate("kg/hr")
         && getOutletPressure() == getOutletStream().getPressure()) {
       return false;
     } else {
@@ -199,8 +217,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * Calculates molar flow for a gas based on IEC 60534 standards. This method
-   * accounts for choked
+   * Calculates molar flow for a gas based on IEC 60534 standards. This method accounts for choked
    * (critical) flow.
    *
    * @return Molar flow in mole/sec.
@@ -227,7 +244,7 @@ public class ThrottlingValve extends TwoPortEquipment
   /**
    * Adjusts the flow coefficient (Kv) based on the percentage valve opening.
    *
-   * @param Kv                  Flow coefficient SI (for 100% opening)
+   * @param Kv Flow coefficient SI (for 100% opening)
    * @param percentValveOpening Percentage valve opening (0 to 100).
    * @return Adjusted flow coefficient (Kv)
    */
@@ -252,7 +269,7 @@ public class ThrottlingValve extends TwoPortEquipment
       return;
     }
 
-    thermoSystem.initProperties();
+    thermoSystem.init(2);
 
     if (thermoSystem.hasPhaseType(PhaseType.GAS) && thermoSystem.getVolumeFraction(0) > 0.5) {
       setGasValve(true);
@@ -261,10 +278,11 @@ public class ThrottlingValve extends TwoPortEquipment
     }
 
     if (!valveKvSet) {
+      thermoSystem.initPhysicalProperties("density");
       calcKv();
       valveKvSet = true;
     }
-    inStream.getThermoSystem().initProperties();
+    // inStream.getThermoSystem().initProperties();
     double enthalpy = thermoSystem.getEnthalpy();
 
     double outPres = getOutletStream().getThermoSystem().getPressure();
@@ -428,7 +446,6 @@ public class ThrottlingValve extends TwoPortEquipment
       if (flow > minimumMolarFlow) {
         return flow;
       }
-      return 0.0;
     }
     return 0.0;
   }
@@ -478,7 +495,8 @@ public class ThrottlingValve extends TwoPortEquipment
     }
     controllerRequest = clampValveOpening(controllerRequest);
     setTargetPercentValveOpening(controllerRequest);
-    percentValveOpening = clampValveOpening(applyTravelDynamics(percentValveOpening, requestedValveOpening, dt));
+    percentValveOpening =
+        clampValveOpening(applyTravelDynamics(percentValveOpening, requestedValveOpening, dt));
     setCalculationIdentifier(id);
   }
 
@@ -487,36 +505,77 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   private double applyTravelDynamics(double current, double target, double dt) {
+    // Step 1: Apply deadband — ignore small signal changes
+    double effectiveTarget = target;
+    if (valveDeadband > 0.0 && Math.abs(target - current) < valveDeadband) {
+      effectiveTarget = current;
+    }
+
+    // Step 2: Apply stiction — valve sticks until force exceeds stiction band
+    if (valveStiction > 0.0) {
+      if (Double.isNaN(stuckPosition)) {
+        stuckPosition = current;
+        isStuck = true;
+      }
+      if (isStuck) {
+        if (Math.abs(effectiveTarget - stuckPosition) >= valveStiction) {
+          isStuck = false;
+          // Valve breaks free — jump to target
+        } else {
+          effectiveTarget = stuckPosition;
+        }
+      } else {
+        // Valve is moving — check if it should re-stick
+        if (Math.abs(effectiveTarget - current) < valveStiction * 0.1) {
+          isStuck = true;
+          stuckPosition = current;
+          effectiveTarget = current;
+        }
+      }
+    }
+
+    // Step 3: Apply hysteresis — offset position based on direction
+    if (valveHysteresis > 0.0 && Math.abs(effectiveTarget - current) > 1e-12) {
+      int direction = effectiveTarget > current ? 1 : -1;
+      if (direction != lastMoveDirection && lastMoveDirection != 0) {
+        // Direction reversal — apply half hysteresis band as offset
+        effectiveTarget = effectiveTarget - direction * valveHysteresis / 2.0;
+      }
+      lastMoveDirection = direction;
+    }
+
+    // Step 4: Apply rate limiting / lag as before
     if (travelModel == null || travelModel == ValveTravelModel.NONE) {
-      return target;
+      return effectiveTarget;
     }
 
     double effectiveDt = Math.max(0.0, dt);
     switch (travelModel) {
       case LINEAR_RATE_LIMIT:
-        double delta = target - current;
+        double delta = effectiveTarget - current;
         if (Math.abs(delta) < 1e-12 || effectiveDt <= 0.0) {
-          return target;
+          return effectiveTarget;
         }
-        double travelTime = delta >= 0.0 ? getEffectiveOpeningTravelTime() : getEffectiveClosingTravelTime();
+        double travelTime =
+            delta >= 0.0 ? getEffectiveOpeningTravelTime() : getEffectiveClosingTravelTime();
         if (travelTime <= 0.0) {
-          return target;
+          return effectiveTarget;
         }
         double maxRate = 100.0 / travelTime;
         double maxChange = maxRate * effectiveDt;
         if (Math.abs(delta) <= maxChange) {
-          return target;
+          return effectiveTarget;
         }
         return current + Math.copySign(maxChange, delta);
       case FIRST_ORDER_LAG:
         double tau = valveTimeConstantSec > 0.0 ? valveTimeConstantSec : valveTravelTimeSec;
         if (tau <= 0.0 || effectiveDt <= 0.0) {
-          return target;
+          return effectiveTarget;
         }
         double alpha = 1.0 - Math.exp(-effectiveDt / tau);
-        return current + alpha * (target - current);
+        return current + alpha * (effectiveTarget - current);
       default:
-        return target;
+        return effectiveTarget;
     }
   }
 
@@ -565,6 +624,62 @@ public class ThrottlingValve extends TwoPortEquipment
    */
   public double getMaximumValveOpening() {
     return maxValveOpening;
+  }
+
+  /**
+   * Sets the valve deadband in percent. Signal changes smaller than this are ignored.
+   *
+   * @param deadband deadband in percent (0 to 100)
+   */
+  public void setValveDeadband(double deadband) {
+    this.valveDeadband = Math.max(0.0, deadband);
+  }
+
+  /**
+   * Gets the valve deadband in percent.
+   *
+   * @return deadband in percent
+   */
+  public double getValveDeadband() {
+    return valveDeadband;
+  }
+
+  /**
+   * Sets the valve stiction band in percent. The valve sticks until the requested change exceeds
+   * this threshold, then jumps to the target position.
+   *
+   * @param stiction stiction band in percent (0 to 100)
+   */
+  public void setValveStiction(double stiction) {
+    this.valveStiction = Math.max(0.0, stiction);
+  }
+
+  /**
+   * Gets the valve stiction band in percent.
+   *
+   * @return stiction band in percent
+   */
+  public double getValveStiction() {
+    return valveStiction;
+  }
+
+  /**
+   * Sets the valve hysteresis band in percent. This models the positional offset between increasing
+   * and decreasing signal directions.
+   *
+   * @param hysteresis hysteresis band in percent (0 to 100)
+   */
+  public void setValveHysteresis(double hysteresis) {
+    this.valveHysteresis = Math.max(0.0, hysteresis);
+  }
+
+  /**
+   * Gets the valve hysteresis band in percent.
+   *
+   * @return hysteresis band in percent
+   */
+  public double getValveHysteresis() {
+    return valveHysteresis;
   }
 
   /**
@@ -699,6 +814,25 @@ public class ThrottlingValve extends TwoPortEquipment
   @Override
   public double getPercentValveOpening() {
     return percentValveOpening;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit,
+      String pressureUnit, String flowUnit) {
+    Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
+    state.put("percent_opening",
+        ProcessEquipmentInterface.createStateEntry(percentValveOpening, "%"));
+    StreamInterface out = getOutletStream();
+    if (out != null) {
+      state.put("temperature", ProcessEquipmentInterface
+          .createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
+      state.put("pressure",
+          ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
+      state.put("flow",
+          ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
+    }
+    return state;
   }
 
   /** {@inheritDoc} */
@@ -897,7 +1031,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * </p>
    *
    * @param deltaPressure a double
-   * @param unit          a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setDeltaPressure(double deltaPressure, String unit) {
     this.deltaPressure = deltaPressure;
@@ -956,10 +1090,8 @@ public class ThrottlingValve extends TwoPortEquipment
    * Calculate Acoustic-Induced Vibration (AIV) power level.
    *
    * <p>
-   * AIV is most significant at control valves where high pressure drops occur.
-   * The acoustic power
-   * generated is a function of mass flow rate, pressure drop, and temperature.
-   * This method
+   * AIV is most significant at control valves where high pressure drops occur. The acoustic power
+   * generated is a function of mass flow rate, pressure drop, and temperature. This method
    * implements the Energy Institute Guidelines formula for AIV screening.
    * </p>
    *
@@ -998,14 +1130,14 @@ public class ThrottlingValve extends TwoPortEquipment
 
     // Energy Institute formula for acoustic power level
     // W_acoustic = 3.2e-9 * mdot * P1 * (dP/P1)^3.6 * (T/273.15)^0.8
-    double acousticPowerWatts = 3.2e-9 * mdot * p1 * Math.pow(pressureRatio, 3.6) * Math.pow(tempK / 273.15, 0.8);
+    double acousticPowerWatts =
+        3.2e-9 * mdot * p1 * Math.pow(pressureRatio, 3.6) * Math.pow(tempK / 273.15, 0.8);
 
     return acousticPowerWatts / 1000.0; // Return in kW
   }
 
   /**
-   * Calculate AIV Likelihood of Failure based on acoustic power and downstream
-   * pipe geometry.
+   * Calculate AIV Likelihood of Failure based on acoustic power and downstream pipe geometry.
    *
    * <p>
    * AIV LOF interpretation:
@@ -1017,7 +1149,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * <li>&gt; 0.7: Very high risk - design changes needed</li>
    * </ul>
    *
-   * @param downstreamDiameter  downstream pipe diameter in meters
+   * @param downstreamDiameter downstream pipe diameter in meters
    * @param downstreamThickness downstream pipe wall thickness in meters
    * @return AIV likelihood of failure (0.0-1.0)
    */
@@ -1066,50 +1198,48 @@ public class ThrottlingValve extends TwoPortEquipment
   // ============================================================================
 
   /** Storage for capacity constraints. */
-  private final java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> capacityConstraints = new java.util.LinkedHashMap<>();
+  private final java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> capacityConstraints =
+      new java.util.LinkedHashMap<>();
 
   /**
    * Initializes default capacity constraints for the valve.
    *
    * <p>
-   * NOTE: All constraints are disabled by default for backwards compatibility.
-   * Enable specific
-   * constraints when valve capacity analysis is needed (e.g., when Cv has been
-   * sized).
+   * NOTE: All constraints are disabled by default for backwards compatibility. Enable specific
+   * constraints when valve capacity analysis is needed (e.g., when Cv has been sized).
    * </p>
    */
   protected void initializeCapacityConstraints() {
     // Cv utilization constraint (HARD limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("cvUtilization",
         "", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
-        .setDesignValue(getMechanicalDesign().maxDesignCv).setWarningThreshold(0.9)
-        .setDescription("Cv utilization vs design maximum").setValueSupplier(() -> getCv())
-        .setEnabled(false));
+            .setDesignValue(getMechanicalDesign().maxDesignCv).setWarningThreshold(0.9)
+            .setDescription("Cv utilization vs design maximum").setValueSupplier(() -> getCv())
+            .setEnabled(false));
 
     // Volume flow constraint (DESIGN limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("volumeFlow",
         "m3/hr", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-        .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
-        .setDescription("Volume flow vs design maximum").setValueSupplier(
-            () -> getOutStream() != null ? getOutStream().getFlowRate("m3/hr") : 0.0)
-        .setEnabled(false));
+            .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
+            .setDescription("Volume flow vs design maximum")
+            .setValueSupplier(
+                () -> getOutStream() != null ? getOutStream().getFlowRate("m3/hr") : 0.0)
+            .setEnabled(false));
 
     // Valve opening constraint (SOFT limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("valveOpening",
         "%", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-        .setDesignValue(maxValveOpening).setWarningThreshold(0.9)
-        .setDescription("Valve opening percentage")
-        .setValueSupplier(() -> percentValveOpening)
-        .setEnabled(false));
+            .setDesignValue(maxValveOpening).setWarningThreshold(0.9)
+            .setDescription("Valve opening percentage").setValueSupplier(() -> percentValveOpening)
+            .setEnabled(false));
 
     // AIV (Acoustic-Induced Vibration) constraint - critical for control valves -
     // disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("AIV", "kW",
         neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-        .setDesignValue(maxDesignAIV).setMaxValue(50.0).setWarningThreshold(0.4)
-        .setDescription("AIV acoustic power (<1kW=low, 1-10kW=medium, >25kW=very high risk)")
-        .setValueSupplier(() -> calculateAIV())
-        .setEnabled(false));
+            .setDesignValue(maxDesignAIV).setMaxValue(50.0).setWarningThreshold(0.4)
+            .setDescription("AIV acoustic power (<1kW=low, 1-10kW=medium, >25kW=very high risk)")
+            .setValueSupplier(() -> calculateAIV()).setEnabled(false));
   }
 
   /** {@inheritDoc} */
@@ -1213,8 +1343,7 @@ public class ThrottlingValve extends TwoPortEquipment
   // ============================================================================
 
   /**
-   * Default design opening percentage for valve sizing (50% for good control
-   * range).
+   * Default design opening percentage for valve sizing (50% for good control range).
    */
   private static final double DESIGN_OPENING_PERCENT = 50.0;
 
@@ -1225,10 +1354,8 @@ public class ThrottlingValve extends TwoPortEquipment
    * Auto-sizes the valve based on current flow conditions.
    *
    * <p>
-   * This method calculates the required Cv value so that the valve operates at
-   * approximately 50%
-   * opening at the current flow rate. This provides good control range - the
-   * valve can open further
+   * This method calculates the required Cv value so that the valve operates at approximately 50%
+   * opening at the current flow rate. This provides good control range - the valve can open further
    * for higher flows or close for lower flows.
    * </p>
    *
@@ -1237,12 +1364,9 @@ public class ThrottlingValve extends TwoPortEquipment
    * </p>
    * <ul>
    * <li>At normal flow, valve should be at ~50% opening (design point)</li>
-   * <li>Maximum Cv (100% opening) = Cv needed at 50% opening * 2
-   * (approximately)</li>
-   * <li>This gives control range from ~25% to 100% opening for typical flow
-   * variations</li>
-   * <li>For zero flow valves (bypass, emergency), uses minimum default Cv or
-   * estimates from
+   * <li>Maximum Cv (100% opening) = Cv needed at 50% opening * 2 (approximately)</li>
+   * <li>This gives control range from ~25% to 100% opening for typical flow variations</li>
+   * <li>For zero flow valves (bypass, emergency), uses minimum default Cv or estimates from
    * connected equipment</li>
    * </ul>
    *
@@ -1254,12 +1378,10 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * Auto-sizes the valve based on current flow conditions with specified design
-   * opening.
+   * Auto-sizes the valve based on current flow conditions with specified design opening.
    *
-   * @param safetyFactor         safety factor to apply (e.g., 1.2 for 20% margin)
-   * @param designOpeningPercent the target valve opening percentage at design
-   *                             flow (typically 50%)
+   * @param safetyFactor safety factor to apply (e.g., 1.2 for 20% margin)
+   * @param designOpeningPercent the target valve opening percentage at design flow (typically 50%)
    */
   public void autoSize(double safetyFactor, double designOpeningPercent) {
     if (getInletStream() == null) {
@@ -1342,8 +1464,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * Estimates Cv from flow rate using simplified correlation.
    *
    * <p>
-   * This is a rough estimate when the standard calculation fails. Uses typical
-   * valve sizing rules
+   * This is a rough estimate when the standard calculation fails. Uses typical valve sizing rules
    * of thumb.
    * </p>
    *
@@ -1370,8 +1491,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * Estimates Cv for a valve with zero or negligible flow.
    *
    * <p>
-   * For valves like bypass valves, emergency relief valves, or startup valves
-   * that normally have no
+   * For valves like bypass valves, emergency relief valves, or startup valves that normally have no
    * flow, this method estimates an appropriate Cv based on:
    * </p>
    * <ul>

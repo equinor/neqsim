@@ -101,7 +101,7 @@ public class ExpanderCapacityStrategy implements EquipmentCapacityStrategy {
 
     // Check if expander implements CapacityConstrainedEquipment
     if (expander instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) expander).getMaxUtilization();
+      return expander.getMaxUtilization();
     }
 
     // Use power generation as primary capacity indicator
@@ -139,7 +139,7 @@ public class ExpanderCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If expander already implements CapacityConstrainedEquipment, use its constraints
     if (expander instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) expander).getCapacityConstraints();
+      return expander.getCapacityConstraints();
     }
 
     // Power constraint

@@ -119,12 +119,12 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     thermoSystem.getComponent("CO2").setVolumeCorrectionT(0.2);
 
     thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-    assertEquals(37.6425616, thermoSystem.getDensity("kg/m3"), 0.01);
+    assertEquals(37.61805647, thermoSystem.getDensity("kg/m3"), 0.01);
 
     thermoSystem.getComponent("CO2").setRacketZ(0.3);
 
     thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-    assertEquals(37.557573, thermoSystem.getDensity("kg/m3"), 0.01);
+    assertEquals(37.53716726, thermoSystem.getDensity("kg/m3"), 0.01);
   }
 
   @Test

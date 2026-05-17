@@ -151,8 +151,19 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
 
   /** {@inheritDoc} */
   @Override
-  public void setOutTemperature(double temperature) {
+  public void setOutletTemperature(double temperature) {
     this.temperatureOut = temperature;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @deprecated use {@link #setOutletTemperature(double)} instead
+   */
+  @Override
+  @Deprecated
+  public void setOutTemperature(double temperature) {
+    setOutletTemperature(temperature);
   }
 
   /** {@inheritDoc} */

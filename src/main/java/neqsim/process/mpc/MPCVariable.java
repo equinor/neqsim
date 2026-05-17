@@ -16,7 +16,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Create a manipulated variable for valve opening

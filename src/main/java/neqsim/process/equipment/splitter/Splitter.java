@@ -1,14 +1,19 @@
 package neqsim.process.equipment.splitter;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.splitter.SplitterMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.process.util.monitor.SplitterResponse;
 import neqsim.process.util.report.ReportConfig;
@@ -24,11 +29,28 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Splitter extends ProcessEquipmentBaseClass implements SplitterInterface {
+public class Splitter extends ProcessEquipmentBaseClass
+    implements SplitterInterface, CapacityConstrainedEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Splitter.class);
+
+  /** Mechanical design for the splitter. */
+  private SplitterMechanicalDesign mechanicalDesign;
+
+  /** Splitter capacity constraints map. */
+  private java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> splitterCapacityConstraints =
+      new java.util.LinkedHashMap<String, neqsim.process.equipment.capacity.CapacityConstraint>();
+
+  /** Whether capacity analysis is enabled. */
+  private boolean splitterCapacityAnalysisEnabled = false;
+
+  /** Design pressure drop [bar]. */
+  private double designPressureDrop = 0.05;
+
+  /** Maximum design velocity [m/s]. */
+  private double maxDesignVelocity = 30.0;
 
   SystemInterface thermoSystem;
   SystemInterface gasSystem;
@@ -54,6 +76,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
    */
   public Splitter(String name) {
     super(name);
+    initMechanicalDesign();
   }
 
   /**
@@ -65,6 +88,18 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   public Splitter(String name, StreamInterface inStream) {
     this(name);
     this.setInletStream(inStream);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public MechanicalDesign getMechanicalDesign() {
+    return mechanicalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    mechanicalDesign = new SplitterMechanicalDesign(this);
   }
 
   /**
@@ -150,6 +185,24 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   }
 
   /**
+   * Gets the configured outlet flow rates used to calculate split factors.
+   *
+   * @return a copy of the configured flow rates, or null if the splitter uses fixed split factors
+   */
+  public double[] getFlowRates() {
+    return flowRates == null ? null : Arrays.copyOf(flowRates, flowRates.length);
+  }
+
+  /**
+   * Gets the unit used for configured outlet flow rates.
+   *
+   * @return the flow-rate unit string used by {@link #setFlowRates(double[], String)}
+   */
+  public String getFlowUnit() {
+    return flowUnit;
+  }
+
+  /**
    * <p>
    * calcSplitFactors.
    * </p>
@@ -203,16 +256,39 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
 
   /** {@inheritDoc} */
   @Override
+  public List<StreamInterface> getInletStreams() {
+    if (inletStream != null) {
+      return Collections.singletonList(inletStream);
+    }
+    return Collections.emptyList();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    if (splitStream != null) {
+      return Collections.unmodifiableList(Arrays.asList(splitStream));
+    }
+    return Collections.emptyList();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public boolean needRecalculation() {
     // Check if inlet stream needs recalculation first
     if (inletStream.needRecalculation()) {
+      return true;
+    }
+    if (lastComposition == null || inletStream.getFluid().getFlowRate("kg/hr") <= 0.0
+        || lastFlowRate <= 0.0) {
       return true;
     }
     if (inletStream.getFluid().getTemperature() == lastTemperature
         && inletStream.getFluid().getPressure() == lastPressure
         && Math.abs(inletStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
             / inletStream.getFluid().getFlowRate("kg/hr") < 1e-6
-        && Arrays.equals(splitFactor, oldSplitFactor)) {
+        && Arrays.equals(splitFactor, oldSplitFactor)
+        && Arrays.equals(inletStream.getFluid().getMolarComposition(), lastComposition)) {
       return false;
     } else {
       return true;
@@ -260,7 +336,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     lastFlowRate = inletStream.getFluid().getFlowRate("kg/hr");
     lastTemperature = inletStream.getFluid().getTemperature();
     lastPressure = inletStream.getFluid().getPressure();
-    lastComposition = inletStream.getFluid().getMolarComposition();
+    lastComposition = inletStream.getFluid().getMolarComposition().clone();
     oldSplitFactor = Arrays.copyOf(splitFactor, splitFactor.length);
 
     setCalculationIdentifier(id);
@@ -442,5 +518,185 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     }
 
     return result;
+  }
+
+  // ============================================================================
+  // CapacityConstrainedEquipment Implementation
+  // ============================================================================
+
+  /**
+   * Initialize splitter capacity constraints.
+   */
+  private void initializeSplitterCapacityConstraints() {
+    splitterCapacityConstraints.clear();
+
+    // Pressure drop constraint
+    if (designPressureDrop > 0) {
+      neqsim.process.equipment.capacity.CapacityConstraint dpConstraint =
+          new neqsim.process.equipment.capacity.CapacityConstraint("pressureDrop", "bar",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      dpConstraint.setDesignValue(designPressureDrop);
+      dpConstraint.setDescription("Pressure drop across splitter");
+      dpConstraint.setValueSupplier(() -> {
+        // Splitter typically has minimal pressure drop
+        // In ideal case, all outlets have same pressure as inlet
+        return 0.0; // Ideal splitter
+      });
+      splitterCapacityConstraints.put("pressureDrop", dpConstraint);
+    }
+
+    // Velocity constraint (if mechanical design available)
+    if (mechanicalDesign != null && maxDesignVelocity > 0) {
+      neqsim.process.equipment.capacity.CapacityConstraint velConstraint =
+          new neqsim.process.equipment.capacity.CapacityConstraint("velocity", "m/s",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      velConstraint.setDesignValue(maxDesignVelocity);
+      velConstraint.setDescription("Velocity in distribution header");
+      velConstraint.setValueSupplier(() -> {
+        if (inletStream != null && mechanicalDesign.getHeaderDiameter() > 0) {
+          double volumeFlow = inletStream.getFlowRate("m3/hr") / 3600.0;
+          double area = Math.PI * Math.pow(mechanicalDesign.getHeaderDiameter() / 2.0, 2);
+          return volumeFlow / area;
+        }
+        return 0.0;
+      });
+      splitterCapacityConstraints.put("velocity", velConstraint);
+    }
+  }
+
+  /**
+   * Sets the design pressure drop.
+   *
+   * @param pressureDrop design pressure drop in bar
+   */
+  public void setDesignPressureDrop(double pressureDrop) {
+    this.designPressureDrop = pressureDrop;
+    initializeSplitterCapacityConstraints();
+  }
+
+  /**
+   * Gets the design pressure drop.
+   *
+   * @return design pressure drop in bar
+   */
+  public double getDesignPressureDrop() {
+    return designPressureDrop;
+  }
+
+  /**
+   * Sets the maximum design velocity.
+   *
+   * @param velocity max design velocity in m/s
+   */
+  public void setMaxDesignVelocity(double velocity) {
+    this.maxDesignVelocity = velocity;
+    initializeSplitterCapacityConstraints();
+  }
+
+  /**
+   * Gets the maximum design velocity.
+   *
+   * @return max design velocity in m/s
+   */
+  public double getMaxDesignVelocity() {
+    return maxDesignVelocity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityAnalysisEnabled() {
+    return splitterCapacityAnalysisEnabled;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCapacityAnalysisEnabled(boolean enabled) {
+    this.splitterCapacityAnalysisEnabled = enabled;
+    if (enabled && splitterCapacityConstraints.isEmpty()) {
+      initializeSplitterCapacityConstraints();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> getCapacityConstraints() {
+    return java.util.Collections.unmodifiableMap(splitterCapacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public neqsim.process.equipment.capacity.CapacityConstraint getBottleneckConstraint() {
+    neqsim.process.equipment.capacity.CapacityConstraint bottleneck = null;
+    double maxUtil = 0.0;
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()) {
+        double util = constraint.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+          bottleneck = constraint;
+        }
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled() && constraint.getUtilization() > 1.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()
+          && constraint
+              .getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
+          && constraint.getUtilization() > 1.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    double maxUtil = 0.0;
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()) {
+        maxUtil = Math.max(maxUtil, constraint.getUtilization());
+      }
+    }
+    return maxUtil;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(
+      neqsim.process.equipment.capacity.CapacityConstraint constraint) {
+    splitterCapacityConstraints.put(constraint.getName(), constraint);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean removeCapacityConstraint(String constraintName) {
+    return splitterCapacityConstraints.remove(constraintName) != null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearCapacityConstraints() {
+    splitterCapacityConstraints.clear();
   }
 }

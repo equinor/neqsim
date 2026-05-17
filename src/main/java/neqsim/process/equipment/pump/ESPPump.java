@@ -37,7 +37,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * // Create ESP pump for oil well
  * ESPPump esp = new ESPPump("ESP-1", wellStream);
@@ -46,7 +46,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * esp.setHeadPerStage(10.0); // meters per stage at zero GVF
  * esp.setMaxGVF(0.30); // Maximum tolerable GVF
  * esp.run();
- * 
+ *
  * // Check operating status
  * double gvf = esp.getGasVoidFraction();
  * boolean surging = esp.isSurging();

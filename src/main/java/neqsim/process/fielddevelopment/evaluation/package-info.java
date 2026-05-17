@@ -28,42 +28,42 @@
  * </ol>
  *
  * <h2>Single Concept Evaluation</h2>
- * 
+ *
  * <pre>
  * // Create evaluator
  * ConceptEvaluator evaluator = new ConceptEvaluator();
- * 
+ *
  * // Evaluate concept
  * ConceptKPIs kpis = evaluator.evaluate(concept);
- * 
+ *
  * // Access individual reports
  * FlowAssuranceReport fa = kpis.getFlowAssuranceReport();
  * EconomicsEstimator.EconomicsReport econ = kpis.getEconomicsReport();
  * EmissionsTracker.EmissionsReport emissions = kpis.getEmissionsReport();
  * SafetyScreener.SafetyReport safety = kpis.getSafetyReport();
- * 
+ *
  * // Get summary
  * System.out.println(kpis.getSummary());
  * </pre>
  *
  * <h2>Batch Concept Comparison</h2>
- * 
+ *
  * <pre>
  * // Create multiple concepts
  * List&lt;FieldConcept&gt; concepts =
  *     Arrays.asList(createPlatformConcept(), createFPSOConcept(), createSubseaConcept());
- * 
+ *
  * // Run batch evaluation
  * BatchConceptRunner runner = new BatchConceptRunner();
  * Map&lt;String, ConceptKPIs&gt; results = runner.runAll(concepts);
- * 
+ *
  * // Compare results
  * results.forEach((name, kpis) -&gt; {
  *   System.out.printf("%s: CAPEX=%.0f MUSD, CO2=%.1f kg/boe%n", name,
  *       kpis.getEconomicsReport().getTotalCapexMUSD(),
  *       kpis.getEmissionsReport().getCo2IntensityKgPerBoe());
  * });
- * 
+ *
  * // Rank by CAPEX
  * List&lt;ConceptKPIs&gt; ranked =
  *     runner.rankBy(results, kpis -&gt; kpis.getEconomicsReport().getTotalCapexMUSD());

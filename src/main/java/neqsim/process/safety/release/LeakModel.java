@@ -25,16 +25,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * SystemInterface gas = new SystemSrkEos(300.0, 50.0);
  * gas.addComponent("methane", 1.0);
  * gas.setMixingRule("classic");
- * 
+ *
  * LeakModel leak = new LeakModel.builder().fluid(gas).holeDiameter(0.02) // 20mm hole
  *     .orientation(ReleaseOrientation.HORIZONTAL).vesselVolume(10.0) // 10 m³
  *     .dischargeCoefficient(0.62).build();
- * 
+ *
  * SourceTermResult result = leak.calculateSourceTerm(300.0); // 5 minutes
  * result.exportToPHAST("release.csv");
  * </pre>

@@ -26,7 +26,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Pressure CV with setpoint control
@@ -407,7 +407,6 @@ public class ControlledVariable extends MPCVariable {
         } else {
           currentValue = stream.getFlowRate("kg/hr");
         }
-        return currentValue;
       }
     }
 

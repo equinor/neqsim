@@ -1,3 +1,8 @@
+---
+title: Machine Learning Integration
+description: This module provides infrastructure for integrating machine learning models with physics-based simulation.
+---
+
 # Machine Learning Integration
 
 This module provides infrastructure for integrating machine learning models with physics-based simulation.
@@ -235,6 +240,6 @@ registry.register("trained-model", trained, meta);
 
 ## Related Documentation
 
-- [Advisory Systems](../advisory/README.md) - Use predictions for operator guidance
-- [Batch Studies](../optimization/README.md) - Generate training data efficiently
-- [AI Platform Integration](../../integration/ai_platform_integration.md) - External ML platform integration
+- [Advisory Systems](../advisory/) - Use predictions for operator guidance
+- [Batch Studies](../optimization/) - Generate training data efficiently
+- [AI Platform Integration](../../integration/ai_platform_integration) - External ML platform integration

@@ -13,7 +13,7 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * <h2>Usage</h2>
- * 
+ *
  * <pre>
  * FlashTable table = new FlashTable();
  * table.build(referenceFluid, 1e5, 100e5, 50, 250.0, 400.0, 40);

@@ -2,7 +2,7 @@ package neqsim.process.logic.sis;
 
 /**
  * Represents a voting logic pattern for Safety Instrumented Systems (SIS).
- * 
+ *
  * <p>
  * Voting logic determines how multiple redundant sensors or detectors are combined to make a safety
  * decision. Common patterns include:
@@ -13,7 +13,7 @@ package neqsim.process.logic.sis;
  * <li>2oo3 (2 out of 3): At least 2 of 3 sensors must trip (common for high reliability)</li>
  * <li>2oo4 (2 out of 4): At least 2 of 4 sensors must trip</li>
  * </ul>
- * 
+ *
  * <p>
  * Voting patterns balance:
  * <ul>

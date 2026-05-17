@@ -1,0 +1,181 @@
+# IOGP (International Association of Oil and Gas Producers) Equipment Reliability Data
+# Source: IOGP Report 434-Series Safety Performance Indicators and IOGP/OGP Report 434-2 Process Safety Events
+# PUBLIC DOMAIN DATA - Published industry statistics free to use
+# Format: EquipmentType,EquipmentClass,FailureMode,FailureRate,MTBF_hours,MTTR_hours,DataSource,Confidence
+# FailureRate is per hour, MTBF and MTTR in hours
+#
+# References:
+#   - IOGP Report 434-17: Safety Performance Indicators
+#   - IOGP Report 456: Process Safety Recommended Practice
+#   - UK HSE Offshore Hydrocarbon Release Statistics
+#   - SINTEF Offshore Reliability Data (public summary data)
+#   - OGP Risk Assessment Data Directory
+
+# ============================================================================
+# OFFSHORE PRODUCTION EQUIPMENT (from IOGP/SINTEF statistics)
+# ============================================================================
+
+# Offshore Platform Topside Equipment
+Platform,Fixed steel,Structural failure,1.14e-8,87600000,8760,IOGP-434,Low
+Platform,Floating FPSO,All modes,2.28e-6,438600,720,IOGP-434,Medium
+Platform,Semisubmersible,All modes,1.83e-6,546750,720,IOGP-434,Medium
+Platform,Jack-up,All modes,2.74e-6,365000,480,IOGP-434,Medium
+
+# Wellhead and Christmas Tree
+Wellhead,Surface,All modes,5.71e-6,175130,48,IOGP-456,High
+Wellhead,Surface,Leak,1.14e-6,876000,24,IOGP-456,High
+Christmas Tree,Surface,All modes,6.85e-6,146000,72,IOGP-456,High
+Christmas Tree,Surface,Leak,1.37e-6,730000,48,IOGP-456,High
+
+# Blowout Preventer (BOP)
+BOP,Surface stack,All modes,2.28e-5,43860,168,IOGP-456,High
+BOP,Surface stack,Fail to close,5.71e-6,175130,96,IOGP-456,High
+BOP,Subsea stack,All modes,3.43e-5,29155,720,IOGP-456,Medium
+BOP,Subsea stack,Fail to close,8.57e-6,116750,480,IOGP-456,Medium
+BOP,Annular preventer,All modes,4.57e-5,21880,72,IOGP-456,High
+BOP,Ram preventer,All modes,2.28e-5,43860,48,IOGP-456,High
+
+# ============================================================================
+# PROCESS RELEASE FREQUENCIES (from UK HSE and IOGP statistics)
+# ============================================================================
+
+# Hydrocarbon Release - Process Equipment (per equipment-year, converted to per hour)
+# Based on UK HSE Offshore Statistics 2001-2020
+HC Release,Process piping (per km),Minor leak (<1 kg/s),2.85e-5,35088,4,UK-HSE-OSD,High
+HC Release,Process piping (per km),Major leak (1-10 kg/s),5.71e-6,175130,8,UK-HSE-OSD,High
+HC Release,Process piping (per km),Rupture (>10 kg/s),1.14e-6,876000,24,UK-HSE-OSD,High
+HC Release,Flange,Minor leak,1.83e-5,54675,2,UK-HSE-OSD,High
+HC Release,Flange,Major leak,3.65e-6,274000,4,UK-HSE-OSD,High
+HC Release,Valve body,Minor leak,1.14e-5,87720,2,UK-HSE-OSD,High
+HC Release,Valve body,Major leak,2.28e-6,438600,4,UK-HSE-OSD,High
+HC Release,Vessel,Minor leak,5.71e-6,175130,8,UK-HSE-OSD,High
+HC Release,Vessel,Major leak,1.14e-6,876000,24,UK-HSE-OSD,High
+HC Release,Instrument connection,Minor leak,2.28e-5,43860,2,UK-HSE-OSD,High
+HC Release,Heat exchanger,Minor leak,6.85e-6,146000,12,UK-HSE-OSD,High
+HC Release,Heat exchanger,Major leak,1.37e-6,730000,36,UK-HSE-OSD,High
+
+# ============================================================================
+# FIRE AND EXPLOSION IGNITION PROBABILITIES (from IOGP Report 434-6)
+# ============================================================================
+
+Ignition,Gas release indoor,Immediate ignition,0.08,NA,NA,IOGP-434-6,High
+Ignition,Gas release outdoor,Immediate ignition,0.02,NA,NA,IOGP-434-6,High
+Ignition,Liquid release,Immediate ignition,0.065,NA,NA,IOGP-434-6,High
+Ignition,Two-phase release,Immediate ignition,0.04,NA,NA,IOGP-434-6,High
+Fire,Pool fire,All modes,0.001,NA,NA,IOGP-434-6,Medium
+Fire,Jet fire,All modes,0.001,NA,NA,IOGP-434-6,Medium
+Explosion,VCE,All modes,0.04,NA,NA,IOGP-434-6,Medium
+Explosion,BLEVE,All modes,0.01,NA,NA,IOGP-434-6,Low
+
+# ============================================================================
+# SAFETY SYSTEMS (from IEC 61508/61511 literature and IOGP/OGP data)
+# ============================================================================
+
+# Emergency Shutdown (ESD) Systems
+ESD System,Complete system,Fail dangerous,2.28e-7,4380000,8,IOGP-OGP,High
+ESD System,Complete system,Spurious trip,1.14e-5,87600,2,IOGP-OGP,High
+ESD Valve,Ball valve,Fail to close,5.71e-7,1751300,4,IOGP-OGP,High
+ESD Valve,Ball valve,Spurious closure,2.28e-6,438600,1,IOGP-OGP,High
+ESD Valve,Gate valve,Fail to close,6.85e-7,1460000,4,IOGP-OGP,High
+ESD Sensor,Pressure switch,Fail dangerous,1.14e-6,876000,2,IOGP-OGP,High
+ESD Sensor,Level switch,Fail dangerous,1.37e-6,730000,2,IOGP-OGP,High
+ESD Sensor,Flow switch,Fail dangerous,1.83e-6,546750,2,IOGP-OGP,High
+
+# Fire and Gas Detection (F&G) Systems
+F&G Detector,Point gas detector,All modes,9.13e-6,109500,4,IOGP-OGP,High
+F&G Detector,Point gas detector,Fail to detect,2.28e-6,438600,4,IOGP-OGP,High
+F&G Detector,Open path gas detector,All modes,1.14e-5,87600,8,IOGP-OGP,High
+F&G Detector,Open path gas detector,Fail to detect,2.85e-6,350880,8,IOGP-OGP,High
+F&G Detector,Heat detector,All modes,4.57e-6,218820,2,IOGP-OGP,High
+F&G Detector,Heat detector,Fail to detect,1.14e-6,876000,2,IOGP-OGP,High
+F&G Detector,Smoke detector,All modes,6.85e-6,146000,2,IOGP-OGP,High
+F&G Detector,UV/IR flame detector,All modes,9.13e-6,109500,4,IOGP-OGP,High
+F&G Detector,UV/IR flame detector,Fail to detect,2.28e-6,438600,4,IOGP-OGP,High
+
+# Process Shutdown (PSD) Systems
+PSD Logic solver,Safety PLC,Fail dangerous,5.71e-8,17513000,8,IOGP-OGP,High
+PSD Logic solver,Safety PLC,Spurious trip,2.28e-6,438600,2,IOGP-OGP,High
+PSD Input module,Analog,Fail dangerous,1.14e-7,8760000,2,IOGP-OGP,High
+PSD Input module,Digital,Fail dangerous,5.71e-8,17513000,2,IOGP-OGP,High
+PSD Output module,Relay,Fail dangerous,1.14e-7,8760000,2,IOGP-OGP,High
+PSD Output module,Solid state,Fail dangerous,5.71e-8,17513000,2,IOGP-OGP,High
+
+# ============================================================================
+# SUBSEA EQUIPMENT (from IOGP/SINTEF Subsea Reliability Data)
+# ============================================================================
+
+# Subsea Production System
+Subsea Tree,All types,All modes,2.28e-5,43860,720,IOGP-SINTEF,Medium
+Subsea Tree,All types,Critical,5.71e-6,175130,960,IOGP-SINTEF,Medium
+Subsea Tree,All types,External leak,1.14e-6,876000,1440,IOGP-SINTEF,Low
+Subsea Manifold,All types,All modes,1.14e-5,87720,480,IOGP-SINTEF,Medium
+Subsea Manifold,All types,Critical,2.85e-6,350880,720,IOGP-SINTEF,Medium
+Subsea Choke,Electric,All modes,3.43e-5,29155,240,IOGP-SINTEF,Medium
+Subsea Choke,Hydraulic,All modes,2.28e-5,43860,240,IOGP-SINTEF,Medium
+
+# Subsea Control System
+Subsea Control Module,Standard,All modes,4.57e-5,21882,360,IOGP-SINTEF,Medium
+Subsea Control Module,Standard,Critical,1.14e-5,87720,480,IOGP-SINTEF,Medium
+Umbilical,Electro-hydraulic,All modes,1.83e-6,546750,720,IOGP-SINTEF,Low
+Umbilical,Electric only,All modes,9.13e-7,1095000,480,IOGP-SINTEF,Low
+HPU,Subsea HPU,All modes,1.71e-4,5848,480,IOGP-SINTEF,Medium
+Flying Lead,Hydraulic,All modes,5.71e-6,175130,240,IOGP-SINTEF,Low
+Flying Lead,Electric,All modes,2.85e-6,350880,240,IOGP-SINTEF,Low
+
+# Subsea Connectors
+Connector,Vertical,All modes,5.71e-6,175130,120,IOGP-SINTEF,Medium
+Connector,Horizontal,All modes,6.85e-6,146000,120,IOGP-SINTEF,Medium
+Connector,Electrical wet-mate,All modes,9.13e-6,109500,180,IOGP-SINTEF,Medium
+Connector,Hydraulic,All modes,4.57e-6,218820,120,IOGP-SINTEF,Medium
+
+# ============================================================================
+# PIPELINE AND RISER SYSTEMS (from PARLOC and IOGP statistics)
+# ============================================================================
+
+# Offshore Pipelines (per km-year, converted to per hour per km)
+Pipeline,Offshore rigid,All modes,2.85e-8,350880000,168,PARLOC,High
+Pipeline,Offshore rigid,External corrosion,5.71e-9,1752000000,240,PARLOC,High
+Pipeline,Offshore rigid,Third party damage,1.14e-8,876000000,168,PARLOC,Medium
+Pipeline,Offshore rigid,Weld defect,2.85e-9,3504000000,720,PARLOC,Medium
+Pipeline,Offshore flexible,All modes,1.14e-7,87600000,240,PARLOC,Medium
+Pipeline,Offshore flexible,Outer sheath damage,2.85e-8,350880000,120,PARLOC,Medium
+
+# Risers
+Riser,Steel catenary,All modes,5.71e-7,175130000,480,PARLOC,Medium
+Riser,Steel catenary,Fatigue,1.14e-7,876000000,720,PARLOC,Low
+Riser,Flexible dynamic,All modes,1.14e-6,87600000,360,PARLOC,Medium
+Riser,Flexible dynamic,End fitting,2.85e-7,350880000,480,PARLOC,Medium
+Riser,Top tensioned,All modes,4.57e-7,218820000,480,PARLOC,Medium
+
+# ============================================================================
+# DRILLING EQUIPMENT (from IOGP Well Control Incident Data)
+# ============================================================================
+
+Drilling,Well control incident,Kick,1.14e-4,8760,24,IOGP-WCI,High
+Drilling,Well control incident,Underground blowout,2.28e-6,438600,720,IOGP-WCI,Medium
+Drilling,Well control incident,Surface blowout,5.71e-7,1751300,168,IOGP-WCI,Medium
+Drilling,Stuck pipe,All modes,1.83e-4,5475,48,IOGP-WCI,High
+Drilling,Equipment failure,Rotary table,6.85e-5,14599,24,IOGP-WCI,High
+Drilling,Equipment failure,Top drive,9.13e-5,10953,36,IOGP-WCI,High
+Drilling,Equipment failure,Mud pump,1.37e-4,7299,16,IOGP-WCI,High
+Drilling,Equipment failure,Drawworks,5.71e-5,17513,48,IOGP-WCI,High
+
+# ============================================================================
+# OCCUPATIONAL SAFETY FREQUENCIES (from IOGP 2020 Safety Performance)
+# ============================================================================
+
+# Lost Time Injury Frequency (per million work hours)
+Safety,LTIF Offshore production,Industry average,0.95,NA,NA,IOGP-2020,High
+Safety,LTIF Onshore production,Industry average,0.71,NA,NA,IOGP-2020,High
+Safety,LTIF Drilling,Industry average,0.58,NA,NA,IOGP-2020,High
+Safety,LTIF Construction,Industry average,1.23,NA,NA,IOGP-2020,High
+
+# Total Recordable Injury Frequency (per million work hours)
+Safety,TRIF Offshore production,Industry average,2.82,NA,NA,IOGP-2020,High
+Safety,TRIF Onshore production,Industry average,1.98,NA,NA,IOGP-2020,High
+Safety,TRIF Drilling,Industry average,1.65,NA,NA,IOGP-2020,High
+
+# Fatality Rate (per 100 million work hours)
+Safety,FAR Offshore production,Industry average,2.1,NA,NA,IOGP-2020,High
+Safety,FAR Onshore production,Industry average,1.5,NA,NA,IOGP-2020,High
+Safety,FAR Drilling,Industry average,2.8,NA,NA,IOGP-2020,High

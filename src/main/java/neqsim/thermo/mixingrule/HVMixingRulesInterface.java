@@ -102,4 +102,17 @@ public interface HVMixingRulesInterface extends EosMixingRulesInterface {
    * @return a double
    */
   public double getHValphaParameter(int i, int j);
+
+  /**
+   * Set the mixing rule type for a specific component pair.
+   *
+   * <p>
+   * This determines whether the pair uses Huron-Vidal ("HV") or classic ("Classic") mixing.
+   * </p>
+   *
+   * @param i first component index
+   * @param j second component index
+   * @param type "HV" for Huron-Vidal or "Classic" for classic mixing rule
+   */
+  public void setClassicOrHV(int i, int j, String type);
 }

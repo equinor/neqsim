@@ -1,3 +1,9 @@
+---
+title: "Thermodynamic Models in NeqSim"
+description: "This document provides a comprehensive overview of the thermodynamic models available in NeqSim, their theoretical foundations, and practical guidance on when and how to use each model. Models are cla..."
+keywords: "thermodynamic model, SRK, Peng-Robinson, CPA, GERG-2008, EOS-CG, UMR-PRU, electrolyte, cubic EOS, activity coefficient, NRTL, UNIFAC"
+---
+
 # Thermodynamic Models in NeqSim
 
 This document provides a comprehensive overview of the thermodynamic models available in NeqSim, their theoretical foundations, and practical guidance on when and how to use each model. Models are classified into categories based on their mathematical formulation and application domain.
@@ -241,8 +247,8 @@ These models provide superior accuracy for density, speed of sound, and heat cap
 
 ### 5.2 GERG-2008
 
-**Standard:** ISO 20765-2  
-**Application:** Natural gas custody transfer, fiscal metering  
+**Standard:** ISO 20765-2
+**Application:** Natural gas custody transfer, fiscal metering
 **Accuracy:** ±0.1% in density for typical natural gas
 
 **Supported Components (21):**
@@ -284,7 +290,7 @@ ops.TPflash();
 
 ### 5.4 EOS-CG
 
-**Application:** Carbon Capture and Storage (CCS), combustion gases  
+**Application:** Carbon Capture and Storage (CCS), combustion gases
 **Extension:** Includes SO2, NO, NO2, HCl, Cl2, COS in addition to GERG-2008 components
 
 ```java
@@ -421,25 +427,47 @@ double meanGamma = system.getPhase(0).getMeanIonicActivityCoefficient("Na+", "Cl
 
 ### 7.3 Søreide-Whitson Model
 
-**Application:** Sour gas systems with brine
+**Application:** Gas solubility in brine, produced water systems, sour gas with formation water
 
-Uses salinity-dependent binary interaction parameters for CO2-water, H2S-water, and hydrocarbon-water systems:
+The Søreide-Whitson model is a modified Peng-Robinson equation of state specifically designed for predicting gas solubility in aqueous systems containing dissolved salts. **This model is used in NeqSimLive for real-time emission calculations from produced water degassing on offshore platforms.**
+
+The key innovation is a modified alpha function for water that incorporates salinity:
 
 $$
-k_{ij,\text{CO}_2-\text{water}} = -0.31092(1 + 0.156 S^{0.75}) + 0.236(1 + 0.178 S^{0.98}) T_r - 21.26 e^{-6.72^{T_r} - S}
+\alpha = A^2
 $$
+
+where:
+
+$$
+A(T_r, c_s) = 1.0 + 0.453 \left[ 1.0 - T_r \left( 1.0 - 0.0103 \cdot c_s^{1.1} \right) \right] + 0.0034 \left( T_r^{-3} - 1.0 \right)
+$$
+
+- $T_r = T / T_c$ is the reduced temperature
+- $c_s$ is the salinity expressed as equivalent NaCl molality (mol/kg H₂O)
 
 ```java
 import neqsim.thermo.system.SystemSoreideWhitson;
 
-SystemSoreideWhitson fluid = new SystemSoreideWhitson(350.0, 200.0);
-fluid.addComponent("methane", 0.70);
-fluid.addComponent("CO2", 0.15);
-fluid.addComponent("H2S", 0.05);
-fluid.addComponent("water", 0.10);
-fluid.addSalinity(2.0, "mole/sec");  // Add NaCl salinity
-fluid.setMixingRule(11);  // Søreide-Whitson mixing rule
+// Create Søreide-Whitson system for produced water
+SystemSoreideWhitson fluid = new SystemSoreideWhitson(353.15, 30.0);  // 80°C, 30 bara
+fluid.addComponent("water", 0.92);
+fluid.addComponent("methane", 0.05);
+fluid.addComponent("CO2", 0.02);
+fluid.addComponent("ethane", 0.01);
+
+// Add formation water salinity
+fluid.addSalinity("NaCl", 1.2, "mole/sec");  // Dominant salt
+fluid.addSalinity("CaCl2", 0.08, "mole/sec");
+
+// Perform flash calculation
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
 ```
+
+> **📖 Detailed Documentation:** For complete mathematical formulation, salt type coefficients, validation data, and literature references, see [Søreide-Whitson Model Documentation](SoreideWhitsonModel).
+>
+> **Reference:** Søreide, I. & Whitson, C.H. (1992). "Peng-Robinson predictions for hydrocarbons, CO₂, N₂, and H₂S with pure water and NaCl brine". *Fluid Phase Equilibria*, 77, 217-240.
 
 ### 7.4 Other Electrolyte Models
 
@@ -598,13 +626,13 @@ The `autoSelectModel()` method follows this decision tree:
 public SystemInterface autoSelectModel() {
     if (hasComponent("MDEA") && hasComponent("water") && hasComponent("CO2")) {
         return setModel("Electrolyte-ScRK-EOS");  // Amine systems
-    } 
-    else if (hasComponent("water") || hasComponent("methanol") || 
-             hasComponent("MEG") || hasComponent("TEG") || 
+    }
+    else if (hasComponent("water") || hasComponent("methanol") ||
+             hasComponent("MEG") || hasComponent("TEG") ||
              hasComponent("ethanol") || hasComponent("DEG")) {
-        if (hasComponent("Na+") || hasComponent("K+") || 
-            hasComponent("Br-") || hasComponent("Mg++") || 
-            hasComponent("Cl-") || hasComponent("Ca++") || 
+        if (hasComponent("Na+") || hasComponent("K+") ||
+            hasComponent("Br-") || hasComponent("Mg++") ||
+            hasComponent("Cl-") || hasComponent("Ca++") ||
             hasComponent("Fe++") || hasComponent("SO4--")) {
             return setModel("Electrolyte-CPA-EOS-statoil");  // Electrolytes
         } else {
@@ -799,13 +827,15 @@ fluid.autoSelectMixingRule();  // Automatically sets appropriate mixing rule
 
 ## See Also
 
-- [Fluid Creation Guide](fluid_creation_guide.md) - Complete guide to creating fluids
-- [Mixing Rules Guide](mixing_rules_guide.md) - Detailed mixing rule documentation
-- [GERG-2008 and EOS-CG](gerg2008_eoscg.md) - Reference equation details
-- [Electrolyte CPA Model](ElectrolyteCPAModel.md) - Electrolyte model documentation
-- [Flash Calculations Guide](flash_calculations_guide.md) - Thermodynamic operations
-- [Mathematical Models](mathematical_models.md) - Equation derivations
+- [Fluid Creation Guide](fluid_creation_guide) - Complete guide to creating fluids
+- [Mixing Rules Guide](mixing_rules_guide) - Detailed mixing rule documentation
+- [GERG-2008 and EOS-CG](gerg2008_eoscg) - Reference equation details
+- [Electrolyte CPA Model](ElectrolyteCPAModel) - Electrolyte model documentation
+- [Søreide-Whitson Model](SoreideWhitsonModel) - Gas solubility in brine, produced water emissions
+- [Flash Calculations Guide](flash_calculations_guide) - Thermodynamic operations
+- [Mathematical Models](mathematical_models) - Equation derivations
+- [Offshore Emission Reporting](../emissions/OFFSHORE_EMISSION_REPORTING) - Emission calculations using Søreide-Whitson
 
 ---
 
-*Last updated: January 2026*
+*Last updated: February 2026*

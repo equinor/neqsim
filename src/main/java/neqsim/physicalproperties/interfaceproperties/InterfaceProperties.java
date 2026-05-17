@@ -9,11 +9,17 @@ package neqsim.physicalproperties.interfaceproperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.interfaceproperties.solidadsorption.AdsorptionInterface;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.BETAdsorption;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.FreundlichAdsorption;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.IsothermType;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.LangmuirAdsorption;
 import neqsim.physicalproperties.interfaceproperties.solidadsorption.PotentialTheoryAdsorption;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.SipsAdsorption;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.FirozabadiRamleyInterfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.GTSurfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.GTSurfaceTensionSimple;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.LGTSurfaceTension;
+import neqsim.physicalproperties.interfaceproperties.surfacetension.CDFTSurfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.ParachorSurfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.SurfaceTensionInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -70,13 +76,10 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   public InterfaceProperties clone() {
     InterfaceProperties clonedSystem = null;
     try {
-      // clonedSystem = (InterfaceProperties) suclone();
-      // clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations)
-      // chemicalReactionOperations.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      clonedSystem = (InterfaceProperties) super.clone();
+    } catch (CloneNotSupportedException ex) {
+      throw new AssertionError("Clone failed for InterfaceProperties", ex);
     }
-    // clonedSystem.system = system;
     return clonedSystem;
   }
 
@@ -108,6 +111,39 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
 
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       getAdsorptionCalc()[i] = new PotentialTheoryAdsorption(system);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initAdsorption(IsothermType type) {
+    setAdsorptionCalc(new AdsorptionInterface[system.getNumberOfPhases()]);
+
+    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+      getAdsorptionCalc()[i] = createAdsorptionModel(type);
+    }
+  }
+
+  /**
+   * Create an adsorption model instance for the given isotherm type.
+   *
+   * @param type the isotherm type
+   * @return a new adsorption model instance
+   */
+  private AdsorptionInterface createAdsorptionModel(IsothermType type) {
+    switch (type) {
+      case LANGMUIR:
+      case EXTENDED_LANGMUIR:
+        return new LangmuirAdsorption(system);
+      case BET:
+        return new BETAdsorption(system);
+      case FREUNDLICH:
+        return new FreundlichAdsorption(system);
+      case SIPS:
+        return new SipsAdsorption(system);
+      case DRA:
+      default:
+        return new PotentialTheoryAdsorption(system);
     }
   }
 
@@ -181,6 +217,8 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
       surfTensModel = new GTSurfaceTensionSimple(system);
     } else if ("Full Gradient Theory".equals(model)) {
       surfTensModel = new GTSurfaceTension(system);
+    } else if ("cDFT".equals(model) || "Classical DFT".equals(model)) {
+      surfTensModel = new CDFTSurfaceTension(system);
     } else if ("Firozabadi Ramley".equals(model)) {
       surfTensModel = new FirozabadiRamleyInterfaceTension(system);
     } else if ("Parachor".equals(model) || "Weinaug-Katz".equals(model)) {

@@ -30,7 +30,7 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * // Create TORG manager with CSV data source
  * TorgManager manager = new TorgManager();

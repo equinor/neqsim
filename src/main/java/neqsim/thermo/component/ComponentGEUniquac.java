@@ -229,16 +229,4 @@ public class ComponentGEUniquac extends ComponentGE {
   public double getq() {
     return q;
   }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getlnGammadt() {
-    return dlngammadt;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getlnGammadn(int k) {
-    return dlngammadn[k];
-  }
 }

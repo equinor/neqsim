@@ -1,0 +1,50 @@
+EquipmentType,SubType,FailureMode,Probability_pct,Severity,TypicalMTTR_hours,Detectability,Description
+Compressor,Centrifugal,Vibration High,25,Medium,24,High,Imbalance or misalignment causing excessive vibration
+Compressor,Centrifugal,Seal Failure,20,High,72,Medium,Dry gas seal or mechanical seal degradation
+Compressor,Centrifugal,Bearing Failure,15,High,96,Medium,Active magnetic bearing or oil bearing failure
+Compressor,Centrifugal,Surge,10,Medium,8,High,Operating outside stable envelope
+Compressor,Centrifugal,Fouling,15,Low,48,Low,Deposit buildup on impeller and diffuser
+Compressor,Centrifugal,Instrumentation,15,Low,4,High,Control system or sensor failure
+Compressor,Reciprocating,Valve Failure,30,Medium,24,Medium,Suction or discharge valve damage
+Compressor,Reciprocating,Packing Leak,25,Medium,36,High,Rod packing wear or failure
+Compressor,Reciprocating,Piston Ring Wear,20,Medium,72,Low,Gradual degradation of compression efficiency
+Compressor,Reciprocating,Bearing Failure,15,High,96,Medium,Main or crosshead bearing damage
+Compressor,Reciprocating,Lubrication,10,High,48,Medium,Oil system failure
+Pump,Centrifugal,Seal Leak,30,Medium,24,High,Mechanical seal degradation
+Pump,Centrifugal,Bearing Failure,20,High,36,Medium,Thrust or radial bearing damage
+Pump,Centrifugal,Impeller Wear,15,Medium,48,Low,Erosion or corrosion of impeller
+Pump,Centrifugal,Cavitation,15,Medium,12,High,Operating below NPSH required
+Pump,Centrifugal,Motor Failure,20,High,72,Medium,Electric motor winding or bearing
+HeatExchanger,Shell-and-Tube,Tube Leak,35,High,168,Low,Internal tube corrosion or erosion
+HeatExchanger,Shell-and-Tube,Fouling,40,Low,72,Low,Deposit buildup reducing heat transfer
+HeatExchanger,Shell-and-Tube,Corrosion,15,High,240,Low,Shell or tube material degradation
+HeatExchanger,Shell-and-Tube,Gasket Failure,10,Medium,24,High,Channel or floating head gasket leak
+HeatExchanger,Air Cooler,Fan Failure,35,Medium,24,High,Motor or blade damage
+HeatExchanger,Air Cooler,Tube Bundle Leak,25,High,96,Medium,Fin tube corrosion
+HeatExchanger,Air Cooler,Louver Malfunction,20,Low,8,High,Control linkage failure
+HeatExchanger,Air Cooler,Belt Failure,20,Low,4,High,V-belt wear or breakage
+Separator,Three-Phase,Level Control,35,Medium,8,High,Level transmitter or valve failure
+Separator,Three-Phase,Internals Damage,20,High,120,Low,Vane pack or mist extractor damage
+Separator,Three-Phase,Instrumentation,30,Low,4,High,Pressure or temperature sensor failure
+Separator,Three-Phase,Corrosion,15,High,240,Low,Internal wall or nozzle corrosion
+Separator,Two-Phase,Entrainment,30,Medium,24,Medium,Liquid carryover in gas
+Separator,Two-Phase,Level Control,40,Medium,8,High,Interface control failure
+Separator,Two-Phase,Internals,20,High,96,Low,Demister pad damage
+Separator,Two-Phase,Instrumentation,10,Low,4,High,Sensor or transmitter failure
+Valve,Control,Actuator,35,Medium,8,High,Pneumatic or electric actuator failure
+Valve,Control,Positioner,30,Low,4,High,Electronic positioner malfunction
+Valve,Control,Trim Wear,20,Medium,24,Low,Erosion of plug and seat
+Valve,Control,Packing Leak,15,Low,4,High,Stem packing degradation
+Valve,Safety PSV,Seat Leak,40,Medium,24,Low,Soft seat damage allowing bypass
+Valve,Safety PSV,Set Point Drift,35,Medium,8,Low,Spring relaxation changing opening pressure
+Valve,Safety PSV,Plugging,15,High,48,Low,Process deposits blocking valve
+Valve,Safety PSV,Chatter,10,Medium,24,High,Unstable operation near set point
+Turbine,Gas,Hot Section,30,High,240,Medium,Combustion liner or turbine blade damage
+Turbine,Gas,Compressor Fouling,25,Medium,72,Medium,Axial compressor deposit buildup
+Turbine,Gas,Fuel System,20,Medium,48,High,Fuel nozzle or control valve failure
+Turbine,Gas,Bearing,15,High,168,Medium,Journal or thrust bearing failure
+Turbine,Gas,Control System,10,Medium,24,High,IGV or fuel control malfunction
+Motor,Electric,Winding,35,High,96,Medium,Insulation breakdown or short circuit
+Motor,Electric,Bearing,40,Medium,24,Medium,Rolling element or sleeve bearing wear
+Motor,Electric,Cooling,15,Medium,12,High,Fan or ventilation failure
+Motor,Electric,Terminal,10,Low,8,High,Connection or lead failure

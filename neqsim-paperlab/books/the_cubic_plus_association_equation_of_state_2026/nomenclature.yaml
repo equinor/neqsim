@@ -1,0 +1,134 @@
+# Symbol definitions
+symbols:
+  P:
+    description: Pressure
+    unit: Pa
+  T:
+    description: Temperature
+    unit: K
+  V:
+    description: Volume
+    unit: m3
+  v:
+    description: Molar volume
+    unit: m3/mol
+  R:
+    description: Universal gas constant
+    unit: J/(mol K)
+  n_i:
+    description: Number of moles of component i
+    unit: mol
+  x_i:
+    description: Mole fraction of component i in liquid phase
+    unit: dimensionless
+  y_i:
+    description: Mole fraction of component i in vapor phase
+    unit: dimensionless
+  z_i:
+    description: Overall mole fraction of component i
+    unit: dimensionless
+  G:
+    description: Gibbs energy
+    unit: J
+  A:
+    description: Helmholtz energy
+    unit: J
+  H:
+    description: Enthalpy
+    unit: J
+  S:
+    description: Entropy
+    unit: J/K
+  mu_i:
+    description: Chemical potential of component i
+    unit: J/mol
+  f_i:
+    description: Fugacity of component i
+    unit: Pa
+  phi_i:
+    description: Fugacity coefficient of component i
+    unit: dimensionless
+  K_i:
+    description: Equilibrium ratio (K-value) of component i
+    unit: dimensionless
+  beta:
+    description: Vapor (or second phase) fraction
+    unit: dimensionless
+  a:
+    description: Energy parameter of cubic EoS
+    unit: Pa m6/mol2
+  b:
+    description: Co-volume parameter of cubic EoS
+    unit: m3/mol
+  a_0:
+    description: Energy parameter at zero temperature (CPA)
+    unit: Pa m6/mol2
+  c_1:
+    description: Temperature dependence parameter of alpha function (CPA)
+    unit: dimensionless
+  alpha:
+    description: Alpha function (temperature-dependent energy correction)
+    unit: dimensionless
+  k_ij:
+    description: Binary interaction parameter
+    unit: dimensionless
+  T_c:
+    description: Critical temperature
+    unit: K
+  P_c:
+    description: Critical pressure
+    unit: Pa
+  omega:
+    description: Acentric factor
+    unit: dimensionless
+  T_r:
+    description: Reduced temperature (T/Tc)
+    unit: dimensionless
+  rho:
+    description: Molar density
+    unit: mol/m3
+  X_A:
+    description: Fraction of sites of type A that are NOT bonded
+    unit: dimensionless
+  Delta_AB:
+    description: Association strength between sites A and B
+    unit: m3/mol
+  epsilon_AB:
+    description: Association energy between sites A and B
+    unit: J/mol
+  beta_AB:
+    description: Association volume between sites A and B
+    unit: dimensionless
+  g_rho:
+    description: Radial distribution function at contact distance
+    unit: dimensionless
+  eta:
+    description: Reduced density (packing fraction), b*rho/4
+    unit: dimensionless
+  sigma:
+    description: Spectral radius (convergence rate parameter)
+    unit: dimensionless
+  Gamma:
+    description: Debye screening parameter (electrolyte CPA)
+    unit: 1/m
+  epsilon_r:
+    description: Relative permittivity (dielectric constant)
+    unit: dimensionless
+  z_ion:
+    description: Ion charge number
+    unit: dimensionless
+  sigma_ion:
+    description: Ion diameter
+    unit: m
+  g_E:
+    description: Excess Gibbs energy
+    unit: J/mol
+  gamma_i:
+    description: Activity coefficient of component i
+    unit: dimensionless
+  a_w:
+    description: Activity of water
+    unit: dimensionless
+  Delta_T:
+    description: Hydrate temperature depression
+    unit: K

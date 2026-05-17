@@ -1,3 +1,8 @@
+---
+title: Scale Potential Calculation in NeqSim
+description: Scale formation is a critical challenge in oil and gas production, water treatment, and geothermal systems. When water becomes supersaturated with certain minerals, precipitation (scaling) can occur o...
+---
+
 # Scale Potential Calculation in NeqSim
 
 ## Introduction
@@ -493,5 +498,8 @@ Several salt correlations were corrected:
 
 ## See Also
 
-- [Electrolyte CPA Model](../thermo/ElectrolyteCPAModel.md)
-- [Chemical Equilibrium](../chemicalreactions/README.md)
+- [Mineral Scale Formation Guide](../pvtsimulation/mineral_scale_formation) - Comprehensive oilfield scale guide
+- [pH Stabilization and Corrosion Control](../pvtsimulation/ph_stabilization_corrosion) - FeCO3 protective layer
+- [Flow Assurance Overview](../pvtsimulation/flow_assurance_overview) - Integrated flow assurance
+- [Electrolyte CPA Model](../thermo/ElectrolyteCPAModel)
+- [Chemical Equilibrium](../chemicalreactions/)

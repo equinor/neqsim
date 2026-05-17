@@ -21,14 +21,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * <b>Example Usage:</b>
- * 
+ *
  * <pre>
  * {@code
  * SafetyEnvelopeCalculator calc = new SafetyEnvelopeCalculator(gasSystem);
- * 
+ *
  * SafetyEnvelope hydrateEnv = calc.calculateHydrateEnvelope(1.0, 150.0, 20);
  * hydrateEnv.exportToCSV("hydrate_curve.csv");
- * 
+ *
  * // Check operating point
  * boolean safe = hydrateEnv.isOperatingPointSafe(50.0, 280.0);
  * }

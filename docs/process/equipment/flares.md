@@ -1,3 +1,8 @@
+---
+title: Flare Systems
+description: Documentation for flare equipment in NeqSim process simulation.
+---
+
 # Flare Systems
 
 Documentation for flare equipment in NeqSim process simulation.
@@ -339,6 +344,6 @@ System.out.println("Annual CO2 emissions: " + annualCO2 + " tonnes/year");
 
 ## Related Documentation
 
-- [Safety Systems](../safety/README.md) - PSV and blowdown
-- [Valves](valves.md) - Blowdown valves
-- [Tanks](tanks.md) - Vessel depressuring
+- [Safety Systems](../safety/) - PSV and blowdown
+- [Valves](valves) - Blowdown valves
+- [Tanks](tanks) - Vessel depressuring

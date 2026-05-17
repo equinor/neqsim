@@ -21,12 +21,12 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
 
   String comp1;
   String comp2;
-  /** Constant <code>Kcomplex=0.133736021815520500</code>. */
-  public static double Kcomplex = 0.133736021815520500;
-  /** Constant <code>HrefComplex=4598.717135</code>. */
-  public static double HrefComplex = 4598.717135;
-  /** Constant <code>TrefComplex=244.19</code>. */
-  public static double TrefComplex = 244.19;
+  /** Default Kcomplex value. */
+  public double Kcomplex = 0.133736021815520500;
+  /** Default HrefComplex value. */
+  public double HrefComplex = 4598.717135;
+  /** Default TrefComplex value. */
+  public double TrefComplex = 244.19;
 
   /**
    * <p>
@@ -219,7 +219,7 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
    * @param Kcomplex the Kcomplex to set
    */
   public void setKcomplex(double Kcomplex) {
-    SolidComplexTemperatureCalc.Kcomplex = Kcomplex;
+    this.Kcomplex = Kcomplex;
   }
 
   /**
@@ -241,7 +241,7 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
    * @param HrefComplex the HrefComplex to set
    */
   public void setHrefComplex(double HrefComplex) {
-    SolidComplexTemperatureCalc.HrefComplex = HrefComplex;
+    this.HrefComplex = HrefComplex;
   }
 
   /**
@@ -263,6 +263,6 @@ public class SolidComplexTemperatureCalc extends ConstantDutyTemperatureFlash {
    * @param TrefComplex the TrefComplex to set
    */
   public void setTrefComplex(double TrefComplex) {
-    SolidComplexTemperatureCalc.TrefComplex = TrefComplex;
+    this.TrefComplex = TrefComplex;
   }
 }

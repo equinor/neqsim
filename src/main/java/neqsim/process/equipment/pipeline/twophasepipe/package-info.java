@@ -26,7 +26,7 @@
  * <p>
  * <b>Drift-Flux Model:</b> The core model uses the Zuber-Findlay drift-flux formulation:
  * </p>
- * 
+ *
  * <pre>
  * v_G = C_0 * v_m + v_d
  * </pre>
@@ -49,7 +49,7 @@
  * </p>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * // Create fluid
  * SystemInterface fluid = new SystemSrkEos(300, 50);

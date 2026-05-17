@@ -1,3 +1,8 @@
+---
+title: "ASTM D6377 - Reid Vapor Pressure"
+description: "ASTM D6377 provides methods for determining vapor pressure of crude oil and petroleum products."
+---
+
 # ASTM D6377 - Reid Vapor Pressure
 
 ASTM D6377 provides methods for determining vapor pressure of crude oil and petroleum products.

@@ -60,6 +60,7 @@ nbdist/
 #Visual studio
 .vs/
 .vscode/
+!.vscode/mcp.json
 
 # git merge files
 *.orig
@@ -77,6 +78,18 @@ neqsim.iml
 # Test output - Serialized files
 test_*.ser
 
+# Paper lab — ignore all paper folders by default, then whitelist tracked ones
+neqsim-paperlab/papers/*/
+!neqsim-paperlab/papers/gibbs_minimization_2026/
+!neqsim-paperlab/papers/tpflash_algorithms_2026/
+!neqsim-paperlab/papers/implicit_cpa_performance_2026/
+
+# Book lab — ignore all book folders by default, then whitelist tracked ones
+neqsim-paperlab/books/*/
+!neqsim-paperlab/books/the_cubic_plus_association_equation_of_state_2026/
+# Temp Word lock files
+~$*.docx
+
 .dccache
 
 #Intellij IDEA
@@ -92,3 +105,35 @@ src/main/**/*.gif
 
 # Gemini Agent
 .gemini/
+
+# Local agent workspace
+.agents/
+
+output/
+*.dot
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Task-solving workspace (local working area, not tracked)
+task_solve/
+devtools/neqsim_dev_setup.egg-info/dependency_links.txt
+devtools/neqsim_dev_setup.egg-info/top_level.txt
+devtools/neqsim_dev_setup.egg-info/requires.txt
+devtools/neqsim_dev_setup.egg-info/SOURCES.txt
+
+# Document retrieval backend config (organization-specific, never commit)
+devtools/doc_retrieval_config.yaml
+
+run_notebook.bat
+run_notebook.py
+token_cache.bin
+neqsim_profile.jfr
+
+# paperlab copilot-bridge LLM file exchange
+.llm_bridge/
+
+# Local agent data (not tracked, as it may contain sensitive information or be large)
+.agents/
+

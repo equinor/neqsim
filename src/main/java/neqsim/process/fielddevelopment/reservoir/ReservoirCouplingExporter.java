@@ -17,41 +17,37 @@ import neqsim.thermo.system.SystemInterface;
  * Exports time-series data for reservoir simulator coupling (E300/ECLIPSE).
  *
  * <p>
- * Generates VFP tables, separator efficiency curves, and schedule keywords for
- * coupling NeqSim
- * process models with reservoir simulators. Supports both Eclipse 100 and E300
- * (compositional)
+ * Generates VFP tables, separator efficiency curves, and schedule keywords for coupling NeqSim
+ * process models with reservoir simulators. Supports both Eclipse 100 and E300 (compositional)
  * formats.
  * </p>
  *
  * <h2>Export Capabilities</h2>
  * <ul>
- * <li><b>VFP Tables</b>: Vertical flow performance for wells
- * (VFPPROD/VFPINJ)</li>
- * <li><b>Separator Efficiency</b>: Oil/gas/water split ratios vs
- * conditions</li>
+ * <li><b>VFP Tables</b>: Vertical flow performance for wells (VFPPROD/VFPINJ)</li>
+ * <li><b>Separator Efficiency</b>: Oil/gas/water split ratios vs conditions</li>
  * <li><b>Compression Curves</b>: Power vs rate and suction pressure</li>
  * <li><b>Network Deliverability</b>: Platform capacity constraints</li>
  * <li><b>Schedule Keywords</b>: Time-varying constraints</li>
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Create exporter
  * ReservoirCouplingExporter exporter = new ReservoirCouplingExporter(processSystem);
- * 
+ *
  * // Configure VFP table generation
  * exporter.setWellheadPressureRange(20.0, 100.0, 9); // 20-100 bara, 9 points
  * exporter.setGasRateRange(0.1e6, 10.0e6, 10); // 0.1-10 MSm3/d
  * exporter.setWaterCutRange(0.0, 0.95, 6); // 0-95% water cut
- * 
+ *
  * // Generate VFP tables
  * exporter.generateVfpProd("WELL-1", wellStream, 1);
- * 
+ *
  * // Export to file
  * exporter.exportToFile("vfp_tables.inc");
- * 
+ *
  * // Or get as string for E300 INCLUDE
  * String vfpKeywords = exporter.getEclipseKeywords();
  * }</pre>
@@ -95,47 +91,83 @@ public class ReservoirCouplingExporter implements Serializable {
     private double[] almValues; // artificial lift
     private double[][][][][] bhpValues; // 5D array: flow, thp, wct, gor, alm
 
-    /** Get table number. */
+    /**
+     * Get table number.
+     *
+     * @return the VFP table number
+     */
     public int getTableNumber() {
       return tableNumber;
     }
 
-    /** Set table number. */
+    /**
+     * Set table number.
+     *
+     * @param num the VFP table number to set
+     */
     public void setTableNumber(int num) {
       this.tableNumber = num;
     }
 
-    /** Get well name. */
+    /**
+     * Get well name.
+     *
+     * @return the well name associated with this VFP table
+     */
     public String getWellName() {
       return wellName;
     }
 
-    /** Set well name. */
+    /**
+     * Set well name.
+     *
+     * @param name the well name to set
+     */
     public void setWellName(String name) {
       this.wellName = name;
     }
 
-    /** Get datum depth. */
+    /**
+     * Get datum depth.
+     *
+     * @return the datum depth in meters
+     */
     public double getDatumDepth() {
       return datumDepth;
     }
 
-    /** Set datum depth. */
+    /**
+     * Set datum depth.
+     *
+     * @param depth the datum depth to set in meters
+     */
     public void setDatumDepth(double depth) {
       this.datumDepth = depth;
     }
 
-    /** Get flow rates. */
+    /**
+     * Get flow rates.
+     *
+     * @return the array of flow rates in Sm3/d
+     */
     public double[] getFlowRates() {
       return flowRates;
     }
 
-    /** Get THP values. */
+    /**
+     * Get THP values.
+     *
+     * @return the array of tubing head pressure values in bara
+     */
     public double[] getThpValues() {
       return thpValues;
     }
 
-    /** Get water cut values. */
+    /**
+     * Get water cut values.
+     *
+     * @return the array of water cut values (fraction 0-1)
+     */
     public double[] getWctValues() {
       return wctValues;
     }
@@ -172,7 +204,7 @@ public class ReservoirCouplingExporter implements Serializable {
     /**
      * Creates a new schedule entry.
      *
-     * @param date    schedule date
+     * @param date schedule date
      * @param keyword Eclipse keyword
      * @param content keyword content
      */
@@ -182,17 +214,29 @@ public class ReservoirCouplingExporter implements Serializable {
       this.content = content;
     }
 
-    /** Get date. */
+    /**
+     * Get date.
+     *
+     * @return the schedule date
+     */
     public Date getDate() {
       return date;
     }
 
-    /** Get keyword. */
+    /**
+     * Get keyword.
+     *
+     * @return the Eclipse keyword
+     */
     public String getKeyword() {
       return keyword;
     }
 
-    /** Get content. */
+    /**
+     * Get content.
+     *
+     * @return the keyword content
+     */
     public String getContent() {
       return content;
     }
@@ -285,7 +329,7 @@ public class ReservoirCouplingExporter implements Serializable {
    *
    * @param minRate minimum rate (Sm3/d for liquid, MSm3/d for gas)
    * @param maxRate maximum rate
-   * @param points  number of points
+   * @param points number of points
    */
   public void setRateRange(double minRate, double maxRate, int points) {
     this.rateRange = linspace(minRate, maxRate, points);
@@ -330,13 +374,12 @@ public class ReservoirCouplingExporter implements Serializable {
    * Generate VFPPROD table for a producing well.
    *
    * <p>
-   * Creates a multi-dimensional VFP table mapping (rate, THP, WCT, GOR) to BHP
-   * using the process
+   * Creates a multi-dimensional VFP table mapping (rate, THP, WCT, GOR) to BHP using the process
    * model for pressure drop calculations.
    * </p>
    *
-   * @param wellName    well name
-   * @param baseFluid   base fluid composition
+   * @param wellName well name
+   * @param baseFluid base fluid composition
    * @param tableNumber VFP table number (1-9999)
    * @return the generated VFP table
    */
@@ -351,7 +394,7 @@ public class ReservoirCouplingExporter implements Serializable {
     vfp.thpValues = pressureRange.clone();
     vfp.wctValues = wctRange.clone();
     vfp.gorValues = gorRange.clone();
-    vfp.almValues = new double[] { 0.0 }; // No artificial lift by default
+    vfp.almValues = new double[] {0.0}; // No artificial lift by default
 
     int nFlow = rateRange.length;
     int nThp = pressureRange.length;
@@ -388,9 +431,9 @@ public class ReservoirCouplingExporter implements Serializable {
   /**
    * Generate VFPINJ table for an injection well.
    *
-   * @param wellName       well name
+   * @param wellName well name
    * @param injectionFluid injection fluid (water or gas)
-   * @param tableNumber    VFP table number
+   * @param tableNumber VFP table number
    * @return the generated VFP table
    */
   public VfpTable generateVfpInj(String wellName, SystemInterface injectionFluid, int tableNumber) {
@@ -430,10 +473,10 @@ public class ReservoirCouplingExporter implements Serializable {
    * Calculate BHP from THP using process model.
    *
    * @param fluid the fluid system
-   * @param rate  production rate in Sm3/day
-   * @param thp   tubing head pressure in bara
-   * @param wct   water cut fraction (0-1)
-   * @param gor   gas-oil ratio Sm3/Sm3
+   * @param rate production rate in Sm3/day
+   * @param thp tubing head pressure in bara
+   * @param wct water cut fraction (0-1)
+   * @param gor gas-oil ratio Sm3/Sm3
    * @return calculated bottom hole pressure in bara
    */
   private double calculateBhp(SystemInterface fluid, double rate, double thp, double wct,
@@ -455,8 +498,8 @@ public class ReservoirCouplingExporter implements Serializable {
    * Calculate injection BHP.
    *
    * @param fluid the fluid system
-   * @param rate  injection rate in Sm3/day
-   * @param thp   tubing head pressure in bara
+   * @param rate injection rate in Sm3/day
+   * @param thp tubing head pressure in bara
    * @return calculated bottom hole pressure in bara
    */
   private double calculateInjectionBhp(SystemInterface fluid, double rate, double thp) {
@@ -478,10 +521,10 @@ public class ReservoirCouplingExporter implements Serializable {
   /**
    * Add a platform rate constraint.
    *
-   * @param date      effective date
+   * @param date effective date
    * @param groupName group/platform name
-   * @param oilRate   oil rate limit (Sm3/d)
-   * @param gasRate   gas rate limit (Sm3/d)
+   * @param oilRate oil rate limit (Sm3/d)
+   * @param gasRate gas rate limit (Sm3/d)
    * @param waterRate water injection rate limit (Sm3/d)
    */
   public void addGroupConstraint(Date date, String groupName, double oilRate, double gasRate,
@@ -496,8 +539,8 @@ public class ReservoirCouplingExporter implements Serializable {
   /**
    * Add well control mode change.
    *
-   * @param date        effective date
-   * @param wellName    well name
+   * @param date effective date
+   * @param wellName well name
    * @param controlMode control mode (ORAT, GRAT, LRAT, RESV, BHP)
    * @param targetValue target value
    */
@@ -512,8 +555,8 @@ public class ReservoirCouplingExporter implements Serializable {
   /**
    * Add VFP table reference for a well.
    *
-   * @param date           effective date
-   * @param wellName       well name
+   * @param date effective date
+   * @param wellName well name
    * @param vfpTableNumber VFP table number
    */
   public void addVfpReference(Date date, String wellName, int vfpTableNumber) {
@@ -529,6 +572,8 @@ public class ReservoirCouplingExporter implements Serializable {
 
   /**
    * Append VFPPROD keyword to buffer.
+   *
+   * @param vfp the VFP table containing production well data
    */
   private void appendVfpProdKeyword(VfpTable vfp) {
     keywordsBuffer.append("VFPPROD\n");
@@ -591,6 +636,8 @@ public class ReservoirCouplingExporter implements Serializable {
 
   /**
    * Append VFPINJ keyword to buffer.
+   *
+   * @param vfp the VFP table containing injection well data
    */
   private void appendVfpInjKeyword(VfpTable vfp) {
     keywordsBuffer.append("VFPINJ\n");
@@ -632,8 +679,8 @@ public class ReservoirCouplingExporter implements Serializable {
   /**
    * Export separator efficiency curves for E300 coupling.
    *
-   * @param separatorName     separator equipment name
-   * @param pressurePoints    pressure points to evaluate (bara)
+   * @param separatorName separator equipment name
+   * @param pressurePoints pressure points to evaluate (bara)
    * @param temperaturePoints temperature points to evaluate (K)
    * @return CSV data string
    */
@@ -720,23 +767,17 @@ public class ReservoirCouplingExporter implements Serializable {
   public void exportToFile(String filePath) throws IOException {
     logger.info("Exporting to file: {}", filePath);
 
-    BufferedWriter writer = null;
-    try {
-      writer = new BufferedWriter(new FileWriter(filePath));
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
       writer.write(getEclipseKeywords());
-    } finally {
-      if (writer != null) {
-        writer.close();
-      }
     }
   }
 
   /**
    * Export production forecast to CSV for import to other tools.
    *
-   * @param years      forecast years
-   * @param oilRates   oil rates by year (Sm3/d)
-   * @param gasRates   gas rates by year (Sm3/d)
+   * @param years forecast years
+   * @param oilRates oil rates by year (Sm3/d)
+   * @param gasRates gas rates by year (Sm3/d)
    * @param waterRates water rates by year (Sm3/d)
    * @return CSV string
    */
@@ -766,6 +807,11 @@ public class ReservoirCouplingExporter implements Serializable {
 
   /**
    * Generate linearly spaced array.
+   *
+   * @param start the starting value of the sequence
+   * @param end the ending value of the sequence
+   * @param points the number of points to generate
+   * @return an array of linearly spaced values from start to end
    */
   private double[] linspace(double start, double end, int points) {
     double[] result = new double[points];

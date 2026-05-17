@@ -3,6 +3,8 @@ package neqsim.process.equipment.pipeline;
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
+import neqsim.process.electricaldesign.pipeline.PipelineElectricalDesign;
+import neqsim.process.instrumentdesign.pipeline.PipelineInstrumentDesign;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -12,24 +14,19 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Single-phase adiabatic pipe model.
  *
  * <p>
- * This class models a simple adiabatic (no heat transfer) pipe for single-phase
- * flow using basic
- * gas flow equations. It calculates pressure drop from friction and elevation
- * changes.
+ * This class models a simple adiabatic (no heat transfer) pipe for single-phase flow using basic
+ * gas flow equations. It calculates pressure drop from friction and elevation changes.
  * </p>
  *
  * <h2>Calculation Modes</h2>
  * <ul>
- * <li><b>Calculate outlet pressure</b> - Given inlet conditions and flow
- * rate</li>
- * <li><b>Calculate flow rate</b> - Given inlet and outlet pressures (when
- * outlet pressure is
+ * <li><b>Calculate outlet pressure</b> - Given inlet conditions and flow rate</li>
+ * <li><b>Calculate flow rate</b> - Given inlet and outlet pressures (when outlet pressure is
  * set)</li>
  * </ul>
  *
  * <p>
- * The pipeline implements CapacityConstrainedEquipment (inherited from
- * Pipeline) with constraints:
+ * The pipeline implements CapacityConstrainedEquipment (inherited from Pipeline) with constraints:
  * </p>
  * <ul>
  * <li>Velocity - SOFT limit based on erosional velocity</li>
@@ -78,6 +75,8 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
   // Override with local insideDiameter for backward compatibility
   double insideDiameter = 0.1;
   double pipeWallRoughnessLocal = 1e-5;
+  PipelineElectricalDesign electricalDesign;
+  PipelineInstrumentDesign instrumentDesign;
 
   /**
    * Constructor for AdiabaticPipe.
@@ -92,13 +91,43 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
   /**
    * Constructor for AdiabaticPipe.
    *
-   * @param name     name of pipe
+   * @param name name of pipe
    * @param inStream input stream
    */
   public AdiabaticPipe(String name, StreamInterface inStream) {
     this(name);
     this.inStream = inStream;
     outStream = inStream.clone();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PipelineElectricalDesign getElectricalDesign() {
+    if (electricalDesign == null) {
+      initElectricalDesign();
+    }
+    return electricalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initElectricalDesign() {
+    electricalDesign = new PipelineElectricalDesign(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PipelineInstrumentDesign getInstrumentDesign() {
+    if (instrumentDesign == null) {
+      initInstrumentDesign();
+    }
+    return instrumentDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initInstrumentDesign() {
+    instrumentDesign = new PipelineInstrumentDesign(this);
   }
 
   /** {@inheritDoc} */
@@ -141,30 +170,6 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
 
   /** {@inheritDoc} */
   @Override
-  public void setInletElevation(double inletElevation) {
-    super.setInletElevation(inletElevation);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getInletElevation() {
-    return super.getInletElevation();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void setOutletElevation(double outletElevation) {
-    super.setOutletElevation(outletElevation);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getOutletElevation() {
-    return super.getOutletElevation();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public void setPipeSpecification(double nominalDiameter, String pipeSec) {
     pipeSpecification = pipeSec;
     insideDiameter = nominalDiameter / 1000.0;
@@ -173,14 +178,14 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
 
   /** {@inheritDoc} */
   @Override
-  public void setOutTemperature(double temperature) {
+  public void setOutletTemperature(double temperature) {
     setTemperature = true;
     this.temperatureOut = temperature;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setOutPressure(double pressure) {
+  public void setOutletPressure(double pressure) {
     setPressureOut = true;
     this.pressureOut = pressure;
   }
@@ -218,22 +223,45 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
   /**
    * Calculate the outlet pressure based on friction and elevation losses.
    *
+   * <p>
+   * This method calculates the pressure drop using the general flow equation for compressible gas
+   * flow, accounting for:
+   * </p>
+   * <ul>
+   * <li>Friction pressure loss (using effective length including fittings)</li>
+   * <li>Elevation pressure change (hydrostatic head)</li>
+   * </ul>
+   *
+   * <p>
+   * The effective length includes both physical pipe length and equivalent length from fittings:
+   * </p>
+   *
+   * <pre>
+   * L_eff = L_physical + Σ(L/D)_i × D
+   * </pre>
+   *
    * @return the outlet pressure in bara
    */
   public double calcPressureOut() {
+    // Use effective length (physical + fittings equivalent length)
+    double effectiveLength = getEffectiveLength();
+
     double area = Math.PI / 4.0 * Math.pow(insideDiameter, 2.0);
     velocity = system.getPhase(0).getTotalVolume() / area / 1.0e5;
     reynoldsNumber = velocity * insideDiameter
         / system.getPhase(0).getPhysicalProperties().getKinematicViscosity();
     frictionFactor = calcWallFrictionFactor(reynoldsNumber);
+
+    // Pressure drop calculation with effective length
     double dp = Math
         .pow(4.0 * system.getPhase(0).getNumberOfMolesInPhase() * system.getPhase(0).getMolarMass()
             / neqsim.thermo.ThermodynamicConstantsInterface.pi, 2.0)
-        * frictionFactor * length * system.getPhase(0).getZ()
+        * frictionFactor * effectiveLength * system.getPhase(0).getZ()
         * neqsim.thermo.ThermodynamicConstantsInterface.R / system.getPhase(0).getMolarMass()
         * system.getTemperature() / Math.pow(insideDiameter, 5.0);
-    double dp_gravity = system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
-        * (inletElevation - outletElevation);
+    double dp_gravity =
+        system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
+            * (inletElevation - outletElevation);
     return Math.sqrt(Math.pow(inletPressure * 1e5, 2.0) - dp) / 1.0e5 + dp_gravity / 1.0e5;
   }
 
@@ -241,8 +269,7 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
    * Calculate the flow rate required to achieve the specified outlet pressure.
    *
    * <p>
-   * Uses bisection iteration to find the flow rate that achieves the target
-   * outlet pressure.
+   * Uses bisection iteration to find the flow rate that achieves the target outlet pressure.
    * </p>
    *
    * @return the calculated flow rate in the current system units
@@ -420,6 +447,12 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
   /** Maximum design FRMS value. */
   private double maxDesignFRMS = 500.0;
 
+  /**
+   * Rhone-Poulenc velocity calculator. When non-null, maximum velocity is determined from the
+   * Rhone-Poulenc curves instead of API RP 14E.
+   */
+  private RhonePoulencVelocity rhonePoulencVelocity = null;
+
   /** Wall thickness in meters. */
   private double pipeWallThickness = 0.01;
 
@@ -438,11 +471,137 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
   /**
    * Set support arrangement for FIV calculations.
    *
-   * @param arrangement support arrangement (Stiff, Medium stiff, Medium,
-   *                    Flexible)
+   * @param arrangement support arrangement (Stiff, Medium stiff, Medium, Flexible)
    */
   public void setSupportArrangement(String arrangement) {
     this.supportArrangement = arrangement;
+  }
+
+  /**
+   * Enable Rhone-Poulenc maximum velocity calculation for gas pipes.
+   *
+   * <p>
+   * When enabled, the maximum allowable velocity is determined from the Rhone-Poulenc curves
+   * instead of the API RP 14E erosional velocity. The Rhone-Poulenc method uses a power-law
+   * correlation between gas density and maximum velocity, with service-type-dependent constants.
+   * </p>
+   *
+   * @param serviceType the gas service type (NON_CORROSIVE_GAS or CORROSIVE_GAS)
+   */
+  public void setRhonePoulencServiceType(RhonePoulencVelocity.ServiceType serviceType) {
+    this.rhonePoulencVelocity = new RhonePoulencVelocity(serviceType);
+  }
+
+  /**
+   * Enable Rhone-Poulenc maximum velocity calculation with default non-corrosive gas settings.
+   *
+   * <p>
+   * Equivalent to calling {@code setRhonePoulencServiceType(ServiceType.NON_CORROSIVE_GAS)}.
+   * </p>
+   */
+  public void useRhonePoulencVelocity() {
+    this.rhonePoulencVelocity =
+        new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
+  }
+
+  /**
+   * Enable Rhone-Poulenc maximum velocity calculation using tabulated data with log-log
+   * interpolation for higher accuracy.
+   *
+   * @param serviceType the gas service type
+   * @param useInterpolation true to use tabulated interpolation, false for power-law formula
+   */
+  public void setRhonePoulencServiceType(RhonePoulencVelocity.ServiceType serviceType,
+      boolean useInterpolation) {
+    this.rhonePoulencVelocity = new RhonePoulencVelocity(serviceType);
+    this.rhonePoulencVelocity.setUseInterpolation(useInterpolation);
+  }
+
+  /**
+   * Disable Rhone-Poulenc maximum velocity and revert to API RP 14E erosional velocity.
+   */
+  public void disableRhonePoulencVelocity() {
+    this.rhonePoulencVelocity = null;
+  }
+
+  /**
+   * Check if Rhone-Poulenc maximum velocity is enabled.
+   *
+   * @return true if Rhone-Poulenc method is active
+   */
+  public boolean isRhonePoulencEnabled() {
+    return rhonePoulencVelocity != null;
+  }
+
+  /**
+   * Get the Rhone-Poulenc velocity calculator, or null if not enabled.
+   *
+   * @return the RhonePoulencVelocity calculator or null
+   */
+  public RhonePoulencVelocity getRhonePoulencCalculator() {
+    return rhonePoulencVelocity;
+  }
+
+  /**
+   * Calculate the maximum allowable gas velocity using the Rhone-Poulenc curves.
+   *
+   * <p>
+   * This method uses the current gas density from the simulation to look up the maximum velocity
+   * from the Rhone-Poulenc correlation. If Rhone-Poulenc is not enabled, this returns 0.0.
+   * </p>
+   *
+   * @return maximum allowable velocity in m/s, or 0.0 if not enabled or density unavailable
+   */
+  public double getRhonePoulencMaxVelocity() {
+    if (rhonePoulencVelocity == null) {
+      return 0.0;
+    }
+    double density = getGasDensityForVelocity();
+    if (density <= 0) {
+      return 0.0;
+    }
+    return rhonePoulencVelocity.getMaxVelocity(density);
+  }
+
+  /**
+   * Get the effective maximum allowable velocity using the currently configured method.
+   *
+   * <p>
+   * Returns Rhone-Poulenc max velocity if enabled, otherwise the API RP 14E erosional velocity.
+   * </p>
+   *
+   * @return maximum allowable velocity in m/s
+   */
+  public double getMaxAllowableVelocity() {
+    if (rhonePoulencVelocity != null) {
+      double rpVel = getRhonePoulencMaxVelocity();
+      return rpVel > 0 ? rpVel : getErosionalVelocity();
+    }
+    return getErosionalVelocity();
+  }
+
+  /**
+   * Get the name of the currently active maximum velocity method.
+   *
+   * @return "RHONE_POULENC" or "API_RP_14E"
+   */
+  public String getMaxVelocityMethod() {
+    return rhonePoulencVelocity != null ? "RHONE_POULENC" : "API_RP_14E";
+  }
+
+  /**
+   * Get the gas density used for velocity calculations.
+   *
+   * @return gas density in kg/m3, or 0.0 if unavailable
+   */
+  private double getGasDensityForVelocity() {
+    if (system != null) {
+      return system.getDensity("kg/m3");
+    }
+    if (inStream != null && inStream.getFluid() != null) {
+      return inStream.getFluid().getDensity("kg/m3");
+    }
+    return 0.0;
   }
 
   /**
@@ -559,7 +718,8 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
     double alpha;
     double beta;
     if ("Stiff".equals(supportArrangement)) {
-      alpha = 446187 + 646 * outerDiameter + 9.17E-4 * outerDiameter * outerDiameter * outerDiameter;
+      alpha =
+          446187 + 646 * outerDiameter + 9.17E-4 * outerDiameter * outerDiameter * outerDiameter;
       beta = 0.1 * Math.log(outerDiameter) - 1.3739;
     } else if ("Medium stiff".equals(supportArrangement)) {
       alpha = 283921 + 370 * outerDiameter;
@@ -631,6 +791,17 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
     result.put("velocityRatio",
         getErosionalVelocity() > 0 ? getMixtureVelocity() / getErosionalVelocity() : Double.NaN);
 
+    // Rhone-Poulenc max velocity (if enabled)
+    result.put("maxVelocityMethod", getMaxVelocityMethod());
+    result.put("maxAllowableVelocity_m_s", getMaxAllowableVelocity());
+    if (rhonePoulencVelocity != null) {
+      result.put("rhonePoulencMaxVelocity_m_s", getRhonePoulencMaxVelocity());
+      result.put("rhonePoulencServiceType", rhonePoulencVelocity.getServiceType().name());
+      double rpMaxVel = getRhonePoulencMaxVelocity();
+      result.put("rhonePoulencVelocityRatio",
+          rpMaxVel > 0 ? getMixtureVelocity() / rpMaxVel : Double.NaN);
+    }
+
     double lof = calculateLOF();
     result.put("LOF", lof);
     if (Double.isNaN(lof)) {
@@ -686,47 +857,47 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
   }
 
   /**
-   * Override parent's capacity constraint initialization to add FIV/FRMS
-   * constraints.
+   * Override parent's capacity constraint initialization to add FIV/FRMS constraints.
    */
   @Override
   protected void initializeCapacityConstraints() {
-    // Velocity constraint (SOFT limit - erosional is a guideline)
+    // Velocity constraint (SOFT limit - uses Rhone-Poulenc if enabled, else erosional)
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("velocity",
         "m/s", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-        .setDesignValue(maxDesignVelocity).setMaxValue(getErosionalVelocity())
-        .setWarningThreshold(0.9).setDescription("Velocity vs erosional limit")
-        .setValueSupplier(() -> getMixtureVelocity()));
+            .setDesignValue(maxDesignVelocity).setMaxValue(getMaxAllowableVelocity())
+            .setWarningThreshold(0.9)
+            .setDescription("Velocity vs " + getMaxVelocityMethod() + " limit")
+            .setValueSupplier(() -> getMixtureVelocity()));
 
     // LOF (Likelihood of Failure) - FIV constraint
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("LOF", "-",
         neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-        .setDesignValue(maxDesignLOF).setMaxValue(1.5).setWarningThreshold(0.5)
-        .setDescription("LOF for flow-induced vibration (>1.0 = high risk)")
-        .setValueSupplier(() -> calculateLOF()));
+            .setDesignValue(maxDesignLOF).setMaxValue(1.5).setWarningThreshold(0.5)
+            .setDescription("LOF for flow-induced vibration (>1.0 = high risk)")
+            .setValueSupplier(() -> calculateLOF()));
 
     // FRMS (Flow-induced vibration RMS)
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("FRMS", "-",
         neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-        .setDesignValue(maxDesignFRMS).setMaxValue(750.0).setWarningThreshold(0.8)
-        .setDescription("FRMS vibration intensity").setValueSupplier(() -> calculateFRMS()));
+            .setDesignValue(maxDesignFRMS).setMaxValue(750.0).setWarningThreshold(0.8)
+            .setDescription("FRMS vibration intensity").setValueSupplier(() -> calculateFRMS()));
 
     // Volume flow constraint from mechanical design
     if (getMechanicalDesign() != null && getMechanicalDesign().maxDesignVolumeFlow > 0) {
       addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("volumeFlow",
           "m3/hr", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-          .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
-          .setDescription("Volume flow vs mechanical design limit").setValueSupplier(
-              () -> getOutletStream() != null ? getOutletStream().getFlowRate("m3/hr") : 0.0));
+              .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
+              .setDescription("Volume flow vs mechanical design limit").setValueSupplier(
+                  () -> getOutletStream() != null ? getOutletStream().getFlowRate("m3/hr") : 0.0));
     }
 
     // Pressure drop constraint
     if (getMechanicalDesign() != null && getMechanicalDesign().maxDesignPressureDrop > 0) {
       addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("pressureDrop",
           "bar", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-          .setDesignValue(getMechanicalDesign().maxDesignPressureDrop).setWarningThreshold(0.9)
-          .setDescription("Pressure drop vs mechanical design limit")
-          .setValueSupplier(() -> getPressureDrop()));
+              .setDesignValue(getMechanicalDesign().maxDesignPressureDrop).setWarningThreshold(0.9)
+              .setDescription("Pressure drop vs mechanical design limit")
+              .setValueSupplier(() -> getPressureDrop()));
     }
   }
 
@@ -839,8 +1010,8 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
    * @return nearest standard pipe nominal diameter in inches
    */
   private double selectStandardPipeSize(double calculatedDiameterInches) {
-    double[] standardSizes = { 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0,
-        14.0, 16.0, 18.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0 };
+    double[] standardSizes = {0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0,
+        14.0, 16.0, 18.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0};
 
     for (double size : standardSizes) {
       if (size >= calculatedDiameterInches) {
@@ -896,7 +1067,14 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
 
     report.append("\nFlow Characteristics:\n");
     report.append(String.format("  Velocity: %.2f m/s\n", velocity));
-    report.append(String.format("  Erosional Velocity: %.2f m/s\n", getErosionalVelocity()));
+    report.append(
+        String.format("  Erosional Velocity (API RP 14E): %.2f m/s\n", getErosionalVelocity()));
+    if (rhonePoulencVelocity != null) {
+      report.append(String.format("  Rhone-Poulenc Max Velocity: %.2f m/s (%s)\n",
+          getRhonePoulencMaxVelocity(), rhonePoulencVelocity.getServiceType().name()));
+    }
+    report.append(String.format("  Max Allowable Velocity (%s): %.2f m/s\n", getMaxVelocityMethod(),
+        getMaxAllowableVelocity()));
     report.append(String.format("  Flow Regime: %s\n", flowRegime));
     report.append(String.format("  Reynolds Number: %.0f\n", reynoldsNumber));
 
@@ -935,6 +1113,12 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
       java.util.Map<String, Object> velocities = new java.util.LinkedHashMap<String, Object>();
       velocities.put("velocity_ms", velocity);
       velocities.put("erosionalVelocity_ms", getErosionalVelocity());
+      velocities.put("maxAllowableVelocity_ms", getMaxAllowableVelocity());
+      velocities.put("maxVelocityMethod", getMaxVelocityMethod());
+      if (rhonePoulencVelocity != null) {
+        velocities.put("rhonePoulencMaxVelocity_ms", getRhonePoulencMaxVelocity());
+        velocities.put("rhonePoulencServiceType", rhonePoulencVelocity.getServiceType().name());
+      }
       reportData.put("velocities", velocities);
 
       reportData.put("fivAnalysis", getFIVAnalysis());
@@ -951,7 +1135,8 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] name) {
-    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 5.0), 220.00);
+    neqsim.thermo.system.SystemInterface testSystem =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 5.0), 220.00);
     testSystem.addComponent("methane", 24.0, "MSm^3/day");
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
@@ -965,7 +1150,8 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
     pipe.setPipeWallRoughness(5e-6);
     pipe.setOutPressure(112.0);
 
-    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations =
+        new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(pipe);
     operations.run();

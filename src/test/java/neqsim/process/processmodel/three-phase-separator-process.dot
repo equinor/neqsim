@@ -55,19 +55,19 @@ digraph process {
   "gas mixer 0" -> "VG-23-002" [label="gas mixer 0 mixed stream"];
   "VG-23-002" -> "23-KA-004" [label="gasOutStream"];
   "VG-23-002" -> "stream to closed drain" [label="liquidOutStream"];
-  "23-KA-004" -> "gas mixer 22" [label="gasOutStream"];
+  "23-KA-004" -> "gas mixer 22" [label="23-KA-004 out stream"];
   "recycle gas 2nd stage" -> "gas mixer 22" [label="recycle gas 2nd stage"];
   "gas mixer 22" -> "HA-23-005" [label="gas mixer 22 mixed stream"];
   "HA-23-005" -> "VG-23-006" [label="outStream"];
   "VG-23-006" -> "23-KA-007" [label="gasOutStream"];
   "VG-23-006" -> "recycle 1st stage liquid" [label="liquidOutStream"];
-  "23-KA-007" -> "gas mixer 1" [label="gasOutStream"];
+  "23-KA-007" -> "gas mixer 1" [label="23-KA-007 out stream"];
   "recycle gas 2nd stage 2" -> "gas mixer 1" [label="recycle gas 2nd stage 2"];
   "gas mixer 1" -> "23-HA-006" [label="gas mixer 1 mixed stream"];
   "23-HA-006" -> "23-VG-009" [label="outStream"];
   "23-VG-009" -> "23-KA-010" [label="gasOutStream"];
   "23-VG-009" -> "recycle 2nd stage liquid" [label="liquidOutStream"];
-  "23-KA-010" -> "gas mixer 2" [label="gasOutStream"];
+  "23-KA-010" -> "gas mixer 2" [label="23-KA-010 out stream"];
   "gas mixer 2" -> "gas to injection manifold" [label="gas mixer 2 mixed stream"];
   "gas to injection manifold" -> "gas manifold" [label="gas to injection manifold"];
 }

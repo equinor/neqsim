@@ -150,7 +150,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     }
   }
 
-  private final List<ManifoldNode> manifolds = new ArrayList<>();
+  private final transient List<ManifoldNode> manifolds = new ArrayList<>();
   private PipeBeggsAndBrills facilityPipeline;
   private boolean propagateArrivalPressureToWells = true;
   private boolean forceFlowFromPressureSolve = true;

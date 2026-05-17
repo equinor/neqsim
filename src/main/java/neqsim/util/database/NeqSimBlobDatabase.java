@@ -32,8 +32,8 @@ public class NeqSimBlobDatabase
   private static String username = "";
   private static String password = "";
 
-  private Statement statement = null;
-  protected Connection databaseConnection = null;
+  private transient Statement statement = null;
+  protected transient Connection databaseConnection = null;
 
   /**
    * <p>

@@ -29,7 +29,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class GasOilWaterProcessSvgExportTest extends neqsim.NeqSimTest {
-  /*
+  /**
    * Creates a well fluid with typical oil and gas components plus water.**@return a configured
    * SystemInterface with gas,oil, and water components
    */

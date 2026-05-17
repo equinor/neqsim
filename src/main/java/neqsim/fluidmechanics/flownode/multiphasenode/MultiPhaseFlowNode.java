@@ -257,7 +257,7 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
     interphaseFrictionFactor[0] =
         interphaseTransportCoefficient.calcInterPhaseFrictionFactor(0, this);
     interphaseFrictionFactor[1] =
-        interphaseTransportCoefficient.calcInterPhaseFrictionFactor(0, this);
+        interphaseTransportCoefficient.calcInterPhaseFrictionFactor(1, this);
   }
 
   /**

@@ -9,7 +9,9 @@ package neqsim.physicalproperties.system.liquidphysicalproperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.CO2ConductivityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.HydrogenConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.WaterConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodHeavyOil;
 import neqsim.thermo.phase.PhaseSpanWagnerEos;
@@ -47,6 +49,14 @@ public class LiquidPhysicalProperties extends PhysicalProperties {
     if (phase instanceof PhaseSpanWagnerEos) {
       conductivityCalc = new CO2ConductivityMethod(this);
       viscosityCalc = new CO2ViscosityMethod(this);
+    } else if (phase.getNumberOfComponents() == 1
+        && "hydrogen".equalsIgnoreCase(phase.getComponent(0).getName())) {
+      conductivityCalc = new HydrogenConductivityMethod(this);
+      viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
+    } else if (phase.getNumberOfComponents() == 1
+        && "water".equalsIgnoreCase(phase.getComponent(0).getName())) {
+      conductivityCalc = new WaterConductivityMethod(this);
+      viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
     } else {
       // conductivityCalc = new Conductivity(this);
       conductivityCalc = new PFCTConductivityMethodMod86(this);

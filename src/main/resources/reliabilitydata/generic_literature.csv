@@ -1,0 +1,227 @@
+# Generic Equipment Reliability Data from Published Literature
+# Sources: Various academic papers, handbooks, and public industry reports
+# PUBLIC DOMAIN DATA - Free to use and distribute
+# Format: EquipmentType,EquipmentClass,FailureMode,FailureRate,MTBF_hours,MTTR_hours,DataSource,Confidence
+# FailureRate is per hour, MTBF and MTTR in hours
+#
+# Key References:
+#   - Lees' Loss Prevention in the Process Industries (4th Ed, 2012)
+#   - CCPS Guidelines for Process Equipment Reliability Data (1989)
+#   - Military Handbook 217F (MIL-HDBK-217F)
+#   - NUREG/CR-6928 (Nuclear power plant data)
+#   - DNV-RP-G101 Risk-based Inspection
+
+# ============================================================================
+# PROCESS EQUIPMENT (from Lees' Loss Prevention and CCPS)
+# ============================================================================
+
+# Pressure Vessels (per vessel)
+Vessel,Atmospheric storage tank,Catastrophic,1.14e-8,87720000,720,CCPS-1989,Medium
+Vessel,Atmospheric storage tank,Major leak,1.14e-7,8772000,168,CCPS-1989,Medium
+Vessel,Pressure vessel,Catastrophic,1.14e-9,876000000,720,CCPS-1989,Medium
+Vessel,Pressure vessel,Major leak,1.14e-8,87720000,168,CCPS-1989,Medium
+Vessel,Pressure vessel,Minor leak,1.14e-6,876000,24,CCPS-1989,Medium
+
+# Process Piping (per meter)
+Piping,Carbon steel (process),Full bore rupture,1.14e-10,8760000000,24,CCPS-1989,Medium
+Piping,Carbon steel (process),10% bore leak,1.14e-9,876000000,12,CCPS-1989,Medium
+Piping,Carbon steel (process),1% bore leak,1.14e-8,87600000,4,CCPS-1989,Medium
+Piping,Stainless steel (process),Full bore rupture,5.71e-11,17520000000,24,LEES-2012,Medium
+Piping,Stainless steel (process),Major leak,5.71e-10,1752000000,12,LEES-2012,Medium
+
+# Gaskets and Flanges
+Gasket,Spiral wound,All modes,1.83e-7,5467500,2,CCPS-1989,Medium
+Gasket,Ring joint,All modes,9.13e-8,10950000,2,CCPS-1989,Medium
+Gasket,Sheet (non-metallic),All modes,3.65e-7,2740000,2,CCPS-1989,Medium
+Flange,ASME Class 150,Leak,2.28e-7,4386000,4,CCPS-1989,Medium
+Flange,ASME Class 300,Leak,1.83e-7,5467500,4,CCPS-1989,Medium
+Flange,ASME Class 600+,Leak,1.37e-7,7300000,4,CCPS-1989,Medium
+
+# ============================================================================
+# ROTATING EQUIPMENT (from various published sources)
+# ============================================================================
+
+# Pumps (from CCPS and industry averages)
+Pump,Centrifugal single stage,Seal failure,5.71e-5,17513,8,CCPS-1989,High
+Pump,Centrifugal single stage,Bearing failure,2.28e-5,43860,16,CCPS-1989,High
+Pump,Centrifugal single stage,Impeller damage,1.14e-5,87720,24,CCPS-1989,Medium
+Pump,Multistage centrifugal,All modes,2.28e-4,4386,36,LEES-2012,Medium
+Pump,Positive displacement,All modes,3.65e-4,2740,24,LEES-2012,Medium
+Pump,Progressive cavity,All modes,4.57e-4,2188,16,Generic,Medium
+Pump,Gear,All modes,2.74e-4,3650,12,Generic,Medium
+Pump,Diaphragm,All modes,1.83e-4,5468,8,Generic,Medium
+
+# Compressors (from published industry data)
+Compressor,Centrifugal single stage,All modes,9.13e-5,10953,48,LEES-2012,High
+Compressor,Centrifugal multistage,All modes,1.37e-4,7299,72,LEES-2012,High
+Compressor,Axial,All modes,1.14e-4,8772,96,LEES-2012,Medium
+Compressor,Reciprocating single cylinder,All modes,1.83e-4,5468,36,Generic,Medium
+Compressor,Reciprocating multi-cylinder,All modes,2.74e-4,3650,48,Generic,Medium
+Compressor,Diaphragm,All modes,9.13e-5,10953,24,Generic,Medium
+Compressor,Scroll,All modes,6.85e-5,14599,16,Generic,Medium
+
+# Turbines and Expanders
+Turbine,Steam (large >10MW),All modes,4.57e-5,21882,96,LEES-2012,High
+Turbine,Steam (small <10MW),All modes,6.85e-5,14599,72,LEES-2012,Medium
+Turbine,Gas (industrial),All modes,9.13e-5,10953,120,LEES-2012,High
+Turbine,Gas (aero-derivative),All modes,6.85e-5,14599,96,LEES-2012,Medium
+Expander,Turbo-expander,All modes,1.14e-4,8772,72,Generic,Medium
+Expander,Reciprocating,All modes,1.83e-4,5468,48,Generic,Medium
+
+# ============================================================================
+# HEAT TRANSFER EQUIPMENT (from Lees' and generic sources)
+# ============================================================================
+
+Heat Exchanger,Shell and tube (fixed),Tube leak,9.13e-6,109500,72,LEES-2012,High
+Heat Exchanger,Shell and tube (fixed),Shell leak,2.28e-6,438600,120,LEES-2012,High
+Heat Exchanger,Shell and tube (floating),All modes,1.37e-5,73050,72,LEES-2012,High
+Heat Exchanger,U-tube,All modes,1.14e-5,87720,72,LEES-2012,High
+Heat Exchanger,Double pipe,All modes,5.71e-6,175130,24,Generic,Medium
+Heat Exchanger,Plate frame,Gasket leak,2.28e-5,43860,8,Generic,Medium
+Heat Exchanger,Plate frame,Plate failure,2.85e-6,350880,48,Generic,Medium
+Heat Exchanger,Brazed plate,All modes,9.13e-6,109500,36,Generic,Medium
+Heat Exchanger,Air cooled (fin fan),All modes,3.43e-5,29155,24,LEES-2012,High
+Heat Exchanger,Air cooled (fin fan),Fan failure,1.14e-5,87720,8,LEES-2012,High
+Heat Exchanger,Air cooled (fin fan),Tube bundle,5.71e-6,175130,72,LEES-2012,Medium
+Condenser,Shell and tube,All modes,9.13e-6,109500,72,Generic,Medium
+Condenser,Air cooled,All modes,1.37e-5,73050,36,Generic,Medium
+Reboiler,Thermosiphon,All modes,1.14e-5,87720,48,Generic,Medium
+Reboiler,Kettle,All modes,9.13e-6,109500,48,Generic,Medium
+
+# ============================================================================
+# VALVES (from multiple published sources)
+# ============================================================================
+
+# Manual Valves
+Valve,Manual gate,Fail to operate,2.28e-6,438600,4,LEES-2012,High
+Valve,Manual gate,External leak,4.57e-7,2188200,4,LEES-2012,High
+Valve,Manual ball,Fail to operate,1.83e-6,546750,4,LEES-2012,High
+Valve,Manual ball,External leak,3.65e-7,2740000,4,LEES-2012,High
+Valve,Manual globe,Fail to operate,2.74e-6,365000,4,LEES-2012,High
+Valve,Manual plug,Fail to operate,2.28e-6,438600,4,LEES-2012,Medium
+Valve,Manual butterfly,Fail to operate,1.83e-6,546750,4,LEES-2012,Medium
+
+# Control Valves
+Valve,Control (pneumatic),Fail to respond,2.28e-5,43860,8,LEES-2012,High
+Valve,Control (pneumatic),Stuck,1.14e-5,87720,12,LEES-2012,High
+Valve,Control (electric),Fail to respond,1.83e-5,54675,8,Generic,Medium
+Valve,Control (hydraulic),Fail to respond,2.74e-5,36500,12,Generic,Medium
+
+# Safety Valves
+Valve,Pressure relief,Fail to open,5.71e-7,1751300,4,LEES-2012,High
+Valve,Pressure relief,Premature open,2.28e-6,438600,2,LEES-2012,High
+Valve,Pressure relief,Leak,9.13e-6,109500,2,LEES-2012,High
+Valve,Rupture disc,Fail to open,1.14e-7,8772000,2,Generic,Medium
+Valve,Rupture disc,Premature open,5.71e-7,1751300,2,Generic,Medium
+
+# Check Valves
+Valve,Check (swing),Fail to close,4.57e-6,218820,4,LEES-2012,High
+Valve,Check (swing),Stuck open,2.28e-6,438600,4,LEES-2012,High
+Valve,Check (lift),Fail to close,3.43e-6,291600,4,LEES-2012,High
+Valve,Check (dual plate),Fail to close,2.74e-6,365000,4,Generic,Medium
+
+# ============================================================================
+# INSTRUMENTATION (from MIL-HDBK-217F and industry data)
+# ============================================================================
+
+# Sensors and Transmitters
+Sensor,RTD,All modes,6.85e-6,146000,2,MIL-217F,High
+Sensor,Thermocouple,All modes,4.57e-6,218820,1,MIL-217F,High
+Sensor,Pressure transducer,All modes,9.13e-6,109500,2,MIL-217F,High
+Sensor,Differential pressure cell,All modes,1.14e-5,87720,4,MIL-217F,High
+Sensor,Flow orifice,All modes,2.28e-6,438600,4,Generic,High
+Sensor,Flow turbine,All modes,1.83e-5,54675,4,Generic,Medium
+Sensor,Flow magnetic,All modes,9.13e-6,109500,4,Generic,High
+Sensor,Flow ultrasonic,All modes,1.37e-5,73050,4,Generic,Medium
+Sensor,Flow Coriolis,All modes,6.85e-6,146000,8,Generic,High
+Sensor,Level float,All modes,1.14e-5,87720,2,Generic,Medium
+Sensor,Level displacer,All modes,9.13e-6,109500,4,Generic,Medium
+Sensor,Level radar,All modes,6.85e-6,146000,4,Generic,High
+Sensor,Level ultrasonic,All modes,1.14e-5,87720,4,Generic,Medium
+Sensor,Analyzer pH,All modes,4.57e-5,21882,4,Generic,High
+Sensor,Analyzer conductivity,All modes,2.28e-5,43860,2,Generic,High
+Sensor,Analyzer O2,All modes,5.71e-5,17513,4,Generic,High
+
+# Final Control Elements
+Actuator,Pneumatic diaphragm,All modes,9.13e-6,109500,4,LEES-2012,High
+Actuator,Pneumatic piston,All modes,1.14e-5,87720,4,LEES-2012,High
+Actuator,Electric motor,All modes,1.37e-5,73050,8,MIL-217F,High
+Actuator,Hydraulic,All modes,2.28e-5,43860,8,Generic,Medium
+Positioner,Pneumatic,All modes,1.83e-5,54675,4,Generic,High
+Positioner,Electro-pneumatic,All modes,2.74e-5,36500,4,Generic,High
+Positioner,Smart/digital,All modes,1.14e-5,87720,2,Generic,High
+
+# ============================================================================
+# ELECTRONIC EQUIPMENT (from MIL-HDBK-217F)
+# ============================================================================
+
+Electronics,Power supply AC/DC,All modes,2.28e-5,43860,4,MIL-217F,High
+Electronics,Power supply DC/DC,All modes,1.37e-5,73050,2,MIL-217F,High
+Electronics,Relay electromechanical,All modes,5.71e-6,175130,1,MIL-217F,High
+Electronics,Relay solid state,All modes,2.28e-6,438600,1,MIL-217F,High
+Electronics,Contactor,All modes,1.14e-5,87720,2,MIL-217F,High
+Electronics,Fuse,All modes,1.14e-7,8772000,0.5,MIL-217F,High
+Electronics,Circuit board (analog),All modes,9.13e-6,109500,4,MIL-217F,Medium
+Electronics,Circuit board (digital),All modes,4.57e-6,218820,4,MIL-217F,Medium
+Electronics,Connector (circular),All modes,1.14e-7,8772000,1,MIL-217F,High
+Electronics,Connector (rectangular),All modes,5.71e-8,17513000,1,MIL-217F,High
+
+# ============================================================================
+# STRUCTURAL AND MECHANICAL (from various sources)
+# ============================================================================
+
+Structure,Steel platform,Fatigue failure,1.14e-9,876000000,8760,DNV-RP-G101,Low
+Structure,Steel jacket,All modes,5.71e-10,1752000000,8760,DNV-RP-G101,Low
+Structure,Concrete gravity base,All modes,2.85e-10,3504000000,8760,DNV-RP-G101,Low
+Mooring,Chain link,Failure,1.14e-7,8772000,720,DNV-RP-G101,Medium
+Mooring,Wire rope,Failure,2.28e-7,4386000,480,DNV-RP-G101,Medium
+Mooring,Synthetic rope,Failure,1.83e-7,5467500,480,DNV-RP-G101,Medium
+Bearing,Rolling element,All modes,1.83e-5,54675,12,Generic,High
+Bearing,Sleeve/journal,All modes,1.14e-5,87720,16,Generic,High
+Bearing,Thrust,All modes,2.28e-5,43860,16,Generic,High
+Seal,Single mechanical,All modes,5.71e-5,17513,8,Generic,High
+Seal,Double mechanical,All modes,2.85e-5,35088,12,Generic,High
+Seal,Dry gas,All modes,2.28e-5,43860,16,Generic,High
+Seal,Lip seal,All modes,9.13e-5,10953,4,Generic,High
+Seal,O-ring static,All modes,1.14e-6,876000,2,Generic,High
+Seal,O-ring dynamic,All modes,9.13e-6,109500,2,Generic,High
+Coupling,Flexible (gear type),All modes,1.14e-5,87720,8,Generic,Medium
+Coupling,Flexible (disc type),All modes,6.85e-6,146000,8,Generic,Medium
+Coupling,Rigid,All modes,2.28e-6,438600,4,Generic,Medium
+Gearbox,Parallel shaft,All modes,4.57e-5,21882,48,Generic,High
+Gearbox,Epicyclic,All modes,5.71e-5,17513,72,Generic,High
+Gearbox,Right angle,All modes,6.85e-5,14599,48,Generic,Medium
+
+# ============================================================================
+# ELECTRICAL POWER (from various published sources)
+# ============================================================================
+
+Generator,Gas engine,All modes,1.14e-4,8772,48,Generic,High
+Generator,Gas engine,Fail to start,4.57e-5,21882,2,Generic,High
+Generator,Diesel engine,All modes,9.13e-5,10953,36,Generic,High
+Generator,Diesel engine,Fail to start,3.65e-5,27400,2,Generic,High
+VFD,AC drive (large),All modes,4.57e-5,21882,24,Generic,High
+VFD,AC drive (small),All modes,2.28e-5,43860,8,Generic,High
+Soft Starter,All types,All modes,1.83e-5,54675,8,Generic,Medium
+Capacitor Bank,Power factor correction,All modes,1.14e-5,87720,12,Generic,Medium
+Battery,Lead acid,All modes,2.28e-5,43860,4,Generic,High
+Battery,Lithium ion,All modes,9.13e-6,109500,4,Generic,Medium
+Charger,Battery charger,All modes,1.37e-5,73050,4,Generic,High
+
+# ============================================================================
+# HVAC AND UTILITIES (from generic industrial data)
+# ============================================================================
+
+HVAC,AHU,All modes,3.43e-5,29155,16,Generic,Medium
+HVAC,Chiller centrifugal,All modes,6.85e-5,14599,48,Generic,High
+HVAC,Chiller scroll,All modes,4.57e-5,21882,24,Generic,Medium
+HVAC,Cooling tower,All modes,5.71e-5,17513,24,Generic,High
+HVAC,Fan coil unit,All modes,2.28e-5,43860,8,Generic,Medium
+HVAC,Damper motorized,All modes,1.83e-5,54675,4,Generic,Medium
+Utility,Compressed air system,All modes,4.57e-5,21882,16,Generic,High
+Utility,Nitrogen generator,All modes,5.71e-5,17513,24,Generic,Medium
+Utility,Water treatment RO,All modes,6.85e-5,14599,24,Generic,Medium
+Utility,Steam boiler,All modes,3.43e-5,29155,48,Generic,High
+Utility,Steam boiler,Tube failure,5.71e-6,175130,72,Generic,Medium
+Utility,Fired heater,All modes,4.57e-5,21882,36,Generic,High
+Utility,Fired heater,Tube failure,9.13e-6,109500,72,Generic,Medium

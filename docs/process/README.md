@@ -1,3 +1,8 @@
+---
+title: Process Simulation Package
+description: The `process` package provides process equipment, unit operations, controllers, and process system management for building complete flowsheets.
+---
+
 # Process Simulation Package
 
 The `process` package provides process equipment, unit operations, controllers, and process system management for building complete flowsheets.
@@ -34,22 +39,31 @@ This documentation is organized into the following sections:
 | Section | Description |
 |---------|-------------|
 | [equipment/](equipment/) | Equipment documentation (separators, compressors, etc.) |
+| [equipment/adsorption_bed.md](equipment/adsorption_bed) | **Adsorption bed** — transient simulation, LDF mass transfer, PSA/TSA cycles |
+| [mercury_removal.md](mercury_removal) | **Mercury removal guard beds** — chemisorption (PuraSpec), bed loading, breakthrough, degradation, mechanical design, cost |
+| [bioprocessing.md](bioprocessing) | **Bio-processing** — reactors, fermenters, solid-liquid separators, LLE, evaporators, dryers, crystallizers |
 | [processmodel/](processmodel/) | ProcessSystem and flowsheet management |
+| [process_json_export_and_e300_fluids.md](process_json_export_and_e300_fluids) | **Process JSON export** — self-contained ProcessSystem/ProcessModel JSON for MCP, including E300-equivalent component properties and volume correction |
+| [simulation-hooks-and-events.md](simulation-hooks-and-events) | **Lifecycle hooks, event bus, auto-validation** for ProcessSystem and ProcessModel |
 | [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
-| [controllers.md](controllers.md) | Process controllers and logic |
+| [controllers.md](controllers) | Process controllers and logic |
+| [unisim-to-neqsim-conversion.md](unisim-to-neqsim-conversion) | **UniSim/HYSYS conversion** — convert `.usc` models to NeqSim with E300 full-fluid transfer and export back to UniSim |
+| [piping_route_builder.md](piping_route_builder) | **STID/E3D line-list piping route builder** — convert route tables into serial Beggs-and-Brill hydraulic models and water-hammer screening handoffs |
+| [water_hammer_implementation.md](../wiki/water_hammer_implementation.md) | **Water hammer/liquid hammer screening** — fast valve closure, pump trip, STID route, tagreader event, and MCP runWaterHammer workflow |
+| [operational_evidence_package.md](operational_evidence_package) | **Operational evidence package** — combine P&ID/STID references, tagreader values, scenario actions, and bottleneck detection |
+| [exergy-analysis.md](exergy-analysis) | **Exergy analysis** — plant-wide destruction hotspots for ProcessSystem and ProcessModel |
 
 ### Process Design Guide
 
 | Document | Description |
 |----------|-------------|
-| [process_design_guide.md](process_design_guide.md) | **Complete guide to process design workflow using NeqSim** |
+| [process_design_guide.md](process_design_guide) | **Complete guide to process design workflow using NeqSim** |
 
 ### Design Framework (NEW) ✨
 
 | Document | Description |
 |----------|-------------|
-| [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK.md) | **Automated equipment sizing and optimization framework** |
-| [OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](OPTIMIZATION_IMPROVEMENT_PROPOSAL.md) | Implementation status and roadmap |
+| [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK) | **Automated equipment sizing and optimization framework** |
 
 **Key Features:**
 - `AutoSizeable` interface - Equipment auto-sizing from flow requirements
@@ -58,48 +72,132 @@ This documentation is organized into the following sections:
 - `DesignOptimizer` - Design-to-optimization workflow
 - Integration with MechanicalDesign and company TR documents
 
-### Capacity Constraint Framework
+### Optimization and Constraints Framework (NEW) ✨
 
 | Document | Description |
 |----------|-------------|
-| [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK.md) | **Framework for equipment capacity limits, bottleneck detection, and utilization tracking** |
+| [optimization/OPTIMIZATION_AND_CONSTRAINTS.md](optimization/OPTIMIZATION_AND_CONSTRAINTS) | **COMPREHENSIVE: Complete guide to optimization algorithms, constraint types, bottleneck analysis** |
+| [optimization/OPTIMIZATION_OVERVIEW.md](optimization/OPTIMIZATION_OVERVIEW) | When to use which optimizer |
+| [optimization/process-researcher.md](optimization/process-researcher) | **Process researcher** - generate and rank candidate flowsheets from feed/product targets, including reaction routes |
+| [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK) | Equipment capacity limits and utilization tracking |
+
+**Key Features:**
+- Five search algorithms: Binary, Golden-Section, Nelder-Mead, Particle Swarm, Gradient Descent
+- Multi-constraint support per equipment (speed, power, surge, K-factor, etc.)
+- Constraint types: HARD (trip/damage), SOFT (efficiency loss), DESIGN (normal envelope)
+- Constraint severity: CRITICAL, HARD, SOFT, ADVISORY
+- Automated bottleneck detection with `ProcessSystem.findBottleneck()`
+- Multi-objective Pareto optimization
+- External optimizer integration (Python/SciPy via `ProcessSimulationEvaluator`)
+
+### Corrosion Analysis ✨
+
+| Document | Description |
+|----------|-------------|
+| [corrosion/](corrosion/) | **Corrosion analysis module overview** — NORSOK M-506 CO2 corrosion rate + NORSOK M-001 material selection |
+| [corrosion/norsok_m506_corrosion_rate.md](corrosion/norsok_m506_corrosion_rate) | **NORSOK M-506 API** — CO2 corrosion rate prediction with fugacity, pH, correction factors |
+| [corrosion/norsok_m001_material_selection.md](corrosion/norsok_m001_material_selection) | **NORSOK M-001 API** — Material grade recommendation, sour service, chloride SCC |
+| [corrosion/pipeline_corrosion_integration.md](corrosion/pipeline_corrosion_integration) | **Pipeline integration** — Automated corrosion analysis from process simulation |
+
+### Electrical Design Documentation
+
+| Document | Description |
+|----------|-------------|
+| [electrical-design.md](electrical-design) | **Electrical design framework — motor sizing, VFD, cable, transformer, switchgear, hazardous area, equipment-specific designs, plant-wide load analysis** |
+
+### Dynamic Simulation
+
+| Document | Description |
+|----------|-------------|
+| [dynamic-simulation.md](dynamic-simulation) | **Dynamic simulation helper — auto-instruments a sized steady-state process with transmitters and PID controllers for transient simulation** |
+
+**Key Features:**
+- `DynamicProcessHelper` — one-call conversion from steady-state to dynamic
+- Auto-creates PT, LT, TT transmitters per equipment type
+- Auto-wires PID controllers (PC, LC, WLC) to downstream valves
+- Configurable PID tuning with sensible defaults
+- Convenience methods for flow and temperature control loops
+
+### Instrument Design Documentation
+
+| Document | Description |
+|----------|-------------|
+| [instrument-design.md](instrument-design) | **Instrument design framework — ISA-5.1 identification, SIL-rated safety instruments, I/O counting, DCS/SIS cabinet sizing, cost estimation, equipment-specific designs (separator, compressor, heat exchanger, pipeline, valve), plant-wide SystemInstrumentDesign** |
+
+**Key Features:**
+- Equipment-specific designs: Compressor, Pump, Separator, Heater/Cooler, Pipeline
+- `SystemElectricalDesign` for plant-wide load aggregation, transformer and generator sizing
+- IEC standards: 60034 (motors), 60502 (cables), 60076 (transformers), 61439 (switchgear)
+- `ProcessSystem.getSystemElectricalDesign()` for one-call plant electrical summary
 
 ### Mechanical Design Documentation
 
 | Document | Description |
 |----------|-------------|
-| [EQUIPMENT_DESIGN_PARAMETERS.md](EQUIPMENT_DESIGN_PARAMETERS.md) | **Equipment design parameters, autoSize vs MechanicalDesign guide** |
-| [mechanical_design_standards.md](mechanical_design_standards.md) | Design standards (NORSOK, ASME, API, DNV, etc.) |
-| [mechanical_design_database.md](mechanical_design_database.md) | Data sources, database schemas, and CSV configuration |
-| [pipeline_mechanical_design.md](pipeline_mechanical_design.md) | Pipeline mechanical design (wall thickness, stress, buckling) |
-| [topside_piping_design.md](topside_piping_design.md) | **Topside piping design (velocity, support, vibration per ASME B31.3)** |
-| [riser_mechanical_design.md](riser_mechanical_design.md) | Riser design (catenary, VIV, fatigue per DNV-OS-F201) |
-| [torg_integration.md](torg_integration.md) | Technical Requirements Documents (TORG) integration |
-| [field_development_orchestration.md](field_development_orchestration.md) | Complete design workflow orchestration |
+| [EQUIPMENT_DESIGN_PARAMETERS.md](EQUIPMENT_DESIGN_PARAMETERS) | **Equipment design parameters, autoSize vs MechanicalDesign guide** |
+| [mechanical_design_standards.md](mechanical_design_standards) | Design standards (NORSOK, ASME, API, DNV, etc.) |
+| [mechanical_design_database.md](mechanical_design_database) | Data sources, database schemas, and CSV configuration |
+| [pipeline_mechanical_design.md](pipeline_mechanical_design) | Pipeline mechanical design (wall thickness, stress, buckling, corrosion) |
+| [topside_piping_design.md](topside_piping_design) | **Topside piping design (velocity, support, vibration per ASME B31.3)** |
+| [riser_mechanical_design.md](riser_mechanical_design) | Riser design (catenary, VIV, fatigue per DNV-OS-F201) |
+| [well_mechanical_design.md](well_mechanical_design) | **Well casing/tubing design, barrier verification, cost estimation per NORSOK D-010, API 5CT** |
+| [torg_integration.md](torg_integration) | Technical Requirements Documents (TORG) integration |
+| [field_development_orchestration.md](field_development_orchestration) | Complete design workflow orchestration |
+| [mechanical_design/two_phase_heat_transfer.md](mechanical_design/two_phase_heat_transfer) | **Two-phase heat transfer — Shah condensation, Chen/Gungor-Winterton boiling, Friedel/MSH pressure drop, Ebert-Panchal fouling, incremental zone analysis, tube inserts** |
+
+### Cost Estimation Framework (NEW) ✨
+
+| Document | Description |
+|----------|-------------|
+| [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK) | **Comprehensive capital and operating cost estimation** |
+| [COST_ESTIMATION_API_REFERENCE.md](COST_ESTIMATION_API_REFERENCE) | **Detailed API reference for cost estimation classes** |
+
+**Key Features:**
+- Equipment cost estimation using Turton et al. correlations
+- Support for 14+ equipment types (separators, compressors, heat exchangers, tanks, expanders, ejectors, absorbers, etc.)
+- Multi-currency support (USD, EUR, NOK, GBP, CNY, JPY)
+- Location factors for 11 global regions
+- Operating cost (OPEX) calculation with utility costs
+- Financial metrics (payback period, ROI, NPV)
+- Process-level cost aggregation with JSON export
 
 ### Equipment Categories
 
 | Category | Documentation | Classes |
 |----------|--------------|---------|
-| Streams | [streams.md](equipment/streams.md) | Stream, EnergyStream, VirtualStream |
-| Separators | [separators.md](equipment/separators.md) | Separator, ThreePhaseSeparator, GasScrubber |
-| Heat Exchangers | [heat_exchangers.md](equipment/heat_exchangers.md) | Heater, Cooler, HeatExchanger |
-| Compressors | [compressors.md](equipment/compressors.md) | Compressor, CompressorChart |
-| Pumps | [pumps.md](equipment/pumps.md) | Pump, PumpChart |
-| Expanders | [expanders.md](equipment/expanders.md) | Expander, TurboExpanderCompressor |
-| Valves | [valves.md](equipment/valves.md) | ThrottlingValve, SafetyValve, BlowdownValve |
-| Distillation | [distillation.md](equipment/distillation.md) | DistillationColumn, SimpleTray |
-| Absorbers | [absorbers.md](equipment/absorbers.md) | SimpleAbsorber, SimpleTEGAbsorber |
-| Ejectors | [ejectors.md](equipment/ejectors.md) | Ejector |
-| Membranes | [membranes.md](equipment/membranes.md) | MembraneSeparator |
-| Flares | [flares.md](equipment/flares.md) | Flare, FlareStack |
-| Electrolyzers | [electrolyzers.md](equipment/electrolyzers.md) | Electrolyzer, CO2Electrolyzer |
-| Filters | [filters.md](equipment/filters.md) | Filter, CharCoalFilter |
-| Reactors | [reactors.md](equipment/reactors.md) | GibbsReactor |
-| Pipelines | [pipelines.md](equipment/pipelines.md) | Pipeline, AdiabaticPipe, TopsidePiping, Riser |
-| Tanks | [tanks.md](equipment/tanks.md) | Tank, VesselDepressurization |
-| Wells | [wells.md](equipment/wells.md) | Well equipment |
-| Mixers/Splitters | [mixers_splitters.md](equipment/mixers_splitters.md) | Mixer, Splitter |
+| Streams | [streams.md](equipment/streams) | Stream, EnergyStream, VirtualStream |
+| Separators | [separators.md](equipment/separators) | Separator, ThreePhaseSeparator, GasScrubber |
+| Heat Exchangers | [heat_exchangers.md](equipment/heat_exchangers) | Heater, Cooler, HeatExchanger |
+| Compressors | [compressors.md](equipment/compressors) | Compressor, CompressorChart, CompressorWashing |
+| Pumps | [pumps.md](equipment/pumps) | Pump, PumpChart |
+| Expanders | [expanders.md](equipment/expanders) | Expander, TurboExpanderCompressor |
+| Valves | [valves.md](equipment/valves) | ThrottlingValve, SafetyValve, BlowdownValve |
+| **Well Chokes** | [well_choke_implementation.md](well_choke_implementation) | Sachdeva, Gilbert choke models, ThrottlingValve integration |
+| Distillation | [distillation.md](equipment/distillation) | DistillationColumn, SimpleTray |
+| Absorbers | [absorbers.md](equipment/absorbers) | SimpleAbsorber, SimpleTEGAbsorber |
+| Ejectors | [ejectors.md](equipment/ejectors) | Ejector |
+| Membranes | [membranes.md](equipment/membranes) | MembraneSeparator |
+| Flares | [flares.md](equipment/flares) | Flare, FlareStack |
+| Electrolyzers | [electrolyzers.md](equipment/electrolyzers) | Electrolyzer, CO2Electrolyzer |
+| Filters | [filters.md](equipment/filters) | Filter, CharCoalFilter |
+| H2S Scavengers | [H2S_scavenger_guide.md](H2S_scavenger_guide) | H2S chemical scavenging (triazine, glyoxal, iron sponge) |
+| Reactors | [reactors.md](equipment/reactors) | GibbsReactor |
+| Pipelines | [pipelines.md](equipment/pipelines) | Pipeline, AdiabaticPipe, TopsidePiping, Riser |
+| **Water Hammer Screening** | [water_hammer_implementation.md](../wiki/water_hammer_implementation.md) | WaterHammerPipe, WaterHammerStudy, MCP runWaterHammer |
+| **Piping Route Builder** | [piping_route_builder.md](piping_route_builder) | PipingRouteBuilder for STID/E3D line-list route hydraulics |
+| **CO2 Well Analysis** | [co2_injection_well_analysis.md](co2_injection_well_analysis) | CO2InjectionWellAnalyzer, ImpurityMonitor, TransientWellbore, CO2FlowCorrections |
+| Looped Networks | [looped_networks.md](equipment/looped_networks) | LoopedPipeNetwork, Hardy Cross solver |
+| Tanks | [tanks.md](equipment/tanks) | Tank, VesselDepressurization |
+| Wells | [wells.md](equipment/wells) | Well equipment |
+| Subsea Trees | [subsea_trees.md](equipment/subsea_trees) | SubseaTree, valve control |
+| Subsea Manifolds | [subsea_manifolds.md](equipment/subsea_manifolds) | SubseaManifold |
+| Subsea Boosters | [subsea_boosters.md](equipment/subsea_boosters) | SubseaBooster, multiphase pumps |
+| Umbilicals | [umbilicals.md](equipment/umbilicals) | Umbilical systems |
+| Battery Storage | [battery_storage.md](equipment/battery_storage) | BatteryStorage |
+| **Heat Integration** | [heat_integration.md](equipment/heat_integration) | PinchAnalysis, HeatStream |
+| **Power Generation** | [power_generation.md](equipment/power_generation) | GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem, FuelCell, WindTurbine, SolarPanel |
+| Failure Modes | [failure_modes.md](equipment/failure_modes) | EquipmentFailureMode, reliability |
+| Mixers/Splitters | [mixers_splitters.md](equipment/mixers_splitters) | Mixer, Splitter |
 | Utility | [util/](equipment/util/) | Adjuster, Recycle, Calculator |
 
 ---
@@ -255,8 +353,8 @@ process/
 | Equipment | Documentation | Standards |
 |-----------|--------------|-----------|
 | Separators | See SeparatorMechanicalDesign | ASME, BS 5500 |
-| Compressors | [CompressorMechanicalDesign.md](CompressorMechanicalDesign.md) | API 617, API 672 |
-| Valves | [ValveMechanicalDesign.md](ValveMechanicalDesign.md) | IEC 60534, ANSI/ISA-75, ASME B16.34 |
+| Compressors | [CompressorMechanicalDesign.md](CompressorMechanicalDesign) | API 617, API 672 |
+| Valves | [ValveMechanicalDesign.md](ValveMechanicalDesign) | IEC 60534, ANSI/ISA-75, ASME B16.34 |
 
 ---
 
@@ -302,9 +400,9 @@ process.add(separator);
 process.runOptimized();
 
 // Get results
-System.out.println("Separator gas rate: " + 
+System.out.println("Separator gas rate: " +
     separator.getGasOutStream().getFlowRate("kg/hr") + " kg/hr");
-System.out.println("Separator liquid rate: " + 
+System.out.println("Separator liquid rate: " +
     separator.getLiquidOutStream().getFlowRate("kg/hr") + " kg/hr");
 ```
 
@@ -508,7 +606,7 @@ process.add(psv);
 
 ### Blowdown Systems
 
-See [Safety Simulation Roadmap](../safety/SAFETY_SIMULATION_ROADMAP.md) for detailed safety system documentation.
+See [Safety Simulation Roadmap](../safety/SAFETY_SIMULATION_ROADMAP) for detailed safety system documentation.
 
 ---
 
@@ -522,9 +620,9 @@ double timeStep = 1.0;           // 1 second
 process.setTimeStep(timeStep);
 for (double t = 0; t < simulationTime; t += timeStep) {
     process.runTransient();
-    
+
     // Log data
-    System.out.println(t + ", " + 
+    System.out.println(t + ", " +
         separator.getPressure() + ", " +
         separator.getGasOutStream().getFlowRate("kg/hr"));
 }
@@ -568,17 +666,17 @@ NeqSim includes foundational infrastructure to support the future of process sim
 | **Emissions Tracking** | [sustainability/](sustainability/) | CO2e accounting, regulatory reporting |
 | **Advisory Systems** | [advisory/](advisory/) | Look-ahead predictions with uncertainty |
 | **ML Integration** | [ml/](ml/) | Surrogate models, physics constraint validation |
-| **Safety Scenarios** | [safety/scenario-generation.md](safety/scenario-generation.md) | Automatic failure scenario generation |
-| **Batch Studies** | [optimization/batch-studies.md](optimization/batch-studies.md) | Parallel parameter studies |
+| **Safety Scenarios** | [safety/scenario-generation.md](safety/scenario-generation) | Automatic failure scenario generation |
+| **Batch Studies** | [optimization/batch-studies.md](optimization/batch-studies) | Parallel parameter studies |
 
-See [Future Infrastructure Overview](future-infrastructure.md) for complete documentation.
+See [Future Infrastructure Overview](future-infrastructure) for complete documentation.
 
 ---
 
 ## Related Documentation
 
 - [Equipment Documentation](equipment/) - Detailed equipment guides
-- [Process Logic Framework](../simulation/process_logic_framework.md) - Logic controllers
-- [Safety Systems](../safety/SAFETY_SIMULATION_ROADMAP.md) - Safety simulation
-- [Alarm System](../safety/alarm_system_guide.md) - Process alarms
-- [Future Infrastructure](future-infrastructure.md) - Digital twin, AI integration, sustainability
+- [Process Logic Framework](../simulation/process_logic_framework) - Logic controllers
+- [Safety Systems](../safety/SAFETY_SIMULATION_ROADMAP) - Safety simulation
+- [Alarm System](../safety/alarm_system_guide) - Process alarms
+- [Future Infrastructure](future-infrastructure) - Digital twin, AI integration, sustainability

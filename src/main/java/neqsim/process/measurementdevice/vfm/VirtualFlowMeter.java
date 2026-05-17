@@ -46,7 +46,7 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
   private double flowCoefficient = 1.0;
   private double calibrationFactor = 1.0;
 
-  private List<WellTestData> calibrationHistory = new ArrayList<>();
+  private transient List<WellTestData> calibrationHistory = new ArrayList<>();
   private Instant lastCalibration;
 
   private VFMResult lastResult;
@@ -199,7 +199,6 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
 
     // Calculate phase flow rates based on differential pressure
     double dpRatio = Math.sqrt(Math.abs(differentialPressure));
-    double totalMolarFlow = fluid.getTotalNumberOfMoles();
 
     // Apply flow coefficient and calibration
     double flowMultiplier = flowCoefficient * calibrationFactor * dpRatio * (chokeOpening / 100.0);

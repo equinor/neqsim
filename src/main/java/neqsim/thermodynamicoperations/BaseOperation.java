@@ -37,6 +37,13 @@ public abstract class BaseOperation implements OperationInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double[] get(String name, double[] defaultValue) {
+    double[] result = get(name);
+    return result != null ? result : defaultValue;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public String[][] getResultTable() {
     return new String[10][3];
   }

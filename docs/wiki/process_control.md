@@ -1,3 +1,8 @@
+---
+title: "Process control framework"
+description: "NeqSim contains a flexible process control framework for dynamic simulations."
+---
+
 # Process control framework
 
 NeqSim contains a flexible process control framework for dynamic simulations.
@@ -20,7 +25,7 @@ of how the controllers and control structures are used in simulations.
 
 ## Model predictive control
 
-The [`ModelPredictiveController`](../../src/main/java/neqsim/process/controllerdevice/ModelPredictiveController.java)
+The [`ModelPredictiveController`](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/controllerdevice/ModelPredictiveController.java)
 class adds multivariable model predictive control (MPC) to the framework. The
 controller uses a first-order process model with configurable gain, time
 constant, bias and prediction horizon to calculate an optimal control move that
@@ -122,11 +127,11 @@ the next optimisation. Supplying these predictions enables proactive responses
 to known feed changes and improves constraint tracking on multivariate systems.
 
 ```java
-controller.updateFeedConditions(Map.of(
-    "methane", 0.82,
-    "ethane", 0.08,
-    "propane", 0.03),
-    12.4);    // kmol/hr
+Map<String, Double> composition = new HashMap<>();
+composition.put("methane", 0.82);
+composition.put("ethane", 0.08);
+composition.put("propane", 0.03);
+controller.updateFeedConditions(composition, 12.4);    // kmol/hr
 ```
 
 ### Moving horizon estimation

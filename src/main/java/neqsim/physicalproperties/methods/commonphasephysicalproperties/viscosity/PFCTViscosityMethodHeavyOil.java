@@ -42,6 +42,12 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
       4.2903609488e-2, 1.4529023444e2, 6.1276818706e3};
   double[] viscRefK = {-9.74602, 18.0834, -4126.66, 44.6055, 0.976544, 81.8134, 15649.9};
 
+  /** Number of CSP viscosity correction factors. */
+  private static final int CSP_VISCOSITY_CORRECTION_FACTOR_COUNT = 4;
+
+  /** CSP viscosity correction factors for temperature, pressure, molar mass and alpha terms. */
+  private double[] cspViscosityCorrectionFactors = {1.0, 1.0, 1.0, 1.0};
+
   /**
    * <p>
    * Constructor for PFCTViscosityMethodHeavyOil.
@@ -153,18 +159,110 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
       }
 
       refVisosity = getRefComponentViscosity(T0, P0);
-      double LOviscosity = refVisosity * Math.pow(TCmix / Tc0, -1.0 / 6.0)
-          * Math.pow(PCmix / Pc0, 2.0 / 3.0) * Math.pow(Mmix / M0, 0.5) * alfaMix / alfa0;
+      double LOviscosity = calculateCorrespondingStatesViscosity(refVisosity, TCmix, Tc0, PCmix,
+          Pc0, Mmix, M0, alfaMix, alfa0);
       return LOviscosity * (1.0 - (75 - T0) / 10.0) + HOviscosity * (75.0 - T0) / 10.0;
     }
     // System.out.println("m/mix " + Mmix/M0);
     // System.out.println("a/amix " + alfaMix/alfa0);
     refVisosity = getRefComponentViscosity(T0, P0);
-    double viscosity = refVisosity * Math.pow(TCmix / Tc0, -1.0 / 6.0)
-        * Math.pow(PCmix / Pc0, 2.0 / 3.0) * Math.pow(Mmix / M0, 0.5) * alfaMix / alfa0;
+    double viscosity = calculateCorrespondingStatesViscosity(refVisosity, TCmix, Tc0, PCmix, Pc0,
+        Mmix, M0, alfaMix, alfa0);
     // System.out.println("viscosityLO " + viscosity);
 
     return viscosity;
+  }
+
+  /**
+   * Calculates the CSP viscosity from the reference component and four correction factors.
+   *
+   * @param referenceViscosity methane reference viscosity in Pa s
+   * @param mixtureCriticalTemperature mixture critical temperature in K
+   * @param referenceCriticalTemperature reference critical temperature in K
+   * @param mixtureCriticalPressure mixture critical pressure in bara
+   * @param referenceCriticalPressure reference critical pressure in bara
+   * @param mixtureMolarMass mixture molar mass in g/mol
+   * @param referenceMolarMass reference molar mass in g/mol
+   * @param mixtureAlpha mixture alpha correction
+   * @param referenceAlpha reference alpha correction
+   * @return calculated CSP viscosity in Pa s
+   */
+  private double calculateCorrespondingStatesViscosity(double referenceViscosity,
+      double mixtureCriticalTemperature, double referenceCriticalTemperature,
+      double mixtureCriticalPressure, double referenceCriticalPressure, double mixtureMolarMass,
+      double referenceMolarMass, double mixtureAlpha, double referenceAlpha) {
+    return referenceViscosity
+        * Math.pow(mixtureCriticalTemperature / referenceCriticalTemperature,
+            -1.0 / 6.0 * cspViscosityCorrectionFactors[0])
+        * Math.pow(mixtureCriticalPressure / referenceCriticalPressure,
+            2.0 / 3.0 * cspViscosityCorrectionFactors[1])
+        * Math.pow(mixtureMolarMass / referenceMolarMass, 0.5 * cspViscosityCorrectionFactors[2])
+        * Math.pow(mixtureAlpha / referenceAlpha, cspViscosityCorrectionFactors[3]);
+  }
+
+  /**
+   * Sets the four CSP viscosity correction factors.
+   *
+   * @param correctionFactors correction factors for temperature, pressure, molar mass and alpha
+   *        terms
+   * @throws IllegalArgumentException if the array does not contain four finite values
+   */
+  public void setCspViscosityCorrectionFactors(double[] correctionFactors) {
+    validateCspViscosityCorrectionFactors(correctionFactors);
+    cspViscosityCorrectionFactors = correctionFactors.clone();
+  }
+
+  /**
+   * Sets one CSP viscosity correction factor.
+   *
+   * @param index correction factor index, from 0 to 3
+   * @param value finite correction factor value
+   * @throws IllegalArgumentException if the index is outside 0 to 3 or the value is not finite
+   */
+  public void setCspViscosityCorrectionFactor(int index, double value) {
+    validateCspViscosityCorrectionFactor(index, value);
+    cspViscosityCorrectionFactors[index] = value;
+  }
+
+  /**
+   * Gets the four CSP viscosity correction factors.
+   *
+   * @return copy of the correction factors for temperature, pressure, molar mass and alpha terms
+   */
+  public double[] getCspViscosityCorrectionFactors() {
+    return cspViscosityCorrectionFactors.clone();
+  }
+
+  /**
+   * Validates an array of CSP viscosity correction factors.
+   *
+   * @param correctionFactors correction factors to validate
+   * @throws IllegalArgumentException if the array does not contain four finite values
+   */
+  private void validateCspViscosityCorrectionFactors(double[] correctionFactors) {
+    if (correctionFactors == null
+        || correctionFactors.length != CSP_VISCOSITY_CORRECTION_FACTOR_COUNT) {
+      throw new IllegalArgumentException("CSP viscosity requires exactly four correction factors");
+    }
+    for (int i = 0; i < correctionFactors.length; i++) {
+      validateCspViscosityCorrectionFactor(i, correctionFactors[i]);
+    }
+  }
+
+  /**
+   * Validates one CSP viscosity correction factor.
+   *
+   * @param index correction factor index, from 0 to 3
+   * @param value correction factor value
+   * @throws IllegalArgumentException if the index is outside 0 to 3 or the value is not finite
+   */
+  private void validateCspViscosityCorrectionFactor(int index, double value) {
+    if (index < 0 || index >= CSP_VISCOSITY_CORRECTION_FACTOR_COUNT) {
+      throw new IllegalArgumentException("CSP viscosity correction factor index must be 0 to 3");
+    }
+    if (Double.isNaN(value) || Double.isInfinite(value)) {
+      throw new IllegalArgumentException("CSP viscosity correction factor must be finite");
+    }
   }
 
   /**
@@ -231,5 +329,13 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
     }
     double refVisc = (viscRefO + viscRef1 + viscRef2 + viscRef3) / 1.0e7;
     return refVisc;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PFCTViscosityMethodHeavyOil clone() {
+    PFCTViscosityMethodHeavyOil method = (PFCTViscosityMethodHeavyOil) super.clone();
+    method.cspViscosityCorrectionFactors = cspViscosityCorrectionFactors.clone();
+    return method;
   }
 }

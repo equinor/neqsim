@@ -1,3 +1,8 @@
+---
+title: NeqSim Safety Simulation Roadmap
+description: A comprehensive analysis of existing safety capabilities and a realistic implementation plan for enhancing NeqSim's safety simulation features.
+---
+
 # NeqSim Safety Simulation Roadmap
 
 A comprehensive analysis of existing safety capabilities and a realistic implementation plan for enhancing NeqSim's safety simulation features.

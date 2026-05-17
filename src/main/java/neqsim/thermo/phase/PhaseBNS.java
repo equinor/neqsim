@@ -36,7 +36,6 @@ public class PhaseBNS extends PhasePrEos {
    */
   public PhaseBNS(double[] tcs, double[] pcs, double[] mws, double[] acfs, double[] omegaA,
       double[] omegaB, double[] vshift) {
-    super();
     this.tcs = tcs;
     this.pcs = pcs;
     this.mws = mws;

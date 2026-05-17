@@ -23,13 +23,13 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * MMPCalculator mmp = new MMPCalculator(reservoirOil, injectionGas);
  * mmp.setTemperature(100.0); // 100°C
  * mmp.setRecoveryThreshold(0.90); // 90% recovery
  * mmp.run();
- * 
+ *
  * System.out.println("MMP: " + mmp.getMMP() + " bara");
  * System.out.println("Miscibility mechanism: " + mmp.getMiscibilityMechanism());
  * </pre>
@@ -102,6 +102,7 @@ public class MMPCalculator extends BasePVTsimulation {
    *
    * @param temperatureCelsius Temperature in Celsius
    */
+  @Override
   public void setTemperature(double temperatureCelsius) {
     this.temperature = temperatureCelsius + 273.15;
   }
@@ -472,6 +473,7 @@ public class MMPCalculator extends BasePVTsimulation {
    *
    * @return Array of pressures (bara)
    */
+  @Override
   public double[] getPressures() {
     return pressures;
   }

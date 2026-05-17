@@ -1,3 +1,8 @@
+---
+title: NeqSim AI-Friendly Validation Framework
+description: This document describes the AI-friendly validation and integration framework added to NeqSim. The framework provides structured validation, error remediation hints, and API discovery for AI/ML agents ...
+---
+
 # NeqSim AI-Friendly Validation Framework
 
 ## Overview

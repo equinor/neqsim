@@ -426,7 +426,7 @@ public class ChemEq implements java.io.Serializable {
    * <p>
    * solve.
    * </p>
-   * 
+   *
    * <p>
    * Iteratively solves the chemical equilibrium using Newton-Raphson method. Continues until
    * relative change in moles is below tolerance or max iterations reached.

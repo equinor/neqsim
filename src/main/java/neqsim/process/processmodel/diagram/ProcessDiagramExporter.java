@@ -18,7 +18,6 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.dexpi.DexpiProcessUnit;
 import neqsim.process.processmodel.dexpi.DexpiStream;
-import neqsim.process.processmodel.diagram.EquipmentRole;
 import neqsim.process.processmodel.graph.ProcessEdge;
 import neqsim.process.processmodel.graph.ProcessGraph;
 import neqsim.process.processmodel.graph.ProcessGraphBuilder;

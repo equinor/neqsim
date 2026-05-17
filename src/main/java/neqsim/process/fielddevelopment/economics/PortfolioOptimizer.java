@@ -27,24 +27,24 @@ import org.apache.logging.log4j.Logger;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * PortfolioOptimizer optimizer = new PortfolioOptimizer();
- * 
+ *
  * // Add projects
  * optimizer.addProject("Field A", 500.0, 850.0, ProjectType.DEVELOPMENT, 0.85);
  * optimizer.addProject("Field B", 300.0, 420.0, ProjectType.DEVELOPMENT, 0.90);
  * optimizer.addProject("Field C IOR", 100.0, 180.0, ProjectType.IOR, 0.95);
  * optimizer.addProject("Exploration X", 150.0, 600.0, ProjectType.EXPLORATION, 0.30);
- * 
+ *
  * // Set annual budget constraints
  * optimizer.setAnnualBudget(2025, 400.0);
  * optimizer.setAnnualBudget(2026, 450.0);
  * optimizer.setAnnualBudget(2027, 350.0);
- * 
+ *
  * // Optimize
  * PortfolioResult result = optimizer.optimize(OptimizationStrategy.GREEDY_NPV_RATIO);
- * 
+ *
  * // Results
  * System.out.println("Selected projects: " + result.getSelectedProjects());
  * System.out.println("Portfolio NPV: " + result.getTotalNpv() + " MUSD");

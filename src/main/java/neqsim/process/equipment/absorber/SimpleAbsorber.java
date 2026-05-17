@@ -103,8 +103,21 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
-  public StreamInterface getOutStream() {
+  public StreamInterface getOutletStream() {
     return outStream[0];
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>outStream</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.Stream} object
+   * @deprecated use {@link #getOutletStream()} instead
+   */
+  @Deprecated
+  public StreamInterface getOutStream() {
+    return getOutletStream();
   }
 
   /**
@@ -115,8 +128,22 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
    * @param i a int
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
-  public StreamInterface getOutStream(int i) {
+  public StreamInterface getOutletStream(int i) {
     return outStream[i];
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>outStream</code>.
+   * </p>
+   *
+   * @param i a int
+   * @return a {@link neqsim.process.equipment.stream.Stream} object
+   * @deprecated use {@link #getOutletStream(int)} instead
+   */
+  @Deprecated
+  public StreamInterface getOutStream(int i) {
+    return getOutletStream(i);
   }
 
   /**
@@ -144,13 +171,26 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
 
   /**
    * <p>
-   * Setter for property <code>temperatureOut</code>.
+   * Set the outlet temperature.
    * </p>
    *
    * @param temperature Temperature in Kelvin
    */
-  public void setOutTemperature(double temperature) {
+  public void setOutletTemperature(double temperature) {
     this.temperatureOut = temperature;
+  }
+
+  /**
+   * <p>
+   * Setter for property <code>temperatureOut</code>.
+   * </p>
+   *
+   * @param temperature Temperature in Kelvin
+   * @deprecated use {@link #setOutletTemperature(double)} instead
+   */
+  @Deprecated
+  public void setOutTemperature(double temperature) {
+    setOutletTemperature(temperature);
   }
 
   /**
@@ -161,8 +201,22 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
    * @param i a int
    * @return Temperature of outstream i in Kelvin
    */
-  public double getOutTemperature(int i) {
+  public double getOutletTemperature(int i) {
     return outStream[i].getThermoSystem().getTemperature();
+  }
+
+  /**
+   * <p>
+   * Get temperature of outstream i.
+   * </p>
+   *
+   * @param i a int
+   * @return Temperature of outstream i in Kelvin
+   * @deprecated use {@link #getOutletTemperature(int)} instead
+   */
+  @Deprecated
+  public double getOutTemperature(int i) {
+    return getOutletTemperature(i);
   }
 
   /**
@@ -353,7 +407,13 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
    * @return a double
    */
   public double getFsFactor() {
-    double intArea = 3.14 * getInternalDiameter() * getInternalDiameter() / 4.0;
+    if (getGasOutStream() == null || getGasOutStream().getThermoSystem() == null) {
+      return 0.0;
+    }
+    double intArea = Math.PI * getInternalDiameter() * getInternalDiameter() / 4.0;
+    if (intArea <= 0.0) {
+      return 0.0;
+    }
     return getGasOutStream().getThermoSystem().getFlowRate("m3/sec") / intArea
         * Math.sqrt(getGasOutStream().getThermoSystem().getDensity("kg/m3"));
   }
@@ -366,7 +426,13 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
    * @return a double
    */
   public double getWettingRate() {
-    double intArea = 3.14 * getInternalDiameter() * getInternalDiameter() / 4.0;
+    if (getLiquidOutStream() == null || getLiquidOutStream().getThermoSystem() == null) {
+      return 0.0;
+    }
+    double intArea = Math.PI * getInternalDiameter() * getInternalDiameter() / 4.0;
+    if (intArea <= 0.0) {
+      return 0.0;
+    }
     return getLiquidOutStream().getThermoSystem().getFlowRate("m3/hr") / intArea;
   }
 

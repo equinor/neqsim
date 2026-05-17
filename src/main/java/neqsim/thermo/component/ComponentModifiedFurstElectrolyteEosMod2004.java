@@ -171,38 +171,38 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
     diElectricdndV = calcdiElectricdndV(phase, numberOfComponents, temp, pres);
     diElectricdndT = calcdiElectricdndT(phase, numberOfComponents, temp, pres);
     alphai = -(electronCharge * electronCharge * avagadroNumber) / (vacumPermittivity
-        * Math.pow(((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDiElectricConstant(), 2.0)
+        * Math.pow(((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDielectricConstant(), 2.0)
         * R * temp) * diElectricdn;
     alphaiT = -electronCharge * electronCharge * avagadroNumber
         / (vacumPermittivity * Math
-            .pow(((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDiElectricConstant(), 2.0) * R
+            .pow(((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDielectricConstant(), 2.0) * R
             * temp)
         * diElectricdndT
         + electronCharge * electronCharge * avagadroNumber
             / (vacumPermittivity
                 * Math.pow(
-                    ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDiElectricConstant(), 2.0)
+                    ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDielectricConstant(), 2.0)
                 * R * temp * temp)
             * diElectricdn
         + 2.0 * electronCharge * electronCharge * avagadroNumber
             / (vacumPermittivity
                 * Math.pow(
-                    ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDiElectricConstant(), 3.0)
+                    ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDielectricConstant(), 3.0)
                 * R * temp)
             * diElectricdn
-            * ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDiElectricConstantdT();
+            * ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDielectricConstantdT();
     alphaiV = -electronCharge * electronCharge * avagadroNumber
         / (vacumPermittivity * Math
-            .pow(((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDiElectricConstant(), 2.0) * R
+            .pow(((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDielectricConstant(), 2.0) * R
             * temp)
         * diElectricdndV
         + 2.0 * electronCharge * electronCharge * avagadroNumber
             / (vacumPermittivity
                 * Math.pow(
-                    ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDiElectricConstant(), 3.0)
+                    ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDielectricConstant(), 3.0)
                 * R * temp)
             * diElectricdn
-            * ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDiElectricConstantdV();
+            * ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDielectricConstantdV();
     XLRi = calcXLRdN(phase, numberOfComponents, temp, pres);
     XBorni = ionicCharge * ionicCharge / (getLennardJonesMolecularDiameter() * 1e-10);
     super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, initType);
@@ -224,15 +224,15 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
       double temperature, double pressure) {
     double temp = 2.0 * electronCharge * electronCharge * avagadroNumber
         / (vacumPermittivity * Math
-            .pow(((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDiElectricConstant(), 3.0) * R
+            .pow(((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDielectricConstant(), 3.0) * R
             * temperature)
         * diElectricdn
         * ((ComponentModifiedFurstElectrolyteEosMod2004) ((PhaseModifiedFurstElectrolyteEosMod2004) phase)
-            .getComponent(j)).getDiElectricConstantdn()
+            .getComponent(j)).getDielectricConstantdn()
         - electronCharge * electronCharge * avagadroNumber
             / (vacumPermittivity
                 * Math.pow(
-                    ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDiElectricConstant(), 2.0)
+                    ((PhaseModifiedFurstElectrolyteEosMod2004) phase).getDielectricConstant(), 2.0)
                 * R * temperature)
             * calcdiElectricdndn(j, phase, numberOfComponents, temperature, pressure);
     return temp;
@@ -242,14 +242,11 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
   @Override
   public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    double Fsup = 0;
-    double FSR2 = 0;
-    double FLR = 0;
-    double FBorn = 0;
-    Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
-    FSR2 = dFSR2dN(phase, numberOfComponents, temperature, pressure);
-    FLR = dFLRdN(phase, numberOfComponents, temperature, pressure);
-    FBorn = dFBorndN(phase, numberOfComponents, temperature, pressure);
+    double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
+    double FSR2 = dFSR2dN(phase, numberOfComponents, temperature, pressure);
+    double FLR = dFLRdN(phase, numberOfComponents, temperature, pressure);
+    double FBorn = dFBorndN(phase, numberOfComponents, temperature, pressure);
+
     // System.out.println("phase " + phase.getType());
     // System.out.println("name " + componentName);
     // System.out.println("Fsup: " + super.dFdN(phase,
@@ -422,7 +419,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
      * phase.getComponent(i).getNumberOfMolesInPhase(); } }
      */
     return 0.0;
-    // return getDiElectricConstant(temperature)/ans2 -
+    // return getDielectricConstant(temperature)/ans2 -
     // ((PhaseModifiedFurstElectrolyteEosMod2004)
     // phase).getSolventDiElectricConstant()/ans2;
   }
@@ -450,9 +447,9 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
      * phase.getComponent(i).getNumberOfMolesInPhase(); } }
      */
     return 0.0;
-    // return -getDiElectricConstant(temperature)/(ans2*ans2) -
+    // return -getDielectricConstant(temperature)/(ans2*ans2) -
     // ((ComponentModifiedFurstElectrolyteEosMod2004)((PhaseModifiedFurstElectrolyteEosMod2004)
-    // phase).getComponent(j)).getDiElectricConstant(temperature)/(ans2*ans2) +
+    // phase).getComponent(j)).getDielectricConstant(temperature)/(ans2*ans2) +
     // 2.0*((PhaseModifiedFurstElectrolyteEosMod2004)
     // phase).getSolventDiElectricConstant()/(ans2*ans2);
   }
@@ -478,7 +475,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
      * phase.getComponent(i).getNumberOfMolesInPhase(); } }
      */
     return 0.0;
-    // return getDiElectricConstantdT(temperature)/ans2 -
+    // return getDielectricConstantdT(temperature)/ans2 -
     // ((PhaseModifiedFurstElectrolyteEosMod2004)
     // phase).getSolventDiElectricConstantdT()/ans2;
   }
@@ -862,12 +859,12 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
 
   /**
    * <p>
-   * getDiElectricConstantdn.
+   * getDielectricConstantdn.
    * </p>
    *
    * @return a double
    */
-  public double getDiElectricConstantdn() {
+  public double getDielectricConstantdn() {
     return diElectricdn;
   }
 

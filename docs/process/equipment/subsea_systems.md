@@ -1,3 +1,8 @@
+---
+title: Subsea Production Systems
+description: Documentation for subsea production equipment in NeqSim.
+---
+
 # Subsea Production Systems
 
 Documentation for subsea production equipment in NeqSim.
@@ -251,7 +256,7 @@ import java.util.ArrayList;
 Adjuster rateControl = new Adjuster("Rate Adjuster");
 rateControl.setActivateWhenLess(true);
 rateControl.setTargetVariable(flowline.getOutletStream(), "pressure", 80.0, "bara");
-rateControl.setAdjustedVariable(producedStream, "flow rate");
+rateControl.setAdjustedVariable(producedStream, "flow", "kg/hr");
 
 // Add adjuster to process
 subsea.add(rateControl);
@@ -262,10 +267,10 @@ ArrayList<double[]> productionHistory = new ArrayList<double[]>();
 for (int day = 0; day < 365; day++) {
     // Run reservoir for one day
     reservoir.runTransient(60 * 60 * 24);  // seconds in day
-    
+
     // Run subsea system
     subsea.run();
-    
+
     // Record data
     productionHistory.add(new double[] {
         day,
@@ -273,11 +278,11 @@ for (int day = 0; day < 365; day++) {
         reservoir.getOilProductionTotal("MSm3"),
         reservoir.getPressure()
     });
-    
+
     // Monthly output
     if (day % 30 == 0) {
         System.out.printf("Day %d: Rate=%.0f kg/hr, Cum=%.2f MSm3, P_res=%.1f bara%n",
-            day, 
+            day,
             producedStream.getFlowRate("kg/hr"),
             reservoir.getOilProductionTotal("MSm3"),
             reservoir.getPressure());
@@ -340,11 +345,11 @@ exportLine.getPipeline().setLength(15000.0);
 
 ## Related Documentation
 
-- [Reservoirs](reservoirs.md) - Reservoir modeling
-- [Pipelines](pipelines.md) - Pipeline flow models
-- [Risers](pipelines.md#risers) - Riser types (SCR, TTR, Flexible, Lazy-Wave)
-- [Riser Mechanical Design](../riser_mechanical_design.md) - Riser mechanical design
-- [Valves](valves.md) - Choke valves
-- [Manifolds](manifolds.md) - Subsea manifolds
-- [Networks](networks.md) - Pipeline networks
-- [Two-Phase Pipe Flow](../../fluidmechanics/TwoPhasePipeFlowModel.md) - Flow correlations
+- [Reservoirs](reservoirs) - Reservoir modeling
+- [Pipelines](pipelines) - Pipeline flow models
+- [Risers](pipelines#risers) - Riser types (SCR, TTR, Flexible, Lazy-Wave)
+- [Riser Mechanical Design](../riser_mechanical_design) - Riser mechanical design
+- [Valves](valves) - Choke valves
+- [Manifolds](manifolds) - Subsea manifolds
+- [Networks](networks) - Pipeline networks
+- [Two-Phase Pipe Flow](../../fluidmechanics/TwoPhasePipeFlowModel) - Flow correlations

@@ -22,6 +22,7 @@ import neqsim.thermodynamicoperations.flashops.PHflash;
 import neqsim.thermodynamicoperations.flashops.PHflashSingleComp;
 import neqsim.thermodynamicoperations.flashops.PHsolidFlash;
 import neqsim.thermodynamicoperations.flashops.PSFlash;
+import neqsim.thermodynamicoperations.flashops.PVFflash;
 import neqsim.thermodynamicoperations.flashops.PSFlashGERG2008;
 import neqsim.thermodynamicoperations.flashops.PSFlashLeachman;
 import neqsim.thermodynamicoperations.flashops.PSFlashVega;
@@ -44,6 +45,7 @@ import neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetTemp
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlashDer;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointTemperatureNoDer;
+import neqsim.thermodynamicoperations.flashops.saturationops.CapillaryDewPointFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.CalcSaltSatauration;
 import neqsim.thermodynamicoperations.flashops.saturationops.CheckScalePotential;
 import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyFlashInterface;
@@ -67,8 +69,7 @@ import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointTemper
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.CricondenBarFlash;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.CricondenThermFlash;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.HPTphaseEnvelope;
-import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelope;
-import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelopeNew2;
+import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTPhaseEnvelopeMichelsen;
 import neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTphaseEnvelopeNew3;
 import neqsim.thermodynamicoperations.phaseenvelopeops.reactivecurves.PloadingCurve2;
 import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGeneratorWaterKeywordFormat;
@@ -91,7 +92,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ThermodynamicOperations.class);
 
-  private Thread thermoOperationThread = new Thread();
+  private transient Thread thermoOperationThread = new Thread();
   private OperationInterface operation = null;
 
   SystemInterface system = null;
@@ -182,8 +183,17 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       system.setTotalNumberOfMoles(1.0);
       system.init(1);
     }
-    operation =
-        new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+    if (system instanceof neqsim.thermo.system.SystemSAFTVRMie) {
+      // SAFT-VR Mie uses a specialized TPflash with separate volume solvers per phase
+      // for improved robustness with the non-cubic EOS.
+      // Standard bubble/dew point algorithms use the standard init(1) path which works
+      // via the overridden molarVolume() and dFdN/dFdNdT/dFdNdV derivatives.
+      operation = new neqsim.thermodynamicoperations.flashops.TPflashSAFT(system,
+          system.doSolidPhaseCheck());
+    } else {
+      operation =
+          new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+    }
     if (!isRunAsThread()) {
       getOperation().run();
     } else {
@@ -399,6 +409,64 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Solve simultaneous chemical and phase equilibrium at constant T, P using the modified RAND
+   * (non-stoichiometric) method.
+   *
+   * <p>
+   * The method minimizes total Gibbs energy subject to element balance constraints without
+   * requiring explicit reaction stoichiometry. It automatically determines the number of
+   * independent reactions from the formula matrix (element-component mapping) and handles
+   * single-phase chemical equilibrium, VLE, and VLLE with simultaneous reactions in all phases.
+   * </p>
+   *
+   * <p>
+   * If no element data is available for the components (no independent reactions detected), the
+   * method falls back to a standard TP flash.
+   * </p>
+   */
+  public void reactiveTPflash() {
+    operation =
+        new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphaseTPflash(system);
+    getOperation().run();
+  }
+
+  /**
+   * Reactive multiphase PH flash: finds the equilibrium temperature, phase split, and composition
+   * at a given pressure P and total enthalpy H_spec, with simultaneous chemical and phase
+   * equilibrium.
+   *
+   * <p>
+   * Uses a nested approach: Newton-Raphson on 1/T (outer loop) wraps the Modified RAND reactive TP
+   * flash (inner loop). Suitable for systems with gas-phase reactions (WGS, SMR, NH3 synthesis),
+   * ionic equilibria, and multiphase reactive systems.
+   * </p>
+   *
+   * @param Hspec specified total enthalpy in J
+   * @param type flash type (0 = standard)
+   */
+  public void reactivePHflash(double Hspec, int type) {
+    operation = new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash(
+        system, Hspec, type);
+    getOperation().run();
+  }
+
+  /**
+   * Reactive multiphase PS flash: finds the equilibrium temperature, phase split, and composition
+   * at a given pressure P and total entropy S_spec, with simultaneous chemical and phase
+   * equilibrium.
+   *
+   * @param Sspec specified total entropy in J/K
+   */
+  public void reactivePSflash(double Sspec) {
+    neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash phflash =
+        new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash(system,
+            0.0, 0);
+    phflash.setEntropySpec(Sspec);
+    operation = phflash;
+    getOperation().run();
+  }
+
+  /**
    * <p>
    * PHflash.
    * </p>
@@ -582,6 +650,34 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   public void PHflash2(double Hspec, int type) {
     operation = new PHflash(system, Hspec, type);
     getOperation().run();
+  }
+
+  /**
+   * Perform a Pressure-Vapor Fraction flash to find the temperature at which the system achieves
+   * the specified molar vapor fraction at the current pressure.
+   *
+   * <p>
+   * This is commonly used in process design to specify a desired quality. A vapor fraction of 0.0
+   * is the bubble point and 1.0 is the dew point.
+   * </p>
+   *
+   * @param vaporFraction target molar vapor fraction (0.0 to 1.0)
+   */
+  public void PVFflash(double vaporFraction) {
+    operation = new PVFflash(system, vaporFraction);
+    getOperation().run();
+  }
+
+  /**
+   * Perform a Pressure-Vapor Fraction flash at a specified pressure with the given vapor fraction.
+   *
+   * @param vaporFraction target molar vapor fraction (0.0 to 1.0)
+   * @param pressure the pressure value
+   * @param pressureUnit the unit of pressure (e.g., "bara", "barg", "Pa", "MPa")
+   */
+  public void PVFflash(double vaporFraction, double pressure, String pressureUnit) {
+    system.setPressure(pressure, pressureUnit);
+    PVFflash(vaporFraction);
   }
 
   /**
@@ -1534,13 +1630,17 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       factor -= 2 * system.getPhase(0).getComponent("MEG").getz()
           / system.getPhase(0).getComponent("water").getz();
     }
-    if (factor < 2) {
-      factor = 2;
+    // Ensure factor is positive but allow inhibitor effects
+    if (factor < 0.1) {
+      factor = 0.1;
     }
 
     system.setTemperature(273.0 + system.getPressure() / 100.0 * 20.0 * factor - 20.0);
     if (system.getTemperature() > 298.15) {
       system.setTemperature(273.0 + 25.0);
+    }
+    if (system.getTemperature() < 200.0) {
+      system.setTemperature(200.0); // Don't start too low
     }
     // logger.info("guess hydrate temperature " + system.getTemperature());
     operation = new HydrateFormationTemperatureFlash(system);
@@ -1872,6 +1972,47 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Computes the capillary dew point temperature at the current system pressure.
+   *
+   * <p>
+   * The capillary dew point accounts for the Young-Laplace pressure difference across the curved
+   * gas-liquid interface in a pore or capillary. This shifts the dew point to a higher temperature
+   * than the bulk (flat-interface) dew point.
+   * </p>
+   *
+   * @param poreRadiusM the effective pore or capillary radius in meters
+   * @throws neqsim.util.exception.IsNaNException if the calculation does not converge
+   */
+  public void capillaryDewPointTemperatureFlash(double poreRadiusM) throws IsNaNException {
+    ConstantDutyFlashInterface operation = new CapillaryDewPointFlash(system, poreRadiusM);
+    operation.run();
+    if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
+      // throw new neqsim.util.exception.IsNaNException(this,
+      // "capillaryDewPointTemperatureFlash",
+      // "Could not find solution - possible no dew point exists");
+    }
+  }
+
+  /**
+   * Computes the capillary dew point temperature with a specified contact angle.
+   *
+   * @param poreRadiusM the effective pore or capillary radius in meters
+   * @param contactAngleRad the contact angle in radians (0 = perfect wetting)
+   * @throws neqsim.util.exception.IsNaNException if the calculation does not converge
+   */
+  public void capillaryDewPointTemperatureFlash(double poreRadiusM, double contactAngleRad)
+      throws IsNaNException {
+    ConstantDutyFlashInterface operation =
+        new CapillaryDewPointFlash(system, poreRadiusM, contactAngleRad);
+    operation.run();
+    if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
+      // throw new neqsim.util.exception.IsNaNException(this,
+      // "capillaryDewPointTemperatureFlash",
+      // "Could not find solution - possible no dew point exists");
+    }
+  }
+
+  /**
    * <p>
    * dewPointPressureFlashHC.
    * </p>
@@ -1931,9 +2072,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    */
   public void calcPTphaseEnvelope() {
-    operation = new PTphaseEnvelope(system, fileName, (1.0 - 1e-10), 1.0, false);
-    // thisThread = new Thread(operation);
-    // thisThread.start();
+    operation = new PTPhaseEnvelopeMichelsen(system, fileName, (1.0 - 1e-10), 1.0, false);
     getOperation().run();
   }
 
@@ -1950,11 +2089,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (bubfirst) {
       phasefraction = 1.0e-10;
     }
-    operation = new PTphaseEnvelope(system, fileName, phasefraction, lowPres, bubfirst);
-
-    // thisThread = new Thread(operation);
-    // thisThread.start();
-    getOperation().run();
+    operation = new PTPhaseEnvelopeMichelsen(system, fileName, phasefraction, lowPres, bubfirst);
+    if (!isRunAsThread()) {
+      getOperation().run();
+    } else {
+      run();
+    }
   }
 
   /**
@@ -1965,9 +2105,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param lowPres a double
    */
   public void calcPTphaseEnvelope(double lowPres) {
-    operation = new PTphaseEnvelope(system, fileName, 1e-10, lowPres, true);
-    // thisThread = new Thread(operation);
-    // thisThread.start();
+    operation = new PTPhaseEnvelopeMichelsen(system, fileName, 1e-10, lowPres, true);
     getOperation().run();
   }
 
@@ -1983,10 +2121,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (bubfirst) {
       phasefraction = 1.0e-10;
     }
-    operation = new PTphaseEnvelope(system, fileName, phasefraction, 1.0, bubfirst);
-
-    // thisThread = new Thread(operation);
-    // thisThread.start();
+    operation = new PTPhaseEnvelopeMichelsen(system, fileName, phasefraction, 1.0, bubfirst);
     if (!isRunAsThread()) {
       getOperation().run();
     } else {
@@ -2003,38 +2138,35 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param phasefraction a double
    */
   public void calcPTphaseEnvelope(double lowPres, double phasefraction) {
-    operation = new PTphaseEnvelope(system, fileName, phasefraction, lowPres, true);
-
-    // thisThread = new Thread(operation);
-    // thisThread.start();
+    operation = new PTPhaseEnvelopeMichelsen(system, fileName, phasefraction, lowPres, true);
     getOperation().run();
   }
 
   /**
-   * <p>
-   * calcPTphaseEnvelopeNew.
-   * </p>
+   * Calculates a PT phase envelope.
+   *
+   * @deprecated Use {@link #calcPTphaseEnvelope()} instead. This method now delegates to the
+   *             standard phase envelope calculation.
    */
+  @Deprecated
   public void calcPTphaseEnvelope2() {
-    operation = new PTphaseEnvelopeNew2(system, fileName, (1.0 - 1e-10), 1.0, false);
-    // thisThread = new Thread(operation);
-    // thisThread.start();
-    getOperation().run();
+    calcPTphaseEnvelope();
   }
 
   /**
-   * <p>
-   * calcPTphaseEnvelopeNew.
-   * </p>
+   * Calculates a PT phase envelope.
+   *
+   * @deprecated Use {@link #calcPTphaseEnvelope()} instead. This method now delegates to the
+   *             standard phase envelope calculation.
    */
+  @Deprecated
   public void calcPTphaseEnvelopeNew() {
-    // double phasefraction = 1.0 - 1e-10;
-    // operation = new pTphaseEnvelope(system, fileName, phasefraction, 1.0);
-    getOperation().run();
+    calcPTphaseEnvelope();
   }
 
   /**
-   * Calculates a phase envelope matrix using PTphaseEnvelopeNew3.
+   * Calculates a phase envelope matrix using PTphaseEnvelopeNew3. This grid-based method evaluates
+   * the phase state at each point in a P-T grid, rather than tracing the boundary.
    *
    * @param minPressure minimum pressure (bar)
    * @param maxPressure maximum pressure (bar)
@@ -2048,6 +2180,64 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     operation = new PTphaseEnvelopeNew3(system, minPressure, maxPressure, minTemp, maxTemp,
         pressureStep, tempStep);
     operation.run();
+  }
+
+  /**
+   * Calculates a PT phase envelope with quality lines. Quality lines are curves of constant molar
+   * vapor fraction inside the two-phase region. At each point on a quality line, the corresponding
+   * volume fraction and mass fraction are also computed.
+   *
+   * @param betaValues array of molar vapor fractions to trace (between 0 and 1 exclusive), e.g.
+   *        {0.1, 0.25, 0.5, 0.75, 0.9}
+   */
+  public void calcPTphaseEnvelopeWithQualityLines(double[] betaValues) {
+    PTPhaseEnvelopeMichelsen envOp =
+        new PTPhaseEnvelopeMichelsen(system, fileName, (1.0 - 1e-10), 1.0, false);
+    envOp.run();
+    envOp.calcQualityLines(betaValues);
+    operation = envOp;
+  }
+
+  /**
+   * Calculates a PT phase envelope with quality lines.
+   *
+   * @param bubfirst if true, trace bubble point curve first; otherwise trace dew point first
+   * @param betaValues array of molar vapor fractions to trace (between 0 and 1 exclusive)
+   */
+  public void calcPTphaseEnvelopeWithQualityLines(boolean bubfirst, double[] betaValues) {
+    double phasefraction = 1.0 - 1e-10;
+    if (bubfirst) {
+      phasefraction = 1.0e-10;
+    }
+    PTPhaseEnvelopeMichelsen envOp =
+        new PTPhaseEnvelopeMichelsen(system, fileName, phasefraction, 1.0, bubfirst);
+    envOp.run();
+    envOp.calcQualityLines(betaValues);
+    operation = envOp;
+  }
+
+  /**
+   * Calculates a PT phase envelope and performs stability analysis along the envelope to detect
+   * three-phase (VLLE) regions. At sampled points on the traced boundary, a multi-phase TP flash
+   * checks if the equilibrium produces more than two phases.
+   *
+   * <p>
+   * Results are accessible via {@code get("threePhaseT")} and {@code get("threePhaseP")} which
+   * return the temperatures and pressures of points where 3+ phases were detected. An empty array
+   * means no three-phase regions were found along the envelope.
+   * </p>
+   *
+   * <p>
+   * Reference: Cismondi &amp; Michelsen, "Global calculation of phase equilibrium", Fluid Phase
+   * Equilibria, 259, 228-234 (2007).
+   * </p>
+   */
+  public void calcPTphaseEnvelopeWithStabilityAnalysis() {
+    PTPhaseEnvelopeMichelsen envOp =
+        new PTPhaseEnvelopeMichelsen(system, fileName, (1.0 - 1e-10), 1.0, false);
+    envOp.run();
+    envOp.checkStabilityAlongEnvelope();
+    operation = envOp;
   }
 
   /**
@@ -2277,6 +2467,41 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public double[] get(String name) {
     return getOperation().get(name);
+  }
+
+  /**
+   * Returns the named result array, or the supplied default if the key is not found or the result
+   * is {@code null}. Convenience for Python/JPype consumers where
+   * {@code ops.get("dewT", emptyArray)} mirrors the Python dict {@code .get(key, default)} idiom.
+   *
+   * @param name the result key (e.g. "dewT", "bubP")
+   * @param defaultValue the array to return when the key is absent or maps to {@code null}
+   * @return the result array, or {@code defaultValue} if not found
+   */
+  public double[] get(String name, double[] defaultValue) {
+    return getOperation().get(name, defaultValue);
+  }
+
+  /**
+   * Return the PT phase envelope as a list of contiguous branch segments.
+   *
+   * <p>
+   * Preferred over the flat {@code get("dewT")} / {@code get("bubT")} arrays for plotting and
+   * machine-readable export. Each segment is a polyline with a uniform phase type (DEW or BUBBLE)
+   * and contains no NaN. Available after a successful call to any
+   * {@code calcPTphaseEnvelope(...)} overload that uses the Michelsen tracer.
+   * </p>
+   *
+   * @return unmodifiable list of envelope segments, or an empty list if the last-run operation
+   *         does not produce segment data (e.g. legacy envelope implementations)
+   */
+  public java.util.List<neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.EnvelopeSegment> getEnvelopeSegments() {
+    OperationInterface op = getOperation();
+    if (op instanceof neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTPhaseEnvelopeMichelsen) {
+      return ((neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.PTPhaseEnvelopeMichelsen) op)
+          .getSegments();
+    }
+    return java.util.Collections.emptyList();
   }
 
   /**
@@ -2576,7 +2801,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
    * double onsetP = ops.asphalteneOnsetPressure();

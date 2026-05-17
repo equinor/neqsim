@@ -68,7 +68,7 @@ public class GORfitter extends TwoPortEquipment {
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
     try {
-      this.outStream = inletStream.clone();
+      this.outStream = inletStream.clone(this.getName() + " out stream");
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }

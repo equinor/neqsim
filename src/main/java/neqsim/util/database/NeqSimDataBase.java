@@ -40,16 +40,16 @@ public class NeqSimDataBase
   private static String dataBaseType = "H2fromCSV";
   private static String connectionString = "jdbc:h2:mem:neqsimthermodatabase";
   /** True if h2 database has been initialized, i.e., populated with tables */
-  private static boolean h2IsInitialized = false;
+  private static volatile boolean h2IsInitialized = false;
   /** True while h2 database is being initialized. */
-  private static boolean h2IsInitalizing = false;
+  private static volatile boolean h2IsInitalizing = false;
   // static String dataBaseType = "MSAccessUCanAccess";
   // public static String connectionString =
   // "jdbc:ucanaccess://C:/Users/esol/OneDrive -
   // Equinor/programming/neqsimdatabase/MSAccess/NeqSimDataBase.mdb;memory=true";
 
-  private Statement statement = null;
-  protected Connection databaseConnection = null;
+  private transient Statement statement = null;
+  protected transient Connection databaseConnection = null;
 
   /**
    * <p>
@@ -302,8 +302,10 @@ public class NeqSimDataBase
 
     // Fill tables from csv-files if not initialized and not currently being
     // initialized.
-    if ("H2fromCSV".equals(dataBaseType) && !h2IsInitialized && !h2IsInitalizing) {
-      initH2DatabaseFromCSVfiles();
+    synchronized (NeqSimDataBase.class) {
+      if ("H2fromCSV".equals(dataBaseType) && !h2IsInitialized && !h2IsInitalizing) {
+        initH2DatabaseFromCSVfiles();
+      }
     }
 
     if (connectionString != null) {
@@ -549,9 +551,11 @@ public class NeqSimDataBase
       updateTable("UNIFACInterParamC_UMRMC");
       updateTable("MBWR32param");
       updateTable("COMPSALT");
+      updateTable("PitzerParameters");
       updateTable("PIPEDATA");
+      updateTable("REACTIONDATAKENTEISENBERG");
 
-      // TODO: missing tables: ionicData, reactiondatakenteisenberg,
+      // TODO: missing tables: ionicData,
       // purecomponentvapourpressures,
       // binarysystemviscosity, binaryliquiddiffusioncoefficientdata,
       // purecomponentconductivitydata, purecomponentdensity,

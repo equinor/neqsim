@@ -19,14 +19,14 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * </p>
  *
  * <p><strong>Example Implementation</strong></p>
- * 
+ *
  * <pre>
  * public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
  *   &#64;Override
  *   public boolean supports(ProcessEquipmentInterface equipment) {
  *     return equipment instanceof Compressor;
  *   }
- * 
+ *
  *   &#64;Override
  *   public double evaluateCapacity(ProcessEquipmentInterface equipment) {
  *     Compressor comp = (Compressor) equipment;

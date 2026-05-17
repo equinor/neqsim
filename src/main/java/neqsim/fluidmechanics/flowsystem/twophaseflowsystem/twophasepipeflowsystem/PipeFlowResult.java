@@ -15,7 +15,7 @@ import neqsim.fluidmechanics.flownode.FlowPattern;
  * </p>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.horizontalPipe(fluid, 0.1, 1000, 100);
  * pipe.enableNonEquilibriumMassTransfer();

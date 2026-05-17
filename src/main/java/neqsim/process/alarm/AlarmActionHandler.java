@@ -6,7 +6,7 @@ import neqsim.process.logic.ProcessLogic;
 
 /**
  * Interface for handling alarm-triggered actions.
- * 
+ *
  * <p>
  * This interface allows automatic responses to alarm events, such as:
  * <ul>
@@ -15,7 +15,7 @@ import neqsim.process.logic.ProcessLogic;
  * <li>Operator notifications</li>
  * <li>Logging and reporting</li>
  * </ul>
- * 
+ *
  * @author ESOL
  * @version 1.0
  */
@@ -24,7 +24,7 @@ public interface AlarmActionHandler extends Serializable {
 
   /**
    * Handles an alarm event and performs the configured action.
-   * 
+   *
    * @param event the alarm event that triggered this handler
    * @return true if action was taken, false otherwise
    */
@@ -32,7 +32,7 @@ public interface AlarmActionHandler extends Serializable {
 
   /**
    * Returns the priority of this handler (higher values execute first).
-   * 
+   *
    * @return handler priority
    */
   default int getPriority() {
@@ -41,7 +41,7 @@ public interface AlarmActionHandler extends Serializable {
 
   /**
    * Returns a description of the action this handler performs.
-   * 
+   *
    * @return action description
    */
   default String getActionDescription() {
@@ -50,7 +50,7 @@ public interface AlarmActionHandler extends Serializable {
 
   /**
    * Creates a handler that activates process logic when alarm conditions are met.
-   * 
+   *
    * @param sourceName the alarm source name to match (e.g., "PT-101")
    * @param level the alarm level to match (HIHI, HI, LO, LOLO)
    * @param eventType the event type to match (ACTIVATED, CLEARED, ACKNOWLEDGED)
@@ -87,7 +87,7 @@ public interface AlarmActionHandler extends Serializable {
 
   /**
    * Creates a handler that activates process logic when HIHI alarm is activated.
-   * 
+   *
    * @param sourceName the alarm source name to match
    * @param logic the process logic to activate
    * @return alarm action handler
@@ -98,7 +98,7 @@ public interface AlarmActionHandler extends Serializable {
 
   /**
    * Creates a handler that activates process logic when LOLO alarm is activated.
-   * 
+   *
    * @param sourceName the alarm source name to match
    * @param logic the process logic to activate
    * @return alarm action handler
@@ -109,7 +109,7 @@ public interface AlarmActionHandler extends Serializable {
 
   /**
    * Creates a composite handler that executes multiple handlers in sequence.
-   * 
+   *
    * @param handlers list of handlers to execute
    * @return composite alarm action handler
    */

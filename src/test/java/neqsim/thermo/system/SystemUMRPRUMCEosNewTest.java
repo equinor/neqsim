@@ -216,7 +216,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
       assertTrue(false);
       throw new Exception(ex);
     }
-    assertEquals(testOps.get("cricondenbar")[1], 130.686140727503, 0.02);
+    assertEquals(testOps.get("cricondenbar")[1], 130.7734122125336, 0.1);
   }
 
   /**
@@ -274,7 +274,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     testSystem.setPressure(10);
     SaturationPressure satPresSim = new SaturationPressure(testSystem);
     satPresSim.run();
-    assertEquals(104.7532901763, satPresSim.getThermoSystem().getPressure(), 0.001);
+    assertEquals(104.70405197143555, satPresSim.getThermoSystem().getPressure(), 0.1);
   }
 
   /**

@@ -58,29 +58,29 @@ import java.util.Map;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * DetailedEmissionsCalculator calc = new DetailedEmissionsCalculator();
- * 
+ *
  * // Set production
  * calc.setOilProduction(10000, "bbl/day");
  * calc.setGasProduction(5.0, "MMSm3/day");
- * 
+ *
  * // Set combustion sources
  * calc.addGasTurbine("GT-1", 25.0, "MW"); // 25 MW gas turbine
  * calc.addGasTurbine("GT-2", 25.0, "MW");
  * calc.addHeater("Reboiler", 5.0, "MW");
- * 
+ *
  * // Set flaring
  * calc.setFlaringRate(0.02, "MMSm3/day");
  * calc.setFlareEfficiency(0.98);
- * 
+ *
  * // Set fugitives
  * calc.setFugitiveRate(0.01); // 0.01% of throughput
- * 
+ *
  * // Calculate
  * DetailedEmissionsReport report = calc.calculate();
- * 
+ *
  * System.out.println("Scope 1: " + report.getScope1Emissions() + " tCO2e/yr");
  * System.out.println("Scope 2: " + report.getScope2Emissions() + " tCO2e/yr");
  * System.out.println("Intensity: " + report.getIntensity() + " kg CO2e/boe");

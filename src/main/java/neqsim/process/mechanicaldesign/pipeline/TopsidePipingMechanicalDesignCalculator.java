@@ -229,7 +229,6 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
    * Default constructor.
    */
   public TopsidePipingMechanicalDesignCalculator() {
-    super();
     setDesignCode(ASME_B31_3);
   }
 
@@ -988,6 +987,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
    *
    * @return support spacing in meters
    */
+  @Override
   public double getSupportSpacing() {
     return calculatedSupportSpacing;
   }

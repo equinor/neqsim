@@ -24,7 +24,8 @@ public class RachfordRice implements Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   private double[] beta = new double[2];
-  private static String method = "Nielsen2023"; // alternative use Nielsen2023 or Michelsen2001
+  private static volatile String method = "Nielsen2023"; // alternative use Nielsen2023 or
+                                                         // Michelsen2001
   // Work arrays reused across iterations
   private double[] c = new double[0];
   private double[] d = new double[0];

@@ -136,6 +136,8 @@ public class SystemGERG2008Eos extends SystemEos {
     this.gergModelType = modelType;
     if (modelType == GERG2008Type.HYDROGEN_ENHANCED) {
       modelName = "GERG2008-H2-EOS";
+    } else if (modelType == GERG2008Type.AMMONIA_EXTENDED) {
+      modelName = "GERG2008-NH3-EOS";
     } else {
       modelName = "GERG2008-EOS";
     }
@@ -172,5 +174,32 @@ public class SystemGERG2008Eos extends SystemEos {
    */
   public boolean isUsingHydrogenEnhancedModel() {
     return gergModelType == GERG2008Type.HYDROGEN_ENHANCED;
+  }
+
+  /**
+   * Enable the GERG-2008-NH3 model with ammonia as the 22nd component.
+   *
+   * <p>
+   * This is a convenience method equivalent to calling
+   * {@code setGergModelType(GERG2008Type.AMMONIA_EXTENDED)}.
+   * </p>
+   *
+   * <p>
+   * Reference: Neumann, T., Herrig, S., Bell, I.H., Beckmüller, R., Span, R., Thol, M. (2020).
+   * "Ammonia as a constituent in natural gases - Tables for the GERG-2008 mixture model". Fluid
+   * Phase Equilibria, 511, 112496.
+   * </p>
+   */
+  public void useAmmoniaExtendedModel() {
+    setGergModelType(GERG2008Type.AMMONIA_EXTENDED);
+  }
+
+  /**
+   * Check if the ammonia-extended GERG-2008-NH3 model is being used.
+   *
+   * @return true if using GERG-2008-NH3, false otherwise
+   */
+  public boolean isUsingAmmoniaExtendedModel() {
+    return gergModelType == GERG2008Type.AMMONIA_EXTENDED;
   }
 }

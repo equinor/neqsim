@@ -1,3 +1,8 @@
+---
+title: "Multiphase 1D Transient Pipeline Model - Implementation Recommendations"
+description: "This document outlines recommendations for implementing a full multiphase 1D transient pipeline model in NeqSim, similar to commercial tools like OLGA and LedaFlow. The model would handle:"
+---
+
 # Multiphase 1D Transient Pipeline Model - Implementation Recommendations
 
 ## Executive Summary

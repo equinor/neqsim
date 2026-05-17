@@ -22,11 +22,11 @@ import java.util.List;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * FlowRateOptimizer optimizer = new FlowRateOptimizer(pipeline);
  * FlowRateOptimizationResult result = optimizer.findFlowRate(100.0, 80.0, "bara");
- * 
+ *
  * if (result.isFeasible()) {
  *   System.out.println("Optimal flow rate: " + result.getFlowRate() + " kg/hr");
  * } else {

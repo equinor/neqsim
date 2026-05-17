@@ -236,7 +236,7 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
     dewPointControlCooler2.setOutTemperature(-15.0, "C");
     dewPointControlCooler2.setOutPressure(59.5, "bara");
     dewPointControlCooler2.run();
-    Assertions.assertEquals(0.9673153306118873,
+    Assertions.assertEquals(0.9673163375093863,
         dewPointControlCooler2.getOutletStream().getFluid().getBeta(), 1e-6);
     Separator dewPointScrubber2 = new neqsim.process.equipment.separator.Separator(
         "dew point scrubber 2", dewPointControlCooler2.getOutletStream());
@@ -292,22 +292,22 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
      * hpResycle = jneqsim.process.equipment.util.Recycle("HP liq resycle")
      * hpResycle.addStream(hpLiqmixer.getOutStream()) hpResycle.setOutletStream(oilFirstStage)
      * hpResycle.setTolerance(1e-2)
-     * 
+     *
      * mpResycle = jneqsim.process.equipment.util.Recycle("MP liq resycle")
      * mpResycle.addStream(mpLiqmixer.getOutStream()) mpResycle.setOutletStream(oilSeccondStage)
      * mpResycle.setTolerance(1e-2)
-     * 
+     *
      * lpResycle = jneqsim.process.equipment.util.Recycle("LP liq resycle")
      * lpResycle.addStream(lpLiqmixer.getOutStream()) lpResycle.setOutletStream(oilThirdStage)
      * lpResycle.setTolerance(1e-2)
-     * 
+     *
      * #expander_energy_stream = jneqsim.process.equipment.stream.EnergyStream("expander energy");
-     * 
+     *
      * turboexpander = jneqsim.process.equipment.compressor.Compressor("TEX",
      * dewPointScrubber2.getGasOutStream()) turboexpander.setIsentropicEfficiency(0.80)
      * #turboexpander.setUsePolytropicCalc(True) #turboexpander.setOutletPressure(55.0, 'bara')
      * #turboexpander.setEnergyStream(expander_energy_stream)
-     * 
+     *
      * /* 'moleRateHP': HP1, 'moleRateLP': LP1, #'flowFirstStage': 10.0, #'flowSecondStage': 5.0,
      * 'gasCoolerTemperature': 28.0, 'export_gas_temperature': 55.0, 'export_gas_pressure': 126.5,
      * 'firstStagePressure': 62.0, 'firstStageTemperature': 67.0, 'secondStagePressure': 20.0,

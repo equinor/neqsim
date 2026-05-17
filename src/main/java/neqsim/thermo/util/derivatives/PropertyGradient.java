@@ -18,7 +18,7 @@ import java.util.Arrays;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * PropertyGradient densityGrad = flash.computePropertyGradient("density");

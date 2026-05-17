@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.compressor.Compressor;
@@ -24,13 +25,13 @@ import neqsim.process.equipment.valve.ThrottlingValve;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * EquipmentConstraintRegistry registry = EquipmentConstraintRegistry.getInstance();
- * 
+ *
  * // Get default constraints for a separator
  * List&lt;CapacityConstraint&gt; constraints = registry.getDefaultConstraints(separator);
- * 
+ *
  * // Register custom constraint
  * registry.registerCustomConstraint("Separator", new CapacityConstraint(...));
  * </pre>
@@ -40,10 +41,10 @@ import neqsim.process.equipment.valve.ThrottlingValve;
  */
 public class EquipmentConstraintRegistry {
 
-  private static EquipmentConstraintRegistry instance;
+  private static volatile EquipmentConstraintRegistry instance;
 
   private Map<String, List<ConstraintTemplate>> defaultConstraints = new HashMap<>();
-  private Map<String, List<CapacityConstraint>> customConstraints = new HashMap<>();
+  private Map<String, List<CapacityConstraint>> customConstraints = new ConcurrentHashMap<>();
 
   /**
    * Private constructor for singleton pattern.
@@ -185,7 +186,9 @@ public class EquipmentConstraintRegistry {
    * @param constraint the custom constraint
    */
   public void registerCustomConstraint(String equipmentType, CapacityConstraint constraint) {
-    customConstraints.computeIfAbsent(equipmentType, k -> new ArrayList<>()).add(constraint);
+    customConstraints
+        .computeIfAbsent(equipmentType, k -> new java.util.concurrent.CopyOnWriteArrayList<>())
+        .add(constraint);
   }
 
   /**

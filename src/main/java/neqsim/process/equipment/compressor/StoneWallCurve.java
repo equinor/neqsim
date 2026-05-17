@@ -17,7 +17,6 @@ public class StoneWallCurve extends BoundaryCurve {
    * Default constructor.
    */
   public StoneWallCurve() {
-    super();
   }
 
   /**

@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "neqsim": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "ghcr.io/equinor/neqsim-mcp-server:latest"
+      ]
+    }
+  }
+}

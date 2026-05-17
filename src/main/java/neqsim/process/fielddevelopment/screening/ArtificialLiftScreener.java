@@ -85,7 +85,7 @@ import java.util.List;
  * </table>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * ArtificialLiftScreener screener = new ArtificialLiftScreener();
  * screener.setReservoirPressure(250.0, "bara");
@@ -99,9 +99,9 @@ import java.util.List;
  * screener.setOilViscosity(5.0, "cP");
  * screener.setGasLiftAvailable(true);
  * screener.setElectricityAvailable(true);
- * 
+ *
  * ScreeningResult result = screener.screen();
- * 
+ *
  * System.out.println("Recommended: " + result.getRecommendedMethod());
  * for (MethodResult method : result.getAllMethods()) {
  *   System.out.println(method);

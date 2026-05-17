@@ -1,3 +1,8 @@
+---
+title: Process Model Lifecycle Management
+description: This module provides infrastructure for managing the lifecycle of process models (digital twins) from concept through operation to archival.
+---
+
 # Process Model Lifecycle Management
 
 This module provides infrastructure for managing the lifecycle of process models (digital twins) from concept through operation to archival.
@@ -154,6 +159,6 @@ git log --oneline -- model_*.json
 
 ## Related Documentation
 
-- [Emissions Tracking](../sustainability/README.md)
-- [Safety Scenarios](../safety/README.md)
-- [Batch Studies](../optimization/README.md)
+- [Emissions Tracking](../sustainability/)
+- [Safety Scenarios](../safety/)
+- [Batch Studies](../optimization/)

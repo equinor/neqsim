@@ -1,3 +1,8 @@
+---
+title: "PVT and Fluid Characterization"
+description: "Accurate phase behavior predictions start with a realistic fluid description. NeqSim supports full compositional models, TBP cuts, and black-oil style pseudo-components."
+---
+
 # PVT and Fluid Characterization
 
 Accurate phase behavior predictions start with a realistic fluid description. NeqSim supports full compositional models, TBP cuts, and black-oil style pseudo-components.
@@ -62,7 +67,7 @@ oil.getCharacterization().configureLumping()
 | `standard` | Lumps all heavy fractions from C6 onwards | Minimal components for fast simulation |
 | `no lumping` | Keeps all individual SCN components | Detailed compositional studies |
 
-For more details on the mathematical background, see [Fluid Characterization Mathematics](../pvtsimulation/fluid_characterization_mathematics.md).
+For more details on the mathematical background, see [Fluid Characterization Mathematics](../pvtsimulation/fluid_characterization_mathematics).
 
 ## Asphaltene Modeling
 

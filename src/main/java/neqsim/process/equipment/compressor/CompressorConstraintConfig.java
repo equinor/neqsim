@@ -20,14 +20,14 @@ import neqsim.process.equipment.compressor.driver.DriverCurve;
  * </ul>
  *
  * <p><strong>Example Usage</strong></p>
- * 
+ *
  * <pre>
  * CompressorConstraintConfig config = new CompressorConstraintConfig();
  * config.setMinSurgeMargin(0.10); // 10% minimum surge margin
  * config.setMinStonewallMargin(0.05); // 5% minimum stonewall margin
  * config.setMaxPowerUtilization(0.95); // 95% max power
  * config.setMaxDischargeTemperature(473.15); // 200°C max
- * 
+ *
  * compressor.setConstraintConfig(config);
  * </pre>
  *

@@ -26,7 +26,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Feed flow as disturbance
@@ -269,7 +269,6 @@ public class DisturbanceVariable extends MPCVariable {
         } else {
           currentValue = stream.getPressure("bara");
         }
-        return currentValue;
       }
     }
 

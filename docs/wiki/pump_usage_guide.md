@@ -1,3 +1,8 @@
+---
+title: "Pump Usage Guide - Quick Reference"
+description: "SystemInterface fluid = new SystemSrkEos(298.15, 1.0);"
+---
+
 # Pump Usage Guide - Quick Reference
 
 ## Basic Pump Setup
@@ -20,6 +25,22 @@ pump.run();
 double power = pump.getPower("kW");
 double outletTemp = pump.getOutletStream().getTemperature("C");
 ```
+
+### Pump with Specified Outlet Temperature
+
+When the discharge temperature is known (e.g. from plant data), use `setOutletTemperature`
+to have the pump perform a TP flash and back-calculate the power:
+
+```java
+Pump pump = new Pump("Pump2", feed);
+pump.setOutletPressure(10.0, "bara");
+pump.setOutletTemperature(35.0, "C"); // supports "K", "C", "F", "R"
+pump.run();
+
+double power = pump.getPower("kW"); // back-calculated from enthalpy difference
+```
+
+> **Note:** `setOutTemperature(double)` is deprecated — use `setOutletTemperature` instead.
 
 ---
 
@@ -373,7 +394,7 @@ pump_feed = oseberg_process.get('main process').getUnit('3RD stage separator').g
 
 separatorValve = neqsim.process.equipment.valve.ThrottlingValve("SeparatorOutletValve", pump_feed)
 separatorValve.setCv(350)              # Valve Cv (flow coefficient in US gpm/psi^0.5)
-separatorValve.setIsCalcOutPressure(True) 
+separatorValve.setIsCalcOutPressure(True)
 separatorValve.setPercentValveOpening(80)  # 80% open - allows for control margin
 
 separatorValve.run()

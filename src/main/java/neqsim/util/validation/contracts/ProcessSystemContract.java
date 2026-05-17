@@ -6,12 +6,12 @@ import neqsim.util.validation.ValidationResult;
 
 /**
  * Contract for process systems (flowsheets).
- * 
+ *
  * <p>
  * Defines requirements and guarantees for {@link ProcessSystem} implementations. AI agents can use
  * this contract to validate entire process flowsheets before running simulations.
  * </p>
- * 
+ *
  * <h2>Preconditions (what the process system needs):</h2>
  * <ul>
  * <li>At least one unit operation</li>
@@ -19,14 +19,14 @@ import neqsim.util.validation.ValidationResult;
  * <li>Feed streams defined</li>
  * <li>No circular dependencies without recycle blocks</li>
  * </ul>
- * 
+ *
  * <h2>Postconditions (what run() provides):</h2>
  * <ul>
  * <li>All equipment calculated</li>
  * <li>Recycles converged (if any)</li>
  * <li>Material/energy balances satisfied</li>
  * </ul>
- * 
+ *
  * @author NeqSim
  * @version 1.0
  */
@@ -38,7 +38,7 @@ public class ProcessSystemContract implements ModuleContract<ProcessSystem> {
 
   /**
    * Get the singleton instance.
-   * 
+   *
    * @return contract instance
    */
   public static ProcessSystemContract getInstance() {
@@ -158,11 +158,11 @@ public class ProcessSystemContract implements ModuleContract<ProcessSystem> {
 
   /**
    * Validate equipment connectivity.
-   * 
+   *
    * <p>
    * Checks that equipment is properly connected via streams.
    * </p>
-   * 
+   *
    * @param processSystem the process system to validate
    * @return validation result
    */

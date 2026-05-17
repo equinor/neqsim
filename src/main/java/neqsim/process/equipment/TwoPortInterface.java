@@ -101,6 +101,37 @@ public interface TwoPortInterface {
   public void setOutletPressure(double pressure);
 
   /**
+   * Set outlet pressure of twoport with unit specification.
+   *
+   * @param pressure value to set
+   * @param unit pressure unit (e.g., "bara", "barg", "Pa", "psi")
+   */
+  public void setOutletPressure(double pressure, String unit);
+
+  /**
+   * Set outlet pressure of twoport.
+   *
+   * @param pressure value to set in unit bara
+   * @deprecated use {@link #setOutletPressure(double)} instead
+   */
+  @Deprecated
+  public default void setOutPressure(double pressure) {
+    setOutletPressure(pressure);
+  }
+
+  /**
+   * Set outlet pressure of twoport with unit specification.
+   *
+   * @param pressure value to set
+   * @param unit pressure unit (e.g., "bara", "barg", "Pa", "psi")
+   * @deprecated use {@link #setOutletPressure(double, String)} instead
+   */
+  @Deprecated
+  public default void setOutPressure(double pressure, String unit) {
+    setOutletPressure(pressure, unit);
+  }
+
+  /**
    * Set outlet Stream of twoport.
    *
    * @param stream value to set
@@ -113,4 +144,35 @@ public interface TwoPortInterface {
    * @param temperature value to set in kelvin
    */
   public void setOutletTemperature(double temperature);
+
+  /**
+   * Set outlet temperature of twoport with unit specification.
+   *
+   * @param temperature value to set
+   * @param unit temperature unit (e.g., "K", "C", "R", "F")
+   */
+  public void setOutletTemperature(double temperature, String unit);
+
+  /**
+   * Set outlet temperature of twoport.
+   *
+   * @param temperature value to set in kelvin
+   * @deprecated use {@link #setOutletTemperature(double)} instead
+   */
+  @Deprecated
+  public default void setOutTemperature(double temperature) {
+    setOutletTemperature(temperature);
+  }
+
+  /**
+   * Set outlet temperature of twoport with unit specification.
+   *
+   * @param temperature value to set
+   * @param unit temperature unit (e.g., "K", "C", "R", "F")
+   * @deprecated use {@link #setOutletTemperature(double, String)} instead
+   */
+  @Deprecated
+  public default void setOutTemperature(double temperature, String unit) {
+    setOutletTemperature(temperature, unit);
+  }
 }

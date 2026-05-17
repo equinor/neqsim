@@ -32,12 +32,12 @@ import neqsim.process.processmodel.ProcessSystem;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * BottleneckAnalyzer analyzer = new BottleneckAnalyzer(facility);
  * List<BottleneckResult> bottlenecks = analyzer.identifyBottlenecks();
- * 
+ *
  * // Show most limiting constraint
  * BottleneckResult limiting = bottlenecks.get(0);
  * System.out.println("Bottleneck: " + limiting.getEquipmentName());

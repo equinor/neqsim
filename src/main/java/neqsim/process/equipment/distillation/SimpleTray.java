@@ -25,7 +25,20 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   double heatInput = 0.0;
   private double temperature = Double.NaN;
 
-  private double trayPressure = -1.0;
+  /** Tray operating pressure in bara. Negative means use stream pressure. */
+  protected double trayPressure = -1.0;
+
+  /**
+   * When {@code true}, the tray uses reactive flash (Modified RAND, simultaneous chemical + phase
+   * equilibrium) instead of standard VLE flash. Set via
+   * {@link DistillationColumn#setReactive(boolean)}.
+   */
+  private boolean useReactiveFlash = false;
+
+  /** Cached gas out stream, invalidated when run() is called. */
+  private transient StreamInterface cachedGasOutStream = null;
+  /** Cached liquid out stream, invalidated when run() is called. */
+  private transient StreamInterface cachedLiquidOutStream = null;
 
   /**
    * <p>
@@ -116,9 +129,29 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    */
   public void TPflash() {}
 
+  /**
+   * Enable or disable reactive flash on this tray.
+   *
+   * @param useReactiveFlash {@code true} to use reactive (chemical + phase) equilibrium
+   */
+  public void setUseReactiveFlash(boolean useReactiveFlash) {
+    this.useReactiveFlash = useReactiveFlash;
+  }
+
+  /**
+   * Check whether this tray uses reactive flash.
+   *
+   * @return {@code true} if reactive flash is enabled
+   */
+  public boolean isUseReactiveFlash() {
+    return useReactiveFlash;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    cachedGasOutStream = null;
+    cachedLiquidOutStream = null;
     double enthalpy = 0.0;
     // double flowRate = ((Stream)
     // streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
@@ -160,17 +193,29 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
       if (!Double.isNaN(getOutTemperature())) {
         mixedStream.getThermoSystem().setTemperature(getOutTemperature());
       }
-      testOps.TPflash();
+      if (useReactiveFlash) {
+        testOps.reactiveTPflash();
+      } else {
+        testOps.TPflash();
+      }
       mixedStream.getThermoSystem().init(2);
     } else {
       try {
-        testOps.PHflash(enthalpy, 0);
+        if (useReactiveFlash) {
+          testOps.reactivePHflash(enthalpy, 0);
+        } else {
+          testOps.PHflash(enthalpy, 0);
+        }
       } catch (Exception ex) {
         try {
           if (!Double.isNaN(getOutTemperature())) {
             mixedStream.getThermoSystem().setTemperature(getOutTemperature());
           }
-          testOps.TPflash();
+          if (useReactiveFlash) {
+            testOps.reactiveTPflash();
+          } else {
+            testOps.TPflash();
+          }
         } catch (Exception ex2) {
           logger.warn("TPflash failed in SimpleTray: " + getName(), ex2);
         }
@@ -199,6 +244,35 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
+   * Invalidate the cached gas and liquid output streams. Call this after modifying the tray's
+   * thermo system compositions externally (e.g. Murphree efficiency correction).
+   */
+  public void invalidateOutStreamCache() {
+    cachedGasOutStream = null;
+    cachedLiquidOutStream = null;
+  }
+
+  /**
+   * Set a pre-built gas out stream (e.g. Murphree-corrected) to be returned by
+   * {@link #getGasOutStream()} instead of the equilibrium result.
+   *
+   * @param stream the corrected gas stream
+   */
+  public void setCachedGasOutStream(StreamInterface stream) {
+    this.cachedGasOutStream = stream;
+  }
+
+  /**
+   * Set a pre-built liquid out stream (e.g. Murphree-corrected) to be returned by
+   * {@link #getLiquidOutStream()} instead of the equilibrium result.
+   *
+   * @param stream the corrected liquid stream
+   */
+  public void setCachedLiquidOutStream(StreamInterface stream) {
+    this.cachedLiquidOutStream = stream;
+  }
+
+  /**
    * <p>
    * getGasOutStream.
    * </p>
@@ -206,7 +280,10 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
   public StreamInterface getGasOutStream() {
-    return new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
+    if (cachedGasOutStream == null) {
+      cachedGasOutStream = new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
+    }
+    return cachedGasOutStream;
   }
 
   /**
@@ -217,7 +294,10 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
   public StreamInterface getLiquidOutStream() {
-    return new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
+    if (cachedLiquidOutStream == null) {
+      cachedLiquidOutStream = new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
+    }
+    return cachedLiquidOutStream;
   }
 
   /** {@inheritDoc} */

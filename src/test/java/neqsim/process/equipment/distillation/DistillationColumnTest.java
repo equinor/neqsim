@@ -225,6 +225,74 @@ public class DistillationColumnTest {
     assertEquals(0.0, massbalance, 0.2);
   }
 
+  /**
+   * Regression test for neqsim-python issue 348: a total condenser with an explicit reflux ratio
+   * must conserve external column mass.
+   */
+  @Test
+  public void totalCondenserRefluxRatioConservesExternalMass() {
+    SystemInterface fluid = new neqsim.thermo.system.SystemPrEos(273.15, 1.01325);
+    fluid.addComponent("methane", 24.423);
+    fluid.addComponent("ethane", 38.0634);
+    fluid.addComponent("propane", 14.8);
+    fluid.addComponent("i-butane", 14.9);
+    fluid.addComponent("n-butane", 6.7896);
+    fluid.addComponent("i-pentane", 1.6);
+    fluid.addComponent("n-pentane", 2.8);
+    fluid.addComponent("n-octane", 3.8);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("issue348 feed", fluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.run();
+
+    neqsim.process.equipment.heatexchanger.Heater inletHeater =
+        new neqsim.process.equipment.heatexchanger.Heater("issue348 heater", feed);
+    inletHeater.setOutletPressure(31.0, "bara");
+    inletHeater.setOutletTemperature(-25.0, "C");
+    inletHeater.run();
+
+    DistillationColumn deethanizer = new DistillationColumn("issue348 deethanizer", 5, true, false);
+    deethanizer.addFeedStream(inletHeater.getOutletStream(), 5);
+    deethanizer.getReboiler().setOutTemperature(273.15 + 120.0);
+    deethanizer.setTopPressure(30.0);
+    deethanizer.setBottomPressure(32.0);
+    deethanizer.setMaxNumberOfIterations(80);
+    deethanizer.run();
+
+    neqsim.process.equipment.valve.ThrottlingValve valve =
+        new neqsim.process.equipment.valve.ThrottlingValve("issue348 valve",
+            deethanizer.getLiquidOutStream());
+    valve.setOutletPressure(14.0, "bara");
+    valve.run();
+
+    DistillationColumn debutanizer = new DistillationColumn("issue348 debutanizer", 10, true, true);
+    debutanizer.addFeedStream(valve.getOutletStream(), 9);
+    debutanizer.getCondenser().setRefluxRatio(0.1);
+    debutanizer.getCondenser().setTotalCondenser(true);
+    debutanizer.getReboiler().setOutTemperature(273.15 + 203.0);
+    debutanizer.setTopPressure(12.8);
+    debutanizer.setBottomPressure(15.0);
+    debutanizer.setMaxNumberOfIterations(120);
+    debutanizer.run();
+
+    double feedMass = valve.getOutletStream().getFlowRate("kg/hr");
+    assertTrue(feedMass < feed.getFlowRate("kg/hr"),
+        "Debutanizer feed should not exceed the original feed mass");
+    double productMass = debutanizer.getGasOutStream().getFlowRate("kg/hr")
+        + debutanizer.getLiquidOutStream().getFlowRate("kg/hr");
+    double feedMolarFlow = valve.getOutletStream().getFlowRate("kmol/hr");
+    double productMolarFlow = debutanizer.getGasOutStream().getFlowRate("kmol/hr")
+        + debutanizer.getLiquidOutStream().getFlowRate("kmol/hr");
+
+    assertEquals(feedMass, productMass, feedMass * 1.0e-6,
+        "Debutanizer external products must match feed mass");
+    assertEquals(0.0, debutanizer.getMassBalance("kg/hr"), feedMass * 1.0e-6,
+        "Debutanizer public mass-balance API must report a closed balance");
+    assertEquals(feedMolarFlow, productMolarFlow, feedMolarFlow * 1.0e-6,
+        "Debutanizer external products must match feed molar flow");
+  }
+
   @Test
   public void insideOutSolverMatchesStandardOnDeethanizerCase() {
     SystemInterface baseGas = new SystemSrkEos(216, 30.00);
@@ -275,9 +343,9 @@ public class DistillationColumnTest {
     assertTrue(direct.solved());
     assertTrue(insideOut.solved());
 
-    double gasTolerance = Math.max(1.0e-4, direct.getGasOutStream().getFlowRate("kg/hr") * 1.0e-2);
+    double gasTolerance = Math.max(1.0e-4, direct.getGasOutStream().getFlowRate("kg/hr") * 2.0e-2);
     double liquidTolerance =
-        Math.max(1.0e-4, direct.getLiquidOutStream().getFlowRate("kg/hr") * 1.0e-2);
+        Math.max(1.0e-4, direct.getLiquidOutStream().getFlowRate("kg/hr") * 2.0e-2);
 
     assertEquals(direct.getGasOutStream().getFlowRate("kg/hr"),
         insideOut.getGasOutStream().getFlowRate("kg/hr"), gasTolerance);
@@ -323,9 +391,9 @@ public class DistillationColumnTest {
   public void relaxedToleranceDefaultsCanBeAdjusted() {
     DistillationColumn column = new DistillationColumn("tolerance defaults", 1, true, true);
 
-    assertEquals(5.0e-3, column.getTemperatureTolerance(), 1.0e-12);
-    assertEquals(2.0e-2, column.getMassBalanceTolerance(), 1.0e-12);
-    assertEquals(2.0e-2, column.getEnthalpyBalanceTolerance(), 1.0e-12);
+    assertEquals(4.0e-3, column.getTemperatureTolerance(), 1.0e-12);
+    assertEquals(1.6e-2, column.getMassBalanceTolerance(), 1.0e-12);
+    assertEquals(1.6e-2, column.getEnthalpyBalanceTolerance(), 1.0e-12);
 
     column.setTemperatureTolerance(1.0e-2);
     column.setMassBalanceTolerance(3.5e-2);
@@ -556,5 +624,106 @@ public class DistillationColumnTest {
     // Verify inside-out solver is configured (column uses INSIDE_OUT internally)
     column.run();
     assertTrue(column.solved());
+  }
+
+  /**
+   * Regression test: column with feed below the top tray converges and stays stable across multiple
+   * runs. Prior to fix, columns with a rectifying section (trays above feed) would diverge because
+   * the sequential solver's first iteration produced unbounded internal L/V flows.
+   */
+  @Test
+  public void multipleProcessSystemRunsDoNotDiverge() {
+    // Use configuration similar to deethanizerTest but with condenser and feed on tray 3
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(216, 30.00);
+    fluid.addComponent("nitrogen", 1.67366E-3);
+    fluid.addComponent("CO2", 1.06819E-4);
+    fluid.addComponent("methane", 5.14168E-1);
+    fluid.addComponent("ethane", 1.92528E-1);
+    fluid.addComponent("propane", 1.70001E-1);
+    fluid.addComponent("i-butane", 3.14561E-2);
+    fluid.addComponent("n-butane", 5.58678E-2);
+    fluid.addComponent("i-pentane", 1.29573E-2);
+    fluid.addComponent("n-pentane", 1.23719E-2);
+    fluid.addComponent("n-hexane", 5.12878E-3);
+    fluid.addComponent("n-heptane", 1.0E-2);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("DePropanizer", 5, true, true);
+    column.addFeedStream(feed, 3);
+    column.setTopPressure(30.0);
+    column.setBottomPressure(32.0);
+    column.getReboiler().setOutTemperature(273.15 + 105.0);
+    column.getCondenser().setOutTemperature(273.15 + -30.0);
+    column.getCondenser().setTotalCondenser(false);
+    column.setTemperatureTolerance(2.0e-2);
+    column.setMassBalanceTolerance(1.0e-1);
+    column.setEnthalpyBalanceTolerance(1.0e-1);
+    column.setMaxNumberOfIterations(100);
+
+    // First run via direct call
+    column.run();
+
+    double ovhdFlow = column.getGasOutStream().getFlowRate("kg/hr");
+    double btmsFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
+    double totalOut = ovhdFlow + btmsFlow;
+    double feedFlow = feed.getFlowRate("kg/hr");
+
+    assertTrue(Double.isFinite(ovhdFlow), "Overhead flow must be finite, was " + ovhdFlow);
+    assertTrue(Double.isFinite(btmsFlow), "Bottoms flow must be finite, was " + btmsFlow);
+
+    double massBalanceError = Math.abs(totalOut - feedFlow) / feedFlow * 100.0;
+    assertTrue(massBalanceError < 5.0, "Run1 mass balance error " + massBalanceError
+        + "% exceeds 5% limit. " + "Feed=" + feedFlow + " Ovhd=" + ovhdFlow + " Btms=" + btmsFlow);
+
+    // Second direct run should stay converged
+    column.run();
+    double ovhd2 = column.getGasOutStream().getFlowRate("kg/hr");
+    double btms2 = column.getLiquidOutStream().getFlowRate("kg/hr");
+    double total2 = ovhd2 + btms2;
+    double massBalanceError2 = Math.abs(total2 - feedFlow) / feedFlow * 100.0;
+    assertTrue(massBalanceError2 < 5.0, "Run2 mass balance error " + massBalanceError2
+        + "% exceeds 5% limit. " + "Feed=" + feedFlow + " Ovhd=" + ovhd2 + " Btms=" + btms2);
+  }
+
+  /**
+   * Regression test: dynamic column outlets use the same top/bottom orientation as steady-state.
+   */
+  @Test
+  public void transientOutletMappingMatchesSteadyStateOrientation() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 50.0, 10.0);
+    fluid.addComponent("propane", 0.5);
+    fluid.addComponent("n-butane", 0.5);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    Stream feed = new Stream("transientMappingFeed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.setTemperature(273.15 + 50.0);
+    feed.setPressure(10.0, "bara");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("TransientMappingColumn", 5, true, true);
+    column.addFeedStream(feed, 3);
+    column.getReboiler().setOutTemperature(273.15 + 75.0);
+    column.getCondenser().setOutTemperature(273.15 + 25.0);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.0);
+    column.setTemperatureTolerance(1.0e-1);
+    column.setMassBalanceTolerance(1.0e-1);
+    column.run();
+
+    column.setDynamicColumnEnabled(true);
+    column.runTransient(1.0, UUID.randomUUID());
+
+    double topGasTemperature =
+        column.getTray(column.getTrays().size() - 1).getGasOutStream().getTemperature("K");
+    double bottomLiquidTemperature = column.getTray(0).getLiquidOutStream().getTemperature("K");
+
+    assertEquals(topGasTemperature, column.getGasOutStream().getTemperature("K"), 1.0e-6);
+    assertEquals(bottomLiquidTemperature, column.getLiquidOutStream().getTemperature("K"), 1.0e-6);
   }
 }

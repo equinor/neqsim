@@ -24,7 +24,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * <b>Stokes Settling Velocity:</b>
  * </p>
- * 
+ *
  * <pre>
  * v_s = g × d² × (ρ_L - ρ_G) / (18 × μ)
  * </pre>
@@ -32,7 +32,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * <b>Souders-Brown Gas Velocity:</b>
  * </p>
- * 
+ *
  * <pre>
  * V_max = K × sqrt((ρ_L - ρ_G) / ρ_G)
  * </pre>
@@ -40,7 +40,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * <b>Residence Time Criterion:</b>
  * </p>
- * 
+ *
  * <pre>
  * t_residence &gt; t_separation
  * </pre>
@@ -152,7 +152,7 @@ public class SeparatorSizingCalculator implements Serializable {
    * <p>
    * Stokes Law applies to laminar flow around spherical particles (Re &lt; 1):
    * </p>
-   * 
+   *
    * <pre>
    * v_s = g × d² × (ρ_heavy - ρ_light) / (18 × μ)
    * </pre>
@@ -243,7 +243,7 @@ public class SeparatorSizingCalculator implements Serializable {
    * The Souders-Brown equation determines the maximum allowable gas velocity to prevent liquid
    * entrainment:
    * </p>
-   * 
+   *
    * <pre>
    * V_max = K × sqrt((ρ_L - ρ_G) / ρ_G)
    * </pre>

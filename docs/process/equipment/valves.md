@@ -1,3 +1,9 @@
+---
+title: Valve Equipment
+description: Documentation for valve equipment in NeqSim process simulation.
+keywords: "valve, throttling valve, control valve, JT valve, Joule-Thomson, Cv, pressure drop, valve sizing, choke, relief valve, PSV"
+---
+
 # Valve Equipment
 
 Documentation for valve equipment in NeqSim process simulation.
@@ -24,6 +30,10 @@ Documentation for valve equipment in NeqSim process simulation.
 - `SafetyReliefValve` - Full PSV with API sizing
 - `BlowdownValve` - Emergency blowdown valve
 - `ControlValve` - Specialized control valve
+
+> **📖 Additional Valve Documentation:**
+> - [Control Valves Guide](control_valves) - CheckValve, LevelControlValve, PressureControlValve, ESD/PSD valves
+> - [HIPPS Implementation](../safety/hipps_implementation) - High Integrity Pressure Protection
 
 **Mechanical Design:** `neqsim.process.mechanicaldesign.valve`
 - `ValveMechanicalDesign` - Body sizing, weight, actuator calculations
@@ -157,29 +167,65 @@ NeqSim supports multiple valve sizing standards for different applications.
 | IEC 60534 | `IEC 60534` | Full IEC 60534-2-1 implementation |
 | Extended | `IEC 60534 full` | IEC 60534 with all correction factors |
 | Prod Choke | `prod choke` | Production choke with discharge coefficient |
+| **Sachdeva** | `Sachdeva` | **Mechanistic two-phase choke model (SPE 15657)** |
+| **Gilbert** | `Gilbert` | **Empirical two-phase correlation (1954)** |
+| **Baxendell** | `Baxendell` | **Empirical two-phase correlation (1958)** |
+| **Ros** | `Ros` | **Empirical two-phase correlation (1960)** |
+| **Achong** | `Achong` | **Empirical two-phase correlation (1961)** |
 
 ### Setting Sizing Standard
 
 ```java
 ValveMechanicalDesign mechDesign = (ValveMechanicalDesign) valve.getMechanicalDesign();
 mechDesign.setValveSizingStandard("IEC 60534");
+
+// For multiphase production chokes:
+mechDesign.setValveSizingStandard("Sachdeva");
+mechDesign.setChokeDiameter(0.5, "in");
 ```
+
+### Multiphase Choke Sizing
+
+For production chokes handling two-phase (gas-liquid) flow, use the Sachdeva or Gilbert-type models:
+
+```java
+ThrottlingValve choke = new ThrottlingValve("Production Choke", wellStream);
+choke.setOutletPressure(30.0, "bara");
+
+ValveMechanicalDesign design = choke.getMechanicalDesign();
+design.setValveSizingStandard("Sachdeva");  // Mechanistic model
+design.setChokeDiameter(32, "64ths");        // 32/64" = 0.5"
+design.setChokeDischargeCoefficient(0.84);
+
+// Enable flow calculation in transient mode
+choke.setCalculateSteadyState(false);
+choke.runTransient(0.1);
+
+double calculatedFlow = choke.getOutletStream().getFlowRate("kg/hr");
+```
+
+**See:** [Multiphase Choke Flow Models](../MultiphaseChokeFlow) for detailed documentation.
 
 ### IEC 60534 Gas Sizing
 
-For compressible fluids (gas/vapor):
+For compressible fluids (gas/vapor), per IEC 60534-2-1 Section 6.2:
 
-$$K_v = \frac{Q}{N_9 \cdot P_1 \cdot Y} \sqrt{\frac{M \cdot T \cdot Z}{x}}$$
+$$K_v = \frac{Q_{std}}{N_9 \cdot P_1 \cdot Y} \sqrt{\frac{M \cdot T \cdot Z}{x}}$$
 
 Where:
-- $Q$ = actual volumetric flow at inlet (m³/h)
-- $N_9$ = 24.6 (SI constant)
+- $Q_{std}$ = volumetric flow at **standard conditions** (273.15 K, 101.325 kPa) [m³/h]
+- $N_9$ = 24.6 (SI constant for Q in m³/h, P in kPa)
 - $P_1$ = inlet pressure (kPa abs)
 - $Y$ = expansion factor
 - $M$ = molecular weight (g/mol)
-- $T$ = temperature (K)
-- $Z$ = compressibility factor
+- $T$ = inlet temperature (K)
+- $Z$ = compressibility factor at inlet
 - $x$ = $\Delta P / P_1$
+
+> **Important:** The flow rate $Q_{std}$ must be at standard conditions, not at operating
+> conditions. NeqSim automatically converts actual flow to standard flow internally
+> when sizing gas valves. See [GitHub issue #1918](https://github.com/equinor/neqsim/issues/1918)
+> for details on this correction.
 
 ### Choked Flow Detection
 
@@ -242,7 +288,7 @@ System.out.println("Actuator Thrust: " + mechDesign.getRequiredActuatorThrust() 
 
 ### Detailed Documentation
 
-See [Valve Mechanical Design](../ValveMechanicalDesign.md) for complete documentation including:
+See [Valve Mechanical Design](../ValveMechanicalDesign) for complete documentation including:
 - ANSI pressure class selection criteria
 - Wall thickness calculations per ASME B16.34
 - Actuator sizing methodology
@@ -390,8 +436,8 @@ double muJT = inletStream.getJouleThomsonCoefficient();  // K/bar
 
 ## Related Documentation
 
-- [Valve Mechanical Design](../ValveMechanicalDesign.md) - Complete mechanical design calculations
-- [Compressor Mechanical Design](../CompressorMechanicalDesign.md) - Similar approach for compressors
-- [Process Package](../README.md) - Package overview
-- [Separators](separators.md) - Separation equipment
+- [Valve Mechanical Design](../ValveMechanicalDesign) - Complete mechanical design calculations
+- [Compressor Mechanical Design](../CompressorMechanicalDesign) - Similar approach for compressors
+- [Process Package](../) - Package overview
+- [Separators](separators) - Separation equipment
 - [Safety Systems](../safety/) - Safety valve sizing

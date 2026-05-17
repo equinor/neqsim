@@ -73,9 +73,9 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
           {1.31, 1.5, 1.72, 1.99, 2.33, 2.77, 3.31, 3.95, 4.74},
           {1.38, 1.59, 1.83, 2.12, 2.48, 2.95, 3.51, 4.19, 5.03},
           {1.47, 1.68, 1.93, 2.24, 2.63, 3.12, 3.72, 4.45, 5.34}};
-  BicubicInterpolatingFunction pcs1 = null;
-  BicubicInterpolatingFunction pcs2 = null;
-  LinearInterpolator liearInterpol = new LinearInterpolator();
+  transient BicubicInterpolatingFunction pcs1 = null;
+  transient BicubicInterpolatingFunction pcs2 = null;
+  transient LinearInterpolator liearInterpol = new LinearInterpolator();
   double[] Vitemperatures = ISO6578temperatures; // {-180.0, -175.0, -170.0, -165.0, -160.0,
                                                  // -155.0, -150.0, -145.0,
                                                  // -140.0};

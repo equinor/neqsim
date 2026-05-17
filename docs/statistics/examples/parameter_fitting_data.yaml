@@ -1,0 +1,31 @@
+name: yaml response calibration
+responseName: response
+responseUnit: '-'
+dependentVariableNames:
+  - temperature
+  - pressure
+dependentVariableUnits:
+  - K
+  - bara
+points:
+  - measuredValue: 5.0
+    standardDeviation: 0.1
+    dependentValues:
+      - 298.15
+      - 1.0
+    reference: synthetic
+    description: row one
+  - measuredValue: 7.5
+    standardDeviation: 0.1
+    dependentValues:
+      - 323.15
+      - 2.0
+    reference: synthetic
+    description: row two
+  - measuredValue: 10.0
+    standardDeviation: 0.1
+    dependentValues:
+      - 348.15
+      - 3.0
+    reference: synthetic
+    description: row three

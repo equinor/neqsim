@@ -1,3 +1,8 @@
+---
+title: "Java simulations inspired by NeqSim Colab notebooks"
+description: "This guide shows how to translate the interactive workflows from the"
+---
+
 # Java simulations inspired by NeqSim Colab notebooks
 
 This guide shows how to translate the interactive workflows from the

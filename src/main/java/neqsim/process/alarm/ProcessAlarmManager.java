@@ -9,7 +9,7 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 
 /**
  * Coordinates alarm evaluation across all measurement devices in a process system.
- * 
+ *
  * <p>
  * Supports automatic alarm-triggered actions through registered {@link AlarmActionHandler}
  * instances.
@@ -71,7 +71,7 @@ public class ProcessAlarmManager implements Serializable {
 
   /**
    * Registers an action handler to respond to alarm events.
-   * 
+   *
    * @param handler the action handler to register
    */
   public void registerActionHandler(AlarmActionHandler handler) {
@@ -84,7 +84,7 @@ public class ProcessAlarmManager implements Serializable {
 
   /**
    * Removes an action handler.
-   * 
+   *
    * @param handler the action handler to remove
    */
   public void removeActionHandler(AlarmActionHandler handler) {
@@ -93,7 +93,7 @@ public class ProcessAlarmManager implements Serializable {
 
   /**
    * Gets all registered action handlers.
-   * 
+   *
    * @return immutable list of action handlers
    */
   public List<AlarmActionHandler> getActionHandlers() {
@@ -102,7 +102,7 @@ public class ProcessAlarmManager implements Serializable {
 
   /**
    * Executes all registered action handlers for the given events.
-   * 
+   *
    * @param events alarm events to process
    */
   private void executeActionHandlers(List<AlarmEvent> events) {

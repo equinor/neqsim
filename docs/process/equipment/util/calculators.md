@@ -1,3 +1,8 @@
+---
+title: Calculators and Setters
+description: Documentation for calculator and setter equipment in NeqSim process simulation.
+---
+
 # Calculators and Setters
 
 Documentation for calculator and setter equipment in NeqSim process simulation.
@@ -468,6 +473,6 @@ for (double t = 0; t < 3600; t += 60) {
 
 ## Related Documentation
 
-- [Adjusters](adjusters.md) - Iterative adjustment
-- [Recycles](recycles.md) - Recycle handling
-- [Process Controllers](../../controllers.md) - Control systems
+- [Adjusters](adjusters) - Iterative adjustment
+- [Recycles](recycles) - Recycle handling
+- [Process Controllers](../../controllers) - Control systems

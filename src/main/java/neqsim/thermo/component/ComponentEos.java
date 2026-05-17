@@ -20,6 +20,7 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermMollerup;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPr;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPr1978;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrDanesh;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrLeeKesler;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrDelft1998;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrGassem2001;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermRk;
@@ -48,11 +49,17 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   public double b = 1;
 
+  /** Per-component OmegaA override. NaN means use the EOS default. */
+  protected double omegaAOverride = Double.NaN;
+
   public double m = 0;
 
   public double alpha = 0;
 
   public double aT = 1;
+
+  /** Cached {@code Math.sqrt(aT)} for use by mixing-rule inner loops. Kept in sync with aT by init(). */
+  public double sqrtAT = 1;
 
   public double aDiffT = 0;
 
@@ -140,6 +147,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     a = calca();
     b = calcb();
     aT = a * alpha(temp);
+    sqrtAT = aT > 0 ? Math.sqrt(aT) : 0.0;
     if (initType >= 2) {
       aDiffT = diffaT(temp);
       aDiffDiffT = diffdiffaT(temp);
@@ -219,6 +227,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       setAttractiveParameter(new AtractiveTermMatCopPRUMRNew(this, getMatiascopemanParamsUMRPRU()));
     } else if (i == 20) {
       setAttractiveParameter(new AttractiveTermSoreideWhitson(this));
+    } else if (i == 21) {
+      setAttractiveParameter(new AttractiveTermPrLeeKesler(this));
     } else {
       logger.error("error selecting an alpha formulation term");
       logger.info("ok setting alpha function");
@@ -592,6 +602,35 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   @Override
   public void seta(double a) {
     this.a = a;
+  }
+
+  /**
+   * Override the OmegaA parameter used in {@link #calca()}. Once set, every call to {@code calca()}
+   * (including those triggered by {@code init()}) will use this value instead of the EOS class
+   * default. Use {@code Double.NaN} to revert to the EOS default.
+   *
+   * @param omegaA the OmegaA value, e.g. 0.45724 for PR or 0.42748 for SRK.
+   */
+  public void setOmegaA(double omegaA) {
+    this.omegaAOverride = omegaA;
+  }
+
+  /**
+   * Returns true when a per-component OmegaA override has been set via {@link #setOmegaA}.
+   *
+   * @return true if an OmegaA override is active
+   */
+  public boolean hasOmegaAOverride() {
+    return !Double.isNaN(omegaAOverride);
+  }
+
+  /**
+   * Returns the active OmegaA value, or {@code Double.NaN} when no override has been set.
+   *
+   * @return active OmegaA override, or NaN
+   */
+  public double getOmegaAOverride() {
+    return omegaAOverride;
   }
 
   /** {@inheritDoc} */

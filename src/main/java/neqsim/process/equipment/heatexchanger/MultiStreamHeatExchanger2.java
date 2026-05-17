@@ -717,7 +717,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       for (int i : unknownIndices) {
         double inT = inletTemps.get(i);
         double outT = outletTemps.get(i);
-        String type = (String) streamTypes.get(i);
+        String type = streamTypes.get(i);
         if (type.equals("hot") && outT >= inT) {
           directionOk = false;
           msgs.add("hot outlet ≥ inlet");
@@ -789,7 +789,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
           double inlet = inletTemps.get(idx);
           double lower;
           double upper;
-          String type = (String) streamTypes.get(idx);
+          String type = streamTypes.get(idx);
           if (type.equals("hot")) {
             lower = coldestCold + approachTemperature;
             upper = inlet;

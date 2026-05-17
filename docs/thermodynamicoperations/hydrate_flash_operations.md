@@ -1,3 +1,8 @@
+---
+title: "Hydrate Flash Operations in NeqSim"
+description: "This document provides comprehensive documentation for hydrate phase equilibrium flash calculations in NeqSim."
+---
+
 # Hydrate Flash Operations in NeqSim
 
 This document provides comprehensive documentation for hydrate phase equilibrium flash calculations in NeqSim.
@@ -509,7 +514,7 @@ This is expected behavior. Use `gasHydrateTPflash()` for systems with trace wate
 
 ## Related Documentation
 
-- [Hydrate Models](../thermo/hydrate_models.md) - Thermodynamic model details
-- [Flash Calculations Guide](../thermo/flash_calculations_guide.md) - General flash operations
-- [Fluid Creation Guide](../thermo/fluid_creation_guide.md) - Setting up fluids
-- [Process Equipment](../process/README.md) - Process integration
+- [Hydrate Models](../thermo/hydrate_models) - Thermodynamic model details
+- [Flash Calculations Guide](../thermo/flash_calculations_guide) - General flash operations
+- [Fluid Creation Guide](../thermo/fluid_creation_guide) - Setting up fluids
+- [Process Equipment](../process/) - Process integration

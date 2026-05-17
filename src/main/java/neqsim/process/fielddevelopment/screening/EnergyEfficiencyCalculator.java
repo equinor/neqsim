@@ -53,7 +53,7 @@ import neqsim.process.fielddevelopment.facility.FacilityConfig;
  * </table>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * EnergyEfficiencyCalculator calc = new EnergyEfficiencyCalculator();
  * calc.setOilProduction(10000, "bbl/day");
@@ -63,9 +63,9 @@ import neqsim.process.fielddevelopment.facility.FacilityConfig;
  * calc.setPumpPower(1000, "kW");
  * calc.setHeatingDuty(8000, "kW");
  * calc.setFlaringRate(0.05, "MMSm3/day");
- * 
+ *
  * EnergyReport report = calc.calculate();
- * 
+ *
  * System.out.println("SEC: " + report.getSpecificEnergyConsumption() + " kWh/boe");
  * System.out.println("EEI: " + report.getEnergyEfficiencyIndex());
  * System.out.println("Potential savings: " + report.getPotentialSavings() + " MW");

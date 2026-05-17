@@ -12,7 +12,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Example demonstrating HIPPS (High Integrity Pressure Protection System) implementation.
- * 
+ *
  * <p>
  * This example shows:
  * <ul>
@@ -22,7 +22,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>HIPPS preventing PSV from lifting (no flaring)</li>
  * <li>Transient pressure response and valve closure</li>
  * </ul>
- * 
+ *
  * <p>
  * <b>Scenario:</b> A high-pressure separator operates normally at 70 bara. A downstream valve
  * accidentally closes (blocked outlet), causing pressure to ramp up. HIPPS detects the pressure

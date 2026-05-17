@@ -164,6 +164,9 @@ public final class ProcessModelGraphBuilder {
 
   /**
    * Builds a flattened graph containing all nodes and edges from all sub-systems.
+   *
+   * @param subSystemGraphs list of sub-system graphs to flatten
+   * @return a new ProcessGraph containing all nodes and edges from all sub-systems
    */
   private static ProcessGraph buildFlattenedGraph(
       List<ProcessModelGraph.SubSystemGraph> subSystemGraphs) {
@@ -196,11 +199,17 @@ public final class ProcessModelGraphBuilder {
    * Detects connections between different sub-systems by analyzing stream references. This includes
    * both explicit edges within sub-systems AND implicit dependencies where one system uses
    * stream/fluid objects from another system's equipment.
+   *
+   * @param subSystemGraphs list of sub-system graphs to analyze
+   * @param nodeToSystem mapping from nodes to their owning system names
+   * @param connections list to populate with detected inter-system connections
+   * @param flattenedGraph the flattened graph containing all nodes
    */
   private static void detectInterSystemConnections(
       List<ProcessModelGraph.SubSystemGraph> subSystemGraphs, Map<ProcessNode, String> nodeToSystem,
       List<ProcessModelGraph.InterSystemConnection> connections, ProcessGraph flattenedGraph) {
-    // Build a map of stream objects to their producing equipment AND their sub-system
+    // Build a map of stream objects to their producing equipment AND their
+    // sub-system
     Map<Object, ProcessEquipmentInterface> streamProducers = new IdentityHashMap<>();
     Map<Object, String> streamToSystem = new IdentityHashMap<>();
 
@@ -327,7 +336,8 @@ public final class ProcessModelGraphBuilder {
               flattenedGraph, connections);
         }
 
-        // Also check edges within this sub-system that might reference external equipment
+        // Also check edges within this sub-system that might reference external
+        // equipment
         for (ProcessEdge edge : targetNode.getIncomingEdges()) {
           ProcessNode sourceNode = edge.getSource();
           String sourceSystemName = nodeToSystem.get(sourceNode);
@@ -354,6 +364,11 @@ public final class ProcessModelGraphBuilder {
 
   /**
    * Collect output streams from specific equipment types.
+   *
+   * @param equipment the equipment to collect outputs from
+   * @param systemName the name of the system containing the equipment
+   * @param streamProducers map to populate with stream-to-producer mappings
+   * @param streamToSystem map to populate with stream-to-system mappings
    */
   private static void collectEquipmentOutputs(ProcessEquipmentInterface equipment,
       String systemName, Map<Object, ProcessEquipmentInterface> streamProducers,
@@ -463,6 +478,10 @@ public final class ProcessModelGraphBuilder {
 
   /**
    * Find an edge between two nodes.
+   *
+   * @param source the source node
+   * @param target the target node
+   * @return the edge between the nodes, or null if not found
    */
   private static ProcessEdge findEdge(ProcessNode source, ProcessNode target) {
     for (ProcessEdge edge : source.getOutgoingEdges()) {
@@ -475,6 +494,11 @@ public final class ProcessModelGraphBuilder {
 
   /**
    * Check if a connection already exists.
+   *
+   * @param connections the list of existing connections
+   * @param source the source node
+   * @param target the target node
+   * @return true if the connection exists, false otherwise
    */
   private static boolean connectionExists(List<ProcessModelGraph.InterSystemConnection> connections,
       ProcessNode source, ProcessNode target) {
@@ -489,6 +513,9 @@ public final class ProcessModelGraphBuilder {
 
   /**
    * Find the 'stream' field in a Stream class hierarchy.
+   *
+   * @param clazz the class to search for the stream field
+   * @return the stream field, or null if not found
    */
   private static java.lang.reflect.Field findStreamField(Class<?> clazz) {
     Class<?> current = clazz;
@@ -504,6 +531,13 @@ public final class ProcessModelGraphBuilder {
 
   /**
    * Check Mixer inputs for cross-system connections.
+   *
+   * @param mixer the mixer equipment to check
+   * @param targetSystemName the name of the target process system
+   * @param streamProducers map from streams to their producing equipment
+   * @param streamToSystem map from streams to their originating system name
+   * @param flattenedGraph the flattened process graph
+   * @param connections list to populate with discovered inter-system connections
    */
   private static void checkMixerInputs(ProcessEquipmentInterface mixer, String targetSystemName,
       Map<Object, ProcessEquipmentInterface> streamProducers, Map<Object, String> streamToSystem,
@@ -553,6 +587,10 @@ public final class ProcessModelGraphBuilder {
 
   /**
    * Find a field in class hierarchy.
+   *
+   * @param clazz the class to search
+   * @param fieldName the name of the field to find
+   * @return the field, or null if not found
    */
   private static java.lang.reflect.Field findField(Class<?> clazz, String fieldName) {
     Class<?> current = clazz;

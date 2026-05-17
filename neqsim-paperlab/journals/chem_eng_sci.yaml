@@ -1,0 +1,144 @@
+# Chemical Engineering Science — Journal Profile
+# Elsevier — ISSN: 0009-2509
+# https://www.sciencedirect.com/journal/chemical-engineering-science
+
+journal_name: "Chemical Engineering Science"
+journal_abbrev: "Chem. Eng. Sci."
+publisher: "Elsevier"
+issn: "0009-2509"
+url: "https://www.sciencedirect.com/journal/chemical-engineering-science"
+submit_url: "https://submit.elsevier.com/CES"
+impact_factor: 4.3
+citescore: 7.9
+scope: >
+  Outstanding research in the science of chemical engineering. Covers
+  engineering science fundamentals since 1951, catalysis, green and sustainable
+  chemistry, environmental engineering, and novel materials. Emphasizes both
+  fundamental understanding and innovative applications.
+
+# Structure
+abstract_words_max: 250
+keywords_min: 1
+keywords_max: 7
+section_order:
+  - Abstract
+  - Keywords
+  - Highlights
+  - Introduction
+  - Theory / Mathematical Framework
+  - Methods / Experimental
+  - Results and Discussion
+  - Conclusions
+  - Nomenclature
+  - Acknowledgements
+  - CRediT Author Contributions
+  - Declaration of Competing Interest
+  - Declaration of Generative AI Use
+  - Data Availability
+  - References
+  - Appendices
+
+# Formatting
+latex_class: "elsarticle"
+latex_options: "review,3p"
+reference_style: "elsarticle-num"
+citation_style: "numbered"  # Square brackets: [1], [2], [3,6], [4-8]
+figure_formats:
+  - "eps"
+  - "pdf"
+  - "tiff"
+  - "jpg"
+  - "png"
+figure_dpi_min: 300
+figure_dpi_line_art: 1000
+figure_dpi_combination: 500
+table_style: "three-line"  # booktabs: toprule, midrule, bottomrule; no vertical rules
+equation_numbering: "sequential"
+line_numbering_required: false  # Not explicitly required but welcome
+double_spacing_required: false  # Single-column Word; double-column LaTeX allowed
+page_size: "flexible"  # .doc/.docx or .tex accepted
+
+# Requirements
+highlights_required: true
+highlights_max: 5
+highlights_min: 3
+highlights_max_chars_each: 85
+graphical_abstract_required: false  # Encouraged, not required
+graphical_abstract_size: "531 x 1328 pixels (h x w)"
+cover_letter_required: true  # Especially for Review Articles (with Review Guidance doc)
+conflict_of_interest_required: true  # Via Elsevier declarations tool
+data_availability_required: true  # Option C: deposit in repository or explain why not
+credit_statement_required: true  # CRediT taxonomy roles
+ai_disclosure_required: true  # New section before references
+nomenclature_section: "optional"
+
+# Page/Content Limits
+pages_max: null  # No strict limit; 25-30 pages typical for full papers
+short_communication_words_max: 2000  # Including illustrations and tables
+figures_max: null
+tables_max: null
+references_max: null
+word_count_typical: "6000-10000"
+
+# Submission Types
+paper_types:
+  - "Full Length Paper"
+  - "Short Communication"  # Max ~2000 words equivalent
+  - "Review Article"       # Must follow Review Guidance document
+  - "Letter to the Editor"
+  - "Board Perspective"    # Invited from Advisory Board members
+
+# Peer Review
+peer_review_model: "single_anonymous"  # Min 2 reviewers per manuscript
+
+# Reference Format Examples
+# Numbered in order of appearance, square brackets in text
+# Journal: [1] A.B. Author1, C.D. Author2, Title of article,
+#          J. Abbrev. Vol (Year) Pages. https://doi.org/xxx
+# Book: [3] W. Strunk Jr., E.B. White, The Elements of Style, fourth ed.,
+#       Longman, New York, 2000.
+# Chapter: [4] G.R. Mettam, L.B. Adams, How to prepare an electronic version
+#          of your article, in: B.S. Jones, R.Z. Smith (Eds.), Introduction to
+#          the Electronic Age, E-Publishing Inc., New York, 2020, pp. 281-304.
+# Flexible at initial submission; consistent style required
+# Journal abbreviations per ISSN LTWA
+
+# Typical Topics for Flash Algorithm / Thermo Papers
+relevant_topics:
+  - "Phase equilibrium and thermodynamic modeling"
+  - "Reaction engineering and reactor design"
+  - "Multiphase flow and transport phenomena"
+  - "Process intensification"
+  - "Catalysis and surface science"
+  - "Separation processes"
+  - "Computational fluid dynamics in chemical engineering"
+  - "Green and sustainable chemical engineering"
+  - "Population balance modeling"
+
+# Distinctive Features
+distinctive_features:
+  - "One of the oldest ChemEng journals (since 1951)"
+  - "Very broad scope covering all chemical engineering science"
+  - "Companion journal: Chemical Engineering Science: X (open access)"
+  - "Short Communications for concise Novel findings"
+  - "Board Perspectives from advisory board members"
+  - "Active special issue program and calls for papers"
+
+# Key Elsevier/CES Policies
+policies:
+  ai_disclosure: >
+    Must declare generative AI use in dedicated section before references;
+    AI cannot be listed as author; authors responsible for AI-generated content
+  preprints: "Allowed per Elsevier sharing policy; does not count as prior publication"
+  data_sharing: "Option C: deposit data in repository, cite and link in article"
+  color_figures: "Free for online publication"
+  open_access_apc: "USD 3,930 (excluding taxes)"
+  co_submission: "Data in Brief and MethodsX co-submissions supported"
+  review_guidance: "Review Articles must follow downloadable Review Guidance document"
+
+# Timeline (from journal insights page)
+timeline:
+  submission_to_first_decision_days: 8
+  submission_to_decision_after_review_days: 40
+  submission_to_acceptance_days: 89
+  acceptance_to_online_days: 2

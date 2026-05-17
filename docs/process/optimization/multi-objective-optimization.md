@@ -1,6 +1,11 @@
+---
+title: Multi-Objective Optimization for Process Systems
+description: The `neqsim.process.util.optimizer` package provides a comprehensive **multi-objective optimization** framework for finding Pareto-optimal solutions when optimizing competing objectives in process sim...
+---
+
 # Multi-Objective Optimization for Process Systems
 
-> **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+> **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW) to understand when to use which optimizer.
 
 The `neqsim.process.util.optimizer` package provides a comprehensive **multi-objective optimization** framework for finding Pareto-optimal solutions when optimizing competing objectives in process simulations.
 
@@ -8,9 +13,10 @@ The `neqsim.process.util.optimizer` package provides a comprehensive **multi-obj
 
 | Document | Description |
 |----------|-------------|
-| [Optimization Overview](OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
-| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | ProductionOptimizer examples |
-| [Batch Studies](batch-studies.md) | Parallel parameter sweeps |
+| [Optimization Overview](OPTIMIZATION_OVERVIEW) | When to use which optimizer |
+| [Constraint Framework](constraint-framework) | Unified constraint system for all optimizers |
+| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | ProductionOptimizer examples |
+| [Batch Studies](batch-studies) | Parallel parameter sweeps |
 
 ## Table of Contents
 
@@ -192,6 +198,7 @@ The `StandardObjective` enum provides pre-built objectives for common optimizati
 | `MINIMIZE_COOLING_DUTY` | Minimize | Total cooler duty | kW |
 | `MINIMIZE_TOTAL_ENERGY` | Minimize | Power + heating + cooling | kW |
 | `MAXIMIZE_SPECIFIC_PRODUCTION` | Maximize | Throughput per unit power | kg/kWh |
+| `MAXIMIZE_LIQUID_RECOVERY` | Maximize | Liquid recovery fraction | - |
 
 ### Using Standard Objectives
 
@@ -1095,10 +1102,10 @@ for p in pareto_scipy:
 
 ## Related Documentation
 
-- [Production Optimization Framework](README.md) - Single-objective optimization
-- [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) - Equipment constraints
-- [Batch Parameter Estimation](batch-studies.md) - Parameter fitting
-- [Python Optimization Tutorial](../../examples/NeqSim_Python_Optimization.md) - SciPy integration
+- [Optimizer Guide](../../util/optimizer_guide) - Main optimization module documentation
+- [Constraint Framework](constraint-framework) - Unified constraint system (ProcessConstraint, ConstraintPenaltyCalculator)
+- [Flow Rate Optimization](flow-rate-optimization) - FlowRateOptimizer and Eclipse VFP
+- [Batch Parameter Estimation](batch-studies) - Parameter fitting
 
 ---
 

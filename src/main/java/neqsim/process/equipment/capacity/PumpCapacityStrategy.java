@@ -86,7 +86,7 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
 
     // Check if pump implements CapacityConstrainedEquipment
     if (pump instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) pump).getMaxUtilization();
+      return pump.getMaxUtilization();
     }
 
     // Use power utilization as primary capacity indicator

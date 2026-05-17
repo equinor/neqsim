@@ -20,12 +20,12 @@ package neqsim.process.fielddevelopment.economics;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Using predefined country parameters
  * FiscalParameters params = TaxModelRegistry.getParameters("UK");
  * TaxModel model = new GenericTaxModel(params);
- * 
+ *
  * // Calculate tax
  * TaxModel.TaxResult result = model.calculateTax(500.0, 100.0, 80.0, 0.0);
  * System.out.println("Total tax: " + result.getTotalTax());

@@ -14,7 +14,7 @@
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * // Create process basis
  * ProcessBasis basis = ProcessBasis.builder().feedFluid(myOilGasFluid)

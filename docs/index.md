@@ -1,11 +1,12 @@
 ---
 layout: default
 title: NeqSim Documentation
+description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engineering Task Solving in Industry."
 ---
 
 # NeqSim Documentation
 
-**NeqSim** (Non-Equilibrium Simulator) is a comprehensive Java library for thermodynamic, physical property, and process simulation developed by [Equinor](https://www.equinor.com/).
+**Industrial Agentic Engineering with NeqSim** — AI Agents for Engineering Task Solving in Industry. NeqSim (Non-Equilibrium Simulator) is a comprehensive Java library developed at [NTNU](https://www.ntnu.edu/).
 
 <div class="hero-badges" style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin: 1rem 0;">
   <a href="https://github.com/equinor/neqsim/actions"><img src="https://github.com/equinor/neqsim/actions/workflows/verify_build.yml/badge.svg" alt="Java CI"></a>
@@ -17,6 +18,7 @@ title: NeqSim Documentation
   <a href="wiki/getting_started.html" class="cta-button primary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #159957; color: white;">🚀 Get Started</a>
   <a href="https://github.com/equinor/neqsim" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">⭐ Star on GitHub</a>
   <a href="manual/neqsim_reference_manual.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📖 Reference Manual</a>
+  <a href="https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📘 JavaDoc API</a>
 </div>
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
@@ -61,6 +63,41 @@ title: NeqSim Documentation
 </ul>
 </div>
 
+<div class="nav-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border: 1px solid #e1e4e8; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e53935; color: #24292e; font-size: 1.25rem;">⚠️ Risk & Reliability</h3>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="risk/index.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Risk Simulation</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Equipment failure, Monte Carlo analysis</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="risk/sis-integration.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>SIS/SIF Integration</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">IEC 61508/61511, LOPA, SIL verification</span></li>
+<li style="padding: 0.5rem 0;"><a href="risk/bowtie-analysis.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Bow-Tie Analysis</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Barrier analysis, threat visualization</span></li>
+</ul>
+</div>
+
+<div class="nav-card" style="background: linear-gradient(135deg, #e8eaf6 0%, #ffffff 100%); border: 2px solid #3f51b5; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #3f51b5; color: #24292e; font-size: 1.25rem;">🤖 AI-Assisted Engineering</h3>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="tutorials/solve-engineering-task.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Solve an Engineering Task</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">From problem statement to validated report — no coding required</span></li>
+<li style="padding: 0.5rem 0;"><a href="development/TASK_SOLVING_GUIDE.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Task Solving Guide</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Multi-agent workflow with validation and report generation</span></li>
+</ul>
+</div>
+
+<div class="nav-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border: 1px solid #e1e4e8; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #4caf50; color: #24292e; font-size: 1.25rem;">🎯 Optimization & Cost</h3>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="process/optimization/OPTIMIZATION_OVERVIEW.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Production Optimization</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Throughput, multi-objective, Pareto</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="process/COST_ESTIMATION_FRAMEWORK.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Cost Estimation</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">CAPEX, OPEX, financial metrics</span></li>
+<li style="padding: 0.5rem 0;"><a href="integration/EXTERNAL_OPTIMIZER_INTEGRATION.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>External Optimizers</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Python/SciPy integration</span></li>
+</ul>
+</div>
+
+<div class="nav-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border: 1px solid #e1e4e8; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #00897b; color: #24292e; font-size: 1.25rem;">🌱 Emissions & Sustainability</h3>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="emissions/index.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Emissions Hub</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Landing page for all emission documentation</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="emissions/OFFSHORE_EMISSION_REPORTING.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Offshore Reporting Guide</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Regulatory framework, methods, validation</span></li>
+<li style="padding: 0.5rem 0;"><a href="examples/ProducedWaterEmissions_Tutorial.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Emissions Tutorial</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">CO₂, methane, nmVOC from produced water</span></li>
+</ul>
+</div>
+
 </div>
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
@@ -82,6 +119,7 @@ gas.setMixingRule("classic");
 // Perform flash calculation
 ThermodynamicOperations ops = new ThermodynamicOperations(gas);
 ops.TPflash();
+gas.initProperties();
 
 // Get properties
 System.out.println("Density: " + gas.getDensity("kg/m3") + " kg/m³");
@@ -90,7 +128,56 @@ System.out.println("Compressibility: " + gas.getZ());
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
 
-## 📖 Documentation Sections
+## � New: Quickstart & Learning Resources
+
+<div class="nav-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
+
+<div class="nav-card" style="background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%); border: 2px solid #4caf50; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #4caf50; color: #24292e; font-size: 1.25rem;">⚡ Quickstart Guides</h3>
+<p style="color: #6a737d; margin-bottom: 1rem;">Get running in 5 minutes!</p>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.4rem 0;"><a href="quickstart/java-quickstart.html" style="color: #155799; text-decoration: none;">☕ Java Quickstart</a></li>
+<li style="padding: 0.4rem 0;"><a href="quickstart/python-quickstart.html" style="color: #155799; text-decoration: none;">🐍 Python Quickstart</a></li>
+<li style="padding: 0.4rem 0;"><a href="quickstart/colab-quickstart.html" style="color: #155799; text-decoration: none;">☁️ Google Colab (No Install)</a></li>
+</ul>
+</div>
+
+<div class="nav-card" style="background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%); border: 2px solid #2196f3; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #2196f3; color: #24292e; font-size: 1.25rem;">📖 Cookbook</h3>
+<p style="color: #6a737d; margin-bottom: 1rem;">Copy-paste recipes for common tasks</p>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.4rem 0;"><a href="cookbook/thermodynamics-recipes.html" style="color: #155799; text-decoration: none;">🔬 Thermodynamics Recipes</a></li>
+<li style="padding: 0.4rem 0;"><a href="cookbook/process-recipes.html" style="color: #155799; text-decoration: none;">⚙️ Process Recipes</a></li>
+<li style="padding: 0.4rem 0;"><a href="cookbook/pipeline-recipes.html" style="color: #155799; text-decoration: none;">🔧 Pipeline Recipes</a></li>
+<li style="padding: 0.4rem 0;"><a href="cookbook/unit-conversion-recipes.html" style="color: #155799; text-decoration: none;">📏 Unit Conversion</a></li>
+</ul>
+</div>
+
+<div class="nav-card" style="background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%); border: 2px solid #ff9800; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #ff9800; color: #24292e; font-size: 1.25rem;">🎓 Learning Paths</h3>
+<p style="color: #6a737d; margin-bottom: 1rem;">Structured tracks by role</p>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#pvt-engineer-track" style="color: #155799; text-decoration: none;">🛢️ PVT Engineer Track</a></li>
+<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#process-engineer-track" style="color: #155799; text-decoration: none;">⚙️ Process Engineer Track</a></li>
+<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#developer-track" style="color: #155799; text-decoration: none;">💻 Developer Track</a></li>
+</ul>
+</div>
+
+<div class="nav-card" style="background: linear-gradient(135deg, #ffebee 0%, #ffffff 100%); border: 2px solid #f44336; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #f44336; color: #24292e; font-size: 1.25rem;">🔧 Troubleshooting</h3>
+<p style="color: #6a737d; margin-bottom: 1rem;">Solutions to common problems</p>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#flash-convergence-issues" style="color: #155799; text-decoration: none;">Flash Convergence</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#density-issues" style="color: #155799; text-decoration: none;">Density Issues</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#python-integration-issues" style="color: #155799; text-decoration: none;">Python Integration</a></li>
+</ul>
+</div>
+
+</div>
+
+<hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
+
+## �📖 Documentation Sections
 
 <div style="overflow-x: auto; margin: 1.5rem 0;">
 <table style="width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
@@ -103,10 +190,17 @@ System.out.println("Compressibility: " + gas.getZ());
 <tbody>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="thermo/README.html">🧪 Thermodynamics</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Equations of state, phase behavior, component properties</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="process/README.html">⚙️ Process Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Unit operations, process systems, controllers</td></tr>
-<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="physical_properties/README.html">📊 Physical Properties</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Transport properties, interfacial tension</td></tr>
-<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="pvtsimulation/README.html">🛢️ PVT Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Reservoir fluid characterization, tuning</td></tr>
-<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="fluidmechanics/README.html">🌊 Fluid Mechanics</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Pipeline flow, multiphase modeling</td></tr>
-<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="examples/">💡 Examples</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Tutorials and code samples</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="simulation/dynamic_simulation_guide.html">🔄 Dynamic Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Transient simulation, time-stepping, depressurization</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="physical_properties/README.html">📊 Physical Properties</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Transport properties, interfacial tension</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="pvtsimulation/README.html">🛢️ PVT Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Reservoir fluid characterization, tuning</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="fluidmechanics/README.html">🌊 Fluid Mechanics</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Pipeline flow, multiphase modeling</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="process/optimization/OPTIMIZATION_OVERVIEW.html">🎯 Optimization</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Production optimization, multi-objective, constraints</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="risk/index.html">⚠️ Risk & Reliability</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Equipment failure, Monte Carlo, SIS/SIF, bow-tie</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="safety/README.html">🛡️ Safety Systems</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">ESD, HIPPS, PSV, blowdown, alarms</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="examples/ProducedWaterEmissions_Tutorial.html">🌱 Emissions & Sustainability</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">CO₂, methane, nmVOC virtual measurement, Norwegian methods</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="process/COST_ESTIMATION_FRAMEWORK.html">💰 Cost Estimation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">CAPEX, OPEX, financial metrics (NPV, ROI)</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="examples/">💡 Examples</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Tutorials, Jupyter notebooks, code samples</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="tutorials/solve-engineering-task.html">🤖 AI-Assisted Engineering</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Multi-agent task solver: simulation, validation, and report generation</td></tr>
 <tr><td style="padding: 0.875rem 1rem; background: #fff;"><a href="development/README.html">🔧 Development</a></td><td style="padding: 0.875rem 1rem; background: #fff;">Contributing guidelines, developer setup</td></tr>
 </tbody>
 </table>
@@ -143,6 +237,7 @@ gas.setTemperature(298.15, "K")
 gas.setPressure(50.0, "bara")
 
 TPflash(gas)
+gas.initProperties()
 print(f"Gas density: {gas.getDensity('kg/m3'):.2f} kg/m³")
 ```
 
@@ -172,6 +267,6 @@ print(f"Gas density: {gas.getDensity('kg/m3'):.2f} kg/m³")
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
 
 <div class="doc-footer" style="margin-top: 2rem; padding-top: 1.5rem; text-align: center; color: #6a737d;">
-<p>NeqSim is developed and maintained by <a href="https://www.equinor.com/" style="color: #159957;">Equinor</a> and contributors.</p>
+<p>NeqSim is developed and maintained by the <a href="https://github.com/equinor/neqsim" style="color: #159957;">NeqSim community</a> and contributors.</p>
 <p>Licensed under the <a href="https://opensource.org/licenses/Apache-2.0" style="color: #159957;">Apache 2.0 License</a>.</p>
 </div>

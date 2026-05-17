@@ -1,3 +1,8 @@
+---
+title: "Gas quality standards validated by ISO 6976 tests"
+description: "The ISO 6976 calorific value and Wobbe index calculations are verified in `Standard_ISO6976Test`. This page summarizes the tested configurations and equations so you can align custom gas-quality runs ..."
+---
+
 # Gas quality standards validated by ISO 6976 tests
 
 The ISO 6976 calorific value and Wobbe index calculations are verified in `Standard_ISO6976Test`. This page summarizes the tested configurations and equations so you can align custom gas-quality runs with the regression suite.
@@ -8,11 +13,11 @@ The ISO 6976 calorific value and Wobbe index calculations are verified in `Stand
 
 The Wobbe index relation checked in the test is
 
-\[
+$
 WI = \frac{GCV}{\sqrt{\rho_r}}\ ,
-\]
+$
 
-where \(\rho_r\) is the relative density. Matching the test values indicates both combustion energy and density normalization are consistent with ISO 6976.
+where $\rho_r$ is the relative density. Matching the test values indicates both combustion energy and density normalization are consistent with ISO 6976.
 
 ## Handling reference condition overrides
 

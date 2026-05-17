@@ -144,16 +144,14 @@ plt.rcParams['font.size'] = 11
 ## 2. Configure NeqSim Environment and Helper Functions
 
 ```python
-# Import Java classes directly for more control
-# Using same approach as validated Java tests
-
-from jpype import JClass
-
-# Import NeqSim Java classes
+# Import Java classes via jneqsim gateway (no direct JClass needed)
 # Using Peng-Robinson EOS (PR) for vapor pressure predictions
-SystemPrEos = JClass('neqsim.thermo.system.SystemPrEos')
-ThermodynamicOperations = JClass('neqsim.thermodynamicoperations.ThermodynamicOperations')
-Standard_ASTM_D6377 = JClass('neqsim.standards.oilquality.Standard_ASTM_D6377')
+SystemPrEos = jneqsim.thermo.system.SystemPrEos
+ThermodynamicOperations = jneqsim.thermodynamicoperations.ThermodynamicOperations
+Standard_ASTM_D6377 = jneqsim.standards.oilquality.Standard_ASTM_D6377
+
+# Conversion factor bara to psi
+BARA_TO_PSI = 14.5038
 
 def calculate_tvp_rvp(fluid_system, temperature_C=37.8, method="VPCR4"):
     """
@@ -164,49 +162,76 @@ def calculate_tvp_rvp(fluid_system, temperature_C=37.8, method="VPCR4"):
     
     Parameters:
     -----------
-    fluid_system : SystemInterface
-        NeqSim fluid system
+    fluid_system : SystemPrEos
+        NeqSim fluid system with composition defined
     temperature_C : float
-        Reference temperature in Celsius (default: 37.8°C = 100°F)
+        Temperature in Celsius (default 37.8°C = 100°F)
     method : str
-        RVP method: "VPCR4", "RVP_ASTM_D6377", or "RVP_ASTM_D323_82"
-    
+        RVP calculation method: "VPCR4", "RVP_ASTM_D6377", "RVP_ASTM_D323_82"
+        
     Returns:
     --------
-    dict : Dictionary containing TVP, RVP, and related values
+    dict : Contains TVP, RVP, and TVP/RVP ratio in both bara and psi
     """
-    # Create ASTM D6377 standard calculator (same as Java tests)
-    rvp_standard = Standard_ASTM_D6377(fluid_system)
-    rvp_standard.setReferenceTemperature(temperature_C, "C")
-    rvp_standard.setMethodRVP(method)
-    rvp_standard.calculate()
+    # Clone the fluid to avoid modifying the original
+    test_fluid = fluid_system.clone()
     
-    # Get results
-    tvp_bara = float(rvp_standard.getValue("TVP", "bara"))
-    rvp_bara = float(rvp_standard.getValue("RVP", "bara"))
+    # Set temperature
+    test_fluid.setTemperature(temperature_C + 273.15)
     
-    # Calculate ratio
-    tvp_rvp_ratio = tvp_bara / rvp_bara if rvp_bara > 0 else float('nan')
+    # Create thermodynamic operations
+    thermoOps = ThermodynamicOperations(test_fluid)
     
+    # Calculate TVP (bubble point pressure)
+    thermoOps.bubblePointPressureFlash(False)
+    tvp_bara = test_fluid.getPressure()
+    
+    # Calculate RVP using ASTM D6377
+    astm = Standard_ASTM_D6377(fluid_system.clone())
+    astm.setReferenceTemperature(temperature_C, "C")
+    
+    # Get VPCR4 (default method)
+    astm.setMethodRVP("VPCR4")
+    astm.calculate()
+    vpcr4 = astm.getValue("RVP")
+    
+    # Get RVP_ASTM_D6377
+    astm.setMethodRVP("RVP_ASTM_D6377")
+    astm.calculate()
+    rvp_d6377 = astm.getValue("RVP")
+    
+    # Get RVP_ASTM_D323_82
+    astm.setMethodRVP("RVP_ASTM_D323_82")
+    astm.calculate()
+    rvp_d323 = astm.getValue("RVP")
+    
+    if method == "VPCR4":
+        rvp = vpcr4
+    elif method == "RVP_ASTM_D6377":
+        rvp = rvp_d6377
+    else:
+        rvp = rvp_d323
+        
     return {
         'TVP_bara': tvp_bara,
-        'TVP_psi': tvp_bara * 14.504,
-        'RVP_bara': rvp_bara,
-        'RVP_psi': rvp_bara * 14.504,
-        'TVP_RVP_ratio': tvp_rvp_ratio,
-        'Method': method
+        'TVP_psi': tvp_bara * BARA_TO_PSI,
+        'RVP_bara': rvp,
+        'RVP_psi': rvp * BARA_TO_PSI,
+        'VPCR4_bara': vpcr4,
+        'RVP_D6377_bara': rvp_d6377,
+        'RVP_D323_bara': rvp_d323,
+        'TVP_RVP_ratio': tvp_bara / rvp if rvp > 0 else float('inf'),
+        'temperature_C': temperature_C
     }
 
-print("Helper functions configured successfully!")
-print("Using Peng-Robinson (PR) equation of state for vapor pressure calculations")
+print("Helper functions defined successfully!")
 ```
 
 <details>
 <summary>Output</summary>
 
 ```
-Helper functions configured successfully!
-Using Peng-Robinson (PR) equation of state for vapor pressure calculations
+Helper functions defined successfully!
 ```
 
 </details>
@@ -512,50 +537,50 @@ Method: VPCR4 (Vapor Pressure at V/L=4)
 
 Light Condensate:
   TVP = 26.3724 bara (382.50 psi)
-  RVP = 9.1113 bara (132.15 psi)
-  TVP/RVP ratio = 2.8945
+  RVP = 20.4989 bara (297.31 psi)
+  TVP/RVP ratio = 1.2865
   Validation (TVP >= RVP): ✓
 
 Medium Crude:
   TVP = 9.0010 bara (130.55 psi)
-  RVP = 2.7353 bara (39.67 psi)
-  TVP/RVP ratio = 3.2907
+  RVP = 6.7283 bara (97.59 psi)
+  TVP/RVP ratio = 1.3378
   Validation (TVP >= RVP): ✓
 
 Heavy Crude:
   TVP = 2.0424 bara (29.62 psi)
-  RVP = 0.7140 bara (10.36 psi)
-  TVP/RVP ratio = 2.8604
-  Validation (TVP >= RVP): ✓
+  RVP = 1925.3195 bara (27924.45 psi)
+  TVP/RVP ratio = 0.0011
+  Validation (TVP >= RVP): ✗
 
 Stabilized Crude:
   TVP = 0.3624 bara (5.26 psi)
-  RVP = 0.3335 bara (4.84 psi)
-  TVP/RVP ratio = 1.0866
+  RVP = 0.3262 bara (4.73 psi)
+  TVP/RVP ratio = 1.1111
   Validation (TVP >= RVP): ✓
 
 Natural Gasoline:
   TVP = 2.6021 bara (37.74 psi)
-  RVP = 2.4497 bara (35.53 psi)
-  TVP/RVP ratio = 1.0622
+  RVP = 2.3419 bara (33.97 psi)
+  TVP/RVP ratio = 1.1111
   Validation (TVP >= RVP): ✓
 
 Straight-Run Gasoline:
   TVP = 0.6322 bara (9.17 psi)
-  RVP = 0.6033 bara (8.75 psi)
-  TVP/RVP ratio = 1.0480
+  RVP = 0.5690 bara (8.25 psi)
+  TVP/RVP ratio = 1.1111
   Validation (TVP >= RVP): ✓
 
 ================================================================================
 SUMMARY TABLE
 ================================================================================
-             Oil_Type  TVP_bara    TVP_psi  RVP_bara    RVP_psi  TVP_RVP_ratio
-     Light Condensate 26.372379 382.504990  9.111297 132.150253       2.894470
-         Medium Crude  9.001045 130.551160  2.735329  39.673213       3.290663
-          Heavy Crude  2.042383  29.622725  0.714028  10.356258       2.860369
-     Stabilized Crude  0.362413   5.256433  0.333516   4.837317       1.086642
-     Natural Gasoline  2.602094  37.740778  2.449741  35.531039       1.062192
-Straight-Run Gasoline  0.632224   9.169770  0.603290   8.750116       1.047960
+             Oil_Type  TVP_bara    TVP_psi    RVP_bara      RVP_psi  TVP_RVP_ratio
+     Light Condensate 26.372379 382.499715   20.498855   297.311292       1.286529
+         Medium Crude  9.001045 130.549360    6.728333    97.586403       1.337782
+          Heavy Crude  2.042383  29.622317 1925.319539 27924.449529       0.001061
+     Stabilized Crude  0.362413   5.256360    0.326171     4.730724       1.111111
+     Natural Gasoline  2.602094  37.740258    2.341885    33.966232       1.111111
+Straight-Run Gasoline  0.632224   9.169644    0.569001     8.252680       1.111111
 ```
 
 </details>
@@ -664,17 +689,17 @@ df_light_ends
 Light Ends Effect Study Results:
 
     Light_Ends_Fraction  TVP_bara  RVP_bara    TVP_psi    RVP_psi  \
-0                   0.0  0.287482  0.280863   4.169635   4.073634   
-1                   2.5  0.842009  0.500782  12.212504   7.263335   
-2                   5.0  1.371313  0.714476  19.889520  10.362767   
-3                   7.5  1.877043  0.922196  27.224629  13.375526   
-4                  10.0  2.360709  1.124173  34.239718  16.305009   
-5                  12.5  2.823693  1.320632  40.954839  19.154449   
-6                  15.0  3.267264  1.511785  47.388396  21.926923   
-7                  17.5  3.692589  1.697831  53.557313  24.625335   
-8                  20.0  4.100744  1.878964  59.477184  27.252491   
-9                  22.5  4.492719  2.055367  65.162400  29.811043   
-10                 25.0  4.869433  2.227213  70.626262  32.303494   
+0                   0.0  0.287482  0.280863   4.169578   4.073578   
+1                   2.5  0.842009  0.500782  12.212335   7.263235   
+2                   5.0  1.371313  0.714476  19.889246  10.362624   
+3                   7.5  1.877043  0.922196  27.224253  13.375341   
+4                  10.0  2.360709  1.124173  34.239246  16.304784   
+5                  12.5  2.823693  1.320632  40.954274  19.154185   
+6                  15.0  3.267264  1.511785  47.387742  21.926621   
+7                  17.5  3.692589  1.697831  53.556575  24.624995   
+8                  20.0  4.100744  1.878964  59.476364  27.252115   
+9                  22.5  4.492719  2.055367  65.161501  29.810632   
+10                 25.0  4.869433  2.227213  70.625288  32.303049   
 
     TVP_RVP_ratio  
 0        1.023566  

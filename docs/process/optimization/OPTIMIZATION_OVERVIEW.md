@@ -1,3 +1,8 @@
+---
+title: Process Optimization in NeqSim - Overview
+description: This document provides a high-level introduction to the process optimization capabilities in NeqSim, explaining how the different components relate to each other and when to use each one.
+---
+
 # Process Optimization in NeqSim - Overview
 
 This document provides a high-level introduction to the process optimization capabilities in NeqSim, explaining how the different components relate to each other and when to use each one.
@@ -11,6 +16,7 @@ This document provides a high-level introduction to the process optimization cap
 - [Key Concepts](#key-concepts)
 - [Search Algorithms](#search-algorithms)
 - [Python Usage via JPype](#python-usage-via-jpype)
+- [Getting Started](#getting-started)
 - [Complete Examples](#complete-examples)
 - [Related Documentation](#related-documentation)
 
@@ -20,16 +26,31 @@ This document provides a high-level introduction to the process optimization cap
 
 | I want to... | Use this class | Documentation |
 |--------------|----------------|---------------|
-| Find maximum throughput for given pressures | `ProcessOptimizationEngine` | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md) |
-| Optimize arbitrary objectives with constraints | `ProductionOptimizer` | [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) |
-| Do multi-objective Pareto optimization | `ProductionOptimizer.optimizePareto()` | [Multi-Objective Optimization](multi-objective-optimization.md) |
-| Run batch parameter studies | `BatchStudy` | [Batch Studies](batch-studies.md) |
-| Calculate flow rates for pressure boundaries | `FlowRateOptimizer` | [Flow Rate Optimization](flow-rate-optimization.md) |
-| Generate Eclipse lift curves (VFP tables) | `EclipseVFPExporter` | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md#eclipsevfpexporter) |
-| Evaluate equipment constraints | `ProcessConstraintEvaluator` | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) |
-| Integrate with external optimizers (SciPy, NLopt) | `ProcessSimulationEvaluator` | [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
-| Calibrate model parameters to data | `BatchParameterEstimator` | [README.md](README.md) |
+| Find maximum throughput for given pressures | `ProcessOptimizationEngine` | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE) |
+| Optimize arbitrary objectives with constraints | `ProductionOptimizer` | [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) |
+| Do multi-objective Pareto optimization | `ProductionOptimizer.optimizePareto()` | [Multi-Objective Optimization](multi-objective-optimization) |
+| Run batch parameter studies | `BatchStudy` | [Batch Studies](batch-studies) |
+| Generate and rank candidate flowsheets from feed/product targets | `ProcessResearcher` | [Process Researcher](process-researcher) |
+| Calculate flow rates for pressure boundaries | `FlowRateOptimizer` | [Flow Rate Optimization](flow-rate-optimization) |
+| Generate Eclipse lift curves (VFP tables) | `EclipseVFPExporter` | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE#eclipsevfpexporter) |
+| Evaluate equipment constraints | `ProcessConstraintEvaluator` | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) |
+| Integrate with external optimizers (SciPy, NLopt) | `ProcessSimulationEvaluator` | [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) |
+| Solve constrained NLP (equality + inequality) | `SQPoptimizer` | [SQP Optimizer](sqp_optimizer) |
+| Calibrate model parameters to data | `BatchParameterEstimator` | [Data Reconciliation and Steady-State Detection](data-reconciliation) |
 | Load optimization config from YAML/JSON | `ProductionOptimizationSpecLoader` | [YAML Spec Format](#yaml-specification-files) |
+
+---
+
+
+## Getting Started
+
+If you are new to process optimization in NeqSim, begin with:
+
+1. [Getting Started](getting-started)
+2. [Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS)
+3. [Constraint Framework](constraint-framework)
+
+This sequence covers base-run requirements, optimizer selection, and safe variable access through `ProcessAutomation`.
 
 ---
 
@@ -38,18 +59,21 @@ This document provides a high-level introduction to the process optimization cap
 | Document | Purpose |
 |----------|---------|
 | **This Document** | High-level overview and when to use which optimizer |
-| **[ProductionOptimizer Tutorial (Jupyter)](../../examples/ProductionOptimizer_Tutorial.md)** | **Interactive notebook: algorithms, single/multi-variable, Pareto, constraints** |
-| **[Python Optimization Tutorial (Jupyter)](../../examples/NeqSim_Python_Optimization.md)** | **Using SciPy/Python optimizers with NeqSim: constraints, Pareto, global opt** |
-| [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md) | Equipment capacity strategies, ProcessOptimizationEngine API, VFP export |
-| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | Complete examples for ProductionOptimizer with Java/Python |
-| [Practical Examples](PRACTICAL_EXAMPLES.md) | Code samples for common optimization tasks |
-| [Multi-Objective Optimization](multi-objective-optimization.md) | Pareto fronts, weighted-sum, epsilon-constraint methods |
-| [Batch Studies](batch-studies.md) | Parallel parameter sweeps and sensitivity analysis |
-| [Flow Rate Optimization](flow-rate-optimization.md) | FlowRateOptimizer and lift curve tables |
-| [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) | ProcessSimulationEvaluator for Python/SciPy integration |
-| [README.md](README.md) | BatchParameterEstimator for Levenberg-Marquardt calibration |
-| [Optimizer Guide](../../util/optimizer_guide.md) | Detailed API reference for all optimizer classes |
-| [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) | Equipment constraints and bottleneck detection |
+| **[Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS)** | **COMPREHENSIVE: Complete guide to algorithms, constraint types, bottleneck analysis, practical examples** |
+| **[ProductionOptimizer Tutorial (Jupyter)](../../examples/ProductionOptimizer_Tutorial)** | **Interactive notebook: algorithms, single/multi-variable, Pareto, constraints** |
+| **[Python Optimization Tutorial (Jupyter)](../../examples/NeqSim_Python_Optimization)** | **Using SciPy/Python optimizers with NeqSim: constraints, Pareto, global opt** |
+| [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE) | Equipment capacity strategies, ProcessOptimizationEngine API, VFP export |
+| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | Complete examples for ProductionOptimizer with Java/Python |
+| [Practical Examples](PRACTICAL_EXAMPLES) | Code samples for common optimization tasks |
+| [Process Researcher](process-researcher) | Candidate flowsheet generation and ranking from feed/product specifications |
+| [Multi-Objective Optimization](multi-objective-optimization) | Pareto fronts, weighted-sum, epsilon-constraint methods |
+| [Batch Studies](batch-studies) | Parallel parameter sweeps and sensitivity analysis |
+| [Flow Rate Optimization](flow-rate-optimization) | FlowRateOptimizer and lift curve tables |
+| [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | ProcessSimulationEvaluator for Python/SciPy integration |
+| [Getting Started](getting-started) | Step-by-step first optimization workflow for process models/systems |
+| [Optimizer Guide](../../util/optimizer_guide) | Detailed API reference for all optimizer classes |
+| [SQP Optimizer](sqp_optimizer) | Sequential Quadratic Programming — constrained NLP with BFGS + active-set QP |
+| [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) | Equipment constraints and bottleneck detection |
 
 ---
 
@@ -80,16 +104,19 @@ NeqSim provides three main levels of optimization capability:
 │                                     ▼                                        │
 │                   LEVEL 1: Equipment Constraint Layer                        │
 │  ┌─────────────────────────────────────────────────────────────────────────┐│
-│  │            EquipmentCapacityStrategyRegistry (Plugin System)             ││
+│  │            EquipmentCapacityStrategyRegistry (18 Built-in Strategies)    ││
 │  │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────┐            ││
-│  │  │Compressor  │ │ Separator  │ │   Pump     │ │  Expander  │ + custom   ││
-│  │  │ Strategy   │ │  Strategy  │ │ Strategy   │ │  Strategy  │            ││
+│  │  │Compressor  │ │ Separator  │ │   Pump     │ │  Reactor   │            ││
+│  │  │ Strategy   │ │  Strategy  │ │ Strategy   │ │  Strategy  │ + custom   ││
+│  │  │Pipe, Valve │ │  HX, Tank  │ │ Expander   │ │ PowerGen   │            ││
+│  │  │Mixer, Split│ │  Ejector   │ │ Distill.   │ │ Subsea,Well│            ││
 │  │  └────────────┘ └────────────┘ └────────────┘ └────────────┘            ││
 │  └─────────────────────────────────────────────────────────────────────────┘│
 │                                     │                                        │
 │  ┌─────────────────────────────────────────────────────────────────────────┐│
-│  │                    CapacityConstraint                                    ││
-│  │  (utilization ratio, design vs operating values, severity levels)       ││
+│  │         ProcessEquipmentBaseClass (Universal Constraint Storage)         ││
+│  │  All 144+ equipment types inherit: addCapacityConstraint(),              ││
+│  │  getMaxUtilization(), isCapacityExceeded(), getBottleneckConstraint()    ││
 │  └─────────────────────────────────────────────────────────────────────────┘│
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -104,7 +131,7 @@ NeqSim provides three main levels of optimization capability:
 
 **Best for:**
 - Maximum throughput calculations
-- Pressure-constrained optimization  
+- Pressure-constrained optimization
 - Lift curve generation
 - Equipment bottleneck analysis
 - Integration with ProcessSystem/ProcessModule
@@ -163,8 +190,8 @@ OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0)
 
 // Define objectives
 List<OptimizationObjective> objectives = Arrays.asList(
-    new OptimizationObjective("throughput", 
-        proc -> proc.getUnit("outlet").getFlowRate("kg/hr"), 
+    new OptimizationObjective("throughput",
+        proc -> proc.getUnit("outlet").getFlowRate("kg/hr"),
         1.0, ObjectiveType.MAXIMIZE)
 );
 
@@ -256,14 +283,14 @@ Equipment constraints define operating limits. Each equipment type has a strateg
 | Valve | Cv capacity, choke conditions |
 
 > **⚠️ Important**: Most equipment constraints are **disabled by default** for backward compatibility. The optimizer automatically falls back to traditional capacity methods (`getCapacityMax()`/`getCapacityDuty()`) when no enabled constraints exist. To use multi-constraint capacity analysis, you must explicitly enable constraints:
-> 
+>
 > ```java
 > separator.useEquinorConstraints();  // Enable Equinor TR3500 constraints
 > // OR
 > separator.enableConstraints();       // Enable all constraints
 > ```
-> 
-> See [Capacity Constraint Framework - Constraints Disabled by Default](../CAPACITY_CONSTRAINT_FRAMEWORK.md#important-constraints-disabled-by-default) for details.
+>
+> See [Capacity Constraint Framework - Constraints Disabled by Default](../CAPACITY_CONSTRAINT_FRAMEWORK#important-constraints-disabled-by-default) for details.
 
 ### Utilization Ratio
 
@@ -317,7 +344,7 @@ config.searchMode(SearchMode.PARTICLE_SWARM_SCORE);
 config.searchMode(SearchMode.GRADIENT_DESCENT_SCORE);  // New (Jan 2026)
 ```
 
-> **January 2026 Update:** ProductionOptimizer now includes `GRADIENT_DESCENT_SCORE` algorithm, configuration validation, stagnation detection, warm start, bounded LRU cache, and infeasibility diagnostics. See [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) for details.
+> **January 2026 Update:** ProductionOptimizer now includes `GRADIENT_DESCENT_SCORE` algorithm, configuration validation, stagnation detection, warm start, bounded LRU cache, and infeasibility diagnostics. See [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) for details.
 
 ---
 
@@ -414,7 +441,7 @@ engine.setSearchAlgorithm(SearchAlgorithm.GOLDEN_SECTION);
 
 OptimizationResult result = engine.findMaximumThroughput(
     50.0,      // inlet pressure
-    100.0,     // outlet pressure  
+    100.0,     // outlet pressure
     10000.0,   // min flow
     200000.0   // max flow
 );
@@ -477,13 +504,13 @@ scenarios:
     maxIterations: 30
     searchMode: "GOLDEN_SECTION_SCORE"
     utilizationMarginFraction: 0.05
-    
+
     objectives:
       - name: "throughput"
         weight: 1.0
         type: "MAXIMIZE"
         metric: "throughputMetric"   # Key in metrics map
-    
+
     constraints:
       - name: "maxPower"
         metric: "powerMetric"
@@ -527,16 +554,16 @@ for (ScenarioRequest scenario : scenarios) {
 
 | Class | Purpose | Key Method | Documentation |
 |-------|---------|------------|---------------|
-| `ProcessOptimizationEngine` | Throughput-focused optimization | `findMaximumThroughput()` | [Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md) |
-| `ProductionOptimizer` | General-purpose optimization | `optimize()`, `optimizePareto()` | [Production Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) |
-| `FlowRateOptimizer` | Flow rate for pressure boundaries | `findMaxFlowRate()` | [Flow Rate Optimization](flow-rate-optimization.md) |
-| `MultiObjectiveOptimizer` | Pareto front generation | `optimize()` | [Multi-Objective](multi-objective-optimization.md) |
-| `BatchStudy` | Parallel parameter sweeps | `run()` | [Batch Studies](batch-studies.md) |
-| `ProcessConstraintEvaluator` | Constraint evaluation | `evaluate()` | [Capacity Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) |
-| `ProcessSimulationEvaluator` | External optimizer interface | `evaluate()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
-| `EclipseVFPExporter` | Eclipse VFP tables | `exportVFPPROD()` | [Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md#eclipsevfpexporter) |
-| `LiftCurveGenerator` | Lift curve tables | `generateLiftCurve()` | [Flow Rate Optimization](flow-rate-optimization.md) |
-| `BatchParameterEstimator` | Model calibration | `solve()` | [README.md](README.md) |
+| `ProcessOptimizationEngine` | Throughput-focused optimization | `findMaximumThroughput()` | [Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE) |
+| `ProductionOptimizer` | General-purpose optimization | `optimize()`, `optimizePareto()` | [Production Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) |
+| `FlowRateOptimizer` | Flow rate for pressure boundaries | `findMaxFlowRate()` | [Flow Rate Optimization](flow-rate-optimization) |
+| `MultiObjectiveOptimizer` | Pareto front generation | `optimize()` | [Multi-Objective](multi-objective-optimization) |
+| `BatchStudy` | Parallel parameter sweeps | `run()` | [Batch Studies](batch-studies) |
+| `ProcessConstraintEvaluator` | Constraint evaluation | `evaluate()` | [Capacity Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) |
+| `ProcessSimulationEvaluator` | External optimizer interface | `evaluate()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) |
+| `EclipseVFPExporter` | Eclipse VFP tables | `exportVFPPROD()` | [Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE#eclipsevfpexporter) |
+| `LiftCurveGenerator` | Lift curve tables | `generateLiftCurve()` | [Flow Rate Optimization](flow-rate-optimization) |
+| `BatchParameterEstimator` | Model calibration | `solve()` | [Data Reconciliation and Steady-State Detection](data-reconciliation) |
 | `ProductionOptimizationSpecLoader` | YAML/JSON config loading | `load()` | [YAML Format](#yaml-specification-files) |
 
 ---

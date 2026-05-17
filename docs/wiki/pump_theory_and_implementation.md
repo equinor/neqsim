@@ -1,3 +1,8 @@
+---
+title: "Pump Theory and Implementation in NeqSim"
+description: "NeqSim provides comprehensive centrifugal pump simulation through the `Pump` and `PumpChart` classes. The implementation supports:"
+---
+
 # Pump Theory and Implementation in NeqSim
 
 ## Overview
@@ -10,7 +15,7 @@ NeqSim provides comprehensive centrifugal pump simulation through the `Pump` and
 - Cavitation detection and operating status monitoring
 - Surge and stonewall detection
 
-Also see [pump usage guide](https://github.com/equinor/neqsim/blob/master/docs/wiki/pump_usage_guide.md).
+Also see [pump usage guide](https://github.com/equinor/neqsim/blob/master/docs/wiki/pump_usage_guide).
 
 ---
 
@@ -94,6 +99,26 @@ pump.run();
 System.out.println("Power: " + pump.getPower("kW") + " kW");
 System.out.println("Outlet T: " + pump.getOutletTemperature() + " K");
 ```
+
+### Fixed Outlet Temperature Mode
+
+When `setOutletTemperature` is called, the pump bypasses the isentropic or pump-curve
+calculation and instead performs a **TP flash** at the target temperature and outlet pressure.
+Pump power is back-calculated from the enthalpy difference.
+
+Supported units: `"K"` (Kelvin), `"C"` (Celsius), `"F"` (Fahrenheit), `"R"` (Rankine).
+
+```java
+Pump pump = new Pump("PlantPump", feedStream);
+pump.setOutletPressure(10.0, "bara");
+pump.setOutletTemperature(35.0, "C"); // set discharge temperature with unit
+pump.run();
+
+double power = pump.getPower("kW"); // back-calculated
+```
+
+> The legacy method `setOutTemperature(double)` (Kelvin only) is deprecated.
+> Use `setOutletTemperature(double)` or `setOutletTemperature(double, String)`.
 
 ### Using Pump Curves
 
@@ -378,11 +403,6 @@ pump.getPumpChart().setCurves(chartConditions, speed, flow, head, efficiency);
 pump.getPumpChart().setReferenceViscosity(1.0);       // Chart measured with water (1 cSt)
 pump.getPumpChart().setUseViscosityCorrection(true);  // Enable correction
 
-// Set pump parameters
-pump.getPumpChart().setReferenceFlow(100.0);          // BEP flow (m³/hr)
-pump.getPumpChart().setReferenceHead(100.0);          // BEP head (meters)
-pump.getPumpChart().setReferenceSpeed(1500.0);        // Reference speed (rpm)
-
 pump.run();
 
 // Check applied corrections
@@ -514,7 +534,7 @@ esp.run()
 # Monitor performance
 print(f"Inlet GVF: {esp.getGasVoidFraction()*100:.1f}%")
 print(f"Head degradation factor: {esp.getHeadDegradationFactor():.3f}")
-print(f"Effective head: {esp.calculateTotalHead():.1f} m")
+print(f"Effective head: {esp.getHeadPerStage() * esp.getNumberOfStages() * esp.getHeadDegradationFactor():.1f} m")
 print(f"Is surging: {esp.isSurging()}")
 ```
 
@@ -532,7 +552,6 @@ print(f"Is surging: {esp.isSurging()}")
 | `getHeadDegradationFactor()` | Get head degradation (0-1) |
 | `isSurging()` | Check if pump is surging |
 | `isGasLocked()` | Check if pump has lost prime |
-| `calculateTotalHead()` | Get total developed head |
 
 ---
 

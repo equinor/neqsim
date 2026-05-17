@@ -56,7 +56,7 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
   @Override
   public double calcInterphaseHeatTransferCoefficient(int phaseNum, double prandtlNumber,
       FlowNodeInterface node) {
-    if (Math.abs(node.getReynoldsNumber()) < 2000) {
+    if (Math.abs(node.getReynoldsNumber(phaseNum)) < 2000) {
       return 3.66 / node.getHydraulicDiameter(phaseNum)
           * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
     } else { // if turbulent - use chilton colburn analogy
@@ -74,7 +74,7 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
   @Override
   public double calcWallMassTransferCoefficient(int phaseNum, double schmidtNumber,
       FlowNodeInterface node) {
-    if (Math.abs(node.getReynoldsNumber()) < 2000) {
+    if (Math.abs(node.getReynoldsNumber(phaseNum)) < 2000) {
       return 3.66 / node.getHydraulicDiameter(phaseNum) / schmidtNumber
           * node.getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getKinematicViscosity();
     } else {

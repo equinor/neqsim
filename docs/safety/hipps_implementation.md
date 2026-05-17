@@ -1,3 +1,8 @@
+---
+title: HIPPS (High Integrity Pressure Protection System) Implementation in NeqSim
+description: HIPPS is a Safety Instrumented System (SIS) designed to prevent overpressure by shutting down the source of pressure rather than relieving it through pressure safety valves (PSVs) or rupture disks. Th...
+---
+
 # HIPPS (High Integrity Pressure Protection System) Implementation in NeqSim
 
 ## Overview

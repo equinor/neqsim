@@ -1,3 +1,8 @@
+---
+title: MPC Integration for NeqSim Process Systems
+description: This document describes the Model Predictive Control (MPC) integration package for NeqSim, which bridges the gap between rigorous process simulation and advanced control systems.
+---
+
 # MPC Integration for NeqSim Process Systems
 
 This document describes the Model Predictive Control (MPC) integration package for NeqSim, which bridges the gap between rigorous process simulation and advanced control systems.
@@ -642,4 +647,4 @@ ProductionIndex=  8
 
 - [ModelPredictiveController](../controllerdevice) - Underlying MPC implementation
 - [ProcessSystem](../processmodel) - NeqSim process simulation
-- [AI Platform Integration](ai_platform_integration.md) - Broader AI integration guide
+- [AI Platform Integration](ai_platform_integration) - Broader AI integration guide

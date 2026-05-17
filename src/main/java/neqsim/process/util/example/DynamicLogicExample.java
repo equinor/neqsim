@@ -16,7 +16,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 /**
  * Example demonstrating how to create process logic completely dynamically at runtime without any
  * pre-compiled logic sequences.
- * 
+ *
  * <p>
  * This shows:
  * </p>
@@ -65,6 +65,8 @@ public class DynamicLogicExample {
 
   /**
    * Creates a simple process for demonstration.
+   *
+   * @return the created ProcessSystem with feed, valve, and separator
    */
   private static ProcessSystem createSimpleProcess() {
     ProcessSystem system = new ProcessSystem();
@@ -100,6 +102,9 @@ public class DynamicLogicExample {
 
   /**
    * Demonstrates creating custom actions at runtime.
+   *
+   * @param valve the ThrottlingValve to control in custom actions
+   * @param separator the Separator to control in custom actions
    */
   private static void demonstrateCustomActions(ThrottlingValve valve, Separator separator) {
     System.out.println("\n=== EXAMPLE 1: CUSTOM ACTIONS ===");
@@ -179,6 +184,9 @@ public class DynamicLogicExample {
 
   /**
    * Demonstrates creating custom conditions at runtime.
+   *
+   * @param valve the ThrottlingValve to monitor in custom conditions
+   * @param separator the Separator to monitor in custom conditions
    */
   private static void demonstrateCustomConditions(ThrottlingValve valve, Separator separator) {
     System.out.println("\n=== EXAMPLE 2: CUSTOM CONDITIONS ===");
@@ -256,6 +264,9 @@ public class DynamicLogicExample {
 
   /**
    * Demonstrates building complex logic sequences completely at runtime.
+   *
+   * @param valve the throttling valve to control
+   * @param separator the separator to monitor
    */
   private static void demonstrateDynamicLogicSequences(ThrottlingValve valve, Separator separator) {
     System.out.println("\n=== EXAMPLE 3: DYNAMIC LOGIC SEQUENCES ===");
@@ -307,6 +318,9 @@ public class DynamicLogicExample {
 
   /**
    * Demonstrates modifying logic sequences at runtime.
+   *
+   * @param valve the throttling valve to control
+   * @param separator the separator to monitor
    */
   private static void demonstrateRuntimeModification(ThrottlingValve valve, Separator separator) {
     System.out.println("\n=== EXAMPLE 4: RUNTIME LOGIC MODIFICATION ===");
@@ -393,6 +407,8 @@ public class DynamicLogicExample {
 
   /**
    * Simulates determining what scenario to use at runtime.
+   *
+   * @return the determined runtime scenario name
    */
   private static String determineRuntimeScenario() {
     // In real implementation, this might check:
@@ -406,6 +422,11 @@ public class DynamicLogicExample {
 
   /**
    * Creates adaptive logic based on runtime scenario.
+   *
+   * @param scenario the scenario name to determine logic behavior
+   * @param valve the ThrottlingValve to control
+   * @param separator the Separator to control
+   * @return the created ESDLogic configured for the given scenario
    */
   private static ESDLogic createAdaptiveLogic(String scenario, ThrottlingValve valve,
       Separator separator) {
@@ -429,6 +450,11 @@ public class DynamicLogicExample {
 
   /**
    * Factory method for creating adaptive actions.
+   *
+   * @param description the description of the action
+   * @param equipment the equipment to control
+   * @param parameter the parameter value for the action (valve opening or -1 for mode switch)
+   * @return the created LogicAction
    */
   private static LogicAction createAdaptiveAction(String description,
       ProcessEquipmentInterface equipment, double parameter) {

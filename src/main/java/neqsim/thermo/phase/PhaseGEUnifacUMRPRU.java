@@ -58,6 +58,11 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
       componentArray[i] = new ComponentGEUnifacUMRPRU(phase.getComponent(i).getName(),
           phase.getComponent(i).getNumberOfmoles(), phase.getComponent(i).getNumberOfMolesInPhase(),
           phase.getComponent(i).getComponentNumber());
+      // For pseudo-components (_PC), copy correct molar mass and reinitialize UNIFAC groups
+      if (phase.getComponent(i).getName().contains("_PC")) {
+        componentArray[i].setMolarMass(phase.getComponent(i).getMolarMass());
+        ((ComponentGEUnifacUMRPRU) componentArray[i]).initPCUNIFACGroups();
+      }
       componentArray[i].setAttractiveTerm(phase.getComponent(i).getAttractiveTermNumber());
     }
     this.setMixingRule(EosMixingRuleType.CLASSIC);

@@ -1,3 +1,8 @@
+---
+title: Flow Assurance in NeqSim
+description: Flow assurance is the discipline ensuring that hydrocarbon fluids can be produced, transported, and processed safely and economically throughout the life of a field. NeqSim provides comprehensive tool...
+---
+
 # Flow Assurance in NeqSim
 
 Flow assurance is the discipline ensuring that hydrocarbon fluids can be produced, transported, and processed safely and economically throughout the life of a field. NeqSim provides comprehensive tools for predicting and managing flow assurance challenges.
@@ -17,14 +22,28 @@ Flow assurance encompasses the prevention and remediation of:
 
 | Topic | Description |
 |-------|-------------|
-| [Asphaltene Modeling](asphaltene_modeling.md) | Overview of asphaltene stability analysis |
-| [CPA-Based Asphaltene Calculations](asphaltene_cpa_calculations.md) | Thermodynamic onset pressure/temperature |
-| [De Boer Asphaltene Screening](asphaltene_deboer_screening.md) | Empirical screening correlation |
-| [Asphaltene Parameter Fitting](asphaltene_parameter_fitting.md) | Tuning CPA parameters to experimental data |
-| [Asphaltene Method Comparison](asphaltene_method_comparison.md) | Comparing CPA vs De Boer approaches |
-| [Asphaltene Model Validation](asphaltene_validation.md) | Validation against SPE-24987 field data |
+| [Asphaltene Modeling](asphaltene_modeling) | Overview of asphaltene stability analysis |
+| [CPA-Based Asphaltene Calculations](asphaltene_cpa_calculations) | Thermodynamic onset pressure/temperature |
+| [De Boer Asphaltene Screening](asphaltene_deboer_screening) | Empirical screening correlation |
+| [Asphaltene Parameter Fitting](asphaltene_parameter_fitting) | Tuning CPA parameters to experimental data |
+| [Asphaltene Method Comparison](asphaltene_method_comparison) | Comparing CPA vs De Boer approaches |
+| [Asphaltene Model Validation](asphaltene_validation) | Validation against SPE-24987 field data |
+| [Flow Assurance Screening Tools](flow_assurance_screening_tools) | Pipeline cooldown, CO2 corrosion, scale prediction, wax curve monotonicity |
 
 ## Key Classes
+
+### Flow Assurance Screening Tools
+
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `PipelineCooldownCalculator` | `neqsim.pvtsimulation.flowassurance` | Lumped-parameter pipeline shutdown cooldown |
+| `DeWaardMilliamsCorrosion` | `neqsim.pvtsimulation.flowassurance` | CO2 corrosion rate (de Waard-Milliams 1991) |
+
+> **Full NORSOK standard models:** For production-grade corrosion analysis per NORSOK M-506 and
+> material selection per NORSOK M-001, see the **[Corrosion Analysis Module](../../process/corrosion/)**
+> in `neqsim.process.corrosion`. These integrate directly with pipeline mechanical design.
+| `ScalePredictionCalculator` | `neqsim.pvtsimulation.flowassurance` | Saturation index for CaCO3, BaSO4, SrSO4, CaSO4, FeCO3 |
+| `WaxCurveCalculator` | `neqsim.pvtsimulation.flowassurance` | Wax fraction curves with monotonicity enforcement |
 
 ### Asphaltene Analysis
 
@@ -32,7 +51,11 @@ Flow assurance encompasses the prevention and remediation of:
 |-------|---------|---------|
 | `AsphalteneCharacterization` | `neqsim.thermo.characterization` | SARA-based characterization |
 | `AsphalteneStabilityAnalyzer` | `neqsim.pvtsimulation.flowassurance` | High-level CPA analysis API |
-| `DeBoerAsphalteneScreening` | `neqsim.pvtsimulation.flowassurance` | Empirical De Boer screening |
+| `DeBoerAsphalteneScreening` | `neqsim.pvtsimulation.flowassurance` | Empirical De Boer screening (quadratic boundaries) |
+| `FloryHugginsAsphalteneModel` | `neqsim.pvtsimulation.flowassurance` | Flory-Huggins regular solution model with physics-based calibration and API gravity configuration |
+| `RefractiveIndexAsphalteneScreening` | `neqsim.pvtsimulation.flowassurance` | Refractive index stability screening (Buckley et al.) |
+| `AsphalteneMultiMethodBenchmark` | `neqsim.pvtsimulation.flowassurance` | Unified 6-method comparison framework with literature cases |
+| `PedersenAsphalteneCharacterization` | `neqsim.thermo.characterization` | Pedersen cubic EOS asphaltene characterization with kij tuning |
 | `AsphalteneMethodComparison` | `neqsim.pvtsimulation.flowassurance` | Compare multiple methods |
 | `AsphalteneOnsetPressureFlash` | `neqsim.thermodynamicoperations` | Onset pressure calculation |
 | `AsphalteneOnsetTemperatureFlash` | `neqsim.thermodynamicoperations` | Onset temperature calculation |
@@ -138,10 +161,10 @@ if (fluid.hasPhaseType(PhaseType.ASPHALTENE)) {
 }
 ```
 
-See [Asphaltene Modeling](asphaltene_modeling.md) for more details on `PhaseType.ASPHALTENE`.
+See [Asphaltene Modeling](asphaltene_modeling) for more details on `PhaseType.ASPHALTENE`.
 
 ## Related Topics
 
-- [Thermodynamic Models](../../thermo/README.md) - Equation of state fundamentals
-- [PVT Simulation](../README.md) - Fluid characterization
-- [Process Equipment](../../process/README.md) - Separator and pipeline modeling
+- [Thermodynamic Models](../../thermo/) - Equation of state fundamentals
+- [PVT Simulation](../) - Fluid characterization
+- [Process Equipment](../../process/) - Separator and pipeline modeling

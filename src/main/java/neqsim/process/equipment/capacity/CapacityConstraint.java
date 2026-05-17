@@ -15,7 +15,7 @@ import java.util.function.DoubleSupplier;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * CapacityConstraint speedConstraint = new CapacityConstraint("speed", "RPM", ConstraintType.HARD)
  *     .setDesignValue(10000.0).setMaxValue(11000.0).setWarningThreshold(0.9)
@@ -28,6 +28,13 @@ import java.util.function.DoubleSupplier;
 public class CapacityConstraint implements Serializable {
   /** Serialization version. */
   private static final long serialVersionUID = 1000L;
+
+  /**
+   * Maximum utilization value returned by {@link #getUtilization()}. Caps extreme values (e.g.,
+   * when design value is near zero or current value is far beyond design) to prevent unbounded
+   * utilization percentages that confuse optimization and reporting.
+   */
+  private static final double MAX_UTILIZATION = 9.99;
 
   /**
    * Enum defining the type of capacity constraint.
@@ -53,7 +60,7 @@ public class CapacityConstraint implements Serializable {
 
   /**
    * Enum defining the severity level of constraint violations.
-   * 
+   *
    * <p>
    * Used by the optimizer to determine how to handle constraint violations:
    * <ul>
@@ -131,6 +138,22 @@ public class CapacityConstraint implements Serializable {
 
   /** Whether this constraint is enabled for capacity analysis. */
   private boolean enabled = true;
+
+  /**
+   * Describes the source of the design value used in this constraint.
+   *
+   * <p>
+   * Typical values:
+   * </p>
+   * <ul>
+   * <li>"equipment" — set directly on the equipment object via API</li>
+   * <li>"designCapacities" — supplied via JSON designCapacities input</li>
+   * <li>"mechanicalDesign" — derived from mechanical design calculations</li>
+   * <li>"default" — a strategy-level default (not from actual equipment data)</li>
+   * <li>"not_set" — no design value has been provided</li>
+   * </ul>
+   */
+  private String dataSource = "not_set";
 
   /**
    * Creates a new capacity constraint.
@@ -297,8 +320,7 @@ public class CapacityConstraint implements Serializable {
    * @return this constraint for method chaining
    */
   public CapacityConstraint setUnit(String unit) {
-    // Since unit is final, we need to use reflection or create a new instance
-    // For now, we'll just store it in a separate mutable field
+    // The constructor-assigned unit field is final; store the override in a mutable field
     this.unitOverride = unit;
     return this;
   }
@@ -330,14 +352,14 @@ public class CapacityConstraint implements Serializable {
     if (minValue > 0 && designValue == Double.MAX_VALUE) {
       // This is a minimum constraint (e.g., residence time)
       if (current <= 0) {
-        return Double.MAX_VALUE;
+        return MAX_UTILIZATION;
       }
-      return minValue / current;
+      return Math.min(minValue / current, MAX_UTILIZATION);
     }
     if (designValue <= 0 || designValue == Double.MAX_VALUE) {
       return 0.0;
     }
-    return current / designValue;
+    return Math.min(current / designValue, MAX_UTILIZATION);
   }
 
   /**
@@ -527,6 +549,32 @@ public class CapacityConstraint implements Serializable {
    */
   public CapacityConstraint setEnabled(boolean enabled) {
     this.enabled = enabled;
+    return this;
+  }
+
+  /**
+   * Gets the data source that provided the design value for this constraint.
+   *
+   * <p>
+   * The data source indicates where the design/limit value came from, helping operators and agents
+   * understand the basis of utilization calculations. Common values: "equipment",
+   * "designCapacities", "mechanicalDesign", "default", "not_set".
+   * </p>
+   *
+   * @return the data source string
+   */
+  public String getDataSource() {
+    return dataSource;
+  }
+
+  /**
+   * Sets the data source that provided the design value for this constraint.
+   *
+   * @param dataSource the data source string (e.g., "equipment", "designCapacities", "default")
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setDataSource(String dataSource) {
+    this.dataSource = dataSource != null ? dataSource : "not_set";
     return this;
   }
 

@@ -4,13 +4,13 @@ import neqsim.process.equipment.stream.StreamInterface;
 
 /**
  * Check valve (non-return valve) that prevents reverse flow.
- * 
+ *
  * <p>
  * CheckValve is a self-actuating valve that opens when forward differential pressure exceeds the
  * cracking pressure, and closes when flow reverses or stops. It is essential for protecting
  * equipment like pumps and compressors from reverse flow damage.
  * </p>
- * 
+ *
  * <p>
  * Key features:
  * <ul>
@@ -20,7 +20,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Zero leakage when closed (ideal model)</li>
  * <li>Minimal pressure drop when fully open</li>
  * </ul>
- * 
+ *
  * <p>
  * Common applications:
  * <ul>
@@ -30,16 +30,16 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Gravity drainage systems</li>
  * <li>Preventing siphoning</li>
  * </ul>
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * CheckValve checkValve = new CheckValve("CV-101", pumpDischargeStream);
  * checkValve.setCrackingPressure(0.2); // Opens at 0.2 bar differential
  * checkValve.setCv(250.0); // Flow coefficient when fully open
  * checkValve.run();
- * 
+ *
  * if (checkValve.isOpen()) {
  *   System.out.println("Check valve is open, flow is forward");
  * } else {

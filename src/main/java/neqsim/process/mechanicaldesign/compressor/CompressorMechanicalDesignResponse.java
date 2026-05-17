@@ -1,5 +1,6 @@
 package neqsim.process.mechanicaldesign.compressor;
 
+import java.util.Map;
 import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 
 /**
@@ -88,6 +89,47 @@ public class CompressorMechanicalDesignResponse extends MechanicalDesignResponse
   private double isentropicEfficiency;
 
   // ============================================================================
+  // Process Design Parameters (added for TR3500 compliance)
+  // ============================================================================
+
+  /** Surge margin percentage. */
+  private double surgeMarginPercent;
+
+  /** Stonewall margin percentage. */
+  private double stonewallMarginPercent;
+
+  /** Minimum turndown percentage. */
+  private double minTurndownPercent;
+
+  /** Target polytropic efficiency. */
+  private double targetPolytropicEfficiency;
+
+  /** Seal type (dry gas, oil film, labyrinth). */
+  private String sealType;
+
+  /** Bearing type (tilting pad, plain, magnetic). */
+  private String bearingType;
+
+  /** NACE compliance required flag. */
+  private boolean naceCompliance;
+
+  /** Maximum discharge temperature [°C]. */
+  private double maxDischargeTemperature;
+
+  /** Maximum pressure ratio per stage. */
+  private double maxPressureRatioPerStage;
+
+  /** Maximum unfiltered vibration [mm/s]. */
+  private double maxVibrationUnfiltered;
+
+  // ============================================================================
+  // Casing Design Parameters (API 617 / ASME VIII)
+  // ============================================================================
+
+  /** Casing design results from CompressorCasingDesignCalculator. */
+  private Map<String, Object> casingDesign;
+
+  // ============================================================================
   // Constructors
   // ============================================================================
 
@@ -95,7 +137,6 @@ public class CompressorMechanicalDesignResponse extends MechanicalDesignResponse
    * Default constructor.
    */
   public CompressorMechanicalDesignResponse() {
-    super();
     setEquipmentType("Compressor");
     setDesignStandard("API 617");
   }
@@ -146,6 +187,24 @@ public class CompressorMechanicalDesignResponse extends MechanicalDesignResponse
     // Calculate pressure ratio
     if (this.inletPressure > 0) {
       this.pressureRatio = this.outletPressure / this.inletPressure;
+    }
+
+    // Populate process design parameters
+    this.surgeMarginPercent = mecDesign.getSurgeMarginPercent();
+    this.stonewallMarginPercent = mecDesign.getStonewallMarginPercent();
+    this.minTurndownPercent = mecDesign.getTurndownPercent();
+    this.targetPolytropicEfficiency = mecDesign.getTargetPolytropicEfficiency();
+    this.sealType = mecDesign.getSealType();
+    this.bearingType = mecDesign.getBearingType();
+    this.naceCompliance = mecDesign.isNaceCompliance();
+    this.maxDischargeTemperature = mecDesign.getMaxDischargeTemperatureC();
+    this.maxPressureRatioPerStage = mecDesign.getMaxPressureRatioPerStage();
+    this.maxVibrationUnfiltered = mecDesign.getMaxVibrationMmPerSec();
+
+    // Populate casing design calculation results
+    CompressorCasingDesignCalculator casingCalc = mecDesign.getCasingDesignCalculator();
+    if (casingCalc != null) {
+      this.casingDesign = casingCalc.toMap();
     }
   }
 
@@ -327,5 +386,89 @@ public class CompressorMechanicalDesignResponse extends MechanicalDesignResponse
 
   public void setIsentropicEfficiency(double isentropicEfficiency) {
     this.isentropicEfficiency = isentropicEfficiency;
+  }
+
+  // ============================================================================
+  // Getters and Setters for Process Design Parameters
+  // ============================================================================
+
+  public double getSurgeMarginPercent() {
+    return surgeMarginPercent;
+  }
+
+  public void setSurgeMarginPercent(double surgeMarginPercent) {
+    this.surgeMarginPercent = surgeMarginPercent;
+  }
+
+  public double getStonewallMarginPercent() {
+    return stonewallMarginPercent;
+  }
+
+  public void setStonewallMarginPercent(double stonewallMarginPercent) {
+    this.stonewallMarginPercent = stonewallMarginPercent;
+  }
+
+  public double getMinTurndownPercent() {
+    return minTurndownPercent;
+  }
+
+  public void setMinTurndownPercent(double minTurndownPercent) {
+    this.minTurndownPercent = minTurndownPercent;
+  }
+
+  public double getTargetPolytropicEfficiency() {
+    return targetPolytropicEfficiency;
+  }
+
+  public void setTargetPolytropicEfficiency(double targetPolytropicEfficiency) {
+    this.targetPolytropicEfficiency = targetPolytropicEfficiency;
+  }
+
+  public String getSealType() {
+    return sealType;
+  }
+
+  public void setSealType(String sealType) {
+    this.sealType = sealType;
+  }
+
+  public String getBearingType() {
+    return bearingType;
+  }
+
+  public void setBearingType(String bearingType) {
+    this.bearingType = bearingType;
+  }
+
+  public boolean isNaceCompliance() {
+    return naceCompliance;
+  }
+
+  public void setNaceCompliance(boolean naceCompliance) {
+    this.naceCompliance = naceCompliance;
+  }
+
+  public double getMaxDischargeTemperature() {
+    return maxDischargeTemperature;
+  }
+
+  public void setMaxDischargeTemperature(double maxDischargeTemperature) {
+    this.maxDischargeTemperature = maxDischargeTemperature;
+  }
+
+  public double getMaxPressureRatioPerStage() {
+    return maxPressureRatioPerStage;
+  }
+
+  public void setMaxPressureRatioPerStage(double maxPressureRatioPerStage) {
+    this.maxPressureRatioPerStage = maxPressureRatioPerStage;
+  }
+
+  public double getMaxVibrationUnfiltered() {
+    return maxVibrationUnfiltered;
+  }
+
+  public void setMaxVibrationUnfiltered(double maxVibrationUnfiltered) {
+    this.maxVibrationUnfiltered = maxVibrationUnfiltered;
   }
 }

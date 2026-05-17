@@ -1,3 +1,8 @@
+---
+title: "Transient process simulation patterns from tests"
+description: "Dynamic process behavior in NeqSim is validated through `ProcessSystemRunTransientTest`, which assembles streams, valves, separators, transmitters, and controllers before stepping a transient solver. ..."
+---
+
 # Transient process simulation patterns from tests
 
 Dynamic process behavior in NeqSim is validated through `ProcessSystemRunTransientTest`, which assembles streams, valves, separators, transmitters, and controllers before stepping a transient solver. Reusing the tested scaffolding ensures that custom flowsheets converge and maintain synchronized calculation identifiers across unit operations.

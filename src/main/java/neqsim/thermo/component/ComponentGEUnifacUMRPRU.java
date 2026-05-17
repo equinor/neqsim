@@ -101,6 +101,30 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
+   * Reinitialize UNIFAC groups for pseudo-components (_PC) based on current molar mass. Call this
+   * after setting the correct molar mass on a pseudo-component that was created with a "default"
+   * database fallback.
+   */
+  @Override
+  public void initPCUNIFACGroups() {
+    double number = getMolarMass() / 0.014;
+    int intNumb = (int) Math.round(number) - 2;
+    if (intNumb < 0) {
+      intNumb = 0;
+    }
+    unifacGroups.clear();
+    unifacGroups.add(new UNIFACgroup(1, 2));
+    unifacGroups.add(new UNIFACgroup(2, intNumb));
+    unifacGroupsArray = unifacGroups.toArray(unifacGroupsArray);
+    for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
+      getUnifacGroup(i).calcXComp(this);
+    }
+    for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
+      getUnifacGroup(i).calcQComp(this);
+    }
+  }
+
+  /**
    * <p>
    * calcTempExpaij.
    * </p>
@@ -356,25 +380,21 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure, PhaseType pt) {
-    int initType = phase.getInitType();
-    double lngammaCombinational;
-    double lngammaResidual;
-    double lngammaResidualdT;
-    double lngammaResidualdTdT;
-    gamma = 1.0;
+    this.gamma = 1.0;
     lngamma = 0.0;
     dlngammadt = 0.0;
     dlngammadtdt = 0.0;
-    ComponentGEUnifac[] compArray = (ComponentGEUnifac[]) phase.getcomponentArray();
 
     if (this.getx() < 1e-100) {
       return gamma;
     }
 
+    ComponentGEUnifac[] compArray = (ComponentGEUnifac[]) phase.getcomponentArray();
+
     double V = this.getx() * this.getR() / ((PhaseGEUnifacUMRPRU) phase).getVCommontemp();
     double F = this.getx() * this.getQ() / ((PhaseGEUnifacUMRPRU) phase).getFCommontemp();
 
-    lngammaCombinational = -10.0 / 2.0 * getQ() * (Math.log(V / F) + 1.0 - V / F);
+    double lngammaCombinational = -10.0 / 2.0 * getQ() * (Math.log(V / F) + 1.0 - V / F);
 
     for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
       // getUnifacGroup(i).calcXComp(this);.
@@ -389,7 +409,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
       calcTempExpaij(phase);
     }
 
-    lngammaResidual = 0.0;
+    double lngammaResidual = 0.0;
 
     calcSum2Comp();
     for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
@@ -413,6 +433,8 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     if (gamma < 1e-10) {
       gamma = 1.0; // this code has been added to
     }
+
+    int initType = phase.getInitType();
     if (initType > 1) {
       if (Math.abs(temperature - old2Temperature) > 1e-10) {
         calcUnifacGroupParamsdT(phase);
@@ -422,8 +444,8 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
       for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
         calclnGammakdTdT(i, phase);
       }
-      lngammaResidualdT = 0.0;
-      lngammaResidualdTdT = 0.0;
+      double lngammaResidualdT = 0.0;
+      double lngammaResidualdTdT = 0.0;
       for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
         lngammaResidualdT += getUnifacGroup(i).getN()
             * (getUnifacGroup(i).getLnGammaMixdT() - getUnifacGroup(i).getLnGammaCompdT());
@@ -466,7 +488,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         if (Double.isNaN(dlnGammadn)) {
           dlnGammadn = 0.0;
         }
-        setlnGammadn(i, dlnGammadn);
+        setLnGammadn(i, dlnGammadn);
       }
     }
 
@@ -540,7 +562,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
 
       double dlnGammadn = (oldGamma - lngamma) / dn;
       // System.out.println("dlnGammadn " + dlnGammadn);
-      setlnGammadn(i, dlnGammadn);
+      setLnGammadn(i, dlnGammadn);
     }
   }
 

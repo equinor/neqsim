@@ -11,7 +11,7 @@ import neqsim.integration.ValidationFramework.*;
 
 /**
  * Validators for process equipment (Separator, DistillationColumn, Heater, Cooler, etc.).
- * 
+ *
  * <p>
  * Checks:
  * <ul>
@@ -25,7 +25,7 @@ public class EquipmentValidator {
 
   /**
    * Validate any ProcessEquipmentBaseClass before execution.
-   * 
+   *
    * @param equipment The equipment to validate
    * @return ValidationResult with errors and warnings
    */

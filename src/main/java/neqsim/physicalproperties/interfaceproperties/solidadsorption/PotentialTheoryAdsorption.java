@@ -33,6 +33,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
   double[] surfaceExcessMolFraction;
   double[] deltaz;
   String solidMaterial = "AC";
+  private boolean calculated = false;
 
   /**
    * <p>
@@ -62,6 +63,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
   @Override
   public void setSolidMaterial(String solidM) {
     solidMaterial = solidM;
+    calculated = false;
   }
 
   /** {@inheritDoc} */
@@ -139,15 +141,39 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
     }
     for (int comp = 0; comp < numComp; comp++) {
       surfaceExcessMolFraction[comp] = surfaceExcess[comp] / totalSurfaceExcess;
-      // logger.info("surface excess molfrac " + surfaceExcessMolFraction[comp] + "
-      // mol/kg adsorbent " + surfaceExcess[comp]);
     }
+    calculated = true;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getSurfaceExcess(int component) {
-    throw new UnsupportedOperationException("Unimplemented method 'getSurfaceExcess'");
+    if (!calculated) {
+      throw new IllegalStateException("Adsorption not calculated. Call calcAdsorption() first.");
+    }
+    if (component < 0 || component >= surfaceExcess.length) {
+      throw new IndexOutOfBoundsException(
+          "Component index " + component + " out of range [0, " + (surfaceExcess.length - 1) + "]");
+    }
+    return surfaceExcess[component];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getTotalSurfaceExcess() {
+    return totalSurfaceExcess;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public IsothermType getIsothermType() {
+    return IsothermType.DRA;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCalculated() {
+    return calculated;
   }
 
   /** {@inheritDoc} */
@@ -172,8 +198,8 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         dataSet.next();
 
         eps0[comp] = Double.parseDouble(dataSet.getString("eps"));
-        beta[comp] = Double.parseDouble(dataSet.getString("z0"));
-        z0[comp] = Double.parseDouble(dataSet.getString("beta"));
+        z0[comp] = Double.parseDouble(dataSet.getString("z0"));
+        beta[comp] = Double.parseDouble(dataSet.getString("beta"));
 
         logger.info("adsorption parameters read ok for "
             + system.getPhase(0).getComponent(comp).getComponentName() + " eps " + eps0[comp]);

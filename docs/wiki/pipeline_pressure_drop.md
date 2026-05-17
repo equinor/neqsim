@@ -1,3 +1,8 @@
+---
+title: "Pipeline Pressure Drop Calculations in NeqSim"
+description: "NeqSim provides three main pipeline models for calculating pressure drop:"
+---
+
 # Pipeline Pressure Drop Calculations in NeqSim
 
 ## Overview
@@ -155,7 +160,7 @@ The reverse calculation uses a bisection algorithm that iteratively adjusts the 
 
 ## See Also
 
-- [Beggs & Brill Correlation Details](beggs_and_brill_correlation.md)
-- [Pipeline Transient Simulation](pipeline_transient_simulation.md)
-- [Friction Factor Calculations](friction_factor_models.md)
-- [Heat Transfer in Pipelines](pipeline_heat_transfer.md)
+- [Beggs & Brill Correlation Details](beggs_and_brill_correlation)
+- [Pipeline Transient Simulation](pipeline_transient_simulation)
+- [Friction Factor Calculations](friction_factor_models)
+- [Heat Transfer in Pipelines](pipeline_heat_transfer)

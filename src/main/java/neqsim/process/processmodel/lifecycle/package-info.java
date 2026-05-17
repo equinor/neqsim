@@ -23,7 +23,7 @@
  * </ol>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * // Create and configure process
  * ProcessSystem process = new ProcessSystem("Offshore Platform Train 1");

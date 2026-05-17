@@ -58,14 +58,18 @@ class TPFlashTestHighTemp {
      * testSystem.getNumberOfPhases() + " temp " + testSystem.getTemperature("C") + " hasoil " +
      * testSystem.hasPhaseType("oil") + " gibbs energy " + testSystem.getGibbsEnergy() + " gibbs
      * energy " + " density " + testSystem.getDensity("kg/m3") + " \n");
-     * 
+     *
      * }
      */
 
     testSystem.setTemperature(268.0, "C");
     testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
-    assertEquals(0.006832557441121211, testSystem.getPhaseFraction("gas", "mole"), 0.001);
+    // The original expected value (0.006833) was from a correct solution.
+    // A beta normalization bug in TPmultiflash (betas not summing to 1.0 after
+    // phase removal) caused it to regress to 0.003490. The fix (solveBeta after
+    // phase removal) restores the properly converged result near 0.00698.
+    assertEquals(0.00698, testSystem.getPhaseFraction("gas", "mole"), 0.001);
   }
 }
 

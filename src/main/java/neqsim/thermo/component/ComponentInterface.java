@@ -156,7 +156,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * method to return flow rate of a component.
    *
    * @param flowunit Supported units are kg/sec, kg/min, kg/hr, tonnes/year, m3/sec, m3/min, m3/hr,
-   *        mole/sec, mole/min, mole/hr
+   *        mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min,
+   *        kmol/min, kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr,
+   *        barrel/day, bbl/day
    * @return flow rate in specified unit
    */
   public double getFlowRate(String flowunit);
@@ -164,7 +166,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   /**
    * method to return total flow rate of a component.
    *
-   * @param flowunit Supported units are kg/sec, kg/min, kg/hr, mole/sec, mole/min, mole/hr
+   * @param flowunit Supported units are kg/sec, kg/min, kg/hr, mole/sec, mol/sec, mole/min,
+   *        mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr,
+   *        kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, barrel/day, bbl/day
    * @return total flow rate in specified unit
    */
   public double getTotalFlowRate(String flowunit);
@@ -818,13 +822,13 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getDiElectricConstantdTdT.
+   * getDielectricConstantdTdT.
    * </p>
    *
    * @param temperature a double
    * @return a double
    */
-  public double getDiElectricConstantdTdT(double temperature);
+  public double getDielectricConstantdTdT(double temperature);
 
   /**
    * <p>
@@ -837,13 +841,13 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getDiElectricConstantdT.
+   * getDielectricConstantdT.
    * </p>
    *
    * @param temperature a double
    * @return a double
    */
-  public double getDiElectricConstantdT(double temperature);
+  public double getDielectricConstantdT(double temperature);
 
   /**
    * <p>
@@ -1188,13 +1192,13 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getDiElectricConstant.
+   * getDielectricConstant.
    * </p>
    *
    * @param temperature a double
    * @return a double
    */
-  public double getDiElectricConstant(double temperature);
+  public double getDielectricConstant(double temperature);
 
   /**
    * <p>
@@ -1278,15 +1282,20 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   /**
    * Get molar mass of component.
    *
+   * <p>
+   * Note: the return value is in kg/mol (SI), not g/mol. Multiply by 1000 to convert to g/mol, or
+   * use {@link #getMolarMass(String)} with unit "g/mol".
+   * </p>
+   *
    * @return molar mass in unit kg/mol
    */
   public double getMolarMass();
 
   /**
-   * Get molar mass of component.
+   * Get molar mass of component in the specified unit.
    *
-   * @param unit a String
-   * @return molar mass in unit kg/mol
+   * @param unit Supported units are kg/mol, g/mol, gr/mol, kg/kmol, lbm/lbmol
+   * @return molar mass in specified unit
    */
   public double getMolarMass(String unit);
 
@@ -1476,6 +1485,15 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
+   * Set the dipole moment of the component.
+   * </p>
+   *
+   * @param debyeDipoleMoment dipole moment in Debye
+   */
+  public void setDebyeDipoleMoment(double debyeDipoleMoment);
+
+  /**
+   * <p>
    * getViscosityCorrectionFactor.
    * </p>
    *
@@ -1505,6 +1523,22 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * @return a double
    */
   public double getCriticalVolume();
+
+  /**
+   * Get the COSTALD characteristic volume V* in cm3/mol. If zero, the critical volume should be
+   * used as fallback.
+   *
+   * @return COSTALD characteristic volume V* in cm3/mol
+   */
+  public double getCostaldCharacteristicVolume();
+
+  /**
+   * Set the COSTALD characteristic volume V* in cm3/mol. Set to 0 to use critical volume as
+   * fallback.
+   *
+   * @param costaldCharacteristicVolume COSTALD characteristic volume V* in cm3/mol
+   */
+  public void setCostaldCharacteristicVolume(double costaldCharacteristicVolume);
 
   /**
    * <p>
@@ -2168,6 +2202,84 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
+   * getLambdaRSAFTVRMie.
+   * </p>
+   *
+   * @return repulsive Mie exponent
+   */
+  public double getLambdaRSAFTVRMie();
+
+  /**
+   * <p>
+   * setLambdaRSAFTVRMie.
+   * </p>
+   *
+   * @param lambdaRSAFTVRMie repulsive Mie exponent
+   */
+  public void setLambdaRSAFTVRMie(double lambdaRSAFTVRMie);
+
+  /**
+   * <p>
+   * getLambdaASAFTVRMie.
+   * </p>
+   *
+   * @return attractive Mie exponent
+   */
+  public double getLambdaASAFTVRMie();
+
+  /**
+   * <p>
+   * setLambdaASAFTVRMie.
+   * </p>
+   *
+   * @param lambdaASAFTVRMie attractive Mie exponent
+   */
+  public void setLambdaASAFTVRMie(double lambdaASAFTVRMie);
+
+  /**
+   * Gets the SAFT-VR Mie segment number.
+   *
+   * @return segment number for SAFT-VR Mie
+   */
+  public double getmSAFTVRMie();
+
+  /**
+   * Sets the SAFT-VR Mie segment number.
+   *
+   * @param mSAFTVRMie segment number
+   */
+  public void setmSAFTVRMie(double mSAFTVRMie);
+
+  /**
+   * Gets the SAFT-VR Mie segment diameter.
+   *
+   * @return sigma for SAFT-VR Mie in meters
+   */
+  public double getSigmaSAFTVRMie();
+
+  /**
+   * Sets the SAFT-VR Mie segment diameter.
+   *
+   * @param sigmaSAFTVRMie sigma in meters
+   */
+  public void setSigmaSAFTVRMie(double sigmaSAFTVRMie);
+
+  /**
+   * Gets the SAFT-VR Mie well depth divided by k.
+   *
+   * @return eps/k for SAFT-VR Mie in Kelvin
+   */
+  public double getEpsikSAFTVRMie();
+
+  /**
+   * Sets the SAFT-VR Mie well depth divided by k.
+   *
+   * @param epsikSAFTVRMie eps/k in Kelvin
+   */
+  public void setEpsikSAFTVRMie(double epsikSAFTVRMie);
+
+  /**
+   * <p>
    * getAssociationVolumeSAFT.
    * </p>
    *
@@ -2201,6 +2313,36 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * @param associationEnergySAFT a double
    */
   public void setAssociationEnergySAFT(double associationEnergySAFT);
+
+  /**
+   * Get the association energy for SAFT-VR Mie EOS. Returns the VR-Mie-specific value if set,
+   * otherwise falls back to the PC-SAFT/CPA association energy.
+   *
+   * @return association energy in J/mol for SAFT-VR Mie
+   */
+  public double getAssociationEnergySAFTVRMie();
+
+  /**
+   * Set the association energy for SAFT-VR Mie EOS.
+   *
+   * @param associationEnergySAFTVRMie association energy in J/mol
+   */
+  public void setAssociationEnergySAFTVRMie(double associationEnergySAFTVRMie);
+
+  /**
+   * Get the SAFT-VR Mie bond volume K_HB in m^3 (Lafitte 2013 Eq. 39). For water: 101.69 Ang^3 =
+   * 1.0169e-28 m^3. Returns 0 if not set (caller should fall back to kappa * sigma^3).
+   *
+   * @return bond volume K_HB in m^3
+   */
+  public double getAssociationVolumeSAFTVRMie();
+
+  /**
+   * Set the SAFT-VR Mie bond volume K_HB in m^3.
+   *
+   * @param associationVolumeSAFTVRMie bond volume in m^3
+   */
+  public void setAssociationVolumeSAFTVRMie(double associationVolumeSAFTVRMie);
 
   /**
    * <p>

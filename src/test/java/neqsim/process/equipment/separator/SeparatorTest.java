@@ -323,5 +323,79 @@ class SeparatorTest extends neqsim.NeqSimTest {
     // Verify streams are created
     Assertions.assertTrue(sep.getGasOutStream().getFlowRate("kg/hr") > 0);
   }
+
+  /**
+   * Test that GasScrubber reports meaningful utilization with minimum setup. Only internal diameter
+   * is required beyond the default constructor settings.
+   */
+  @Test
+  void testGasScrubberUtilizationMinimumSetup() {
+    // Two-phase feed (gas + liquid)
+    neqsim.thermo.system.SystemSrkEos fluid = new neqsim.thermo.system.SystemSrkEos(300.0, 50.0);
+    fluid.addComponent("methane", 90.0);
+    fluid.addComponent("ethane", 5.0);
+    fluid.addComponent("n-hexane", 5.0);
+    fluid.setMixingRule(2);
+    fluid.setMultiPhaseCheck(true);
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setTemperature(30.0, "C");
+    feed.setFlowRate(50000.0, "kg/hr");
+
+    // Minimum setup: just set internal diameter
+    GasScrubber scrubber = new GasScrubber("inlet scrubber", feed);
+    scrubber.setInternalDiameter(1.2);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(scrubber);
+    process.run();
+
+    double utilization = scrubber.getCapacityUtilization();
+    // Should be a valid number between 0 and some positive value
+    Assertions.assertFalse(Double.isNaN(utilization),
+        "Utilization should not be NaN with diameter set");
+    Assertions.assertTrue(utilization > 0.0,
+        "Utilization should be > 0 for gas flow, got: " + utilization);
+    Assertions.assertTrue(utilization < 10.0,
+        "Utilization should be reasonable, got: " + utilization);
+
+    // Verify orientation is vertical
+    Assertions.assertEquals("vertical", scrubber.getOrientation());
+
+    // Verify the gas load factor is computed
+    double kFactor = scrubber.getGasLoadFactor();
+    Assertions.assertTrue(kFactor > 0, "Gas load factor should be > 0, got: " + kFactor);
+  }
+
+  /**
+   * Test that GasScrubber reports utilization even with dry gas (no liquid phase).
+   */
+  @Test
+  void testGasScrubberUtilizationDryGas() {
+    // Pure gas feed - no liquid
+    neqsim.thermo.system.SystemSrkEos fluid = new neqsim.thermo.system.SystemSrkEos(300.0, 50.0);
+    fluid.addComponent("methane", 95.0);
+    fluid.addComponent("ethane", 5.0);
+    fluid.setMixingRule(2);
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setTemperature(30.0, "C");
+    feed.setFlowRate(50000.0, "kg/hr");
+
+    GasScrubber scrubber = new GasScrubber("dry gas scrubber", feed);
+    scrubber.setInternalDiameter(1.0);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(scrubber);
+    process.run();
+
+    // Should still get utilization even with no liquid
+    double utilization = scrubber.getCapacityUtilization();
+    Assertions.assertFalse(Double.isNaN(utilization), "Dry gas utilization should not be NaN");
+    Assertions.assertTrue(utilization > 0.0,
+        "Dry gas utilization should be > 0, got: " + utilization);
+  }
 }
 

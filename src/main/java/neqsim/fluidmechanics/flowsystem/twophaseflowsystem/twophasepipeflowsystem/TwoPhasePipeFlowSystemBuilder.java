@@ -17,7 +17,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * TwoPhasePipeFlowSystem pipe =
  *     TwoPhasePipeFlowSystemBuilder.create().withFluid(thermoSystem).withDiameter(0.1, "m")

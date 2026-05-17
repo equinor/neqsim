@@ -4,12 +4,12 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Gas Detector instrument for detecting combustible or toxic gases.
- * 
+ *
  * <p>
  * A gas detector measures the concentration of specific gases in the air, typically reporting in
  * percentage of Lower Explosive Limit (%LEL) for combustible gases, or ppm for toxic gases. It is
  * commonly used in Fire &amp; Gas (F&amp;G) systems for emergency shutdown (ESD) applications.
- * 
+ *
  * <p>
  * Key features:
  * <ul>
@@ -20,30 +20,30 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>Location/zone identification for spatial awareness</li>
  * <li>Reset capability for testing and normal operation restoration</li>
  * </ul>
- * 
+ *
  * <p>
  * Typical usage in ESD system with gas detection:
- * 
+ *
  * <pre>
  * // Create gas detector for hydrocarbon detection
  * GasDetector gasDetector = new GasDetector("GD-101", GasDetector.GasType.COMBUSTIBLE);
  * gasDetector.setLocation("Separator Area");
- * 
+ *
  * // Configure two-level alarm (20% LEL warning, 60% LEL high alarm)
  * AlarmConfig alarmConfig = AlarmConfig.builder().highLimit(20.0) // 20% LEL - Warning
  *     .highHighLimit(60.0) // 60% LEL - High alarm
  *     .delay(2.0) // 2 second confirmation
  *     .unit("%LEL").build();
  * gasDetector.setAlarmConfig(alarmConfig);
- * 
+ *
  * // Simulate gas detection
  * gasDetector.setGasConcentration(25.0); // 25% LEL detected
- * 
+ *
  * // Check detector state
  * if (gasDetector.getGasConcentration() &gt; 20.0) {
  *   System.out.println("Gas alarm - evacuate area");
  * }
- * 
+ *
  * if (gasDetector.getGasConcentration() &gt; 60.0) {
  *   // Activate ESD
  *   esdSystem.activate();
@@ -170,7 +170,7 @@ public class GasDetector extends MeasurementDeviceBaseClass {
 
   /**
    * Sets the gas concentration reading.
-   * 
+   *
    * <p>
    * For COMBUSTIBLE type: value is in %LEL (0-100%) For TOXIC type: value is in ppm For OXYGEN
    * type: value is in %O2
@@ -193,7 +193,7 @@ public class GasDetector extends MeasurementDeviceBaseClass {
 
   /**
    * Checks if gas is detected above threshold.
-   * 
+   *
    * <p>
    * For combustible gases: typically &gt; 20% LEL is considered a detection For toxic gases:
    * depends on gas type (e.g., H2S &gt; 10 ppm)
@@ -270,7 +270,7 @@ public class GasDetector extends MeasurementDeviceBaseClass {
 
   /**
    * Sets the Lower Explosive Limit for the gas being detected.
-   * 
+   *
    * <p>
    * This is used to convert between ppm and %LEL. For example: - Methane: 50,000 ppm (5% vol) -
    * Propane: 21,000 ppm (2.1% vol) - Hydrogen: 40,000 ppm (4% vol)
@@ -331,7 +331,7 @@ public class GasDetector extends MeasurementDeviceBaseClass {
 
   /**
    * Gets the measured value of the gas detector.
-   * 
+   *
    * <p>
    * Returns current gas concentration in detector's units (%LEL, ppm, or %O2).
    * </p>
@@ -345,7 +345,7 @@ public class GasDetector extends MeasurementDeviceBaseClass {
 
   /**
    * Gets the measured value in the specified unit.
-   * 
+   *
    * <p>
    * Supported units depend on gas type: - COMBUSTIBLE: "%LEL", "% LEL" - TOXIC: "ppm" - OXYGEN:
    * "%O2", "% O2"

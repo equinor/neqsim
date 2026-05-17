@@ -42,8 +42,8 @@ public abstract class PhysicalPropertyMethod implements PhysicalPropertyMethodIn
 
     try {
       properties = (PhysicalPropertyMethod) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+    } catch (CloneNotSupportedException ex) {
+      throw new AssertionError("Clone failed for PhysicalPropertyMethod", ex);
     }
 
     return properties;

@@ -2,7 +2,6 @@ package neqsim.process.fielddevelopment.screening;
 
 import neqsim.process.fielddevelopment.concept.FieldConcept;
 import neqsim.process.fielddevelopment.concept.ReservoirInput;
-import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
@@ -45,16 +44,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * FlowAssuranceScreener screener = new FlowAssuranceScreener();
- * 
+ *
  * // Full screening with specific conditions
  * FlowAssuranceReport report = screener.screen(concept, 4.0, 150.0); // 4°C seabed, 150 bara
- * 
+ *
  * // Quick screening with default conditions
  * FlowAssuranceReport quickReport = screener.quickScreen(concept);
- * 
+ *
  * // Check specific risks
  * if (report.getHydrateResult() == FlowAssuranceResult.FAIL) {
  *   System.out.println("Hydrate mitigation required: " + report.getHydrateMargin() + "°C margin");

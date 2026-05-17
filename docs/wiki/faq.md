@@ -1,3 +1,8 @@
+---
+title: "Frequently Asked Questions (FAQ)"
+description: "NeqSim (Non-Equilibrium Simulator) is a Java library for thermodynamic calculations and process simulation, specializing in oil and gas applications. It provides:"
+---
+
 # Frequently Asked Questions (FAQ)
 
 ## Table of Contents
@@ -220,7 +225,7 @@ double liqVisc = system.getPhase("oil").getViscosity("cP");
 - **Corresponding States (CS)**: For heavy oils
 - **Chung**: For gases
 
-See [Viscosity Models](viscosity_models.md) for details.
+See [Viscosity Models](viscosity_models) for details.
 
 ### How do I get the speed of sound?
 
@@ -284,7 +289,7 @@ system.addComponent("n-butane", 1.0);  // Note: n-butane, not nbutane
 4. Run `./mvnw verify` to check code style
 5. Submit a pull request
 
-See [Contributing Structure](../development/contributing-structure.md) for details.
+See [Contributing Structure](../development/contributing-structure) for details.
 
 ### How do I report a bug?
 

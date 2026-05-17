@@ -74,7 +74,7 @@ public class LevenbergMarquardtAbsDev extends LevenbergMarquardt {
       beta[i] = 0.0;
       for (int j = 0; j < sampleSet.getLength(); j++) {
         int k =
-            (sampleSet.getSample(i).getSampleValue() - this.calcValue(sampleSet.getSample(i))) > 0
+            (sampleSet.getSample(j).getSampleValue() - this.calcValue(sampleSet.getSample(j))) > 0
                 ? 1
                 : -1;
         beta[i] += k

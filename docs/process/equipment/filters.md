@@ -1,3 +1,8 @@
+---
+title: Filter Equipment
+description: Documentation for filter equipment in NeqSim process simulation.
+---
+
 # Filter Equipment
 
 Documentation for filter equipment in NeqSim process simulation.
@@ -116,6 +121,6 @@ System.out.println("Outlet mercury: " + outletMercury + " g/hr");
 
 ## Related Documentation
 
-- [Separators](separators.md) - Phase separation
-- [Absorbers](absorbers.md) - Absorption processes
-- [Streams](streams.md) - Stream handling
+- [Separators](separators) - Phase separation
+- [Absorbers](absorbers) - Absorption processes
+- [Streams](streams) - Stream handling

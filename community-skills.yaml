@@ -1,0 +1,37 @@
+# NeqSim Community Skill Catalog
+#
+# Machine-readable listing of community-contributed skills hosted outside
+# the core repo. Install with: neqsim skill install <name>
+#
+# To add your skill: submit a PR adding an entry to this file.
+# See VISION_AGENTS.md for core vs. community guidelines.
+#
+# Format:
+#   - name: neqsim-<topic>           # must start with neqsim-
+#     description: "Short description"
+#     author: "GitHub username or name"
+#     repo: "owner/repo"              # GitHub repo containing the skill
+#     path: "path/to/SKILL.md"        # path within the repo (default: SKILL.md)
+#     tags: [tag1, tag2]              # searchable keywords
+#     min_neqsim_version: "3.7.0"    # optional: minimum NeqSim version
+
+catalog_version: "1.0"
+last_updated: "2026-04-18"
+
+skills:
+  # ── Example entries (remove or replace with real community skills) ──
+
+  - name: neqsim-example-skill
+    description: "Example community skill — replace with a real contribution"
+    author: "equinor"
+    repo: "equinor/neqsim"
+    path: ".github/skills/neqsim-api-patterns/SKILL.md"
+    tags: [example, template]
+
+  # ── Add your community skill below this line ──
+  # - name: neqsim-my-topic
+  #   description: "What it does and when to use it"
+  #   author: "your-github-username"
+  #   repo: "your-username/your-repo"
+  #   path: "skills/neqsim-my-topic/SKILL.md"
+  #   tags: [keyword1, keyword2]

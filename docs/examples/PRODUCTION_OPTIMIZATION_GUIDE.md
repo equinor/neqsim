@@ -1,6 +1,11 @@
+---
+title: Production Optimization Guide
+description: This guide provides comprehensive examples for setting up and running production optimization simulations in NeqSim, covering both Java and Python implementations.
+---
+
 # Production Optimization Guide
 
-> **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+> **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW) to understand when to use which optimizer.
 
 This guide provides comprehensive examples for setting up and running production optimization simulations in NeqSim, covering both Java and Python implementations.
 
@@ -23,6 +28,9 @@ This guide provides comprehensive examples for setting up and running production
 - **Warm Start**: `initialGuess(double[])` to start near known good solutions
 - **LRU Cache Control**: `maxCacheSize(int)` to limit memory usage (default: 1000)
 - **Infeasibility Diagnostics**: `result.getInfeasibilityDiagnosis()` for detailed violation reports
+- **Batch Constraint Control**: `equipment.disableAllConstraints()` and `enableAllConstraints()` for what-if analysis
+- **Process-Wide Constraint Control**: `processSystem.disableAllConstraints()` and `processModule.disableAllConstraints()` to control all equipment at once
+- **Full Equipment Exclusion**: Equipment with `setCapacityAnalysisEnabled(false)` is now fully excluded from optimization feasibility checks
 
 ---
 
@@ -30,13 +38,13 @@ This guide provides comprehensive examples for setting up and running production
 
 | Document | Description |
 |----------|-------------|
-| [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) | **START HERE**: When to use which optimizer |
-| [Optimizer Plugin Architecture](../process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md) | ProcessOptimizationEngine and equipment strategies |
-| [Multi-Objective Optimization](../process/optimization/multi-objective-optimization.md) | Pareto fronts and trade-offs |
-| [Flow Rate Optimization](../process/optimization/flow-rate-optimization.md) | FlowRateOptimizer and lift curves |
-| [Batch Studies](../process/optimization/batch-studies.md) | Parallel parameter sweeps |
-| [External Optimizer Integration](../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) | Python/SciPy integration |
-| [CAPACITY_CONSTRAINT_FRAMEWORK.md](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md) | Multi-constraint equipment and bottleneck detection |
+| [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW) | **START HERE**: When to use which optimizer |
+| [Optimizer Plugin Architecture](../process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE) | ProcessOptimizationEngine and equipment strategies |
+| [Multi-Objective Optimization](../process/optimization/multi-objective-optimization) | Pareto fronts and trade-offs |
+| [Flow Rate Optimization](../process/optimization/flow-rate-optimization) | FlowRateOptimizer and lift curves |
+| [Batch Studies](../process/optimization/batch-studies) | Parallel parameter sweeps |
+| [External Optimizer Integration](../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | Python/SciPy integration |
+| [CAPACITY_CONSTRAINT_FRAMEWORK.md](../process/CAPACITY_CONSTRAINT_FRAMEWORK) | Multi-constraint equipment and bottleneck detection |
 
 ---
 
@@ -268,7 +276,7 @@ boolean hasEnabled = equipment.getCapacityConstraints().values().stream()
     .anyMatch(CapacityConstraint::isEnabled);
 ```
 
-For detailed information, see [Capacity Constraint Framework - Constraints Disabled by Default](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md#important-constraints-disabled-by-default).
+For detailed information, see [Capacity Constraint Framework - Constraints Disabled by Default](../process/CAPACITY_CONSTRAINT_FRAMEWORK#important-constraints-disabled-by-default).
 
 ### Constraint Types and Their Behavior
 
@@ -277,6 +285,94 @@ For detailed information, see [Capacity Constraint Framework - Constraints Disab
 | **HARD** | Physical or safety limit - cannot exceed | Optimization stops before exceeding | Compressor trip speed, vessel MAWP |
 | **SOFT** | Operational limit - penalty for exceeding | Can exceed with warning/penalty | Efficiency degradation zone |
 | **DESIGN** | Normal operating envelope | Target for optimal operation | Design K-factor, rated capacity |
+
+### Disabling Constraints for What-If Analysis
+
+You can disable constraints at three levels for what-if scenarios or focused analysis:
+
+#### 1. Disable Individual Constraint
+
+```java
+// Get a specific constraint and disable it
+Map<String, CapacityConstraint> constraints = compressor.getCapacityConstraints();
+constraints.get("surgeMargin").setEnabled(false);  // Disable just surge constraint
+
+// Re-enable later
+constraints.get("surgeMargin").setEnabled(true);
+```
+
+#### 2. Disable All Constraints on One Equipment
+
+```java
+// Disable all constraints on a single equipment
+int disabled = compressor.disableAllConstraints();
+System.out.println("Disabled " + disabled + " constraints on compressor");
+
+// Re-enable all constraints
+int enabled = compressor.enableAllConstraints();
+```
+
+#### 3. Disable All Constraints in ProcessSystem or ProcessModule
+
+```java
+// Disable all constraints on ALL equipment in the process
+int total = processSystem.disableAllConstraints();
+System.out.println("Disabled " + total + " constraints across the process");
+
+// Re-enable all constraints
+processSystem.enableAllConstraints();
+
+// For process modules (same API)
+processModule.disableAllConstraints();
+processModule.enableAllConstraints();
+```
+
+#### 4. Exclude Equipment from Optimization Entirely
+
+To **completely exclude** an equipment from optimization feasibility checks (not just disable its constraints), use `setCapacityAnalysisEnabled()`:
+
+```java
+// Completely exclude this compressor from optimization
+compressor.setCapacityAnalysisEnabled(false);
+
+// The optimizer will skip this equipment entirely
+// It won't be included in utilization summaries or bottleneck detection
+
+// Re-include in optimization
+compressor.setCapacityAnalysisEnabled(true);
+```
+
+#### Comparison: Constraint Disable vs Capacity Analysis Disabled
+
+| Method | Effect on Equipment | Effect on Optimization |
+|--------|---------------------|------------------------|
+| `constraint.setEnabled(false)` | Specific constraint disabled | Falls back to other constraints or type-specific rules |
+| `equipment.disableAllConstraints()` | All constraints disabled | Falls back to type-specific capacity rules |
+| `equipment.setCapacityAnalysisEnabled(false)` | Equipment excluded from analysis | **Fully excluded** - no capacity checks at all |
+
+**Use cases:**
+- `disableAllConstraints()` - What-if without constraint limits, still subject to basic capacity rules
+- `setCapacityAnalysisEnabled(false)` - Exclude equipment from sizing analysis entirely (e.g., utilities)
+
+```python
+# Python example for disabling constraints in optimization
+from neqsim import jneqsim
+
+# Get the equipment
+compressor = process_system.getUnit("MyCompressor")
+
+# Option 1: Disable all constraints but keep in optimization (uses fallback rules)
+compressor.disableAllConstraints()
+
+# Option 2: Fully exclude from optimization
+compressor.setCapacityAnalysisEnabled(False)
+
+# Process-wide: disable all constraints on all equipment
+process_system.disableAllConstraints()
+
+# Re-enable all constraints
+process_system.enableAllConstraints()
+```
 
 ### Full Process Example: Finding Active Constraint
 
@@ -1173,10 +1269,10 @@ try {
 
 ## Related Documentation
 
-- [Bottleneck Analysis](../wiki/bottleneck_analysis.md) - Detailed bottleneck detection API
-- [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md) - Multi-constraint architecture
-- [Process Simulation Guide](../wiki/process_simulation.md) - Building process models
-- [Advanced Process Simulation](../wiki/advanced_process_simulation.md) - Recycles and complex systems
+- [Bottleneck Analysis](../wiki/bottleneck_analysis) - Detailed bottleneck detection API
+- [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK) - Multi-constraint architecture
+- [Process Simulation Guide](../wiki/process_simulation) - Building process models
+- [Advanced Process Simulation](../wiki/advanced_process_simulation) - Recycles and complex systems
 
 ---
 

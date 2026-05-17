@@ -106,9 +106,19 @@ public class PUflash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    tpFlash.run();
-    // System.out.println("internal energy start: " + system.getInternalEnergy());
-    solveQ();
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values
+    // left by a previous unrelated flash. Warm-start is then enabled for the
+    // inner TPflash iterations within the outer PU loop.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      // System.out.println("internal energy start: " + system.getInternalEnergy());
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
     // System.out.println("internal energy end: " + system.getInternalEnergy());
     // System.out.println("enthalpy: " + system.getEnthalpy());
     // System.out.println("Temperature: " + system.getTemperature());

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -35,21 +34,21 @@ import com.google.gson.GsonBuilder;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * ProcessSystem process = new ProcessSystem();
  * // ... add equipment ...
- * 
+ *
  * SubrModlExporter exporter = new SubrModlExporter(process);
  * exporter.setModelName("WellModel");
  * exporter.addParameter("Volume", 100.0, "m3");
  * exporter.addParameter("Height", 2000.0, "m");
- * 
+ *
  * // Add SubrXvr definitions
  * exporter.addSubrXvr("Pdownhole", "pdh", "Downhole pressure", 147.7);
  * exporter.addSubrXvr("Pwellhead", "pwh", "Wellhead pressure", 10.4);
- * 
+ *
  * // Export configuration
  * exporter.exportConfiguration("wellmodel_config.txt");
  * }

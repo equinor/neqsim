@@ -11,11 +11,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import neqsim.process.SimulationBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.failure.EquipmentFailureMode;
+import neqsim.process.equipment.iec81346.ReferenceDesignation;
 import neqsim.process.equipment.stream.EnergyStream;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.util.report.Report;
@@ -40,6 +47,12 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   private ControllerDeviceInterface controller = null;
   ControllerDeviceInterface flowValveController = null;
   public boolean hasController = false;
+
+  /**
+   * Map of controller tag name to controller device. Supports multiple controllers per equipment.
+   */
+  private final Map<String, ControllerDeviceInterface> controllerMap =
+      new LinkedHashMap<String, ControllerDeviceInterface>();
   private String specification = "TP";
   public String[][] report = new String[0][0];
   public HashMap<String, String> properties = new HashMap<String, String>();
@@ -54,6 +67,29 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * excluded from bottleneck detection, capacity utilization summaries, and optimization routines.
    */
   private boolean capacityAnalysisEnabled = true;
+
+  /**
+   * Current failure mode of the equipment. Null means equipment is operating normally.
+   */
+  private EquipmentFailureMode failureMode = null;
+
+  /**
+   * Flag indicating if the equipment is in a failed state.
+   */
+  private boolean isFailed = false;
+
+  /**
+   * IEC 81346 reference designation for this equipment. Contains the function, product, and
+   * location aspects per IEC 81346 standard.
+   */
+  private ReferenceDesignation referenceDesignation = new ReferenceDesignation();
+
+  /**
+   * Capacity constraints for this equipment, keyed by constraint name. Marked transient because
+   * {@link CapacityConstraint} instances may hold non-serializable lambda value suppliers. After
+   * deserialization, subclasses should call {@link #initializeDefaultConstraints()} to rebuild.
+   */
+  private transient Map<String, CapacityConstraint> capacityConstraints;
 
   /**
    * <p>
@@ -120,6 +156,11 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   public void setController(ControllerDeviceInterface controller) {
     this.controller = controller;
     hasController = controller != null;
+    if (controller != null) {
+      String tag =
+          controller instanceof neqsim.util.NamedInterface ? controller.getName() : "default";
+      controllerMap.put(tag, controller);
+    }
   }
 
   /**
@@ -131,12 +172,42 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    */
   public void setFlowValveController(ControllerDeviceInterface controller) {
     this.flowValveController = controller;
+    if (controller != null) {
+      String tag =
+          controller instanceof neqsim.util.NamedInterface ? controller.getName() : "flowValve";
+      controllerMap.put(tag, controller);
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public ControllerDeviceInterface getController() {
     return controller;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addController(String tag, ControllerDeviceInterface controller) {
+    controllerMap.put(tag, controller);
+    if (this.controller == null) {
+      this.controller = controller;
+      hasController = true;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ControllerDeviceInterface getController(String tag) {
+    return controllerMap.get(tag);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Collection<ControllerDeviceInterface> getControllers() {
+    if (controllerMap.isEmpty() && controller != null) {
+      return Collections.singletonList(controller);
+    }
+    return Collections.unmodifiableCollection(controllerMap.values());
   }
 
   /** {@inheritDoc} */
@@ -148,6 +219,14 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public void initMechanicalDesign() {}
+
+  /** {@inheritDoc} */
+  @Override
+  public void initElectricalDesign() {}
+
+  /** {@inheritDoc} */
+  @Override
+  public void initInstrumentDesign() {}
 
   /** {@inheritDoc} */
   @Override
@@ -302,8 +381,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     final int prime = 31;
     int result = 1;
     result = prime * result + Arrays.deepHashCode(report);
-    result = prime * result + Objects.hash(conditionAnalysisMessage, controller, energyStream,
-        flowValveController, hasController, isSetEnergyStream, name, properties, specification);
+    result = prime * result
+        + Objects.hash(conditionAnalysisMessage, controller, controllerMap, energyStream,
+            flowValveController, hasController, isSetEnergyStream, name, properties, specification);
     return result;
   }
 
@@ -322,6 +402,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     ProcessEquipmentBaseClass other = (ProcessEquipmentBaseClass) obj;
     return Objects.equals(conditionAnalysisMessage, other.conditionAnalysisMessage)
         && Objects.equals(controller, other.controller)
+        && Objects.equals(controllerMap, other.controllerMap)
         && Objects.equals(energyStream, other.energyStream)
         && Objects.equals(flowValveController, other.flowValveController)
         && hasController == other.hasController && isSetEnergyStream == other.isSetEnergyStream
@@ -433,5 +514,284 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    */
   public void setCapacityAnalysisEnabled(boolean enabled) {
     this.capacityAnalysisEnabled = enabled;
+  }
+
+  /**
+   * Gets the current failure mode of the equipment.
+   *
+   * @return the failure mode, or null if equipment is operating normally
+   */
+  public EquipmentFailureMode getFailureMode() {
+    return failureMode;
+  }
+
+  /**
+   * Sets a failure mode on the equipment.
+   *
+   * <p>
+   * When a failure mode is set, the equipment is marked as failed and its behavior changes
+   * according to the failure mode characteristics (capacity factor, etc.). Setting null clears the
+   * failure.
+   * </p>
+   *
+   * @param failureMode the failure mode to apply, or null to clear failure
+   */
+  public void setFailureMode(EquipmentFailureMode failureMode) {
+    this.failureMode = failureMode;
+    this.isFailed = (failureMode != null);
+    if (isFailed && failureMode.isCompleteFailure()) {
+      this.isActive = false;
+      this.capacityAnalysisEnabled = false;
+    }
+  }
+
+  /**
+   * Checks if the equipment is in a failed state.
+   *
+   * @return true if the equipment has a failure mode set
+   */
+  public boolean isFailed() {
+    return isFailed;
+  }
+
+  /**
+   * Simulates a trip (complete failure) on the equipment.
+   *
+   * <p>
+   * Convenience method that applies a standard trip failure mode. The equipment becomes inactive
+   * and is excluded from capacity analysis.
+   * </p>
+   */
+  public void simulateTrip() {
+    setFailureMode(EquipmentFailureMode.trip(this.getClass().getSimpleName()));
+  }
+
+  /**
+   * Simulates degraded operation at a specified capacity.
+   *
+   * @param capacityPercent remaining capacity percentage (0-100)
+   */
+  public void simulateDegradedOperation(double capacityPercent) {
+    setFailureMode(EquipmentFailureMode.degraded(capacityPercent));
+  }
+
+  /**
+   * Restores the equipment from a failed state.
+   *
+   * <p>
+   * Clears any failure mode and restores the equipment to normal operation.
+   * </p>
+   */
+  public void restoreFromFailure() {
+    this.failureMode = null;
+    this.isFailed = false;
+    this.isActive = true;
+    this.capacityAnalysisEnabled = true;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ReferenceDesignation getReferenceDesignation() {
+    return referenceDesignation;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setReferenceDesignation(ReferenceDesignation referenceDesignation) {
+    this.referenceDesignation =
+        referenceDesignation != null ? referenceDesignation : new ReferenceDesignation();
+  }
+
+  /**
+   * Gets the effective capacity factor considering any failure mode.
+   *
+   * @return capacity factor (0.0 to 1.0), where 1.0 is full capacity
+   */
+  public double getEffectiveCapacityFactor() {
+    if (failureMode == null) {
+      return 1.0;
+    }
+    return failureMode.getCapacityFactor();
+  }
+
+  // ============================================================
+  // Capacity Constraint Support (universal base implementation)
+  // ============================================================
+
+  /**
+   * Ensures the capacity constraints map is initialized.
+   *
+   * <p>
+   * The map is transient (not serialized) so it may be null after deserialization. This method
+   * lazily initializes it and calls {@link #initializeDefaultConstraints()} to let subclasses
+   * re-attach their lambda value suppliers.
+   * </p>
+   */
+  private void ensureCapacityConstraintsInitialized() {
+    if (capacityConstraints == null) {
+      capacityConstraints = new LinkedHashMap<String, CapacityConstraint>();
+      initializeDefaultConstraints();
+    }
+  }
+
+  /**
+   * Hook for subclasses to set up default capacity constraints.
+   *
+   * <p>
+   * Called lazily when constraints are first accessed, and after deserialization. Subclasses should
+   * override this to add equipment-specific constraints using
+   * {@link #addCapacityConstraint(CapacityConstraint)}. The default implementation does nothing.
+   * </p>
+   */
+  protected void initializeDefaultConstraints() {
+    // Default no-op — subclasses override to add equipment-specific constraints
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, CapacityConstraint> getCapacityConstraints() {
+    ensureCapacityConstraintsInitialized();
+    return Collections.unmodifiableMap(capacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(CapacityConstraint constraint) {
+    ensureCapacityConstraintsInitialized();
+    if (constraint != null) {
+      capacityConstraints.put(constraint.getName(), constraint);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public CapacityConstraint getBottleneckConstraint() {
+    ensureCapacityConstraintsInitialized();
+    CapacityConstraint bottleneck = null;
+    double maxUtil = -1.0;
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isEnabled()) {
+        double util = c.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+          bottleneck = c;
+        }
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    ensureCapacityConstraintsInitialized();
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isEnabled() && c.isViolated()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    ensureCapacityConstraintsInitialized();
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isEnabled() && c.isHardLimitExceeded()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    ensureCapacityConstraintsInitialized();
+    double maxUtil = 0.0;
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isEnabled()) {
+        double util = c.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+        }
+      }
+    }
+    return maxUtil;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilizationPercent() {
+    return getMaxUtilization() * 100.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getAvailableMargin() {
+    return 1.0 - getMaxUtilization();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getAvailableMarginPercent() {
+    return getAvailableMargin() * 100.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isNearCapacityLimit() {
+    ensureCapacityConstraintsInitialized();
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isEnabled() && c.isNearLimit()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, Double> getUtilizationSummary() {
+    ensureCapacityConstraintsInitialized();
+    Map<String, Double> summary = new java.util.LinkedHashMap<String, Double>();
+    for (Map.Entry<String, CapacityConstraint> entry : capacityConstraints.entrySet()) {
+      CapacityConstraint c = entry.getValue();
+      if (c.isEnabled()) {
+        summary.put(entry.getKey(), c.getUtilization() * 100.0);
+      }
+    }
+    return summary;
+  }
+
+  /**
+   * Evaluates all capacity constraints and returns a summary string.
+   *
+   * <p>
+   * Useful for logging and diagnostics. Each enabled constraint is evaluated and its utilization is
+   * reported. Constraints that are violated or near their limit are flagged.
+   * </p>
+   *
+   * @return multi-line summary of constraint status
+   */
+  public String getConstraintEvaluationReport() {
+    ensureCapacityConstraintsInitialized();
+    StringBuilder sb = new StringBuilder();
+    sb.append("Capacity constraints for ").append(getName()).append(":\n");
+    for (Map.Entry<String, CapacityConstraint> entry : capacityConstraints.entrySet()) {
+      CapacityConstraint c = entry.getValue();
+      if (c.isEnabled()) {
+        sb.append("  ").append(entry.getKey());
+        sb.append(": ").append(String.format("%.1f%%", c.getUtilization() * 100.0));
+        if (c.isViolated()) {
+          sb.append(" [VIOLATED]");
+        } else if (c.isNearLimit()) {
+          sb.append(" [WARNING]");
+        }
+        sb.append("\n");
+      }
+    }
+    return sb.toString();
   }
 }

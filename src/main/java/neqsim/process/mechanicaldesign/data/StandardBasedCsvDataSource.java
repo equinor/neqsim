@@ -8,8 +8,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,7 +25,7 @@ import neqsim.process.mechanicaldesign.DesignLimitData;
  * </p>
  *
  * <h2>Standard Format (with STANDARD_CODE column):</h2>
- * 
+ *
  * <pre>
  * STANDARD_CODE,STANDARD_VERSION,EQUIPMENTTYPE,SPECIFICATION,MINVALUE,MAXVALUE,UNIT,DESCRIPTION
  * NORSOK-L-001,Rev 6,Pipeline,DesignPressureMargin,1.1,1.1,-,Design pressure safety factor
@@ -31,7 +33,7 @@ import neqsim.process.mechanicaldesign.DesignLimitData;
  * </pre>
  *
  * <h2>Company Format (legacy compatibility):</h2>
- * 
+ *
  * <pre>
  * EQUIPMENTTYPE,COMPANY,MAXPRESSURE,MINPRESSURE,MAXTEMPERATURE,MINTEMPERATURE,CORROSIONALLOWANCE,JOINTEFFICIENCY
  * Pipeline,StatoilTR,100,0,150,-50,3.0,0.85
@@ -165,6 +167,47 @@ public class StandardBasedCsvDataSource implements MechanicalDesignDataSource {
     }
 
     return versions;
+  }
+
+  /**
+   * Get all specification values for a given standard, version, and equipment type.
+   *
+   * <p>
+   * Returns a map from specification name to a two-element double array where index 0 is MINVALUE
+   * and index 1 is MAXVALUE. This allows access to arbitrary specification names beyond the fixed
+   * fields in {@link DesignLimitData}.
+   * </p>
+   *
+   * @param standardCode the standard code (e.g., "NORSOK-D-010")
+   * @param version the standard version (e.g., "Rev 5"), or null for any version
+   * @param equipmentTypeName the equipment type (e.g., "SubseaWell")
+   * @return map of specification name to [minValue, maxValue] arrays
+   */
+  public Map<String, double[]> getSpecificationValues(String standardCode, String version,
+      String equipmentTypeName) {
+    ensureLoaded();
+
+    Map<String, double[]> specs = new LinkedHashMap<String, double[]>();
+    String normalizedStandard = normalize(standardCode);
+    String normalizedEquipment = normalize(equipmentTypeName);
+    String normalizedVersion = version != null ? normalize(version) : null;
+
+    for (StandardDataRow row : cachedData) {
+      if (!normalize(row.standardCode).equals(normalizedStandard)) {
+        continue;
+      }
+      if (normalizedVersion != null && !normalize(row.version).equals(normalizedVersion)) {
+        continue;
+      }
+      if (!normalize(row.equipmentType).equals(normalizedEquipment)) {
+        continue;
+      }
+      if (row.specification != null && !row.specification.isEmpty()) {
+        specs.put(row.specification, new double[] {row.minValue, row.maxValue});
+      }
+    }
+
+    return specs;
   }
 
   private Optional<DesignLimitData> findByCompany(String equipmentTypeName,

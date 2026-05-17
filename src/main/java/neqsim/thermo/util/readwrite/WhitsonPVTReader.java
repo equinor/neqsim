@@ -472,6 +472,8 @@ public class WhitsonPVTReader {
 
   /**
    * Set binary interaction parameters from the parsed BIP matrix.
+   *
+   * @param fluid the thermodynamic system to set BIPs on
    */
   private void setBinaryInteractionParameters(SystemInterface fluid) {
     if (bipMatrix == null) {
@@ -507,6 +509,9 @@ public class WhitsonPVTReader {
 
   /**
    * Check if component name indicates a C7+ fraction.
+   *
+   * @param name the component name to check
+   * @return true if the name indicates a C7+ fraction
    */
   private boolean isC7PlusFraction(String name) {
     if (name.matches("C\\d+.*")) {

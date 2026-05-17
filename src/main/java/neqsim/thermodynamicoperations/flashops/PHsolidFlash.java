@@ -45,6 +45,22 @@ public class PHsolidFlash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values;
+    // warm-start enabled only for subsequent inner iterations (outer loop
+    // converges on T via enthalpy residual).
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      runInternal();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
+  }
+
+  /**
+   * Internal implementation of PH-solid flash iteration.
+   */
+  private void runInternal() {
     // logger.info("enthalpy: " + system.getEnthalpy());
     double err = 0;
     int iter = 0;
@@ -55,6 +71,7 @@ public class PHsolidFlash extends Flash {
     double t_oldold = 0.0;
     // ThermodynamicOperations ops = new ThermodynamicOperations(system);
     tpFlash.run();
+    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
     double dt = 10;
     do {
       iter++;

@@ -1,3 +1,8 @@
+---
+title: "Characterization Package"
+description: "Documentation for plus fraction and asphaltene characterization in NeqSim."
+---
+
 # Characterization Package
 
 Documentation for plus fraction and asphaltene characterization in NeqSim.
@@ -153,7 +158,7 @@ fluid.getCharacterization().configureLumping()
 | Match specific PVT lab groupings | `.customBoundaries(6, 10, 20)` |
 | Keep all SCN components | `.noLumping()` |
 
-For complete mathematical details, see [Fluid Characterization Mathematics](../../pvtsimulation/fluid_characterization_mathematics.md#lumping-methods).
+For complete mathematical details, see [Fluid Characterization Mathematics](../../pvtsimulation/fluid_characterization_mathematics#lumping-methods).
 
 ---
 
@@ -297,6 +302,6 @@ oil.setMixingRule("classic");
 
 ## Related Documentation
 
-- [PVT Fluid Characterization](../pvt_fluid_characterization.md) - Detailed characterization guide
-- [Fluid Creation Guide](../fluid_creation_guide.md) - Creating fluids
-- [Thermo Package](../README.md) - Package overview
+- [PVT Fluid Characterization](../pvt_fluid_characterization) - Detailed characterization guide
+- [Fluid Creation Guide](../fluid_creation_guide) - Creating fluids
+- [Thermo Package](../) - Package overview

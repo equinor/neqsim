@@ -1,3 +1,8 @@
+---
+title: Advanced Process Logic Features
+description: NeqSim's process logic framework has been extended with powerful advanced features for complex process control, startup/shutdown sequences, and decision-making. This document covers the new capabiliti...
+---
+
 # Advanced Process Logic Features
 
 ## Overview
@@ -125,7 +130,7 @@ LogicAction openCooling = new OpenValveAction(coolingValve);
 LogicAction openBypass = new OpenValveAction(bypassValve);
 
 ConditionalAction conditional = new ConditionalAction(
-    highTemp, 
+    highTemp,
     openCooling,      // If true
     openBypass,       // If false
     "Temperature Control"
@@ -374,11 +379,11 @@ All features are designed for real-time performance with minimal overhead.
 
 ## See Also
 
-- [Process Logic Framework](process_logic_framework.md) - Base architecture
-- [SIS Logic Implementation](../safety/sis_logic_implementation.md) - Safety systems
-- [HIPPS Safety Logic](../safety/hipps_safety_logic.md) - Pressure protection
-- [Layered Safety Architecture](../safety/layered_safety_architecture.md) - Defense in depth
-- [Advanced Process Logic Example](../src/main/java/neqsim/process/util/example/AdvancedProcessLogicExample.java) - Complete code example
+- [Process Logic Framework](process_logic_framework) - Base architecture
+- [SIS Logic Implementation](../safety/sis_logic_implementation) - Safety systems
+- [HIPPS Safety Logic](../safety/hipps_safety_logic) - Pressure protection
+- [Layered Safety Architecture](../safety/layered_safety_architecture) - Defense in depth
+- [Advanced Process Logic Example](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/util/example/AdvancedProcessLogicExample.java) - Complete code example
 
 ---
 

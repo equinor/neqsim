@@ -1,3 +1,8 @@
+---
+title: Comparing process simulations with NeqSim (Java)
+description: This guide shows how to reproduce the `comparesimulations.ipynb` Colab notebook using
+---
+
 # Comparing process simulations with NeqSim (Java)
 
 This guide shows how to reproduce the `comparesimulations.ipynb` Colab notebook using

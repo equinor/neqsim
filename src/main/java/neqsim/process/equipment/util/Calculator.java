@@ -26,7 +26,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
   ArrayList<ProcessEquipmentInterface> inputVariable = new ArrayList<ProcessEquipmentInterface>();
   private ProcessEquipmentInterface outputVariable;
-  private BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface> calculationMethod;
+  private transient BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface> calculationMethod;
   private Runnable simpleCalculationMethod;
   String type = "sumTEG";
 
@@ -106,12 +106,11 @@ public class Calculator extends ProcessEquipmentBaseClass {
       return;
     }
 
-    double flowAntiSurge = antiSurgeSplitter.getSplitStream(1).getFlowRate("Sm3/hr") + 0.5
-        * (compressor.getSurgeFlowRateStd() - compressor.getInletStream().getFlowRate("Sm3/hr"));
-    flowAntiSurge =
-        Math.max(flowAntiSurge, compressor.getInletStream().getFlowRate("Sm3/hr") / 1e6);
-    antiSurgeSplitter.setFlowRates(new double[] {-1, flowAntiSurge}, "Sm3/hr");
-    antiSurgeSplitter.getSplitStream(1).setFlowRate(flowAntiSurge, "Sm3/hr");
+    double flowAntiSurge = antiSurgeSplitter.getSplitStream(1).getFlowRate("m3/hr")
+        + 0.5 * (compressor.getSurgeFlowRate() - compressor.getInletStream().getFlowRate("m3/hr"));
+    flowAntiSurge = Math.max(flowAntiSurge, compressor.getInletStream().getFlowRate("m3/hr") / 1e6);
+    antiSurgeSplitter.setFlowRates(new double[] {-1, flowAntiSurge}, "m3/hr");
+    antiSurgeSplitter.getSplitStream(1).setFlowRate(flowAntiSurge, "m3/hr");
     antiSurgeSplitter.getSplitStream(1).run();
     antiSurgeSplitter.setCalculationIdentifier(id);
   }

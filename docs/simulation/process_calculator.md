@@ -1,3 +1,8 @@
+---
+title: "Process Calculator"
+description: "The `Calculator` unit operation in NeqSim provides a flexible way to perform custom calculations and data manipulation within a process simulation. It allows users to define arbitrary logic that can r..."
+---
+
 # Process Calculator
 
 The `Calculator` unit operation in NeqSim provides a flexible way to perform custom calculations and data manipulation within a process simulation. It allows users to define arbitrary logic that can read properties from input process equipment and modify properties of output process equipment. Custom lambdas are the recommended hook for AI-generated calculations so you can swap in new behavior without rebuilding the process topology.

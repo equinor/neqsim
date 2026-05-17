@@ -2,19 +2,19 @@ package neqsim.process.controllerdevice;
 
 import java.util.List;
 import java.util.UUID;
+import neqsim.process.ProcessElementInterface;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 
 /**
- * General contract for feedback controllers operating on measurement devices in
- * NeqSim. Implementations typically provide proportional-integral-derivative
- * (PID) control but the API is prepared for other regulators. The interface
- * exposes unit-aware set points and measurements, tuning parameters, auto
- * tuning hooks, gain scheduling and performance logging features.
+ * General contract for feedback controllers operating on measurement devices in NeqSim.
+ * Implementations typically provide proportional-integral-derivative (PID) control but the API is
+ * prepared for other regulators. The interface exposes unit-aware set points and measurements,
+ * tuning parameters, auto tuning hooks, gain scheduling and performance logging features.
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface ControllerDeviceInterface extends java.io.Serializable {
+public interface ControllerDeviceInterface extends ProcessElementInterface {
   /**
    * <p>
    * getMeasuredValue.
@@ -90,8 +90,7 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
    * setTransmitter.
    * </p>
    *
-   * @param device a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
-   *        object
+   * @param device a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface} object
    */
   public void setTransmitter(MeasurementDeviceInterface device);
 
@@ -201,6 +200,75 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
     autoTune(ultimateGain, ultimatePeriod);
   }
 
+  /**
+   * Operating modes for a feedback controller. These mirror the standard modes found in commercial
+   * DCS and simulator products (AUTO, MANUAL, CASCADE).
+   */
+  public static enum ControllerMode {
+    /** Controller output is computed by the PID algorithm. */
+    AUTO,
+    /** Controller output is set manually by the operator; PID computation is bypassed. */
+    MANUAL,
+    /**
+     * Controller receives its set-point from an upstream (primary) controller rather than from a
+     * fixed value.
+     */
+    CASCADE
+  }
+
+  /**
+   * Get the current operating mode of the controller.
+   *
+   * @return the controller mode
+   */
+  public default ControllerMode getMode() {
+    return ControllerMode.AUTO;
+  }
+
+  /**
+   * Switch the controller to a new operating mode. Implementations should perform bumpless transfer
+   * when transitioning between modes so that the controller output does not jump.
+   *
+   * @param mode the desired controller mode
+   */
+  public default void setMode(ControllerMode mode) {}
+
+  /**
+   * Set the 2-DOF PID setpoint weight for the proportional term. A value of 1.0 gives standard PID
+   * (setpoint changes cause full proportional kick). A value of 0.0 removes setpoint from the
+   * proportional term entirely (derivative-on-measurement behaviour). Typical values are 0.0 to
+   * 1.0.
+   *
+   * @param b the setpoint weight (0.0 to 1.0, default 1.0)
+   */
+  public default void setSetpointWeight(double b) {}
+
+  /**
+   * Get the 2-DOF PID setpoint weight for the proportional term.
+   *
+   * @return the setpoint weight (0.0 to 1.0)
+   */
+  public default double getSetpointWeight() {
+    return 1.0;
+  }
+
+  /**
+   * Get the manual output value used when the controller is in MANUAL mode.
+   *
+   * @return the manual output value in engineering units
+   */
+  public default double getManualOutput() {
+    return getResponse();
+  }
+
+  /**
+   * Set the manual output value. This value is used as the controller response when the controller
+   * is in MANUAL mode.
+   *
+   * @param output the desired manual output in engineering units
+   */
+  public default void setManualOutput(double output) {}
+
   /** Available tuning rules for step-response based auto-tuning. */
   public static enum StepResponseTuningMethod {
     /** Original Ziegler-Nichols-inspired correlations used historically in NeqSim. */
@@ -232,8 +300,8 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
 
   /**
    * <p>
-   * Auto tune controller from an open-loop step response using process gain, time constant and
-   * dead time.
+   * Auto tune controller from an open-loop step response using process gain, time constant and dead
+   * time.
    * </p>
    *
    * @param processGain Process gain from step response
@@ -245,8 +313,8 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
 
   /**
    * <p>
-   * Auto tune controller from an open-loop step response using process gain, time constant and
-   * dead time with optional derivative tuning.
+   * Auto tune controller from an open-loop step response using process gain, time constant and dead
+   * time with optional derivative tuning.
    * </p>
    *
    * @param processGain Process gain from step response

@@ -3,6 +3,7 @@
  * - Copy button for code blocks
  * - Auto-generated table of contents
  * - Edit on GitHub link
+ * - Mobile-friendly dropdown menus
  */
 
 (function() {
@@ -12,7 +13,105 @@
     addCopyButtons();
     generateTableOfContents();
     addEditLink();
+    initMobileDropdowns();
   });
+
+  /**
+   * Initialize mobile-friendly dropdown menus
+   * Adds click/touch support for dropdown buttons since :hover doesn't work on touch devices
+   */
+  function initMobileDropdowns() {
+    var dropdownBtns = document.querySelectorAll('.nav-dropdown-btn');
+    var isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    dropdownBtns.forEach(function(btn) {
+      var dropdown = btn.closest('.nav-dropdown');
+      var content = dropdown.querySelector('.nav-dropdown-content');
+      
+      // Function to toggle dropdown
+      function toggleDropdown(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Close all other dropdowns first
+        document.querySelectorAll('.nav-dropdown').forEach(function(d) {
+          if (d !== dropdown) {
+            d.classList.remove('is-open');
+          }
+        });
+        
+        // Toggle this dropdown
+        dropdown.classList.toggle('is-open');
+      }
+      
+      // Handle both click and touch events
+      btn.addEventListener('click', toggleDropdown);
+      
+      // For touch devices, also listen for touchend to ensure responsiveness
+      if (isTouchDevice) {
+        btn.addEventListener('touchend', function(e) {
+          // Prevent the click event from also firing
+          e.preventDefault();
+          toggleDropdown(e);
+        }, { passive: false });
+      }
+    });
+    
+    // Close dropdowns when clicking/touching outside
+    function closeAllDropdowns(e) {
+      if (!e.target.closest('.nav-dropdown')) {
+        document.querySelectorAll('.nav-dropdown').forEach(function(d) {
+          d.classList.remove('is-open');
+        });
+      }
+    }
+    
+    document.addEventListener('click', closeAllDropdowns);
+    if (isTouchDevice) {
+      document.addEventListener('touchend', closeAllDropdowns);
+    }
+    
+    // Close dropdowns when pressing Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.nav-dropdown').forEach(function(d) {
+          d.classList.remove('is-open');
+        });
+      }
+    });
+    
+    // Close dropdown when a link inside is clicked/touched and navigate
+    document.querySelectorAll('.nav-dropdown-content a').forEach(function(link) {
+      // Handler that closes dropdown and allows navigation
+      function handleLinkClick(e) {
+        // Get the href before closing dropdown
+        var href = link.getAttribute('href');
+        
+        // Close all dropdowns
+        document.querySelectorAll('.nav-dropdown').forEach(function(d) {
+          d.classList.remove('is-open');
+        });
+        
+        // For touchend, we need to manually navigate since some browsers
+        // don't reliably fire click events after touchend on dynamically shown elements
+        if (e.type === 'touchend' && href) {
+          e.preventDefault();
+          // Small delay to allow dropdown close animation
+          setTimeout(function() {
+            window.location.href = href;
+          }, 10);
+        }
+        // For click events, the default behavior will handle navigation
+      }
+      
+      link.addEventListener('click', handleLinkClick);
+      
+      // On touch devices, also handle touchend for reliable navigation
+      if (isTouchDevice) {
+        link.addEventListener('touchend', handleLinkClick, { passive: false });
+      }
+    });
+  }
 
   /**
    * Add copy buttons to all code blocks

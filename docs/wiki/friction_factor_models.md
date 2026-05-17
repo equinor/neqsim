@@ -1,3 +1,8 @@
+---
+title: "Friction Factor Models in NeqSim Pipelines"
+description: "Friction factor is a critical parameter in pressure drop calculations. NeqSim implements industry-standard correlations for both laminar and turbulent flow."
+---
+
 # Friction Factor Models in NeqSim Pipelines
 
 ## Overview
@@ -88,7 +93,7 @@ $$S = \frac{\ln(y)}{-0.0523 + 3.18\ln(y) - 0.872[\ln(y)]^2 + 0.01853[\ln(y)]^4}$
 pipe.setPipeWallRoughness(4.6e-5);  // meters
 
 // For AdiabaticPipe
-pipe.setWallRoughness(4.6e-5);      // meters
+pipe.setPipeWallRoughness(4.6e-5);  // meters
 ```
 
 ## Implementation Details
@@ -156,5 +161,5 @@ Comparison of NeqSim friction factor implementation against Colebrook-White:
 
 ## See Also
 
-- [Pipeline Pressure Drop Overview](pipeline_pressure_drop.md)
-- [Beggs & Brill Correlation](beggs_and_brill_correlation.md)
+- [Pipeline Pressure Drop Overview](pipeline_pressure_drop)
+- [Beggs & Brill Correlation](beggs_and_brill_correlation)

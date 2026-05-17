@@ -21,7 +21,7 @@ import java.util.Map;
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * ModelMetadata metadata = new ModelMetadata();
  * metadata.setAssetId("PLATFORM-A-TRAIN-1");

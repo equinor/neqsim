@@ -1,0 +1,8 @@
+# Oddo-Tomson CaCO3 / BaSO4 saturation index reference cases (NACE TM0374)
+# Saturation index sign-based screening: SI>0 = scaling tendency, SI<0 = no risk.
+# Columns: case,T_C,P_bara,pCO2_bar,Ca_mgL,HCO3_mgL,Ba_mgL,SO4_mgL,Na_mgL,TDS_mgL,pH,expectedCaCO3SI,expectedBaSO4SI,tolerance
+case,T_C,P_bara,pCO2_bar,Ca_mgL,HCO3_mgL,Ba_mgL,SO4_mgL,Na_mgL,TDS_mgL,pH,expectedCaCO3SI,expectedBaSO4SI,tolerance
+OT_A_seawater,25,1.0,0.0004,400,140,0.05,2700,10800,35000,8.1,0.5,-0.3,1.0
+OT_B_high_Ca,80,80,0.5,2000,500,0.5,200,15000,50000,6.5,1.0,0.5,1.5
+OT_C_low_risk,20,200,2.0,100,50,0.0,10,5000,15000,5.0,-1.5,-2.0,1.0
+OT_D_BaSO4_severe,60,150,1.0,500,200,150,1500,20000,60000,6.0,0.5,2.5,1.5

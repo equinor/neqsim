@@ -22,17 +22,17 @@
  *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * SystemInterface gas = new SystemSrkEos(280.0, 50.0);
  * gas.addComponent("methane", 0.85);
  * gas.addComponent("CO2", 0.10);
  * gas.addComponent("water", 0.05);
- * 
+ *
  * SafetyEnvelopeCalculator calc = new SafetyEnvelopeCalculator(gas);
  * SafetyEnvelope hydrate = calc.calculateHydrateEnvelope(1.0, 150.0, 20);
  * SafetyEnvelope co2 = calc.calculateCO2FreezingEnvelope(1.0, 100.0, 15);
- * 
+ *
  * boolean safe = hydrate.isOperatingPointSafe(50.0, 290.0);
  * </pre>
  *
