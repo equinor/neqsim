@@ -3042,9 +3042,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     StreamInterface[] snapshotLiquidStreams = new StreamInterface[numberOfTrays];
     for (int i = 0; i < numberOfTrays; i++) {
       snapshotGasStreams[i] = trays.get(i).getGasOutStream().clone();
-      snapshotGasStreams[i].run();
       snapshotLiquidStreams[i] = trays.get(i).getLiquidOutStream().clone();
-      snapshotLiquidStreams[i].run();
     }
 
     // On re-runs, seed previous-stream arrays from the snapshot so that
@@ -3052,9 +3050,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (hasBeenSolvedBefore) {
       for (int i = 0; i < numberOfTrays; i++) {
         previousGasStreams[i] = snapshotGasStreams[i].clone();
-        previousGasStreams[i].run();
         previousLiquidStreams[i] = snapshotLiquidStreams[i].clone();
-        previousLiquidStreams[i].run();
       }
     }
 
@@ -3085,7 +3081,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
       for (int i = firstFeedTrayNumber; i > 1; i--) {
         int replaceStream = trays.get(i - 1).getNumberOfInputStreams() - 1;
-        StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[i],
+        StreamInterface relaxedLiquid = applyRelaxationFast(previousLiquidStreams[i],
             trays.get(i).getLiquidOutStream(), relaxation);
         trays.get(i - 1).replaceStream(replaceStream, relaxedLiquid);
         currentLiquidStreams[i] = relaxedLiquid;
@@ -3094,8 +3090,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       int streamNumb = trays.get(0).getNumberOfInputStreams() - 1;
-      StreamInterface reboilerFeed =
-          applyRelaxation(previousLiquidStreams[1], trays.get(1).getLiquidOutStream(), relaxation);
+      StreamInterface reboilerFeed = applyRelaxationFast(previousLiquidStreams[1],
+          trays.get(1).getLiquidOutStream(), relaxation);
       trays.get(0).replaceStream(streamNumb, reboilerFeed);
       currentLiquidStreams[1] = reboilerFeed;
       trays.get(0).run(id);
@@ -3106,7 +3102,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         if (i == (numberOfTrays - 1)) {
           replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
         }
-        StreamInterface relaxedGas = applyRelaxation(previousGasStreams[i - 1],
+        StreamInterface relaxedGas = applyRelaxationFast(previousGasStreams[i - 1],
             trays.get(i - 1).getGasOutStream(), relaxation);
         trays.get(i).replaceStream(replaceStream, relaxedGas);
         currentGasStreams[i - 1] = relaxedGas;
@@ -3116,7 +3112,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
       for (int i = numberOfTrays - 2; i >= firstFeedTrayNumber; i--) {
         int replaceStream = trays.get(i).getNumberOfInputStreams() - 1;
-        StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[i + 1],
+        StreamInterface relaxedLiquid = applyRelaxationFast(previousLiquidStreams[i + 1],
             trays.get(i + 1).getLiquidOutStream(), relaxation);
         trays.get(i).replaceStream(replaceStream, relaxedLiquid);
         currentLiquidStreams[i + 1] = relaxedLiquid;
@@ -3180,9 +3176,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           relaxation = minSequentialRelaxation;
           for (int i = 0; i < numberOfTrays; i++) {
             previousGasStreams[i] = snapshotGasStreams[i].clone();
-            previousGasStreams[i].run();
             previousLiquidStreams[i] = snapshotLiquidStreams[i].clone();
-            previousLiquidStreams[i].run();
           }
           divergenceRecoveryApplied = true;
           internalTrafficCapActive = true;
@@ -3528,18 +3522,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     StreamInterface[] snapshotLiquidStreamsIO = new StreamInterface[numberOfTrays];
     for (int i = 0; i < numberOfTrays; i++) {
       snapshotGasStreamsIO[i] = trays.get(i).getGasOutStream().clone();
-      snapshotGasStreamsIO[i].run();
       snapshotLiquidStreamsIO[i] = trays.get(i).getLiquidOutStream().clone();
-      snapshotLiquidStreamsIO[i].run();
     }
 
     // On re-runs, seed previous-stream arrays from the snapshot.
     if (hasBeenSolvedBefore) {
       for (int i = 0; i < numberOfTrays; i++) {
         previousGasStreams[i] = snapshotGasStreamsIO[i].clone();
-        previousGasStreams[i].run();
         previousLiquidStreams[i] = snapshotLiquidStreamsIO[i].clone();
-        previousLiquidStreams[i].run();
       }
     }
 
@@ -3583,7 +3573,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       for (int stage = firstFeedTrayNumber; stage >= 1; stage--) {
         int target = stage - 1;
         int replaceStream = trays.get(target).getNumberOfInputStreams() - 1;
-        StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[stage],
+        StreamInterface relaxedLiquid = applyRelaxationFast(previousLiquidStreams[stage],
             trays.get(stage).getLiquidOutStream(), relaxation);
         trays.get(target).replaceStream(replaceStream, relaxedLiquid);
         currentLiquidStreams[stage] = relaxedLiquid;
@@ -3597,7 +3587,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         if (stage == (numberOfTrays - 1)) {
           replaceStream = trays.get(stage).getNumberOfInputStreams() - 1;
         }
-        StreamInterface relaxedGas = applyRelaxation(previousGasStreams[stage - 1],
+        StreamInterface relaxedGas = applyRelaxationFast(previousGasStreams[stage - 1],
             trays.get(stage - 1).getGasOutStream(), relaxation);
         trays.get(stage).replaceStream(replaceStream, relaxedGas);
         currentGasStreams[stage - 1] = relaxedGas;
@@ -3608,7 +3598,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       // Phase 3: Polish liquid sweep (condenser → feed) for better coupling
       for (int stage = numberOfTrays - 2; stage >= firstFeedTrayNumber; stage--) {
         int replaceStream = trays.get(stage).getNumberOfInputStreams() - 1;
-        StreamInterface relaxedLiquid = applyRelaxation(previousLiquidStreams[stage + 1],
+        StreamInterface relaxedLiquid = applyRelaxationFast(previousLiquidStreams[stage + 1],
             trays.get(stage + 1).getLiquidOutStream(), relaxation);
         trays.get(stage).replaceStream(replaceStream, relaxedLiquid);
         currentLiquidStreams[stage + 1] = relaxedLiquid;
@@ -3730,9 +3720,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           relaxation = minInsideOutRelaxation;
           for (int i = 0; i < numberOfTrays; i++) {
             previousGasStreams[i] = snapshotGasStreamsIO[i].clone();
-            previousGasStreams[i].run();
             previousLiquidStreams[i] = snapshotLiquidStreamsIO[i].clone();
-            previousLiquidStreams[i].run();
           }
           divergenceRecoveryAppliedIO = true;
           internalTrafficCapActive = true;
@@ -4421,18 +4409,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (!Double.isFinite(err) || !Double.isFinite(energyErr) || err > baseTempTolerance
         || massErr > baseMassTolerance) {
       logger.warn("Wegstein did not converge cleanly for column {}. Falling back to damped "
-          + "substitution.", getName());
-      solveDampedFallbackFromFreshInitialization(id);
-      return;
-    }
-
-    synchronizeTrayStreamsAfterAcceleratedTemperatureUpdate(id, firstFeedTrayNumber);
-    massErr = getMassBalanceError();
-    energyErr = getEnergyBalanceError();
-
-    if (!Double.isFinite(err) || !Double.isFinite(energyErr) || err > baseTempTolerance
-        || massErr > baseMassTolerance) {
-      logger.warn("Sum-rates did not converge cleanly for column {}. Falling back to damped "
           + "substitution.", getName());
       solveDampedFallbackFromFreshInitialization(id);
       return;
@@ -6613,14 +6589,45 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private StreamInterface applyRelaxation(StreamInterface previous, StreamInterface current,
       double relaxation) {
+    return applyRelaxationInternal(previous, current, relaxation, false);
+  }
+
+  /**
+   * Blend streams using the fast unchanged-clone path for fixed-point sweeps.
+   *
+   * @param previous stream from the previous iteration (may be {@code null})
+   * @param current current iteration stream
+   * @param relaxation relaxation factor applied to the update
+   * @return relaxed stream instance to be used in the next tear
+   */
+  private StreamInterface applyRelaxationFast(StreamInterface previous, StreamInterface current,
+      double relaxation) {
+    return applyRelaxationInternal(previous, current, relaxation, true);
+  }
+
+  /**
+   * Blend the current stream update with the previous iterate.
+   *
+   * @param previous stream from the previous iteration (may be {@code null})
+   * @param current current iteration stream
+   * @param relaxation relaxation factor applied to the update
+   * @param skipUnchangedReflash whether an unchanged clone can reuse the current stream flash state
+   * @return relaxed stream instance to be used in the next tear
+   */
+  private StreamInterface applyRelaxationInternal(StreamInterface previous, StreamInterface current,
+      double relaxation, boolean skipUnchangedReflash) {
     double maximumInternalFlow = getMaximumRelaxedInternalFlowKgPerHour();
-    // Fast path: no damping needed, just clone and flash
+    // Fast path: no damping needed; clone the already-flashed tray outlet.
     if (previous == null || relaxation >= 1.0) {
       StreamInterface relaxed = current.clone();
-      if (internalTrafficCapActive || !Double.isFinite(relaxed.getFlowRate("kg/hr"))) {
+      boolean requiresReflash =
+          internalTrafficCapActive || !Double.isFinite(relaxed.getFlowRate("kg/hr"));
+      if (requiresReflash) {
         capStreamFlow(relaxed, maximumInternalFlow);
       }
-      relaxed.run();
+      if (requiresReflash || !skipUnchangedReflash) {
+        relaxed.run();
+      }
       return relaxed;
     }
 

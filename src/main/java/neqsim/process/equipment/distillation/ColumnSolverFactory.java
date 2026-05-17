@@ -6,10 +6,8 @@ import java.util.UUID;
  * Factory for the built-in distillation column solver strategies.
  *
  * <p>
- * This class keeps enum dispatch outside {@link DistillationColumn}. The first
- * implementation is a
- * thin adapter layer around the existing numerical methods so that the public
- * behavior remains
+ * This class keeps enum dispatch outside {@link DistillationColumn}. The first implementation is a
+ * thin adapter layer around the existing numerical methods so that the public behavior remains
  * unchanged while future rigorous solvers can be added as separate strategies.
  * </p>
  *
@@ -35,8 +33,7 @@ final class ColumnSolverFactory {
   private static final ColumnSolver MESH_RESIDUAL = new MeshResidualSolver();
 
   /** Utility class constructor. */
-  private ColumnSolverFactory() {
-  }
+  private ColumnSolverFactory() {}
 
   /**
    * Create the strategy for a solver type.
@@ -103,22 +100,21 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
       boolean fallbackApplied = false;
       try {
         column.solveInsideOut(id);
       } catch (RuntimeException exception) {
-        applyDampedFallback(column, fallbackCandidate, id, "Inside-out failed", exception);
+        applyDampedFallback(column, null, id, "Inside-out failed", exception);
         fallbackApplied = true;
       }
       if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
-        applyDampedFallback(column, fallbackCandidate, id,
+        applyDampedFallback(column, null, id,
             "Inside-out required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
       if (!fallbackApplied && !column.solved()) {
-        applyDampedFallback(column, fallbackCandidate, id,
-            "Inside-out did not satisfy convergence criteria", null);
+        applyDampedFallback(column, null, id, "Inside-out did not satisfy convergence criteria",
+            null);
       }
       return ColumnSolveResult.from(column, getSolverType());
     }
@@ -207,22 +203,20 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
       boolean fallbackApplied = false;
       try {
         column.solveNewton(id);
       } catch (RuntimeException exception) {
-        applyDampedFallback(column, fallbackCandidate, id, "Newton failed", exception);
+        applyDampedFallback(column, null, id, "Newton failed", exception);
         fallbackApplied = true;
       }
       if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
-        applyDampedFallback(column, fallbackCandidate, id,
-            "Newton required guarded feed-flash product fallback", null);
+        applyDampedFallback(column, null, id, "Newton required guarded feed-flash product fallback",
+            null);
         fallbackApplied = true;
       }
       if (!fallbackApplied && !column.solved()) {
-        applyDampedFallback(column, fallbackCandidate, id,
-            "Newton did not satisfy convergence criteria", null);
+        applyDampedFallback(column, null, id, "Newton did not satisfy convergence criteria", null);
       }
       return ColumnSolveResult.from(column, getSolverType());
     }
@@ -233,52 +227,6 @@ final class ColumnSolverFactory {
       return DistillationColumn.SolverType.NEWTON;
     }
 
-    /**
-     * Create a clean damped-substitution fallback candidate before Newton changes
-     * tray state.
-     *
-     * @param column column to copy
-     * @return copied column, or {@code null} if the copy fails
-     */
-    private DistillationColumn createDampedFallbackCandidate(DistillationColumn column) {
-      try {
-        return (DistillationColumn) column.copy();
-      } catch (RuntimeException exception) {
-        return null;
-      } catch (StackOverflowError error) {
-        return null;
-      }
-    }
-
-    /**
-     * Apply damped substitution from a pre-Newton candidate when available.
-     *
-     * @param column            live column to update
-     * @param fallbackCandidate clean fallback candidate, or {@code null} if
-     *                          unavailable
-     * @param id                calculation identifier
-     * @param reason            rejection reason
-     * @param exception         optional accelerator exception
-     */
-    private void applyDampedFallback(DistillationColumn column,
-        DistillationColumn fallbackCandidate, UUID id, String reason, RuntimeException exception) {
-      if (fallbackCandidate != null) {
-        try {
-          fallbackCandidate.setDoInitializion(true);
-          fallbackCandidate.solveDampedSubstitution(id);
-          column.acceptDampedFallbackCandidate(fallbackCandidate, reason);
-          return;
-        } catch (RuntimeException fallbackException) {
-          column.solveDampedFallbackAfterAcceleratorFailure(id, fallbackException);
-          return;
-        }
-      }
-      if (exception != null) {
-        column.solveDampedFallbackAfterAcceleratorFailure(id, exception);
-      } else {
-        column.solveDampedFallbackAfterRejectedAccelerator(id, reason);
-      }
-    }
   }
 
   /** Naphtali-Sandholm simultaneous MESH adapter. */
@@ -314,8 +262,7 @@ final class ColumnSolverFactory {
   }
 
   /**
-   * Create a clean damped-substitution fallback candidate before an accelerator
-   * changes tray state.
+   * Create a clean damped-substitution fallback candidate before an accelerator changes tray state.
    *
    * @param column column to copy
    * @return copied column, or {@code null} if the copy fails
@@ -331,15 +278,13 @@ final class ColumnSolverFactory {
   }
 
   /**
-   * Apply damped substitution from a clean candidate when an accelerator is
-   * rejected.
+   * Apply damped substitution from a clean candidate when an accelerator is rejected.
    *
-   * @param column            live column to update
-   * @param fallbackCandidate clean fallback candidate, or {@code null} if
-   *                          unavailable
-   * @param id                calculation identifier
-   * @param reason            rejection reason
-   * @param exception         optional accelerator exception
+   * @param column live column to update
+   * @param fallbackCandidate clean fallback candidate, or {@code null} if unavailable
+   * @param id calculation identifier
+   * @param reason rejection reason
+   * @param exception optional accelerator exception
    */
   private static void applyDampedFallback(DistillationColumn column,
       DistillationColumn fallbackCandidate, UUID id, String reason, RuntimeException exception) {
@@ -364,11 +309,10 @@ final class ColumnSolverFactory {
   /**
    * Validate an accelerator result against a damped-substitution candidate.
    *
-   * @param column            accelerated result
-   * @param fallbackCandidate clean damped candidate, or {@code null} if
-   *                          unavailable
-   * @param id                calculation identifier
-   * @param solverName        name of the accelerator being validated
+   * @param column accelerated result
+   * @param fallbackCandidate clean damped candidate, or {@code null} if unavailable
+   * @param id calculation identifier
+   * @param solverName name of the accelerator being validated
    */
   private static void validateAcceleratedProductSplit(DistillationColumn column,
       DistillationColumn fallbackCandidate, UUID id, String solverName) {
@@ -391,7 +335,7 @@ final class ColumnSolverFactory {
    * Check whether two solved columns expose materially different product splits.
    *
    * @param accelerated accelerated result
-   * @param reference   reference damped-substitution result
+   * @param reference reference damped-substitution result
    * @return {@code true} when gas or liquid product flows differ beyond tolerance
    */
   private static boolean productSplitDiffers(DistillationColumn accelerated,
@@ -407,7 +351,7 @@ final class ColumnSolverFactory {
   /**
    * Compare two product flow values with a relative tolerance.
    *
-   * @param actual    accelerated value
+   * @param actual accelerated value
    * @param reference reference value
    * @return {@code true} when the values differ materially
    */
