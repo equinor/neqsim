@@ -145,9 +145,7 @@ public class DistillationSolverBenchmarkTest {
             + direct.getLastIterationCount());
   }
 
-  /**
-   * Test matrix inside-out uses the rigorous inside-out polish and matches its product split.
-   */
+  /** Test matrix inside-out adaptively matches rigorous inside-out on a small column. */
   @Test
   public void matrixInsideOutMatchesRigorousInsideOutOnDeethanizer() {
     DistillationColumn insideOut = runDeethanizer(DistillationColumn.SolverType.INSIDE_OUT);
@@ -167,6 +165,13 @@ public class DistillationSolverBenchmarkTest {
         matrixInsideOut.getLiquidOutStream().getFlowRate("kg/hr"), liquidTolerance);
     assertTrue(
         matrixInsideOut.getLastMassResidual() <= insideOut.getLastMassResidual() * 1.25 + 1.0e-9);
+    assertTrue(matrixInsideOut.wasMatrixInsideOutWarmStartBypassed(),
+        "Small columns should bypass matrix warm-start overhead");
+    assertFalse(matrixInsideOut.wasMatrixInsideOutWarmStartUsed(),
+        "Bypassed matrix inside-out should not report warm-start usage");
+    assertEquals(0, matrixInsideOut.getLastMatrixInsideOutIterationCount());
+    assertTrue(Double.isNaN(matrixInsideOut.getLastMatrixInsideOutTemperatureResidual()));
+    assertTrue(matrixInsideOut.getConvergenceDiagnostics().contains("Matrix inside-out"));
   }
 
   /**
@@ -200,7 +205,8 @@ public class DistillationSolverBenchmarkTest {
   @Test
   public void substitutionSolversHandleSimpleBinarySystem() {
     DistillationColumn.SolverType[] solvers = {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
-        DistillationColumn.SolverType.INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
+        DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
+        DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
         DistillationColumn.SolverType.SUM_RATES};
 
     for (DistillationColumn.SolverType solver : solvers) {

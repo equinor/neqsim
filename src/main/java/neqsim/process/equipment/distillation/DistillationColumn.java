@@ -100,6 +100,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private static final int DEFAULT_MAX_TRAY_OPTIMIZATION_CANDIDATES = 2000;
   /** Default maximum elapsed time for tray optimization searches in seconds. */
   private static final double DEFAULT_MAX_TRAY_OPTIMIZATION_TIME_SECONDS = 120.0;
+  /** Minimum tray count where matrix warm-start overhead is expected to pay off. */
+  private static final int MIN_MATRIX_INSIDE_OUT_WARM_START_TRAYS = 12;
   double condenserCoolingDuty = 10.0;
   private double reboilerTemperature = 273.15;
   private double condenserTemperature = 270.15;
@@ -134,7 +136,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     DAMPED_SUBSTITUTION,
     /** Inside-out style simultaneous correction of upward/downward flows. */
     INSIDE_OUT,
-    /** Matrix inside-out component-balance warm start followed by rigorous inside-out polishing. */
+    /** Adaptive matrix inside-out component-balance warm start with rigorous polishing. */
     MATRIX_INSIDE_OUT,
     /** Wegstein acceleration of successive substitution. */
     WEGSTEIN,
@@ -284,6 +286,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private transient StreamInterface terminalLiquidProductDrawStream = null;
   /** Duration of the latest solve step in seconds. */
   private double lastSolveTimeSeconds = 0.0;
+  /** Whether matrix inside-out used a matrix warm-start on the latest solve. */
+  private transient boolean lastMatrixInsideOutWarmStartUsed = false;
+  /** Whether matrix inside-out bypassed the matrix warm-start on the latest solve. */
+  private transient boolean lastMatrixInsideOutWarmStartBypassed = false;
+  /** Matrix warm-start iterations from the latest matrix inside-out solve. */
+  private transient int lastMatrixInsideOutIterationCount = 0;
+  /** Matrix warm-start average temperature residual from the latest solve. */
+  private transient double lastMatrixInsideOutTemperatureResidual = Double.NaN;
+  /** Matrix warm-start wall time from the latest solve in seconds. */
+  private transient double lastMatrixInsideOutSolveTimeSeconds = 0.0;
 
   /**
    * Instead of Map&lt;Integer,StreamInterface&gt;, we store a list of feed streams per tray number.
@@ -688,6 +700,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public void run(UUID id) {
     lastInternalTrafficGuardReached = false;
     internalTrafficCapActive = false;
+    resetMatrixInsideOutDiagnostics();
     assignUnassignedFeeds();
     convergenceHistory = new ArrayList<>();
     applyDirectSpecifications();
@@ -1187,6 +1200,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.terminalGasProductDrawStream = candidate.terminalGasProductDrawStream;
     this.terminalLiquidProductDrawStream = candidate.terminalLiquidProductDrawStream;
     this.lastSolveTimeSeconds = candidate.lastSolveTimeSeconds;
+    this.lastMatrixInsideOutWarmStartUsed = candidate.lastMatrixInsideOutWarmStartUsed;
+    this.lastMatrixInsideOutWarmStartBypassed = candidate.lastMatrixInsideOutWarmStartBypassed;
+    this.lastMatrixInsideOutIterationCount = candidate.lastMatrixInsideOutIterationCount;
+    this.lastMatrixInsideOutTemperatureResidual = candidate.lastMatrixInsideOutTemperatureResidual;
+    this.lastMatrixInsideOutSolveTimeSeconds = candidate.lastMatrixInsideOutSolveTimeSeconds;
     this.hasBeenSolvedBefore = candidate.hasBeenSolvedBefore;
     this.lastTotalFeedFlow = candidate.lastTotalFeedFlow;
     this.doInitializion = candidate.doInitializion;
@@ -3811,8 +3829,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param id calculation identifier
    */
   void solveMatrixInsideOut(UUID id) {
+    resetMatrixInsideOutDiagnostics();
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
+      return;
+    }
+
+    if (shouldBypassMatrixInsideOutWarmStart()) {
+      lastMatrixInsideOutWarmStartBypassed = true;
+      solveInsideOut(id);
       return;
     }
 
@@ -3844,6 +3869,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     int matrixIterations = matrixSolver.getLastIterationCount();
     double matrixSolveTime = matrixSolver.getLastSolveTimeSeconds();
+    lastMatrixInsideOutWarmStartUsed = matrixWarmStartAccepted;
+    lastMatrixInsideOutWarmStartBypassed = false;
+    lastMatrixInsideOutIterationCount = matrixIterations;
+    lastMatrixInsideOutTemperatureResidual = matrixSolver.getLastTemperatureResidual();
+    lastMatrixInsideOutSolveTimeSeconds = matrixSolveTime;
     if (matrixWarmStartAccepted) {
       hasBeenSolvedBefore = true;
       setDoInitializion(false);
@@ -3857,6 +3887,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastSolveTimeSeconds += matrixSolveTime;
     logger.debug("Matrix inside-out stage iterations={} residual={} accepted={}", matrixIterations,
         matrixSolver.getLastTemperatureResidual(), matrixWarmStartAccepted);
+  }
+
+  /**
+   * Decide whether the matrix warm-start stage should be skipped for the current column size.
+   *
+   * <p>
+   * The matrix component-balance stage has fixed setup cost and is only expected to pay off on
+   * larger columns. Small benchmark columns are faster with the rigorous inside-out path directly.
+   * </p>
+   *
+   * @return {@code true} when the adaptive matrix solver should use rigorous inside-out directly
+   */
+  private boolean shouldBypassMatrixInsideOutWarmStart() {
+    return numberOfTrays < MIN_MATRIX_INSIDE_OUT_WARM_START_TRAYS;
   }
 
   /**
@@ -5424,6 +5468,51 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Check whether matrix inside-out used its matrix warm-start stage in the latest run.
+   *
+   * @return {@code true} if a matrix warm-start state was accepted before rigorous polishing
+   */
+  public boolean wasMatrixInsideOutWarmStartUsed() {
+    return lastMatrixInsideOutWarmStartUsed;
+  }
+
+  /**
+   * Check whether matrix inside-out bypassed the matrix stage in the latest run.
+   *
+   * @return {@code true} if the adaptive solver used rigorous inside-out directly
+   */
+  public boolean wasMatrixInsideOutWarmStartBypassed() {
+    return lastMatrixInsideOutWarmStartBypassed;
+  }
+
+  /**
+   * Retrieve matrix warm-start iterations from the latest matrix inside-out run.
+   *
+   * @return number of matrix warm-start iterations, or zero if no matrix stage ran
+   */
+  public int getLastMatrixInsideOutIterationCount() {
+    return lastMatrixInsideOutIterationCount;
+  }
+
+  /**
+   * Retrieve matrix warm-start average temperature residual from the latest run.
+   *
+   * @return average temperature residual in Kelvin, or {@code Double.NaN} if no matrix stage ran
+   */
+  public double getLastMatrixInsideOutTemperatureResidual() {
+    return lastMatrixInsideOutTemperatureResidual;
+  }
+
+  /**
+   * Retrieve matrix warm-start wall time from the latest matrix inside-out run.
+   *
+   * @return matrix warm-start solve time in seconds, or zero if no matrix stage ran
+   */
+  public double getLastMatrixInsideOutSolveTimeSeconds() {
+    return lastMatrixInsideOutSolveTimeSeconds;
+  }
+
+  /**
    * Retrieve the latest top specification residual.
    *
    * @return top specification residual as current value minus target value
@@ -5573,6 +5662,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         .append(getEffectiveStageCount()).append(" equilibrium stages").append("\n");
     diagnostics.append("  Iterations: ").append(lastIterationCount).append("\n");
     diagnostics.append("  Solve time: ").append(lastSolveTimeSeconds).append(" s\n");
+    if (solverType == SolverType.MATRIX_INSIDE_OUT || lastMatrixInsideOutWarmStartUsed
+        || lastMatrixInsideOutWarmStartBypassed) {
+      diagnostics.append("  Matrix inside-out:\n");
+      diagnostics.append("    warm start used: ").append(lastMatrixInsideOutWarmStartUsed)
+          .append("\n");
+      diagnostics.append("    warm start bypassed: ").append(lastMatrixInsideOutWarmStartBypassed)
+          .append("\n");
+      diagnostics.append("    matrix iterations: ").append(lastMatrixInsideOutIterationCount)
+          .append("\n");
+      diagnostics.append("    matrix temperature residual: ")
+          .append(lastMatrixInsideOutTemperatureResidual).append(" K\n");
+      diagnostics.append("    matrix time: ").append(lastMatrixInsideOutSolveTimeSeconds)
+          .append(" s\n");
+    }
     diagnostics.append("  Residuals:\n");
     diagnostics.append("    temperature: ").append(lastTemperatureResidual).append(" K (tolerance ")
         .append(getEffectiveTemperatureTolerance()).append(")\n");
@@ -7380,6 +7483,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastUsedFeedFlashFallback = false;
     terminalGasProductDrawStream = null;
     terminalLiquidProductDrawStream = null;
+    resetMatrixInsideOutDiagnostics();
+  }
+
+  /** Reset matrix inside-out warm-start diagnostics. */
+  private void resetMatrixInsideOutDiagnostics() {
+    lastMatrixInsideOutWarmStartUsed = false;
+    lastMatrixInsideOutWarmStartBypassed = false;
+    lastMatrixInsideOutIterationCount = 0;
+    lastMatrixInsideOutTemperatureResidual = Double.NaN;
+    lastMatrixInsideOutSolveTimeSeconds = 0.0;
   }
 
   /**
