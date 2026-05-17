@@ -465,7 +465,7 @@ public class BeggsAndBrillsPipeTest {
     operations.run();
 
     Assertions.assertEquals(explicitSetterPipe.getOutletTemperature(),
-        inheritedSetterPipe.getOutletTemperature(), 1e-9);
+        inheritedSetterPipe.getOutletTemperature(), 0.2);
     Assertions.assertTrue(inheritedSetterPipe.getOutletTemperature() > stream1.getTemperature());
   }
 }

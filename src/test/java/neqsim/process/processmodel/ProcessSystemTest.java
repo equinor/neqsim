@@ -70,8 +70,11 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     @Override
     public void run(UUID id) {}
 
-    /** {@inheritDoc} */
-    @Override
+    /**
+     * Gets the inlet stream used by the mass-balance fixture.
+     *
+     * @return singleton list containing the inlet stream
+     */
     public List<StreamInterface> getInletStreams() {
       return java.util.Collections.singletonList(inletStream);
     }

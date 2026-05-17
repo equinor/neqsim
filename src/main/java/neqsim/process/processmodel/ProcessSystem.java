@@ -2431,7 +2431,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   private double calculateInletFlow(ProcessEquipmentInterface unitOp, String unit) {
     try {
-      List<StreamInterface> inletStreams = unitOp.getInletStreams();
+      List<StreamInterface> inletStreams = getReportedInletStreams(unitOp);
       if (inletStreams != null && !inletStreams.isEmpty()) {
         return sumStreamFlows(inletStreams, unit);
       }
@@ -2458,6 +2458,56 @@ public class ProcessSystem extends SimulationBaseClass {
           e.getMessage());
     }
     return 0.0;
+  }
+
+  /**
+   * Gets inlet streams reported by equipment-specific getter methods.
+   *
+   * @param unitOp unit operation to inspect
+   * @return list of inlet streams reported by the unit operation
+   */
+  private List<StreamInterface> getReportedInletStreams(ProcessEquipmentInterface unitOp) {
+    List<StreamInterface> inletStreams = new ArrayList<>();
+    addStreamsFromGetter(unitOp, "getInletStreams", inletStreams);
+    addStreamsFromGetter(unitOp, "getInputStreams", inletStreams);
+    addStreamsFromGetter(unitOp, "getInletStream", inletStreams);
+    return inletStreams;
+  }
+
+  /**
+   * Adds streams returned by a no-argument getter if the unit exposes it.
+   *
+   * @param unitOp unit operation to inspect
+   * @param getterName name of the getter method
+   * @param streams destination stream list
+   */
+  private void addStreamsFromGetter(ProcessEquipmentInterface unitOp, String getterName,
+      List<StreamInterface> streams) {
+    try {
+      java.lang.reflect.Method getter = unitOp.getClass().getMethod(getterName);
+      getter.setAccessible(true);
+      Object value = getter.invoke(unitOp);
+      if (value instanceof StreamInterface) {
+        streams.add((StreamInterface) value);
+      } else if (value instanceof Iterable<?>) {
+        for (Object stream : (Iterable<?>) value) {
+          if (stream instanceof StreamInterface) {
+            streams.add((StreamInterface) stream);
+          }
+        }
+      } else if (value instanceof StreamInterface[]) {
+        for (StreamInterface stream : (StreamInterface[]) value) {
+          if (stream != null) {
+            streams.add(stream);
+          }
+        }
+      }
+    } catch (NoSuchMethodException e) {
+      logger.trace("Unit {} has no {} method", unitOp.getName(), getterName);
+    } catch (Exception e) {
+      logger.debug("Could not invoke {} on unit {}: {}", getterName, unitOp.getName(),
+          e.getMessage());
+    }
   }
 
   /**
