@@ -3307,8 +3307,10 @@ public class ProcessSystem extends SimulationBaseClass {
     /* */
     if (recycleController.solvedAll()) {
       for (int i = 0; i < unitOperations.size(); i++) {
-        logger.info("unit " + unitOperations.get(i).getName() + " solved: "
-            + unitOperations.get(i).solved());
+        if (logger.isDebugEnabled()) {
+          logger.debug("unit " + unitOperations.get(i).getName() + " solved: "
+              + unitOperations.get(i).solved());
+        }
         if (!unitOperations.get(i).solved()) {
           return false;
         }

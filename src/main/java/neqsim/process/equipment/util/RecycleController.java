@@ -185,7 +185,9 @@ public class RecycleController implements java.io.Serializable {
    */
   public boolean solvedAll() {
     for (Recycle recyc : recycleArray) {
-      logger.info(recyc.getName() + " solved " + recyc.solved());
+      if (logger.isDebugEnabled()) {
+        logger.debug(recyc.getName() + " solved " + recyc.solved());
+      }
       if (!recyc.solved()) {
         return false;
       }
