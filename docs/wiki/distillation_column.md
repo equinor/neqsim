@@ -1,6 +1,6 @@
 ---
 title: "Distillation column algorithm"
-description: "Mathematical model, solver implementations, MESH residual diagnostics, and convergence behavior for NeqSim distillation columns."
+description: "Mathematical model, solver implementations, adaptive matrix inside-out warm starts, MESH residual diagnostics, and convergence behavior for NeqSim distillation columns."
 ---
 
 # Distillation column algorithm
@@ -50,14 +50,16 @@ $
 
 with stripping factors $S_j = K_{i,j} V_j / L_j$ embedded in the diagonal terms.
 
-Temperature updates rely on the log-Newton step derived from $\sum_i y_{i,j}=1$:
+The matrix inside-out warm-start updates tray temperatures from the bubble-sum residual
+$\sum_i K_{i,j} x_{i,j} - 1$ and cached derivatives of $\ln K$ with respect to temperature:
 
-$
-\Delta T_j = -\frac{\ln(\sum_i K_{i,j} x_{i,j}) R T_j^2}{h_j^{V} - h_j^{L}}
-$
+$$
+\Delta T_j = -\frac{\sum_i K_{i,j} x_{i,j} - 1}
+{\sum_i x_{i,j} K_{i,j} \frac{\partial \ln K_{i,j}}{\partial T}}
+$$
 
-The code limits $\Delta T_j$ to ±5 K and enforces bounds of 50–1000 K for numerical
-stability.
+The code limits $\Delta T_j$ to ±8 K and enforces bounds of 50–1000 K for numerical
+stability during the matrix warm-start stage.
 
 ## Column preparation
 
@@ -75,10 +77,13 @@ stability.
 | `DIRECT_SUBSTITUTION` | `solveSequential()` | Classic two-sweep sequential substitution (liquids down, vapours up) with adaptive relaxation on temperatures and streams. | Converges robustly for well-behaved systems; default choice. |
 | `DAMPED_SUBSTITUTION` | `runDamped()` | Same equations as direct substitution but starts with a user-defined fixed relaxation factor before enabling adaptation. | Useful for stiff columns where the default step overshoots. |
 | `INSIDE_OUT` | `solveInsideOut()` | Quadrat-structure inside-out method: streams are relaxed against previous iterates while tray properties update using enthalpy-driven temperature corrections. | Balances mass/energy less frequently to reduce cost and supports a polishing phase for tight tolerances. |
+| `MATRIX_INSIDE_OUT` | `solveMatrixInsideOut()` | Adaptive matrix inside-out mode that bypasses matrix setup for small columns and otherwise solves component-balance tridiagonal systems as a warm start before rigorous inside-out polishing. | Avoids warm-start overhead on small columns while preserving a matrix path for larger hydrocarbon fractionators. |
 | `WEGSTEIN` | `solveWegstein()` | Wegstein acceleration on the sequential temperature map after direct-substitution warm-up. | Speeds up well-conditioned fixed-point problems. |
 | `SUM_RATES` | `solveSumRates()` | Flow-corrected tearing method that adjusts relaxation from tray sum-rate behavior. | Useful for absorber and stripper style columns. |
 | `NEWTON` | `solveNewton()` | Finite-difference Newton correction on tray temperatures with line search. | A tray-temperature accelerator, not a full simultaneous MESH Newton solver. |
-| `MESH_RESIDUAL` | `solveMeshResidual()` | Inside-out initialization, MESH residual evaluation, and Newton polishing if the residual monitor detects a poor residual state. | Best for auditing MESH residuals and preparing cases for future rigorous residual-driven solvers. |
+| `NAPHTALI_SANDHOLM` | `solveNaphtaliSandholm()` | Inside-out warm start followed by guarded simultaneous Newton correction of liquid component flows, tray temperatures, and vapor flows. | Best for rigorous residual-driven MESH convergence on well-conditioned hydrocarbon fractionators. |
+| `MESH_RESIDUAL` | `solveMeshResidual()` | Inside-out initialization followed by full MESH residual evaluation. | Best for auditing material, equilibrium, summation, energy, specification, and product-draw residuals. |
+| `AUTO` | `ColumnSolverFactory.AutoSolver` | Runs built-in candidate solvers on column copies and accepts the solved or best candidate state. | Useful when an agent or workflow should request robust automatic solver selection while still reporting the concrete solver through `getLastSolverTypeUsed()`. |
 
 ### Sequential substitution details
 
@@ -87,7 +92,7 @@ stability.
 - Convergence metric: average absolute temperature change.
 - Relaxation policy: decreases when combined residual (temperature, mass, energy) grows by
   more than 5 %, increases when it shrinks by more than 2 %.
-- Adaptive default tolerances scale with column complexity. The base values are 4e-3 K for
+- Adaptive default tolerances scale with column complexity. The base values are 9e-3 K for
   temperature and 1.6e-2 relative for mass and energy residuals unless the user overrides them.
 
 ## Complete usage example
@@ -147,16 +152,52 @@ System.out.println("Solve time:     " + column.getLastSolveTimeSeconds() + " s")
 - Records the peak relaxation factors applied to trays, providing a quick signal when the column
   required aggressive damping to converge.
 
+## Outer tear variables
+
+Some column features are coupled outside the inner tray solver because they change the traffic or
+pressure profile that the tray sweeps depend on:
+
+- side-draw flow specifications adjust tray gas or liquid draw fractions until the target product
+  flow is reached;
+- liquid pumparounds withdraw internal tray liquid, update a cooled or heated return stream, and
+  re-solve the column with that return connected to the configured tray;
+- optional hydraulic pressure-drop coupling rates internals, updates the top/bottom pressure
+  profile from total pressure drop, and re-solves until the pressure-profile change is small.
+
+`solveWithColumnTearVariables()` wraps the selected inner solver for these features. It records
+`getLastColumnTearIterationCount()`, `getLastColumnTearResidual()`,
+`isLastColumnTearConverged()`, `getLastPumparoundRelativeChange()`,
+`getLastHydraulicPressureDropPa()`, and `getLastHydraulicPressureDropResidual()`. If a side-draw
+target is physically impossible, the draw fraction is bounded by available tray traffic and the
+latest tear diagnostics report non-convergence instead of allowing an impossible product draw.
+
 ### Matrix solver specifics
 
-- Precomputes feed molar contributions (`feedFlows`, vapor/liquid split) per tray.
-- Builds stripping factors $S_j$ to couple component molar flows between neighbouring trays.
-- Uses constant molar overflow anchors (bottom vapour, top liquid) blended with instantaneous
-  sum-rate flows: $L_j = w L_{\text{CMO},j} + (1-w) L_{\text{SR},j}$ with default
-  $w = 0.95$.
-- Applies damping on both component flows and total holdups to keep the linear update stable.
-- Temperature correction follows the same log-Newton formula, requiring `system.init(2)` for
-  enthalpy data and `system.init(1)` afterwards to refresh K-values.
+- `MATRIX_INSIDE_OUT` is adaptive. Below 12 trays it bypasses the matrix stage and runs rigorous
+  `INSIDE_OUT` directly because benchmark columns showed matrix setup overhead dominating runtime.
+- For larger columns, the matrix stage precomputes feed component, feed vapor, and feed liquid
+  molar contributions by tray.
+- It builds one tridiagonal component-balance system per component using stripping factors
+  $S_j = K_{i,j} V_j / L_j$ based on current tray vapor and liquid traffic.
+- Vapor component flows follow from cached stripping factors, while liquid component flows come
+  from the Thomas-algorithm solution of each tridiagonal system.
+- Tray compositions, cached outlet streams, K-values, and K-temperature derivatives are updated
+  without a rigorous PH flash inside the matrix loop.
+- Final products are still accepted only after the rigorous inside-out polish and the normal mass,
+  product, internal-traffic, fallback, and optional MESH residual gates.
+
+### Naphtali-Sandholm solver specifics
+
+- Uses the inside-out solution as a warm start so legacy tray flash behavior provides a robust
+  initial state.
+- Solves a simultaneous block of MESH residual equations with liquid component flows, tray
+  temperature, and vapor flow as tray variables.
+- Builds a finite-difference block-tridiagonal Jacobian from neighboring tray couplings and uses a
+  guarded Newton line search with flow and temperature trust limits.
+- Supports optional `setSeedTemperature(stageIndex, temperatureK)` warm-start guesses. Seeds are
+  initial values only; they do not pin tray temperatures or replace energy-balance residuals.
+- Accepts the Newton-refined state only when the scaled MESH residual improves; otherwise the
+  inside-out warm-start state is retained.
 
 ## Result handling
 
@@ -167,15 +208,25 @@ are exposed through getters such as `getLastIterationCount()`, `getLastMassResid
 
 Every `run()` also records a scaled MESH residual vector for the final column state. The vector is
 assembled by `ColumnMeshResidualEvaluator` from a `ColumnMeshState` snapshot and groups equations
-as material, equilibrium, summation, energy, and specification residuals. Public diagnostics expose
-the full norm and group norms through `getLastMeshResidualNorm()`,
+as material, equilibrium, summation, energy, product-draw, and specification residuals. Public
+diagnostics expose the full norm and group norms through `getLastMeshResidualNorm()`,
 `getLastMeshMaterialResidualNorm()`, `getLastMeshEquilibriumResidualNorm()`,
-`getLastMeshSummationResidualNorm()`, `getLastMeshEnergyResidualNorm()`, and
-`getLastMeshSpecificationResidualNorm()`.
+`getLastMeshSummationResidualNorm()`, `getLastMeshEnergyResidualNorm()`,
+`getLastMeshProductDrawResidualNorm()`, and `getLastMeshSpecificationResidualNorm()`.
 
-By default, the MESH residual vector is diagnostic only. `setEnforceMeshResidualTolerance(true)`
-makes `solved()` require the latest residual norm to be finite and less than
-`getMeshResidualTolerance()`, which is configured with `setMeshResidualTolerance(double)`.
+For `MATRIX_INSIDE_OUT`, diagnostics also expose the adaptive warm-start decision:
+`wasMatrixInsideOutWarmStartUsed()`, `wasMatrixInsideOutWarmStartBypassed()`,
+`getLastMatrixInsideOutIterationCount()`, `getLastMatrixInsideOutTemperatureResidual()`, and
+`getLastMatrixInsideOutSolveTimeSeconds()`. These values make it clear whether a run paid the
+matrix setup cost or intentionally followed the rigorous inside-out path directly.
+
+By default, the MESH residual vector is diagnostic for sequential solver modes. For
+`NAPHTALI_SANDHOLM` and `MESH_RESIDUAL`, the residual gate is effective unless explicitly disabled.
+When the gate is effective, `solved()` requires the latest residual norm to be finite and less than
+`getMeshResidualTolerance()`, and also requires the product-draw residual to pass
+`getMeshProductDrawResidualTolerance()`. For legacy solver modes, calling
+`setEnforceMeshResidualTolerance(true)` opts into the same convergence contract; calling it with
+`false` explicitly disables the gate even for the residual-oriented solvers.
 
 ## MESH equations
 
@@ -197,7 +248,10 @@ $$S_j = \sum_{i=1}^{n_c} y_{i,j} - \sum_{i=1}^{n_c} x_{i,j} = 0$$
 
 $$H_j = L_{j-1} h_{j-1}^L + V_{j+1} h_{j+1}^V + F_j h_j^F - L_j h_j^L - V_j h_j^V - Q_j = 0$$
 
-Rather than solving these equations algebraically, NeqSim uses a **tray-by-tray flash approach**: each tray mixes its input streams and performs a pressure–enthalpy (PH) flash. This automatically satisfies M, E, S, and H for any equation of state available in NeqSim (SRK, CPA, GERG-2008, etc.).
+Most NeqSim column solvers use a **tray-by-tray flash approach**: each tray mixes its input
+streams and performs a pressure-enthalpy (PH) flash. This provides a robust MESH-consistent update
+for any equation of state available in NeqSim (SRK, CPA, GERG-2008, etc.). The
+`NAPHTALI_SANDHOLM` solver adds a simultaneous residual-correction layer on top of that warm start.
 
 ## Available solver types
 
@@ -206,10 +260,12 @@ Rather than solving these equations algebraically, NeqSim uses a **tray-by-tray 
 | `DIRECT_SUBSTITUTION` | Classic tray-by-tray without damping (default) | General use |
 | `DAMPED_SUBSTITUTION` | Adaptive relaxation controller | Difficult polar/CPA systems |
 | `INSIDE_OUT` | Three-sweep IO with stripping factor correction and K-value tracking | Multi-feed, general-purpose, debugging |
+| `MATRIX_INSIDE_OUT` | Adaptive matrix warm start plus rigorous inside-out polish; bypasses matrix setup for small columns | Larger hydrocarbon columns where the matrix warm start can help |
 | `WEGSTEIN` | Wegstein acceleration of successive substitution | Fast convergence on well-posed problems |
 | `SUM_RATES` | Flow-corrected tearing method | Absorbers and strippers |
 | `NEWTON` | Newton-Raphson tray-temperature correction accelerator | Difficult temperature convergence cases |
-| `MESH_RESIDUAL` | Inside-out initialization with MESH residual diagnostics and Newton polishing | Residual auditing and future rigorous solver preparation |
+| `NAPHTALI_SANDHOLM` | Simultaneous MESH residual Newton correction with guarded acceptance | Rigorous residual convergence checks |
+| `MESH_RESIDUAL` | Inside-out initialization with MESH residual diagnostics | Residual auditing and diagnostics |
 
 ### Solver mathematics
 
@@ -236,10 +292,12 @@ $$J_{ij} \approx \frac{f_i(\mathbf{T} + \epsilon \mathbf{e}_j) - f_i(\mathbf{T})
 
 A line search ($\lambda = 1, 0.5, 0.25, 0.125$) controls step size, and 2–3 warm-up direct substitution iterations establish the convergence basin.
 
-**MESH_RESIDUAL** starts from `INSIDE_OUT`, evaluates the scaled MESH residual vector, and runs
-`NEWTON` polishing when the residual vector is non-finite or above the monitor threshold. It does
-not change the public meaning of `NEWTON`; instead, it provides a solver entry point that is
-explicitly organized around residual diagnostics.
+**MESH_RESIDUAL** starts from `INSIDE_OUT` and evaluates the scaled MESH residual vector without
+running an additional Newton-polishing solve. When the residual or product-draw gate is not
+satisfied, the current implementation leaves the inside-out state in place and reports the failed
+gate through `solved()`, the residual getters, and `getConvergenceDiagnostics()`. This keeps
+`MESH_RESIDUAL` as a diagnostics-oriented entry point; use `NAPHTALI_SANDHOLM` when a guarded
+simultaneous residual correction should be attempted.
 
 ### Example: selecting a solver
 
@@ -264,13 +322,14 @@ column.getConvergenceHistory();        // per-iteration [temp, mass, energy] (IO
 
 ### Convergence criteria
 
-All solvers use three residual metrics:
+All solvers track three scalar residual metrics, and the residual-oriented modes also gate on the
+MESH diagnostics:
 
 1. **Temperature**: $\varepsilon_T = \frac{1}{N}\sum_{j=1}^{N} |T_j^{new} - T_j^{old}|$ (K)
 2. **Mass balance**: $\varepsilon_M = \max\!\Big(\max_j \frac{|M_j^{in} - M_j^{out}|}{M_j^{in}},\; \frac{\sum|M_j^{in}-M_j^{out}|}{\sum M_j^{in}}\Big)$
 3. **Energy balance**: analogous per-tray and column-wide relative error
 4. **Optional MESH residual**: infinity norm of the scaled material, equilibrium, summation,
-   energy, and specification residual vector
+   energy, product-draw, and specification residual vector
 
 Tolerances scale with column complexity:
 
@@ -340,9 +399,9 @@ The reboiler and condenser (when present) are always treated as equilibrium stag
 
 The `NEWTON` solver treats all tray temperatures as simultaneous variables and computes a Jacobian by finite-difference perturbation. Each iteration requires $N+1$ column sweeps (1 base + $N$ perturbations). The resulting linear system is solved by Gaussian elimination with partial pivoting and a backtracking line search controls step size.
 
-- Converges in the fewest iterations (7 for 5-tray, 18 for 10-tray deethanizer)
-- Most reliable solver for difficult convergence cases
-- Higher per-iteration cost: best suited for problems where sequential methods fail
+- Can reduce tray-temperature oscillations after the direct-substitution warm-up
+- Preserves the public `NEWTON` contract as a temperature accelerator rather than a full MESH solver
+- Higher per-iteration cost: best suited for cases where temperature convergence dominates
 
 ```java
 column.setSolverType(DistillationColumn.SolverType.NEWTON);

@@ -92,6 +92,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Calculates derivative with safety checks.
+   *
+   * @return second derivative of the objective with respect to temperature
    */
   public double calcdQdTT() {
     double dQdT_val = calcdQdT();
@@ -108,6 +110,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Calculates derivative.
+   *
+   * @return derivative of the objective with respect to temperature
    */
   public double calcdQdT() {
     double dQdT = (Uspec + system.getPressure() * Vspec - system.getEnthalpy())
@@ -117,6 +121,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Calculates derivative.
+   *
+   * @return derivative of the objective with respect to pressure
    */
   public double calcdQdP() {
     double dQdP = system.getPressure() * (system.getVolume() - Vspec)
@@ -126,6 +132,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Enhanced solver with better convergence and bounds checking.
+   *
+   * @return converged pressure, or the current system pressure if input validation fails
    */
   public double solveQ() {
     if (!validateInputs()) {

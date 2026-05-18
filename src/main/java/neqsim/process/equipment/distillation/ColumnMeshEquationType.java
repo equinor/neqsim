@@ -15,6 +15,8 @@ enum ColumnMeshEquationType {
   SUMMATION,
   /** Tray heat balance residual. */
   ENERGY,
+  /** Product draw consistency residual between terminal tray traffic and public products. */
+  PRODUCT_DRAW,
   /** Active column specification residual. */
   SPECIFICATION
 }

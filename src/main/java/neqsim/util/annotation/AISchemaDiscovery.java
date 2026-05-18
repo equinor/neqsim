@@ -129,6 +129,8 @@ public class AISchemaDiscovery implements Serializable {
 
     /**
      * Convert to structured text for AI consumption.
+     *
+     * @return formatted prompt text containing schema metadata
      */
     public String toPromptText() {
       StringBuilder sb = new StringBuilder();

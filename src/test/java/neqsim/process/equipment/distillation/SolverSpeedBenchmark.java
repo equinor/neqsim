@@ -35,13 +35,15 @@ public class SolverSpeedBenchmark {
     int[] trayCounts = {5, 10};
 
     // All solver configurations to benchmark
-    String[] labels = {"DIRECT", "DAMPED", "IO", "IO(inner=3)", "WEGSTEIN", "SUM_RATES", "NEWTON"};
+    String[] labels =
+        {"DIRECT", "DAMPED", "IO", "MATRIX_IO", "IO(inner=3)", "WEGSTEIN", "SUM_RATES", "NEWTON"};
     DistillationColumn.SolverType[] solverTypes = {
         DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
         DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
-        DistillationColumn.SolverType.INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
-        DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.NEWTON};
-    int[] innerLoopSteps = {0, 0, 0, 3, 0, 0, 0};
+        DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.INSIDE_OUT,
+        DistillationColumn.SolverType.WEGSTEIN, DistillationColumn.SolverType.SUM_RATES,
+        DistillationColumn.SolverType.NEWTON};
+    int[] innerLoopSteps = {0, 0, 0, 0, 3, 0, 0, 0};
 
     StringBuilder sb = new StringBuilder();
     sb.append(String.format("%-20s %6s %10s %12s %12s %12s  %s%n", "Solver", "Trays", "Iters",

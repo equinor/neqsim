@@ -210,6 +210,32 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(1, p.size());
   }
 
+    @Test
+    public void convergenceDiagnosticsIncludeUnsolvedColumnDetails() {
+        neqsim.thermo.system.SystemInterface fluid =
+                new neqsim.thermo.system.SystemSrkEos(289.15, 14.0);
+        fluid.addComponent("propane", 0.35);
+        fluid.addComponent("n-butane", 0.40);
+        fluid.addComponent("n-pentane", 0.25);
+        fluid.setMixingRule("classic");
+
+        Stream feed = new Stream("process diagnostic feed", fluid);
+        feed.setFlowRate(100.0, "kg/hr");
+        feed.run();
+
+        DistillationColumn column = new DistillationColumn("process diagnostic debutanizer", 10, true,
+                true);
+        column.addFeedStream(feed, 9);
+        column.getCondenser().setRefluxRatio(0.1);
+        p.add(column);
+
+        String diagnostics = p.getConvergenceDiagnostics();
+
+        Assertions.assertTrue(diagnostics.contains("process diagnostic debutanizer"));
+        Assertions.assertTrue(diagnostics.contains("DistillationColumn Diagnostics"));
+        Assertions.assertTrue(diagnostics.contains("near top/condenser"));
+    }
+
   @Test
   public void testRemoveUnit() {
     Separator sep = new Separator("Separator");
