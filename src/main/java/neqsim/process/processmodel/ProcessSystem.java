@@ -31,6 +31,7 @@ import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.ejector.Ejector;
 import neqsim.process.equipment.expander.TurboExpanderCompressor;
 import neqsim.process.equipment.flare.FlareStack;
@@ -3317,6 +3318,72 @@ public class ProcessSystem extends SimulationBaseClass {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Build a human-readable convergence diagnostic report for the process system.
+   *
+   * <p>
+   * The report lists unsolved unit operations and expands distillation column residual diagnostics
+   * so notebook users can identify the unit and convergence gate that prevented the process from
+   * solving.
+   * </p>
+   *
+   * @return multi-line diagnostic report for recycle and unit-operation convergence
+   */
+  public String getConvergenceDiagnostics() {
+    StringBuilder diagnostics = new StringBuilder();
+    diagnostics.append("ProcessSystem Diagnostics:\n");
+    diagnostics.append("  Name: ").append(getName()).append("\n");
+    diagnostics.append("  Units: ").append(unitOperations.size()).append("\n");
+    diagnostics.append("  Recycles solved: ").append(recycleController.solvedAll()).append("\n");
+
+    int unsolvedUnits = 0;
+    diagnostics.append("  Unsolved units:\n");
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      boolean unitSolved = false;
+      try {
+        unitSolved = unit.solved();
+      } catch (Exception ex) {
+        diagnostics.append("    - ").append(unit.getName()).append(" (")
+            .append(unit.getClass().getSimpleName()).append(") threw ")
+            .append(ex.getClass().getSimpleName()).append(" while checking solved state: ")
+            .append(ex.getMessage()).append("\n");
+        unsolvedUnits++;
+        continue;
+      }
+      if (!unitSolved) {
+        diagnostics.append("    - ").append(unit.getName()).append(" (")
+            .append(unit.getClass().getSimpleName()).append(")\n");
+        if (unit instanceof DistillationColumn) {
+          appendIndentedDiagnostics(diagnostics,
+              ((DistillationColumn) unit).getConvergenceDiagnostics(), "      ");
+        }
+        unsolvedUnits++;
+      }
+    }
+    if (unsolvedUnits == 0) {
+      diagnostics.append("    none\n");
+    }
+    if (hasRecycles()) {
+      diagnostics.append("  Recycle diagnostics:\n");
+      appendIndentedDiagnostics(diagnostics, recycleController.getConvergenceDiagnostics(), "    ");
+    }
+    return diagnostics.toString();
+  }
+
+  /**
+   * Append a multi-line diagnostic block using a fixed indentation prefix.
+   *
+   * @param diagnostics destination report builder
+   * @param block diagnostic block to append
+   * @param indent prefix added before every line of {@code block}
+   */
+  private void appendIndentedDiagnostics(StringBuilder diagnostics, String block, String indent) {
+    String[] lines = block.split("\\R");
+    for (String line : lines) {
+      diagnostics.append(indent).append(line).append("\n");
+    }
   }
 
   /** {@inheritDoc} */

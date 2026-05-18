@@ -2,6 +2,7 @@ package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.validation.ValidationResult;
 
 /**
  * Tests for the {@link ColumnSpecification} class and the specification-driven column solving in
@@ -60,6 +62,10 @@ public class ColumnSpecificationTest {
     assertThrows(IllegalArgumentException.class,
         () -> new ColumnSpecification(ColumnSpecification.SpecificationType.REFLUX_RATIO,
             ColumnSpecification.ProductLocation.TOP, -1.0));
+
+    assertThrows(IllegalArgumentException.class,
+        () -> new ColumnSpecification(ColumnSpecification.SpecificationType.DUTY,
+            ColumnSpecification.ProductLocation.TOP, Double.NaN));
   }
 
   /**
@@ -169,6 +175,58 @@ public class ColumnSpecificationTest {
     assertThrows(IllegalArgumentException.class, () -> column.setBottomSpecification(topSpec));
   }
 
+    /**
+     * Test that validation reports component specifications that do not match the feed composition.
+     */
+    @Test
+    public void validateSetupReportsMissingSpecificationComponent() {
+        SystemSrkEos testSystem = new SystemSrkEos(273.15 + 25.0, 15.0);
+        testSystem.addComponent("methane", 0.7);
+        testSystem.addComponent("ethane", 0.3);
+        testSystem.setMixingRule("classic");
+
+        Stream feed = new Stream("validation feed", testSystem);
+        feed.setFlowRate(100.0, "kg/hr");
+
+        DistillationColumn column = new DistillationColumn("ValidationColumn", 5, true, true);
+        column.addFeedStream(feed, 2);
+        column.setTopPressure(15.0);
+        column.setBottomPressure(15.5);
+        column.setTopProductPurity("propane", 0.90);
+
+        ValidationResult result = column.validateSpecifications();
+
+        assertFalse(result.isValid());
+        assertTrue(result.getReport().contains("propane"));
+    }
+
+    /**
+     * Test that validation warns when an adjustable top specification has no condenser handle.
+     */
+    @Test
+    public void validateSetupWarnsWhenTopSpecHasNoCondenser() {
+        SystemSrkEos testSystem = new SystemSrkEos(273.15 + 25.0, 15.0);
+        testSystem.addComponent("methane", 0.7);
+        testSystem.addComponent("ethane", 0.3);
+        testSystem.setMixingRule("classic");
+
+        Stream feed = new Stream("validation feed 2", testSystem);
+        feed.setFlowRate(100.0, "kg/hr");
+
+        DistillationColumn column = new DistillationColumn("ValidationColumnNoCondenser", 5, true,
+                false);
+        column.addFeedStream(feed, 2);
+        column.setTopPressure(15.0);
+        column.setBottomPressure(15.5);
+        column.setTopProductPurity("ethane", 0.20);
+
+        ValidationResult result = column.validateSetup();
+
+        assertTrue(result.isValid());
+        assertTrue(result.hasWarnings());
+        assertTrue(result.getReport().contains("condenser/reboiler handle"));
+    }
+
   /**
    * Test reflux ratio specification — this should be directly set on the condenser/reboiler without
    * an outer loop.
@@ -204,6 +262,43 @@ public class ColumnSpecificationTest {
     assertTrue(gasFlow > 0, "Gas out should have positive flow");
     assertTrue(liquidFlow > 0, "Liquid out should have positive flow");
   }
+
+    /**
+     * Test that automatic solver mode records which concrete solver completed the run.
+     */
+    @Test
+    public void testAutoSolverRecordsSelectedSolver() {
+        SystemSrkEos testSystem = new SystemSrkEos(273.15 + 45.0, 12.0);
+        testSystem.addComponent("propane", 0.45);
+        testSystem.addComponent("n-butane", 0.35);
+        testSystem.addComponent("n-pentane", 0.20);
+        testSystem.setMixingRule("classic");
+
+        Stream feed = new Stream("auto feed", testSystem);
+        feed.setFlowRate(250.0, "kg/hr");
+        feed.run();
+
+        DistillationColumn column = new DistillationColumn("AutoCol", 4, true, true);
+        column.addFeedStream(feed, 3);
+        column.setTopPressure(12.0);
+        column.setBottomPressure(12.2);
+        column.getCondenser().setOutTemperature(273.15 + 35.0);
+        column.getReboiler().setOutTemperature(273.15 + 90.0);
+        column.setCondenserRefluxRatio(1.5);
+        column.setSolverType(DistillationColumn.SolverType.AUTO);
+        column.setMaxNumberOfIterations(40);
+        column.setTemperatureTolerance(1.0e-1);
+        column.setMassBalanceTolerance(1.0e-1);
+
+        column.run();
+
+        assertEquals(DistillationColumn.SolverType.AUTO, column.getSolverType());
+        assertNotNull(column.getLastSolverTypeUsed());
+        assertNotEquals(DistillationColumn.SolverType.AUTO, column.getLastSolverTypeUsed());
+        assertTrue(column.getGasOutStream().getFlowRate("kg/hr") >= 0.0);
+        assertTrue(column.getLiquidOutStream().getFlowRate("kg/hr") >= 0.0);
+        assertTrue(column.getConvergenceDiagnostics().contains("Last selected solver"));
+    }
 
   /**
    * Test product purity specification using a deethanizer case. The top spec is methane + ethane
