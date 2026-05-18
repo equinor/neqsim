@@ -1834,26 +1834,26 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         finiteMinimum(warmStartTemperatureResidual, solver.getLastTemperatureResidual());
     double massResidual = finiteOr(solver.getLastMassBalanceError(), warmStartMassResidual);
     double energyResidual = finiteOr(solver.getLastEnergyResidual(), warmStartEnergyResidual);
-    candidate.finalizeSolve(id, warmStartIterations + solver.getLastIterations(), temperatureResidual,
-        massResidual, energyResidual, startTime);
+    candidate.finalizeSolve(id, warmStartIterations + solver.getLastIterations(),
+        temperatureResidual, massResidual, energyResidual, startTime);
     candidate.updateMeshResiduals();
-    double acceptedMeshResidual =
-      candidate.lastMeshResidual == null ? Double.NaN : candidate.lastMeshResidual.getInfinityNorm();
+    double acceptedMeshResidual = candidate.lastMeshResidual == null ? Double.NaN
+        : candidate.lastMeshResidual.getInfinityNorm();
     if (!candidate.solved()) {
       logger.debug(
-        "Naphtali-Sandholm rejected for column {}; candidate residual {} did not satisfy "
-          + "the active convergence gates.",
-        getName(), Double.valueOf(acceptedMeshResidual));
+          "Naphtali-Sandholm rejected for column {}; candidate residual {} did not satisfy "
+              + "the active convergence gates.",
+          getName(), Double.valueOf(acceptedMeshResidual));
       return;
     }
 
     if (!meshPolishProductSplitMatches(candidate, baselineGasFlow, baselineLiquidFlow)) {
       logger.debug(
-        "Naphtali-Sandholm rejected for column {}; product split changed from gas/liquid "
-          + "{}/{} kg/hr to {}/{} kg/hr.",
-        getName(), Double.valueOf(baselineGasFlow), Double.valueOf(baselineLiquidFlow),
-        Double.valueOf(getProductFlowKgPerHour(candidate.gasOutStream)),
-        Double.valueOf(getProductFlowKgPerHour(candidate.liquidOutStream)));
+          "Naphtali-Sandholm rejected for column {}; product split changed from gas/liquid "
+              + "{}/{} kg/hr to {}/{} kg/hr.",
+          getName(), Double.valueOf(baselineGasFlow), Double.valueOf(baselineLiquidFlow),
+          Double.valueOf(getProductFlowKgPerHour(candidate.gasOutStream)),
+          Double.valueOf(getProductFlowKgPerHour(candidate.liquidOutStream)));
       return;
     }
 

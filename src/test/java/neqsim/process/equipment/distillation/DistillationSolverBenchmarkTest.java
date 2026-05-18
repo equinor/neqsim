@@ -130,6 +130,14 @@ public class DistillationSolverBenchmarkTest {
       times[i] = col.getLastSolveTimeSeconds();
       statuses[i] = col.getLastSolveStatus();
       solversUsed[i] = col.getLastSolverTypeUsed();
+    if (solvers[i] == DistillationColumn.SolverType.SUM_RATES) {
+      assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, solversUsed[i],
+        "SUM_RATES should guard condenser/reboiler columns with damped substitution");
+    }
+    if (solvers[i] == DistillationColumn.SolverType.NAPHTALI_SANDHOLM) {
+      assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, solversUsed[i],
+        "Naphtali-Sandholm should keep its accepted warm-start when its candidate is rejected");
+    }
 
       // Mass balance closure: within 0.5%
       double massbalance = Math.abs(100.0 - gasFlows[i] - liquidFlows[i]) / 100.0 * 100;
@@ -152,9 +160,6 @@ public class DistillationSolverBenchmarkTest {
     // All solvers should agree on product splits within 2%
     double refGas = gasFlows[0]; // DIRECT_SUBSTITUTION as reference
     for (int i = 1; i < solvers.length; i++) {
-      if (solvers[i] == DistillationColumn.SolverType.NAPHTALI_SANDHOLM) {
-        continue;
-      }
       double relativeTolerance = 0.02;
       double tolerance = Math.max(0.01, refGas * relativeTolerance);
       assertEquals(refGas, gasFlows[i], tolerance, solvers[i].name()

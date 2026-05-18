@@ -98,16 +98,16 @@ public class DistillationAcceleratorDiagnosticTest {
       System.out.println("  lastIterationCount             = " + column.getLastIterationCount());
       System.out.println("  lastMassResidual               = " + column.getLastMassResidual());
       System.out.println("  lastEnergyResidual             = " + column.getLastEnergyResidual());
-        System.out.println("  lastMeshResidualNorm           = " + column.getLastMeshResidualNorm());
-        System.out.println("  lastMeshMaterialResidualNorm   = "
+      System.out.println("  lastMeshResidualNorm           = " + column.getLastMeshResidualNorm());
+      System.out.println("  lastMeshMaterialResidualNorm   = "
           + column.getLastMeshMaterialResidualNorm());
-        System.out.println("  lastMeshEquilibriumResidualNorm= "
+      System.out.println("  lastMeshEquilibriumResidualNorm= "
           + column.getLastMeshEquilibriumResidualNorm());
-        System.out.println("  lastMeshSummationResidualNorm  = "
+      System.out.println("  lastMeshSummationResidualNorm  = "
           + column.getLastMeshSummationResidualNorm());
-        System.out.println("  lastMeshEnergyResidualNorm     = "
+      System.out.println("  lastMeshEnergyResidualNorm     = "
           + column.getLastMeshEnergyResidualNorm());
-        System.out.println("  lastMeshProductDrawResidualNorm= "
+      System.out.println("  lastMeshProductDrawResidualNorm= "
           + column.getLastMeshProductDrawResidualNorm());
       System.out.println("  lastInternalTrafficRatio       = " + column.getLastInternalTrafficRatio());
       System.out.println("  gasOut flow (kg/hr)            = "
