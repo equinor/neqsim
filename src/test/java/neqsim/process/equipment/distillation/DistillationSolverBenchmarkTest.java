@@ -74,6 +74,25 @@ public class DistillationSolverBenchmarkTest {
   }
 
   /**
+   * Assert that a converged deethanizer solve reports an accepted non-fallback status.
+   *
+   * @param column column to inspect after running
+   * @param solverType configured solver used to build assertion messages
+   */
+  private void assertAcceptedSolveStatus(DistillationColumn column,
+      DistillationColumn.SolverType solverType) {
+    DistillationColumn.SolveStatus status = column.getLastSolveStatus();
+    assertTrue(
+        status == DistillationColumn.SolveStatus.RIGOROUS_CONVERGED
+            || status == DistillationColumn.SolveStatus.RECONCILED_PRODUCTS,
+        solverType.name() + " should finish with an accepted non-fallback status, was " + status);
+    assertNotNull(column.getLastSolveStatusReason(),
+        solverType.name() + " should expose a solve status reason");
+    assertFalse(column.getLastSolveStatusReason().trim().isEmpty(),
+        solverType.name() + " should expose a non-empty solve status reason");
+  }
+
+  /**
    * Test that all solver types converge on the deethanizer benchmark and produce consistent results
    * within engineering tolerance.
    */
@@ -95,6 +114,11 @@ public class DistillationSolverBenchmarkTest {
       DistillationColumn col = runDeethanizer(solvers[i]);
       assertTrue(col.solved(),
           solvers[i].name() + " should converge: " + col.getConvergenceDiagnostics());
+      assertAcceptedSolveStatus(col, solvers[i]);
+      assertFalse(col.wasFeedFlashFallbackApplied(),
+          solvers[i].name() + " should not use fallback products on the deethanizer case");
+      assertTrue(col.getConvergenceDiagnostics().contains("Solve status:"),
+          solvers[i].name() + " diagnostics should include solve status");
 
       gasFlows[i] = col.getGasOutStream().getFlowRate("kg/hr");
       liquidFlows[i] = col.getLiquidOutStream().getFlowRate("kg/hr");
@@ -679,6 +703,10 @@ public class DistillationSolverBenchmarkTest {
     if (!column.solved()) {
       assertTrue(column.wasFeedFlashFallbackApplied(),
           "column4 should use guarded fallback products when the rigorous tray solve is not accepted");
+      assertEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, column.getLastSolveStatus(),
+          "column4 fallback products should be visible through solve status diagnostics");
+      assertTrue(column.getLastSolveStatusReason().contains("fallback"),
+          "column4 fallback status should include a remediation-oriented reason");
     }
     assertEquals(feedMass, productMass, feedMass * 1.0e-6,
         "column4 external products must match feed mass");

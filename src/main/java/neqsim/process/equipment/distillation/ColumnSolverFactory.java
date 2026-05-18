@@ -130,11 +130,11 @@ final class ColumnSolverFactory {
             bestScore = score;
             bestCandidate = candidate;
             bestResult = result;
-            bestSolver = candidateSolver;
+            bestSolver = result.getSolverType();
           }
           if (result.isSolved()) {
-            column.acceptAutoSolverCandidate(candidate, candidateSolver);
-            return ColumnSolveResult.from(column, candidateSolver);
+            column.acceptAutoSolverCandidate(candidate, result.getSolverType());
+            return ColumnSolveResult.from(column, result.getSolverType());
           }
         } catch (RuntimeException exception) {
           DistillationColumn.logger.debug("AUTO distillation solver candidate {} failed for {}.",
@@ -162,8 +162,9 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.markSolverTypeUsed(getSolverType());
       column.solveDirectSubstitution(id);
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -178,8 +179,9 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.markSolverTypeUsed(getSolverType());
       column.solveDampedSubstitution(id);
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -194,6 +196,7 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.markSolverTypeUsed(getSolverType());
       boolean fallbackApplied = false;
       try {
         column.solveInsideOut(id);
@@ -210,7 +213,7 @@ final class ColumnSolverFactory {
         applyDampedFallback(column, null, id, "Inside-out did not satisfy convergence criteria",
             null);
       }
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -225,6 +228,7 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.markSolverTypeUsed(getSolverType());
       boolean fallbackApplied = false;
       try {
         column.solveMatrixInsideOut(id);
@@ -241,7 +245,7 @@ final class ColumnSolverFactory {
         applyDampedFallback(column, null, id,
             "Matrix inside-out did not satisfy convergence criteria", null);
       }
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -256,6 +260,7 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.markSolverTypeUsed(getSolverType());
       DistillationColumn fallbackCandidate =
           verifyAcceleratedResults ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
@@ -278,7 +283,7 @@ final class ColumnSolverFactory {
       if (!fallbackApplied && verifyAcceleratedResults) {
         validateAcceleratedProductSplit(column, fallbackCandidate, id, "Wegstein");
       }
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -293,6 +298,7 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.markSolverTypeUsed(getSolverType());
       DistillationColumn fallbackCandidate =
           verifyAcceleratedResults ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
@@ -315,7 +321,7 @@ final class ColumnSolverFactory {
       if (!fallbackApplied && verifyAcceleratedResults) {
         validateAcceleratedProductSplit(column, fallbackCandidate, id, "Sum-rates");
       }
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -330,6 +336,7 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.markSolverTypeUsed(getSolverType());
       boolean fallbackApplied = false;
       try {
         column.solveNewton(id);
@@ -345,7 +352,7 @@ final class ColumnSolverFactory {
       if (!fallbackApplied && !column.solved()) {
         applyDampedFallback(column, null, id, "Newton did not satisfy convergence criteria", null);
       }
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -361,6 +368,7 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.markSolverTypeUsed(getSolverType());
       DistillationColumn fallbackCandidate =
           verifyAcceleratedResults ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
@@ -383,7 +391,7 @@ final class ColumnSolverFactory {
       if (!fallbackApplied && verifyAcceleratedResults) {
         validateAcceleratedProductSplit(column, fallbackCandidate, id, "Naphtali-Sandholm");
       }
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -398,6 +406,7 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.markSolverTypeUsed(getSolverType());
       DistillationColumn fallbackCandidate =
           verifyAcceleratedResults ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
@@ -420,7 +429,7 @@ final class ColumnSolverFactory {
       if (!fallbackApplied && verifyAcceleratedResults) {
         validateAcceleratedProductSplit(column, fallbackCandidate, id, "MESH residual");
       }
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -541,6 +550,7 @@ final class ColumnSolverFactory {
     if (fallbackCandidate != null) {
       try {
         fallbackCandidate.setDoInitializion(true);
+        fallbackCandidate.markSolverTypeUsed(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
         fallbackCandidate.solveDampedSubstitution(id);
         column.acceptDampedFallbackCandidate(fallbackCandidate, reason);
         return;
@@ -571,6 +581,7 @@ final class ColumnSolverFactory {
     }
     try {
       fallbackCandidate.setDoInitializion(true);
+      fallbackCandidate.markSolverTypeUsed(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
       fallbackCandidate.solveDampedSubstitution(id);
     } catch (RuntimeException exception) {
       return;

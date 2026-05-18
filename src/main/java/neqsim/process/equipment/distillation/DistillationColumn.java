@@ -82,6 +82,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private static final double DEFAULT_MESH_PRODUCT_DRAW_RESIDUAL_TOLERANCE = 2.0e-2;
   /** Maximum product-flow drift allowed when accepting a MESH Newton polish candidate. */
   private static final double MESH_POLISH_PRODUCT_FLOW_TOLERANCE = 2.0e-2;
+  /** Product reconciliation drift above this level is reported as a non-rigorous solve status. */
+  private static final double PRODUCT_RECONCILIATION_STATUS_TOLERANCE = 2.0e-2;
   /**
    * Maximum internal tray traffic accepted after divergence recovery relative to external feed.
    */
@@ -158,6 +160,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     MESH_RESIDUAL,
     /** Automatically select a robust solver from the built-in strategy set. */
     AUTO
+  }
+
+  /** Status of the latest column solve. */
+  public enum SolveStatus {
+    /** No solve has been run since the diagnostics were reset. */
+    NOT_RUN,
+    /** The tray solution satisfies the active rigorous convergence gates. */
+    RIGOROUS_CONVERGED,
+    /** Public products were materially reconciled after the tray solve. */
+    RECONCILED_PRODUCTS,
+    /** Public products came from a guarded fallback estimate, not a rigorous tray solve. */
+    FALLBACK_PRODUCTS,
+    /** The latest solve did not satisfy the active rigorous convergence gates. */
+    FAILED
   }
 
   /** Phase withdrawn by a column side draw. */
@@ -487,6 +503,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private SolverType solverType = SolverType.DIRECT_SUBSTITUTION;
   /** Solver strategy that actually completed the latest solve. */
   private transient SolverType lastSolverTypeUsed = SolverType.DIRECT_SUBSTITUTION;
+  /** Strict status of the latest solve. */
+  private transient SolveStatus lastSolveStatus = SolveStatus.NOT_RUN;
+  /** Optional reason explaining why the latest solve fell back or was rejected. */
+  private transient String lastSolveStatusReason = "";
 
   /**
    * Relaxation factor used when {@link SolverType#DAMPED_SUBSTITUTION} is active.
@@ -514,8 +534,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private boolean enforceEnergyBalanceTolerance = false;
   /**
    * Explicit control of whether the MESH residual vector must satisfy tolerance before convergence.
-   * When not explicitly set, the gate is active for {@link SolverType#MESH_RESIDUAL} and inactive
-   * for the legacy solver modes.
+   * When not explicitly set, the gate is active for advanced solver modes and inactive for the
+   * direct and damped substitution solver modes.
    */
   private boolean enforceMeshResidualTolerance = false;
   /**
@@ -1998,6 +2018,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.lastTotalFeedFlow = candidate.lastTotalFeedFlow;
     this.doInitializion = candidate.doInitializion;
     this.lastSolverTypeUsed = candidate.lastSolverTypeUsed;
+    this.lastSolveStatus = candidate.lastSolveStatus;
+    this.lastSolveStatusReason = candidate.lastSolveStatusReason;
   }
 
   /**
@@ -2021,6 +2043,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     logger.warn("Accelerated solver result rejected for column {}: {}. Using damped "
         + "substitution fallback candidate.", getName(), reason);
     acceptSolvedStateCandidate(candidate);
+    lastSolverTypeUsed = SolverType.DAMPED_SUBSTITUTION;
+    lastSolveStatusReason = reason;
   }
 
   /**
@@ -5685,6 +5709,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private void solveDampedFallbackFromFreshInitialization(UUID id) {
     boolean originalInitializationFlag = doInitializion;
     doInitializion = true;
+    lastSolverTypeUsed = SolverType.DAMPED_SUBSTITUTION;
     solveDampedSubstitution(id);
     doInitializion = originalInitializationFlag;
   }
@@ -6615,6 +6640,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** {@inheritDoc} */
   @Override
   public boolean solved() {
+    boolean acceptableStatus = lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
+        || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS;
+    return acceptableStatus && residualConvergenceSatisfied();
+  }
+
+  /**
+   * Check whether the current residual diagnostics satisfy all active rigorous convergence gates.
+   *
+   * @return {@code true} when temperature, mass, energy, internal traffic, MESH, and specification
+   *         gates are all satisfied
+   */
+  private boolean residualConvergenceSatisfied() {
     boolean temperatureSolved = err < getEffectiveTemperatureTolerance();
     boolean massSolved = lastMassResidual <= getEffectiveMassBalanceTolerance();
     boolean energySolved = !enforceEnergyBalanceTolerance
@@ -6670,9 +6707,31 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (enforceMeshResidualToleranceCustomized) {
       return enforceMeshResidualTolerance;
     }
-    return solverType == SolverType.MESH_RESIDUAL || solverType == SolverType.NAPHTALI_SANDHOLM
-        || (solverType == SolverType.AUTO && (lastSolverTypeUsed == SolverType.MESH_RESIDUAL
-            || lastSolverTypeUsed == SolverType.NAPHTALI_SANDHOLM));
+    return isAdvancedSolverType(solverType) || isAdvancedSolverType(lastSolverTypeUsed);
+  }
+
+  /**
+   * Check whether a solver uses an accelerated or residual-based formulation that should satisfy
+   * the MESH residual gate by default.
+   *
+   * @param type solver type to inspect
+   * @return {@code true} when the solver is an advanced non-legacy solver
+   */
+  private boolean isAdvancedSolverType(SolverType type) {
+    return type == SolverType.INSIDE_OUT || type == SolverType.MATRIX_INSIDE_OUT
+        || type == SolverType.WEGSTEIN || type == SolverType.SUM_RATES || type == SolverType.NEWTON
+        || type == SolverType.NAPHTALI_SANDHOLM || type == SolverType.MESH_RESIDUAL;
+  }
+
+  /**
+   * Mark the solver strategy currently responsible for the accepted state.
+   *
+   * @param solverTypeUsed solver strategy that produced the accepted state
+   */
+  void markSolverTypeUsed(SolverType solverTypeUsed) {
+    if (solverTypeUsed != null) {
+      lastSolverTypeUsed = solverTypeUsed;
+    }
   }
 
   void setError(double err) {
@@ -6924,7 +6983,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     diagnostics.append("  Name: ").append(getName()).append("\n");
     diagnostics.append("  Solved: ").append(solved).append("\n");
     diagnostics.append("  Solver: ").append(solverType).append("\n");
-    diagnostics.append("  Last selected solver: ").append(lastSolverTypeUsed).append("\n");
+    diagnostics.append("  Last solver used: ").append(lastSolverTypeUsed).append("\n");
+    diagnostics.append("  Solve status: ").append(lastSolveStatus).append("\n");
+    if (lastSolveStatusReason != null && !lastSolveStatusReason.trim().isEmpty()) {
+      diagnostics.append("  Solve status reason: ").append(lastSolveStatusReason).append("\n");
+    }
     diagnostics.append("  Trays: ").append(numberOfTrays).append(" total, ")
         .append(getEffectiveStageCount()).append(" equilibrium stages").append("\n");
     diagnostics.append("  Iterations: ").append(lastIterationCount).append("\n");
@@ -7111,8 +7174,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /**
    * Control whether the latest MESH residual vector must satisfy tolerance during convergence
-   * checks. Calling this method explicitly overrides the default behavior where
-   * {@link SolverType#MESH_RESIDUAL} enforces the gate and legacy solvers do not.
+   * checks. Calling this method explicitly overrides the default behavior where advanced solvers
+   * enforce the gate and direct or damped substitution solvers do not.
    *
    * @param enforce {@code true} to require MESH residuals to satisfy the configured tolerance
    */
@@ -8569,6 +8632,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double[] zCurr = current.getThermoSystem().getMolarComposition();
     double totalMolesCurr = current.getThermoSystem().getTotalNumberOfMoles();
 
+    if (!canRelaxMolarComposition(previous, current, relaxed, zPrev, zCurr)) {
+      relaxed.run();
+      return relaxed;
+    }
+
     double[] zMixed = new double[zPrev.length];
     double totalMolesMixed = 0.0;
 
@@ -8594,6 +8662,30 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     relaxed.run();
 
     return relaxed;
+  }
+
+  /**
+   * Check whether two stream compositions can be relaxed component-by-component.
+   *
+   * @param previous previous internal stream state
+   * @param current current internal stream state
+   * @param relaxed relaxed stream receiving the mixed composition
+   * @param previousComposition previous molar composition vector
+   * @param currentComposition current molar composition vector
+   * @return {@code true} when all streams expose the same component count and composition length
+   */
+  private boolean canRelaxMolarComposition(StreamInterface previous, StreamInterface current,
+      StreamInterface relaxed, double[] previousComposition, double[] currentComposition) {
+    if (previous == null || current == null || relaxed == null || previousComposition == null
+        || currentComposition == null) {
+      return false;
+    }
+    int previousComponents = previous.getThermoSystem().getNumberOfComponents();
+    int currentComponents = current.getThermoSystem().getNumberOfComponents();
+    int relaxedComponents = relaxed.getThermoSystem().getNumberOfComponents();
+    return previousComponents == currentComponents && currentComponents == relaxedComponents
+        && previousComposition.length == previousComponents
+        && currentComposition.length == currentComponents;
   }
 
   /**
@@ -8676,7 +8768,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     liquidOutStream.setCalculationIdentifier(id);
 
     captureTerminalProductDrawStreams(id);
-    updateProductsFromExternalComponentBalance(id);
+    boolean productReconciled = updateProductsFromExternalComponentBalance(id);
     lastInternalTrafficRatio = getInternalTrafficRatio();
     if (!internalTrafficSatisfied()) {
       capInternalTrayTraffic();
@@ -8684,11 +8776,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       lastInternalTrafficRatio =
           Math.min(getInternalTrafficRatio(), MAX_RELAXED_INTERNAL_TRAFFIC_TO_FEED_RATIO);
     }
+    boolean fallbackProductsApplied = false;
     if ((!internalTrafficSatisfied() || lastMassResidual > getEffectiveMassBalanceTolerance()
         || getExternalMassBalanceError() > getEffectiveMassBalanceTolerance()
         || bottomProductPhaseInvalid()) && updateProductsFromOverallFeedFlash(id)) {
-      lastUsedFeedFlashFallback = true;
+      fallbackProductsApplied = true;
     }
+    lastUsedFeedFlashFallback = fallbackProductsApplied;
     lastMassResidual = Math.max(lastMassResidual, getExternalMassBalanceError());
     if (lastInternalTrafficGuardReached) {
       lastMassResidual = Math.max(lastMassResidual,
@@ -8715,7 +8809,52 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     for (int i = 0; i < numberOfTrays; i++) {
       trays.get(i).setCalculationIdentifier(id);
     }
+    if (isEffectiveMeshResidualToleranceEnforced() || lastMeshResidual != null) {
+      updateMeshResiduals();
+    }
+    updateLastSolveStatus(productReconciled, fallbackProductsApplied);
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Update the strict solve status after product handling and residual diagnostics are current.
+   *
+   * @param productReconciled {@code true} if public products were materially reconciled
+   * @param fallbackProductsApplied {@code true} if fallback products were generated
+   */
+  private void updateLastSolveStatus(boolean productReconciled, boolean fallbackProductsApplied) {
+    if (fallbackProductsApplied) {
+      setLastSolveStatus(SolveStatus.FALLBACK_PRODUCTS,
+          "Public products were generated from guarded fallback flash products");
+      return;
+    }
+    if (lastInternalTrafficGuardReached) {
+      setLastSolveStatus(SolveStatus.FAILED,
+          "Internal tray traffic exceeded the rigorous solved-state guard");
+      return;
+    }
+    if (!residualConvergenceSatisfied()) {
+      setLastSolveStatus(SolveStatus.FAILED, "Residual convergence gates were not satisfied");
+      return;
+    }
+    if (productReconciled) {
+      setLastSolveStatus(SolveStatus.RECONCILED_PRODUCTS,
+          "Public products were materially reconciled after the tray solve");
+      return;
+    }
+    setLastSolveStatus(SolveStatus.RIGOROUS_CONVERGED,
+        "Tray solution satisfies active rigorous convergence gates");
+  }
+
+  /**
+   * Store the latest solve status and explanatory reason.
+   *
+   * @param status solve status to store
+   * @param reason concise status reason
+   */
+  private void setLastSolveStatus(SolveStatus status, String reason) {
+    lastSolveStatus = status == null ? SolveStatus.FAILED : status;
+    lastSolveStatusReason = reason == null ? "" : reason;
   }
 
   /**
@@ -8755,10 +8894,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Updates products so the exposed streams close the external component balance.
    *
    * @param id calculation identifier to assign to the updated stream
+   * @return {@code true} if product component amounts were materially changed
    */
-  private void updateProductsFromExternalComponentBalance(UUID id) {
+  private boolean updateProductsFromExternalComponentBalance(UUID id) {
     if (getAllExternalFeedStreams().isEmpty() || gasOutStream == null || liquidOutStream == null) {
-      return;
+      return false;
     }
 
     double[] feedComponentMoles = getFeedComponentMoles();
@@ -8767,7 +8907,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double[] bottomProductComponentMoles = getComponentMoles(liquidOutStream.getThermoSystem());
     if (feedComponentMoles.length != topProductComponentMoles.length
         || feedComponentMoles.length != bottomProductComponentMoles.length) {
-      return;
+      return false;
     }
 
     double feedTotalMoles = 0.0;
@@ -8778,7 +8918,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           + Math.max(0.0, bottomProductComponentMoles[componentIndex]);
     }
     if (feedTotalMoles <= 1.0e-20 || currentProductTotalMoles <= 1.0e-20) {
-      return;
+      return false;
     }
 
     double[] balancedTopProductComponentMoles = new double[feedComponentMoles.length];
@@ -8801,11 +8941,41 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     if (topTotalMoles <= 1.0e-20 || bottomTotalMoles <= 1.0e-20) {
-      return;
+      return false;
     }
 
+    boolean materialChange =
+        componentMolesMateriallyDiffer(topProductComponentMoles, balancedTopProductComponentMoles)
+            || componentMolesMateriallyDiffer(bottomProductComponentMoles,
+                balancedBottomProductComponentMoles);
     updateProductStreamFromComponentMoles(gasOutStream, balancedTopProductComponentMoles, id);
     updateProductStreamFromComponentMoles(liquidOutStream, balancedBottomProductComponentMoles, id);
+    return materialChange;
+  }
+
+  /**
+   * Check whether two component-flow vectors differ materially for solve-status classification.
+   *
+   * @param before component mole amounts before reconciliation
+   * @param after component mole amounts after reconciliation
+   * @return {@code true} when relative component drift exceeds the status tolerance
+   */
+  private boolean componentMolesMateriallyDiffer(double[] before, double[] after) {
+    if (before == null || after == null || before.length != after.length) {
+      return true;
+    }
+    double difference = 0.0;
+    double scale = 0.0;
+    for (int componentIndex = 0; componentIndex < before.length; componentIndex++) {
+      double beforeValue = Math.max(0.0, before[componentIndex]);
+      double afterValue = Math.max(0.0, after[componentIndex]);
+      difference += Math.abs(afterValue - beforeValue);
+      scale += Math.abs(beforeValue) + Math.abs(afterValue);
+    }
+    if (scale <= 1.0e-20) {
+      return difference > 1.0e-20;
+    }
+    return difference / scale > PRODUCT_RECONCILIATION_STATUS_TOLERANCE;
   }
 
   /**
@@ -9397,6 +9567,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastInternalTrafficRatio = 0.0;
     lastInternalTrafficGuardReached = false;
     lastUsedFeedFlashFallback = false;
+    lastSolveStatus = SolveStatus.NOT_RUN;
+    lastSolveStatusReason = "No solve has been run";
     terminalGasProductDrawStream = null;
     terminalLiquidProductDrawStream = null;
     resetMatrixInsideOutDiagnostics();
@@ -10237,6 +10409,24 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public SolverType getLastSolverTypeUsed() {
     return lastSolverTypeUsed;
+  }
+
+  /**
+   * Get the strict status of the latest column solve.
+   *
+   * @return latest solve status
+   */
+  public SolveStatus getLastSolveStatus() {
+    return lastSolveStatus;
+  }
+
+  /**
+   * Get the explanatory reason for the latest solve status.
+   *
+   * @return concise status reason, or an empty string if none is available
+   */
+  public String getLastSolveStatusReason() {
+    return lastSolveStatusReason;
   }
 
   /**
