@@ -227,7 +227,7 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
+      DistillationColumn fallbackCandidate = createValidationFallbackCandidate(column);
       boolean fallbackApplied = false;
       try {
         column.solveWegstein(id);
@@ -263,7 +263,7 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
+      DistillationColumn fallbackCandidate = createValidationFallbackCandidate(column);
       boolean fallbackApplied = false;
       try {
         column.solveSumRates(id);
@@ -330,7 +330,7 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
+      DistillationColumn fallbackCandidate = createValidationFallbackCandidate(column);
       boolean fallbackApplied = false;
       try {
         column.solveNaphtaliSandholm(id);
@@ -366,7 +366,7 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
+      DistillationColumn fallbackCandidate = createValidationFallbackCandidate(column);
       boolean fallbackApplied = false;
       try {
         column.solveMeshResidual(id);
@@ -412,6 +412,19 @@ final class ColumnSolverFactory {
     } catch (StackOverflowError error) {
       return null;
     }
+  }
+
+  /**
+   * Create a damped-substitution validation candidate unless fast mode has disabled that check.
+   *
+   * @param column column being solved
+   * @return copied validation candidate, or {@code null} when validation is skipped or copy fails
+   */
+  private static DistillationColumn createValidationFallbackCandidate(DistillationColumn column) {
+    if (column.isFastSolverMode()) {
+      return null;
+    }
+    return createDampedFallbackCandidate(column);
   }
 
   /**

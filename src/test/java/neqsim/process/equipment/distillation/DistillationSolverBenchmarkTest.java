@@ -279,6 +279,41 @@ public class DistillationSolverBenchmarkTest {
   }
 
   /**
+   * Test the opt-in fast solver mode used to skip conservative validation candidates.
+   */
+  @Test
+  public void fastSolverModeAccessorsAndAcceleratedSolve() {
+    DistillationColumn column = new DistillationColumn("test", 3, true, true);
+    assertFalse(column.isFastSolverMode());
+
+    column.setFastSolverMode(true);
+    assertTrue(column.isFastSolverMode());
+
+    column.setFastSolverMode(false);
+    assertFalse(column.isFastSolverMode());
+
+    Stream feed = new Stream("fast_sum_rates_feed", createDeethanizerFeed().clone());
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.run();
+
+    DistillationColumn fastColumn =
+        new DistillationColumn("fast_sum_rates_deethanizer", 5, true, false);
+    fastColumn.addFeedStream(feed, 5);
+    fastColumn.getReboiler().setOutTemperature(105.0 + 273.15);
+    fastColumn.setTopPressure(30.0);
+    fastColumn.setBottomPressure(32.0);
+    fastColumn.setMaxNumberOfIterations(50);
+    fastColumn.setSolverType(DistillationColumn.SolverType.SUM_RATES);
+    fastColumn.setFastSolverMode(true);
+    fastColumn.run();
+
+    assertTrue(fastColumn.solved(),
+        "Fast-mode sum-rates should converge: " + fastColumn.getConvergenceDiagnostics());
+    assertFiniteMassBalanced(fastColumn, 100.0, 0.5,
+        "Fast-mode sum-rates should stay mass balanced");
+  }
+
+  /**
    * Test seed-temperature accessors used by external warm-start examples.
    */
   @Test

@@ -487,6 +487,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private SolverType solverType = SolverType.DIRECT_SUBSTITUTION;
   /** Solver strategy that actually completed the latest solve. */
   private transient SolverType lastSolverTypeUsed = SolverType.DIRECT_SUBSTITUTION;
+  /** Whether accelerated solvers may skip validation fallback candidates for speed. */
+  private boolean fastSolverMode = false;
 
   /**
    * Relaxation factor used when {@link SolverType#DAMPED_SUBSTITUTION} is active.
@@ -6495,6 +6497,32 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.solverType = solverType == null ? SolverType.DIRECT_SUBSTITUTION : solverType;
     this.lastSolverTypeUsed =
         this.solverType == SolverType.AUTO ? SolverType.DIRECT_SUBSTITUTION : this.solverType;
+  }
+
+  /**
+   * Enable or disable fast solver mode for accelerated column solvers.
+   *
+   * <p>
+   * Fast mode keeps the normal convergence checks and live damped fallback after accelerator
+   * failures, but skips the precomputed damped-substitution validation candidate used to verify
+   * accelerated product splits. The default is {@code false} to preserve the conservative solver
+   * behavior.
+   * </p>
+   *
+   * @param fastSolverMode {@code true} to skip validation fallback candidates for speed,
+   *        {@code false} to use the conservative default
+   */
+  public void setFastSolverMode(boolean fastSolverMode) {
+    this.fastSolverMode = fastSolverMode;
+  }
+
+  /**
+   * Check whether fast solver mode is enabled.
+   *
+   * @return {@code true} when accelerated solvers skip validation fallback candidates
+   */
+  public boolean isFastSolverMode() {
+    return fastSolverMode;
   }
 
   /**
