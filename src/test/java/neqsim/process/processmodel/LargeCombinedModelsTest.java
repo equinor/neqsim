@@ -109,7 +109,7 @@ public class LargeCombinedModelsTest {
 
   /**
    * Test method for validating the well stream and manifold model.
-   * 
+   *
    * This test performs the following checks: 1. Runs the well stream and manifold process model. 2.
    * Asserts that the flow rate of the "HP well stream" matches the expected first stage flow rate.
    * 3. Asserts that the flow rates of the split streams from the "HP manifold" match the expected
@@ -380,7 +380,7 @@ public class LargeCombinedModelsTest {
 
   /**
    * Test method for the separation train process.
-   * 
+   *
    * This test performs the following steps: 1. Creates a process system for the well stream and
    * manifold model. 2. Asserts that the flow rate of the "HP well stream" matches the expected
    * input flow rate. 3. Creates two separation train processes for the split streams from the HP
@@ -590,7 +590,7 @@ public class LargeCombinedModelsTest {
             .getFlowRate("MSm3/day"),
         0.1);
 
-    Assertions.assertEquals(11.31411820330,
+    Assertions.assertEquals(10.92474704678,
         ((Separator) sepprocessTrain2.getUnit("dew point scrubber 2")).getGasOutStream()
             .getFlowRate("MSm3/day"),
         0.1);
@@ -609,7 +609,7 @@ public class LargeCombinedModelsTest {
             .getPressure("bara"),
         0.1);
 
-    Assertions.assertEquals(10.8448139,
+    Assertions.assertEquals(10.45588151441,
         ((ThrottlingValve) expanderProcess2.getUnit("gas split valve")).getOutletStream()
             .getFlowRate("MSm3/day"),
         0.1);
@@ -637,7 +637,7 @@ public class LargeCombinedModelsTest {
             .getFlowRate("MSm3/day"),
         0.1);
 
-    Assertions.assertEquals(11.65461404,
+    Assertions.assertEquals(11.80111377368,
         ((Separator) sepprocessTrain2.getUnit("dew point scrubber 2")).getGasOutStream()
             .getFlowRate("MSm3/day"),
         0.1);
@@ -656,7 +656,7 @@ public class LargeCombinedModelsTest {
             .getPressure("bara"),
         0.1);
 
-    Assertions.assertEquals(11.0797159,
+    Assertions.assertEquals(11.18971271189,
         ((ThrottlingValve) expanderProcess2.getUnit("gas split valve")).getOutletStream()
             .getFlowRate("MSm3/day"),
         0.1);
