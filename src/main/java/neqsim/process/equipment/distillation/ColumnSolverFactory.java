@@ -1,6 +1,7 @@
 package neqsim.process.equipment.distillation;
 
 import java.util.UUID;
+import neqsim.util.validation.ValidationResult;
 
 /**
  * Factory for the built-in distillation column solver strategies.
@@ -113,18 +114,54 @@ final class ColumnSolverFactory {
       ColumnSolveResult bestResult = null;
       DistillationColumn.SolverType bestSolver = null;
       double bestScore = Double.POSITIVE_INFINITY;
+      StringBuilder summary = new StringBuilder();
+
+      ValidationResult feasibility = column.screenSpecificationFeasibility();
+      column.setLastAutoFeasibilityReport(feasibility.getReport());
+      column.recordAutoSolverEvent("feasibility pre-screen valid=" + feasibility.isValid()
+          + ", warnings=" + feasibility.hasWarnings());
+      appendAutoFeasibilitySummary(summary, feasibility);
+
+      DistillationColumn candidateSource = createAutoCandidate(column);
+      if (candidateSource == null) {
+        appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+            null, "pipeline seed copy failed; live damped fallback used");
+        return runAutoFallbackOnLiveColumn(column, id, summary);
+      }
+      boolean shortcutApplied = candidateSource.tryAutomaticShortcutInitialization(summary);
+      if (shortcutApplied) {
+        column.recordAutoSolverEvent("shortcut seed applied");
+        column.setLastInitializationReport(candidateSource.getLastInitializationReport());
+      } else if (candidateSource.tryThermodynamicProfileInitialization(summary)) {
+        column.recordAutoSolverEvent("thermodynamic profile seed applied");
+        column.setLastInitializationReport(candidateSource.getLastInitializationReport());
+      } else {
+        column.setLastInitializationReport(candidateSource.getLastInitializationReport());
+      }
+      ColumnSolveResult warmBaseResult = runAutoWarmBase(candidateSource, id, summary);
+      column.recordAutoSolverEvent("relaxed base solve solved=" + warmBaseResult.isSolved()
+          + ", used=" + warmBaseResult.getSolverType());
+      double warmBaseScore = scoreResult(warmBaseResult);
+      if (warmBaseScore < bestScore) {
+        bestScore = warmBaseScore;
+        bestCandidate = candidateSource;
+        bestResult = warmBaseResult;
+        bestSolver = warmBaseResult.getSolverType();
+      }
 
       for (int index = 0; index < candidates.length; index++) {
         DistillationColumn.SolverType candidateSolver = candidates[index];
-        DistillationColumn candidate = createAutoCandidate(column);
+        DistillationColumn candidate = createAutoCandidate(candidateSource);
         if (candidate == null) {
-          return runAutoFallbackOnLiveColumn(column, id);
+          appendAutoCandidateSummary(summary, candidateSolver, null,
+              "candidate copy failed; live damped fallback used");
+          return runAutoFallbackOnLiveColumn(column, id, summary);
         }
-        candidate.setSolverType(candidateSolver);
-        candidate.setDoInitializion(true);
+        prepareAutoCandidate(candidate, candidateSolver);
         try {
           ColumnSolveResult result =
               ColumnSolverFactory.create(candidateSolver).solve(candidate, id);
+          appendAutoCandidateSummary(summary, candidateSolver, result, null);
           double score = scoreResult(result);
           if (score < bestScore) {
             bestScore = score;
@@ -134,9 +171,13 @@ final class ColumnSolverFactory {
           }
           if (result.isSolved()) {
             column.acceptAutoSolverCandidate(candidate, result.getSolverType());
+            column.setLastAutoSolverSummary(summary.toString());
+            column.recordAutoSolverEvent("selected " + result.getSolverType());
             return ColumnSolveResult.from(column, result.getSolverType());
           }
         } catch (RuntimeException exception) {
+          appendAutoCandidateSummary(summary, candidateSolver, null,
+              "failed: " + exception.getMessage());
           DistillationColumn.logger.debug("AUTO distillation solver candidate {} failed for {}.",
               candidateSolver, column.getName(), exception);
         }
@@ -145,9 +186,11 @@ final class ColumnSolverFactory {
       if (bestCandidate != null && bestResult != null && bestSolver != null
           && bestResult.isSolved()) {
         column.acceptAutoSolverCandidate(bestCandidate, bestSolver);
+        column.setLastAutoSolverSummary(summary.toString());
+        column.recordAutoSolverEvent("selected best available " + bestSolver);
         return ColumnSolveResult.from(column, bestResult.getSolverType());
       }
-      return runAutoFallbackOnLiveColumn(column, id);
+      return runAutoFallbackOnLiveColumn(column, id, summary);
     }
 
     /** {@inheritDoc} */
@@ -466,6 +509,18 @@ final class ColumnSolverFactory {
   }
 
   /**
+   * Prepare an automatic-solver candidate with robust defaults.
+   *
+   * @param candidate candidate column copy to prepare
+   * @param candidateSolver solver to apply to the candidate
+   */
+  private static void prepareAutoCandidate(DistillationColumn candidate,
+      DistillationColumn.SolverType candidateSolver) {
+    candidate.setSolverType(candidateSolver);
+    candidate.setDoInitializion(true);
+  }
+
+  /**
    * Select candidate solvers for automatic mode.
    *
    * @param column column being solved
@@ -477,19 +532,105 @@ final class ColumnSolverFactory {
           DistillationColumn.SolverType.MESH_RESIDUAL,
           DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
     }
+    if (hasAdjustableProductSpecification(column)) {
+      if (column.numberOfTrays >= 12) {
+        return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
+            DistillationColumn.SolverType.NAPHTALI_SANDHOLM,
+            DistillationColumn.SolverType.MESH_RESIDUAL,
+            DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
+      }
+      return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.INSIDE_OUT,
+          DistillationColumn.SolverType.NAPHTALI_SANDHOLM,
+          DistillationColumn.SolverType.MESH_RESIDUAL,
+          DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
+    }
     if (column.hasCondenser && column.hasReboiler) {
       if (column.numberOfTrays >= 12) {
         return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
+            DistillationColumn.SolverType.INSIDE_OUT,
             DistillationColumn.SolverType.MESH_RESIDUAL,
             DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
       }
       if (column.numberOfTrays >= 6) {
-        return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.MESH_RESIDUAL,
+        return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.INSIDE_OUT,
+            DistillationColumn.SolverType.MESH_RESIDUAL,
             DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
       }
     }
+    if (!column.hasCondenser || !column.hasReboiler) {
+      return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.SUM_RATES,
+          DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+          DistillationColumn.SolverType.DIRECT_SUBSTITUTION};
+    }
     return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
         DistillationColumn.SolverType.DIRECT_SUBSTITUTION};
+  }
+
+  /**
+   * Check whether the column has a product specification that benefits from continuation.
+   *
+   * @param column column to inspect
+   * @return {@code true} when a purity, recovery, or product-flow specification is active
+   */
+  private static boolean hasAdjustableProductSpecification(DistillationColumn column) {
+    return isAdjustableProductSpecification(column.getTopSpecification())
+        || isAdjustableProductSpecification(column.getBottomSpecification());
+  }
+
+  /**
+   * Check whether one specification is adjusted through the outer temperature loop.
+   *
+   * @param specification specification to inspect
+   * @return {@code true} for purity, recovery, or product-flow specifications
+   */
+  private static boolean isAdjustableProductSpecification(ColumnSpecification specification) {
+    if (specification == null) {
+      return false;
+    }
+    return specification.getType() != ColumnSpecification.SpecificationType.REFLUX_RATIO
+        && specification.getType() != ColumnSpecification.SpecificationType.DUTY;
+  }
+
+  /**
+   * Run the relaxed base stage used by automatic solver mode.
+   *
+   * @param candidateSource candidate source column to warm start
+   * @param id calculation identifier
+   * @param summary automatic solver summary builder
+   * @return solve result from the relaxed base stage
+   */
+  private static ColumnSolveResult runAutoWarmBase(DistillationColumn candidateSource, UUID id,
+      StringBuilder summary) {
+    prepareAutoCandidate(candidateSource, DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    try {
+      ColumnSolveResult result = DAMPED.solve(candidateSource, id);
+      appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+          result, "relaxed base solve");
+      return result;
+    } catch (RuntimeException exception) {
+      appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION, null,
+          "relaxed base solve failed: " + exception.getMessage());
+      DistillationColumn.logger.debug("AUTO relaxed base solve failed for {}.",
+          candidateSource.getName(), exception);
+      return ColumnSolveResult.from(candidateSource,
+          DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    }
+  }
+
+  /**
+   * Append feasibility pre-screen status to the automatic solver trace.
+   *
+   * @param summary summary builder receiving a one-line status
+   * @param feasibility feasibility validation result
+   */
+  private static void appendAutoFeasibilitySummary(StringBuilder summary,
+      ValidationResult feasibility) {
+    if (summary.length() > 0) {
+      summary.append("\n");
+    }
+    summary.append("    - FEASIBILITY_SCREEN: valid=").append(feasibility.isValid())
+        .append(", warnings=").append(feasibility.hasWarnings()).append(", issues=")
+        .append(feasibility.getIssues().size());
   }
 
   /**
@@ -499,9 +640,43 @@ final class ColumnSolverFactory {
    * @param id calculation identifier
    * @return solve result from the fallback solver
    */
-  private static ColumnSolveResult runAutoFallbackOnLiveColumn(DistillationColumn column, UUID id) {
+  private static ColumnSolveResult runAutoFallbackOnLiveColumn(DistillationColumn column, UUID id,
+      StringBuilder summary) {
     ColumnSolveResult result = DAMPED.solve(column, id);
+    appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION, result,
+        "live fallback");
+    column.setLastAutoSolverSummary(summary.toString());
+    column.recordAutoSolverEvent("selected live damped fallback");
     return ColumnSolveResult.from(column, result.getSolverType());
+  }
+
+  /**
+   * Append one candidate attempt to the automatic solver trace.
+   *
+   * @param summary summary builder to append to
+   * @param candidateSolver solver requested for the candidate
+   * @param result candidate result, or {@code null} when no result is available
+   * @param note optional explanatory note
+   */
+  private static void appendAutoCandidateSummary(StringBuilder summary,
+      DistillationColumn.SolverType candidateSolver, ColumnSolveResult result, String note) {
+    if (summary.length() > 0) {
+      summary.append("\n");
+    }
+    summary.append("    - ").append(candidateSolver).append(": ");
+    if (result == null) {
+      summary.append(note == null ? "no result" : note);
+      return;
+    }
+    summary.append("solved=").append(result.isSolved()).append(", used=")
+        .append(result.getSolverType()).append(", iterations=").append(result.getIterationCount())
+        .append(", time=").append(result.getSolveTimeSeconds()).append(" s, tempResidual=")
+        .append(result.getTemperatureResidual()).append(", massResidual=")
+        .append(result.getMassResidual()).append(", meshResidual=")
+        .append(result.getMeshResidualNorm());
+    if (note != null && !note.trim().isEmpty()) {
+      summary.append(", note=").append(note);
+    }
   }
 
   /**

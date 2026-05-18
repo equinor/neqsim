@@ -108,6 +108,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private static final double DEFAULT_MAX_TRAY_OPTIMIZATION_TIME_SECONDS = 120.0;
   /** Minimum tray count where matrix warm-start overhead is expected to pay off. */
   private static final int MIN_MATRIX_INSIDE_OUT_WARM_START_TRAYS = 12;
+  /** Default specification continuation stages used by automatic solver mode. */
+  private static final int AUTO_SPECIFICATION_HOMOTOPY_STEPS = 3;
   double condenserCoolingDuty = 10.0;
   private double reboilerTemperature = 273.15;
   private double condenserTemperature = 270.15;
@@ -507,6 +509,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private transient SolveStatus lastSolveStatus = SolveStatus.NOT_RUN;
   /** Optional reason explaining why the latest solve fell back or was rejected. */
   private transient String lastSolveStatusReason = "";
+  /** Trace of solver candidates attempted by automatic solver mode. */
+  private transient String lastAutoSolverSummary = "";
+  /** Structured history events from the latest automatic solver run. */
+  private transient List<String> lastAutoSolverHistory = new ArrayList<String>();
+  /** Feasibility report generated before the latest automatic solver run. */
+  private transient String lastAutoFeasibilityReport = "";
+  /** Initialization report generated before or during the latest automatic solver run. */
+  private transient String lastInitializationReport = "";
 
   /**
    * Relaxation factor used when {@link SolverType#DAMPED_SUBSTITUTION} is active.
@@ -582,6 +592,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private ColumnSpecification topSpecification;
   /** Column specification for the bottom (reboiler) end. */
   private ColumnSpecification bottomSpecification;
+  /** Number of continuation stages used for adjustable product specifications. */
+  private int specificationHomotopySteps = 1;
+  /** Number of specification continuation stages completed by the latest solve. */
+  private transient int lastSpecificationHomotopyStepCount = 0;
 
   Mixer feedmixer = new Mixer("temp mixer");
   double bottomTrayPressure = -1.0;
@@ -649,6 +663,30 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private transient double lastMatrixInsideOutTemperatureResidual = Double.NaN;
   /** Matrix warm-start wall time from the latest solve in seconds. */
   private transient double lastMatrixInsideOutSolveTimeSeconds = 0.0;
+  /** Rigorous inside-out flash sweeps performed in the latest inside-out solve. */
+  private transient int lastInsideOutOuterFlashSweeps = 0;
+  /** Simplified inside-out inner-loop iterations performed in the latest inside-out solve. */
+  private transient int lastInsideOutInnerLoopIterations = 0;
+  /** Latest inside-out K-value residual. */
+  private transient double lastInsideOutKValueResidual = Double.NaN;
+
+  /** Latest inside-out surrogate model residual from simplified inner loops. */
+  private transient double lastInsideOutSurrogateResidual = Double.NaN;
+
+  /** Number of simplified inside-out surrogate resets in the latest solve. */
+  private transient int lastInsideOutSurrogateResetCount = 0;
+
+  /** Latest Naphtali-Sandholm semi-analytic Jacobian column count. */
+  private transient int lastNaphtaliAnalyticJacobianColumns = 0;
+
+  /** Latest Naphtali-Sandholm finite-difference Jacobian column count. */
+  private transient int lastNaphtaliFiniteDifferenceJacobianColumns = 0;
+
+  /** Latest Naphtali-Sandholm thermodynamic evaluation count. */
+  private transient int lastNaphtaliThermoEvaluationCount = 0;
+
+  /** Latest Naphtali-Sandholm Jacobian build time. */
+  private transient double lastNaphtaliJacobianBuildTimeSeconds = 0.0;
 
   /**
    * Instead of Map&lt;Integer,StreamInterface&gt;, we store a list of feed streams per tray number.
@@ -1094,6 +1132,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public void run(UUID id) {
     lastInternalTrafficGuardReached = false;
     internalTrafficCapActive = false;
+    lastSpecificationHomotopyStepCount = 0;
+    lastAutoSolverSummary = "";
+    lastAutoSolverHistory = new ArrayList<String>();
+    lastAutoFeasibilityReport = "";
+    lastInitializationReport = "";
     resetMatrixInsideOutDiagnostics();
     assignUnassignedFeeds();
     convergenceHistory = new ArrayList<>();
@@ -1544,6 +1587,24 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Evaluate the current value represented by a specification without subtracting its target.
+   *
+   * @param spec the specification to evaluate
+   * @return current value for the specification, or {@code Double.NaN} if unavailable
+   */
+  private double evaluateSpecValueSafely(ColumnSpecification spec) {
+    if (spec == null) {
+      return Double.NaN;
+    }
+    try {
+      return evaluateSpecError(spec) + spec.getTargetValue();
+    } catch (Exception ex) {
+      logger.debug("Could not evaluate column specification value", ex);
+      return Double.NaN;
+    }
+  }
+
+  /**
    * Check whether a single column specification is satisfied.
    *
    * @param spec the specification to evaluate
@@ -1575,19 +1636,111 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param id calculation identifier
    */
   private void solveWithSpecifications(UUID id) {
+    lastSpecificationHomotopyStepCount = 0;
+    int effectiveHomotopySteps = getEffectiveSpecificationHomotopySteps();
+    if (effectiveHomotopySteps > 1) {
+      specificationHomotopySteps = effectiveHomotopySteps;
+      solveWithSpecificationHomotopy(id, effectiveHomotopySteps);
+      return;
+    }
+    solveWithSpecificationTargets(id, topSpecification, bottomSpecification);
+  }
+
+  /**
+   * Determine the specification continuation stage count for the current solve.
+   *
+   * @return explicit user homotopy steps, or automatic robust-mode steps when AUTO is active
+   */
+  private int getEffectiveSpecificationHomotopySteps() {
+    if (specificationHomotopySteps > 1) {
+      return specificationHomotopySteps;
+    }
+    if (solverType == SolverType.AUTO && hasAdjustableSpecifications()) {
+      return AUTO_SPECIFICATION_HOMOTOPY_STEPS;
+    }
+    return specificationHomotopySteps;
+  }
+
+  /**
+   * Solve adjustable product specifications through staged continuation targets.
+   *
+   * <p>
+   * The first stage starts from the current product value after a warm baseline solve and then
+   * ramps linearly to the user-specified final target. This avoids an abrupt jump to a difficult
+   * purity, recovery, or product-flow target while leaving the stored public specifications
+   * unchanged.
+   * </p>
+   *
+   * @param id calculation identifier
+   * @param steps number of continuation stages to run
+   */
+  private void solveWithSpecificationHomotopy(UUID id, int steps) {
     boolean adjustTop = needsAdjustment(topSpecification) && hasCondenser;
     boolean adjustBottom = needsAdjustment(bottomSpecification) && hasReboiler;
+    if (!adjustTop && !adjustBottom) {
+      solveWithSpecificationTargets(id, topSpecification, bottomSpecification);
+      return;
+    }
+
+    double feedTemp = estimateFeedTemperature();
+    double topTemp =
+        hasCondenser && getCondenser().isSetOutTemperature() ? getCondenser().getOutTemperature()
+            : feedTemp - 20.0;
+    double bottomTemp =
+        hasReboiler && getReboiler().isSetOutTemperature() ? getReboiler().getOutTemperature()
+            : feedTemp + 20.0;
+
+    applySpecificationTemperatureGuess(adjustTop, adjustBottom, topTemp, bottomTemp);
+    setDoInitializion(!hasBeenSolvedBefore);
+    solveInner(id);
+
+    double topStart = adjustTop ? evaluateSpecValueSafely(topSpecification) : Double.NaN;
+    double bottomStart = adjustBottom ? evaluateSpecValueSafely(bottomSpecification) : Double.NaN;
+    if (adjustTop && !Double.isFinite(topStart)) {
+      topStart = topSpecification.getTargetValue();
+    }
+    if (adjustBottom && !Double.isFinite(bottomStart)) {
+      bottomStart = bottomSpecification.getTargetValue();
+    }
+
+    int stageCount = Math.max(1, steps);
+    for (int step = 1; step <= stageCount; step++) {
+      double fraction = step / (double) stageCount;
+      ColumnSpecification stagedTop =
+          adjustTop ? createHomotopySpecification(topSpecification, topStart, fraction)
+              : topSpecification;
+      ColumnSpecification stagedBottom =
+          adjustBottom ? createHomotopySpecification(bottomSpecification, bottomStart, fraction)
+              : bottomSpecification;
+      solveWithSpecificationTargets(id, stagedTop, stagedBottom);
+      lastSpecificationHomotopyStepCount = step;
+      setDoInitializion(false);
+    }
+    updateSpecificationResiduals();
+  }
+
+  /**
+   * Solve the column against the provided effective top and bottom specification targets.
+   *
+   * @param id calculation identifier
+   * @param effectiveTopSpecification effective top specification for this solve
+   * @param effectiveBottomSpecification effective bottom specification for this solve
+   */
+  private void solveWithSpecificationTargets(UUID id, ColumnSpecification effectiveTopSpecification,
+      ColumnSpecification effectiveBottomSpecification) {
+    boolean adjustTop = needsAdjustment(effectiveTopSpecification) && hasCondenser;
+    boolean adjustBottom = needsAdjustment(effectiveBottomSpecification) && hasReboiler;
 
     int maxOuterIter = 20;
-    if (adjustTop && topSpecification != null) {
-      maxOuterIter = Math.max(maxOuterIter, topSpecification.getMaxIterations());
+    if (adjustTop && effectiveTopSpecification != null) {
+      maxOuterIter = Math.max(maxOuterIter, effectiveTopSpecification.getMaxIterations());
     }
-    if (adjustBottom && bottomSpecification != null) {
-      maxOuterIter = Math.max(maxOuterIter, bottomSpecification.getMaxIterations());
+    if (adjustBottom && effectiveBottomSpecification != null) {
+      maxOuterIter = Math.max(maxOuterIter, effectiveBottomSpecification.getMaxIterations());
     }
 
-    double topTol = adjustTop ? topSpecification.getTolerance() : 1.0e-4;
-    double bottomTol = adjustBottom ? bottomSpecification.getTolerance() : 1.0e-4;
+    double topTol = adjustTop ? effectiveTopSpecification.getTolerance() : 1.0e-4;
+    double bottomTol = adjustBottom ? effectiveBottomSpecification.getTolerance() : 1.0e-4;
 
     // Initialize temperature bounds from feed conditions
     double feedTemp = estimateFeedTemperature();
@@ -1622,9 +1775,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         double currentBottomTemp = (outerIter == 0) ? bottomTemp0 : bottomTemp1;
         getReboiler().setOutTemperature(currentBottomTemp);
       }
+      applySpecificationTemperatureGuess(adjustTop, adjustBottom,
+          adjustTop ? (outerIter == 0 ? topTemp0 : topTemp1) : Double.NaN,
+          adjustBottom ? (outerIter == 0 ? bottomTemp0 : bottomTemp1) : Double.NaN);
 
-      // Reset initialization flag for new temperature guesses
-      setDoInitializion(true);
+      // Keep the previous stage profile after the first full initialization.
+      setDoInitializion(outerIter == 0 && !hasBeenSolvedBefore);
 
       // Solve the column with current settings
       solveInner(id);
@@ -1635,8 +1791,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       // Evaluate specification errors
-      double topError = adjustTop ? evaluateSpecError(topSpecification) : 0.0;
-      double bottomError = adjustBottom ? evaluateSpecError(bottomSpecification) : 0.0;
+      double topError = adjustTop ? evaluateSpecError(effectiveTopSpecification) : 0.0;
+      double bottomError = adjustBottom ? evaluateSpecError(effectiveBottomSpecification) : 0.0;
       lastTopSpecificationResidual = topError;
       lastBottomSpecificationResidual = bottomError;
 
@@ -1677,6 +1833,95 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           bottomErr0 = bottomErr1;
           bottomTemp1 = newBottomTemp;
         }
+      }
+    }
+  }
+
+  /**
+   * Build one staged specification by interpolating from a start value to the final target.
+   *
+   * @param specification final user specification
+   * @param startValue initial product value from the warm baseline solve
+   * @param fraction continuation fraction, where one means the final user target
+   * @return staged specification preserving the original tolerance and iteration limit
+   */
+  private ColumnSpecification createHomotopySpecification(ColumnSpecification specification,
+      double startValue, double fraction) {
+    double boundedFraction = Math.max(0.0, Math.min(1.0, fraction));
+    double target = startValue + boundedFraction * (specification.getTargetValue() - startValue);
+    target = boundSpecificationTarget(specification, target);
+    ColumnSpecification staged = new ColumnSpecification(specification.getType(),
+        specification.getLocation(), target, specification.getComponentName());
+    staged.setTolerance(specification.getTolerance());
+    staged.setMaxIterations(specification.getMaxIterations());
+    return staged;
+  }
+
+  /**
+   * Bound a staged target so it remains valid for its specification type.
+   *
+   * @param specification specification defining the valid target range
+   * @param target staged target candidate
+   * @return bounded finite target value
+   */
+  private double boundSpecificationTarget(ColumnSpecification specification, double target) {
+    double finiteTarget = Double.isFinite(target) ? target : specification.getTargetValue();
+    if (specification.getType() == ColumnSpecification.SpecificationType.PRODUCT_PURITY
+        || specification.getType() == ColumnSpecification.SpecificationType.COMPONENT_RECOVERY) {
+      return Math.max(0.0, Math.min(1.0, finiteTarget));
+    }
+    if (specification.getType() == ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE) {
+      return Math.max(1.0e-12, finiteTarget);
+    }
+    return finiteTarget;
+  }
+
+  /**
+   * Apply temperature guesses and seed the internal tray-temperature profile.
+   *
+   * @param adjustTop whether the condenser temperature is being adjusted
+   * @param adjustBottom whether the reboiler temperature is being adjusted
+   * @param topTemperature top temperature guess in kelvin
+   * @param bottomTemperature bottom temperature guess in kelvin
+   */
+  private void applySpecificationTemperatureGuess(boolean adjustTop, boolean adjustBottom,
+      double topTemperature, double bottomTemperature) {
+    double top = adjustTop && Double.isFinite(topTemperature) ? topTemperature : Double.NaN;
+    double bottom =
+        adjustBottom && Double.isFinite(bottomTemperature) ? bottomTemperature : Double.NaN;
+    if (!Double.isFinite(top) && hasCondenser && getCondenser().isSetOutTemperature()) {
+      top = getCondenser().getOutTemperature();
+    }
+    if (!Double.isFinite(bottom) && hasReboiler && getReboiler().isSetOutTemperature()) {
+      bottom = getReboiler().getOutTemperature();
+    }
+    seedTrayTemperatureProfile(top, bottom);
+  }
+
+  /**
+   * Seed tray temperatures linearly between bottom and top endpoints.
+   *
+   * @param topTemperature top-stage seed temperature in kelvin
+   * @param bottomTemperature bottom-stage seed temperature in kelvin
+   */
+  private void seedTrayTemperatureProfile(double topTemperature, double bottomTemperature) {
+    if (!Double.isFinite(topTemperature) && !Double.isFinite(bottomTemperature)) {
+      return;
+    }
+    double feedTemperature = estimateFeedTemperature();
+    double top = Double.isFinite(topTemperature) ? topTemperature : feedTemperature;
+    double bottom = Double.isFinite(bottomTemperature) ? bottomTemperature : feedTemperature;
+    ensureSeedTemperatureArray();
+    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
+      double fraction = numberOfTrays <= 1 ? 0.0 : trayIndex / (numberOfTrays - 1.0);
+      double temperature = bottom + fraction * (top - bottom);
+      seedTemperatures[trayIndex] = temperature;
+      trays.get(trayIndex).setTemperature(temperature);
+      try {
+        trays.get(trayIndex).getThermoSystem().setTemperature(temperature);
+      } catch (RuntimeException exception) {
+        logger.debug("Could not seed tray temperature for {}", trays.get(trayIndex).getName(),
+            exception);
       }
     }
   }
@@ -1824,6 +2069,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     solver.setMaxIterations(Math.max(2, Math.min(maxNumberOfIterations, getEffectiveStageCount())));
     solver.setResidualTolerance(meshResidualTolerance);
     boolean accepted = solver.solve(id);
+    candidate.storeNaphtaliTelemetry(solver);
+    storeNaphtaliTelemetry(solver);
     if (!accepted) {
       logger.debug("Naphtali-Sandholm kept warm-start state for column {}; residual={}", getName(),
           Double.valueOf(baselineMeshResidual));
@@ -1840,10 +2087,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double acceptedMeshResidual = candidate.lastMeshResidual == null ? Double.NaN
         : candidate.lastMeshResidual.getInfinityNorm();
     if (!candidate.solved()) {
-      logger.debug(
-          "Naphtali-Sandholm rejected for column {}; candidate residual {} did not satisfy "
-              + "the active convergence gates.",
-          getName(), Double.valueOf(acceptedMeshResidual));
+      logger
+          .debug(
+              "Naphtali-Sandholm rejected for column {}; candidate residual {} did not satisfy "
+                  + "the active convergence gates.",
+              getName(), Double.valueOf(acceptedMeshResidual));
       return;
     }
 
@@ -1860,6 +2108,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     acceptSolvedStateCandidate(candidate);
     logger.debug("Naphtali-Sandholm accepted for column {}; residual {} -> {}", getName(),
         Double.valueOf(baselineMeshResidual), Double.valueOf(acceptedMeshResidual));
+  }
+
+  /**
+   * Store speed telemetry from a Naphtali-Sandholm solve attempt.
+   *
+   * @param solver solver that just completed a solve attempt
+   */
+  private void storeNaphtaliTelemetry(NaphtaliSandholmSolver solver) {
+    lastNaphtaliAnalyticJacobianColumns = solver.getLastAnalyticJacobianColumns();
+    lastNaphtaliFiniteDifferenceJacobianColumns = solver.getLastFiniteDifferenceJacobianColumns();
+    lastNaphtaliThermoEvaluationCount = solver.getLastThermoEvaluationCount();
+    lastNaphtaliJacobianBuildTimeSeconds = solver.getLastJacobianBuildTimeSeconds();
   }
 
   /**
@@ -2050,6 +2310,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.lastSolverTypeUsed = candidate.lastSolverTypeUsed;
     this.lastSolveStatus = candidate.lastSolveStatus;
     this.lastSolveStatusReason = candidate.lastSolveStatusReason;
+    this.lastInitializationReport = candidate.lastInitializationReport;
+    this.lastInsideOutOuterFlashSweeps = candidate.lastInsideOutOuterFlashSweeps;
+    this.lastInsideOutInnerLoopIterations = candidate.lastInsideOutInnerLoopIterations;
+    this.lastInsideOutKValueResidual = candidate.lastInsideOutKValueResidual;
+    this.lastInsideOutSurrogateResidual = candidate.lastInsideOutSurrogateResidual;
+    this.lastInsideOutSurrogateResetCount = candidate.lastInsideOutSurrogateResetCount;
+    this.lastNaphtaliAnalyticJacobianColumns = candidate.lastNaphtaliAnalyticJacobianColumns;
+    this.lastNaphtaliFiniteDifferenceJacobianColumns =
+        candidate.lastNaphtaliFiniteDifferenceJacobianColumns;
+    this.lastNaphtaliThermoEvaluationCount = candidate.lastNaphtaliThermoEvaluationCount;
+    this.lastNaphtaliJacobianBuildTimeSeconds = candidate.lastNaphtaliJacobianBuildTimeSeconds;
+    this.specificationHomotopySteps = candidate.specificationHomotopySteps;
+    this.lastSpecificationHomotopyStepCount = candidate.lastSpecificationHomotopyStepCount;
   }
 
   /**
@@ -2061,6 +2334,47 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   void acceptAutoSolverCandidate(DistillationColumn candidate, SolverType selectedSolver) {
     acceptSolvedStateCandidate(candidate);
     lastSolverTypeUsed = selectedSolver;
+  }
+
+  /**
+   * Store the candidate trace from the automatic solver selector.
+   *
+   * @param summary human-readable candidate trace, or {@code null} to clear it
+   */
+  void setLastAutoSolverSummary(String summary) {
+    lastAutoSolverSummary = summary == null ? "" : summary;
+  }
+
+  /**
+   * Store the feasibility report from the automatic solver pre-screen.
+   *
+   * @param report feasibility report text, or {@code null} to clear it
+   */
+  void setLastAutoFeasibilityReport(String report) {
+    lastAutoFeasibilityReport = report == null ? "" : report;
+  }
+
+  /**
+   * Store the initialization report from automatic solver seeding.
+   *
+   * @param report initialization report text, or {@code null} to clear it
+   */
+  void setLastInitializationReport(String report) {
+    lastInitializationReport = report == null ? "" : report;
+  }
+
+  /**
+   * Record one automatic solver pipeline event.
+   *
+   * @param event concise pipeline event description
+   */
+  void recordAutoSolverEvent(String event) {
+    if (lastAutoSolverHistory == null) {
+      lastAutoSolverHistory = new ArrayList<String>();
+    }
+    if (event != null && !event.trim().isEmpty()) {
+      lastAutoSolverHistory.add(event);
+    }
   }
 
   /**
@@ -2760,6 +3074,208 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Automatic shortcut key-component selection used by {@link SolverType#AUTO}.
+   *
+   * @author esol
+   * @version 1.0
+   */
+  private static class AutoShortcutKeySelection implements java.io.Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000;
+
+    private final boolean usable;
+    private final StreamInterface feedStream;
+    private final String lightKey;
+    private final String heavyKey;
+    private final double lightKeyRecovery;
+    private final double heavyKeyRecovery;
+    private final double refluxRatioMultiplier;
+    private final String message;
+
+    /**
+     * Create a shortcut-key selection.
+     *
+     * @param usable whether the selection can be used
+     * @param feedStream selected feed stream
+     * @param lightKey selected light key
+     * @param heavyKey selected heavy key
+     * @param lightKeyRecovery selected light-key recovery to distillate
+     * @param heavyKeyRecovery selected heavy-key recovery to bottoms
+     * @param refluxRatioMultiplier selected reflux multiplier above minimum reflux
+     * @param message selection diagnostic message
+     */
+    private AutoShortcutKeySelection(boolean usable, StreamInterface feedStream, String lightKey,
+        String heavyKey, double lightKeyRecovery, double heavyKeyRecovery,
+        double refluxRatioMultiplier, String message) {
+      this.usable = usable;
+      this.feedStream = feedStream;
+      this.lightKey = lightKey;
+      this.heavyKey = heavyKey;
+      this.lightKeyRecovery = lightKeyRecovery;
+      this.heavyKeyRecovery = heavyKeyRecovery;
+      this.refluxRatioMultiplier = refluxRatioMultiplier;
+      this.message = message;
+    }
+
+    /**
+     * Create a usable shortcut-key selection.
+     *
+     * @param feedStream selected feed stream
+     * @param lightKey selected light key
+     * @param heavyKey selected heavy key
+     * @param lightKeyRecovery selected light-key recovery to distillate
+     * @param heavyKeyRecovery selected heavy-key recovery to bottoms
+     * @param refluxRatioMultiplier selected reflux multiplier above minimum reflux
+     * @param message selection diagnostic message
+     * @return usable selection
+     */
+    private static AutoShortcutKeySelection usable(StreamInterface feedStream, String lightKey,
+        String heavyKey, double lightKeyRecovery, double heavyKeyRecovery,
+        double refluxRatioMultiplier, String message) {
+      return new AutoShortcutKeySelection(true, feedStream, lightKey, heavyKey, lightKeyRecovery,
+          heavyKeyRecovery, refluxRatioMultiplier, message);
+    }
+
+    /**
+     * Create an unusable shortcut-key selection with a diagnostic message.
+     *
+     * @param message diagnostic reason the selection cannot be used
+     * @return unusable selection
+     */
+    private static AutoShortcutKeySelection unusable(String message) {
+      return new AutoShortcutKeySelection(false, null, null, null, Double.NaN, Double.NaN,
+          Double.NaN, message);
+    }
+
+    /**
+     * Check whether the selection is usable.
+     *
+     * @return {@code true} when the selection can be applied
+     */
+    private boolean isUsable() {
+      return usable;
+    }
+
+    /**
+     * Get the selected feed stream.
+     *
+     * @return feed stream
+     */
+    private StreamInterface getFeedStream() {
+      return feedStream;
+    }
+
+    /**
+     * Get the selected light key.
+     *
+     * @return light-key component name
+     */
+    private String getLightKey() {
+      return lightKey;
+    }
+
+    /**
+     * Get the selected heavy key.
+     *
+     * @return heavy-key component name
+     */
+    private String getHeavyKey() {
+      return heavyKey;
+    }
+
+    /**
+     * Get the light-key recovery to distillate.
+     *
+     * @return light-key recovery fraction
+     */
+    private double getLightKeyRecovery() {
+      return lightKeyRecovery;
+    }
+
+    /**
+     * Get the heavy-key recovery to bottoms.
+     *
+     * @return heavy-key recovery fraction
+     */
+    private double getHeavyKeyRecovery() {
+      return heavyKeyRecovery;
+    }
+
+    /**
+     * Get the reflux ratio multiplier.
+     *
+     * @return reflux multiplier above minimum reflux
+     */
+    private double getRefluxRatioMultiplier() {
+      return refluxRatioMultiplier;
+    }
+
+    /**
+     * Get the selection diagnostic message.
+     *
+     * @return diagnostic message
+     */
+    private String getMessage() {
+      return message;
+    }
+  }
+
+  /**
+   * Volatility-ranked component candidate for automatic shortcut key selection.
+   *
+   * @author esol
+   * @version 1.0
+   */
+  private static class AutoShortcutComponent implements java.io.Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000;
+
+    private final String name;
+    private final double volatility;
+    private final double moleFraction;
+
+    /**
+     * Create a volatility-ranked component candidate.
+     *
+     * @param name component name
+     * @param volatility estimated relative volatility indicator
+     * @param moleFraction feed mole fraction
+     */
+    private AutoShortcutComponent(String name, double volatility, double moleFraction) {
+      this.name = name;
+      this.volatility = volatility;
+      this.moleFraction = moleFraction;
+    }
+
+    /**
+     * Get the component name.
+     *
+     * @return component name
+     */
+    private String getName() {
+      return name;
+    }
+
+    /**
+     * Get the volatility indicator.
+     *
+     * @return volatility indicator
+     */
+    private double getVolatility() {
+      return volatility;
+    }
+
+    /**
+     * Get the feed mole fraction.
+     *
+     * @return feed mole fraction
+     */
+    private double getMoleFraction() {
+      return moleFraction;
+    }
+  }
+
+  /**
    * Result from an economic tray-count, feed-tray, and optional reflux/boilup search.
    *
    * <p>
@@ -3368,6 +3884,611 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public ShortcutInitializationResult getLastShortcutInitializationResult() {
     return lastShortcutInitializationResult;
+  }
+
+  /**
+   * Try to apply a conservative Fenske-Underwood-Gilliland seed for automatic solver mode.
+   *
+   * <p>
+   * Unlike
+   * {@link #initializeFromShortcut(StreamInterface, String, String, double, double, double)}, this
+   * method does not rebuild the rigorous tray count and does not replace user product
+   * specifications. It only estimates key components, applies shortcut reflux and duty estimates,
+   * moves a single feed to the shortcut feed tray, and seeds the tray-temperature profile. The
+   * method is package-private so the automatic solver can use it without changing public API
+   * behavior.
+   * </p>
+   *
+   * @param summary optional automatic-solver summary receiving a human-readable event
+   * @return {@code true} if a shortcut seed was applied
+   */
+  boolean tryAutomaticShortcutInitialization(StringBuilder summary) {
+    AutoShortcutKeySelection selection = selectAutomaticShortcutKeys();
+    if (!selection.isUsable()) {
+      appendAutoShortcutSummary(summary, false, selection.getMessage());
+      recordAutoSolverEvent("shortcut skipped: " + selection.getMessage());
+      return false;
+    }
+
+    ShortcutInitializationResult result = initializeFromShortcutSeed(selection.getFeedStream(),
+        selection.getLightKey(), selection.getHeavyKey(), selection.getLightKeyRecovery(),
+        selection.getHeavyKeyRecovery(), selection.getRefluxRatioMultiplier());
+    appendAutoShortcutSummary(summary, result.isInitialized(), result.getMessage());
+    recordAutoSolverEvent(
+        "shortcut " + (result.isInitialized() ? "applied" : "failed") + ": " + result.getMessage());
+    return result.isInitialized();
+  }
+
+  /**
+   * Try to seed only the thermodynamic tray profile for automatic solver mode.
+   *
+   * <p>
+   * This path is less intrusive than the shortcut seed: it does not move feeds, overwrite duties,
+   * or change reflux. It uses the same volatility ladder as shortcut initialization to estimate
+   * Wilson K-value endpoint temperatures and stores a report that diagnostics can surface later.
+   * </p>
+   *
+   * @param summary optional automatic-solver summary receiving a human-readable event
+   * @return {@code true} if a profile seed was applied
+   */
+  boolean tryThermodynamicProfileInitialization(StringBuilder summary) {
+    AutoShortcutKeySelection selection = selectAutomaticShortcutKeys();
+    if (!selection.isUsable()) {
+      appendAutoProfileSummary(summary, false, selection.getMessage());
+      setLastInitializationReport("Thermodynamic profile seed skipped: " + selection.getMessage());
+      recordAutoSolverEvent("profile seed skipped: " + selection.getMessage());
+      return false;
+    }
+    double[] endpoints = estimateThermodynamicProfileTemperatures(selection.getFeedStream(),
+        selection.getLightKey(), selection.getHeavyKey());
+    if (endpoints == null) {
+      appendAutoProfileSummary(summary, false, "Wilson endpoint temperatures unavailable");
+      setLastInitializationReport(
+          "Thermodynamic profile seed skipped: Wilson endpoint temperatures unavailable");
+      recordAutoSolverEvent("profile seed skipped: Wilson endpoint temperatures unavailable");
+      return false;
+    }
+    seedTrayTemperatureProfile(endpoints[0], endpoints[1]);
+    setDoInitializion(true);
+    String report = "Thermodynamic profile seed applied with light key " + selection.getLightKey()
+        + ", heavy key " + selection.getHeavyKey() + ", top temperature " + endpoints[0]
+        + " K, bottom temperature " + endpoints[1] + " K";
+    appendAutoProfileSummary(summary, true, report);
+    setLastInitializationReport(report);
+    recordAutoSolverEvent(
+        "profile seed applied: " + selection.getLightKey() + "/" + selection.getHeavyKey());
+    return true;
+  }
+
+  /**
+   * Append an automatic shortcut event to the candidate summary.
+   *
+   * @param summary summary builder, or {@code null} if no summary should be updated
+   * @param applied whether the shortcut was applied
+   * @param message event message
+   */
+  private void appendAutoShortcutSummary(StringBuilder summary, boolean applied, String message) {
+    if (summary == null) {
+      return;
+    }
+    if (summary.length() > 0) {
+      summary.append("\n");
+    }
+    summary.append("    - SHORTCUT_INITIALIZATION: applied=").append(applied).append(", note=")
+        .append(message == null ? "" : message);
+  }
+
+  /**
+   * Append an automatic thermodynamic profile event to the candidate summary.
+   *
+   * @param summary summary builder, or {@code null} if no summary should be updated
+   * @param applied whether the profile seed was applied
+   * @param message event message
+   */
+  private void appendAutoProfileSummary(StringBuilder summary, boolean applied, String message) {
+    if (summary == null) {
+      return;
+    }
+    if (summary.length() > 0) {
+      summary.append("\n");
+    }
+    summary.append("    - THERMODYNAMIC_PROFILE: applied=").append(applied).append(", note=")
+        .append(message == null ? "" : message);
+  }
+
+  /**
+   * Apply shortcut estimates as a seed without changing the rigorous tray count or user specs.
+   *
+   * @param feedStream feed stream used by the shortcut calculation
+   * @param lightKey light-key component name
+   * @param heavyKey heavy-key component name
+   * @param lightKeyRecoveryDistillate light-key recovery to top product, 0 to 1
+   * @param heavyKeyRecoveryBottoms heavy-key recovery to bottom product, 0 to 1
+   * @param refluxRatioMultiplier actual reflux divided by minimum reflux
+   * @return shortcut initialization result for the applied seed
+   */
+  private ShortcutInitializationResult initializeFromShortcutSeed(StreamInterface feedStream,
+      String lightKey, String heavyKey, double lightKeyRecoveryDistillate,
+      double heavyKeyRecoveryBottoms, double refluxRatioMultiplier) {
+    ShortcutDistillationColumn shortcut = createSolvedShortcut(feedStream, lightKey, heavyKey,
+        lightKeyRecoveryDistillate, heavyKeyRecoveryBottoms, refluxRatioMultiplier);
+    if (shortcut == null || !shortcut.isSolved()) {
+      lastShortcutInitializationResult = createFailedShortcutInitialization(lightKey, heavyKey,
+          "Automatic shortcut seed failed. Check key components and feed volatility order.");
+      return lastShortcutInitializationResult;
+    }
+
+    int feedTrayNumber =
+        convertShortcutFeedTrayFromTop(shortcut.getFeedTrayNumber(), numberOfTrays);
+    applyShortcutEndpointDutiesToCurrentColumn(shortcut);
+    moveSingleFeedToTray(feedStream, feedTrayNumber);
+    double[] endpoints = estimateThermodynamicProfileTemperatures(feedStream, lightKey, heavyKey);
+    if (endpoints == null) {
+      seedTrayTemperatureProfile(feedStream.getTemperature("K") - 20.0,
+          feedStream.getTemperature("K") + 20.0);
+    } else {
+      seedTrayTemperatureProfile(endpoints[0], endpoints[1]);
+    }
+    setDoInitializion(true);
+
+    lastShortcutInitializationResult = new ShortcutInitializationResult(true, numberOfTrays,
+        feedTrayNumber, shortcut.getFeedTrayNumber(), shortcut.getMinimumNumberOfStages(),
+        shortcut.getMinimumRefluxRatio(), shortcut.getActualNumberOfStages(),
+        shortcut.getActualRefluxRatio(), shortcut.getCondenserDuty(), shortcut.getReboilerDuty(),
+        lightKey, heavyKey, "Automatic shortcut seed applied to current rigorous tray count.");
+    return lastShortcutInitializationResult;
+  }
+
+  /**
+   * Estimate top and bottom tray temperatures from Wilson K-value unity points.
+   *
+   * @param feedStream feed stream providing fluid and fallback temperature
+   * @param lightKey light-key component name
+   * @param heavyKey heavy-key component name
+   * @return two-element array {@code [topK, bottomK]}, or {@code null} when unavailable
+   */
+  private double[] estimateThermodynamicProfileTemperatures(StreamInterface feedStream,
+      String lightKey, String heavyKey) {
+    if (feedStream == null || feedStream.getFluid() == null) {
+      return null;
+    }
+    SystemInterface fluid = feedStream.getFluid();
+    double feedTemperature = feedStream.getTemperature("K");
+    double topPressure = isPositiveFinite(topTrayPressure) ? topTrayPressure
+        : Math.max(1.0e-6, feedStream.getPressure("bara"));
+    double bottomPressure = isPositiveFinite(bottomTrayPressure) ? bottomTrayPressure : topPressure;
+    double topTemperature = estimateWilsonUnityTemperature(fluid, lightKey, topPressure);
+    double bottomTemperature = estimateWilsonUnityTemperature(fluid, heavyKey, bottomPressure);
+    if (!Double.isFinite(topTemperature) && !Double.isFinite(bottomTemperature)) {
+      return null;
+    }
+    if (!Double.isFinite(topTemperature)) {
+      topTemperature = feedTemperature - FEED_PROFILE_END_TEMPERATURE_OFFSET;
+    }
+    if (!Double.isFinite(bottomTemperature)) {
+      bottomTemperature = feedTemperature + FEED_PROFILE_END_TEMPERATURE_OFFSET;
+    }
+    topTemperature = boundedProfileTemperature(topTemperature, feedTemperature, false);
+    bottomTemperature = boundedProfileTemperature(bottomTemperature, feedTemperature, true);
+    if (bottomTemperature < topTemperature + MINIMUM_FEED_PROFILE_SPAN) {
+      double midpoint = 0.5 * (topTemperature + bottomTemperature);
+      topTemperature = midpoint - 0.5 * MINIMUM_FEED_PROFILE_SPAN;
+      bottomTemperature = midpoint + 0.5 * MINIMUM_FEED_PROFILE_SPAN;
+    }
+    return new double[] {topTemperature, bottomTemperature};
+  }
+
+  /**
+   * Estimate the temperature where a component Wilson K-value is unity.
+   *
+   * @param fluid feed fluid containing component metadata
+   * @param componentName component name
+   * @param pressure pressure in bara
+   * @return unity-K temperature in Kelvin, or {@link Double#NaN} when unavailable
+   */
+  private double estimateWilsonUnityTemperature(SystemInterface fluid, String componentName,
+      double pressure) {
+    try {
+      if (!Double.isFinite(pressure) || pressure <= 0.0) {
+        return Double.NaN;
+      }
+      double criticalTemperature = fluid.getPhase(0).getComponent(componentName).getTC();
+      double criticalPressure = fluid.getPhase(0).getComponent(componentName).getPC();
+      double acentricFactor = fluid.getPhase(0).getComponent(componentName).getAcentricFactor();
+      double denominator =
+          1.0 - Math.log(pressure / criticalPressure) / (5.373 * (1.0 + acentricFactor));
+      if (!Double.isFinite(denominator) || Math.abs(denominator) < 1.0e-12) {
+        return Double.NaN;
+      }
+      double temperature = criticalTemperature / denominator;
+      return Double.isFinite(temperature) && temperature > 0.0 ? temperature : Double.NaN;
+    } catch (RuntimeException exception) {
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Bound a profile endpoint around the feed temperature.
+   *
+   * @param temperature endpoint candidate in Kelvin
+   * @param feedTemperature feed temperature in Kelvin
+   * @param bottom whether this is the bottom endpoint
+   * @return bounded endpoint temperature in Kelvin
+   */
+  private double boundedProfileTemperature(double temperature, double feedTemperature,
+      boolean bottom) {
+    double low = Math.max(50.0, feedTemperature - 120.0);
+    double high = Math.min(1000.0, feedTemperature + 160.0);
+    double bounded = Math.max(low, Math.min(high, temperature));
+    if (bottom && bounded < feedTemperature - FEED_PROFILE_END_TEMPERATURE_OFFSET) {
+      return feedTemperature + FEED_PROFILE_END_TEMPERATURE_OFFSET;
+    }
+    if (!bottom && bounded > feedTemperature + FEED_PROFILE_END_TEMPERATURE_OFFSET) {
+      return feedTemperature - FEED_PROFILE_END_TEMPERATURE_OFFSET;
+    }
+    return bounded;
+  }
+
+  /**
+   * Create and solve a shortcut column for the supplied key split.
+   *
+   * @param feedStream feed stream used by the shortcut calculation
+   * @param lightKey light-key component name
+   * @param heavyKey heavy-key component name
+   * @param lightKeyRecoveryDistillate light-key recovery to top product
+   * @param heavyKeyRecoveryBottoms heavy-key recovery to bottom product
+   * @param refluxRatioMultiplier actual reflux divided by minimum reflux
+   * @return solved shortcut column, or {@code null} when the shortcut calculation fails
+   */
+  private ShortcutDistillationColumn createSolvedShortcut(StreamInterface feedStream,
+      String lightKey, String heavyKey, double lightKeyRecoveryDistillate,
+      double heavyKeyRecoveryBottoms, double refluxRatioMultiplier) {
+    if (feedStream == null) {
+      return null;
+    }
+    ShortcutDistillationColumn shortcut =
+        new ShortcutDistillationColumn(getName() + " automatic shortcut", feedStream);
+    shortcut.setLightKey(lightKey);
+    shortcut.setHeavyKey(heavyKey);
+    shortcut.setLightKeyRecoveryDistillate(lightKeyRecoveryDistillate);
+    shortcut.setHeavyKeyRecoveryBottoms(heavyKeyRecoveryBottoms);
+    shortcut.setRefluxRatioMultiplier(refluxRatioMultiplier);
+    applyShortcutPressureBasis(shortcut, feedStream);
+    try {
+      shortcut.run(UUID.randomUUID());
+    } catch (RuntimeException exception) {
+      logger.debug("Automatic shortcut calculation failed for column {}", getName(), exception);
+      return null;
+    }
+    return shortcut;
+  }
+
+  /**
+   * Apply shortcut reflux and duty estimates to the current condenser and reboiler.
+   *
+   * @param shortcut solved shortcut column
+   */
+  private void applyShortcutEndpointDutiesToCurrentColumn(ShortcutDistillationColumn shortcut) {
+    if (hasCondenser) {
+      getCondenser().setRefluxRatio(Math.max(0.0, shortcut.getActualRefluxRatio()));
+      getCondenser().setHeatInput(shortcut.getCondenserDuty());
+    }
+    if (hasReboiler) {
+      getReboiler().setHeatInput(shortcut.getReboilerDuty());
+    }
+  }
+
+  /**
+   * Move the single AUTO shortcut feed to the estimated rigorous feed tray.
+   *
+   * @param feedStream feed stream to keep on the column
+   * @param feedTrayNumber bottom-up tray number receiving the feed
+   */
+  private void moveSingleFeedToTray(StreamInterface feedStream, int feedTrayNumber) {
+    feedStreams.clear();
+    directExternalFeedStreams.clear();
+    unassignedFeedStreams.clear();
+    feedmixer = new Mixer("temp mixer");
+    feedmixer.setMultiPhaseCheck(doMultiPhaseCheck);
+    resetTrayInputsToExternalFeeds();
+    addFeedStream(feedStream, feedTrayNumber);
+  }
+
+  /**
+   * Select automatic shortcut key components and recoveries for an ordinary fractionator.
+   *
+   * @return selected key split, or an unusable selection with a diagnostic message
+   */
+  private AutoShortcutKeySelection selectAutomaticShortcutKeys() {
+    if (!hasCondenser || !hasReboiler) {
+      return AutoShortcutKeySelection.unusable("requires both condenser and reboiler");
+    }
+    if (reactive) {
+      return AutoShortcutKeySelection.unusable("reactive columns are not shortcut seeded");
+    }
+    if (!sideDrawSpecifications.isEmpty() || !pumparounds.isEmpty()
+        || hydraulicPressureDropCouplingEnabled || dynamicColumnEnabled) {
+      return AutoShortcutKeySelection
+          .unusable("side draws, pumparounds, hydraulics, or dynamics are active");
+    }
+    List<StreamInterface> feeds = getAllExternalFeedStreams();
+    if (feeds.size() != 1) {
+      return AutoShortcutKeySelection.unusable("requires exactly one external feed");
+    }
+    StreamInterface feedStream = feeds.get(0);
+    List<AutoShortcutComponent> components = getShortcutComponentCandidates(feedStream);
+    if (components.size() < 2) {
+      return AutoShortcutKeySelection.unusable("requires at least two volatile feed components");
+    }
+
+    AutoShortcutKeySelection specificationSelection =
+        selectShortcutKeysFromSpecifications(feedStream, components);
+    if (specificationSelection.isUsable()) {
+      return specificationSelection;
+    }
+    return selectShortcutKeysFromFeed(feedStream, components);
+  }
+
+  /**
+   * Select shortcut keys from configured top and bottom component specifications.
+   *
+   * @param feedStream feed stream used by the shortcut calculation
+   * @param components volatility-sorted shortcut component candidates
+   * @return usable or unusable shortcut-key selection
+   */
+  private AutoShortcutKeySelection selectShortcutKeysFromSpecifications(StreamInterface feedStream,
+      List<AutoShortcutComponent> components) {
+    ColumnSpecification top =
+        componentBasedSpecification(topSpecification) ? topSpecification : null;
+    ColumnSpecification bottom =
+        componentBasedSpecification(bottomSpecification) ? bottomSpecification : null;
+    if (top != null && bottom != null
+        && !top.getComponentName().equals(bottom.getComponentName())) {
+      AutoShortcutComponent light = findShortcutComponent(components, top.getComponentName());
+      AutoShortcutComponent heavy = findShortcutComponent(components, bottom.getComponentName());
+      if (light == null || heavy == null) {
+        return AutoShortcutKeySelection.unusable("specification components are not in the feed");
+      }
+      if (light.getVolatility() <= heavy.getVolatility()) {
+        return AutoShortcutKeySelection
+            .unusable("top specification component is not more volatile than bottom component");
+      }
+      return AutoShortcutKeySelection.usable(feedStream, light.getName(), heavy.getName(),
+          recoveryFromSpecification(top, 0.98), recoveryFromSpecification(bottom, 0.98), 1.25,
+          "selected from top/bottom component specifications");
+    }
+    if (top != null) {
+      AutoShortcutComponent light = findShortcutComponent(components, top.getComponentName());
+      AutoShortcutComponent heavy = nextLessVolatileComponent(components, light);
+      if (light != null && heavy != null) {
+        return AutoShortcutKeySelection.usable(feedStream, light.getName(), heavy.getName(),
+            recoveryFromSpecification(top, 0.95), 0.95, 1.25,
+            "selected heavy key adjacent to top specification component");
+      }
+    }
+    if (bottom != null) {
+      AutoShortcutComponent heavy = findShortcutComponent(components, bottom.getComponentName());
+      AutoShortcutComponent light = nextMoreVolatileComponent(components, heavy);
+      if (light != null && heavy != null) {
+        return AutoShortcutKeySelection.usable(feedStream, light.getName(), heavy.getName(), 0.95,
+            recoveryFromSpecification(bottom, 0.95), 1.25,
+            "selected light key adjacent to bottom specification component");
+      }
+    }
+    return AutoShortcutKeySelection.unusable("no component specifications available");
+  }
+
+  /**
+   * Select shortcut keys from the feed volatility ladder when no component specs are available.
+   *
+   * @param feedStream feed stream used by the shortcut calculation
+   * @param components volatility-sorted shortcut component candidates
+   * @return shortcut-key selection
+   */
+  private AutoShortcutKeySelection selectShortcutKeysFromFeed(StreamInterface feedStream,
+      List<AutoShortcutComponent> components) {
+    int heavyIndex = Math.max(1, components.size() / 2);
+    AutoShortcutComponent light = components.get(heavyIndex - 1);
+    AutoShortcutComponent heavy = components.get(heavyIndex);
+    return AutoShortcutKeySelection.usable(feedStream, light.getName(), heavy.getName(), 0.95, 0.95,
+        1.20, "selected from feed volatility ladder");
+  }
+
+  /**
+   * Check whether a specification names a product component.
+   *
+   * @param specification specification to inspect
+   * @return {@code true} when purity or recovery is component-based
+   */
+  private boolean componentBasedSpecification(ColumnSpecification specification) {
+    if (specification == null) {
+      return false;
+    }
+    return specification.getType() == ColumnSpecification.SpecificationType.PRODUCT_PURITY
+        || specification.getType() == ColumnSpecification.SpecificationType.COMPONENT_RECOVERY;
+  }
+
+  /**
+   * Infer a recovery target from a component-recovery specification.
+   *
+   * @param specification specification to inspect
+   * @param fallback fallback recovery for product-purity specs
+   * @return recovery target between 0 and 1
+   */
+  private double recoveryFromSpecification(ColumnSpecification specification, double fallback) {
+    if (specification != null
+        && specification.getType() == ColumnSpecification.SpecificationType.COMPONENT_RECOVERY) {
+      return Math.max(1.0e-6, Math.min(0.999999, specification.getTargetValue()));
+    }
+    return Math.max(1.0e-6, Math.min(0.999999, fallback));
+  }
+
+  /**
+   * Build volatility-sorted shortcut component candidates from a feed stream.
+   *
+   * @param feedStream feed stream to inspect
+   * @return component candidates sorted from most volatile to least volatile
+   */
+  private List<AutoShortcutComponent> getShortcutComponentCandidates(StreamInterface feedStream) {
+    List<AutoShortcutComponent> components = new ArrayList<AutoShortcutComponent>();
+    if (feedStream == null || feedStream.getFluid() == null) {
+      return components;
+    }
+    SystemInterface fluid = feedStream.getFluid();
+    String[] componentNames = fluid.getComponentNames();
+    if (componentNames == null) {
+      return components;
+    }
+    for (String componentName : componentNames) {
+      if (!isLikelyShortcutComponent(componentName)) {
+        continue;
+      }
+      double moleFraction = getFeedMoleFraction(fluid, componentName);
+      if (moleFraction <= 1.0e-10) {
+        continue;
+      }
+      double volatility = estimateWilsonVolatility(fluid, componentName);
+      if (Double.isFinite(volatility) && volatility > 0.0) {
+        components.add(new AutoShortcutComponent(componentName, volatility, moleFraction));
+      }
+    }
+    Collections.sort(components, new java.util.Comparator<AutoShortcutComponent>() {
+      @Override
+      public int compare(AutoShortcutComponent left, AutoShortcutComponent right) {
+        int volatilityOrder = Double.compare(right.getVolatility(), left.getVolatility());
+        if (volatilityOrder != 0) {
+          return volatilityOrder;
+        }
+        return Double.compare(right.getMoleFraction(), left.getMoleFraction());
+      }
+    });
+    return components;
+  }
+
+  /**
+   * Check whether a component name is suitable for the ordinary hydrocarbon shortcut heuristic.
+   *
+   * @param componentName component name to inspect
+   * @return {@code true} for ordinary volatile components
+   */
+  private boolean isLikelyShortcutComponent(String componentName) {
+    if (componentName == null) {
+      return false;
+    }
+    String lowerName = componentName.toLowerCase(java.util.Locale.ROOT);
+    return !lowerName.contains("water") && !lowerName.contains("meg") && !lowerName.contains("teg")
+        && !lowerName.contains("methanol") && !lowerName.contains("mercury");
+  }
+
+  /**
+   * Estimate a feed mole fraction for a component.
+   *
+   * @param fluid feed fluid
+   * @param componentName component name
+   * @return feed mole fraction, or zero if unavailable
+   */
+  private double getFeedMoleFraction(SystemInterface fluid, String componentName) {
+    try {
+      return Math.max(0.0, fluid.getPhase(0).getComponent(componentName).getz());
+    } catch (RuntimeException exception) {
+      return 0.0;
+    }
+  }
+
+  /**
+   * Estimate component volatility with a Wilson K-value expression at feed conditions.
+   *
+   * @param fluid feed fluid
+   * @param componentName component name
+   * @return Wilson K-value estimate, or {@link Double#NaN} if unavailable
+   */
+  private double estimateWilsonVolatility(SystemInterface fluid, String componentName) {
+    return estimateWilsonVolatility(fluid, componentName,
+        fluid == null ? Double.NaN : fluid.getTemperature(),
+        fluid == null ? Double.NaN : fluid.getPressure());
+  }
+
+  /**
+   * Estimate component volatility with a Wilson K-value expression at specified conditions.
+   *
+   * @param fluid feed fluid
+   * @param componentName component name
+   * @param temperature temperature in Kelvin
+   * @param pressure pressure in bara
+   * @return Wilson K-value estimate, or {@link Double#NaN} if unavailable
+   */
+  private double estimateWilsonVolatility(SystemInterface fluid, String componentName,
+      double temperature, double pressure) {
+    try {
+      if (!Double.isFinite(temperature) || !Double.isFinite(pressure) || pressure <= 0.0) {
+        return Double.NaN;
+      }
+      double criticalTemperature = fluid.getPhase(0).getComponent(componentName).getTC();
+      double criticalPressure = fluid.getPhase(0).getComponent(componentName).getPC();
+      double acentricFactor = fluid.getPhase(0).getComponent(componentName).getAcentricFactor();
+      return (criticalPressure / pressure)
+          * Math.exp(5.373 * (1.0 + acentricFactor) * (1.0 - criticalTemperature / temperature));
+    } catch (RuntimeException exception) {
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Find a shortcut component candidate by name.
+   *
+   * @param components component candidates
+   * @param componentName component name to find
+   * @return matching candidate, or {@code null}
+   */
+  private AutoShortcutComponent findShortcutComponent(List<AutoShortcutComponent> components,
+      String componentName) {
+    if (componentName == null) {
+      return null;
+    }
+    for (AutoShortcutComponent component : components) {
+      if (componentName.equals(component.getName())) {
+        return component;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get the next less volatile component candidate.
+   *
+   * @param components volatility-sorted component candidates
+   * @param component reference component
+   * @return next less volatile component, or {@code null}
+   */
+  private AutoShortcutComponent nextLessVolatileComponent(List<AutoShortcutComponent> components,
+      AutoShortcutComponent component) {
+    if (component == null) {
+      return null;
+    }
+    int index = components.indexOf(component);
+    if (index < 0 || index >= components.size() - 1) {
+      return null;
+    }
+    return components.get(index + 1);
+  }
+
+  /**
+   * Get the next more volatile component candidate.
+   *
+   * @param components volatility-sorted component candidates
+   * @param component reference component
+   * @return next more volatile component, or {@code null}
+   */
+  private AutoShortcutComponent nextMoreVolatileComponent(List<AutoShortcutComponent> components,
+      AutoShortcutComponent component) {
+    if (component == null) {
+      return null;
+    }
+    int index = components.indexOf(component);
+    if (index <= 0) {
+      return null;
+    }
+    return components.get(index - 1);
   }
 
   /**
@@ -4222,6 +5343,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double massErr = 1.0e10;
     double energyErr = 1.0e10;
     double previousCombinedResidual = Double.POSITIVE_INFINITY;
+    lastInsideOutOuterFlashSweeps = 0;
+    lastInsideOutInnerLoopIterations = 0;
+    lastInsideOutKValueResidual = Double.NaN;
+    lastInsideOutSurrogateResidual = Double.NaN;
+    lastInsideOutSurrogateResetCount = 0;
 
     long startTime = System.nanoTime();
 
@@ -4755,7 +5881,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     // Simplified inner-loop K-value model setup
     int nc = trays.get(firstFeedTrayNumber).getThermoSystem().getNumberOfComponents();
-    SimplifiedKvalueModel kModel = new SimplifiedKvalueModel(numberOfTrays, nc);
+    String[] insideOutComponentNames = trays.get(firstFeedTrayNumber).getThermoSystem()
+      .getComponentNames();
+    SimplifiedKvalueModel kModel =
+      new SimplifiedKvalueModel(numberOfTrays, nc, insideOutComponentNames);
     double[][] prevOuterKvalues = null;
     double[] prevOuterTemps = new double[numberOfTrays];
     int outerIterCount = 0; // counts rigorous (outer) iterations
@@ -4859,6 +5988,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       previousKvalues = cacheCurrentKvalues();
       outerIterCount++;
       totalFlashSweeps++;
+      lastInsideOutOuterFlashSweeps = totalFlashSweeps;
+      lastInsideOutKValueResidual = kValueResidual;
 
       // Fit simplified K-value model after 2nd rigorous outer iteration
       if (outerIterCount >= 2 && prevOuterKvalues != null && innerLoopSteps > 0) {
@@ -4866,7 +5997,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         for (int i = 0; i < numberOfTrays; i++) {
           currentTemps[i] = trays.get(i).getThermoSystem().getTemperature();
         }
-        kModel.fit(prevOuterKvalues, prevOuterTemps, previousKvalues, currentTemps);
+        kModel.fit(prevOuterKvalues, prevOuterTemps, previousKvalues, currentTemps,
+            currentTrayPressures());
       }
 
       // Save outer-loop state for next model fitting
@@ -4883,6 +6015,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         double latestInnerTempResidual = err;
         for (int inner = 0; inner < innerLoopSteps; inner++) {
           double innerTempResidual = innerLoopIteration(kModel, relaxation);
+          lastInsideOutInnerLoopIterations++;
+          lastInsideOutSurrogateResidual = innerTempResidual;
           latestInnerTempResidual = innerTempResidual;
           // Log inner iteration (inner iters don't count in outer iteration budget)
           logger.debug("inside-out INNER step {}/{} tempErr={}", inner + 1, innerLoopSteps,
@@ -4892,6 +6026,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
                 .add(new double[] {innerTempResidual, massErr, energyErr, kValueResidual});
           }
           // If inner loop has converged, no need for more inner steps
+          if (!Double.isFinite(innerTempResidual)
+              || innerTempResidual > Math.max(baseTempTolerance * 20.0, err * 4.0)) {
+            kModel.invalidate();
+            lastInsideOutSurrogateResetCount++;
+            previousCombinedResidual = Double.POSITIVE_INFINITY;
+            break;
+          }
           if (innerTempResidual < baseTempTolerance * 0.5) {
             break;
           }
@@ -5019,6 +6160,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
     }
 
+    lastInsideOutOuterFlashSweeps = totalFlashSweeps;
+    lastInsideOutKValueResidual = kValueResidual;
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
   }
 
@@ -5173,6 +6316,26 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Cache current tray pressures for the inside-out surrogate model.
+   *
+   * @return tray pressures in bara
+   */
+  private double[] currentTrayPressures() {
+    double[] pressures = new double[numberOfTrays];
+    for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
+      try {
+        pressures[trayIndex] = trays.get(trayIndex).getThermoSystem().getPressure();
+      } catch (RuntimeException exception) {
+        pressures[trayIndex] = Double.NaN;
+      }
+      if (!Double.isFinite(pressures[trayIndex]) || pressures[trayIndex] <= 0.0) {
+        pressures[trayIndex] = topTrayPressure > 0.0 ? topTrayPressure : 1.0;
+      }
+    }
+    return pressures;
+  }
+
+  /**
    * Simplified K-value model for the inside-out inner loop.
    *
    * <p>
@@ -5192,6 +6355,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     final double[][] coeffA;
     /** Slope coefficient: lnK = a + b/T. Indexed [tray][component]. */
     final double[][] coeffB;
+    /** Pressure coefficient: lnK correction = c ln(P/Pref). */
+    final double[][] pressureCoeff;
+    /** Component-family damping for fitted K-temperature slopes. */
+    final double[] componentDamping;
+    /** Component names used for family damping. */
+    final String[] componentNames;
+    /** Reference tray pressure for pressure correction. */
+    final double[] referencePressure;
     /** Number of trays. */
     final int nTrays;
     /** Number of components. */
@@ -5199,11 +6370,25 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     /** Whether the model has been fitted (needs at least 2 temperature points). */
     boolean fitted = false;
 
-    SimplifiedKvalueModel(int nTrays, int nComponents) {
+    /**
+     * Create a simplified K-value model.
+     *
+     * @param nTrays number of trays
+     * @param nComponents number of components
+     * @param componentNames component names in model order
+     */
+    SimplifiedKvalueModel(int nTrays, int nComponents, String[] componentNames) {
       this.nTrays = nTrays;
       this.nComponents = nComponents;
+      this.componentNames = componentNames == null ? new String[0] : componentNames.clone();
       this.coeffA = new double[nTrays][nComponents];
       this.coeffB = new double[nTrays][nComponents];
+      this.pressureCoeff = new double[nTrays][nComponents];
+      this.componentDamping = new double[nComponents];
+      this.referencePressure = new double[nTrays];
+      for (int componentIndex = 0; componentIndex < nComponents; componentIndex++) {
+        componentDamping[componentIndex] = componentSlopeDamping(componentName(componentIndex));
+      }
     }
 
     /**
@@ -5223,9 +6408,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * @param temps1 tray temperatures at point 1
      * @param kvalues2 K-values at temperature T2 [tray][component]
      * @param temps2 tray temperatures at point 2
+     * @param pressures tray pressure reference in bara
      */
-    void fit(double[][] kvalues1, double[] temps1, double[][] kvalues2, double[] temps2) {
+    void fit(double[][] kvalues1, double[] temps1, double[][] kvalues2, double[] temps2,
+        double[] pressures) {
       for (int i = 0; i < nTrays; i++) {
+        referencePressure[i] = pressures != null && i < pressures.length
+            && Double.isFinite(pressures[i]) && pressures[i] > 0.0 ? pressures[i] : 1.0;
         double t1 = temps1[i];
         double t2 = temps2[i];
         if (t1 < 1.0 || t2 < 1.0 || Math.abs(t1 - t2) < 0.01) {
@@ -5234,6 +6423,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
             if (kvalues2[i][j] > 1e-30) {
               coeffA[i][j] = Math.log(kvalues2[i][j]);
               coeffB[i][j] = 0.0;
+              pressureCoeff[i][j] = componentPressureCoefficient(componentName(j));
             }
           }
           continue;
@@ -5247,11 +6437,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           if (k1 > 1e-30 && k2 > 1e-30) {
             double lnK1 = Math.log(k1);
             double lnK2 = Math.log(k2);
-            coeffB[i][j] = (lnK2 - lnK1) / dInvT;
+            coeffB[i][j] = componentDamping[j] * (lnK2 - lnK1) / dInvT;
             coeffA[i][j] = lnK1 - coeffB[i][j] * invT1;
+            pressureCoeff[i][j] = componentPressureCoefficient(componentName(j));
           } else if (k2 > 1e-30) {
             coeffA[i][j] = Math.log(k2);
             coeffB[i][j] = 0.0;
+            pressureCoeff[i][j] = componentPressureCoefficient(componentName(j));
           }
         }
       }
@@ -5264,16 +6456,76 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * @param tray tray index
      * @param component component index
      * @param temperature temperature in Kelvin
+     * @param pressure pressure in bara
      * @return estimated K-value
      */
-    double predict(int tray, int component, double temperature) {
+    double predict(int tray, int component, double temperature, double pressure) {
       if (temperature < 1.0) {
         return 1.0;
       }
       double lnK = coeffA[tray][component] + coeffB[tray][component] / temperature;
+      double reference = referencePressure[tray] > 0.0 ? referencePressure[tray] : 1.0;
+      if (Double.isFinite(pressure) && pressure > 0.0) {
+        lnK += pressureCoeff[tray][component] * Math.log(pressure / reference);
+      }
       // Bound to prevent extreme values
       lnK = Math.max(-30.0, Math.min(30.0, lnK));
       return Math.exp(lnK);
+    }
+
+    /** Mark the surrogate as requiring a rigorous outer-loop refit. */
+    void invalidate() {
+      fitted = false;
+    }
+
+    /**
+     * Get a component name by index.
+     *
+     * @param component component index
+     * @return component name, or an empty string when unavailable
+     */
+    private String componentName(int component) {
+      return component >= 0 && component < componentNames.length && componentNames[component] != null
+          ? componentNames[component] : "";
+    }
+
+    /**
+     * Return family damping for K-temperature slopes.
+     *
+     * @param name component name
+     * @return damping factor for fitted slopes
+     */
+    private double componentSlopeDamping(String name) {
+      String normalized = name == null ? "" : name.toLowerCase();
+      if (normalized.contains("water") || normalized.contains("teg")
+          || normalized.contains("meg")) {
+        return 0.45;
+      }
+      if (normalized.contains("co2") || normalized.contains("h2s")) {
+        return 0.70;
+      }
+      if (normalized.contains("nitrogen") || normalized.contains("methane")) {
+        return 0.90;
+      }
+      return 0.80;
+    }
+
+    /**
+     * Return a Wilson-style pressure coefficient for component families.
+     *
+     * @param name component name
+     * @return pressure coefficient for {@code ln(K)}
+     */
+    private double componentPressureCoefficient(String name) {
+      String normalized = name == null ? "" : name.toLowerCase();
+      if (normalized.contains("water") || normalized.contains("teg")
+          || normalized.contains("meg")) {
+        return -0.35;
+      }
+      if (normalized.contains("co2") || normalized.contains("h2s")) {
+        return -0.75;
+      }
+      return -1.0;
     }
   }
 
@@ -5301,13 +6553,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       double trayTemp = fluid.getTemperature();
+      double trayPressure = fluid.getPressure();
       int nc = fluid.getNumberOfComponents();
 
       // Estimate new compositions using simplified K-values at current temperature
       double sumKx = 0.0;
       double[] kPredicted = new double[nc];
       for (int j = 0; j < nc; j++) {
-        kPredicted[j] = model.predict(i, j, trayTemp);
+        kPredicted[j] = model.predict(i, j, trayTemp, trayPressure);
         double xj = fluid.getPhase(1).getComponent(j).getx();
         sumKx += kPredicted[j] * xj;
       }
@@ -6886,6 +8139,43 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Set the number of continuation stages used for adjustable product specifications.
+   *
+   * <p>
+   * A value of one preserves the legacy direct outer-loop solve. Values above one ramp purity,
+   * recovery, and product-flow targets from the current product value to the final target over the
+   * requested number of stages.
+   * </p>
+   *
+   * @param steps number of homotopy stages, must be positive
+   * @throws IllegalArgumentException if {@code steps} is less than one
+   */
+  public void setSpecificationHomotopySteps(int steps) {
+    if (steps < 1) {
+      throw new IllegalArgumentException("Specification homotopy steps must be positive");
+    }
+    specificationHomotopySteps = steps;
+  }
+
+  /**
+   * Get the configured number of specification continuation stages.
+   *
+   * @return configured homotopy stage count
+   */
+  public int getSpecificationHomotopySteps() {
+    return specificationHomotopySteps;
+  }
+
+  /**
+   * Get the number of specification continuation stages completed by the latest solve.
+   *
+   * @return latest completed homotopy stage count, or zero when homotopy was not used
+   */
+  public int getLastSpecificationHomotopyStepCount() {
+    return lastSpecificationHomotopyStepCount;
+  }
+
+  /**
    * Retrieve the latest MESH residual vector infinity norm.
    *
    * @return maximum absolute MESH residual, or {@code Double.NaN} if no solve has been run
@@ -7012,6 +8302,31 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         .append(getEffectiveStageCount()).append(" equilibrium stages").append("\n");
     diagnostics.append("  Iterations: ").append(lastIterationCount).append("\n");
     diagnostics.append("  Solve time: ").append(lastSolveTimeSeconds).append(" s\n");
+    if (lastAutoSolverSummary != null && !lastAutoSolverSummary.trim().isEmpty()) {
+      diagnostics.append("  Automatic solver candidates:\n");
+      diagnostics.append(lastAutoSolverSummary);
+      if (!lastAutoSolverSummary.endsWith("\n")) {
+        diagnostics.append("\n");
+      }
+    }
+    if (lastAutoFeasibilityReport != null && !lastAutoFeasibilityReport.trim().isEmpty()) {
+      diagnostics.append("  Automatic solver feasibility pre-screen:\n");
+      diagnostics.append(indentReport(lastAutoFeasibilityReport, "    "));
+    }
+    if (lastInitializationReport != null && !lastInitializationReport.trim().isEmpty()) {
+      diagnostics.append("  Initialization:\n");
+      diagnostics.append(indentReport(lastInitializationReport, "    "));
+    }
+    if (lastAutoSolverHistory != null && !lastAutoSolverHistory.isEmpty()) {
+      diagnostics.append("  Automatic solver history:\n");
+      for (String event : lastAutoSolverHistory) {
+        diagnostics.append("    - ").append(event).append("\n");
+      }
+    }
+    if (specificationHomotopySteps > 1 || lastSpecificationHomotopyStepCount > 0) {
+      diagnostics.append("  Specification homotopy: ").append(lastSpecificationHomotopyStepCount)
+          .append("/").append(specificationHomotopySteps).append(" stages\n");
+    }
     if (solverType == SolverType.MATRIX_INSIDE_OUT || lastMatrixInsideOutWarmStartUsed
         || lastMatrixInsideOutWarmStartBypassed) {
       diagnostics.append("  Matrix inside-out:\n");
@@ -7024,6 +8339,31 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       diagnostics.append("    matrix temperature residual: ")
           .append(lastMatrixInsideOutTemperatureResidual).append(" K\n");
       diagnostics.append("    matrix time: ").append(lastMatrixInsideOutSolveTimeSeconds)
+          .append(" s\n");
+    }
+    if (solverType == SolverType.INSIDE_OUT || solverType == SolverType.MATRIX_INSIDE_OUT
+        || lastInsideOutOuterFlashSweeps > 0 || lastInsideOutInnerLoopIterations > 0) {
+      diagnostics.append("  Inside-out model:\n");
+      diagnostics.append("    rigorous flash sweeps: ").append(lastInsideOutOuterFlashSweeps)
+          .append("\n");
+      diagnostics.append("    simplified inner iterations: ")
+          .append(lastInsideOutInnerLoopIterations).append("\n");
+      diagnostics.append("    K-value residual: ").append(lastInsideOutKValueResidual).append("\n");
+        diagnostics.append("    surrogate residual: ").append(lastInsideOutSurrogateResidual)
+          .append("\n");
+        diagnostics.append("    surrogate resets: ").append(lastInsideOutSurrogateResetCount)
+          .append("\n");
+    }
+    if (solverType == SolverType.NAPHTALI_SANDHOLM || lastNaphtaliAnalyticJacobianColumns > 0
+        || lastNaphtaliFiniteDifferenceJacobianColumns > 0) {
+      diagnostics.append("  Naphtali-Sandholm Jacobian:\n");
+      diagnostics.append("    analytic/frozen-thermo columns: ")
+          .append(lastNaphtaliAnalyticJacobianColumns).append("\n");
+      diagnostics.append("    finite-difference columns: ")
+          .append(lastNaphtaliFiniteDifferenceJacobianColumns).append("\n");
+      diagnostics.append("    thermodynamic evaluations: ")
+          .append(lastNaphtaliThermoEvaluationCount).append("\n");
+      diagnostics.append("    Jacobian build time: ").append(lastNaphtaliJacobianBuildTimeSeconds)
           .append(" s\n");
     }
     diagnostics.append("  Residuals:\n");
@@ -7071,6 +8411,25 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       diagnostics.append("    - No immediate convergence issue detected.\n");
     }
     return diagnostics.toString();
+  }
+
+  /**
+   * Indent a multi-line report for embedding in diagnostics.
+   *
+   * @param report report text to indent
+   * @param indent indentation prefix
+   * @return indented report ending with a newline when the input is non-empty
+   */
+  private String indentReport(String report, String indent) {
+    if (report == null || report.trim().isEmpty()) {
+      return "";
+    }
+    StringBuilder indented = new StringBuilder();
+    String[] lines = report.split("\\R");
+    for (String line : lines) {
+      indented.append(indent).append(line).append("\n");
+    }
+    return indented.toString();
   }
 
   /**
@@ -8940,8 +10299,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem();
     SystemInterface bottomTraySystem = trays.get(0).getLiquidOutStream().getThermoSystem();
     double[] topProductComponentMoles = getPhaseFilteredComponentMoles(topTraySystem, true);
-    double[] bottomProductComponentMoles =
-        getPhaseFilteredComponentMoles(bottomTraySystem, false);
+    double[] bottomProductComponentMoles = getPhaseFilteredComponentMoles(bottomTraySystem, false);
     if (feedComponentMoles.length != topProductComponentMoles.length
         || feedComponentMoles.length != bottomProductComponentMoles.length) {
       return false;
@@ -8996,9 +10354,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (hasReboiler && !isLiquidLikeProduct(liquidOutStream)) {
       double terminalProductTotalMoles = 0.0;
       for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
-        terminalProductTotalMoles +=
-            Math.max(0.0,
-                feedComponentMoles[componentIndex] - sideDrawComponentMoles[componentIndex]);
+        terminalProductTotalMoles += Math.max(0.0,
+            feedComponentMoles[componentIndex] - sideDrawComponentMoles[componentIndex]);
       }
       if (terminalProductTotalMoles > 1.0e-20 && currentProductTotalMoles > 1.0e-20) {
         double overallScale = terminalProductTotalMoles / currentProductTotalMoles;
@@ -9682,9 +11039,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Tray terminal thermo systems can hold both an ascending gas phase and a descending liquid
    * phase. When reconciling a single-phase public product against the external feed mass balance,
    * the moles attributed to the product must come only from the relevant phase. If no matching
-   * phase is present (e.g. a single-phase oil reboiler or pure-vapor distillate), this method
-   * falls back to {@link #getComponentMoles(SystemInterface)} so the reconciliation step still
-   * has a non-zero composition to scale.
+   * phase is present (e.g. a single-phase oil reboiler or pure-vapor distillate), this method falls
+   * back to {@link #getComponentMoles(SystemInterface)} so the reconciliation step still has a
+   * non-zero composition to scale.
    * </p>
    *
    * @param system thermodynamic system to inspect
@@ -9732,6 +11089,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastUsedFeedFlashFallback = false;
     lastSolveStatus = SolveStatus.NOT_RUN;
     lastSolveStatusReason = "No solve has been run";
+    lastAutoSolverSummary = "";
+    lastAutoSolverHistory = new ArrayList<String>();
+    lastAutoFeasibilityReport = "";
+    lastInitializationReport = "";
+    lastSpecificationHomotopyStepCount = 0;
+    resetNaphtaliTelemetry();
     terminalGasProductDrawStream = null;
     terminalLiquidProductDrawStream = null;
     resetMatrixInsideOutDiagnostics();
@@ -9744,6 +11107,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastMatrixInsideOutIterationCount = 0;
     lastMatrixInsideOutTemperatureResidual = Double.NaN;
     lastMatrixInsideOutSolveTimeSeconds = 0.0;
+    lastInsideOutOuterFlashSweeps = 0;
+    lastInsideOutInnerLoopIterations = 0;
+    lastInsideOutKValueResidual = Double.NaN;
+    lastInsideOutSurrogateResidual = Double.NaN;
+    lastInsideOutSurrogateResetCount = 0;
+    resetNaphtaliTelemetry();
+  }
+
+  /**
+   * Reset Naphtali-Sandholm speed telemetry.
+   */
+  private void resetNaphtaliTelemetry() {
+    lastNaphtaliAnalyticJacobianColumns = 0;
+    lastNaphtaliFiniteDifferenceJacobianColumns = 0;
+    lastNaphtaliThermoEvaluationCount = 0;
+    lastNaphtaliJacobianBuildTimeSeconds = 0.0;
   }
 
   /**
@@ -9860,6 +11239,26 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public ValidationResult validateSpecifications() {
     ValidationResult result = new ValidationResult(getName() + ":specifications");
     validateColumnSpecifications(result);
+    return result;
+  }
+
+  /**
+   * Screen product specifications for likely feasibility issues before solving.
+   *
+   * <p>
+   * This extends {@link #validateSpecifications()} with shortcut-stage screening when the column is
+   * an ordinary two-product fractionator. It is intended for {@link SolverType#AUTO}, notebooks,
+   * and agent workflows that need early diagnostics before spending time in the rigorous solver.
+   * </p>
+   *
+   * @return validation result with errors, warnings, and informational shortcut notes
+   */
+  public ValidationResult screenSpecificationFeasibility() {
+    ValidationResult result = new ValidationResult(getName() + ":specification-feasibility");
+    validateColumnSpecifications(result);
+    validateColumnTearVariables(result);
+    validateInitializationFeasibility(result);
+    validateShortcutStageFeasibility(result);
     return result;
   }
 
@@ -10011,6 +11410,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     validateColumnSpecification(result, topSpecification, ColumnSpecification.ProductLocation.TOP);
     validateColumnSpecification(result, bottomSpecification,
         ColumnSpecification.ProductLocation.BOTTOM);
+    validateSpecificationPair(result);
   }
 
   /**
@@ -10049,6 +11449,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         result.addError("sidedraw.iterations", "Side-draw iteration limit is not positive",
             "Set maxIterations to a positive value on the side-draw specification");
       }
+      if ("mol/hr".equals(specification.getFlowUnit())) {
+        double totalFeedFlow = getTotalFeedFlowMolPerHour();
+        if (Double.isFinite(totalFeedFlow) && totalFeedFlow > 0.0
+            && specification.getTargetFlowRate() > 0.90 * totalFeedFlow) {
+          result.addWarning("sidedraw.activeBound",
+              "Side-draw molar target is close to or above total feed flow",
+              "Reduce the side-draw target or add product-flow specifications that reserve traffic");
+        }
+      }
     }
   }
 
@@ -10072,6 +11481,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           || pumparound.getReturnTrayNumber() >= numberOfTrays) {
         result.addError("pumparound.tray", "Pumparound tray is outside the column",
             "Use draw and return tray numbers between 0 and column.getNumberOfTrays() - 1");
+      }
+      if (!Double.isFinite(pumparound.getDrawFraction()) || pumparound.getDrawFraction() < 0.0
+          || pumparound.getDrawFraction() > 1.0) {
+        result.addError("pumparound.drawFraction", "Pumparound draw fraction is outside 0..1",
+            "Set a finite draw fraction between 0 and 1");
+      } else if (pumparound.getDrawFraction() > 0.90) {
+        result.addWarning("pumparound.activeBound",
+            "Pumparound draw fraction is close to the full tray liquid traffic",
+            "Reduce the draw fraction or add more pumparound/side-draw stages");
       }
     }
   }
@@ -10147,6 +11565,377 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     validateSpecificationHardware(result, specification);
     validateSpecificationComponent(result, specification);
+    validateSpecificationProductFlow(result, specification);
+    validateSpecificationActiveBounds(result, specification);
+  }
+
+  /**
+   * Warn about specification targets close to active physical/manipulated-variable bounds.
+   *
+   * @param result validation result receiving issues
+   * @param specification specification to inspect
+   */
+  private void validateSpecificationActiveBounds(ValidationResult result,
+      ColumnSpecification specification) {
+    double target = specification.getTargetValue();
+    if (specification.getType() == ColumnSpecification.SpecificationType.PRODUCT_PURITY
+        || specification.getType() == ColumnSpecification.SpecificationType.COMPONENT_RECOVERY) {
+      double boundBand = Math.max(5.0 * specification.getTolerance(), 1.0e-4);
+      if (target < boundBand || target > 1.0 - boundBand) {
+        result.addWarning("specification.activeBound",
+            "Component quality/recovery target is close to an active 0/1 bound",
+            "Use homotopy or relax the target before tightening to product specification");
+      }
+    } else if (specification.getType() == ColumnSpecification.SpecificationType.REFLUX_RATIO
+        && target < Math.max(1.0e-8, specification.getTolerance())) {
+      result.addWarning("specification.activeBound",
+          "Reflux/boilup ratio target is close to zero",
+          "Increase the ratio or switch to a duty/temperature specification for startup");
+    } else if (specification.getType() == ColumnSpecification.SpecificationType.DUTY
+        && Math.abs(target) < 1.0e-9) {
+      result.addWarning("specification.activeBound", "Duty target is effectively zero",
+          "Use an explicit temperature or reflux/boilup specification if no heat duty is intended");
+    }
+  }
+
+  /**
+   * Validate cross-end specification consistency.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validateSpecificationPair(ValidationResult result) {
+    if (topSpecification == null || bottomSpecification == null) {
+      return;
+    }
+    validateSharedComponentRecoveryPair(result);
+    validateVolatilityDirection(result);
+    validateProductFlowSpecificationSum(result);
+  }
+
+  /**
+   * Validate that top and bottom recovery targets do not demand more than the feed inventory.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validateSharedComponentRecoveryPair(ValidationResult result) {
+    if (topSpecification.getType() != ColumnSpecification.SpecificationType.COMPONENT_RECOVERY
+        || bottomSpecification.getType() != ColumnSpecification.SpecificationType.COMPONENT_RECOVERY
+        || !topSpecification.getComponentName().equals(bottomSpecification.getComponentName())) {
+      return;
+    }
+    double recoverySum = topSpecification.getTargetValue() + bottomSpecification.getTargetValue();
+    double tolerance = topSpecification.getTolerance() + bottomSpecification.getTolerance();
+    if (recoverySum > 1.0 + tolerance) {
+      result.addError("specification.recovery",
+          "Top and bottom recovery targets exceed the available component inventory",
+          "Reduce at least one recovery target so their sum is not greater than 1.0");
+    }
+  }
+
+  /**
+   * Warn when a top component specification is less volatile than the bottom component spec.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validateVolatilityDirection(ValidationResult result) {
+    if (!componentBasedSpecification(topSpecification)
+        || !componentBasedSpecification(bottomSpecification)
+        || topSpecification.getComponentName().equals(bottomSpecification.getComponentName())) {
+      return;
+    }
+    StreamInterface feed = firstExternalFeedStream();
+    if (feed == null || feed.getFluid() == null) {
+      return;
+    }
+    double topVolatility =
+        estimateWilsonVolatility(feed.getFluid(), topSpecification.getComponentName());
+    double bottomVolatility =
+        estimateWilsonVolatility(feed.getFluid(), bottomSpecification.getComponentName());
+    if (Double.isFinite(topVolatility) && Double.isFinite(bottomVolatility)
+        && topVolatility <= bottomVolatility) {
+      result.addWarning("specification.volatility",
+          "Top specification component appears less volatile than bottom specification component",
+          "Check that light and heavy key components are assigned to the correct column ends");
+    }
+  }
+
+  /**
+   * Validate product-flow specifications against total feed flow.
+   *
+   * @param result validation result receiving issues
+   * @param specification specification to validate
+   */
+  private void validateSpecificationProductFlow(ValidationResult result,
+      ColumnSpecification specification) {
+    if (specification.getType() != ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE) {
+      return;
+    }
+    double totalFeedFlow = getTotalFeedFlowMolPerHour();
+    if (Double.isFinite(totalFeedFlow) && totalFeedFlow > 0.0
+        && specification.getTargetValue() > totalFeedFlow * (1.0 + specification.getTolerance())) {
+      result.addError("specification.productFlow",
+          "Product-flow target is higher than the total column feed flow",
+          "Set product-flow targets below the total feed molar flow or change the feed rate");
+    }
+  }
+
+  /**
+   * Validate that simultaneous top and bottom product-flow specs fit within the feed flow.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validateProductFlowSpecificationSum(ValidationResult result) {
+    if (topSpecification.getType() != ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE
+        || bottomSpecification
+            .getType() != ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE) {
+      return;
+    }
+    double totalFeedFlow = getTotalFeedFlowMolPerHour();
+    double productFlowSum =
+        topSpecification.getTargetValue() + bottomSpecification.getTargetValue();
+    double tolerance = topSpecification.getTolerance() + bottomSpecification.getTolerance();
+    if (Double.isFinite(totalFeedFlow) && totalFeedFlow > 0.0
+        && productFlowSum > totalFeedFlow * (1.0 + tolerance)) {
+      result.addError("specification.productFlow",
+          "Top and bottom product-flow targets exceed the total column feed flow",
+          "Reduce one product-flow target or increase the feed rate");
+    }
+  }
+
+  /**
+   * Screen feed phase behavior and volatility spread used by automatic initialization.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validateInitializationFeasibility(ValidationResult result) {
+    StreamInterface feed = firstExternalFeedStream();
+    if (feed == null || feed.getFluid() == null) {
+      result.addInfo("Initialization screening skipped: no external feed fluid available");
+      return;
+    }
+    List<AutoShortcutComponent> components = getShortcutComponentCandidates(feed);
+    if (components.size() < 2) {
+      result.addWarning("initialization.volatility",
+          "Fewer than two volatile feed components are available for K-value profile seeding",
+          "Add light/heavy key components or set explicit seed temperatures for difficult columns");
+      return;
+    }
+    double minimumAdjacentAlpha = Double.POSITIVE_INFINITY;
+    for (int index = 1; index < components.size(); index++) {
+      double denominator = Math.max(1.0e-12, components.get(index).getVolatility());
+      minimumAdjacentAlpha =
+          Math.min(minimumAdjacentAlpha, components.get(index - 1).getVolatility() / denominator);
+    }
+    if (Double.isFinite(minimumAdjacentAlpha) && minimumAdjacentAlpha < 1.05) {
+      result.addWarning("initialization.volatility",
+          "Adjacent key-component volatility ratio is close to unity",
+          "Expect slow convergence; consider more trays, higher reflux, or explicit key specs");
+    } else if (Double.isFinite(minimumAdjacentAlpha)) {
+      result.addInfo("Initialization volatility screening passed with minimum adjacent alpha "
+          + minimumAdjacentAlpha);
+    }
+    int phaseCount = estimateFeedPhaseCount(feed);
+    if (phaseCount <= 1) {
+      result.addInfo("Feed TP flash is single phase at feed conditions; profile seed will use "
+          + "Wilson K-values and tray pressure profile");
+    } else {
+      result
+          .addInfo("Feed TP flash resolved " + phaseCount + " phases for initialization screening");
+    }
+    validatePhaseStabilityIndicators(result, feed, minimumAdjacentAlpha);
+  }
+
+  /**
+   * Add phase/stability indicators for difficult commercial column initialization cases.
+   *
+   * @param result validation result receiving issues
+   * @param feed feed stream used for screening
+   * @param minimumAdjacentAlpha minimum adjacent volatility ratio from component screening
+   */
+  private void validatePhaseStabilityIndicators(ValidationResult result, StreamInterface feed,
+      double minimumAdjacentAlpha) {
+    SystemInterface fluid = feed.getFluid();
+    double reducedTemperature = safeReducedTemperature(fluid);
+    double reducedPressure = safeReducedPressure(fluid);
+    if (Double.isFinite(reducedTemperature) && Double.isFinite(reducedPressure)
+        && reducedTemperature > 0.85 && reducedTemperature < 1.15 && reducedPressure > 0.5
+        && reducedPressure < 1.8) {
+      result.addWarning("initialization.nearCritical",
+          "Feed is close to the mixture critical region by reduced T/P screening",
+          "Use AUTO with profile seeding or provide explicit tray-temperature seeds");
+    }
+    if (containsPolarOrAssociatingComponent(fluid)) {
+      result.addWarning("initialization.polar",
+          "Feed contains water/TEG/MEG or another strongly polar component",
+          "Use an appropriate CPA/electrolyte fluid model and expect slower K-value convergence");
+    }
+    if (Double.isFinite(minimumAdjacentAlpha) && minimumAdjacentAlpha < 1.20
+        && isSinglePhaseAtFeed(feed)) {
+      result.addWarning("initialization.stability",
+          "Single-phase feed and low relative volatility make tray phase creation sensitive",
+          "Seed top/bottom temperatures near dew/bubble conditions or relax specifications");
+    }
+  }
+
+  /**
+   * Estimate mixture reduced temperature with guarded critical-property access.
+   *
+   * @param fluid fluid to inspect
+   * @return reduced temperature, or {@link Double#NaN} when unavailable
+   */
+  private double safeReducedTemperature(SystemInterface fluid) {
+    try {
+      double criticalTemperature = fluid.getTC();
+      return criticalTemperature > 0.0 ? fluid.getTemperature() / criticalTemperature : Double.NaN;
+    } catch (RuntimeException exception) {
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Estimate mixture reduced pressure with guarded critical-property access.
+   *
+   * @param fluid fluid to inspect
+   * @return reduced pressure, or {@link Double#NaN} when unavailable
+   */
+  private double safeReducedPressure(SystemInterface fluid) {
+    try {
+      double criticalPressure = fluid.getPC();
+      return criticalPressure > 0.0 ? fluid.getPressure() / criticalPressure : Double.NaN;
+    } catch (RuntimeException exception) {
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Check whether the feed contains strongly polar or associating components.
+   *
+   * @param fluid fluid to inspect
+   * @return {@code true} when a polar/associating component is present
+   */
+  private boolean containsPolarOrAssociatingComponent(SystemInterface fluid) {
+    String[] names = fluid.getComponentNames();
+    if (names == null) {
+      return false;
+    }
+    for (String name : names) {
+      String normalized = name == null ? "" : name.toLowerCase();
+      if (normalized.contains("water") || normalized.contains("teg")
+          || normalized.contains("meg") || normalized.contains("methanol")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Check whether a feed flash is single phase.
+   *
+   * @param feed feed stream to inspect
+   * @return {@code true} when a guarded flash reports one phase
+   */
+  private boolean isSinglePhaseAtFeed(StreamInterface feed) {
+    return estimateFeedPhaseCount(feed) <= 1;
+  }
+
+  /**
+   * Estimate phase count from a guarded feed TP flash.
+   *
+   * @param feed feed stream to inspect
+   * @return number of phases, or zero when unavailable
+   */
+  private int estimateFeedPhaseCount(StreamInterface feed) {
+    try {
+      SystemInterface system = feed.getThermoSystem().clone();
+      ThermodynamicOperations operations = new ThermodynamicOperations(system);
+      operations.TPflash();
+      system.initProperties();
+      return system.getNumberOfPhases();
+    } catch (RuntimeException exception) {
+      logger.debug("Feed phase screening failed for column {}", getName(), exception);
+      return 0;
+    }
+  }
+
+  /**
+   * Screen current tray count against shortcut minimum and actual stage estimates.
+   *
+   * @param result validation result receiving issues
+   */
+  private void validateShortcutStageFeasibility(ValidationResult result) {
+    AutoShortcutKeySelection selection = selectAutomaticShortcutKeys();
+    if (!selection.isUsable()) {
+      result.addInfo("Shortcut screening skipped: " + selection.getMessage());
+      return;
+    }
+    double savedTopPressure = topTrayPressure;
+    double savedBottomPressure = bottomTrayPressure;
+    ShortcutDistillationColumn shortcut = null;
+    try {
+      shortcut = createSolvedShortcut(selection.getFeedStream(), selection.getLightKey(),
+          selection.getHeavyKey(), selection.getLightKeyRecovery(), selection.getHeavyKeyRecovery(),
+          selection.getRefluxRatioMultiplier());
+    } finally {
+      topTrayPressure = savedTopPressure;
+      bottomTrayPressure = savedBottomPressure;
+    }
+    if (shortcut == null || !shortcut.isSolved()) {
+      result.addWarning("shortcut", "Shortcut feasibility calculation did not solve",
+          "Check key-component order, feed phase behavior, and recovery targets");
+      return;
+    }
+    double effectiveStages = getEffectiveStageCount();
+    if (shortcut.getMinimumNumberOfStages() > effectiveStages + 1.0e-9) {
+      result.addWarning("shortcut.stages",
+          "Configured column has fewer stages than the Fenske minimum stage estimate",
+          "Increase tray count, relax recoveries/purities, or check light/heavy key selection");
+    } else if (shortcut.getActualNumberOfStages() > Math.max(1.0, effectiveStages) * 1.5) {
+      result.addWarning("shortcut.stages",
+          "Shortcut actual-stage estimate is much higher than the configured stage count",
+          "Expect slow convergence or infeasible specs unless reflux/duty is increased");
+    } else {
+      result.addInfo("Shortcut stage screening passed for light key " + selection.getLightKey()
+          + " and heavy key " + selection.getHeavyKey());
+    }
+  }
+
+  /**
+   * Get the total external feed flow in mol/hr.
+   *
+   * @return total feed flow in mol/hr, or {@link Double#NaN} if unavailable
+   */
+  private double getTotalFeedFlowMolPerHour() {
+    double total = 0.0;
+    boolean foundFeed = false;
+    for (StreamInterface feed : getAllExternalFeedStreams()) {
+      if (feed != null && feed.getFluid() != null) {
+        total += feed.getFluid().getFlowRate("mol/hr");
+        foundFeed = true;
+      }
+    }
+    for (StreamInterface feed : unassignedFeedStreams) {
+      if (feed != null && feed.getFluid() != null) {
+        total += feed.getFluid().getFlowRate("mol/hr");
+        foundFeed = true;
+      }
+    }
+    return foundFeed ? total : Double.NaN;
+  }
+
+  /**
+   * Get the first external feed stream for volatility diagnostics.
+   *
+   * @return first available external feed stream, or {@code null}
+   */
+  private StreamInterface firstExternalFeedStream() {
+    List<StreamInterface> feeds = getAllExternalFeedStreams();
+    if (!feeds.isEmpty()) {
+      return feeds.get(0);
+    }
+    if (!unassignedFeedStreams.isEmpty()) {
+      return unassignedFeedStreams.get(0);
+    }
+    return null;
   }
 
   /**
@@ -10593,6 +12382,127 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Get the latest automatic solver candidate trace.
+   *
+   * @return candidate trace from {@link SolverType#AUTO}, or an empty string when automatic mode
+   *         was not used in the latest solve
+   */
+  public String getLastAutoSolverSummary() {
+    return lastAutoSolverSummary;
+  }
+
+  /**
+   * Get the latest automatic solver feasibility pre-screen report.
+   *
+   * @return feasibility report text, or an empty string when AUTO has not run
+   */
+  public String getLastAutoFeasibilityReport() {
+    return lastAutoFeasibilityReport;
+  }
+
+  /**
+   * Get the latest automatic initialization report.
+   *
+   * @return initialization report text, or an empty string when no seed was attempted
+   */
+  public String getLastInitializationReport() {
+    return lastInitializationReport;
+  }
+
+  /**
+   * Get structured history events from the latest automatic solver run.
+   *
+   * @return immutable list of automatic solver pipeline events
+   */
+  public List<String> getLastAutoSolverHistory() {
+    if (lastAutoSolverHistory == null) {
+      return Collections.emptyList();
+    }
+    return Collections.unmodifiableList(lastAutoSolverHistory);
+  }
+
+  /**
+   * Get rigorous inside-out flash sweeps from the latest solve.
+   *
+   * @return number of rigorous flash sweeps
+   */
+  public int getLastInsideOutOuterFlashSweeps() {
+    return lastInsideOutOuterFlashSweeps;
+  }
+
+  /**
+   * Get simplified inside-out inner-loop iterations from the latest solve.
+   *
+   * @return number of simplified inner-loop iterations
+   */
+  public int getLastInsideOutInnerLoopIterations() {
+    return lastInsideOutInnerLoopIterations;
+  }
+
+  /**
+   * Get the latest inside-out K-value residual.
+   *
+   * @return latest K-value residual, or {@link Double#NaN} if unavailable
+   */
+  public double getLastInsideOutKValueResidual() {
+    return lastInsideOutKValueResidual;
+  }
+
+  /**
+   * Get the latest simplified inside-out surrogate residual.
+   *
+   * @return latest surrogate residual, or {@link Double#NaN} if no inner loop was used
+   */
+  public double getLastInsideOutSurrogateResidual() {
+    return lastInsideOutSurrogateResidual;
+  }
+
+  /**
+   * Get the number of simplified inside-out surrogate resets from the latest solve.
+   *
+   * @return number of surrogate resets
+   */
+  public int getLastInsideOutSurrogateResetCount() {
+    return lastInsideOutSurrogateResetCount;
+  }
+
+  /**
+   * Get the number of semi-analytic Naphtali-Sandholm Jacobian columns from the latest solve.
+   *
+   * @return number of analytic/frozen-thermo Jacobian columns
+   */
+  public int getLastNaphtaliAnalyticJacobianColumns() {
+    return lastNaphtaliAnalyticJacobianColumns;
+  }
+
+  /**
+   * Get the number of finite-difference Naphtali-Sandholm Jacobian columns from the latest solve.
+   *
+   * @return number of finite-difference Jacobian columns
+   */
+  public int getLastNaphtaliFiniteDifferenceJacobianColumns() {
+    return lastNaphtaliFiniteDifferenceJacobianColumns;
+  }
+
+  /**
+   * Get thermodynamic evaluations used by the latest Naphtali-Sandholm solve.
+   *
+   * @return number of thermodynamic state evaluations
+   */
+  public int getLastNaphtaliThermoEvaluationCount() {
+    return lastNaphtaliThermoEvaluationCount;
+  }
+
+  /**
+   * Get Jacobian build time from the latest Naphtali-Sandholm solve.
+   *
+   * @return Jacobian build time in seconds
+   */
+  public double getLastNaphtaliJacobianBuildTimeSeconds() {
+    return lastNaphtaliJacobianBuildTimeSeconds;
+  }
+
+  /**
    * Returns the list of trays in this column.
    *
    * @return list of {@link SimpleTray} objects
@@ -10705,6 +12615,32 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Convenience method to specify condenser duty as a top column specification.
+   *
+   * @param duty condenser duty in watts
+   */
+  public void setCondenserDutySpecification(double duty) {
+    if (hasCondenser) {
+      getCondenser().setHeatInput(duty);
+    }
+    this.topSpecification = new ColumnSpecification(ColumnSpecification.SpecificationType.DUTY,
+        ColumnSpecification.ProductLocation.TOP, duty);
+  }
+
+  /**
+   * Convenience method to specify reboiler duty as a bottom column specification.
+   *
+   * @param duty reboiler duty in watts
+   */
+  public void setReboilerDutySpecification(double duty) {
+    if (hasReboiler) {
+      getReboiler().setHeatInput(duty);
+    }
+    this.bottomSpecification = new ColumnSpecification(ColumnSpecification.SpecificationType.DUTY,
+        ColumnSpecification.ProductLocation.BOTTOM, duty);
+  }
+
+  /**
    * Convenience method to specify a target component recovery in the top product.
    *
    * @param componentName the component to constrain
@@ -10726,6 +12662,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.bottomSpecification =
         new ColumnSpecification(ColumnSpecification.SpecificationType.COMPONENT_RECOVERY,
             ColumnSpecification.ProductLocation.BOTTOM, recovery, componentName);
+  }
+
+  /**
+   * Convenience method to specify a target molar flow rate for the top product.
+   *
+   * @param flowRate the desired flow rate value
+   * @param unit the flow rate unit (currently interpreted by the specification solver as mol/hr)
+   */
+  public void setTopProductFlowRate(double flowRate, String unit) {
+    this.topSpecification =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
+            ColumnSpecification.ProductLocation.TOP, flowRate);
   }
 
   /**

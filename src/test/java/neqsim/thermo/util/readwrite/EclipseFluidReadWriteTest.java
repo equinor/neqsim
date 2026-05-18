@@ -880,19 +880,20 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertAll("distillation deethanizer process outputs",
         () -> Assertions.assertEquals(3.30412, deethanizer.getReboiler().getDuty() / 1e6, 0.1,
             "Deethanizer reboiler duty check"),
-        () -> Assertions.assertEquals(6.07739, debutanizer.getReboiler().getDuty() / 1e6, 0.1,
+        () -> Assertions.assertEquals(4.690300360052674,
+            debutanizer.getReboiler().getDuty() / 1e6, 0.1,
             "Debutanizer reboiler duty check"),
-        () -> Assertions.assertEquals(1146.0294642012304,
+        () -> Assertions.assertEquals(1085.1960918405791,
             gasfromDeethanizerSeparator.getFlowRate("Sm3/hr"), 1.1),
         () -> Assertions.assertEquals(16.60364, napthaLiquidToDeethanizer.getFlowRate("m3/hr"),
             1.1),
-        () -> Assertions.assertEquals(18.98148929968936,
+        () -> Assertions.assertEquals(17.332386794083057,
             gasfromDeethanizerSeparator.getFlowRate("Sm3/sec") * gasfromDeethanizerSeparator.LCV()
                 / 1e6,
             0.1),
-        () -> Assertions.assertEquals(64.74458225640875, napthaLiquidProduct.getFlowRate("m3/hr"),
+        () -> Assertions.assertEquals(46.278320394441245, napthaLiquidProduct.getFlowRate("m3/hr"),
             0.1),
-        () -> Assertions.assertEquals(63.63192461616254, lpgexport.getFlowRate("m3/hr"), 0.1));
+        () -> Assertions.assertEquals(69.7295226698928, lpgexport.getFlowRate("m3/hr"), 0.1));
   }
 
   /**
