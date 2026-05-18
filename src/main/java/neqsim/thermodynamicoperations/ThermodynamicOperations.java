@@ -2747,8 +2747,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
           for (int compIndex = 0; compIndex < fraction.length; compIndex++) {
             // Loop all input component names / fractions
             for (int index = 0; index < components.size(); index++) {
-              if (systemComponents[compIndex] == ComponentInterface
-                  .getComponentNameFromAlias(components.get(index))) {
+              if (systemComponents[compIndex]
+                  .equals(ComponentInterface.getComponentNameFromAlias(components.get(index)))) {
                 fraction[compIndex] = onlineFractions.get(index).get(t).doubleValue();
                 break;
               }
