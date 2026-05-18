@@ -72,7 +72,8 @@ public class DistillationAcceleratorDiagnosticTest {
             DistillationColumn.SolverType.INSIDE_OUT,
             DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
             DistillationColumn.SolverType.WEGSTEIN, DistillationColumn.SolverType.SUM_RATES,
-            DistillationColumn.SolverType.NEWTON};
+            DistillationColumn.SolverType.NEWTON, DistillationColumn.SolverType.MESH_RESIDUAL,
+            DistillationColumn.SolverType.NAPHTALI_SANDHOLM};
 
     System.out.println();
     System.out.println("=== Accelerator pre-fallback diagnostic (5-tray deethanizer) ===");
@@ -97,6 +98,17 @@ public class DistillationAcceleratorDiagnosticTest {
       System.out.println("  lastIterationCount             = " + column.getLastIterationCount());
       System.out.println("  lastMassResidual               = " + column.getLastMassResidual());
       System.out.println("  lastEnergyResidual             = " + column.getLastEnergyResidual());
+        System.out.println("  lastMeshResidualNorm           = " + column.getLastMeshResidualNorm());
+        System.out.println("  lastMeshMaterialResidualNorm   = "
+          + column.getLastMeshMaterialResidualNorm());
+        System.out.println("  lastMeshEquilibriumResidualNorm= "
+          + column.getLastMeshEquilibriumResidualNorm());
+        System.out.println("  lastMeshSummationResidualNorm  = "
+          + column.getLastMeshSummationResidualNorm());
+        System.out.println("  lastMeshEnergyResidualNorm     = "
+          + column.getLastMeshEnergyResidualNorm());
+        System.out.println("  lastMeshProductDrawResidualNorm= "
+          + column.getLastMeshProductDrawResidualNorm());
       System.out.println("  lastInternalTrafficRatio       = " + column.getLastInternalTrafficRatio());
       System.out.println("  gasOut flow (kg/hr)            = "
           + column.getGasOutStream().getFlowRate("kg/hr"));
@@ -160,6 +172,12 @@ public class DistillationAcceleratorDiagnosticTest {
         return;
       case NEWTON:
         column.solveNewton(id);
+        return;
+      case MESH_RESIDUAL:
+        column.solveMeshResidual(id);
+        return;
+      case NAPHTALI_SANDHOLM:
+        column.solveNaphtaliSandholm(id);
         return;
       default:
         throw new IllegalArgumentException("Unsupported solver: " + type);

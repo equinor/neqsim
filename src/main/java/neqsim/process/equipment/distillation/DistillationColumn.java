@@ -1808,8 +1808,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double warmStartTemperatureResidual = lastTemperatureResidual;
     double warmStartMassResidual = lastMassResidual;
     double warmStartEnergyResidual = lastEnergyResidual;
+    double baselineGasFlow = getProductFlowKgPerHour(gasOutStream);
+    double baselineLiquidFlow = getProductFlowKgPerHour(liquidOutStream);
 
-    NaphtaliSandholmSolver solver = new NaphtaliSandholmSolver(this);
+    DistillationColumn candidate;
+    try {
+      candidate = (DistillationColumn) this.copy();
+    } catch (RuntimeException exception) {
+      logger.debug("Naphtali-Sandholm skipped because candidate copy failed for column {}.",
+          getName(), exception);
+      return;
+    }
+
+    NaphtaliSandholmSolver solver = new NaphtaliSandholmSolver(candidate);
     solver.setMaxIterations(Math.max(2, Math.min(maxNumberOfIterations, getEffectiveStageCount())));
     solver.setResidualTolerance(meshResidualTolerance);
     boolean accepted = solver.solve(id);
@@ -1823,11 +1834,30 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         finiteMinimum(warmStartTemperatureResidual, solver.getLastTemperatureResidual());
     double massResidual = finiteOr(solver.getLastMassBalanceError(), warmStartMassResidual);
     double energyResidual = finiteOr(solver.getLastEnergyResidual(), warmStartEnergyResidual);
-    finalizeSolve(id, warmStartIterations + solver.getLastIterations(), temperatureResidual,
+    candidate.finalizeSolve(id, warmStartIterations + solver.getLastIterations(), temperatureResidual,
         massResidual, energyResidual, startTime);
-    updateMeshResiduals();
+    candidate.updateMeshResiduals();
     double acceptedMeshResidual =
-        lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm();
+      candidate.lastMeshResidual == null ? Double.NaN : candidate.lastMeshResidual.getInfinityNorm();
+    if (!candidate.solved()) {
+      logger.debug(
+        "Naphtali-Sandholm rejected for column {}; candidate residual {} did not satisfy "
+          + "the active convergence gates.",
+        getName(), Double.valueOf(acceptedMeshResidual));
+      return;
+    }
+
+    if (!meshPolishProductSplitMatches(candidate, baselineGasFlow, baselineLiquidFlow)) {
+      logger.debug(
+        "Naphtali-Sandholm rejected for column {}; product split changed from gas/liquid "
+          + "{}/{} kg/hr to {}/{} kg/hr.",
+        getName(), Double.valueOf(baselineGasFlow), Double.valueOf(baselineLiquidFlow),
+        Double.valueOf(getProductFlowKgPerHour(candidate.gasOutStream)),
+        Double.valueOf(getProductFlowKgPerHour(candidate.liquidOutStream)));
+      return;
+    }
+
+    acceptSolvedStateCandidate(candidate);
     logger.debug("Naphtali-Sandholm accepted for column {}; residual {} -> {}", getName(),
         Double.valueOf(baselineMeshResidual), Double.valueOf(acceptedMeshResidual));
   }
@@ -5735,10 +5765,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Decide whether sum-rates acceleration should be routed to the guarded damped solver.
    *
-   * @return {@code true} while the sum-rates accelerator is guarded by damped substitution
+   * @return {@code true} when the sum-rates accelerator should be guarded by damped substitution
    */
   private boolean useGuardedSumRatesFallback() {
-    return false;
+    return hasCondenser || hasReboiler;
   }
 
   /**
@@ -5770,7 +5800,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     if (useGuardedSumRatesFallback()) {
+      markSolverTypeUsed(SolverType.DAMPED_SUBSTITUTION);
       solveDampedSubstitution(id);
+      if (lastSolveStatus == SolveStatus.RIGOROUS_CONVERGED
+          || lastSolveStatus == SolveStatus.RECONCILED_PRODUCTS) {
+        setLastSolveStatus(lastSolveStatus,
+            "Sum-rates is guarded to damped substitution for columns with condenser/reboiler "
+                + "energy equipment");
+      }
       return;
     }
 
