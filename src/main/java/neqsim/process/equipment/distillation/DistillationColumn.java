@@ -653,6 +653,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private transient StreamInterface terminalLiquidProductDrawStream = null;
   /** Duration of the latest solve step in seconds. */
   private double lastSolveTimeSeconds = 0.0;
+  /** Rigorous inside-out outer flash sweeps performed by the latest inside-out solve. */
+  private transient int lastInsideOutOuterFlashSweeps = 0;
+  /** Simplified inside-out inner-loop iterations performed by the latest inside-out solve. */
+  private transient int lastInsideOutInnerLoopIterations = 0;
+  /** Latest inside-out K-value residual. */
+  private transient double lastInsideOutKValueResidual = Double.NaN;
+  /** Latest simplified inside-out surrogate temperature residual. */
+  private transient double lastInsideOutSurrogateResidual = Double.NaN;
+  /** Number of simplified inside-out surrogate resets in the latest solve. */
+  private transient int lastInsideOutSurrogateResetCount = 0;
   /** Whether matrix inside-out used a matrix warm-start on the latest solve. */
   private transient boolean lastMatrixInsideOutWarmStartUsed = false;
   /** Whether matrix inside-out bypassed the matrix warm-start on the latest solve. */
@@ -663,6 +673,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private transient double lastMatrixInsideOutTemperatureResidual = Double.NaN;
   /** Matrix warm-start wall time from the latest solve in seconds. */
   private transient double lastMatrixInsideOutSolveTimeSeconds = 0.0;
+  /** Latest Naphtali-Sandholm semi-analytic Jacobian column count. */
+  private transient int lastNaphtaliAnalyticJacobianColumns = 0;
+  /** Latest Naphtali-Sandholm finite-difference Jacobian column count. */
+  private transient int lastNaphtaliFiniteDifferenceJacobianColumns = 0;
+  /** Latest Naphtali-Sandholm tray thermodynamic evaluation count. */
+  private transient int lastNaphtaliThermoEvaluationCount = 0;
+  /** Latest Naphtali-Sandholm thermodynamic cache hit count. */
+  private transient int lastNaphtaliThermoCacheHitCount = 0;
+  /** Latest Naphtali-Sandholm Jacobian build wall time in seconds. */
+  private transient double lastNaphtaliJacobianBuildTimeSeconds = 0.0;
+  /** Latest Naphtali-Sandholm block-tridiagonal linear solve count. */
+  private transient int lastNaphtaliBlockLinearSolveCount = 0;
+  /** Latest Naphtali-Sandholm dense fallback linear solve count. */
+  private transient int lastNaphtaliDenseLinearSolveCount = 0;
+  /** Latest Naphtali-Sandholm linear solve wall time in seconds. */
+  private transient double lastNaphtaliLinearSolveTimeSeconds = 0.0;
 
   /**
    * Instead of Map&lt;Integer,StreamInterface&gt;, we store a list of feed streams per tray number.
@@ -2042,6 +2068,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     solver.setMaxIterations(Math.max(2, Math.min(maxNumberOfIterations, getEffectiveStageCount())));
     solver.setResidualTolerance(meshResidualTolerance);
     boolean accepted = solver.solve(id);
+    storeNaphtaliTelemetry(solver);
+    candidate.storeNaphtaliTelemetry(solver);
     if (!accepted) {
       logger.debug("Naphtali-Sandholm kept warm-start state for column {}; residual={}", getName(),
           Double.valueOf(baselineMeshResidual));
@@ -2079,6 +2107,23 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     acceptSolvedStateCandidate(candidate);
     logger.debug("Naphtali-Sandholm accepted for column {}; residual {} -> {}", getName(),
         Double.valueOf(baselineMeshResidual), Double.valueOf(acceptedMeshResidual));
+  }
+
+  /**
+   * Store telemetry reported by a Naphtali-Sandholm solver instance.
+   *
+   * @param solver solver instance containing latest linearization and thermodynamic metrics
+   */
+  private void storeNaphtaliTelemetry(NaphtaliSandholmSolver solver) {
+    lastNaphtaliAnalyticJacobianColumns = solver.getLastAnalyticJacobianColumns();
+    lastNaphtaliFiniteDifferenceJacobianColumns =
+        solver.getLastFiniteDifferenceJacobianColumns();
+    lastNaphtaliThermoEvaluationCount = solver.getLastThermoEvaluationCount();
+    lastNaphtaliThermoCacheHitCount = solver.getLastThermoCacheHitCount();
+    lastNaphtaliJacobianBuildTimeSeconds = solver.getLastJacobianBuildTimeSeconds();
+    lastNaphtaliBlockLinearSolveCount = solver.getLastBlockLinearSolveCount();
+    lastNaphtaliDenseLinearSolveCount = solver.getLastDenseLinearSolveCount();
+    lastNaphtaliLinearSolveTimeSeconds = solver.getLastLinearSolveTimeSeconds();
   }
 
   /**
@@ -2258,11 +2303,25 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.terminalGasProductDrawStream = candidate.terminalGasProductDrawStream;
     this.terminalLiquidProductDrawStream = candidate.terminalLiquidProductDrawStream;
     this.lastSolveTimeSeconds = candidate.lastSolveTimeSeconds;
+    this.lastInsideOutOuterFlashSweeps = candidate.lastInsideOutOuterFlashSweeps;
+    this.lastInsideOutInnerLoopIterations = candidate.lastInsideOutInnerLoopIterations;
+    this.lastInsideOutKValueResidual = candidate.lastInsideOutKValueResidual;
+    this.lastInsideOutSurrogateResidual = candidate.lastInsideOutSurrogateResidual;
+    this.lastInsideOutSurrogateResetCount = candidate.lastInsideOutSurrogateResetCount;
     this.lastMatrixInsideOutWarmStartUsed = candidate.lastMatrixInsideOutWarmStartUsed;
     this.lastMatrixInsideOutWarmStartBypassed = candidate.lastMatrixInsideOutWarmStartBypassed;
     this.lastMatrixInsideOutIterationCount = candidate.lastMatrixInsideOutIterationCount;
     this.lastMatrixInsideOutTemperatureResidual = candidate.lastMatrixInsideOutTemperatureResidual;
     this.lastMatrixInsideOutSolveTimeSeconds = candidate.lastMatrixInsideOutSolveTimeSeconds;
+    this.lastNaphtaliAnalyticJacobianColumns = candidate.lastNaphtaliAnalyticJacobianColumns;
+    this.lastNaphtaliFiniteDifferenceJacobianColumns =
+      candidate.lastNaphtaliFiniteDifferenceJacobianColumns;
+    this.lastNaphtaliThermoEvaluationCount = candidate.lastNaphtaliThermoEvaluationCount;
+    this.lastNaphtaliThermoCacheHitCount = candidate.lastNaphtaliThermoCacheHitCount;
+    this.lastNaphtaliJacobianBuildTimeSeconds = candidate.lastNaphtaliJacobianBuildTimeSeconds;
+    this.lastNaphtaliBlockLinearSolveCount = candidate.lastNaphtaliBlockLinearSolveCount;
+    this.lastNaphtaliDenseLinearSolveCount = candidate.lastNaphtaliDenseLinearSolveCount;
+    this.lastNaphtaliLinearSolveTimeSeconds = candidate.lastNaphtaliLinearSolveTimeSeconds;
     this.hasBeenSolvedBefore = candidate.hasBeenSolvedBefore;
     this.lastTotalFeedFlow = candidate.lastTotalFeedFlow;
     this.doInitializion = candidate.doInitializion;
@@ -5075,6 +5134,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param id calculation identifier
    */
   void solveInsideOut(UUID id) {
+    resetInsideOutTelemetry();
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
       return;
@@ -5151,6 +5211,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double[] prevOuterTemps = new double[numberOfTrays];
     int outerIterCount = 0; // counts rigorous (outer) iterations
     int totalFlashSweeps = 0; // tracks flash count for diagnostics
+    int totalInnerLoopIterations = 0;
+    double latestSurrogateResidual = Double.NaN;
 
     int baseIterationLimit = computeIterationLimit();
     int iterationLimit = baseIterationLimit;
@@ -5275,6 +5337,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         for (int inner = 0; inner < innerLoopSteps; inner++) {
           double innerTempResidual = innerLoopIteration(kModel, relaxation);
           latestInnerTempResidual = innerTempResidual;
+          latestSurrogateResidual = innerTempResidual;
+          totalInnerLoopIterations++;
           // Log inner iteration (inner iters don't count in outer iteration budget)
           logger.debug("inside-out INNER step {}/{} tempErr={}", inner + 1, innerLoopSteps,
               innerTempResidual);
@@ -5410,6 +5474,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
     }
 
+    lastInsideOutOuterFlashSweeps = totalFlashSweeps;
+    lastInsideOutInnerLoopIterations = totalInnerLoopIterations;
+    lastInsideOutKValueResidual = kValueResidual;
+    lastInsideOutSurrogateResidual = latestSurrogateResidual;
+    lastInsideOutSurrogateResetCount = 0;
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
   }
 
@@ -7249,6 +7318,123 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Retrieve rigorous inside-out outer flash sweeps from the latest solve.
+   *
+   * @return number of rigorous outside flash sweeps
+   */
+  public int getLastInsideOutOuterFlashSweeps() {
+    return lastInsideOutOuterFlashSweeps;
+  }
+
+  /**
+   * Retrieve simplified inside-out inner-loop iterations from the latest solve.
+   *
+   * @return number of surrogate inner-loop iterations
+   */
+  public int getLastInsideOutInnerLoopIterations() {
+    return lastInsideOutInnerLoopIterations;
+  }
+
+  /**
+   * Retrieve the latest inside-out K-value residual.
+   *
+   * @return K-value residual, or {@code Double.NaN} if inside-out was not run
+   */
+  public double getLastInsideOutKValueResidual() {
+    return lastInsideOutKValueResidual;
+  }
+
+  /**
+   * Retrieve the latest simplified inside-out surrogate residual.
+   *
+   * @return surrogate temperature residual, or {@code Double.NaN} if no surrogate loop ran
+   */
+  public double getLastInsideOutSurrogateResidual() {
+    return lastInsideOutSurrogateResidual;
+  }
+
+  /**
+   * Retrieve the latest simplified inside-out surrogate reset count.
+   *
+   * @return number of surrogate resets in the latest solve
+   */
+  public int getLastInsideOutSurrogateResetCount() {
+    return lastInsideOutSurrogateResetCount;
+  }
+
+  /**
+   * Retrieve latest Naphtali-Sandholm semi-analytic Jacobian columns.
+   *
+   * @return semi-analytic Jacobian column count
+   */
+  public int getLastNaphtaliAnalyticJacobianColumns() {
+    return lastNaphtaliAnalyticJacobianColumns;
+  }
+
+  /**
+   * Retrieve latest Naphtali-Sandholm finite-difference Jacobian columns.
+   *
+   * @return finite-difference Jacobian column count
+   */
+  public int getLastNaphtaliFiniteDifferenceJacobianColumns() {
+    return lastNaphtaliFiniteDifferenceJacobianColumns;
+  }
+
+  /**
+   * Retrieve latest Naphtali-Sandholm thermodynamic evaluation count.
+   *
+   * @return tray thermodynamic evaluations performed by the latest Naphtali solve
+   */
+  public int getLastNaphtaliThermoEvaluationCount() {
+    return lastNaphtaliThermoEvaluationCount;
+  }
+
+  /**
+   * Retrieve latest Naphtali-Sandholm thermodynamic cache hit count.
+   *
+   * @return tray thermodynamic evaluations avoided by cache reuse
+   */
+  public int getLastNaphtaliThermoCacheHitCount() {
+    return lastNaphtaliThermoCacheHitCount;
+  }
+
+  /**
+   * Retrieve latest Naphtali-Sandholm Jacobian build wall time.
+   *
+   * @return Jacobian build time in seconds
+   */
+  public double getLastNaphtaliJacobianBuildTimeSeconds() {
+    return lastNaphtaliJacobianBuildTimeSeconds;
+  }
+
+  /**
+   * Retrieve latest Naphtali-Sandholm block-tridiagonal linear solve count.
+   *
+   * @return block-tridiagonal solve count
+   */
+  public int getLastNaphtaliBlockLinearSolveCount() {
+    return lastNaphtaliBlockLinearSolveCount;
+  }
+
+  /**
+   * Retrieve latest Naphtali-Sandholm dense fallback linear solve count.
+   *
+   * @return dense linear solve count
+   */
+  public int getLastNaphtaliDenseLinearSolveCount() {
+    return lastNaphtaliDenseLinearSolveCount;
+  }
+
+  /**
+   * Retrieve latest Naphtali-Sandholm linear solve wall time.
+   *
+   * @return linear solve time in seconds
+   */
+  public double getLastNaphtaliLinearSolveTimeSeconds() {
+    return lastNaphtaliLinearSolveTimeSeconds;
+  }
+
+  /**
    * Retrieve the latest top specification residual.
    *
    * @return top specification residual as current value minus target value
@@ -7451,6 +7637,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       diagnostics.append("  Specification homotopy: ").append(lastSpecificationHomotopyStepCount)
           .append("/").append(specificationHomotopySteps).append(" stages\n");
     }
+    if (lastInsideOutOuterFlashSweeps > 0 || lastInsideOutInnerLoopIterations > 0) {
+      diagnostics.append("  Inside-out model:\n");
+      diagnostics.append("    outer flash sweeps: ").append(lastInsideOutOuterFlashSweeps)
+        .append("\n");
+      diagnostics.append("    inner loop iterations: ").append(lastInsideOutInnerLoopIterations)
+        .append("\n");
+      diagnostics.append("    k-value residual: ").append(lastInsideOutKValueResidual)
+        .append("\n");
+      diagnostics.append("    surrogate residual: ").append(lastInsideOutSurrogateResidual)
+        .append("\n");
+      diagnostics.append("    surrogate resets: ").append(lastInsideOutSurrogateResetCount)
+        .append("\n");
+    }
     if (solverType == SolverType.MATRIX_INSIDE_OUT || lastMatrixInsideOutWarmStartUsed
         || lastMatrixInsideOutWarmStartBypassed) {
       diagnostics.append("  Matrix inside-out:\n");
@@ -7465,6 +7664,27 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       diagnostics.append("    matrix time: ").append(lastMatrixInsideOutSolveTimeSeconds)
           .append(" s\n");
     }
+      if (lastNaphtaliAnalyticJacobianColumns > 0
+        || lastNaphtaliFiniteDifferenceJacobianColumns > 0
+        || lastNaphtaliThermoEvaluationCount > 0) {
+        diagnostics.append("  Naphtali-Sandholm Jacobian:\n");
+        diagnostics.append("    semi-analytic columns: ")
+          .append(lastNaphtaliAnalyticJacobianColumns).append("\n");
+        diagnostics.append("    finite-difference columns: ")
+          .append(lastNaphtaliFiniteDifferenceJacobianColumns).append("\n");
+        diagnostics.append("    thermodynamic evaluations: ")
+          .append(lastNaphtaliThermoEvaluationCount).append("\n");
+        diagnostics.append("    thermodynamic cache hits: ")
+          .append(lastNaphtaliThermoCacheHitCount).append("\n");
+        diagnostics.append("    jacobian build time: ")
+          .append(lastNaphtaliJacobianBuildTimeSeconds).append(" s\n");
+        diagnostics.append("    block linear solves: ")
+          .append(lastNaphtaliBlockLinearSolveCount).append("\n");
+        diagnostics.append("    dense linear solves: ")
+          .append(lastNaphtaliDenseLinearSolveCount).append("\n");
+        diagnostics.append("    linear solve time: ").append(lastNaphtaliLinearSolveTimeSeconds)
+          .append(" s\n");
+      }
     diagnostics.append("  Residuals:\n");
     diagnostics.append("    temperature: ").append(lastTemperatureResidual).append(" K (tolerance ")
         .append(getEffectiveTemperatureTolerance()).append(")\n");
@@ -10174,9 +10394,32 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastInitializationReport = "";
     lastAutoSolverHistory = new ArrayList<String>();
     lastSpecificationHomotopyStepCount = 0;
+    resetInsideOutTelemetry();
+    resetNaphtaliTelemetry();
     terminalGasProductDrawStream = null;
     terminalLiquidProductDrawStream = null;
     resetMatrixInsideOutDiagnostics();
+  }
+
+  /** Reset rigorous inside-out telemetry fields. */
+  private void resetInsideOutTelemetry() {
+    lastInsideOutOuterFlashSweeps = 0;
+    lastInsideOutInnerLoopIterations = 0;
+    lastInsideOutKValueResidual = Double.NaN;
+    lastInsideOutSurrogateResidual = Double.NaN;
+    lastInsideOutSurrogateResetCount = 0;
+  }
+
+  /** Reset Naphtali-Sandholm telemetry fields. */
+  private void resetNaphtaliTelemetry() {
+    lastNaphtaliAnalyticJacobianColumns = 0;
+    lastNaphtaliFiniteDifferenceJacobianColumns = 0;
+    lastNaphtaliThermoEvaluationCount = 0;
+    lastNaphtaliThermoCacheHitCount = 0;
+    lastNaphtaliJacobianBuildTimeSeconds = 0.0;
+    lastNaphtaliBlockLinearSolveCount = 0;
+    lastNaphtaliDenseLinearSolveCount = 0;
+    lastNaphtaliLinearSolveTimeSeconds = 0.0;
   }
 
   /** Reset matrix inside-out warm-start diagnostics. */
@@ -11266,6 +11509,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Convenience method to specify a target molar flow rate for the top product.
+   *
+   * @param flowRate the desired flow rate value
+   * @param unit the flow rate unit (currently expected as {@code mol/hr})
+   */
+  public void setTopProductFlowRate(double flowRate, String unit) {
+    this.topSpecification =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
+            ColumnSpecification.ProductLocation.TOP, flowRate);
+  }
+
+  /**
    * Convenience method to specify a target molar flow rate for the bottom product.
    *
    * @param flowRate the desired flow rate value
@@ -11277,6 +11532,26 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.bottomSpecification =
         new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE,
             ColumnSpecification.ProductLocation.BOTTOM, flowRate);
+  }
+
+  /**
+   * Convenience method to specify a target condenser duty.
+   *
+   * @param duty target condenser duty in watts
+   */
+  public void setCondenserDutySpecification(double duty) {
+    this.topSpecification = new ColumnSpecification(ColumnSpecification.SpecificationType.DUTY,
+        ColumnSpecification.ProductLocation.TOP, duty);
+  }
+
+  /**
+   * Convenience method to specify a target reboiler duty.
+   *
+   * @param duty target reboiler duty in watts
+   */
+  public void setReboilerDutySpecification(double duty) {
+    this.bottomSpecification = new ColumnSpecification(ColumnSpecification.SpecificationType.DUTY,
+        ColumnSpecification.ProductLocation.BOTTOM, duty);
   }
 
   // ======================== Builder pattern ========================
