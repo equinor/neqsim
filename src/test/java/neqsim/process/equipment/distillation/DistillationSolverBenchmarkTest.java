@@ -179,6 +179,48 @@ public class DistillationSolverBenchmarkTest {
   }
 
   /**
+   * Test matrix inside-out always runs rigorous polishing after an accepted large-column warm
+   * start.
+   */
+  @Test
+  public void matrixInsideOutWarmStartIsFollowedByRigorousPolishOnLargeColumn() {
+    SystemInterface system = new SystemSrkEos(323.15, 10.0);
+    system.addComponent("propane", 1.0);
+    system.addComponent("n-butane", 1.0);
+    system.setMixingRule("classic");
+
+    Stream feed = new Stream("large_matrix_feed", system);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.setTemperature(323.15);
+    feed.setPressure(10.0, "bara");
+    feed.run();
+
+    DistillationColumn column =
+        new DistillationColumn("large_matrix_binary_column", 14, true, true);
+    column.addFeedStream(feed, 8);
+    column.getCondenser().setOutTemperature(298.15);
+    column.getReboiler().setOutTemperature(348.15);
+    column.getCondenser().setRefluxRatio(2.0);
+    column.getReboiler().setRefluxRatio(2.0);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.0);
+    column.setMaxNumberOfIterations(80);
+    column.setTemperatureTolerance(1.0e-1);
+    column.setMassBalanceTolerance(1.0e-1);
+    column.setSolverType(DistillationColumn.SolverType.MATRIX_INSIDE_OUT);
+    column.run();
+
+    assertTrue(column.solved(),
+        "Matrix inside-out should converge: " + column.getConvergenceDiagnostics());
+    assertFalse(column.wasMatrixInsideOutWarmStartBypassed(),
+        "Large columns should attempt the matrix warm-start stage");
+    assertTrue(column.wasMatrixInsideOutWarmStartUsed(),
+        "Regression case should accept the matrix warm start before polishing");
+    assertTrue(column.getLastIterationCount() > column.getLastMatrixInsideOutIterationCount(),
+        "Rigorous polish iterations must be included after matrix warm-start iterations");
+  }
+
+  /**
    * Test convergence history is properly recorded and monotonically decreasing in the later
    * iterations.
    */

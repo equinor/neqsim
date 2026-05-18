@@ -4992,7 +4992,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return;
     }
 
-    long startTime = System.nanoTime();
     prepareColumnForSolve();
     if (numberOfTrays == 1) {
       solveSingleTray(id);
@@ -5035,75 +5034,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       setDoInitializion(true);
     }
 
-    // Early exit: if the matrix warm-start already satisfies the column's convergence contract,
-    // skip the full rigorous inside-out pass (which is otherwise pure overhead).
-    if (matrixWarmStartAccepted && tryFinalizeAfterMatrixWarmStart(id, matrixIterations,
-        matrixTemperatureResidual, matrixSolveTime, startTime)) {
-      logger
-          .debug("Matrix inside-out warm start fully converged; skipping rigorous inside-out pass. "
-              + "iterations={} residual={}", matrixIterations, matrixTemperatureResidual);
-      return;
-    }
-
     solveInsideOut(id);
     lastIterationCount += matrixIterations;
     lastSolveTimeSeconds += matrixSolveTime;
     logger.debug("Matrix inside-out stage iterations={} residual={} accepted={}", matrixIterations,
         matrixTemperatureResidual, matrixWarmStartAccepted);
-  }
-
-  /**
-   * Try to finalize the column state directly after an accepted matrix warm-start, without running
-   * the full rigorous inside-out pass. The warm-start is accepted only when the resulting state
-   * passes the full {@link #solved()} contract; otherwise the column is restored and the caller
-   * falls back to rigorous inside-out polishing.
-   *
-   * @param id calculation identifier
-   * @param matrixIterations matrix-stage iteration count to record
-   * @param matrixTemperatureResidual matrix-stage temperature residual to record
-   * @param matrixSolveTime matrix-stage wallclock time in seconds
-   * @param startTime overall {@link System#nanoTime()} timestamp when {@code solveMatrixInsideOut}
-   *        started
-   * @return {@code true} when the warm-start state satisfies {@link #solved()} and the column has
-   *         been fully finalized; {@code false} when rigorous inside-out polishing is still
-   *         required
-   */
-  private boolean tryFinalizeAfterMatrixWarmStart(UUID id, int matrixIterations,
-      double matrixTemperatureResidual, double matrixSolveTime, long startTime) {
-    // Snapshot solver diagnostics so they can be restored if early-exit is rejected.
-    double previousErr = err;
-    double previousMass = lastMassResidual;
-    double previousEnergy = lastEnergyResidual;
-    int previousIterations = lastIterationCount;
-    double previousSolveTime = lastSolveTimeSeconds;
-    boolean previousFeedFlashFallback = lastUsedFeedFlashFallback;
-
-    double massResidual;
-    double energyResidual;
-    try {
-      massResidual = getMassBalanceError();
-      energyResidual = getEnergyBalanceError();
-    } catch (RuntimeException exception) {
-      logger.debug("Matrix warm-start finalize: residual evaluation failed, "
-          + "falling back to rigorous inside-out.", exception);
-      return false;
-    }
-
-    finalizeSolve(id, matrixIterations, matrixTemperatureResidual, massResidual, energyResidual,
-        startTime);
-    lastSolveTimeSeconds = Math.max(lastSolveTimeSeconds, matrixSolveTime);
-    if (solved()) {
-      return true;
-    }
-
-    // Restore diagnostics so rigorous inside-out reports cumulative metrics correctly.
-    err = previousErr;
-    lastMassResidual = previousMass;
-    lastEnergyResidual = previousEnergy;
-    lastIterationCount = previousIterations;
-    lastSolveTimeSeconds = previousSolveTime;
-    lastUsedFeedFlashFallback = previousFeedFlashFallback;
-    return false;
   }
 
   /**
@@ -8384,10 +8319,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private double getExternalMassBalanceError() {
     double totalFeedMass = 0.0;
-    for (List<StreamInterface> feedList : feedStreams.values()) {
-      for (StreamInterface feed : feedList) {
-        totalFeedMass += Math.abs(feed.getThermoSystem().getFlowRate("kg/hr"));
-      }
+    for (StreamInterface feed : getAllExternalFeedStreams()) {
+      totalFeedMass += Math.abs(feed.getThermoSystem().getFlowRate("kg/hr"));
     }
     double externalMassBalance = Math.abs(getMassBalance("kg/hr"));
     return totalFeedMass > 1.0e-12 ? externalMassBalance / totalFeedMass : externalMassBalance;
@@ -8728,6 +8661,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private void finalizeSolve(UUID id, int iterations, double temperatureResidual,
       double massResidual, double energyResidual, long startTime) {
+    err = temperatureResidual;
     lastIterationCount = iterations;
     lastTemperatureResidual = temperatureResidual;
     lastMassResidual = massResidual;
@@ -8741,8 +8675,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
     liquidOutStream.setCalculationIdentifier(id);
 
+    captureTerminalProductDrawStreams(id);
     updateProductsFromExternalComponentBalance(id);
-    synchronizeTerminalProductDrawStreams(id);
     lastInternalTrafficRatio = getInternalTrafficRatio();
     if (!internalTrafficSatisfied()) {
       capInternalTrayTraffic();
@@ -8753,7 +8687,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if ((!internalTrafficSatisfied() || lastMassResidual > getEffectiveMassBalanceTolerance()
         || getExternalMassBalanceError() > getEffectiveMassBalanceTolerance()
         || bottomProductPhaseInvalid()) && updateProductsFromOverallFeedFlash(id)) {
-      synchronizeTerminalProductDrawStreams(id);
       lastUsedFeedFlashFallback = true;
     }
     lastMassResidual = Math.max(lastMassResidual, getExternalMassBalanceError());
@@ -8824,7 +8757,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param id calculation identifier to assign to the updated stream
    */
   private void updateProductsFromExternalComponentBalance(UUID id) {
-    if (feedStreams.isEmpty() || gasOutStream == null || liquidOutStream == null) {
+    if (getAllExternalFeedStreams().isEmpty() || gasOutStream == null || liquidOutStream == null) {
       return;
     }
 
@@ -8876,21 +8809,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Synchronizes terminal tray draw streams with the externally exposed product streams.
+   * Captures the raw terminal tray draw streams used by product-draw residual diagnostics.
    *
    * <p>
-   * The external component-balance reconciliation updates the public column products. Without this
-   * synchronization, diagnostics can compare those reconciled products against stale draw streams
-   * from before the reconciliation. The synchronized streams are kept separate from the tray outlet
-   * streams so legacy inspection of raw reboiler/condenser tray traffic is unchanged.
+   * Product reconciliation and guarded fallback updates can change the public column products after
+   * the tray solver has produced terminal draws. MESH diagnostics must compare public products to
+   * these raw terminal draws rather than to synchronized clones of the public products.
    * </p>
    *
-   * @param id calculation identifier to assign to the synchronized draw streams
+   * @param id calculation identifier to assign to the captured draw streams
    */
-  private void synchronizeTerminalProductDrawStreams(UUID id) {
-    terminalGasProductDrawStream = gasOutStream.clone();
+  private void captureTerminalProductDrawStreams(UUID id) {
+    terminalGasProductDrawStream =
+        new Stream("", trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
     terminalGasProductDrawStream.setCalculationIdentifier(id);
-    terminalLiquidProductDrawStream = liquidOutStream.clone();
+    terminalLiquidProductDrawStream =
+        new Stream("", trays.get(0).getLiquidOutStream().getThermoSystem().clone());
     terminalLiquidProductDrawStream.setCalculationIdentifier(id);
   }
 

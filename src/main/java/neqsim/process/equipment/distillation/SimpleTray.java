@@ -187,6 +187,9 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     // streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
     // ((Stream) streams.get(0)).getThermoSystem().display();
     boolean changeTo2Phase = false;
+    if (streams.isEmpty()) {
+      throw new IllegalStateException("Tray " + getName() + " has no inlet streams");
+    }
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
     if (thermoSystem2.doMultiPhaseCheck()) {
       changeTo2Phase = true;

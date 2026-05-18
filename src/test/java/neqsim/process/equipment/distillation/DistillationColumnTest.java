@@ -584,6 +584,121 @@ public class DistillationColumnTest {
   }
 
   @Test
+  public void simpleTrayWithoutInletThrowsUsefulSetupError() {
+    SimpleTray tray = new SimpleTray("empty diagnostic tray");
+
+    IllegalStateException exception =
+        assertThrows(IllegalStateException.class, () -> tray.run(UUID.randomUUID()));
+
+    assertTrue(exception.getMessage().contains("empty diagnostic tray"));
+    assertTrue(exception.getMessage().contains("no inlet streams"));
+  }
+
+  @Test
+  public void productDrawResidualUsesRawTerminalDraws() {
+    DistillationColumn column = new DistillationColumn("product draw residual", 1, false, false);
+    Stream publicTop = createTerminalRegressionStream("public top", 100.0);
+    Stream publicBottom = createTerminalRegressionStream("public bottom", 100.0);
+    Stream terminalTop = createTerminalRegressionStream("terminal top", 40.0);
+    Stream terminalBottom = createTerminalRegressionStream("terminal bottom", 160.0);
+
+    column.getGasOutStream().setThermoSystem(publicTop.getThermoSystem().clone());
+    column.getLiquidOutStream().setThermoSystem(publicBottom.getThermoSystem().clone());
+    column.getTrays().clear();
+    column.getTrays().add(new DiagnosticTray("raw terminal tray", terminalTop, terminalBottom));
+    column.setTerminalProductDrawStreamsForDiagnostics(terminalTop, terminalBottom);
+
+    ColumnMeshResidual residual = ColumnMeshResidualEvaluator.evaluate(column);
+
+    assertTrue(residual.getInfinityNorm(ColumnMeshEquationType.PRODUCT_DRAW) > 1.0e-6);
+  }
+
+  @Test
+  public void meshResidualFailsClosedWhenEnergyDiagnosticFails() {
+    DistillationColumn column = new DistillationColumn("broken residual", 1, false, false);
+    Stream publicTop = createTerminalRegressionStream("broken public top", 100.0);
+    Stream publicBottom = createTerminalRegressionStream("broken public bottom", 100.0);
+    Stream terminalTop = createTerminalRegressionStream("broken terminal top", 100.0);
+    Stream terminalBottom = createTerminalRegressionStream("broken terminal bottom", 100.0);
+
+    column.getGasOutStream().setThermoSystem(publicTop.getThermoSystem().clone());
+    column.getLiquidOutStream().setThermoSystem(publicBottom.getThermoSystem().clone());
+    column.getTrays().clear();
+    column.getTrays()
+        .add(new BrokenEnergyDiagnosticTray("broken energy tray", terminalTop, terminalBottom));
+    column.setTerminalProductDrawStreamsForDiagnostics(terminalTop, terminalBottom);
+
+    ColumnMeshResidual residual = ColumnMeshResidualEvaluator.evaluate(column);
+
+    assertTrue(!residual.isFinite());
+    assertTrue(Double.isInfinite(residual.getInfinityNorm(ColumnMeshEquationType.ENERGY)));
+  }
+
+  /** Tray fixture exposing stable terminal draw streams for residual diagnostics tests. */
+  private static class DiagnosticTray extends SimpleTray {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000L;
+    /** Vapor terminal draw stream. */
+    private final StreamInterface gasDraw;
+    /** Liquid terminal draw stream. */
+    private final StreamInterface liquidDraw;
+
+    /**
+     * Create a diagnostic tray fixture.
+     *
+     * @param name tray name
+     * @param gasDraw vapor terminal draw stream
+     * @param liquidDraw liquid terminal draw stream
+     */
+    DiagnosticTray(String name, StreamInterface gasDraw, StreamInterface liquidDraw) {
+      super(name);
+      this.gasDraw = gasDraw;
+      this.liquidDraw = liquidDraw;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public StreamInterface getGasOutStream() {
+      return gasDraw;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public StreamInterface getLiquidOutStream() {
+      return liquidDraw;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public SystemInterface getThermoSystem() {
+      return liquidDraw.getThermoSystem();
+    }
+  }
+
+  /** Tray fixture that forces the energy residual evaluator into its failure path. */
+  private static final class BrokenEnergyDiagnosticTray extends DiagnosticTray {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000L;
+
+    /**
+     * Create a broken energy diagnostic tray fixture.
+     *
+     * @param name tray name
+     * @param gasDraw vapor terminal draw stream
+     * @param liquidDraw liquid terminal draw stream
+     */
+    BrokenEnergyDiagnosticTray(String name, StreamInterface gasDraw, StreamInterface liquidDraw) {
+      super(name, gasDraw, liquidDraw);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double calcMixStreamEnthalpy() {
+      throw new IllegalStateException("forced energy diagnostic failure");
+    }
+  }
+
+  @Test
   public void repeatedInitializationDoesNotAccumulateInternalTrayStreams() {
     SystemInterface simpleSystem = new SystemSrkEos(216.0, 30.0);
     simpleSystem.addComponent("methane", 0.514168);

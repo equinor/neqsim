@@ -775,7 +775,7 @@ public class DistillationColumnMatrixSolver {
    */
   private double getFeedVaporFlow(int trayIndex) {
     double vaporFlow = 0.0;
-    for (StreamInterface feed : column.getFeedStreams(trayIndex)) {
+    for (StreamInterface feed : column.getExternalFeedStreams(trayIndex)) {
       SystemInterface feedSystem = feed.getThermoSystem();
       if (feedSystem != null && feedSystem.hasPhaseType("gas")) {
         vaporFlow += feedSystem.getPhase("gas").getFlowRate("mole/sec");
@@ -792,7 +792,7 @@ public class DistillationColumnMatrixSolver {
    */
   private double getFeedLiquidFlow(int trayIndex) {
     double liquidFlow = 0.0;
-    for (StreamInterface feed : column.getFeedStreams(trayIndex)) {
+    for (StreamInterface feed : column.getExternalFeedStreams(trayIndex)) {
       SystemInterface feedSystem = feed.getThermoSystem();
       if (feedSystem == null) {
         continue;
@@ -818,7 +818,7 @@ public class DistillationColumnMatrixSolver {
   private double getFeedComponentFlow(int trayIndex, int componentIndex) {
     double componentFlow = 0.0;
     String componentName = componentNames[componentIndex];
-    for (StreamInterface feed : column.getFeedStreams(trayIndex)) {
+    for (StreamInterface feed : column.getExternalFeedStreams(trayIndex)) {
       SystemInterface feedSystem = feed.getThermoSystem();
       if (feedSystem == null || feedSystem.getComponent(componentName) == null) {
         continue;
