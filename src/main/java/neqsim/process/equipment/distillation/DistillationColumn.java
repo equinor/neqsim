@@ -8893,10 +8893,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // accelerator solvers (Inside-Out, Newton, SUM_RATES) are more sensitive to this than DAMPED
     // because their tray-0 gas fraction is proportionally larger, which drove a degenerate per-
     // component scaling and a fallback to overall feed flash on small heavy-rich columns.
-    double[] topProductComponentMoles =
-        getPhaseFilteredComponentMoles(gasOutStream.getThermoSystem(), true);
+    //
+    // Source the moles directly from the tray terminal systems rather than from the public
+    // streams. The public streams are clones of these tray systems at this point, but reading the
+    // tray systems makes the data flow explicit and defends against any pre-call mutation of the
+    // public stream's thermo system that may collapse a two-phase tray system into a single
+    // phase.
+    SystemInterface topTraySystem =
+        trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem();
+    SystemInterface bottomTraySystem = trays.get(0).getLiquidOutStream().getThermoSystem();
+    double[] topProductComponentMoles = getPhaseFilteredComponentMoles(topTraySystem, true);
     double[] bottomProductComponentMoles =
-        getPhaseFilteredComponentMoles(liquidOutStream.getThermoSystem(), false);
+        getPhaseFilteredComponentMoles(bottomTraySystem, false);
     if (feedComponentMoles.length != topProductComponentMoles.length
         || feedComponentMoles.length != bottomProductComponentMoles.length) {
       return false;
