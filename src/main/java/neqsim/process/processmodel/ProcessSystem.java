@@ -141,6 +141,8 @@ public class ProcessSystem extends SimulationBaseClass {
   private transient ProcessGraph cachedGraph = null;
   /** Flag indicating if the cached graph needs to be rebuilt. */
   private boolean graphDirty = true;
+  /** Monotonic version for topology-derived cache invalidation in parent ProcessModels. */
+  private transient long structureVersion = 0;
   /**
    * Cached parallel execution plan: grouped nodes per level for runParallel().
    */
@@ -1577,6 +1579,12 @@ public class ProcessSystem extends SimulationBaseClass {
               throw createUnitRunException(unit, ex);
             }
           }
+        }
+
+        if (recycleController.isUseCoordinatedAcceleration()
+            && recycleController.getRecyclesAtCurrentPriority().size() > 1
+            && !recycleController.solvedCurrentPriorityLevel() && iter > 1) {
+          recycleController.runSimultaneousAcceleration();
         }
 
         if (!recycleController.solvedAll() || recycleController.hasHigherPriorityLevel()) {
@@ -3336,8 +3344,10 @@ public class ProcessSystem extends SimulationBaseClass {
     /* */
     if (recycleController.solvedAll()) {
       for (int i = 0; i < unitOperations.size(); i++) {
-        logger.info("unit " + unitOperations.get(i).getName() + " solved: "
-            + unitOperations.get(i).solved());
+        if (logger.isDebugEnabled()) {
+          logger.debug("unit " + unitOperations.get(i).getName() + " solved: "
+              + unitOperations.get(i).solved());
+        }
         if (!unitOperations.get(i).solved()) {
           return false;
         }
@@ -5543,6 +5553,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    */
   public void invalidateGraph() {
+    structureVersion++;
     graphDirty = true;
     cachedGraph = null;
     cachedParallelPlan = null;
@@ -5561,6 +5572,40 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   private void invalidateStructureCaches() {
     invalidateGraph();
+  }
+
+  /**
+   * Returns the current topology version for this process system.
+   *
+   * <p>
+   * The value increments whenever topology-derived caches are invalidated, including unit additions
+   * and explicit calls to {@link #invalidateGraph()}. Parent {@link ProcessModel}s use this to
+   * detect child wiring changes after an area has already been registered.
+   * </p>
+   *
+   * @return monotonic structure version for topology-sensitive caches
+   */
+  public long getStructureVersion() {
+    return structureVersion;
+  }
+
+  /**
+   * Enable or disable coordinated Broyden acceleration for coupled recycle groups.
+   *
+   * @param useCoordinatedAcceleration true to apply coordinated acceleration across
+   *        current-priority recycle loops
+   */
+  public void setUseCoordinatedRecycleAcceleration(boolean useCoordinatedAcceleration) {
+    recycleController.setUseCoordinatedAcceleration(useCoordinatedAcceleration);
+  }
+
+  /**
+   * Returns whether coordinated recycle acceleration is enabled.
+   *
+   * @return true if coordinated recycle acceleration is enabled
+   */
+  public boolean isUseCoordinatedRecycleAcceleration() {
+    return recycleController.isUseCoordinatedAcceleration();
   }
 
   /**
