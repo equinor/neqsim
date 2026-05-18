@@ -71,6 +71,7 @@ public class PSFlash extends QfuncFlash {
     double errorOld = 10.0e10;
     double factor = 0.8;
     double entropyTolerance = Math.max(MIN_ENTROPY_TOLERANCE, Math.abs(Sspec) * 1e-10);
+    double stagnantAcceptanceTolerance = Math.min(STAGNANT_ENTROPY_TOLERANCE, entropyTolerance);
     int stagnantIterations = 0;
 
     boolean correctFactor = true;
@@ -118,7 +119,7 @@ public class PSFlash extends QfuncFlash {
       errorOld = error;
       error = Math.abs(calcdQdT()); // Math.abs((nyTemp - oldTemp) / (nyTemp));
       if (iterations > 3 && Math.abs(error - errorOld) <= entropyTolerance
-          && error <= STAGNANT_ENTROPY_TOLERANCE) {
+          && error <= stagnantAcceptanceTolerance) {
         stagnantIterations++;
       } else {
         stagnantIterations = 0;

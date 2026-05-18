@@ -80,6 +80,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Default product draw residual tolerance when MESH residual gating is enabled.
    */
   private static final double DEFAULT_MESH_PRODUCT_DRAW_RESIDUAL_TOLERANCE = 2.0e-2;
+  /** Maximum product-flow drift allowed when accepting a MESH Newton polish candidate. */
+  private static final double MESH_POLISH_PRODUCT_FLOW_TOLERANCE = 2.0e-2;
   /**
    * Maximum internal tray traffic accepted after divergence recovery relative to external feed.
    */
@@ -1854,6 +1856,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (!Double.isFinite(baselineResidualNorm)) {
       return false;
     }
+    double baselineGasFlow = getProductFlowKgPerHour(gasOutStream);
+    double baselineLiquidFlow = getProductFlowKgPerHour(liquidOutStream);
     DistillationColumn candidate;
     try {
       candidate = (DistillationColumn) this.copy();
@@ -1879,10 +1883,71 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return false;
     }
 
+    if (!meshPolishProductSplitMatches(candidate, baselineGasFlow, baselineLiquidFlow)) {
+      logger.debug("MESH Newton polish rejected: product split changed from gas/liquid "
+          + "{}/{} kg/hr to {}/{} kg/hr.", Double.valueOf(baselineGasFlow),
+          Double.valueOf(baselineLiquidFlow),
+          Double.valueOf(getProductFlowKgPerHour(candidate.gasOutStream)),
+          Double.valueOf(getProductFlowKgPerHour(candidate.liquidOutStream)));
+      return false;
+    }
+
     acceptSolvedStateCandidate(candidate);
     logger.debug("MESH Newton polish accepted: residual {} improved baseline {}.",
         Double.valueOf(candidateResidualNorm), Double.valueOf(baselineResidualNorm));
     return true;
+  }
+
+  /**
+   * Check whether a MESH Newton polish preserved the accepted terminal product split.
+   *
+   * @param candidate candidate column after Newton polishing
+   * @param baselineGasFlow gas product flow before polishing in kg/hr
+   * @param baselineLiquidFlow liquid product flow before polishing in kg/hr
+   * @return {@code true} when both product flows remain within tolerance
+   */
+  private boolean meshPolishProductSplitMatches(DistillationColumn candidate, double baselineGasFlow,
+      double baselineLiquidFlow) {
+    if (candidate == null) {
+      return false;
+    }
+    double candidateGasFlow = getProductFlowKgPerHour(candidate.gasOutStream);
+    double candidateLiquidFlow = getProductFlowKgPerHour(candidate.liquidOutStream);
+    return productFlowWithinMeshPolishTolerance(candidateGasFlow, baselineGasFlow)
+        && productFlowWithinMeshPolishTolerance(candidateLiquidFlow, baselineLiquidFlow);
+  }
+
+  /**
+   * Read a product stream flow in kg/hr.
+   *
+   * @param stream product stream to inspect
+   * @return flow in kg/hr, or {@link Double#NaN} when unavailable
+   */
+  private double getProductFlowKgPerHour(StreamInterface stream) {
+    if (stream == null) {
+      return Double.NaN;
+    }
+    try {
+      return stream.getFlowRate("kg/hr");
+    } catch (RuntimeException exception) {
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Compare a candidate product flow against a baseline flow for MESH polish acceptance.
+   *
+   * @param candidateFlow candidate flow in kg/hr
+   * @param baselineFlow baseline flow in kg/hr
+   * @return {@code true} if the candidate flow is finite and within tolerance
+   */
+  private boolean productFlowWithinMeshPolishTolerance(double candidateFlow, double baselineFlow) {
+    if (!Double.isFinite(candidateFlow) || !Double.isFinite(baselineFlow)) {
+      return false;
+    }
+    double tolerance =
+      Math.max(1.0e-8, Math.abs(baselineFlow) * MESH_POLISH_PRODUCT_FLOW_TOLERANCE);
+    return Math.abs(candidateFlow - baselineFlow) <= tolerance;
   }
 
   /**

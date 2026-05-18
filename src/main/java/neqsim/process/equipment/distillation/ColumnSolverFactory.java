@@ -113,7 +113,8 @@ final class ColumnSolverFactory {
         }
       }
 
-      if (bestCandidate != null && bestResult != null && bestSolver != null) {
+      if (bestCandidate != null && bestResult != null && bestSolver != null
+          && bestResult.isSolved()) {
         column.acceptAutoSolverCandidate(bestCandidate, bestSolver);
         return ColumnSolveResult.from(column, bestResult.getSolverType());
       }
@@ -329,7 +330,27 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      column.solveNaphtaliSandholm(id);
+      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
+      boolean fallbackApplied = false;
+      try {
+        column.solveNaphtaliSandholm(id);
+      } catch (RuntimeException exception) {
+        applyDampedFallback(column, fallbackCandidate, id, "Naphtali-Sandholm failed", exception);
+        fallbackApplied = true;
+      }
+      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+        applyDampedFallback(column, fallbackCandidate, id,
+            "Naphtali-Sandholm required guarded feed-flash product fallback", null);
+        fallbackApplied = true;
+      }
+      if (!fallbackApplied && !column.solved()) {
+        applyDampedFallback(column, fallbackCandidate, id,
+            "Naphtali-Sandholm did not satisfy convergence criteria", null);
+        fallbackApplied = true;
+      }
+      if (!fallbackApplied) {
+        validateAcceleratedProductSplit(column, fallbackCandidate, id, "Naphtali-Sandholm");
+      }
       return ColumnSolveResult.from(column, getSolverType());
     }
 
@@ -345,7 +366,28 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      column.solveMeshResidual(id);
+      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
+      boolean fallbackApplied = false;
+      try {
+        column.solveMeshResidual(id);
+      } catch (RuntimeException exception) {
+        applyDampedFallback(column, fallbackCandidate, id, "MESH residual solve failed",
+            exception);
+        fallbackApplied = true;
+      }
+      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+        applyDampedFallback(column, fallbackCandidate, id,
+            "MESH residual solve required guarded feed-flash product fallback", null);
+        fallbackApplied = true;
+      }
+      if (!fallbackApplied && !column.solved()) {
+        applyDampedFallback(column, fallbackCandidate, id,
+            "MESH residual solve did not satisfy convergence criteria", null);
+        fallbackApplied = true;
+      }
+      if (!fallbackApplied) {
+        validateAcceleratedProductSplit(column, fallbackCandidate, id, "MESH residual");
+      }
       return ColumnSolveResult.from(column, getSolverType());
     }
 

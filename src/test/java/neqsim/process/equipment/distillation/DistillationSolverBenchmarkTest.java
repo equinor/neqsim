@@ -119,8 +119,7 @@ public class DistillationSolverBenchmarkTest {
     // All solvers should agree on product splits within 2%
     double refGas = gasFlows[0]; // DIRECT_SUBSTITUTION as reference
     for (int i = 1; i < solvers.length; i++) {
-      if (solvers[i] == DistillationColumn.SolverType.NAPHTALI_SANDHOLM
-          || solvers[i] == DistillationColumn.SolverType.MESH_RESIDUAL) {
+      if (solvers[i] == DistillationColumn.SolverType.NAPHTALI_SANDHOLM) {
         continue;
       }
       double relativeTolerance = 0.02;
