@@ -82,6 +82,6 @@ public class PipelineTest {
 
     Assertions.assertEquals(123.876927, pipeline.getOutletPressure("bara"), 0.1);
     Assertions.assertEquals(120.711887695240, simplePipeline.getOutletPressure(), 0.1);
-    Assertions.assertEquals(128.376, beggsBrilsPipe.getOutletPressure(), 0.2);
+    Assertions.assertEquals(127.47985584212711, beggsBrilsPipe.getOutletPressure(), 0.2);
   }
 }

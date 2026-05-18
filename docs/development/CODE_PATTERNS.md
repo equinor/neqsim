@@ -529,6 +529,11 @@ Stream overhead = column.getGasOutStream();
 Stream bottoms = column.getLiquidOutStream();
 ```
 
+For larger hydrocarbon columns where an inside-out warm start is useful, use
+`DistillationColumn.SolverType.MATRIX_INSIDE_OUT`. The solver adaptively bypasses the matrix
+warm-start setup on small columns and exposes `wasMatrixInsideOutWarmStartUsed()` and
+`wasMatrixInsideOutWarmStartBypassed()` diagnostics after `run()`.
+
 ### Distillation Column (Product Purity Specs)
 
 ```java

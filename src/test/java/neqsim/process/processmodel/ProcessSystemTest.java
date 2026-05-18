@@ -4,11 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
 import neqsim.process.equipment.absorber.WaterStripperColumn;
@@ -22,6 +24,7 @@ import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
@@ -29,6 +32,9 @@ import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.process.measurementdevice.WaterDewPointAnalyser;
+import neqsim.process.util.event.ProcessEvent;
+import neqsim.process.util.event.ProcessEventBus;
+import neqsim.process.util.event.ProcessEventListener;
 
 /**
  * Class for testing ProcessSystem class.
@@ -39,6 +45,95 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
   ProcessSystem p;
   String _name = "TestProcess";
+
+  private static class FailingProcessUnit extends ProcessEquipmentBaseClass {
+    private static final long serialVersionUID = 1000L;
+
+    FailingProcessUnit(String name) {
+      super(name);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void run(UUID id) {
+      throw new IllegalStateException("forced process unit failure");
+    }
+  }
+
+  private static class MassBalanceTestUnit extends ProcessEquipmentBaseClass {
+    private static final long serialVersionUID = 1000L;
+    private final StreamInterface inletStream;
+
+    MassBalanceTestUnit(String name, StreamInterface inletStream) {
+      super(name);
+      this.inletStream = inletStream;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void run(UUID id) {}
+
+    /**
+     * Gets the inlet stream used by the mass-balance fixture.
+     *
+     * @return singleton list containing the inlet stream
+     */
+    public List<StreamInterface> getInletStreams() {
+      return java.util.Collections.singletonList(inletStream);
+    }
+
+    /**
+     * Gets the singular inlet stream used by equipment that exposes both stream APIs.
+     *
+     * @return inlet stream
+     */
+    public StreamInterface getInletStream() {
+      return inletStream;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double getMassBalance(String unit) {
+      return 5.0;
+    }
+  }
+
+  private static class SharedInletFailingUnit extends FailingProcessUnit {
+    private static final long serialVersionUID = 1000L;
+    private final List<StreamInterface> inletStreams;
+
+    SharedInletFailingUnit(String name, StreamInterface inletStream) {
+      super(name);
+      this.inletStreams = java.util.Collections.singletonList(inletStream);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public List<StreamInterface> getInletStreams() {
+      return inletStreams;
+    }
+  }
+
+  private static class PassiveMultiInputTestUnit extends ProcessEquipmentBaseClass {
+    private static final long serialVersionUID = 1000L;
+    private final List<StreamInterface> inletStreams;
+
+    PassiveMultiInputTestUnit(String name, StreamInterface firstInlet,
+        StreamInterface secondInlet) {
+      super(name);
+      this.inletStreams = java.util.Arrays.asList(firstInlet, secondInlet);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void run(UUID id) {}
+
+    /** {@inheritDoc} */
+    @Override
+    public List<StreamInterface> getInletStreams() {
+      return inletStreams;
+    }
+  }
 
   @BeforeEach
   public void setUp() {
@@ -115,6 +210,32 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(1, p.size());
   }
 
+    @Test
+    public void convergenceDiagnosticsIncludeUnsolvedColumnDetails() {
+        neqsim.thermo.system.SystemInterface fluid =
+                new neqsim.thermo.system.SystemSrkEos(289.15, 14.0);
+        fluid.addComponent("propane", 0.35);
+        fluid.addComponent("n-butane", 0.40);
+        fluid.addComponent("n-pentane", 0.25);
+        fluid.setMixingRule("classic");
+
+        Stream feed = new Stream("process diagnostic feed", fluid);
+        feed.setFlowRate(100.0, "kg/hr");
+        feed.run();
+
+        DistillationColumn column = new DistillationColumn("process diagnostic debutanizer", 10, true,
+                true);
+        column.addFeedStream(feed, 9);
+        column.getCondenser().setRefluxRatio(0.1);
+        p.add(column);
+
+        String diagnostics = p.getConvergenceDiagnostics();
+
+        Assertions.assertTrue(diagnostics.contains("process diagnostic debutanizer"));
+        Assertions.assertTrue(diagnostics.contains("DistillationColumn Diagnostics"));
+        Assertions.assertTrue(diagnostics.contains("near top/condenser"));
+    }
+
   @Test
   public void testRemoveUnit() {
     Separator sep = new Separator("Separator");
@@ -144,6 +265,80 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     // Enable again
     p.setUseOptimizedExecution(true);
     Assertions.assertTrue(p.isUseOptimizedExecution());
+  }
+
+  @Test
+  public void testRunPropagatesUnitFailure() {
+    ProcessSystem process = new ProcessSystem();
+    process.add(new FailingProcessUnit("FailingUnit"));
+
+    RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> process.run());
+    Assertions.assertTrue(thrown.getMessage().contains("FailingUnit"));
+  }
+
+  @Test
+  public void testRunPublishesUnitFailureEvent() {
+    ProcessSystem process = new ProcessSystem();
+    process.setPublishEvents(true);
+    process.add(new FailingProcessUnit("FailingUnit"));
+
+    ProcessEventBus bus = ProcessEventBus.getInstance();
+    bus.clearHistory();
+    final List<ProcessEvent> captured = new java.util.ArrayList<ProcessEvent>();
+    ProcessEventListener listener = new ProcessEventListener() {
+      @Override
+      public void onEvent(ProcessEvent event) {
+        captured.add(event);
+      }
+    };
+
+    bus.subscribe(ProcessEvent.EventType.ERROR, listener);
+    try {
+      Assertions.assertThrows(RuntimeException.class, () -> process.run());
+      Assertions.assertEquals(1, captured.size());
+      Assertions.assertEquals(ProcessEvent.EventType.ERROR, captured.get(0).getType());
+      Assertions.assertEquals("FailingUnit", captured.get(0).getSource());
+      Assertions
+          .assertTrue(captured.get(0).getDescription().contains("forced process unit failure"));
+    } finally {
+      bus.unsubscribe(ProcessEvent.EventType.ERROR, listener);
+      bus.clearHistory();
+    }
+  }
+
+  @Test
+  public void testRunParallelPropagatesFailureFromSharedInputGroup() throws InterruptedException {
+    neqsim.thermo.system.SystemInterface firstFluid =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    firstFluid.addComponent("methane", 1.0);
+    firstFluid.setMixingRule("classic");
+    Stream firstInlet = new Stream("shared input feed", firstFluid);
+
+    neqsim.thermo.system.SystemInterface secondFluid =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    secondFluid.addComponent("methane", 1.0);
+    secondFluid.setMixingRule("classic");
+    Stream secondInlet = new Stream("second input feed", secondFluid);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(firstInlet);
+    process.add(secondInlet);
+    process.add(new SharedInletFailingUnit("SharedFailingUnit", firstInlet));
+    process.add(new PassiveMultiInputTestUnit("PassiveMultiInputUnit", firstInlet, secondInlet));
+
+    RuntimeException thrown =
+        Assertions.assertThrows(RuntimeException.class, () -> process.runParallel(UUID.randomUUID()));
+    Assertions.assertTrue(thrown.getMessage().contains("SharedFailingUnit"));
+  }
+
+  @Test
+  public void testRunDataflowPropagatesUnitFailure() {
+    ProcessSystem process = new ProcessSystem();
+    process.add(new FailingProcessUnit("DataflowFailingUnit"));
+
+    RuntimeException thrown =
+        Assertions.assertThrows(RuntimeException.class, () -> process.runDataflow(UUID.randomUUID()));
+    Assertions.assertTrue(thrown.getMessage().contains("DataflowFailingUnit"));
   }
 
   @Test
@@ -1050,6 +1245,47 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     ProcessSystem.MassBalanceResult sepResult = results.get("Separator1");
     assertTrue(Math.abs(sepResult.getAbsoluteError()) < 0.01,
         "Separator mass balance error: " + sepResult.getAbsoluteError());
+  }
+
+  @Test
+  public void testMassBalancePercentUsesReportedInletStreams() {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream inletStream = new Stream("mass balance feed", fluid);
+    inletStream.setFlowRate(100.0, "kg/hr");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(inletStream);
+    process.add(new MassBalanceTestUnit("MassBalanceUnit", inletStream));
+
+    Map<String, ProcessSystem.MassBalanceResult> results = process.checkMassBalance("kg/hr");
+
+    ProcessSystem.MassBalanceResult result = results.get("MassBalanceUnit");
+    Assertions.assertNotNull(result);
+    assertEquals(5.0, result.getAbsoluteError(), 1e-12);
+    assertEquals(5.0, result.getPercentError(), 1e-12);
+  }
+
+  @Test
+  public void testMassBalancePercentDoesNotDoubleCountSingularAndListInletStreams() {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream inletStream = new Stream("mass balance feed duplicate APIs", fluid);
+    inletStream.setFlowRate(100.0, "kg/hr");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(inletStream);
+    process.add(new MassBalanceTestUnit("MassBalanceUnitDuplicateApis", inletStream));
+
+    ProcessSystem.MassBalanceResult result =
+        process.checkMassBalance("kg/hr").get("MassBalanceUnitDuplicateApis");
+
+    Assertions.assertNotNull(result);
+    assertEquals(5.0, result.getPercentError(), 1e-12);
   }
 
   @Test

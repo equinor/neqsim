@@ -796,6 +796,7 @@ public class FlowRateOptimizer implements Serializable {
           gen.generateCompressorChart("normal curves", numberOfChartSpeeds);
       comp.setCompressorChart(newChart);
       comp.getCompressorChart().setUseCompressorChart(true);
+      comp.setSolveSpeed(solveSpeed);
 
       // Set maximum speed with margin above design speed
       double designSpeed = comp.getSpeed();

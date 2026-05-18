@@ -18,8 +18,8 @@ import org.apache.logging.log4j.Logger;
  * </p>
  * <ul>
  * <li><b>Sparse LU</b>: For large networks (&gt;50 nodes), uses compressed sparse column (CSC)
- * format with fill-reducing ordering. Complexity is O(nnz) amortized where nnz is the number of
- * non-zeros in the Schur complement matrix.</li>
+ * format with EJML sparse LU. Complexity depends on the number of non-zeros in the Schur complement
+ * matrix.</li>
  * <li><b>Dense LU</b>: For small-to-medium networks (&le;50 nodes), uses EJML's optimized dense LU
  * with partial pivoting. Faster than hand-coded Gaussian for n &gt; 10.</li>
  * </ul>
@@ -140,8 +140,9 @@ public class NetworkLinearSolver {
    *
    * <p>
    * Converts the dense Schur complement to compressed sparse column (CSC) format, discarding
-   * structural zeros. Uses fill-reducing column ordering and sparse LU factorization. For a 100x100
-   * matrix with 6% density, approximately 10-50x faster than dense Gaussian.
+   * structural zeros. Uses EJML sparse LU with natural ordering; EJML 0.41/0.45 do not expose a
+   * deterministic AMD/COLAMD fill-reducing option through this factory. For a 100x100 matrix with
+   * 6% density, sparse storage can be significantly faster than dense Gaussian.
    * </p>
    *
    * @param matA coefficient matrix (n x n) — may have many zeros

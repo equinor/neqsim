@@ -674,6 +674,11 @@ public class PVTRegression {
 
   /**
    * Calculate uncertainty analysis from the optimization results.
+   *
+   * @param optimizer fitted optimizer containing the final regression state
+   * @param function regression function used to evaluate fitted parameters
+   * @param finalChiSquare final chi-square objective value from the fit
+   * @return uncertainty analysis with standard errors, correlation matrix, and confidence intervals
    */
   private UncertaintyAnalysis calculateUncertainty(LevenbergMarquardt optimizer,
       PVTRegressionFunction function, double finalChiSquare) {

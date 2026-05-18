@@ -25,6 +25,10 @@ final class ColumnSolveResult {
   private final double massResidual;
   /** Latest relative energy residual. */
   private final double energyResidual;
+  /** Latest MESH residual infinity norm. */
+  private final double meshResidualNorm;
+  /** Latest product-draw residual infinity norm. */
+  private final double productDrawResidualNorm;
   /** Solver wall time in seconds. */
   private final double solveTimeSeconds;
 
@@ -37,17 +41,21 @@ final class ColumnSolveResult {
    * @param temperatureResidual latest temperature residual in Kelvin
    * @param massResidual latest relative mass residual
    * @param energyResidual latest relative energy residual
+   * @param meshResidualNorm latest MESH residual infinity norm
+   * @param productDrawResidualNorm latest product-draw residual infinity norm
    * @param solveTimeSeconds solver wall time in seconds
    */
   private ColumnSolveResult(DistillationColumn.SolverType solverType, boolean solved,
       int iterationCount, double temperatureResidual, double massResidual, double energyResidual,
-      double solveTimeSeconds) {
+      double meshResidualNorm, double productDrawResidualNorm, double solveTimeSeconds) {
     this.solverType = solverType;
     this.solved = solved;
     this.iterationCount = iterationCount;
     this.temperatureResidual = temperatureResidual;
     this.massResidual = massResidual;
     this.energyResidual = energyResidual;
+    this.meshResidualNorm = meshResidualNorm;
+    this.productDrawResidualNorm = productDrawResidualNorm;
     this.solveTimeSeconds = solveTimeSeconds;
   }
 
@@ -62,7 +70,8 @@ final class ColumnSolveResult {
       DistillationColumn.SolverType solverType) {
     return new ColumnSolveResult(solverType, column.solved(), column.getLastIterationCount(),
         column.getLastTemperatureResidual(), column.getLastMassResidual(),
-        column.getLastEnergyResidual(), column.getLastSolveTimeSeconds());
+      column.getLastEnergyResidual(), column.getLastMeshResidualNorm(),
+      column.getLastMeshProductDrawResidualNorm(), column.getLastSolveTimeSeconds());
   }
 
   /**
@@ -117,6 +126,24 @@ final class ColumnSolveResult {
    */
   double getEnergyResidual() {
     return energyResidual;
+  }
+
+  /**
+   * Get the latest MESH residual infinity norm.
+   *
+   * @return MESH residual infinity norm
+   */
+  double getMeshResidualNorm() {
+    return meshResidualNorm;
+  }
+
+  /**
+   * Get the latest product-draw residual infinity norm.
+   *
+   * @return product-draw residual infinity norm
+   */
+  double getProductDrawResidualNorm() {
+    return productDrawResidualNorm;
   }
 
   /**
