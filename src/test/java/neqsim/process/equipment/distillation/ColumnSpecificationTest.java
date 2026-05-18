@@ -474,7 +474,11 @@ public class ColumnSpecificationTest {
     assertTrue(column.getLastNaphtaliFiniteDifferenceJacobianColumns() >= 0);
     assertTrue(column.getLastNaphtaliThermoEvaluationCount() > 0);
     assertTrue(column.getLastNaphtaliJacobianBuildTimeSeconds() >= 0.0);
+    assertTrue(column.getLastNaphtaliBlockLinearSolveCount() > 0);
+    assertTrue(column.getLastNaphtaliDenseLinearSolveCount() >= 0);
+    assertTrue(column.getLastNaphtaliLinearSolveTimeSeconds() >= 0.0);
     assertTrue(column.getConvergenceDiagnostics().contains("Naphtali-Sandholm Jacobian"));
+    assertTrue(column.getConvergenceDiagnostics().contains("block linear solves"));
   }
 
   /**

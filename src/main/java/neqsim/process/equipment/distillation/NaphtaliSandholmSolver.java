@@ -126,6 +126,12 @@ final class NaphtaliSandholmSolver {
   private int lastThermoEvaluationCount = 0;
   /** Wall time for the latest Jacobian build in seconds. */
   private double lastJacobianBuildTimeSeconds = 0.0;
+  /** Successful block-tridiagonal linear solves in the latest solve. */
+  private int lastBlockLinearSolveCount = 0;
+  /** Successful dense fallback linear solves in the latest solve. */
+  private int lastDenseLinearSolveCount = 0;
+  /** Wall time spent in linear solves during the latest solve. */
+  private double lastLinearSolveTimeSeconds = 0.0;
   /** Whether the latest solve accepted a residual-improving state. */
   private boolean accepted = false;
 
@@ -171,6 +177,9 @@ final class NaphtaliSandholmSolver {
     lastFiniteDifferenceJacobianColumns = 0;
     lastThermoEvaluationCount = 0;
     lastJacobianBuildTimeSeconds = 0.0;
+    lastBlockLinearSolveCount = 0;
+    lastDenseLinearSolveCount = 0;
+    lastLinearSolveTimeSeconds = 0.0;
     initializeFromColumn();
     evaluateAllThermo();
 
@@ -351,6 +360,33 @@ final class NaphtaliSandholmSolver {
    */
   double getLastJacobianBuildTimeSeconds() {
     return lastJacobianBuildTimeSeconds;
+  }
+
+  /**
+   * Get successful block-tridiagonal linear solves from the latest solve.
+   *
+   * @return number of block linear solves
+   */
+  int getLastBlockLinearSolveCount() {
+    return lastBlockLinearSolveCount;
+  }
+
+  /**
+   * Get successful dense fallback linear solves from the latest solve.
+   *
+   * @return number of dense fallback linear solves
+   */
+  int getLastDenseLinearSolveCount() {
+    return lastDenseLinearSolveCount;
+  }
+
+  /**
+   * Get wall time spent in linear solves during the latest solve.
+   *
+   * @return linear solve time in seconds
+   */
+  double getLastLinearSolveTimeSeconds() {
+    return lastLinearSolveTimeSeconds;
   }
 
   /**
@@ -1614,67 +1650,100 @@ final class NaphtaliSandholmSolver {
    * @return Newton correction solving J dx = -F, or null if block elimination fails
    */
   private double[] solveBlockTridiagonal(BlockTridiagonalMatrix jacobian, double[] residual) {
-    int blockSize = variablesPerTray;
-    double[][] rhs = new double[trayCount][blockSize];
+    long startTime = System.nanoTime();
+    double[] solution = solveBlockTridiagonalWithLu(jacobian, residual, 0.0);
+    if (solution == null) {
+      solution = solveBlockTridiagonalWithLu(jacobian, residual, JACOBIAN_REGULARIZATION * 100.0);
+    }
+    lastLinearSolveTimeSeconds += (System.nanoTime() - startTime) / 1.0e9;
+    if (solution != null) {
+      lastBlockLinearSolveCount++;
+    }
+    return solution;
+  }
 
+  /**
+   * Solve the block-tridiagonal Newton system using pivoted block LU elimination.
+   *
+   * @param jacobian block-tridiagonal Jacobian matrix
+   * @param residual residual vector
+   * @param diagonalRegularization additional diagonal regularization for reduced tray blocks
+   * @return Newton correction solving J dx = -F, or null if block elimination fails
+   */
+  private double[] solveBlockTridiagonalWithLu(BlockTridiagonalMatrix jacobian, double[] residual,
+      double diagonalRegularization) {
+    int blockSize = variablesPerTray;
+    double[][] rhs = buildBlockRightHandSide(residual, blockSize);
+    double[][][] reducedUpper = new double[trayCount][blockSize][blockSize];
+    double[][] reducedRhs = new double[trayCount][blockSize];
+
+    double[][] reducedDiagonal = copyBlock(jacobian.diagonal[0]);
+    addDiagonalRegularization(reducedDiagonal, diagonalRegularization);
+    int[] pivots = new int[blockSize];
+    if (!factorizeBlock(reducedDiagonal, pivots)) {
+      return null;
+    }
+    reducedRhs[0] = solveFactoredBlockVector(reducedDiagonal, pivots, rhs[0]);
+    if (trayCount > 1) {
+      reducedUpper[0] = solveFactoredBlockMatrix(reducedDiagonal, pivots, jacobian.upper[0]);
+    }
+    if (!isFiniteVector(reducedRhs[0]) || (trayCount > 1 && !isFiniteBlock(reducedUpper[0]))) {
+      return null;
+    }
+
+    for (int trayIndex = 1; trayIndex < trayCount; trayIndex++) {
+      double[][] lowerReducedUpper = multiplyBlocks(jacobian.lower[trayIndex],
+          reducedUpper[trayIndex - 1]);
+      reducedDiagonal = subtractBlocks(jacobian.diagonal[trayIndex], lowerReducedUpper);
+      addDiagonalRegularization(reducedDiagonal, diagonalRegularization);
+      double[] lowerReducedRhs = multiplyBlockVector(jacobian.lower[trayIndex],
+          reducedRhs[trayIndex - 1]);
+      double[] currentRhs = subtract(rhs[trayIndex], lowerReducedRhs);
+      pivots = new int[blockSize];
+      if (!factorizeBlock(reducedDiagonal, pivots)) {
+        return null;
+      }
+      reducedRhs[trayIndex] = solveFactoredBlockVector(reducedDiagonal, pivots, currentRhs);
+      if (!isFiniteVector(reducedRhs[trayIndex])) {
+        return null;
+      }
+      if (trayIndex < trayCount - 1) {
+        reducedUpper[trayIndex] = solveFactoredBlockMatrix(reducedDiagonal, pivots,
+            jacobian.upper[trayIndex]);
+        if (!isFiniteBlock(reducedUpper[trayIndex])) {
+          return null;
+        }
+      }
+    }
+
+    double[][] solutionBlocks = new double[trayCount][blockSize];
+    System.arraycopy(reducedRhs[trayCount - 1], 0, solutionBlocks[trayCount - 1], 0, blockSize);
+    for (int trayIndex = trayCount - 2; trayIndex >= 0; trayIndex--) {
+      double[] upperContribution =
+          multiplyBlockVector(reducedUpper[trayIndex], solutionBlocks[trayIndex + 1]);
+      solutionBlocks[trayIndex] = subtract(reducedRhs[trayIndex], upperContribution);
+    }
+
+    double[] solution = flattenBlockVector(solutionBlocks, blockSize);
+    return isFiniteVector(solution) ? solution : null;
+  }
+
+  /**
+   * Build a block right-hand side from the residual vector.
+   *
+   * @param residual residual vector
+   * @param blockSize number of rows in each tray block
+   * @return block right-hand side for J dx = -F
+   */
+  private double[][] buildBlockRightHandSide(double[] residual, int blockSize) {
+    double[][] rhs = new double[trayCount][blockSize];
     for (int trayIndex = 0; trayIndex < trayCount; trayIndex++) {
       int rowBase = trayIndex * blockSize;
       for (int row = 0; row < blockSize; row++) {
         rhs[trayIndex][row] = -residual[rowBase + row];
       }
     }
-
-    double[][][] modifiedDiagonal = new double[trayCount][blockSize][blockSize];
-    double[][][] modifiedDiagonalInverse = new double[trayCount][blockSize][blockSize];
-    double[][] modifiedRhs = new double[trayCount][blockSize];
-    copyBlock(jacobian.diagonal[0], modifiedDiagonal[0]);
-    System.arraycopy(rhs[0], 0, modifiedRhs[0], 0, blockSize);
-    double[][] firstInverse = invertBlock(modifiedDiagonal[0]);
-    if (firstInverse == null) {
-      return null;
-    }
-    copyBlock(firstInverse, modifiedDiagonalInverse[0]);
-
-    for (int trayIndex = 1; trayIndex < trayCount; trayIndex++) {
-      double[][] inversePrevious = modifiedDiagonalInverse[trayIndex - 1];
-      double[][] factor = multiplyBlocks(jacobian.lower[trayIndex], inversePrevious);
-      double[][] factorUpper = multiplyBlocks(factor, jacobian.upper[trayIndex - 1]);
-      for (int row = 0; row < blockSize; row++) {
-        for (int columnIndex = 0; columnIndex < blockSize; columnIndex++) {
-          modifiedDiagonal[trayIndex][row][columnIndex] =
-              jacobian.diagonal[trayIndex][row][columnIndex] - factorUpper[row][columnIndex];
-        }
-      }
-      double[] factorRhs = multiplyBlockVector(factor, modifiedRhs[trayIndex - 1]);
-      for (int row = 0; row < blockSize; row++) {
-        modifiedRhs[trayIndex][row] = rhs[trayIndex][row] - factorRhs[row];
-      }
-      double[][] inverseCurrent = invertBlock(modifiedDiagonal[trayIndex]);
-      if (inverseCurrent == null) {
-        return null;
-      }
-      copyBlock(inverseCurrent, modifiedDiagonalInverse[trayIndex]);
-    }
-
-    double[][] solutionBlocks = new double[trayCount][blockSize];
-    double[][] inverseLast = modifiedDiagonalInverse[trayCount - 1];
-    solutionBlocks[trayCount - 1] = multiplyBlockVector(inverseLast, modifiedRhs[trayCount - 1]);
-    for (int trayIndex = trayCount - 2; trayIndex >= 0; trayIndex--) {
-      double[] upperContribution =
-          multiplyBlockVector(jacobian.upper[trayIndex], solutionBlocks[trayIndex + 1]);
-      double[] adjustedRhs = new double[blockSize];
-      for (int row = 0; row < blockSize; row++) {
-        adjustedRhs[row] = modifiedRhs[trayIndex][row] - upperContribution[row];
-      }
-      double[][] inverse = modifiedDiagonalInverse[trayIndex];
-      solutionBlocks[trayIndex] = multiplyBlockVector(inverse, adjustedRhs);
-    }
-
-    double[] solution = new double[totalVariables];
-    for (int trayIndex = 0; trayIndex < trayCount; trayIndex++) {
-      System.arraycopy(solutionBlocks[trayIndex], 0, solution, trayIndex * blockSize, blockSize);
-    }
-    return solution;
+    return rhs;
   }
 
   /**
@@ -1690,57 +1759,197 @@ final class NaphtaliSandholmSolver {
   }
 
   /**
-   * Invert a small dense block using Gauss-Jordan elimination.
+   * Copy one dense block into a new block.
    *
-   * @param block block to invert
-   * @return inverse block, or null when singular
+   * @param source source block
+   * @return copied block
    */
-  private double[][] invertBlock(double[][] block) {
-    int size = block.length;
-    double[][] augmented = new double[size][2 * size];
+  private double[][] copyBlock(double[][] source) {
+    double[][] target = new double[source.length][source[0].length];
+    copyBlock(source, target);
+    return target;
+  }
+
+  /**
+   * Add diagonal regularization to a block.
+   *
+   * @param block block to modify
+   * @param regularization value to add to each diagonal element
+   */
+  private void addDiagonalRegularization(double[][] block, double regularization) {
+    if (regularization == 0.0) {
+      return;
+    }
+    for (int index = 0; index < block.length; index++) {
+      block[index][index] += regularization;
+    }
+  }
+
+  /**
+   * Subtract two dense blocks.
+   *
+   * @param left left block
+   * @param right right block
+   * @return {@code left - right}
+   */
+  private double[][] subtractBlocks(double[][] left, double[][] right) {
+    int size = left.length;
+    double[][] difference = new double[size][left[0].length];
     for (int row = 0; row < size; row++) {
       for (int columnIndex = 0; columnIndex < size; columnIndex++) {
-        augmented[row][columnIndex] = block[row][columnIndex];
+        difference[row][columnIndex] = left[row][columnIndex] - right[row][columnIndex];
       }
-      augmented[row][size + row] = 1.0;
     }
+    return difference;
+  }
+
+  /**
+   * Factorize a small dense block in-place using LU decomposition with partial pivoting.
+   *
+   * @param block block to factorize in-place
+   * @param pivotRows pivot row chosen at each elimination step
+   * @return {@code true} if factorization succeeded
+   */
+  private boolean factorizeBlock(double[][] block, int[] pivotRows) {
+    int size = block.length;
     for (int pivotIndex = 0; pivotIndex < size; pivotIndex++) {
+      pivotRows[pivotIndex] = pivotIndex;
       int pivotRow = pivotIndex;
-      double pivotMagnitude = Math.abs(augmented[pivotIndex][pivotIndex]);
+      double pivotMagnitude = Math.abs(block[pivotIndex][pivotIndex]);
       for (int row = pivotIndex + 1; row < size; row++) {
-        double candidate = Math.abs(augmented[row][pivotIndex]);
+        double candidate = Math.abs(block[row][pivotIndex]);
         if (candidate > pivotMagnitude) {
           pivotMagnitude = candidate;
           pivotRow = row;
         }
       }
       if (!Double.isFinite(pivotMagnitude) || pivotMagnitude < 1.0e-20) {
-        return null;
+        return false;
       }
+      pivotRows[pivotIndex] = pivotRow;
       if (pivotRow != pivotIndex) {
-        double[] temp = augmented[pivotIndex];
-        augmented[pivotIndex] = augmented[pivotRow];
-        augmented[pivotRow] = temp;
+        double[] temp = block[pivotIndex];
+        block[pivotIndex] = block[pivotRow];
+        block[pivotRow] = temp;
       }
-      double pivot = augmented[pivotIndex][pivotIndex];
-      for (int columnIndex = 0; columnIndex < 2 * size; columnIndex++) {
-        augmented[pivotIndex][columnIndex] /= pivot;
+      double pivot = block[pivotIndex][pivotIndex];
+      for (int row = pivotIndex + 1; row < size; row++) {
+        block[row][pivotIndex] /= pivot;
+        double multiplier = block[row][pivotIndex];
+        for (int columnIndex = pivotIndex + 1; columnIndex < size; columnIndex++) {
+          block[row][columnIndex] -= multiplier * block[pivotIndex][columnIndex];
+        }
       }
+    }
+    return true;
+  }
+
+  /**
+   * Solve a factored block system for a vector right-hand side.
+   *
+   * @param luBlock LU-factored block from {@link #factorizeBlock(double[][], int[])}
+   * @param pivotRows pivot row sequence from factorization
+   * @param rhs vector right-hand side
+   * @return solution vector
+   */
+  private double[] solveFactoredBlockVector(double[][] luBlock, int[] pivotRows, double[] rhs) {
+    int size = rhs.length;
+    double[] solution = rhs.clone();
+    applyPivotRows(solution, pivotRows);
+    for (int row = 1; row < size; row++) {
+      double value = solution[row];
+      for (int columnIndex = 0; columnIndex < row; columnIndex++) {
+        value -= luBlock[row][columnIndex] * solution[columnIndex];
+      }
+      solution[row] = value;
+    }
+    for (int row = size - 1; row >= 0; row--) {
+      double value = solution[row];
+      for (int columnIndex = row + 1; columnIndex < size; columnIndex++) {
+        value -= luBlock[row][columnIndex] * solution[columnIndex];
+      }
+      double diagonal = luBlock[row][row];
+      if (!Double.isFinite(diagonal) || Math.abs(diagonal) < 1.0e-20) {
+        solution[row] = Double.NaN;
+      } else {
+        solution[row] = value / diagonal;
+      }
+    }
+    return solution;
+  }
+
+  /**
+   * Solve a factored block system for a matrix right-hand side.
+   *
+   * @param luBlock LU-factored block from {@link #factorizeBlock(double[][], int[])}
+   * @param pivotRows pivot row sequence from factorization
+   * @param rhs matrix right-hand side
+   * @return solution matrix
+   */
+  private double[][] solveFactoredBlockMatrix(double[][] luBlock, int[] pivotRows,
+      double[][] rhs) {
+    int size = rhs.length;
+    double[][] solution = new double[size][rhs[0].length];
+    for (int columnIndex = 0; columnIndex < rhs[0].length; columnIndex++) {
+      double[] rhsColumn = new double[size];
       for (int row = 0; row < size; row++) {
-        if (row == pivotIndex) {
-          continue;
-        }
-        double factor = augmented[row][pivotIndex];
-        for (int columnIndex = 0; columnIndex < 2 * size; columnIndex++) {
-          augmented[row][columnIndex] -= factor * augmented[pivotIndex][columnIndex];
+        rhsColumn[row] = rhs[row][columnIndex];
+      }
+      double[] solutionColumn = solveFactoredBlockVector(luBlock, pivotRows, rhsColumn);
+      for (int row = 0; row < size; row++) {
+        solution[row][columnIndex] = solutionColumn[row];
+      }
+    }
+    return solution;
+  }
+
+  /**
+   * Apply recorded row pivots to a vector.
+   *
+   * @param vector vector to pivot in-place
+   * @param pivotRows pivot row sequence
+   */
+  private void applyPivotRows(double[] vector, int[] pivotRows) {
+    for (int pivotIndex = 0; pivotIndex < pivotRows.length; pivotIndex++) {
+      int pivotRow = pivotRows[pivotIndex];
+      if (pivotRow != pivotIndex) {
+        double temp = vector[pivotIndex];
+        vector[pivotIndex] = vector[pivotRow];
+        vector[pivotRow] = temp;
+      }
+    }
+  }
+
+  /**
+   * Flatten block-vector storage to the Newton variable vector.
+   *
+   * @param solutionBlocks per-tray solution blocks
+   * @param blockSize number of variables in each block
+   * @return flattened solution vector
+   */
+  private double[] flattenBlockVector(double[][] solutionBlocks, int blockSize) {
+    double[] solution = new double[totalVariables];
+    for (int trayIndex = 0; trayIndex < trayCount; trayIndex++) {
+      System.arraycopy(solutionBlocks[trayIndex], 0, solution, trayIndex * blockSize, blockSize);
+    }
+    return solution;
+  }
+
+  /**
+   * Check all entries in a dense block are finite.
+   *
+   * @param block block to check
+   * @return {@code true} when all block entries are finite
+   */
+  private boolean isFiniteBlock(double[][] block) {
+    for (int row = 0; row < block.length; row++) {
+      for (int columnIndex = 0; columnIndex < block[row].length; columnIndex++) {
+        if (!Double.isFinite(block[row][columnIndex])) {
+          return false;
         }
       }
     }
-    double[][] inverse = new double[size][size];
-    for (int row = 0; row < size; row++) {
-      System.arraycopy(augmented[row], size, inverse[row], 0, size);
-    }
-    return inverse;
+    return true;
   }
 
   /**
@@ -1793,6 +2002,23 @@ final class NaphtaliSandholmSolver {
    * @return correction vector, or null when singular
    */
   private double[] solveDenseLinearSystem(double[][] jacobian, double[] residual) {
+    long startTime = System.nanoTime();
+    double[] solution = solveDenseLinearSystemUntimed(jacobian, residual);
+    lastLinearSolveTimeSeconds += (System.nanoTime() - startTime) / 1.0e9;
+    if (solution != null) {
+      lastDenseLinearSolveCount++;
+    }
+    return solution;
+  }
+
+  /**
+   * Solve a dense linear system without updating telemetry.
+   *
+   * @param jacobian coefficient matrix
+   * @param residual residual vector
+   * @return correction vector, or null when singular
+   */
+  private double[] solveDenseLinearSystemUntimed(double[][] jacobian, double[] residual) {
     int size = residual.length;
     double[][] augmented = new double[size][size + 1];
     for (int row = 0; row < size; row++) {

@@ -688,6 +688,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** Latest Naphtali-Sandholm Jacobian build time. */
   private transient double lastNaphtaliJacobianBuildTimeSeconds = 0.0;
 
+  /** Latest Naphtali-Sandholm successful block linear solve count. */
+  private transient int lastNaphtaliBlockLinearSolveCount = 0;
+
+  /** Latest Naphtali-Sandholm successful dense fallback linear solve count. */
+  private transient int lastNaphtaliDenseLinearSolveCount = 0;
+
+  /** Latest Naphtali-Sandholm linear solve wall time. */
+  private transient double lastNaphtaliLinearSolveTimeSeconds = 0.0;
+
   /**
    * Instead of Map&lt;Integer,StreamInterface&gt;, we store a list of feed streams per tray number.
    * This allows multiple feeds to the same tray.
@@ -2120,6 +2129,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastNaphtaliFiniteDifferenceJacobianColumns = solver.getLastFiniteDifferenceJacobianColumns();
     lastNaphtaliThermoEvaluationCount = solver.getLastThermoEvaluationCount();
     lastNaphtaliJacobianBuildTimeSeconds = solver.getLastJacobianBuildTimeSeconds();
+    lastNaphtaliBlockLinearSolveCount = solver.getLastBlockLinearSolveCount();
+    lastNaphtaliDenseLinearSolveCount = solver.getLastDenseLinearSolveCount();
+    lastNaphtaliLinearSolveTimeSeconds = solver.getLastLinearSolveTimeSeconds();
   }
 
   /**
@@ -2321,6 +2333,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         candidate.lastNaphtaliFiniteDifferenceJacobianColumns;
     this.lastNaphtaliThermoEvaluationCount = candidate.lastNaphtaliThermoEvaluationCount;
     this.lastNaphtaliJacobianBuildTimeSeconds = candidate.lastNaphtaliJacobianBuildTimeSeconds;
+    this.lastNaphtaliBlockLinearSolveCount = candidate.lastNaphtaliBlockLinearSolveCount;
+    this.lastNaphtaliDenseLinearSolveCount = candidate.lastNaphtaliDenseLinearSolveCount;
+    this.lastNaphtaliLinearSolveTimeSeconds = candidate.lastNaphtaliLinearSolveTimeSeconds;
     this.specificationHomotopySteps = candidate.specificationHomotopySteps;
     this.lastSpecificationHomotopyStepCount = candidate.lastSpecificationHomotopyStepCount;
   }
@@ -8365,6 +8380,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           .append(lastNaphtaliThermoEvaluationCount).append("\n");
       diagnostics.append("    Jacobian build time: ").append(lastNaphtaliJacobianBuildTimeSeconds)
           .append(" s\n");
+        diagnostics.append("    block linear solves: ").append(lastNaphtaliBlockLinearSolveCount)
+          .append("\n");
+        diagnostics.append("    dense fallback solves: ").append(lastNaphtaliDenseLinearSolveCount)
+          .append("\n");
+        diagnostics.append("    linear solve time: ").append(lastNaphtaliLinearSolveTimeSeconds)
+          .append(" s\n");
     }
     diagnostics.append("  Residuals:\n");
     diagnostics.append("    temperature: ").append(lastTemperatureResidual).append(" K (tolerance ")
@@ -11123,6 +11144,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastNaphtaliFiniteDifferenceJacobianColumns = 0;
     lastNaphtaliThermoEvaluationCount = 0;
     lastNaphtaliJacobianBuildTimeSeconds = 0.0;
+    lastNaphtaliBlockLinearSolveCount = 0;
+    lastNaphtaliDenseLinearSolveCount = 0;
+    lastNaphtaliLinearSolveTimeSeconds = 0.0;
   }
 
   /**
@@ -12500,6 +12524,33 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public double getLastNaphtaliJacobianBuildTimeSeconds() {
     return lastNaphtaliJacobianBuildTimeSeconds;
+  }
+
+  /**
+   * Get successful block-tridiagonal linear solves from the latest Naphtali-Sandholm solve.
+   *
+   * @return number of successful block linear solves
+   */
+  public int getLastNaphtaliBlockLinearSolveCount() {
+    return lastNaphtaliBlockLinearSolveCount;
+  }
+
+  /**
+   * Get successful dense fallback linear solves from the latest Naphtali-Sandholm solve.
+   *
+   * @return number of successful dense fallback solves
+   */
+  public int getLastNaphtaliDenseLinearSolveCount() {
+    return lastNaphtaliDenseLinearSolveCount;
+  }
+
+  /**
+   * Get linear solve wall time from the latest Naphtali-Sandholm solve.
+   *
+   * @return linear solve time in seconds
+   */
+  public double getLastNaphtaliLinearSolveTimeSeconds() {
+    return lastNaphtaliLinearSolveTimeSeconds;
   }
 
   /**
