@@ -534,8 +534,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private boolean enforceEnergyBalanceTolerance = false;
   /**
    * Explicit control of whether the MESH residual vector must satisfy tolerance before convergence.
-   * When not explicitly set, the gate is active for advanced solver modes and inactive for the
-   * direct and damped substitution solver modes.
+   * When not explicitly set, the gate is active for residual-based solver modes and inactive for
+   * substitution and temperature/flow accelerator modes.
    */
   private boolean enforceMeshResidualTolerance = false;
   /**
@@ -5476,24 +5476,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
     }
 
-    lastIterationCount = iter;
-    lastTemperatureResidual = err;
-    lastMassResidual = massErr;
-    lastEnergyResidual = energyErr;
-    lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
+    finalizeSolve(id, iter, err, massErr, energyErr, startTime);
     hasBeenSolvedBefore = true;
     lastTotalFeedFlow = totalFeedFlowBroyden;
-
-    gasOutStream
-        .setThermoSystem(trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem().clone());
-    gasOutStream.setCalculationIdentifier(id);
-    liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem().clone());
-    liquidOutStream.setCalculationIdentifier(id);
-
-    for (int i = 0; i < numberOfTrays; i++) {
-      trays.get(i).setCalculationIdentifier(id);
-    }
-    setCalculationIdentifier(id);
   }
 
   /**
@@ -6707,20 +6692,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (enforceMeshResidualToleranceCustomized) {
       return enforceMeshResidualTolerance;
     }
-    return isAdvancedSolverType(solverType) || isAdvancedSolverType(lastSolverTypeUsed);
+    return isResidualGatedSolverType(solverType) || isResidualGatedSolverType(lastSolverTypeUsed);
   }
 
   /**
-   * Check whether a solver uses an accelerated or residual-based formulation that should satisfy
-   * the MESH residual gate by default.
+   * Check whether a solver uses a residual-based formulation that should satisfy the MESH residual
+   * gate by default.
    *
    * @param type solver type to inspect
-   * @return {@code true} when the solver is an advanced non-legacy solver
+   * @return {@code true} when the solver should enforce full MESH residual diagnostics by default
    */
-  private boolean isAdvancedSolverType(SolverType type) {
-    return type == SolverType.INSIDE_OUT || type == SolverType.MATRIX_INSIDE_OUT
-        || type == SolverType.WEGSTEIN || type == SolverType.SUM_RATES || type == SolverType.NEWTON
-        || type == SolverType.NAPHTALI_SANDHOLM || type == SolverType.MESH_RESIDUAL;
+  private boolean isResidualGatedSolverType(SolverType type) {
+    return type == SolverType.NAPHTALI_SANDHOLM || type == SolverType.MESH_RESIDUAL;
   }
 
   /**
@@ -7174,8 +7157,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /**
    * Control whether the latest MESH residual vector must satisfy tolerance during convergence
-   * checks. Calling this method explicitly overrides the default behavior where advanced solvers
-   * enforce the gate and direct or damped substitution solvers do not.
+   * checks. Calling this method explicitly overrides the default behavior where residual-based
+   * solvers enforce the gate and substitution or temperature/flow accelerator solvers do not.
    *
    * @param enforce {@code true} to require MESH residuals to satisfy the configured tolerance
    */
@@ -9488,12 +9471,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Calculates total component mole amounts entering the column through all external feeds.
    *
-   * @return component mole amounts on the stream-flow basis used by NeqSim streams
+   * @return component mole amounts on the stream-flow basis used by NeqSim streams, or an empty
+   *         array if external feeds do not share a common component basis
    */
   private double[] getFeedComponentMoles() {
-    double[] feedComponentMoles = new double[getNumberOfComponentsFromFeeds()];
+    int componentCount = getNumberOfComponentsFromFeeds();
+    if (componentCount == 0) {
+      return new double[0];
+    }
+    double[] feedComponentMoles = new double[componentCount];
     for (StreamInterface feed : getAllExternalFeedStreams()) {
       double[] componentMoles = getComponentMoles(feed.getThermoSystem());
+      if (componentMoles.length != componentCount) {
+        return new double[0];
+      }
       for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
         feedComponentMoles[componentIndex] += componentMoles[componentIndex];
       }

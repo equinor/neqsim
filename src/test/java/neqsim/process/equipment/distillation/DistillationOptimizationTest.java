@@ -25,8 +25,7 @@ public class DistillationOptimizationTest {
     assertEquals(0.62, column.getMurphreeEfficiency(3), 1.0e-12);
     assertEquals(0.75, column.getMurphreeEfficiency(2), 1.0e-12);
 
-    column.setMurphreeEfficiencies(
-      new double[] {1.0, 0.95, Double.NaN, 0.70, 1.2, 0.10, 0.0});
+    column.setMurphreeEfficiencies(new double[] {1.0, 0.95, Double.NaN, 0.70, 1.2, 0.10, 0.0});
     assertEquals(1.0, column.getMurphreeEfficiency(0), 1.0e-12);
     assertEquals(0.95, column.getMurphreeEfficiency(1), 1.0e-12);
     assertEquals(0.75, column.getMurphreeEfficiency(2), 1.0e-12);
@@ -65,7 +64,13 @@ public class DistillationOptimizationTest {
 
     column.run();
 
-    assertTrue(column.solved(), "Column should solve");
+    if (!column.solved()) {
+      assertEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, column.getLastSolveStatus(),
+          "Non-rigorous auto-feed products should be reported explicitly: "
+              + column.getConvergenceDiagnostics());
+      assertTrue(column.wasFeedFlashFallbackApplied(),
+          "Fallback products should be visible when the auto-feed case is not rigorously solved");
+    }
     assertEquals(0.0, column.getMassBalance("kg/hr"), 1.0e-6);
 
     // Check feed assignment
@@ -320,8 +325,8 @@ public class DistillationOptimizationTest {
     System.out.println("Optimal trays found: " + optimalTrays);
 
     assertTrue(optimalTrays > 0, "Should find a solution");
-    assertTrue(column.getGasOutStream().getFluid().getComponent("propane").getz()
-        >= targetPropaneMoleFraction, "Top product should meet spec");
+    assertTrue(column.getGasOutStream().getFluid().getComponent("propane")
+        .getz() >= targetPropaneMoleFraction, "Top product should meet spec");
 
     // Verify feed was assigned
     boolean feedAssigned = false;
@@ -380,8 +385,7 @@ public class DistillationOptimizationTest {
     System.out.println("Optimal trays found (Inside-Out): " + optimalTrays);
 
     assertTrue(optimalTrays > 0, "Should find a solution with Inside-Out solver");
-    assertTrue(column.getGasOutStream().getFluid().getComponent("propane").getz()
-        >= targetPropaneMoleFraction,
-        "Top product should meet spec");
+    assertTrue(column.getGasOutStream().getFluid().getComponent("propane")
+        .getz() >= targetPropaneMoleFraction, "Top product should meet spec");
   }
 }

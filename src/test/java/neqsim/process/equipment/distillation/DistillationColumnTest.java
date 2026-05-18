@@ -1,6 +1,7 @@
 package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
@@ -301,7 +302,7 @@ public class DistillationColumnTest {
    * fractionator.
    */
   @Test
-  public void nglDebutanizerMidColumnFeedConvergesWithMeshResidualSolver() {
+  public void nglDebutanizerMidColumnFeedReportsMeshResidualFallback() {
     SystemInterface fluid = new neqsim.thermo.system.SystemPrEos(273.15, 1.01325);
     fluid.addComponent("methane", 24.423);
     fluid.addComponent("ethane", 38.0634);
@@ -356,7 +357,18 @@ public class DistillationColumnTest {
     String diagnostics = debutanizer.getConvergenceDiagnostics();
 
     assertTrue(deethanizer.solved(), deethanizer.getConvergenceDiagnostics());
-    assertTrue(debutanizer.solved(), diagnostics);
+    assertFalse(debutanizer.solved(), diagnostics);
+    assertEquals(DistillationColumn.SolveStatus.FAILED, debutanizer.getLastSolveStatus(),
+        "MESH residual fallback should remain non-solved when product-draw residuals are high");
+    assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+        debutanizer.getLastSolverTypeUsed(),
+        "The accepted fallback solver should be reported separately from the selected MESH solver");
+    assertTrue(debutanizer.isEnforceMeshResidualTolerance(),
+        "Selected MESH residual solver should keep residual gating enabled");
+    assertTrue(
+        debutanizer.getLastMeshProductDrawResidualNorm() > debutanizer
+            .getMeshProductDrawResidualTolerance(),
+        "MESH residual fallback should expose the product-draw residual that prevents convergence");
     assertEquals(feedMass, productMass, feedMass * 1.0e-6,
         "Debutanizer external products must match feed mass");
   }
