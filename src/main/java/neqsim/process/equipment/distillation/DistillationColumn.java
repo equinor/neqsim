@@ -8886,8 +8886,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     double[] feedComponentMoles = getFeedComponentMoles();
     double[] sideDrawComponentMoles = getSideDrawComponentMoles(feedComponentMoles.length);
-    double[] topProductComponentMoles = getComponentMoles(gasOutStream.getThermoSystem());
-    double[] bottomProductComponentMoles = getComponentMoles(liquidOutStream.getThermoSystem());
+    // Sum only gas-phase moles for the top product and only liquid-like phase moles for the bottom
+    // product. Tray terminal thermo systems can carry both phases (e.g. a reboiler holding a 2-
+    // phase oil/gas system), and summing across all phases incorrectly attributes ascending vapor
+    // moles to the bottom product (and descending reflux moles to the top product). The
+    // accelerator solvers (Inside-Out, Newton, SUM_RATES) are more sensitive to this than DAMPED
+    // because their tray-0 gas fraction is proportionally larger, which drove a degenerate per-
+    // component scaling and a fallback to overall feed flash on small heavy-rich columns.
+    double[] topProductComponentMoles =
+        getPhaseFilteredComponentMoles(gasOutStream.getThermoSystem(), true);
+    double[] bottomProductComponentMoles =
+        getPhaseFilteredComponentMoles(liquidOutStream.getThermoSystem(), false);
     if (feedComponentMoles.length != topProductComponentMoles.length
         || feedComponentMoles.length != bottomProductComponentMoles.length) {
       return false;
@@ -8933,6 +8942,33 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
                 balancedBottomProductComponentMoles);
     updateProductStreamFromComponentMoles(gasOutStream, balancedTopProductComponentMoles, id);
     updateProductStreamFromComponentMoles(liquidOutStream, balancedBottomProductComponentMoles, id);
+
+    // Per-component scaling can shift a borderline bottom composition across the dew-point
+    // boundary at the reboiler T/P, leaving the bottom stream single-phase gas. When that
+    // happens, retry with a uniform scalar scale that preserves the oil-phase composition
+    // shape from tray 0 (which is liquid by construction). This recovers Inside-Out / Newton
+    // results on small heavy-rich columns without resorting to the overall feed-flash fallback.
+    if (hasReboiler && !isLiquidLikeProduct(liquidOutStream)) {
+      double terminalProductTotalMoles = 0.0;
+      for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
+        terminalProductTotalMoles +=
+            Math.max(0.0,
+                feedComponentMoles[componentIndex] - sideDrawComponentMoles[componentIndex]);
+      }
+      if (terminalProductTotalMoles > 1.0e-20 && currentProductTotalMoles > 1.0e-20) {
+        double overallScale = terminalProductTotalMoles / currentProductTotalMoles;
+        for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
+          balancedTopProductComponentMoles[componentIndex] =
+              Math.max(0.0, topProductComponentMoles[componentIndex]) * overallScale;
+          balancedBottomProductComponentMoles[componentIndex] =
+              Math.max(0.0, bottomProductComponentMoles[componentIndex]) * overallScale;
+        }
+        updateProductStreamFromComponentMoles(gasOutStream, balancedTopProductComponentMoles, id);
+        updateProductStreamFromComponentMoles(liquidOutStream, balancedBottomProductComponentMoles,
+            id);
+        materialChange = true;
+      }
+    }
     return materialChange;
   }
 
@@ -9543,6 +9579,50 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         componentTotal = system.getPhase(0).getComponent(componentIndex).getNumberOfmoles();
       }
       componentMoles[componentIndex] = componentTotal;
+    }
+    return componentMoles;
+  }
+
+  /**
+   * Sum component mole amounts contributed by gas-like or liquid-like phases only.
+   *
+   * <p>
+   * Tray terminal thermo systems can hold both an ascending gas phase and a descending liquid
+   * phase. When reconciling a single-phase public product against the external feed mass balance,
+   * the moles attributed to the product must come only from the relevant phase. If no matching
+   * phase is present (e.g. a single-phase oil reboiler or pure-vapor distillate), this method
+   * falls back to {@link #getComponentMoles(SystemInterface)} so the reconciliation step still
+   * has a non-zero composition to scale.
+   * </p>
+   *
+   * @param system thermodynamic system to inspect
+   * @param gasPhase {@code true} to sum gas-like phases, {@code false} to sum oil/liquid/aqueous
+   *        phases
+   * @return component mole amounts contributed by the matching phases
+   */
+  private double[] getPhaseFilteredComponentMoles(SystemInterface system, boolean gasPhase) {
+    double[] componentMoles = new double[system.getNumberOfComponents()];
+    boolean anyMatch = false;
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      String phaseName = system.getPhase(phaseIndex).getPhaseTypeName();
+      boolean matches;
+      if (gasPhase) {
+        matches = "gas".equalsIgnoreCase(phaseName);
+      } else {
+        matches = "oil".equalsIgnoreCase(phaseName) || "liquid".equalsIgnoreCase(phaseName)
+            || "aqueous".equalsIgnoreCase(phaseName);
+      }
+      if (!matches) {
+        continue;
+      }
+      anyMatch = true;
+      for (int componentIndex = 0; componentIndex < componentMoles.length; componentIndex++) {
+        componentMoles[componentIndex] +=
+            system.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase();
+      }
+    }
+    if (!anyMatch) {
+      return getComponentMoles(system);
     }
     return componentMoles;
   }
