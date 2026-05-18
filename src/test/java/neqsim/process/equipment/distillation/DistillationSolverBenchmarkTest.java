@@ -109,6 +109,10 @@ public class DistillationSolverBenchmarkTest {
     double[] liquidFlows = new double[solvers.length];
     int[] iterations = new int[solvers.length];
     double[] times = new double[solvers.length];
+    DistillationColumn.SolveStatus[] statuses =
+        new DistillationColumn.SolveStatus[solvers.length];
+    DistillationColumn.SolverType[] solversUsed =
+        new DistillationColumn.SolverType[solvers.length];
 
     for (int i = 0; i < solvers.length; i++) {
       DistillationColumn col = runDeethanizer(solvers[i]);
@@ -124,6 +128,8 @@ public class DistillationSolverBenchmarkTest {
       liquidFlows[i] = col.getLiquidOutStream().getFlowRate("kg/hr");
       iterations[i] = col.getLastIterationCount();
       times[i] = col.getLastSolveTimeSeconds();
+      statuses[i] = col.getLastSolveStatus();
+      solversUsed[i] = col.getLastSolverTypeUsed();
 
       // Mass balance closure: within 0.5%
       double massbalance = Math.abs(100.0 - gasFlows[i] - liquidFlows[i]) / 100.0 * 100;
@@ -131,13 +137,16 @@ public class DistillationSolverBenchmarkTest {
           solvers[i].name() + " mass balance should close within 0.5%");
     }
 
-    // Print solver timing summary
-    System.out.printf("%n%-25s %6s %10s %10s %10s%n", "Solver", "Iters", "Time(s)", "GasFlow",
-        "LiqFlow");
-    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 65));
+    // Print solver timing summary (Status surfaces silent FALLBACK_PRODUCTS;
+    // SolverUsed surfaces accelerator-to-damped fallbacks).
+    System.out.printf("%n%-25s %6s %10s %10s %10s %-22s %-22s%n", "Solver", "Iters", "Time(s)",
+        "GasFlow", "LiqFlow", "Status", "SolverUsed");
+    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 115));
     for (int i = 0; i < solvers.length; i++) {
-      System.out.printf("%-25s %6d %10.3f %10.2f %10.2f%n", solvers[i].name(), iterations[i],
-          times[i], gasFlows[i], liquidFlows[i]);
+      System.out.printf("%-25s %6d %10.3f %10.2f %10.2f %-22s %-22s%n", solvers[i].name(),
+          iterations[i], times[i], gasFlows[i], liquidFlows[i],
+          statuses[i] == null ? "null" : statuses[i].name(),
+          solversUsed[i] == null ? "null" : solversUsed[i].name());
     }
 
     // All solvers should agree on product splits within 2%

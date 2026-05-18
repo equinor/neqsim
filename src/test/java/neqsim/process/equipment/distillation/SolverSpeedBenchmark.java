@@ -46,10 +46,10 @@ public class SolverSpeedBenchmark {
     int[] innerLoopSteps = {0, 0, 0, 0, 3, 0, 0, 0};
 
     StringBuilder sb = new StringBuilder();
-    sb.append(String.format("%-20s %6s %10s %12s %12s %12s  %s%n", "Solver", "Trays", "Iters",
-        "Time(s)", "GasFlow", "LiqFlow", "Converged"));
-    sb.append(
-        "--------------------------------------------------------------------------------------------\n");
+    sb.append(String.format("%-20s %6s %10s %12s %12s %12s  %-10s %-22s %-22s%n", "Solver",
+        "Trays", "Iters", "Time(s)", "GasFlow", "LiqFlow", "Converged", "Status", "SolverUsed"));
+    sb.append("------------------------------------------------------------------------"
+        + "------------------------------------------------------------\n");
 
     for (int nTrays : trayCounts) {
       for (int s = 0; s < labels.length; s++) {
@@ -73,10 +73,14 @@ public class SolverSpeedBenchmark {
 
         double gasFlow = column.getGasOutStream().getFlowRate("kg/hr");
         double liqFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
+        DistillationColumn.SolveStatus status = column.getLastSolveStatus();
+        DistillationColumn.SolverType solverUsed = column.getLastSolverTypeUsed();
 
-        sb.append(String.format("%-20s %6d %10d %12.3f %12.2f %12.2f  %s%n", labels[s], nTrays,
-            column.getLastIterationCount(), column.getLastSolveTimeSeconds(), gasFlow, liqFlow,
-            column.solved() ? "YES" : "NO"));
+        sb.append(String.format("%-20s %6d %10d %12.3f %12.2f %12.2f  %-10s %-22s %-22s%n",
+            labels[s], nTrays, column.getLastIterationCount(), column.getLastSolveTimeSeconds(),
+            gasFlow, liqFlow, column.solved() ? "YES" : "NO",
+            status == null ? "null" : status.name(),
+            solverUsed == null ? "null" : solverUsed.name()));
       }
       sb.append("\n");
     }
