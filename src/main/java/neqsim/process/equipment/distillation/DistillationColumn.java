@@ -1884,9 +1884,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     if (!meshPolishProductSplitMatches(candidate, baselineGasFlow, baselineLiquidFlow)) {
-      logger.debug("MESH Newton polish rejected: product split changed from gas/liquid "
-          + "{}/{} kg/hr to {}/{} kg/hr.", Double.valueOf(baselineGasFlow),
-          Double.valueOf(baselineLiquidFlow),
+      logger.debug(
+          "MESH Newton polish rejected: product split changed from gas/liquid "
+              + "{}/{} kg/hr to {}/{} kg/hr.",
+          Double.valueOf(baselineGasFlow), Double.valueOf(baselineLiquidFlow),
           Double.valueOf(getProductFlowKgPerHour(candidate.gasOutStream)),
           Double.valueOf(getProductFlowKgPerHour(candidate.liquidOutStream)));
       return false;
@@ -1906,8 +1907,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param baselineLiquidFlow liquid product flow before polishing in kg/hr
    * @return {@code true} when both product flows remain within tolerance
    */
-  private boolean meshPolishProductSplitMatches(DistillationColumn candidate, double baselineGasFlow,
-      double baselineLiquidFlow) {
+  private boolean meshPolishProductSplitMatches(DistillationColumn candidate,
+      double baselineGasFlow, double baselineLiquidFlow) {
     if (candidate == null) {
       return false;
     }
@@ -1946,7 +1947,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return false;
     }
     double tolerance =
-      Math.max(1.0e-8, Math.abs(baselineFlow) * MESH_POLISH_PRODUCT_FLOW_TOLERANCE);
+        Math.max(1.0e-8, Math.abs(baselineFlow) * MESH_POLISH_PRODUCT_FLOW_TOLERANCE);
     return Math.abs(candidateFlow - baselineFlow) <= tolerance;
   }
 
@@ -8522,11 +8523,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       double molesPrev_i = zPrev[i] * totalMolesPrev;
       double molesCurr_i = zCurr[i] * totalMolesCurr;
       double mixedMoles_i = molesPrev_i + step * (molesCurr_i - molesPrev_i);
-      zMixed[i] = mixedMoles_i;
-      totalMolesMixed += mixedMoles_i;
+      if (Double.isFinite(mixedMoles_i) && mixedMoles_i > 0.0) {
+        zMixed[i] = mixedMoles_i;
+        totalMolesMixed += mixedMoles_i;
+      } else {
+        zMixed[i] = 0.0;
+      }
     }
 
-    if (totalMolesMixed > 1e-12) {
+    if (totalMolesMixed > 1e-12 && relaxed.getThermoSystem().getTotalNumberOfMoles() > 1e-100) {
       for (int i = 0; i < zMixed.length; i++) {
         zMixed[i] /= totalMolesMixed;
       }
