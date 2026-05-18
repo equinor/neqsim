@@ -6044,6 +6044,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double[] residuals = new double[numberOfTrays];
     double[][] jacobian = new double[numberOfTrays][numberOfTrays];
 
+    // Line-search damping memo: cache the last successful step length so the
+    // next iteration can start probing at min(1.0, 2.0 * lastSuccessful) rather
+    // than always at 1.0. Each skipped probe saves one full tray sweep — the
+    // dominant cost of the line search. A periodic reset every LINESEARCH_RESET_PERIOD
+    // iterations re-tries the full step so the algorithm can recover quickly
+    // when nonlinearity eases.
+    double lastSuccessfulStepLength = 1.0;
+    final int LINESEARCH_RESET_PERIOD = 4;
+
     while (iter < iterationLimit) {
       iter++;
 
@@ -6188,13 +6197,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           trays.get(i).setTemperature(temperatures[i] + 0.5 * residuals[i]);
           trays.get(i).getThermoSystem().setTemperature(temperatures[i] + 0.5 * residuals[i]);
         }
+        // Reset damping memo: the Jacobian was bad, so prior step length is not a reliable hint.
+        lastSuccessfulStepLength = 1.0;
         continue;
       }
 
-      // Line search: try full Newton step, halve if residual increases
-      double bestStepLength = 1.0;
+      // Line search: try full Newton step, halve if residual increases.
+      // Damping memo: start at min(1.0, 2.0 * lastSuccessful) to skip probes that
+      // would predictably fail given prior nonlinearity. Periodically reset to 1.0
+      // so the algorithm can recover the full step when conditions improve.
+      double trialStart = (iter % LINESEARCH_RESET_PERIOD == 0) ? 1.0
+          : Math.min(1.0, 2.0 * lastSuccessfulStepLength);
+      double bestStepLength = trialStart;
       double bestNormRes = normRes;
-      for (double stepLength = 1.0; stepLength >= 0.125; stepLength *= 0.5) {
+      for (double stepLength = trialStart; stepLength >= 0.125; stepLength *= 0.5) {
         // Apply trial step
         for (int i = 0; i < numberOfTrays; i++) {
           double newTemp = temperatures[i] + stepLength * deltaT[i];
@@ -6233,6 +6249,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           trays.get(i).getThermoSystem().setTemperature(newTemp);
         }
       }
+
+      // Update damping memo for next iteration's line-search start point.
+      lastSuccessfulStepLength = bestStepLength;
 
       logger.debug("newton iteration {} step={} normRes={}->{}", iter, bestStepLength, normRes,
           bestNormRes);
