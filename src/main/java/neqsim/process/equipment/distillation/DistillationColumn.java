@@ -8977,6 +8977,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         materialChange = true;
       }
     }
+
+    // Phase-preserving rescue. If the bottom product still flashes single-phase gas at the
+    // reboiler T/P after both per-component and scalar retries, force the public bottom stream
+    // to a single liquid phase using the converged tray-0 oil-phase moles. The tray system was
+    // two-phase by construction, so the moles are valid; only the in-isolation re-flash at the
+    // reboiler T/P is producing a spurious vapor product. This avoids the overall-feed-flash
+    // fallback for Inside-Out, Matrix-IO, and Newton solvers on small heavy-rich columns.
+    if (hasReboiler && !isLiquidLikeProduct(liquidOutStream)) {
+      updateProductStreamWithForcedPhase(liquidOutStream, balancedBottomProductComponentMoles,
+          "liquid", id);
+      materialChange = true;
+    }
     return materialChange;
   }
 
@@ -9047,6 +9059,41 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     balancedSystem.init(3);
     balancedSystem.initProperties();
     productStream.setThermoSystem(balancedSystem);
+    productStream.setCalculationIdentifier(id);
+  }
+
+  /**
+   * Replace a product stream fluid with the same thermodynamic model at the product stream's own
+   * temperature and pressure, forcing a single phase identity instead of running a TP flash.
+   *
+   * <p>
+   * Used as a phase-preserving rescue when an accelerator solver (Inside-Out, Matrix-IO, Newton)
+   * converges to a tray-0 oil-phase composition that, when re-flashed in isolation at the reboiler
+   * T/P, collapses to single-phase gas. The tray system itself was two-phase by construction, so
+   * the moles drawn from it are valid; forcing the phase preserves the rigorous solver result and
+   * avoids the spurious overall-feed-flash fallback that otherwise triggers via
+   * {@code bottomProductPhaseInvalid()}.
+   * </p>
+   *
+   * @param productStream stream to update
+   * @param componentMoles component mole amounts on the stream-flow basis
+   * @param phaseTypeName phase type description ("gas" or "liquid")
+   * @param id calculation identifier to assign after the update
+   */
+  private void updateProductStreamWithForcedPhase(StreamInterface productStream,
+      double[] componentMoles, String phaseTypeName, UUID id) {
+    SystemInterface productSystem = productStream.getThermoSystem().clone();
+    double productTemperature = productStream.getTemperature("K");
+    double productPressure = productStream.getPressure("bara");
+    productSystem.setMolarFlowRates(componentMoles);
+    productSystem.setTemperature(productTemperature);
+    productSystem.setPressure(productPressure, "bara");
+    productSystem.init(0);
+    setSingleProductPhaseType(productSystem, phaseTypeName);
+    productSystem.init(1);
+    productSystem.initProperties();
+    setSingleProductPhaseType(productSystem, phaseTypeName);
+    productStream.setThermoSystem(productSystem);
     productStream.setCalculationIdentifier(id);
   }
 
