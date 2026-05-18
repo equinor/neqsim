@@ -4992,6 +4992,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return;
     }
 
+    long startTime = System.nanoTime();
     prepareColumnForSolve();
     if (numberOfTrays == 1) {
       solveSingleTray(id);
@@ -5020,10 +5021,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     int matrixIterations = matrixSolver.getLastIterationCount();
     double matrixSolveTime = matrixSolver.getLastSolveTimeSeconds();
+    double matrixTemperatureResidual = matrixSolver.getLastTemperatureResidual();
     lastMatrixInsideOutWarmStartUsed = matrixWarmStartAccepted;
     lastMatrixInsideOutWarmStartBypassed = false;
     lastMatrixInsideOutIterationCount = matrixIterations;
-    lastMatrixInsideOutTemperatureResidual = matrixSolver.getLastTemperatureResidual();
+    lastMatrixInsideOutTemperatureResidual = matrixTemperatureResidual;
     lastMatrixInsideOutSolveTimeSeconds = matrixSolveTime;
     if (matrixWarmStartAccepted) {
       hasBeenSolvedBefore = true;
@@ -5033,11 +5035,75 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       setDoInitializion(true);
     }
 
+    // Early exit: if the matrix warm-start already satisfies the column's convergence contract,
+    // skip the full rigorous inside-out pass (which is otherwise pure overhead).
+    if (matrixWarmStartAccepted && tryFinalizeAfterMatrixWarmStart(id, matrixIterations,
+        matrixTemperatureResidual, matrixSolveTime, startTime)) {
+      logger
+          .debug("Matrix inside-out warm start fully converged; skipping rigorous inside-out pass. "
+              + "iterations={} residual={}", matrixIterations, matrixTemperatureResidual);
+      return;
+    }
+
     solveInsideOut(id);
     lastIterationCount += matrixIterations;
     lastSolveTimeSeconds += matrixSolveTime;
     logger.debug("Matrix inside-out stage iterations={} residual={} accepted={}", matrixIterations,
-        matrixSolver.getLastTemperatureResidual(), matrixWarmStartAccepted);
+        matrixTemperatureResidual, matrixWarmStartAccepted);
+  }
+
+  /**
+   * Try to finalize the column state directly after an accepted matrix warm-start, without running
+   * the full rigorous inside-out pass. The warm-start is accepted only when the resulting state
+   * passes the full {@link #solved()} contract; otherwise the column is restored and the caller
+   * falls back to rigorous inside-out polishing.
+   *
+   * @param id calculation identifier
+   * @param matrixIterations matrix-stage iteration count to record
+   * @param matrixTemperatureResidual matrix-stage temperature residual to record
+   * @param matrixSolveTime matrix-stage wallclock time in seconds
+   * @param startTime overall {@link System#nanoTime()} timestamp when {@code solveMatrixInsideOut}
+   *        started
+   * @return {@code true} when the warm-start state satisfies {@link #solved()} and the column has
+   *         been fully finalized; {@code false} when rigorous inside-out polishing is still
+   *         required
+   */
+  private boolean tryFinalizeAfterMatrixWarmStart(UUID id, int matrixIterations,
+      double matrixTemperatureResidual, double matrixSolveTime, long startTime) {
+    // Snapshot solver diagnostics so they can be restored if early-exit is rejected.
+    double previousErr = err;
+    double previousMass = lastMassResidual;
+    double previousEnergy = lastEnergyResidual;
+    int previousIterations = lastIterationCount;
+    double previousSolveTime = lastSolveTimeSeconds;
+    boolean previousFeedFlashFallback = lastUsedFeedFlashFallback;
+
+    double massResidual;
+    double energyResidual;
+    try {
+      massResidual = getMassBalanceError();
+      energyResidual = getEnergyBalanceError();
+    } catch (RuntimeException exception) {
+      logger.debug("Matrix warm-start finalize: residual evaluation failed, "
+          + "falling back to rigorous inside-out.", exception);
+      return false;
+    }
+
+    finalizeSolve(id, matrixIterations, matrixTemperatureResidual, massResidual, energyResidual,
+        startTime);
+    lastSolveTimeSeconds = Math.max(lastSolveTimeSeconds, matrixSolveTime);
+    if (solved()) {
+      return true;
+    }
+
+    // Restore diagnostics so rigorous inside-out reports cumulative metrics correctly.
+    err = previousErr;
+    lastMassResidual = previousMass;
+    lastEnergyResidual = previousEnergy;
+    lastIterationCount = previousIterations;
+    lastSolveTimeSeconds = previousSolveTime;
+    lastUsedFeedFlashFallback = previousFeedFlashFallback;
+    return false;
   }
 
   /**
@@ -6030,18 +6096,31 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         }
       }
 
-      // Determine which columns actually need perturbation
+      // Determine which columns actually need perturbation.
+      // A Jacobian column J[:,j] only contributes to the Newton step through rows i
+      // whose residual is non-negligible. If every row in the band around column j is
+      // already at or below the temperature tolerance, the corresponding column has
+      // no useful information and we can skip its perturbation sweep entirely. Each
+      // skipped column saves one full tray sweep — the dominant cost of Newton.
       boolean[] needsPerturb = new boolean[numberOfTrays];
+      double residualSkipThreshold = 0.5 * baseTempTolerance;
       for (int j = 0; j < numberOfTrays; j++) {
         if (numberOfTrays <= 6) {
           needsPerturb[j] = true;
         } else {
-          // Perturb column j if any row i within the band needs it
-          for (int i = Math.max(0, j - halfBand); i <= Math.min(numberOfTrays - 1,
-              j + halfBand); i++) {
-            needsPerturb[j] = true;
-            break;
+          int rowStart = Math.max(0, j - halfBand);
+          int rowEnd = Math.min(numberOfTrays - 1, j + halfBand);
+          double bandResidualMax = 0.0;
+          for (int i = rowStart; i <= rowEnd; i++) {
+            double r = Math.abs(residuals[i]);
+            if (r > bandResidualMax) {
+              bandResidualMax = r;
+            }
           }
+          // Always perturb the diagonal column itself, even if its own residual is
+          // tight — the rest of the band may still couple through off-diagonal entries
+          // on the next iteration. The skip only fires when the entire band is tight.
+          needsPerturb[j] = bandResidualMax > residualSkipThreshold;
         }
       }
 
@@ -6495,6 +6574,28 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.solverType = solverType == null ? SolverType.DIRECT_SUBSTITUTION : solverType;
     this.lastSolverTypeUsed =
         this.solverType == SolverType.AUTO ? SolverType.DIRECT_SUBSTITUTION : this.solverType;
+  }
+
+  /**
+   * Enable or disable the post-success damped-substitution verification run for accelerated solvers
+   * (Wegstein, Sum-Rates, Naphtali-Sandholm, MESH residual). Off by default. When enabled every
+   * successful accelerated solve is double-checked against a fresh damped-substitution solve on a
+   * column clone; if product flows differ by more than 2&nbsp;% the damped result is accepted. The
+   * verification roughly doubles wallclock time, so it is recommended only for regression auditing.
+   *
+   * @param enabled {@code true} to verify accelerated results against damped substitution
+   */
+  public static void setVerifyAcceleratedResults(boolean enabled) {
+    ColumnSolverFactory.setVerifyAcceleratedResults(enabled);
+  }
+
+  /**
+   * Check whether accelerated solver verification is currently enabled.
+   *
+   * @return {@code true} when accelerated solves are verified against damped substitution
+   */
+  public static boolean isVerifyAcceleratedResults() {
+    return ColumnSolverFactory.isVerifyAcceleratedResults();
   }
 
   /**

@@ -36,8 +36,37 @@ final class ColumnSolverFactory {
   /** Automatic strategy selector. */
   private static final ColumnSolver AUTO = new AutoSolver();
 
+  /**
+   * Whether accelerated solvers (Wegstein, Sum-Rates, Naphtali-Sandholm, MESH residual) should run
+   * a damped-substitution validation solve after a successful solve and roll back to the damped
+   * result if product splits differ materially. Off by default because the validation solve is
+   * typically as expensive as the accelerator itself, halving the wallclock speedup. The
+   * accelerators already fall back internally when {@link DistillationColumn#solved()} is not
+   * satisfied, so this extra layer is only useful for regression auditing.
+   */
+  private static volatile boolean verifyAcceleratedResults = false;
+
   /** Utility class constructor. */
   private ColumnSolverFactory() {}
+
+  /**
+   * Enable or disable the damped-substitution verification step run after successful accelerated
+   * solves. Disabled by default.
+   *
+   * @param enabled {@code true} to verify every accelerated result against a damped fallback
+   */
+  static void setVerifyAcceleratedResults(boolean enabled) {
+    verifyAcceleratedResults = enabled;
+  }
+
+  /**
+   * Check whether accelerated result verification is currently enabled.
+   *
+   * @return {@code true} if every accelerated solve is verified against a damped solve
+   */
+  static boolean isVerifyAcceleratedResults() {
+    return verifyAcceleratedResults;
+  }
 
   /**
    * Create the strategy for a solver type.
@@ -227,7 +256,8 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
+      DistillationColumn fallbackCandidate =
+          verifyAcceleratedResults ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
       try {
         column.solveWegstein(id);
@@ -245,7 +275,7 @@ final class ColumnSolverFactory {
             "Wegstein did not satisfy convergence criteria", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied) {
+      if (!fallbackApplied && verifyAcceleratedResults) {
         validateAcceleratedProductSplit(column, fallbackCandidate, id, "Wegstein");
       }
       return ColumnSolveResult.from(column, getSolverType());
@@ -263,7 +293,8 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
+      DistillationColumn fallbackCandidate =
+          verifyAcceleratedResults ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
       try {
         column.solveSumRates(id);
@@ -281,7 +312,7 @@ final class ColumnSolverFactory {
             "Sum-rates did not satisfy convergence criteria", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied) {
+      if (!fallbackApplied && verifyAcceleratedResults) {
         validateAcceleratedProductSplit(column, fallbackCandidate, id, "Sum-rates");
       }
       return ColumnSolveResult.from(column, getSolverType());
@@ -330,7 +361,8 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
+      DistillationColumn fallbackCandidate =
+          verifyAcceleratedResults ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
       try {
         column.solveNaphtaliSandholm(id);
@@ -348,7 +380,7 @@ final class ColumnSolverFactory {
             "Naphtali-Sandholm did not satisfy convergence criteria", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied) {
+      if (!fallbackApplied && verifyAcceleratedResults) {
         validateAcceleratedProductSplit(column, fallbackCandidate, id, "Naphtali-Sandholm");
       }
       return ColumnSolveResult.from(column, getSolverType());
@@ -366,13 +398,13 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
+      DistillationColumn fallbackCandidate =
+          verifyAcceleratedResults ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
       try {
         column.solveMeshResidual(id);
       } catch (RuntimeException exception) {
-        applyDampedFallback(column, fallbackCandidate, id, "MESH residual solve failed",
-            exception);
+        applyDampedFallback(column, fallbackCandidate, id, "MESH residual solve failed", exception);
         fallbackApplied = true;
       }
       if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
@@ -385,7 +417,7 @@ final class ColumnSolverFactory {
             "MESH residual solve did not satisfy convergence criteria", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied) {
+      if (!fallbackApplied && verifyAcceleratedResults) {
         validateAcceleratedProductSplit(column, fallbackCandidate, id, "MESH residual");
       }
       return ColumnSolveResult.from(column, getSolverType());
@@ -430,8 +462,7 @@ final class ColumnSolverFactory {
    * @param column column being solved
    * @return ordered candidate solver types, excluding {@link DistillationColumn.SolverType#AUTO}
    */
-  private static DistillationColumn.SolverType[] selectCandidateSolvers(
-      DistillationColumn column) {
+  private static DistillationColumn.SolverType[] selectCandidateSolvers(DistillationColumn column) {
     if (column.isReactive()) {
       return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.NAPHTALI_SANDHOLM,
           DistillationColumn.SolverType.MESH_RESIDUAL,
