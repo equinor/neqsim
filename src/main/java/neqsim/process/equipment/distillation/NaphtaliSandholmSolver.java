@@ -90,12 +90,30 @@ final class NaphtaliSandholmSolver {
   private double[] fixedTemperatures;
   /** Equilibrium K-values for each tray and component. */
   private double[][] kValues;
+  /** Temperature derivatives of K-values for each tray and component. */
+  private double[][] kTemperatureDerivatives;
   /** Liquid molar enthalpy estimate for each tray. */
   private double[] liquidMolarEnthalpies;
   /** Vapor molar enthalpy estimate for each tray. */
   private double[] vaporMolarEnthalpies;
+  /** Liquid molar heat capacity estimate for each tray. */
+  private double[] liquidMolarHeatCapacities;
+  /** Vapor molar heat capacity estimate for each tray. */
+  private double[] vaporMolarHeatCapacities;
+  /** Whether one tray's thermodynamic state cache is valid. */
+  private boolean[] thermoCacheValid;
+  /** Cached tray temperatures for thermodynamic state reuse. */
+  private double[] cachedThermoTemperatures;
+  /** Cached tray pressures for thermodynamic state reuse. */
+  private double[] cachedThermoPressures;
+  /** Cached tray vapor flows for thermodynamic state reuse. */
+  private double[] cachedThermoVaporFlows;
+  /** Cached tray liquid component flows for thermodynamic state reuse. */
+  private double[][] cachedThermoLiquidComponentFlows;
   /** Characteristic molar flow used for residual scaling. */
   private double flowScale = 1.0;
+  /** Component-specific flow scales used to avoid trace-component residual over-weighting. */
+  private double[] componentFlowScales;
   /** Maximum Newton iterations. */
   private int maxIterations = 8;
   /** Target scaled residual norm. */
@@ -110,6 +128,22 @@ final class NaphtaliSandholmSolver {
   private double lastMassBalanceError = Double.NaN;
   /** Latest scaled energy residual estimate. */
   private double lastEnergyResidual = Double.NaN;
+  /** Number of semi-analytic Jacobian columns built in the latest Jacobian refresh. */
+  private int lastAnalyticJacobianColumns = 0;
+  /** Number of finite-difference Jacobian columns built in the latest Jacobian refresh. */
+  private int lastFiniteDifferenceJacobianColumns = 0;
+  /** Tray thermodynamic evaluations performed by the latest solve. */
+  private int lastThermoEvaluationCount = 0;
+  /** Tray thermodynamic evaluations avoided by cache reuse in the latest solve. */
+  private int lastThermoCacheHitCount = 0;
+  /** Wall time for the latest Jacobian build in seconds. */
+  private double lastJacobianBuildTimeSeconds = 0.0;
+  /** Successful block-tridiagonal linear solves in the latest solve. */
+  private int lastBlockLinearSolveCount = 0;
+  /** Successful dense fallback linear solves in the latest solve. */
+  private int lastDenseLinearSolveCount = 0;
+  /** Wall time spent in linear solves during the latest solve. */
+  private double lastLinearSolveTimeSeconds = 0.0;
   /** Whether the latest solve accepted a residual-improving state. */
   private boolean accepted = false;
 
@@ -151,6 +185,14 @@ final class NaphtaliSandholmSolver {
   boolean solve(UUID id) {
     calculationIdentifier = id;
     accepted = false;
+    lastAnalyticJacobianColumns = 0;
+    lastFiniteDifferenceJacobianColumns = 0;
+    lastThermoEvaluationCount = 0;
+    lastThermoCacheHitCount = 0;
+    lastJacobianBuildTimeSeconds = 0.0;
+    lastBlockLinearSolveCount = 0;
+    lastDenseLinearSolveCount = 0;
+    lastLinearSolveTimeSeconds = 0.0;
     initializeFromColumn();
     evaluateAllThermo();
 
@@ -159,6 +201,8 @@ final class NaphtaliSandholmSolver {
     double bestNorm = initialNorm;
     StateSnapshot bestState = createSnapshot();
     StateSnapshot initialState = createSnapshot();
+    BlockTridiagonalMatrix jacobian = null;
+    boolean rebuildJacobian = true;
 
     if (!Double.isFinite(initialNorm)) {
       restoreSnapshot(initialState);
@@ -171,10 +215,20 @@ final class NaphtaliSandholmSolver {
         break;
       }
 
-      BlockTridiagonalJacobian jacobian = computeJacobian(residual);
+      if (jacobian == null || rebuildJacobian) {
+        jacobian = computeJacobian(residual);
+        rebuildJacobian = false;
+      }
       double[] correction = solveBlockTridiagonal(jacobian, residual);
       if (correction == null) {
         correction = solveDenseLinearSystem(jacobian.toDense(), residual);
+      }
+      if (correction == null || !isFiniteVector(correction)) {
+        jacobian = computeJacobian(residual);
+        correction = solveBlockTridiagonal(jacobian, residual);
+        if (correction == null) {
+          correction = solveDenseLinearSystem(jacobian.toDense(), residual);
+        }
       }
       if (correction == null || !isFiniteVector(correction)) {
         logger.debug("Naphtali-Sandholm linear solve failed for column {} at iteration {}",
@@ -182,6 +236,8 @@ final class NaphtaliSandholmSolver {
         break;
       }
 
+      double[] stateBeforeStep = stateVector();
+      double[] residualBeforeStep = residual.clone();
       double trustScale = applyTrustRegion(correction);
       double trialNorm = lineSearch(correction, vectorNorm(residual));
       residual = computeResidual();
@@ -193,6 +249,16 @@ final class NaphtaliSandholmSolver {
       if (Double.isFinite(currentNorm) && currentNorm < bestNorm) {
         bestNorm = currentNorm;
         bestState = createSnapshot();
+        BlockTridiagonalMatrix updatedJacobian = updateJacobianBroyden(jacobian, stateBeforeStep,
+            residualBeforeStep, stateVector(), residual);
+        if (updatedJacobian == null) {
+          rebuildJacobian = true;
+        } else {
+          jacobian = updatedJacobian;
+          rebuildJacobian = false;
+        }
+      } else {
+        rebuildJacobian = true;
       }
 
       logger.debug("Naphtali-Sandholm iteration {} residual={} trustScale={}",
@@ -274,6 +340,78 @@ final class NaphtaliSandholmSolver {
   }
 
   /**
+   * Get the number of semi-analytic Jacobian columns built in the latest refresh.
+   *
+   * @return number of semi-analytic Jacobian columns
+   */
+  int getLastAnalyticJacobianColumns() {
+    return lastAnalyticJacobianColumns;
+  }
+
+  /**
+   * Get the number of finite-difference Jacobian columns built in the latest refresh.
+   *
+   * @return number of finite-difference Jacobian columns
+   */
+  int getLastFiniteDifferenceJacobianColumns() {
+    return lastFiniteDifferenceJacobianColumns;
+  }
+
+  /**
+   * Get the tray thermodynamic evaluations performed by the latest solve.
+   *
+   * @return thermo evaluation count
+   */
+  int getLastThermoEvaluationCount() {
+    return lastThermoEvaluationCount;
+  }
+
+  /**
+   * Get the tray thermodynamic evaluations avoided through cache reuse.
+   *
+   * @return thermo cache hit count
+   */
+  int getLastThermoCacheHitCount() {
+    return lastThermoCacheHitCount;
+  }
+
+  /**
+   * Get wall time for the latest Jacobian build.
+   *
+   * @return latest Jacobian build time in seconds
+   */
+  double getLastJacobianBuildTimeSeconds() {
+    return lastJacobianBuildTimeSeconds;
+  }
+
+  /**
+   * Get successful block-tridiagonal linear solves from the latest solve.
+   *
+   * @return number of block linear solves
+   */
+  int getLastBlockLinearSolveCount() {
+    return lastBlockLinearSolveCount;
+  }
+
+  /**
+   * Get successful dense fallback linear solves from the latest solve.
+   *
+   * @return number of dense fallback linear solves
+   */
+  int getLastDenseLinearSolveCount() {
+    return lastDenseLinearSolveCount;
+  }
+
+  /**
+   * Get wall time spent in linear solves during the latest solve.
+   *
+   * @return linear solve time in seconds
+   */
+  double getLastLinearSolveTimeSeconds() {
+    return lastLinearSolveTimeSeconds;
+  }
+
+  /**
    * Check whether the latest solve accepted a Newton-refined state.
    *
    * @return {@code true} when a residual-improving state was accepted
@@ -297,14 +435,24 @@ final class NaphtaliSandholmSolver {
     liquidComponentFlows = new double[trayCount][componentCount];
     feedComponentFlows = new double[trayCount][componentCount];
     feedEnthalpies = new double[trayCount];
+    componentFlowScales = new double[componentCount];
     trayHeatInputs = new double[trayCount];
     fixedTemperatures = new double[trayCount];
     kValues = new double[trayCount][componentCount];
+    kTemperatureDerivatives = new double[trayCount][componentCount];
     liquidMolarEnthalpies = new double[trayCount];
     vaporMolarEnthalpies = new double[trayCount];
+    liquidMolarHeatCapacities = new double[trayCount];
+    vaporMolarHeatCapacities = new double[trayCount];
+    thermoCacheValid = new boolean[trayCount];
+    cachedThermoTemperatures = new double[trayCount];
+    cachedThermoPressures = new double[trayCount];
+    cachedThermoVaporFlows = new double[trayCount];
+    cachedThermoLiquidComponentFlows = new double[trayCount][componentCount];
 
     double totalFeedFlow = initializeFeeds();
     flowScale = Math.max(1.0, totalFeedFlow / Math.max(1, trayCount));
+    initializeResidualScales();
     initializeTrayVariables(totalFeedFlow);
   }
 
@@ -400,6 +548,19 @@ final class NaphtaliSandholmSolver {
     return Math.max(totalFeedFlow, MIN_FLOW);
   }
 
+  /** Initialize component-specific residual scales after feed flows have been collected. */
+  private void initializeResidualScales() {
+    double minimumComponentScale = Math.max(1.0, flowScale * 1.0e-3);
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      double componentFeedFlow = 0.0;
+      for (int trayIndex = 0; trayIndex < trayCount; trayIndex++) {
+        componentFeedFlow += Math.max(0.0, feedComponentFlows[trayIndex][componentIndex]);
+      }
+      componentFlowScales[componentIndex] = Math.max(minimumComponentScale,
+          componentFeedFlow / Math.max(1, trayCount));
+    }
+  }
+
   /**
    * Initialize tray temperatures, pressures, liquid component flows, and vapor flows.
    *
@@ -433,14 +594,133 @@ final class NaphtaliSandholmSolver {
       }
       if (liquidTotal <= MIN_FLOW) {
         double seedLiquid = Math.max(MIN_FLOW, totalFeedFlow / Math.max(1, trayCount) * 0.5);
+        double[] trayLiquidComposition = estimateTrayLiquidComposition(totalFeedComposition,
+            temperatures[trayIndex], pressures[trayIndex]);
         for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
           liquidComponentFlows[trayIndex][componentIndex] =
-              seedLiquid * totalFeedComposition[componentIndex];
+              seedLiquid * trayLiquidComposition[componentIndex];
         }
       }
       if (vaporFlows[trayIndex] <= MIN_FLOW) {
         vaporFlows[trayIndex] = Math.max(MIN_FLOW, totalFeedFlow / Math.max(1, trayCount) * 0.5);
       }
+    }
+  }
+
+  /**
+   * Estimate a tray liquid composition from feed composition and Wilson K-values.
+   *
+   * <p>
+   * This supplies a composition profile before the first rigorous tray flashes exist. The light
+   * components are biased toward vapor-rich trays and heavy components toward liquid-rich trays by
+   * a bounded Rachford-Rice style split using Wilson K-values at the seeded tray temperature.
+   * </p>
+   *
+   * @param feedComposition normalized overall feed composition
+   * @param temperature tray seed temperature in Kelvin
+   * @param pressure tray pressure in bara
+   * @return estimated normalized liquid composition
+   */
+  private double[] estimateTrayLiquidComposition(double[] feedComposition, double temperature,
+      double pressure) {
+    double[] liquidComposition = new double[componentCount];
+    double vaporFraction = estimateVaporFraction(temperature, pressure, feedComposition);
+    double sum = 0.0;
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      double kValue = estimateWilsonKValue(componentNames[componentIndex], temperature, pressure);
+      double denominator = Math.max(1.0e-6, 1.0 + vaporFraction * (kValue - 1.0));
+      liquidComposition[componentIndex] = Math.max(0.0, feedComposition[componentIndex]
+          / denominator);
+      sum += liquidComposition[componentIndex];
+    }
+    if (sum <= MIN_FLOW) {
+      return feedComposition.clone();
+    }
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      liquidComposition[componentIndex] /= sum;
+    }
+    return liquidComposition;
+  }
+
+  /**
+   * Estimate vapor fraction from Wilson K-values with a safeguarded Rachford-Rice solve.
+   *
+   * @param temperature tray temperature in Kelvin
+   * @param pressure tray pressure in bara
+   * @param composition overall composition
+   * @return vapor fraction clipped between 0.05 and 0.95
+   */
+  private double estimateVaporFraction(double temperature, double pressure, double[] composition) {
+    double lower = 0.0;
+    double upper = 1.0;
+    double lowerValue = rachfordRiceValue(lower, temperature, pressure, composition);
+    double upperValue = rachfordRiceValue(upper, temperature, pressure, composition);
+    if (!Double.isFinite(lowerValue) || !Double.isFinite(upperValue)
+        || lowerValue * upperValue > 0.0) {
+      return 0.5;
+    }
+    for (int iteration = 0; iteration < 30; iteration++) {
+      double mid = 0.5 * (lower + upper);
+      double value = rachfordRiceValue(mid, temperature, pressure, composition);
+      if (!Double.isFinite(value)) {
+        break;
+      }
+      if (lowerValue * value <= 0.0) {
+        upper = mid;
+        upperValue = value;
+      } else {
+        lower = mid;
+        lowerValue = value;
+      }
+    }
+    return Math.max(0.05, Math.min(0.95, 0.5 * (lower + upper)));
+  }
+
+  /**
+   * Evaluate the Rachford-Rice function using Wilson K-values.
+   *
+   * @param vaporFraction vapor fraction trial
+   * @param temperature temperature in Kelvin
+   * @param pressure pressure in bara
+   * @param composition overall composition
+   * @return Rachford-Rice residual
+   */
+  private double rachfordRiceValue(double vaporFraction, double temperature, double pressure,
+      double[] composition) {
+    double value = 0.0;
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      double kValue = estimateWilsonKValue(componentNames[componentIndex], temperature, pressure);
+      double denominator = 1.0 + vaporFraction * (kValue - 1.0);
+      if (Math.abs(denominator) < 1.0e-10) {
+        denominator = Math.copySign(1.0e-10, denominator);
+      }
+      value += composition[componentIndex] * (kValue - 1.0) / denominator;
+    }
+    return value;
+  }
+
+  /**
+   * Estimate a Wilson K-value for one component.
+   *
+   * @param componentName component name
+   * @param temperature temperature in Kelvin
+   * @param pressure pressure in bara
+   * @return bounded Wilson K-value estimate
+   */
+  private double estimateWilsonKValue(String componentName, double temperature, double pressure) {
+    try {
+      if (!Double.isFinite(temperature) || !Double.isFinite(pressure) || pressure <= 0.0) {
+        return 1.0;
+      }
+      double criticalTemperature = referenceSystem.getPhase(0).getComponent(componentName).getTC();
+      double criticalPressure = referenceSystem.getPhase(0).getComponent(componentName).getPC();
+      double acentricFactor =
+          referenceSystem.getPhase(0).getComponent(componentName).getAcentricFactor();
+      double value = (criticalPressure / pressure) * Math.exp(5.373 * (1.0 + acentricFactor)
+          * (1.0 - criticalTemperature / temperature));
+      return Math.max(MIN_K_VALUE, Math.min(MAX_K_VALUE, value));
+    } catch (RuntimeException exception) {
+      return 1.0;
     }
   }
 
@@ -524,6 +804,11 @@ final class NaphtaliSandholmSolver {
    * @param trayIndex tray index
    */
   private void evaluateThermoForTray(int trayIndex) {
+    if (isThermoCacheCurrent(trayIndex)) {
+      lastThermoCacheHitCount++;
+      return;
+    }
+    lastThermoEvaluationCount++;
     double liquidFlow = liquidFlow(trayIndex);
     double[] liquidComposition = liquidComposition(trayIndex, liquidFlow);
     SystemInterface system = createSystem(liquidComposition, temperatures[trayIndex],
@@ -544,9 +829,65 @@ final class NaphtaliSandholmSolver {
     for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
       kValues[trayIndex][componentIndex] = computeKValue(system, gasPhase, liquidPhase,
           componentIndex, liquidComposition[componentIndex]);
+      kTemperatureDerivatives[trayIndex][componentIndex] = computeKTemperatureDerivative(system,
+          componentIndex, kValues[trayIndex][componentIndex], temperatures[trayIndex]);
     }
     liquidMolarEnthalpies[trayIndex] = phaseMolarEnthalpy(liquidPhase, system);
     vaporMolarEnthalpies[trayIndex] = phaseMolarEnthalpy(gasPhase, system);
+    liquidMolarHeatCapacities[trayIndex] = phaseMolarHeatCapacity(liquidPhase, system);
+    vaporMolarHeatCapacities[trayIndex] = phaseMolarHeatCapacity(gasPhase, system);
+    storeThermoCacheState(trayIndex);
+  }
+
+  /**
+   * Check whether a tray's cached thermodynamic state matches the current Newton variables.
+   *
+   * @param trayIndex tray index
+   * @return {@code true} when the existing K-values and enthalpies can be reused
+   */
+  private boolean isThermoCacheCurrent(int trayIndex) {
+    if (thermoCacheValid == null || !thermoCacheValid[trayIndex]) {
+      return false;
+    }
+    if (!sameCachedValue(temperatures[trayIndex], cachedThermoTemperatures[trayIndex])
+        || !sameCachedValue(pressures[trayIndex], cachedThermoPressures[trayIndex])
+        || !sameCachedValue(vaporFlows[trayIndex], cachedThermoVaporFlows[trayIndex])) {
+      return false;
+    }
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      if (!sameCachedValue(liquidComponentFlows[trayIndex][componentIndex],
+          cachedThermoLiquidComponentFlows[trayIndex][componentIndex])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Compare two cached state values using exact floating-point identity.
+   *
+   * @param current current state value
+   * @param cached cached state value
+   * @return {@code true} when both values have identical double bits
+   */
+  private boolean sameCachedValue(double current, double cached) {
+    return Double.doubleToLongBits(current) == Double.doubleToLongBits(cached);
+  }
+
+  /**
+   * Store the current tray Newton variables as the thermodynamic cache key.
+   *
+   * @param trayIndex tray index
+   */
+  private void storeThermoCacheState(int trayIndex) {
+    thermoCacheValid[trayIndex] = true;
+    cachedThermoTemperatures[trayIndex] = temperatures[trayIndex];
+    cachedThermoPressures[trayIndex] = pressures[trayIndex];
+    cachedThermoVaporFlows[trayIndex] = vaporFlows[trayIndex];
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      cachedThermoLiquidComponentFlows[trayIndex][componentIndex] =
+          liquidComponentFlows[trayIndex][componentIndex];
+    }
   }
 
   /**
@@ -645,6 +986,63 @@ final class NaphtaliSandholmSolver {
   }
 
   /**
+   * Estimate the molar heat-capacity slope used for enthalpy temperature derivatives.
+   *
+   * @param phase phase to inspect
+   * @param system fallback system
+   * @return molar heat capacity in J/mol/K, or zero when unavailable
+   */
+  private double phaseMolarHeatCapacity(PhaseInterface phase, SystemInterface system) {
+    try {
+      if (phase != null && phase.getNumberOfMolesInPhase() > MIN_FLOW) {
+        double cp = phase.getCp("J/molK");
+        return Double.isFinite(cp) ? cp : 0.0;
+      }
+    } catch (RuntimeException exception) {
+      logger.debug("Could not read phase molar heat capacity", exception);
+    }
+    try {
+      double cp = system.getCp("J/molK");
+      return Double.isFinite(cp) ? cp : 0.0;
+    } catch (RuntimeException exception) {
+      return 0.0;
+    }
+  }
+
+  /**
+   * Estimate the K-value temperature derivative from the Wilson K-value slope.
+   *
+   * <p>
+   * EOS packages do not expose a common analytic K-derivative interface yet. This method therefore
+   * uses the Wilson expression slope as a semi-analytic fallback, anchored to the rigorous K-value
+   * from the current flash. This keeps the Jacobian sparse and avoids an extra tray flash per
+   * temperature column.
+   * </p>
+   *
+   * @param system tray system containing component critical data
+   * @param componentIndex component index
+   * @param kValue current rigorous or fallback K-value
+   * @param temperature tray temperature in Kelvin
+   * @return estimated derivative dK/dT
+   */
+  private double computeKTemperatureDerivative(SystemInterface system, int componentIndex,
+      double kValue, double temperature) {
+    try {
+      if (!Double.isFinite(kValue) || kValue <= 0.0 || !Double.isFinite(temperature)
+          || temperature <= 0.0) {
+        return 0.0;
+      }
+      double criticalTemperature = system.getComponent(componentIndex).getTC();
+      double acentricFactor = system.getComponent(componentIndex).getAcentricFactor();
+      double derivative = kValue * 5.373 * (1.0 + acentricFactor) * criticalTemperature
+          / (temperature * temperature);
+      return Double.isFinite(derivative) ? derivative : 0.0;
+    } catch (RuntimeException exception) {
+      return 0.0;
+    }
+  }
+
+  /**
    * Build the full scaled MESH residual vector.
    *
    * @return residual vector
@@ -678,7 +1076,8 @@ final class NaphtaliSandholmSolver {
       if (trayIndex > 0) {
         entering += vaporComponentFlow(trayIndex - 1, componentIndex);
       }
-      residual[componentIndex] = (leaving - entering) / flowScale;
+        residual[componentIndex] =
+          (leaving - entering) / Math.max(MIN_FLOW, componentFlowScales[componentIndex]);
     }
 
     if (Double.isNaN(fixedTemperatures[trayIndex])) {
@@ -719,34 +1118,30 @@ final class NaphtaliSandholmSolver {
   }
 
   /**
-   * Compute a finite-difference Jacobian with block-tridiagonal sparsity.
+   * Compute a semi-analytic Jacobian with block-tridiagonal sparsity.
+   *
+   * <p>
+  * Material, summation, and frozen-enthalpy energy derivatives with respect to liquid-component
+  * and vapor-flow variables are filled analytically. Tray-temperature columns use semi-analytic
+  * Wilson K-value slopes and phase heat capacities, with a guarded finite-difference fallback when
+  * derivative data are unavailable. This mirrors the hybrid Jacobian strategy used in commercial
+  * column solvers while preserving a robust numerical path for difficult thermodynamics.
+   * </p>
    *
    * @param baseResidual residual vector at the base state
-   * @return finite-difference block-tridiagonal Jacobian
+   * @return semi-analytic block-tridiagonal Jacobian
    */
-  private BlockTridiagonalJacobian computeJacobian(double[] baseResidual) {
-    BlockTridiagonalJacobian jacobian = new BlockTridiagonalJacobian(trayCount, variablesPerTray);
+  private BlockTridiagonalMatrix computeJacobian(double[] baseResidual) {
+    long startTime = System.nanoTime();
+    BlockTridiagonalMatrix jacobian = new BlockTridiagonalMatrix(trayCount, variablesPerTray);
+    addSemiAnalyticFlowJacobian(jacobian);
+    lastAnalyticJacobianColumns = trayCount * (componentCount + 1);
+    lastFiniteDifferenceJacobianColumns = 0;
     for (int trayIndex = 0; trayIndex < trayCount; trayIndex++) {
-      for (int variableIndex = 0; variableIndex < variablesPerTray; variableIndex++) {
-        double originalValue = getVariable(trayIndex, variableIndex);
-        double perturbation = perturbationFor(originalValue, variableIndex);
-        setVariable(trayIndex, variableIndex, originalValue + perturbation);
-        evaluateThermoForTray(trayIndex);
-
-        int firstAffectedTray = Math.max(0, trayIndex - 1);
-        int lastAffectedTray = Math.min(trayCount - 1, trayIndex + 1);
-        for (int affectedTray =
-            firstAffectedTray; affectedTray <= lastAffectedTray; affectedTray++) {
-          double[] perturbed = computeResidualForTray(affectedTray);
-          int rowBase = affectedTray * variablesPerTray;
-          for (int equationIndex = 0; equationIndex < variablesPerTray; equationIndex++) {
-            jacobian.blockFor(affectedTray, trayIndex)[equationIndex][variableIndex] =
-                (perturbed[equationIndex] - baseResidual[rowBase + equationIndex]) / perturbation;
-          }
-        }
-
-        setVariable(trayIndex, variableIndex, originalValue);
-        evaluateThermoForTray(trayIndex);
+      if (addSemiAnalyticTemperatureJacobianColumn(jacobian, trayIndex)) {
+        lastAnalyticJacobianColumns++;
+      } else {
+        addTemperatureFiniteDifferenceColumn(jacobian, baseResidual, trayIndex);
       }
     }
     for (int index = 0; index < totalVariables; index++) {
@@ -754,7 +1149,319 @@ final class NaphtaliSandholmSolver {
       int variableIndex = index % variablesPerTray;
       jacobian.diagonal[trayIndex][variableIndex][variableIndex] += JACOBIAN_REGULARIZATION;
     }
+    lastJacobianBuildTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
     return jacobian;
+  }
+
+  /**
+   * Add semi-analytic frozen-thermo derivatives for liquid and vapor flow variables.
+   *
+   * @param jacobian Jacobian matrix receiving derivatives
+   */
+  private void addSemiAnalyticFlowJacobian(BlockTridiagonalMatrix jacobian) {
+    for (int trayIndex = 0; trayIndex < trayCount; trayIndex++) {
+      addCurrentTrayFlowDerivatives(jacobian, trayIndex);
+      if (trayIndex > 0) {
+        addLiquidInletDerivativesToTrayBelow(jacobian, trayIndex);
+      }
+      if (trayIndex < trayCount - 1) {
+        addVaporInletDerivativesToTrayAbove(jacobian, trayIndex);
+      }
+    }
+  }
+
+  /**
+   * Add derivatives for outlet variables appearing in their own tray equations.
+   *
+   * @param jacobian Jacobian matrix receiving derivatives
+   * @param trayIndex tray whose outlet variables are being differentiated
+   */
+  private void addCurrentTrayFlowDerivatives(BlockTridiagonalMatrix jacobian, int trayIndex) {
+    double[][] block = jacobian.diagonal[trayIndex];
+    double liquidFlow = liquidFlow(trayIndex);
+    double sumKFlow = sumKTimesLiquidFlow(trayIndex);
+    double energyScale = energyScaleForTray(trayIndex);
+    for (int equationComponent = 0; equationComponent < componentCount; equationComponent++) {
+      for (int variableComponent = 0; variableComponent < componentCount; variableComponent++) {
+        double liquidDerivative = equationComponent == variableComponent ? 1.0 : 0.0;
+        liquidDerivative += vaporComponentDerivativeWrtLiquid(trayIndex, equationComponent,
+            variableComponent, liquidFlow);
+        block[equationComponent][variableComponent] += liquidDerivative
+            / Math.max(MIN_FLOW, componentFlowScales[equationComponent]);
+      }
+      block[equationComponent][componentCount + 1] += vaporComponentDerivativeWrtVaporFlow(
+          trayIndex, equationComponent, liquidFlow)
+          / Math.max(MIN_FLOW, componentFlowScales[equationComponent]);
+    }
+    for (int variableComponent = 0; variableComponent < componentCount; variableComponent++) {
+      block[componentCount][variableComponent] += liquidMolarEnthalpies[trayIndex] / energyScale;
+      block[componentCount + 1][variableComponent] +=
+          summationDerivativeWrtLiquid(trayIndex, variableComponent, liquidFlow, sumKFlow);
+    }
+    block[componentCount][componentCount + 1] += vaporMolarEnthalpies[trayIndex] / energyScale;
+  }
+
+  /**
+   * Add derivatives for liquid flow from a tray entering the tray below.
+   *
+   * @param jacobian Jacobian matrix receiving derivatives
+   * @param sourceTrayIndex tray sending liquid downward
+   */
+  private void addLiquidInletDerivativesToTrayBelow(BlockTridiagonalMatrix jacobian,
+      int sourceTrayIndex) {
+    int receivingTrayIndex = sourceTrayIndex - 1;
+    double[][] block = jacobian.blockFor(receivingTrayIndex, sourceTrayIndex);
+    double energyScale = energyScaleForTray(receivingTrayIndex);
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      block[componentIndex][componentIndex] -=
+          1.0 / Math.max(MIN_FLOW, componentFlowScales[componentIndex]);
+      block[componentCount][componentIndex] -=
+          liquidMolarEnthalpies[sourceTrayIndex] / energyScale;
+    }
+  }
+
+  /**
+   * Add derivatives for vapor flow from a tray entering the tray above.
+   *
+   * @param jacobian Jacobian matrix receiving derivatives
+   * @param sourceTrayIndex tray sending vapor upward
+   */
+  private void addVaporInletDerivativesToTrayAbove(BlockTridiagonalMatrix jacobian,
+      int sourceTrayIndex) {
+    int receivingTrayIndex = sourceTrayIndex + 1;
+    double[][] block = jacobian.blockFor(receivingTrayIndex, sourceTrayIndex);
+    double liquidFlow = liquidFlow(sourceTrayIndex);
+    double energyScale = energyScaleForTray(receivingTrayIndex);
+    for (int equationComponent = 0; equationComponent < componentCount; equationComponent++) {
+      for (int variableComponent = 0; variableComponent < componentCount; variableComponent++) {
+        block[equationComponent][variableComponent] -= vaporComponentDerivativeWrtLiquid(
+            sourceTrayIndex, equationComponent, variableComponent, liquidFlow)
+            / Math.max(MIN_FLOW, componentFlowScales[equationComponent]);
+      }
+      block[equationComponent][componentCount + 1] -= vaporComponentDerivativeWrtVaporFlow(
+          sourceTrayIndex, equationComponent, liquidFlow)
+          / Math.max(MIN_FLOW, componentFlowScales[equationComponent]);
+    }
+    block[componentCount][componentCount + 1] -= vaporMolarEnthalpies[sourceTrayIndex]
+        / energyScale;
+  }
+
+  /**
+   * Add the finite-difference temperature column for one tray.
+   *
+   * @param jacobian Jacobian matrix receiving derivatives
+   * @param baseResidual residual vector at the base state
+   * @param trayIndex tray whose temperature is perturbed
+   */
+  private void addTemperatureFiniteDifferenceColumn(BlockTridiagonalMatrix jacobian,
+      double[] baseResidual, int trayIndex) {
+    int variableIndex = componentCount;
+    double originalValue = getVariable(trayIndex, variableIndex);
+    double perturbation = perturbationFor(originalValue, variableIndex);
+    setVariable(trayIndex, variableIndex, originalValue + perturbation);
+    evaluateThermoForTray(trayIndex);
+
+    int firstAffectedTray = Math.max(0, trayIndex - 1);
+    int lastAffectedTray = Math.min(trayCount - 1, trayIndex + 1);
+    for (int affectedTray = firstAffectedTray; affectedTray <= lastAffectedTray; affectedTray++) {
+      double[] perturbed = computeResidualForTray(affectedTray);
+      int rowBase = affectedTray * variablesPerTray;
+      for (int equationIndex = 0; equationIndex < variablesPerTray; equationIndex++) {
+        jacobian.blockFor(affectedTray, trayIndex)[equationIndex][variableIndex] =
+            (perturbed[equationIndex] - baseResidual[rowBase + equationIndex]) / perturbation;
+      }
+    }
+
+    setVariable(trayIndex, variableIndex, originalValue);
+    evaluateThermoForTray(trayIndex);
+    lastFiniteDifferenceJacobianColumns++;
+  }
+
+  /**
+   * Sum {@code K_i L_i} for a tray.
+   *
+   * @param trayIndex tray index
+   * @return unnormalized K-weighted liquid component flow
+   */
+  private double sumKTimesLiquidFlow(int trayIndex) {
+    double value = 0.0;
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      value += kValues[trayIndex][componentIndex]
+          * Math.max(0.0, liquidComponentFlows[trayIndex][componentIndex]);
+    }
+    return value;
+  }
+
+  /**
+   * Derivative of vapor component flow with respect to one liquid component flow.
+   *
+   * @param trayIndex tray index
+   * @param equationComponent component in the vapor-flow expression
+   * @param variableComponent differentiated liquid component flow
+   * @param liquidFlow total tray liquid flow
+   * @return frozen-K derivative in mol vapor component per mol liquid component
+   */
+  private double vaporComponentDerivativeWrtLiquid(int trayIndex, int equationComponent,
+      int variableComponent, double liquidFlow) {
+    double totalLiquid = Math.max(MIN_FLOW, liquidFlow);
+    double liquidComponent = Math.max(0.0, liquidComponentFlows[trayIndex][equationComponent]);
+    double numeratorDerivative = equationComponent == variableComponent ? totalLiquid : 0.0;
+    return vaporFlows[trayIndex] * kValues[trayIndex][equationComponent]
+        * (numeratorDerivative - liquidComponent) / (totalLiquid * totalLiquid);
+  }
+
+  /**
+   * Derivative of vapor component flow with respect to total vapor flow.
+   *
+   * @param trayIndex tray index
+   * @param componentIndex component in the vapor-flow expression
+   * @param liquidFlow total tray liquid flow
+   * @return frozen-K derivative in mol vapor component per mol vapor flow
+   */
+  private double vaporComponentDerivativeWrtVaporFlow(int trayIndex, int componentIndex,
+      double liquidFlow) {
+    double liquidFraction = liquidComponentFlows[trayIndex][componentIndex]
+        / Math.max(MIN_FLOW, liquidFlow);
+    return kValues[trayIndex][componentIndex] * liquidFraction;
+  }
+
+  /**
+   * Derivative of the equilibrium summation residual with respect to liquid flow.
+   *
+   * @param trayIndex tray index
+   * @param variableComponent differentiated liquid component flow
+   * @param liquidFlow total tray liquid flow
+   * @param sumKFlow sum of {@code K_i L_i}
+   * @return derivative of {@code sum(K_i x_i) - 1}
+   */
+  private double summationDerivativeWrtLiquid(int trayIndex, int variableComponent,
+      double liquidFlow, double sumKFlow) {
+    double totalLiquid = Math.max(MIN_FLOW, liquidFlow);
+    return (kValues[trayIndex][variableComponent] * totalLiquid - sumKFlow)
+        / (totalLiquid * totalLiquid);
+  }
+
+  /**
+   * Compute the frozen-enthalpy energy residual scale for one tray.
+   *
+   * @param trayIndex tray index
+   * @return positive energy scaling factor
+   */
+  private double energyScaleForTray(int trayIndex) {
+    double outlet = liquidFlow(trayIndex) * liquidMolarEnthalpies[trayIndex]
+        + vaporFlows[trayIndex] * vaporMolarEnthalpies[trayIndex];
+    double inlet = feedEnthalpies[trayIndex];
+    if (trayIndex < trayCount - 1) {
+      inlet += liquidFlow(trayIndex + 1) * liquidMolarEnthalpies[trayIndex + 1];
+    }
+    if (trayIndex > 0) {
+      inlet += vaporFlows[trayIndex - 1] * vaporMolarEnthalpies[trayIndex - 1];
+    }
+    return Math.max(1.0,
+        Math.abs(outlet) + Math.abs(inlet) + Math.abs(trayHeatInputs[trayIndex]));
+  }
+
+  /**
+   * Add a semi-analytic temperature derivative column for one tray.
+   *
+   * @param jacobian Jacobian matrix receiving derivatives
+   * @param sourceTrayIndex tray whose temperature variable is differentiated
+   * @return {@code true} when a finite semi-analytic column was added
+   */
+  private boolean addSemiAnalyticTemperatureJacobianColumn(BlockTridiagonalMatrix jacobian,
+      int sourceTrayIndex) {
+    int temperatureVariableIndex = componentCount;
+    boolean hasFiniteDerivative = false;
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      hasFiniteDerivative |= Double.isFinite(kTemperatureDerivatives[sourceTrayIndex][componentIndex])
+          && Math.abs(kTemperatureDerivatives[sourceTrayIndex][componentIndex]) > 0.0;
+    }
+    hasFiniteDerivative |= Double.isFinite(liquidMolarHeatCapacities[sourceTrayIndex])
+        || Double.isFinite(vaporMolarHeatCapacities[sourceTrayIndex])
+        || !Double.isNaN(fixedTemperatures[sourceTrayIndex]);
+    if (!hasFiniteDerivative) {
+      return false;
+    }
+
+    addCurrentTrayTemperatureDerivatives(jacobian.diagonal[sourceTrayIndex], sourceTrayIndex,
+        temperatureVariableIndex);
+    if (sourceTrayIndex > 0) {
+      addLiquidTemperatureDerivativeToTrayBelow(jacobian, sourceTrayIndex,
+          temperatureVariableIndex);
+    }
+    if (sourceTrayIndex < trayCount - 1) {
+      addVaporTemperatureDerivativeToTrayAbove(jacobian, sourceTrayIndex,
+          temperatureVariableIndex);
+    }
+    return true;
+  }
+
+  /**
+   * Add current-tray residual derivatives with respect to current tray temperature.
+   *
+   * @param block Jacobian block for the current tray
+   * @param trayIndex tray index
+   * @param temperatureVariableIndex variable index for tray temperature
+   */
+  private void addCurrentTrayTemperatureDerivatives(double[][] block, int trayIndex,
+      int temperatureVariableIndex) {
+    double liquidFlow = Math.max(MIN_FLOW, liquidFlow(trayIndex));
+    double energyScale = energyScaleForTray(trayIndex);
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      double liquidFraction = liquidComponentFlows[trayIndex][componentIndex] / liquidFlow;
+      double vaporDerivative = vaporFlows[trayIndex] * liquidFraction
+          * kTemperatureDerivatives[trayIndex][componentIndex];
+      block[componentIndex][temperatureVariableIndex] += vaporDerivative
+          / Math.max(MIN_FLOW, componentFlowScales[componentIndex]);
+      block[componentCount + 1][temperatureVariableIndex] += liquidFraction
+          * kTemperatureDerivatives[trayIndex][componentIndex];
+    }
+    if (Double.isNaN(fixedTemperatures[trayIndex])) {
+      block[componentCount][temperatureVariableIndex] +=
+          (liquidFlow * liquidMolarHeatCapacities[trayIndex]
+              + vaporFlows[trayIndex] * vaporMolarHeatCapacities[trayIndex])
+              / energyScale;
+    } else {
+      block[componentCount][temperatureVariableIndex] += 1.0 / temperatureScale();
+    }
+  }
+
+  /**
+   * Add temperature derivative of liquid enthalpy entering the tray below.
+   *
+   * @param jacobian Jacobian matrix receiving derivatives
+   * @param sourceTrayIndex tray sending liquid downward
+   * @param temperatureVariableIndex variable index for tray temperature
+   */
+  private void addLiquidTemperatureDerivativeToTrayBelow(BlockTridiagonalMatrix jacobian,
+      int sourceTrayIndex, int temperatureVariableIndex) {
+    int receivingTrayIndex = sourceTrayIndex - 1;
+    double[][] block = jacobian.blockFor(receivingTrayIndex, sourceTrayIndex);
+    block[componentCount][temperatureVariableIndex] -= liquidFlow(sourceTrayIndex)
+        * liquidMolarHeatCapacities[sourceTrayIndex] / energyScaleForTray(receivingTrayIndex);
+  }
+
+  /**
+   * Add temperature derivatives of vapor composition and enthalpy entering the tray above.
+   *
+   * @param jacobian Jacobian matrix receiving derivatives
+   * @param sourceTrayIndex tray sending vapor upward
+   * @param temperatureVariableIndex variable index for tray temperature
+   */
+  private void addVaporTemperatureDerivativeToTrayAbove(BlockTridiagonalMatrix jacobian,
+      int sourceTrayIndex, int temperatureVariableIndex) {
+    int receivingTrayIndex = sourceTrayIndex + 1;
+    double[][] block = jacobian.blockFor(receivingTrayIndex, sourceTrayIndex);
+    double liquidFlow = Math.max(MIN_FLOW, liquidFlow(sourceTrayIndex));
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      double liquidFraction = liquidComponentFlows[sourceTrayIndex][componentIndex] / liquidFlow;
+      double vaporDerivative = vaporFlows[sourceTrayIndex] * liquidFraction
+          * kTemperatureDerivatives[sourceTrayIndex][componentIndex];
+      block[componentIndex][temperatureVariableIndex] -= vaporDerivative
+          / Math.max(MIN_FLOW, componentFlowScales[componentIndex]);
+    }
+    block[componentCount][temperatureVariableIndex] -= vaporFlows[sourceTrayIndex]
+        * vaporMolarHeatCapacities[sourceTrayIndex] / energyScaleForTray(receivingTrayIndex);
   }
 
   /**
@@ -803,6 +1510,140 @@ final class NaphtaliSandholmSolver {
     } else {
       vaporFlows[trayIndex] = Math.max(MIN_FLOW, finiteOr(value, MIN_FLOW));
     }
+  }
+
+  /**
+   * Update the Jacobian with a band-limited good-Broyden rank-one correction.
+   *
+   * @param jacobian current block-tridiagonal Jacobian
+   * @param previousState state vector before the accepted step
+   * @param previousResidual residual vector before the accepted step
+   * @param currentState state vector after the accepted step
+   * @param currentResidual residual vector after the accepted step
+   * @return updated Jacobian, or {@code null} when the update is ill-conditioned
+   */
+  private BlockTridiagonalMatrix updateJacobianBroyden(BlockTridiagonalMatrix jacobian,
+      double[] previousState, double[] previousResidual, double[] currentState,
+      double[] currentResidual) {
+    double[] stateStep = subtract(currentState, previousState);
+    double denominator = dot(stateStep, stateStep);
+    if (!Double.isFinite(denominator) || denominator <= 1.0e-24) {
+      return null;
+    }
+    double[] residualStep = subtract(currentResidual, previousResidual);
+    double[] predictedStep = multiplyJacobian(jacobian, stateStep);
+    double[] correction = subtract(residualStep, predictedStep);
+    if (!isFiniteVector(correction)) {
+      return null;
+    }
+    for (int row = 0; row < totalVariables; row++) {
+      int rowTrayIndex = row / variablesPerTray;
+      int equationIndex = row % variablesPerTray;
+      int firstColumnTray = Math.max(0, rowTrayIndex - 1);
+      int lastColumnTray = Math.min(trayCount - 1, rowTrayIndex + 1);
+      for (int columnTrayIndex =
+          firstColumnTray; columnTrayIndex <= lastColumnTray; columnTrayIndex++) {
+        double[][] block = jacobian.blockFor(rowTrayIndex, columnTrayIndex);
+        int columnBase = columnTrayIndex * variablesPerTray;
+        for (int variableIndex = 0; variableIndex < variablesPerTray; variableIndex++) {
+          block[equationIndex][variableIndex] +=
+              correction[row] * stateStep[columnBase + variableIndex] / denominator;
+        }
+      }
+    }
+    return jacobian;
+  }
+
+  /**
+   * Build the current Newton state vector.
+   *
+   * @return state vector containing liquid component flows, temperature, and vapor flow per tray
+   */
+  private double[] stateVector() {
+    double[] state = new double[totalVariables];
+    for (int trayIndex = 0; trayIndex < trayCount; trayIndex++) {
+      int base = trayIndex * variablesPerTray;
+      for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+        state[base + componentIndex] = liquidComponentFlows[trayIndex][componentIndex];
+      }
+      state[base + componentCount] = temperatures[trayIndex];
+      state[base + componentCount + 1] = vaporFlows[trayIndex];
+    }
+    return state;
+  }
+
+  /**
+   * Multiply the block-tridiagonal Jacobian by a vector.
+   *
+   * @param jacobian Jacobian matrix in block-tridiagonal storage
+   * @param vector vector to multiply
+   * @return matrix-vector product
+   */
+  private double[] multiplyJacobian(BlockTridiagonalMatrix jacobian, double[] vector) {
+    double[] product = new double[totalVariables];
+    for (int rowTrayIndex = 0; rowTrayIndex < trayCount; rowTrayIndex++) {
+      int rowBase = rowTrayIndex * variablesPerTray;
+      addBlockProduct(product, rowBase, jacobian.diagonal[rowTrayIndex], vector, rowBase);
+      if (rowTrayIndex > 0) {
+        addBlockProduct(product, rowBase, jacobian.lower[rowTrayIndex], vector,
+            (rowTrayIndex - 1) * variablesPerTray);
+      }
+      if (rowTrayIndex < trayCount - 1) {
+        addBlockProduct(product, rowBase, jacobian.upper[rowTrayIndex], vector,
+            (rowTrayIndex + 1) * variablesPerTray);
+      }
+    }
+    return product;
+  }
+
+  /**
+   * Add one block-vector product to a full vector.
+   *
+   * @param target target vector receiving the product
+   * @param targetOffset row offset in the target vector
+   * @param block dense block to multiply
+   * @param vector source vector
+   * @param vectorOffset column offset in the source vector
+   */
+  private void addBlockProduct(double[] target, int targetOffset, double[][] block, double[] vector,
+      int vectorOffset) {
+    for (int row = 0; row < block.length; row++) {
+      double value = 0.0;
+      for (int columnIndex = 0; columnIndex < block[row].length; columnIndex++) {
+        value += block[row][columnIndex] * vector[vectorOffset + columnIndex];
+      }
+      target[targetOffset + row] += value;
+    }
+  }
+
+  /**
+   * Subtract two equal-length vectors.
+   *
+   * @param left left vector
+   * @param right right vector
+   * @return {@code left - right}
+   */
+  private double[] subtract(double[] left, double[] right) {
+    double[] difference = new double[left.length];
+    for (int index = 0; index < left.length; index++) {
+      difference[index] = left[index] - right[index];
+    }
+    return difference;
+  }
+
+  /**
+   * Calculate the dot product of two vectors.
+   *
+   * @param left left vector
+   * @param right right vector
+   * @return dot product
+   */
+  private double dot(double[] left, double[] right) {
+    double value = 0.0;
+    for (int index = 0; index < left.length; index++) {
+      value += left[index] * right[index];
+    }
+    return value;
   }
 
   /**
@@ -891,68 +1732,101 @@ final class NaphtaliSandholmSolver {
    * @param residual residual vector
    * @return Newton correction solving J dx = -F, or null if block elimination fails
    */
-  private double[] solveBlockTridiagonal(BlockTridiagonalJacobian jacobian, double[] residual) {
-    int blockSize = variablesPerTray;
-    double[][] rhs = new double[trayCount][blockSize];
+  private double[] solveBlockTridiagonal(BlockTridiagonalMatrix jacobian, double[] residual) {
+    long startTime = System.nanoTime();
+    double[] solution = solveBlockTridiagonalWithLu(jacobian, residual, 0.0);
+    if (solution == null) {
+      solution = solveBlockTridiagonalWithLu(jacobian, residual, JACOBIAN_REGULARIZATION * 100.0);
+    }
+    lastLinearSolveTimeSeconds += (System.nanoTime() - startTime) / 1.0e9;
+    if (solution != null) {
+      lastBlockLinearSolveCount++;
+    }
+    return solution;
+  }
 
+  /**
+   * Solve the block-tridiagonal Newton system using pivoted block LU elimination.
+   *
+   * @param jacobian block-tridiagonal Jacobian matrix
+   * @param residual residual vector
+   * @param diagonalRegularization additional diagonal regularization for reduced tray blocks
+   * @return Newton correction solving J dx = -F, or null if block elimination fails
+   */
+  private double[] solveBlockTridiagonalWithLu(BlockTridiagonalMatrix jacobian, double[] residual,
+      double diagonalRegularization) {
+    int blockSize = variablesPerTray;
+    double[][] rhs = buildBlockRightHandSide(residual, blockSize);
+    double[][][] reducedUpper = new double[trayCount][blockSize][blockSize];
+    double[][] reducedRhs = new double[trayCount][blockSize];
+
+    double[][] reducedDiagonal = copyBlock(jacobian.diagonal[0]);
+    addDiagonalRegularization(reducedDiagonal, diagonalRegularization);
+    int[] pivots = new int[blockSize];
+    if (!factorizeBlock(reducedDiagonal, pivots)) {
+      return null;
+    }
+    reducedRhs[0] = solveFactoredBlockVector(reducedDiagonal, pivots, rhs[0]);
+    if (trayCount > 1) {
+      reducedUpper[0] = solveFactoredBlockMatrix(reducedDiagonal, pivots, jacobian.upper[0]);
+    }
+    if (!isFiniteVector(reducedRhs[0]) || (trayCount > 1 && !isFiniteBlock(reducedUpper[0]))) {
+      return null;
+    }
+
+    for (int trayIndex = 1; trayIndex < trayCount; trayIndex++) {
+      double[][] lowerReducedUpper = multiplyBlocks(jacobian.lower[trayIndex],
+          reducedUpper[trayIndex - 1]);
+      reducedDiagonal = subtractBlocks(jacobian.diagonal[trayIndex], lowerReducedUpper);
+      addDiagonalRegularization(reducedDiagonal, diagonalRegularization);
+      double[] lowerReducedRhs = multiplyBlockVector(jacobian.lower[trayIndex],
+          reducedRhs[trayIndex - 1]);
+      double[] currentRhs = subtract(rhs[trayIndex], lowerReducedRhs);
+      pivots = new int[blockSize];
+      if (!factorizeBlock(reducedDiagonal, pivots)) {
+        return null;
+      }
+      reducedRhs[trayIndex] = solveFactoredBlockVector(reducedDiagonal, pivots, currentRhs);
+      if (!isFiniteVector(reducedRhs[trayIndex])) {
+        return null;
+      }
+      if (trayIndex < trayCount - 1) {
+        reducedUpper[trayIndex] = solveFactoredBlockMatrix(reducedDiagonal, pivots,
+            jacobian.upper[trayIndex]);
+        if (!isFiniteBlock(reducedUpper[trayIndex])) {
+          return null;
+        }
+      }
+    }
+
+    double[][] solutionBlocks = new double[trayCount][blockSize];
+    System.arraycopy(reducedRhs[trayCount - 1], 0, solutionBlocks[trayCount - 1], 0, blockSize);
+    for (int trayIndex = trayCount - 2; trayIndex >= 0; trayIndex--) {
+      double[] upperContribution =
+          multiplyBlockVector(reducedUpper[trayIndex], solutionBlocks[trayIndex + 1]);
+      solutionBlocks[trayIndex] = subtract(reducedRhs[trayIndex], upperContribution);
+    }
+
+    double[] solution = flattenBlockVector(solutionBlocks, blockSize);
+    return isFiniteVector(solution) ? solution : null;
+  }
+
+  /**
+   * Build a block right-hand side from the residual vector.
+   *
+   * @param residual residual vector
+   * @param blockSize number of rows in each tray block
+   * @return block right-hand side for J dx = -F
+   */
+  private double[][] buildBlockRightHandSide(double[] residual, int blockSize) {
+    double[][] rhs = new double[trayCount][blockSize];
     for (int trayIndex = 0; trayIndex < trayCount; trayIndex++) {
       int rowBase = trayIndex * blockSize;
       for (int row = 0; row < blockSize; row++) {
         rhs[trayIndex][row] = -residual[rowBase + row];
       }
     }
-
-    double[][][] modifiedDiagonal = new double[trayCount][blockSize][blockSize];
-    double[][][] modifiedDiagonalInverse = new double[trayCount][blockSize][blockSize];
-    double[][] modifiedRhs = new double[trayCount][blockSize];
-    copyBlock(jacobian.diagonal[0], modifiedDiagonal[0]);
-    System.arraycopy(rhs[0], 0, modifiedRhs[0], 0, blockSize);
-    double[][] firstInverse = invertBlock(modifiedDiagonal[0]);
-    if (firstInverse == null) {
-      return null;
-    }
-    copyBlock(firstInverse, modifiedDiagonalInverse[0]);
-
-    for (int trayIndex = 1; trayIndex < trayCount; trayIndex++) {
-      double[][] inversePrevious = modifiedDiagonalInverse[trayIndex - 1];
-      double[][] factor = multiplyBlocks(jacobian.lower[trayIndex], inversePrevious);
-      double[][] factorUpper = multiplyBlocks(factor, jacobian.upper[trayIndex - 1]);
-      for (int row = 0; row < blockSize; row++) {
-        for (int columnIndex = 0; columnIndex < blockSize; columnIndex++) {
-          modifiedDiagonal[trayIndex][row][columnIndex] =
-              jacobian.diagonal[trayIndex][row][columnIndex] - factorUpper[row][columnIndex];
-        }
-      }
-      double[] factorRhs = multiplyBlockVector(factor, modifiedRhs[trayIndex - 1]);
-      for (int row = 0; row < blockSize; row++) {
-        modifiedRhs[trayIndex][row] = rhs[trayIndex][row] - factorRhs[row];
-      }
-      double[][] inverseCurrent = invertBlock(modifiedDiagonal[trayIndex]);
-      if (inverseCurrent == null) {
-        return null;
-      }
-      copyBlock(inverseCurrent, modifiedDiagonalInverse[trayIndex]);
-    }
-
-    double[][] solutionBlocks = new double[trayCount][blockSize];
-    double[][] inverseLast = modifiedDiagonalInverse[trayCount - 1];
-    solutionBlocks[trayCount - 1] = multiplyBlockVector(inverseLast, modifiedRhs[trayCount - 1]);
-    for (int trayIndex = trayCount - 2; trayIndex >= 0; trayIndex--) {
-      double[] upperContribution =
-          multiplyBlockVector(jacobian.upper[trayIndex], solutionBlocks[trayIndex + 1]);
-      double[] adjustedRhs = new double[blockSize];
-      for (int row = 0; row < blockSize; row++) {
-        adjustedRhs[row] = modifiedRhs[trayIndex][row] - upperContribution[row];
-      }
-      double[][] inverse = modifiedDiagonalInverse[trayIndex];
-      solutionBlocks[trayIndex] = multiplyBlockVector(inverse, adjustedRhs);
-    }
-
-    double[] solution = new double[totalVariables];
-    for (int trayIndex = 0; trayIndex < trayCount; trayIndex++) {
-      System.arraycopy(solutionBlocks[trayIndex], 0, solution, trayIndex * blockSize, blockSize);
-    }
-    return solution;
+    return rhs;
   }
 
   /**
@@ -968,57 +1842,197 @@ final class NaphtaliSandholmSolver {
   }
 
   /**
-   * Invert a small dense block using Gauss-Jordan elimination.
+   * Copy one dense block into a new block.
    *
-   * @param block block to invert
-   * @return inverse block, or null when singular
+   * @param source source block
+   * @return copied block
    */
-  private double[][] invertBlock(double[][] block) {
-    int size = block.length;
-    double[][] augmented = new double[size][2 * size];
+  private double[][] copyBlock(double[][] source) {
+    double[][] target = new double[source.length][source[0].length];
+    copyBlock(source, target);
+    return target;
+  }
+
+  /**
+   * Add diagonal regularization to a block.
+   *
+   * @param block block to modify
+   * @param regularization value to add to each diagonal element
+   */
+  private void addDiagonalRegularization(double[][] block, double regularization) {
+    if (regularization == 0.0) {
+      return;
+    }
+    for (int index = 0; index < block.length; index++) {
+      block[index][index] += regularization;
+    }
+  }
+
+  /**
+   * Subtract two dense blocks.
+   *
+   * @param left left block
+   * @param right right block
+   * @return {@code left - right}
+   */
+  private double[][] subtractBlocks(double[][] left, double[][] right) {
+    int size = left.length;
+    double[][] difference = new double[size][left[0].length];
     for (int row = 0; row < size; row++) {
       for (int columnIndex = 0; columnIndex < size; columnIndex++) {
-        augmented[row][columnIndex] = block[row][columnIndex];
+        difference[row][columnIndex] = left[row][columnIndex] - right[row][columnIndex];
       }
-      augmented[row][size + row] = 1.0;
     }
+    return difference;
+  }
+
+  /**
+   * Factorize a small dense block in-place using LU decomposition with partial pivoting.
+   *
+   * @param block block to factorize in-place
+   * @param pivotRows pivot row chosen at each elimination step
+   * @return {@code true} if factorization succeeded
+   */
+  private boolean factorizeBlock(double[][] block, int[] pivotRows) {
+    int size = block.length;
     for (int pivotIndex = 0; pivotIndex < size; pivotIndex++) {
+      pivotRows[pivotIndex] = pivotIndex;
       int pivotRow = pivotIndex;
-      double pivotMagnitude = Math.abs(augmented[pivotIndex][pivotIndex]);
+      double pivotMagnitude = Math.abs(block[pivotIndex][pivotIndex]);
       for (int row = pivotIndex + 1; row < size; row++) {
-        double candidate = Math.abs(augmented[row][pivotIndex]);
+        double candidate = Math.abs(block[row][pivotIndex]);
         if (candidate > pivotMagnitude) {
           pivotMagnitude = candidate;
           pivotRow = row;
         }
       }
       if (!Double.isFinite(pivotMagnitude) || pivotMagnitude < 1.0e-20) {
-        return null;
+        return false;
       }
+      pivotRows[pivotIndex] = pivotRow;
       if (pivotRow != pivotIndex) {
-        double[] temp = augmented[pivotIndex];
-        augmented[pivotIndex] = augmented[pivotRow];
-        augmented[pivotRow] = temp;
+        double[] temp = block[pivotIndex];
+        block[pivotIndex] = block[pivotRow];
+        block[pivotRow] = temp;
       }
-      double pivot = augmented[pivotIndex][pivotIndex];
-      for (int columnIndex = 0; columnIndex < 2 * size; columnIndex++) {
-        augmented[pivotIndex][columnIndex] /= pivot;
+      double pivot = block[pivotIndex][pivotIndex];
+      for (int row = pivotIndex + 1; row < size; row++) {
+        block[row][pivotIndex] /= pivot;
+        double multiplier = block[row][pivotIndex];
+        for (int columnIndex = pivotIndex + 1; columnIndex < size; columnIndex++) {
+          block[row][columnIndex] -= multiplier * block[pivotIndex][columnIndex];
+        }
       }
+    }
+    return true;
+  }
+
+  /**
+   * Solve a factored block system for a vector right-hand side.
+   *
+   * @param luBlock LU-factored block from {@link #factorizeBlock(double[][], int[])}
+   * @param pivotRows pivot row sequence from factorization
+   * @param rhs vector right-hand side
+   * @return solution vector
+   */
+  private double[] solveFactoredBlockVector(double[][] luBlock, int[] pivotRows, double[] rhs) {
+    int size = rhs.length;
+    double[] solution = rhs.clone();
+    applyPivotRows(solution, pivotRows);
+    for (int row = 1; row < size; row++) {
+      double value = solution[row];
+      for (int columnIndex = 0; columnIndex < row; columnIndex++) {
+        value -= luBlock[row][columnIndex] * solution[columnIndex];
+      }
+      solution[row] = value;
+    }
+    for (int row = size - 1; row >= 0; row--) {
+      double value = solution[row];
+      for (int columnIndex = row + 1; columnIndex < size; columnIndex++) {
+        value -= luBlock[row][columnIndex] * solution[columnIndex];
+      }
+      double diagonal = luBlock[row][row];
+      if (!Double.isFinite(diagonal) || Math.abs(diagonal) < 1.0e-20) {
+        solution[row] = Double.NaN;
+      } else {
+        solution[row] = value / diagonal;
+      }
+    }
+    return solution;
+  }
+
+  /**
+   * Solve a factored block system for a matrix right-hand side.
+   *
+   * @param luBlock LU-factored block from {@link #factorizeBlock(double[][], int[])}
+   * @param pivotRows pivot row sequence from factorization
+   * @param rhs matrix right-hand side
+   * @return solution matrix
+   */
+  private double[][] solveFactoredBlockMatrix(double[][] luBlock, int[] pivotRows,
+      double[][] rhs) {
+    int size = rhs.length;
+    double[][] solution = new double[size][rhs[0].length];
+    for (int columnIndex = 0; columnIndex < rhs[0].length; columnIndex++) {
+      double[] rhsColumn = new double[size];
       for (int row = 0; row < size; row++) {
-        if (row == pivotIndex) {
-          continue;
-        }
-        double factor = augmented[row][pivotIndex];
-        for (int columnIndex = 0; columnIndex < 2 * size; columnIndex++) {
-          augmented[row][columnIndex] -= factor * augmented[pivotIndex][columnIndex];
+        rhsColumn[row] = rhs[row][columnIndex];
+      }
+      double[] solutionColumn = solveFactoredBlockVector(luBlock, pivotRows, rhsColumn);
+      for (int row = 0; row < size; row++) {
+        solution[row][columnIndex] = solutionColumn[row];
+      }
+    }
+    return solution;
+  }
+
+  /**
+   * Apply recorded row pivots to a vector.
+   *
+   * @param vector vector to pivot in-place
+   * @param pivotRows pivot row sequence
+   */
+  private void applyPivotRows(double[] vector, int[] pivotRows) {
+    for (int pivotIndex = 0; pivotIndex < pivotRows.length; pivotIndex++) {
+      int pivotRow = pivotRows[pivotIndex];
+      if (pivotRow != pivotIndex) {
+        double temp = vector[pivotIndex];
+        vector[pivotIndex] = vector[pivotRow];
+        vector[pivotRow] = temp;
+      }
+    }
+  }
+
+  /**
+   * Flatten block-vector storage to the Newton variable vector.
+   *
+   * @param solutionBlocks per-tray solution blocks
+   * @param blockSize number of variables in each block
+   * @return flattened solution vector
+   */
+  private double[] flattenBlockVector(double[][] solutionBlocks, int blockSize) {
+    double[] solution = new double[totalVariables];
+    for (int trayIndex = 0; trayIndex < trayCount; trayIndex++) {
+      System.arraycopy(solutionBlocks[trayIndex], 0, solution, trayIndex * blockSize, blockSize);
+    }
+    return solution;
+  }
+
+  /**
+   * Check all entries in a dense block are finite.
+   *
+   * @param block block to check
+   * @return {@code true} when all block entries are finite
+   */
+  private boolean isFiniteBlock(double[][] block) {
+    for (int row = 0; row < block.length; row++) {
+      for (int columnIndex = 0; columnIndex < block[row].length; columnIndex++) {
+        if (!Double.isFinite(block[row][columnIndex])) {
+          return false;
         }
       }
     }
-    double[][] inverse = new double[size][size];
-    for (int row = 0; row < size; row++) {
-      System.arraycopy(augmented[row], size, inverse[row], 0, size);
-    }
-    return inverse;
+    return true;
   }
 
   /**
@@ -1071,6 +2085,23 @@ final class NaphtaliSandholmSolver {
    * @return correction vector, or null when singular
    */
   private double[] solveDenseLinearSystem(double[][] jacobian, double[] residual) {
+    long startTime = System.nanoTime();
+    double[] solution = solveDenseLinearSystemUntimed(jacobian, residual);
+    lastLinearSolveTimeSeconds += (System.nanoTime() - startTime) / 1.0e9;
+    if (solution != null) {
+      lastDenseLinearSolveCount++;
+    }
+    return solution;
+  }
+
+  /**
+   * Solve a dense linear system without updating telemetry.
+   *
+   * @param jacobian coefficient matrix
+   * @param residual residual vector
+   * @return correction vector, or null when singular
+   */
+  private double[] solveDenseLinearSystemUntimed(double[][] jacobian, double[] residual) {
     int size = residual.length;
     double[][] augmented = new double[size][size + 1];
     for (int row = 0; row < size; row++) {
@@ -1476,90 +2507,6 @@ final class NaphtaliSandholmSolver {
       copied[index] = values[index].clone();
     }
     return copied;
-  }
-
-  /** Block-tridiagonal Jacobian storage for neighboring tray equations. */
-  private static final class BlockTridiagonalJacobian {
-    /** Lower block for each tray row. */
-    private final double[][][] lower;
-    /** Diagonal block for each tray row. */
-    private final double[][][] diagonal;
-    /** Upper block for each tray row. */
-    private final double[][][] upper;
-    /** Number of variables in each tray block. */
-    private final int blockSize;
-
-    /**
-     * Create block-tridiagonal storage.
-     *
-     * @param trayCount number of tray blocks
-     * @param blockSize number of equations and variables in each tray block
-     */
-    private BlockTridiagonalJacobian(int trayCount, int blockSize) {
-      this.lower = new double[trayCount][blockSize][blockSize];
-      this.diagonal = new double[trayCount][blockSize][blockSize];
-      this.upper = new double[trayCount][blockSize][blockSize];
-      this.blockSize = blockSize;
-    }
-
-    /**
-     * Select the block matching a row tray and column tray.
-     *
-     * @param rowTrayIndex row tray index
-     * @param columnTrayIndex column tray index
-     * @return lower, diagonal, or upper block for the requested coupling
-     * @throws IllegalArgumentException if the requested block is outside the tridiagonal band
-     */
-    private double[][] blockFor(int rowTrayIndex, int columnTrayIndex) {
-      if (columnTrayIndex == rowTrayIndex - 1) {
-        return lower[rowTrayIndex];
-      }
-      if (columnTrayIndex == rowTrayIndex) {
-        return diagonal[rowTrayIndex];
-      }
-      if (columnTrayIndex == rowTrayIndex + 1) {
-        return upper[rowTrayIndex];
-      }
-      throw new IllegalArgumentException(
-          "Requested Jacobian block is outside the tridiagonal band");
-    }
-
-    /**
-     * Convert block storage to a dense matrix for the emergency dense fallback solver.
-     *
-     * @return dense Jacobian matrix
-     */
-    private double[][] toDense() {
-      int trayCount = diagonal.length;
-      double[][] dense = new double[trayCount * blockSize][trayCount * blockSize];
-      for (int trayIndex = 0; trayIndex < trayCount; trayIndex++) {
-        copyBlockToDense(dense, diagonal[trayIndex], trayIndex, trayIndex);
-        if (trayIndex > 0) {
-          copyBlockToDense(dense, lower[trayIndex], trayIndex, trayIndex - 1);
-        }
-        if (trayIndex < trayCount - 1) {
-          copyBlockToDense(dense, upper[trayIndex], trayIndex, trayIndex + 1);
-        }
-      }
-      return dense;
-    }
-
-    /**
-     * Copy one block into the corresponding dense matrix location.
-     *
-     * @param dense dense matrix to update
-     * @param block block values to copy
-     * @param rowTrayIndex row tray index
-     * @param columnTrayIndex column tray index
-     */
-    private void copyBlockToDense(double[][] dense, double[][] block, int rowTrayIndex,
-        int columnTrayIndex) {
-      int rowBase = rowTrayIndex * blockSize;
-      int columnBase = columnTrayIndex * blockSize;
-      for (int row = 0; row < blockSize; row++) {
-        System.arraycopy(block[row], 0, dense[rowBase + row], columnBase, blockSize);
-      }
-    }
   }
 
   /** Immutable snapshot of mutable solver arrays. */

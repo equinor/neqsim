@@ -534,10 +534,17 @@ For larger hydrocarbon columns where an inside-out warm start is useful, use
 warm-start setup on small columns and exposes `wasMatrixInsideOutWarmStartUsed()` and
 `wasMatrixInsideOutWarmStartBypassed()` diagnostics after `run()`.
 
+When the best solver is not obvious, use `DistillationColumn.SolverType.AUTO`. It runs a
+feasibility pre-screen, warms a copied base case with damped substitution, probes candidate solvers,
+and records the selected concrete solver in `getLastSolverTypeUsed()`. For difficult purity,
+recovery, or product-flow targets, configure `setSpecificationHomotopySteps(steps)`; `AUTO` uses
+three stages by default for adjustable product specifications. Inspect `getLastAutoSolverSummary()`,
+`getLastSpecificationHomotopyStepCount()`, and `getConvergenceDiagnostics()` after `run()`.
+
 ### Distillation Column (Product Purity Specs)
 
 ```java
-// ColumnSpecification auto-adjusts condenser/reboiler T via secant outer loop
+// ColumnSpecification adjusts condenser/reboiler T via secant outer loop
 DistillationColumn column = new DistillationColumn("Deethanizer", 25, true, true);
 column.addFeedStream(feed, 12);
 column.setTopPressure(25.0, "bara");

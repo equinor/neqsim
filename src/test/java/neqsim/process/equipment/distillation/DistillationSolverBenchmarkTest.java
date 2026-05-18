@@ -74,6 +74,25 @@ public class DistillationSolverBenchmarkTest {
   }
 
   /**
+   * Assert that a converged deethanizer solve reports an accepted non-fallback status.
+   *
+   * @param column column to inspect after running
+   * @param solverType configured solver used to build assertion messages
+   */
+  private void assertAcceptedSolveStatus(DistillationColumn column,
+      DistillationColumn.SolverType solverType) {
+    DistillationColumn.SolveStatus status = column.getLastSolveStatus();
+    assertTrue(
+        status == DistillationColumn.SolveStatus.RIGOROUS_CONVERGED
+            || status == DistillationColumn.SolveStatus.RECONCILED_PRODUCTS,
+        solverType.name() + " should finish with an accepted non-fallback status, was " + status);
+    assertNotNull(column.getLastSolveStatusReason(),
+        solverType.name() + " should expose a solve status reason");
+    assertFalse(column.getLastSolveStatusReason().trim().isEmpty(),
+        solverType.name() + " should expose a non-empty solve status reason");
+  }
+
+  /**
    * Test that all solver types converge on the deethanizer benchmark and produce consistent results
    * within engineering tolerance.
    */
@@ -90,16 +109,35 @@ public class DistillationSolverBenchmarkTest {
     double[] liquidFlows = new double[solvers.length];
     int[] iterations = new int[solvers.length];
     double[] times = new double[solvers.length];
+    DistillationColumn.SolveStatus[] statuses =
+        new DistillationColumn.SolveStatus[solvers.length];
+    DistillationColumn.SolverType[] solversUsed =
+        new DistillationColumn.SolverType[solvers.length];
 
     for (int i = 0; i < solvers.length; i++) {
       DistillationColumn col = runDeethanizer(solvers[i]);
       assertTrue(col.solved(),
           solvers[i].name() + " should converge: " + col.getConvergenceDiagnostics());
+      assertAcceptedSolveStatus(col, solvers[i]);
+      assertFalse(col.wasFeedFlashFallbackApplied(),
+          solvers[i].name() + " should not use fallback products on the deethanizer case");
+      assertTrue(col.getConvergenceDiagnostics().contains("Solve status:"),
+          solvers[i].name() + " diagnostics should include solve status");
 
       gasFlows[i] = col.getGasOutStream().getFlowRate("kg/hr");
       liquidFlows[i] = col.getLiquidOutStream().getFlowRate("kg/hr");
       iterations[i] = col.getLastIterationCount();
       times[i] = col.getLastSolveTimeSeconds();
+      statuses[i] = col.getLastSolveStatus();
+      solversUsed[i] = col.getLastSolverTypeUsed();
+    if (solvers[i] == DistillationColumn.SolverType.SUM_RATES) {
+      assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, solversUsed[i],
+        "SUM_RATES should guard condenser/reboiler columns with damped substitution");
+    }
+    if (solvers[i] == DistillationColumn.SolverType.NAPHTALI_SANDHOLM) {
+      assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, solversUsed[i],
+        "Naphtali-Sandholm should keep its accepted warm-start when its candidate is rejected");
+    }
 
       // Mass balance closure: within 0.5%
       double massbalance = Math.abs(100.0 - gasFlows[i] - liquidFlows[i]) / 100.0 * 100;
@@ -107,21 +145,21 @@ public class DistillationSolverBenchmarkTest {
           solvers[i].name() + " mass balance should close within 0.5%");
     }
 
-    // Print solver timing summary
-    System.out.printf("%n%-25s %6s %10s %10s %10s%n", "Solver", "Iters", "Time(s)", "GasFlow",
-        "LiqFlow");
-    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 65));
+    // Print solver timing summary (Status surfaces silent FALLBACK_PRODUCTS;
+    // SolverUsed surfaces accelerator-to-damped fallbacks).
+    System.out.printf("%n%-25s %6s %10s %10s %10s %-22s %-22s%n", "Solver", "Iters", "Time(s)",
+        "GasFlow", "LiqFlow", "Status", "SolverUsed");
+    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 115));
     for (int i = 0; i < solvers.length; i++) {
-      System.out.printf("%-25s %6d %10.3f %10.2f %10.2f%n", solvers[i].name(), iterations[i],
-          times[i], gasFlows[i], liquidFlows[i]);
+      System.out.printf("%-25s %6d %10.3f %10.2f %10.2f %-22s %-22s%n", solvers[i].name(),
+          iterations[i], times[i], gasFlows[i], liquidFlows[i],
+          statuses[i] == null ? "null" : statuses[i].name(),
+          solversUsed[i] == null ? "null" : solversUsed[i].name());
     }
 
     // All solvers should agree on product splits within 2%
     double refGas = gasFlows[0]; // DIRECT_SUBSTITUTION as reference
     for (int i = 1; i < solvers.length; i++) {
-      if (solvers[i] == DistillationColumn.SolverType.NAPHTALI_SANDHOLM) {
-        continue;
-      }
       double relativeTolerance = 0.02;
       double tolerance = Math.max(0.01, refGas * relativeTolerance);
       assertEquals(refGas, gasFlows[i], tolerance, solvers[i].name()
@@ -176,6 +214,48 @@ public class DistillationSolverBenchmarkTest {
     assertEquals(0, matrixInsideOut.getLastMatrixInsideOutIterationCount());
     assertTrue(Double.isNaN(matrixInsideOut.getLastMatrixInsideOutTemperatureResidual()));
     assertTrue(matrixInsideOut.getConvergenceDiagnostics().contains("Matrix inside-out"));
+  }
+
+  /**
+   * Test matrix inside-out always runs rigorous polishing after an accepted large-column warm
+   * start.
+   */
+  @Test
+  public void matrixInsideOutWarmStartIsFollowedByRigorousPolishOnLargeColumn() {
+    SystemInterface system = new SystemSrkEos(323.15, 10.0);
+    system.addComponent("propane", 1.0);
+    system.addComponent("n-butane", 1.0);
+    system.setMixingRule("classic");
+
+    Stream feed = new Stream("large_matrix_feed", system);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.setTemperature(323.15);
+    feed.setPressure(10.0, "bara");
+    feed.run();
+
+    DistillationColumn column =
+        new DistillationColumn("large_matrix_binary_column", 14, true, true);
+    column.addFeedStream(feed, 8);
+    column.getCondenser().setOutTemperature(298.15);
+    column.getReboiler().setOutTemperature(348.15);
+    column.getCondenser().setRefluxRatio(2.0);
+    column.getReboiler().setRefluxRatio(2.0);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.0);
+    column.setMaxNumberOfIterations(80);
+    column.setTemperatureTolerance(1.0e-1);
+    column.setMassBalanceTolerance(1.0e-1);
+    column.setSolverType(DistillationColumn.SolverType.MATRIX_INSIDE_OUT);
+    column.run();
+
+    assertTrue(column.solved(),
+        "Matrix inside-out should converge: " + column.getConvergenceDiagnostics());
+    assertFalse(column.wasMatrixInsideOutWarmStartBypassed(),
+        "Large columns should attempt the matrix warm-start stage");
+    assertTrue(column.wasMatrixInsideOutWarmStartUsed(),
+        "Regression case should accept the matrix warm start before polishing");
+    assertTrue(column.getLastIterationCount() > column.getLastMatrixInsideOutIterationCount(),
+        "Rigorous polish iterations must be included after matrix warm-start iterations");
   }
 
   /**
@@ -637,6 +717,10 @@ public class DistillationSolverBenchmarkTest {
     if (!column.solved()) {
       assertTrue(column.wasFeedFlashFallbackApplied(),
           "column4 should use guarded fallback products when the rigorous tray solve is not accepted");
+      assertEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, column.getLastSolveStatus(),
+          "column4 fallback products should be visible through solve status diagnostics");
+      assertTrue(column.getLastSolveStatusReason().contains("fallback"),
+          "column4 fallback status should include a remediation-oriented reason");
     }
     assertEquals(feedMass, productMass, feedMass * 1.0e-6,
         "column4 external products must match feed mass");

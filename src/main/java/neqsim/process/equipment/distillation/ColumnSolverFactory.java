@@ -1,6 +1,7 @@
 package neqsim.process.equipment.distillation;
 
 import java.util.UUID;
+import neqsim.util.validation.ValidationResult;
 
 /**
  * Factory for the built-in distillation column solver strategies.
@@ -36,8 +37,51 @@ final class ColumnSolverFactory {
   /** Automatic strategy selector. */
   private static final ColumnSolver AUTO = new AutoSolver();
 
+  /**
+   * Whether accelerated solvers (Wegstein, Sum-Rates, Naphtali-Sandholm, MESH residual) should run
+   * a damped-substitution validation solve after a successful solve and roll back to the damped
+   * result if product splits differ materially. Off by default because the validation solve is
+   * typically as expensive as the accelerator itself, halving the wallclock speedup. The
+   * accelerators already fall back internally when {@link DistillationColumn#solved()} is not
+   * satisfied, so this extra layer is only useful for regression auditing.
+   */
+  private static volatile boolean verifyAcceleratedResults = false;
+
+  /**
+   * Thread-local marker used while AUTO probes candidate solvers. Candidate probes should report
+   * their own state without spending another full damped-substitution run inside each rejected
+   * candidate; AUTO applies the robust fallback once after ranking the probes.
+   */
+  private static final ThreadLocal<Boolean> autoCandidateProbeMode =
+      new ThreadLocal<Boolean>() {
+        /** {@inheritDoc} */
+        @Override
+        protected Boolean initialValue() {
+          return Boolean.FALSE;
+        }
+      };
+
   /** Utility class constructor. */
   private ColumnSolverFactory() {}
+
+  /**
+   * Enable or disable the damped-substitution verification step run after successful accelerated
+   * solves. Disabled by default.
+   *
+   * @param enabled {@code true} to verify every accelerated result against a damped fallback
+   */
+  static void setVerifyAcceleratedResults(boolean enabled) {
+    verifyAcceleratedResults = enabled;
+  }
+
+  /**
+   * Check whether accelerated result verification is currently enabled.
+   *
+   * @return {@code true} if every accelerated solve is verified against a damped solve
+   */
+  static boolean isVerifyAcceleratedResults() {
+    return verifyAcceleratedResults;
+  }
 
   /**
    * Create the strategy for a solver type.
@@ -84,41 +128,88 @@ final class ColumnSolverFactory {
       ColumnSolveResult bestResult = null;
       DistillationColumn.SolverType bestSolver = null;
       double bestScore = Double.POSITIVE_INFINITY;
+      StringBuilder summary = new StringBuilder();
+
+      ValidationResult feasibility = column.screenSpecificationFeasibility();
+      column.setLastAutoFeasibilityReport(feasibility.getReport());
+      column.recordAutoSolverEvent("feasibility pre-screen valid=" + feasibility.isValid()
+          + ", warnings=" + feasibility.hasWarnings());
+      appendAutoFeasibilitySummary(summary, feasibility);
+
+      DistillationColumn candidateSource = createAutoCandidate(column);
+      if (candidateSource == null) {
+        appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+            null, "pipeline seed copy failed; live damped fallback used");
+        return runAutoFallbackOnLiveColumn(column, id, summary);
+      }
+      boolean shortcutApplied = candidateSource.tryAutomaticShortcutInitialization(summary);
+      if (shortcutApplied) {
+        column.recordAutoSolverEvent("shortcut seed applied");
+        column.setLastInitializationReport(candidateSource.getLastInitializationReport());
+      } else if (candidateSource.tryThermodynamicProfileInitialization(summary)) {
+        column.recordAutoSolverEvent("thermodynamic profile seed applied");
+        column.setLastInitializationReport(candidateSource.getLastInitializationReport());
+      } else {
+        column.setLastInitializationReport(candidateSource.getLastInitializationReport());
+      }
+      ColumnSolveResult warmBaseResult = runAutoWarmBase(candidateSource, id, summary);
+      column.recordAutoSolverEvent("relaxed base solve solved=" + warmBaseResult.isSolved()
+          + ", used=" + warmBaseResult.getSolverType());
+      double warmBaseScore = scoreResult(warmBaseResult, candidateSource);
+      if (warmBaseScore < bestScore) {
+        bestScore = warmBaseScore;
+        bestCandidate = candidateSource;
+        bestResult = warmBaseResult;
+        bestSolver = warmBaseResult.getSolverType();
+      }
 
       for (int index = 0; index < candidates.length; index++) {
         DistillationColumn.SolverType candidateSolver = candidates[index];
-        DistillationColumn candidate = createAutoCandidate(column);
+        DistillationColumn candidate = createAutoCandidate(candidateSource);
         if (candidate == null) {
-          return runAutoFallbackOnLiveColumn(column, id);
+          appendAutoCandidateSummary(summary, candidateSolver, null,
+              "candidate copy failed; live damped fallback used");
+          return runAutoFallbackOnLiveColumn(column, id, summary);
         }
-        candidate.setSolverType(candidateSolver);
-        candidate.setDoInitializion(true);
+        if (candidateSolver == DistillationColumn.SolverType.DAMPED_SUBSTITUTION) {
+          appendAutoCandidateSummary(summary, candidateSolver, warmBaseResult,
+              "relaxed base reused; duplicate damped probe skipped");
+          continue;
+        }
+        prepareAutoCandidate(candidate, candidateSolver);
         try {
-          ColumnSolveResult result =
-              ColumnSolverFactory.create(candidateSolver).solve(candidate, id);
-          double score = scoreResult(result);
+          ColumnSolveResult result = runAutoProbeCandidate(candidate, candidateSolver, id);
+          appendAutoCandidateSummary(summary, candidateSolver, result,
+              autoProbeNote(candidate, result));
+          double score = scoreResult(result, candidate);
           if (score < bestScore) {
             bestScore = score;
             bestCandidate = candidate;
             bestResult = result;
-            bestSolver = candidateSolver;
+            bestSolver = result.getSolverType();
           }
-          if (result.isSolved()) {
-            column.acceptAutoSolverCandidate(candidate, candidateSolver);
-            return ColumnSolveResult.from(column, candidateSolver);
+          if (isAcceptableAutoCandidate(candidate, result)) {
+            column.acceptAutoSolverCandidate(candidate, result.getSolverType());
+            column.setLastAutoSolverSummary(summary.toString());
+            column.recordAutoSolverEvent("selected " + result.getSolverType());
+            return ColumnSolveResult.from(column, result.getSolverType());
           }
         } catch (RuntimeException exception) {
+          appendAutoCandidateSummary(summary, candidateSolver, null,
+              "failed: " + exception.getMessage());
           DistillationColumn.logger.debug("AUTO distillation solver candidate {} failed for {}.",
               candidateSolver, column.getName(), exception);
         }
       }
 
       if (bestCandidate != null && bestResult != null && bestSolver != null
-          && bestResult.isSolved()) {
+          && isAcceptableAutoCandidate(bestCandidate, bestResult)) {
         column.acceptAutoSolverCandidate(bestCandidate, bestSolver);
+        column.setLastAutoSolverSummary(summary.toString());
+        column.recordAutoSolverEvent("selected best available " + bestSolver);
         return ColumnSolveResult.from(column, bestResult.getSolverType());
       }
-      return runAutoFallbackOnLiveColumn(column, id);
+      return runAutoFallbackOnLiveColumn(column, id, summary);
     }
 
     /** {@inheritDoc} */
@@ -133,8 +224,9 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.markSolverTypeUsed(getSolverType());
       column.solveDirectSubstitution(id);
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -149,8 +241,9 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.markSolverTypeUsed(getSolverType());
       column.solveDampedSubstitution(id);
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -165,23 +258,27 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.markSolverTypeUsed(getSolverType());
       boolean fallbackApplied = false;
       try {
         column.solveInsideOut(id);
       } catch (RuntimeException exception) {
+        if (isAutoCandidateProbeMode()) {
+          throw exception;
+        }
         applyDampedFallback(column, null, id, "Inside-out failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, null, id,
             "Inside-out required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, null, id, "Inside-out did not satisfy convergence criteria",
             null);
       }
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -196,23 +293,27 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.markSolverTypeUsed(getSolverType());
       boolean fallbackApplied = false;
       try {
         column.solveMatrixInsideOut(id);
       } catch (RuntimeException exception) {
+        if (isAutoCandidateProbeMode()) {
+          throw exception;
+        }
         applyDampedFallback(column, null, id, "Matrix inside-out failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, null, id,
             "Matrix inside-out required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, null, id,
             "Matrix inside-out did not satisfy convergence criteria", null);
       }
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -227,28 +328,33 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
+      column.markSolverTypeUsed(getSolverType());
+      DistillationColumn fallbackCandidate =
+          shouldPrepareAcceleratedFallback() ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
       try {
         column.solveWegstein(id);
       } catch (RuntimeException exception) {
+        if (isAutoCandidateProbeMode()) {
+          throw exception;
+        }
         applyDampedFallback(column, fallbackCandidate, id, "Wegstein failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "Wegstein required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "Wegstein did not satisfy convergence criteria", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied) {
+      if (!fallbackApplied && verifyAcceleratedResults) {
         validateAcceleratedProductSplit(column, fallbackCandidate, id, "Wegstein");
       }
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -263,28 +369,33 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
+      column.markSolverTypeUsed(getSolverType());
+      DistillationColumn fallbackCandidate =
+          shouldPrepareAcceleratedFallback() ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
       try {
         column.solveSumRates(id);
       } catch (RuntimeException exception) {
+        if (isAutoCandidateProbeMode()) {
+          throw exception;
+        }
         applyDampedFallback(column, fallbackCandidate, id, "Sum-rates failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "Sum-rates required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "Sum-rates did not satisfy convergence criteria", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied) {
+      if (!fallbackApplied && verifyAcceleratedResults) {
         validateAcceleratedProductSplit(column, fallbackCandidate, id, "Sum-rates");
       }
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -299,22 +410,26 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
+      column.markSolverTypeUsed(getSolverType());
       boolean fallbackApplied = false;
       try {
         column.solveNewton(id);
       } catch (RuntimeException exception) {
+        if (isAutoCandidateProbeMode()) {
+          throw exception;
+        }
         applyDampedFallback(column, null, id, "Newton failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, null, id, "Newton required guarded feed-flash product fallback",
             null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, null, id, "Newton did not satisfy convergence criteria", null);
       }
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -330,28 +445,33 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
+      column.markSolverTypeUsed(getSolverType());
+      DistillationColumn fallbackCandidate =
+          shouldPrepareAcceleratedFallback() ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
       try {
         column.solveNaphtaliSandholm(id);
       } catch (RuntimeException exception) {
+        if (isAutoCandidateProbeMode()) {
+          throw exception;
+        }
         applyDampedFallback(column, fallbackCandidate, id, "Naphtali-Sandholm failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "Naphtali-Sandholm required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "Naphtali-Sandholm did not satisfy convergence criteria", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied) {
+      if (!fallbackApplied && verifyAcceleratedResults) {
         validateAcceleratedProductSplit(column, fallbackCandidate, id, "Naphtali-Sandholm");
       }
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -366,29 +486,33 @@ final class ColumnSolverFactory {
     /** {@inheritDoc} */
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
-      DistillationColumn fallbackCandidate = createDampedFallbackCandidate(column);
+      column.markSolverTypeUsed(getSolverType());
+      DistillationColumn fallbackCandidate =
+          shouldPrepareAcceleratedFallback() ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
       try {
         column.solveMeshResidual(id);
       } catch (RuntimeException exception) {
-        applyDampedFallback(column, fallbackCandidate, id, "MESH residual solve failed",
-            exception);
+        if (isAutoCandidateProbeMode()) {
+          throw exception;
+        }
+        applyDampedFallback(column, fallbackCandidate, id, "MESH residual solve failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "MESH residual solve required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "MESH residual solve did not satisfy convergence criteria", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied) {
+      if (!fallbackApplied && verifyAcceleratedResults) {
         validateAcceleratedProductSplit(column, fallbackCandidate, id, "MESH residual");
       }
-      return ColumnSolveResult.from(column, getSolverType());
+      return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
     }
 
     /** {@inheritDoc} */
@@ -425,31 +549,195 @@ final class ColumnSolverFactory {
   }
 
   /**
+   * Prepare an automatic-solver candidate with robust defaults.
+   *
+   * @param candidate candidate column copy to prepare
+   * @param candidateSolver solver to apply to the candidate
+   */
+  private static void prepareAutoCandidate(DistillationColumn candidate,
+      DistillationColumn.SolverType candidateSolver) {
+    candidate.setSolverType(candidateSolver);
+    candidate.setDoInitializion(true);
+  }
+
+  /**
    * Select candidate solvers for automatic mode.
    *
    * @param column column being solved
    * @return ordered candidate solver types, excluding {@link DistillationColumn.SolverType#AUTO}
    */
-  private static DistillationColumn.SolverType[] selectCandidateSolvers(
-      DistillationColumn column) {
+  private static DistillationColumn.SolverType[] selectCandidateSolvers(DistillationColumn column) {
     if (column.isReactive()) {
       return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.NAPHTALI_SANDHOLM,
+          DistillationColumn.SolverType.MESH_RESIDUAL,
+          DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
+    }
+    if (hasAdjustableProductSpecification(column)) {
+      if (column.numberOfTrays >= 12) {
+        return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
+            DistillationColumn.SolverType.NAPHTALI_SANDHOLM,
+            DistillationColumn.SolverType.MESH_RESIDUAL,
+            DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
+      }
+      return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.INSIDE_OUT,
+          DistillationColumn.SolverType.NAPHTALI_SANDHOLM,
           DistillationColumn.SolverType.MESH_RESIDUAL,
           DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
     }
     if (column.hasCondenser && column.hasReboiler) {
       if (column.numberOfTrays >= 12) {
         return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
+            DistillationColumn.SolverType.INSIDE_OUT,
             DistillationColumn.SolverType.MESH_RESIDUAL,
             DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
       }
       if (column.numberOfTrays >= 6) {
-        return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.MESH_RESIDUAL,
+        return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.INSIDE_OUT,
+            DistillationColumn.SolverType.MESH_RESIDUAL,
             DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
       }
     }
+    if (!column.hasCondenser || !column.hasReboiler) {
+      return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.SUM_RATES,
+          DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+          DistillationColumn.SolverType.DIRECT_SUBSTITUTION};
+    }
     return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
         DistillationColumn.SolverType.DIRECT_SUBSTITUTION};
+  }
+
+  /**
+   * Check whether the column has a product specification that benefits from continuation.
+   *
+   * @param column column to inspect
+   * @return {@code true} when a purity, recovery, or product-flow specification is active
+   */
+  private static boolean hasAdjustableProductSpecification(DistillationColumn column) {
+    return isAdjustableProductSpecification(column.getTopSpecification())
+        || isAdjustableProductSpecification(column.getBottomSpecification());
+  }
+
+  /**
+   * Check whether one specification is adjusted through the outer temperature loop.
+   *
+   * @param specification specification to inspect
+   * @return {@code true} for purity, recovery, or product-flow specifications
+   */
+  private static boolean isAdjustableProductSpecification(ColumnSpecification specification) {
+    if (specification == null) {
+      return false;
+    }
+    return specification.getType() != ColumnSpecification.SpecificationType.REFLUX_RATIO
+        && specification.getType() != ColumnSpecification.SpecificationType.DUTY;
+  }
+
+  /**
+   * Run the relaxed base stage used by automatic solver mode.
+   *
+   * @param candidateSource candidate source column to warm start
+   * @param id calculation identifier
+   * @param summary automatic solver summary builder
+   * @return solve result from the relaxed base stage
+   */
+  private static ColumnSolveResult runAutoWarmBase(DistillationColumn candidateSource, UUID id,
+      StringBuilder summary) {
+    prepareAutoCandidate(candidateSource, DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    try {
+      ColumnSolveResult result = DAMPED.solve(candidateSource, id);
+      appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+          result, "relaxed base solve");
+      return result;
+    } catch (RuntimeException exception) {
+      appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION, null,
+          "relaxed base solve failed: " + exception.getMessage());
+      DistillationColumn.logger.debug("AUTO relaxed base solve failed for {}.",
+          candidateSource.getName(), exception);
+      return ColumnSolveResult.from(candidateSource,
+          DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
+    }
+  }
+
+  /**
+   * Run one AUTO candidate probe without allowing the candidate wrapper to perform its own damped
+   * fallback solve.
+   *
+   * @param candidate candidate column copy
+   * @param candidateSolver solver to probe
+   * @param id calculation identifier
+   * @return result reported by the probed solver before AUTO-level fallback
+   */
+  private static ColumnSolveResult runAutoProbeCandidate(DistillationColumn candidate,
+      DistillationColumn.SolverType candidateSolver, UUID id) {
+    Boolean previousMode = autoCandidateProbeMode.get();
+    autoCandidateProbeMode.set(Boolean.TRUE);
+    try {
+      return ColumnSolverFactory.create(candidateSolver).solve(candidate, id);
+    } finally {
+      autoCandidateProbeMode.set(previousMode);
+    }
+  }
+
+  /**
+   * Check whether the current strategy call is an AUTO probe.
+   *
+   * @return {@code true} when damped fallback work should be deferred to AUTO
+   */
+  private static boolean isAutoCandidateProbeMode() {
+    return autoCandidateProbeMode.get().booleanValue();
+  }
+
+  /**
+   * Check whether an accelerator should prepare a damped validation/fallback copy.
+   *
+   * @return {@code true} when accelerated-result verification is enabled outside AUTO probing
+   */
+  private static boolean shouldPrepareAcceleratedFallback() {
+    return verifyAcceleratedResults && !isAutoCandidateProbeMode();
+  }
+
+  /**
+   * Build an explanatory note for an AUTO candidate probe.
+   *
+   * @param candidate candidate column after the probe
+   * @param result probe result
+   * @return note for the AUTO summary, or {@code null} when no note is needed
+   */
+  private static String autoProbeNote(DistillationColumn candidate, ColumnSolveResult result) {
+    if (candidate.wasFeedFlashFallbackApplied()) {
+      return "damped fallback deferred; candidate used guarded feed-flash products";
+    }
+    if (!result.isSolved()) {
+      return "damped fallback deferred; candidate did not satisfy convergence criteria";
+    }
+    return null;
+  }
+
+  /**
+   * Check whether an AUTO candidate can be accepted without running the live fallback.
+   *
+   * @param candidate candidate column after the probe
+   * @param result probe result
+   * @return {@code true} when the candidate is solved and did not rely on fallback products
+   */
+  private static boolean isAcceptableAutoCandidate(DistillationColumn candidate,
+      ColumnSolveResult result) {
+    return result != null && result.isSolved() && !candidate.wasFeedFlashFallbackApplied();
+  }
+
+  /**
+   * Append feasibility pre-screen status to the automatic solver trace.
+   *
+   * @param summary summary builder receiving a one-line status
+   * @param feasibility feasibility validation result
+   */
+  private static void appendAutoFeasibilitySummary(StringBuilder summary,
+      ValidationResult feasibility) {
+    if (summary.length() > 0) {
+      summary.append("\n");
+    }
+    summary.append("    - FEASIBILITY_SCREEN: valid=").append(feasibility.isValid())
+        .append(", warnings=").append(feasibility.hasWarnings()).append(", issues=")
+        .append(feasibility.getIssues().size());
   }
 
   /**
@@ -459,18 +747,53 @@ final class ColumnSolverFactory {
    * @param id calculation identifier
    * @return solve result from the fallback solver
    */
-  private static ColumnSolveResult runAutoFallbackOnLiveColumn(DistillationColumn column, UUID id) {
+  private static ColumnSolveResult runAutoFallbackOnLiveColumn(DistillationColumn column, UUID id,
+      StringBuilder summary) {
     ColumnSolveResult result = DAMPED.solve(column, id);
+    appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION, result,
+        "live fallback");
+    column.setLastAutoSolverSummary(summary.toString());
+    column.recordAutoSolverEvent("selected live damped fallback");
     return ColumnSolveResult.from(column, result.getSolverType());
+  }
+
+  /**
+   * Append one candidate attempt to the automatic solver trace.
+   *
+   * @param summary summary builder to append to
+   * @param candidateSolver solver requested for the candidate
+   * @param result candidate result, or {@code null} when no result is available
+   * @param note optional explanatory note
+   */
+  private static void appendAutoCandidateSummary(StringBuilder summary,
+      DistillationColumn.SolverType candidateSolver, ColumnSolveResult result, String note) {
+    if (summary.length() > 0) {
+      summary.append("\n");
+    }
+    summary.append("    - ").append(candidateSolver).append(": ");
+    if (result == null) {
+      summary.append(note == null ? "no result" : note);
+      return;
+    }
+    summary.append("solved=").append(result.isSolved()).append(", used=")
+        .append(result.getSolverType()).append(", iterations=").append(result.getIterationCount())
+        .append(", time=").append(result.getSolveTimeSeconds()).append(" s, tempResidual=")
+        .append(result.getTemperatureResidual()).append(", massResidual=")
+        .append(result.getMassResidual()).append(", meshResidual=")
+        .append(result.getMeshResidualNorm());
+    if (note != null && !note.trim().isEmpty()) {
+      summary.append(", note=").append(note);
+    }
   }
 
   /**
    * Score a candidate result for best-effort automatic fallback.
    *
    * @param result candidate result
+   * @param candidate candidate column, or {@code null} if only the result is available
    * @return finite scalar score where lower is better
    */
-  private static double scoreResult(ColumnSolveResult result) {
+  private static double scoreResult(ColumnSolveResult result, DistillationColumn candidate) {
     double score = residualScore(result.getTemperatureResidual())
         + residualScore(result.getMassResidual()) + residualScore(result.getEnergyResidual())
         + residualScore(result.getProductDrawResidualNorm());
@@ -479,6 +802,9 @@ final class ColumnSolverFactory {
     }
     if (!result.isSolved()) {
       score += 1.0e6;
+    }
+    if (candidate != null && candidate.wasFeedFlashFallbackApplied()) {
+      score += 5.0e5;
     }
     return score;
   }
@@ -510,6 +836,7 @@ final class ColumnSolverFactory {
     if (fallbackCandidate != null) {
       try {
         fallbackCandidate.setDoInitializion(true);
+        fallbackCandidate.markSolverTypeUsed(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
         fallbackCandidate.solveDampedSubstitution(id);
         column.acceptDampedFallbackCandidate(fallbackCandidate, reason);
         return;
@@ -540,6 +867,7 @@ final class ColumnSolverFactory {
     }
     try {
       fallbackCandidate.setDoInitializion(true);
+      fallbackCandidate.markSolverTypeUsed(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
       fallbackCandidate.solveDampedSubstitution(id);
     } catch (RuntimeException exception) {
       return;

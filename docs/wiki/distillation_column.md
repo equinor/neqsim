@@ -1,6 +1,6 @@
 ---
 title: "Distillation column algorithm"
-description: "Mathematical model, solver implementations, adaptive matrix inside-out warm starts, MESH residual diagnostics, and convergence behavior for NeqSim distillation columns."
+description: "Mathematical model, solver implementations, automatic solver selection, specification homotopy, adaptive matrix inside-out warm starts, MESH residual diagnostics, and convergence behavior for NeqSim distillation columns."
 ---
 
 # Distillation column algorithm
@@ -83,7 +83,7 @@ stability during the matrix warm-start stage.
 | `NEWTON` | `solveNewton()` | Finite-difference Newton correction on tray temperatures with line search. | A tray-temperature accelerator, not a full simultaneous MESH Newton solver. |
 | `NAPHTALI_SANDHOLM` | `solveNaphtaliSandholm()` | Inside-out warm start followed by guarded simultaneous Newton correction of liquid component flows, tray temperatures, and vapor flows. | Best for rigorous residual-driven MESH convergence on well-conditioned hydrocarbon fractionators. |
 | `MESH_RESIDUAL` | `solveMeshResidual()` | Inside-out initialization followed by full MESH residual evaluation. | Best for auditing material, equilibrium, summation, energy, specification, and product-draw residuals. |
-| `AUTO` | `ColumnSolverFactory.AutoSolver` | Runs built-in candidate solvers on column copies and accepts the solved or best candidate state. | Useful when an agent or workflow should request robust automatic solver selection while still reporting the concrete solver through `getLastSolverTypeUsed()`. |
+| `AUTO` | `ColumnSolverFactory.AutoSolver` | Runs a feasibility pre-screen, initializes a copied candidate, solves a relaxed damped base case, probes built-in candidate solvers on copies, and accepts the first solved non-fallback candidate or best valid fallback. | Useful when an agent or workflow should request robust automatic solver selection while still reporting the concrete solver through `getLastSolverTypeUsed()`. |
 
 ### Sequential substitution details
 
@@ -94,6 +94,31 @@ stability during the matrix warm-start stage.
   more than 5 %, increases when it shrinks by more than 2 %.
 - Adaptive default tolerances scale with column complexity. The base values are 9e-3 K for
   temperature and 1.6e-2 relative for mass and energy residuals unless the user overrides them.
+
+### Automatic solver pipeline
+
+`AUTO` mode is intended for workflows where the caller wants a robust answer and diagnostics rather
+than a specific numerical method. The pipeline first calls `screenSpecificationFeasibility()` and
+adds a `FEASIBILITY_SCREEN` entry to the automatic solver summary. It then creates a candidate copy,
+tries shortcut or thermodynamic-profile initialization, runs a relaxed `DAMPED_SUBSTITUTION` base
+solve, and probes an ordered candidate list on copies of that warmed base state.
+
+The candidate order depends on column structure:
+
+- reactive columns prioritize `NAPHTALI_SANDHOLM`, `MESH_RESIDUAL`, then damped substitution;
+- adjustable product specifications use `MATRIX_INSIDE_OUT` first for larger columns and
+  `INSIDE_OUT` first for smaller columns, followed by residual-oriented solvers and damped
+  substitution;
+- two-ended columns without adjustable product specs use matrix or regular inside-out candidates
+  when tray count justifies them;
+- absorber or stripper style columns without one terminal heat device try `SUM_RATES` before
+  damped and direct substitution.
+
+Candidate probes do not run their own nested damped fallback solves. `AUTO` accepts the first solved
+candidate that did not rely on guarded fallback products; otherwise it scores the available results
+by residuals and falls back to a live damped-substitution solve when necessary. The public solver
+request remains `AUTO`, while `getLastSolverTypeUsed()` reports the concrete accepted solver and
+`getLastAutoSolverSummary()` records the candidate trace.
 
 ## Complete usage example
 
@@ -170,6 +195,20 @@ pressure profile that the tray sweeps depend on:
 `getLastHydraulicPressureDropPa()`, and `getLastHydraulicPressureDropResidual()`. If a side-draw
 target is physically impossible, the draw fraction is bounded by available tray traffic and the
 latest tear diagnostics report non-convergence instead of allowing an impossible product draw.
+
+### Specification homotopy
+
+Purity, recovery, and product-flow specifications can be difficult if the outer loop jumps directly
+from the current product split to a sharp target. `setSpecificationHomotopySteps(steps)` stages the
+effective target over the requested number of continuation steps. Each stage solves with a temporary
+target between the current product value and the final user target; the stored public
+`ColumnSpecification` still contains the final target. `getLastSpecificationHomotopyStepCount()`
+reports how many staged targets were completed by the latest run.
+
+`AUTO` mode enables three specification-homotopy stages automatically for adjustable product
+specifications when the user has not configured a larger or smaller value. Reflux-ratio and duty
+specifications are not staged because they are direct operating specifications rather than product
+targets manipulated through condenser or reboiler temperature.
 
 ### Matrix solver specifics
 
@@ -266,6 +305,7 @@ for any equation of state available in NeqSim (SRK, CPA, GERG-2008, etc.). The
 | `NEWTON` | Newton-Raphson tray-temperature correction accelerator | Difficult temperature convergence cases |
 | `NAPHTALI_SANDHOLM` | Simultaneous MESH residual Newton correction with guarded acceptance | Rigorous residual convergence checks |
 | `MESH_RESIDUAL` | Inside-out initialization with MESH residual diagnostics | Residual auditing and diagnostics |
+| `AUTO` | Feasibility-screened automatic candidate selection with copy-based solver probes and damped fallback | Agent workflows and uncertain column setups |
 
 ### Solver mathematics
 
@@ -413,6 +453,5 @@ column.run();
 - Thomas algorithm tridiagonal material balance in the IO inner loop
 - Inner-loop enthalpy correlation for energy balance correction
 - Non-linear pressure profiles or user specified pressure drops per tray
-- Automatic solver selection based on problem characteristics
-- Per-tray Murphree efficiency specification (current implementation is column-wide)
 - Mass-balance-preserving Murphree via modified K-values in the flash loop
+- Public structured diagnostics for AUTO feasibility and initialization reports
