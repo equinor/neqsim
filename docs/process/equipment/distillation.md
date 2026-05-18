@@ -1,7 +1,7 @@
 ---
 title: Distillation Equipment
-description: Documentation for distillation column equipment in NeqSim process simulation. Covers staged columns, solvers, formal specifications, side draws, pumparounds, condenser and reboiler modes, hydraulics, shortcut initialization, tray efficiency, dynamic screening, and rate-based packed columns.
-keywords: "distillation, column, tray, absorber, stripper, deethanizer, debutanizer, reboiler, condenser, reflux, side draw, pumparound, hydraulics, Murphree efficiency, shortcut distillation, rate-based packed column, NGL, inside-out solver, AUTO solver, matrix inside-out, Naphtali-Sandholm, MESH residual, convergence diagnostics"
+description: Documentation for distillation column equipment in NeqSim process simulation. Covers staged columns, solvers, formal specifications, specification homotopy, side draws, pumparounds, condenser and reboiler modes, hydraulics, shortcut initialization, tray efficiency, dynamic screening, and rate-based packed columns.
+keywords: "distillation, column, tray, absorber, stripper, deethanizer, debutanizer, reboiler, condenser, reflux, side draw, pumparound, hydraulics, Murphree efficiency, shortcut distillation, rate-based packed column, NGL, inside-out solver, AUTO solver, automatic solver, specification homotopy, matrix inside-out, Naphtali-Sandholm, MESH residual, convergence diagnostics"
 ---
 
 NeqSim's distillation package provides equilibrium-stage columns, shortcut design,
@@ -14,8 +14,8 @@ column model for absorption and stripping. The main implementation lives in
 | Area | Main APIs | Notes |
 |------|-----------|-------|
 | Rigorous staged columns | `DistillationColumn`, `SimpleTray`, `Condenser`, `Reboiler` | Equilibrium-stage MESH-style model with tray-by-tray flash calculations. |
-| Solvers | `SolverType` | Direct, damped, inside-out, adaptive matrix inside-out, Wegstein, sum-rates, Newton temperature correction, Naphtali-Sandholm, MESH residual, and `AUTO`. |
-| Formal specifications | `ColumnSpecification`, convenience setters | Product purity, component recovery, reflux ratio, product flow rate, and duty specifications. |
+| Solvers | `SolverType` | Direct, damped, inside-out, adaptive matrix inside-out, Wegstein, sum-rates, Newton temperature correction, Naphtali-Sandholm, MESH residual, and `AUTO` with candidate tracing. |
+| Formal specifications | `ColumnSpecification`, convenience setters | Product purity, component recovery, reflux ratio, product flow rate, duty specifications, and staged specification homotopy for difficult product targets. |
 | Side products | `setGasSideDrawFraction`, `setLiquidSideDrawFraction`, `addSideDrawFlowSpecification` | Side draws are external product streams and are included in outlet stream and mass-balance reporting. |
 | Pumparounds | `addLiquidPumparound` | Internal liquid draw/return circuits solved as column tear variables. |
 | Hardware modes | `CondenserMode`, `ReboilerMode` | Partial or total condenser, fixed liquid reflux split, equilibrium reboiler, and vapor boilup ratio mode. |
@@ -148,7 +148,12 @@ column.setTopSpecification(topFlow);
 ```
 
 For iterative specifications, NeqSim wraps the selected inner solver in an outer adjustment loop and
-uses condenser or reboiler temperature as the manipulated variable where possible.
+uses condenser or reboiler temperature as the manipulated variable where possible. Product purity,
+component recovery, and product-flow specifications can be staged with
+`setSpecificationHomotopySteps(steps)`. Values above one ramp the effective target from the current
+product value to the final user target, leaving the stored `ColumnSpecification` unchanged. When
+`AUTO` is selected and an adjustable product specification is active, NeqSim uses three homotopy
+stages by default unless the user has configured another stage count.
 
 ## Condenser and Reboiler Modes
 
@@ -180,13 +185,19 @@ required.
 | `NEWTON` | Tray-temperature Newton accelerator. | Difficult temperature convergence. It is not full simultaneous MESH Newton. |
 | `NAPHTALI_SANDHOLM` | Guarded simultaneous correction of MESH blocks after inside-out warm start. | Residual-driven hydrocarbon fractionators. |
 | `MESH_RESIDUAL` | Inside-out initialization plus full residual auditing. | Material, equilibrium, summation, energy, product-draw, and spec residual checks. |
-| `AUTO` | Runs candidate strategies on column copies and accepts the solved/best candidate. | Agent workflows and uncertain cases where robust automatic selection is useful. |
+| `AUTO` | Runs a feasibility pre-screen, initializes a copied candidate, solves a relaxed damped base case, probes candidate strategies on column copies, and accepts the first solved non-fallback candidate or the best valid fallback. | Agent workflows and uncertain cases where robust automatic selection and diagnostics are useful. |
 
 ```java
 column.setSolverType(DistillationColumn.SolverType.AUTO);
 column.run();
 DistillationColumn.SolverType selected = column.getLastSolverTypeUsed();
 ```
+
+`AUTO` keeps the requested solver type as `AUTO`, while `getLastSolverTypeUsed()` reports the
+concrete solver that completed the run. Inspect `getLastAutoSolverSummary()` or
+`getConvergenceDiagnostics()` to see the feasibility pre-screen, candidate list, residuals,
+iteration counts, solve times, and fallback notes. For product-specification cases, also inspect
+`getLastSpecificationHomotopyStepCount()` to confirm whether staged continuation was used.
 
 ## Side Draws
 
@@ -359,6 +370,9 @@ fraction diagnostics, film/heat-transfer model choices, and equation-oriented re
 |--------|-------------|
 | `solved()` | Current convergence flag. |
 | `getLastSolverTypeUsed()` | Concrete solver that completed the latest run, especially useful when requested solver is `AUTO`. |
+| `getLastSolveStatus()` | Strict solve status: rigorous convergence, reconciled products, fallback products, failure, or not run. |
+| `getLastSolveStatusReason()` | Concise explanation for fallback or rejected candidate states. |
+| `getLastAutoSolverSummary()` | Candidate trace from `AUTO`, including the feasibility pre-screen and per-candidate residual metrics. |
 | `getLastIterationCount()` | Inner solver iteration count. |
 | `getLastSolveTimeSeconds()` | Latest solve wall time. |
 | `getLastTemperatureResidual()` | Average tray-temperature residual in Kelvin. |
@@ -366,6 +380,8 @@ fraction diagnostics, film/heat-transfer model choices, and equation-oriented re
 | `getLastEnergyResidual()` | Relative enthalpy-balance residual. |
 | `getLastTopSpecificationResidual()`, `getLastBottomSpecificationResidual()` | Endpoint spec errors. |
 | `getLastSpecificationResidual()` | Maximum absolute endpoint spec error. |
+| `getSpecificationHomotopySteps()` | Configured number of staged continuation targets for adjustable product specifications. |
+| `getLastSpecificationHomotopyStepCount()` | Number of specification continuation stages completed by the latest solve. |
 | `getLastColumnTearIterationCount()` | Outer side-draw, pumparound, and hydraulic tear iterations. |
 | `getLastColumnTearResidual()` | Maximum outer tear residual. |
 | `isLastColumnTearConverged()` | Whether active side-draw, pumparound, and hydraulic tear variables met tolerance. |
@@ -418,9 +434,9 @@ false)`.
 
 | Symptom | Recommended checks |
 |---------|--------------------|
-| No convergence | Verify tray numbering, feed condition, endpoint temperatures, pressure profile, and component list. Start with `DIRECT_SUBSTITUTION`, `DAMPED_SUBSTITUTION`, or `AUTO`. |
+| No convergence | Verify tray numbering, feed condition, endpoint temperatures, pressure profile, and component list. Start with `DIRECT_SUBSTITUTION`, `DAMPED_SUBSTITUTION`, or `AUTO`, then inspect `getConvergenceDiagnostics()`. |
 | Oscillation | Reduce aggressive condenser/reboiler specs, set a lower relaxation factor, or use `DAMPED_SUBSTITUTION`. |
-| Specification does not close | Check `getLastTopSpecificationResidual()`, `getLastBottomSpecificationResidual()`, feasible product split, and whether the required condenser/reboiler exists. |
+| Specification does not close | Check `getLastTopSpecificationResidual()`, `getLastBottomSpecificationResidual()`, feasible product split, and whether the required condenser/reboiler exists. For sharp purity, recovery, or product-flow targets, use `setSpecificationHomotopySteps(steps)` or `AUTO`. |
 | Side-draw spec reports non-converged | The target may exceed available tray traffic or feed component inventory. Inspect `getSideDrawStream(...)`, side-draw fraction, and `getLastColumnTearResidual()`. |
 | Pumparound fails | Check draw fraction, tray numbers, and return temperature. A return below 0 K is rejected. |
 | Hydraulic coupling fails | Run without coupling first, set a positive internal diameter, and verify `calcColumnInternals(...)` succeeds for the selected internals type. |

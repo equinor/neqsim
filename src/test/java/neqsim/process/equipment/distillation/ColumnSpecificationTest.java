@@ -473,11 +473,13 @@ public class ColumnSpecificationTest {
     assertTrue(column.getLastNaphtaliAnalyticJacobianColumns() > 0);
     assertTrue(column.getLastNaphtaliFiniteDifferenceJacobianColumns() >= 0);
     assertTrue(column.getLastNaphtaliThermoEvaluationCount() > 0);
+    assertTrue(column.getLastNaphtaliThermoCacheHitCount() >= 0);
     assertTrue(column.getLastNaphtaliJacobianBuildTimeSeconds() >= 0.0);
     assertTrue(column.getLastNaphtaliBlockLinearSolveCount() > 0);
     assertTrue(column.getLastNaphtaliDenseLinearSolveCount() >= 0);
     assertTrue(column.getLastNaphtaliLinearSolveTimeSeconds() >= 0.0);
     assertTrue(column.getConvergenceDiagnostics().contains("Naphtali-Sandholm Jacobian"));
+    assertTrue(column.getConvergenceDiagnostics().contains("thermodynamic cache hits"));
     assertTrue(column.getConvergenceDiagnostics().contains("block linear solves"));
   }
 
@@ -513,6 +515,22 @@ public class ColumnSpecificationTest {
     assertCommercialAutoCase(createBinaryFractionator("BankDebutanizer", "n-butane", "n-pentane",
         "n-hexane", 6.0, 273.15 + 80.0, 273.15 + 45.0, 273.15 + 130.0));
     assertCommercialAutoCase(createLeanGasFractionator());
+  }
+
+  /**
+   * Test that AUTO reports deferred candidate fallbacks instead of rerunning damped substitution
+   * inside every rejected probe.
+   */
+  @Test
+  public void autoSolverDefersCandidateFallbackWork() {
+    DistillationColumn column = createLeanGasFractionator();
+
+    column.run();
+
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertTrue(column.getLastAutoSolverSummary().contains("duplicate damped probe skipped"));
+    assertTrue(column.getLastAutoSolverSummary().contains("damped fallback deferred")
+        || column.getLastSolverTypeUsed() != DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
   }
 
   /**

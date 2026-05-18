@@ -100,6 +100,16 @@ final class NaphtaliSandholmSolver {
   private double[] liquidMolarHeatCapacities;
   /** Vapor molar heat capacity estimate for each tray. */
   private double[] vaporMolarHeatCapacities;
+  /** Whether one tray's thermodynamic state cache is valid. */
+  private boolean[] thermoCacheValid;
+  /** Cached tray temperatures for thermodynamic state reuse. */
+  private double[] cachedThermoTemperatures;
+  /** Cached tray pressures for thermodynamic state reuse. */
+  private double[] cachedThermoPressures;
+  /** Cached tray vapor flows for thermodynamic state reuse. */
+  private double[] cachedThermoVaporFlows;
+  /** Cached tray liquid component flows for thermodynamic state reuse. */
+  private double[][] cachedThermoLiquidComponentFlows;
   /** Characteristic molar flow used for residual scaling. */
   private double flowScale = 1.0;
   /** Component-specific flow scales used to avoid trace-component residual over-weighting. */
@@ -124,6 +134,8 @@ final class NaphtaliSandholmSolver {
   private int lastFiniteDifferenceJacobianColumns = 0;
   /** Tray thermodynamic evaluations performed by the latest solve. */
   private int lastThermoEvaluationCount = 0;
+  /** Tray thermodynamic evaluations avoided by cache reuse in the latest solve. */
+  private int lastThermoCacheHitCount = 0;
   /** Wall time for the latest Jacobian build in seconds. */
   private double lastJacobianBuildTimeSeconds = 0.0;
   /** Successful block-tridiagonal linear solves in the latest solve. */
@@ -176,6 +188,7 @@ final class NaphtaliSandholmSolver {
     lastAnalyticJacobianColumns = 0;
     lastFiniteDifferenceJacobianColumns = 0;
     lastThermoEvaluationCount = 0;
+    lastThermoCacheHitCount = 0;
     lastJacobianBuildTimeSeconds = 0.0;
     lastBlockLinearSolveCount = 0;
     lastDenseLinearSolveCount = 0;
@@ -354,6 +367,15 @@ final class NaphtaliSandholmSolver {
   }
 
   /**
+   * Get the tray thermodynamic evaluations avoided through cache reuse.
+   *
+   * @return thermo cache hit count
+   */
+  int getLastThermoCacheHitCount() {
+    return lastThermoCacheHitCount;
+  }
+
+  /**
    * Get wall time for the latest Jacobian build.
    *
    * @return latest Jacobian build time in seconds
@@ -422,6 +444,11 @@ final class NaphtaliSandholmSolver {
     vaporMolarEnthalpies = new double[trayCount];
     liquidMolarHeatCapacities = new double[trayCount];
     vaporMolarHeatCapacities = new double[trayCount];
+    thermoCacheValid = new boolean[trayCount];
+    cachedThermoTemperatures = new double[trayCount];
+    cachedThermoPressures = new double[trayCount];
+    cachedThermoVaporFlows = new double[trayCount];
+    cachedThermoLiquidComponentFlows = new double[trayCount][componentCount];
 
     double totalFeedFlow = initializeFeeds();
     flowScale = Math.max(1.0, totalFeedFlow / Math.max(1, trayCount));
@@ -777,6 +804,10 @@ final class NaphtaliSandholmSolver {
    * @param trayIndex tray index
    */
   private void evaluateThermoForTray(int trayIndex) {
+    if (isThermoCacheCurrent(trayIndex)) {
+      lastThermoCacheHitCount++;
+      return;
+    }
     lastThermoEvaluationCount++;
     double liquidFlow = liquidFlow(trayIndex);
     double[] liquidComposition = liquidComposition(trayIndex, liquidFlow);
@@ -803,8 +834,60 @@ final class NaphtaliSandholmSolver {
     }
     liquidMolarEnthalpies[trayIndex] = phaseMolarEnthalpy(liquidPhase, system);
     vaporMolarEnthalpies[trayIndex] = phaseMolarEnthalpy(gasPhase, system);
-        liquidMolarHeatCapacities[trayIndex] = phaseMolarHeatCapacity(liquidPhase, system);
-        vaporMolarHeatCapacities[trayIndex] = phaseMolarHeatCapacity(gasPhase, system);
+    liquidMolarHeatCapacities[trayIndex] = phaseMolarHeatCapacity(liquidPhase, system);
+    vaporMolarHeatCapacities[trayIndex] = phaseMolarHeatCapacity(gasPhase, system);
+    storeThermoCacheState(trayIndex);
+  }
+
+  /**
+   * Check whether a tray's cached thermodynamic state matches the current Newton variables.
+   *
+   * @param trayIndex tray index
+   * @return {@code true} when the existing K-values and enthalpies can be reused
+   */
+  private boolean isThermoCacheCurrent(int trayIndex) {
+    if (thermoCacheValid == null || !thermoCacheValid[trayIndex]) {
+      return false;
+    }
+    if (!sameCachedValue(temperatures[trayIndex], cachedThermoTemperatures[trayIndex])
+        || !sameCachedValue(pressures[trayIndex], cachedThermoPressures[trayIndex])
+        || !sameCachedValue(vaporFlows[trayIndex], cachedThermoVaporFlows[trayIndex])) {
+      return false;
+    }
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      if (!sameCachedValue(liquidComponentFlows[trayIndex][componentIndex],
+          cachedThermoLiquidComponentFlows[trayIndex][componentIndex])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Compare two cached state values using exact floating-point identity.
+   *
+   * @param current current state value
+   * @param cached cached state value
+   * @return {@code true} when both values have identical double bits
+   */
+  private boolean sameCachedValue(double current, double cached) {
+    return Double.doubleToLongBits(current) == Double.doubleToLongBits(cached);
+  }
+
+  /**
+   * Store the current tray Newton variables as the thermodynamic cache key.
+   *
+   * @param trayIndex tray index
+   */
+  private void storeThermoCacheState(int trayIndex) {
+    thermoCacheValid[trayIndex] = true;
+    cachedThermoTemperatures[trayIndex] = temperatures[trayIndex];
+    cachedThermoPressures[trayIndex] = pressures[trayIndex];
+    cachedThermoVaporFlows[trayIndex] = vaporFlows[trayIndex];
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      cachedThermoLiquidComponentFlows[trayIndex][componentIndex] =
+          liquidComponentFlows[trayIndex][componentIndex];
+    }
   }
 
   /**

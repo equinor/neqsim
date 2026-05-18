@@ -47,6 +47,20 @@ final class ColumnSolverFactory {
    */
   private static volatile boolean verifyAcceleratedResults = false;
 
+  /**
+   * Thread-local marker used while AUTO probes candidate solvers. Candidate probes should report
+   * their own state without spending another full damped-substitution run inside each rejected
+   * candidate; AUTO applies the robust fallback once after ranking the probes.
+   */
+  private static final ThreadLocal<Boolean> autoCandidateProbeMode =
+      new ThreadLocal<Boolean>() {
+        /** {@inheritDoc} */
+        @Override
+        protected Boolean initialValue() {
+          return Boolean.FALSE;
+        }
+      };
+
   /** Utility class constructor. */
   private ColumnSolverFactory() {}
 
@@ -141,7 +155,7 @@ final class ColumnSolverFactory {
       ColumnSolveResult warmBaseResult = runAutoWarmBase(candidateSource, id, summary);
       column.recordAutoSolverEvent("relaxed base solve solved=" + warmBaseResult.isSolved()
           + ", used=" + warmBaseResult.getSolverType());
-      double warmBaseScore = scoreResult(warmBaseResult);
+      double warmBaseScore = scoreResult(warmBaseResult, candidateSource);
       if (warmBaseScore < bestScore) {
         bestScore = warmBaseScore;
         bestCandidate = candidateSource;
@@ -157,19 +171,24 @@ final class ColumnSolverFactory {
               "candidate copy failed; live damped fallback used");
           return runAutoFallbackOnLiveColumn(column, id, summary);
         }
+        if (candidateSolver == DistillationColumn.SolverType.DAMPED_SUBSTITUTION) {
+          appendAutoCandidateSummary(summary, candidateSolver, warmBaseResult,
+              "relaxed base reused; duplicate damped probe skipped");
+          continue;
+        }
         prepareAutoCandidate(candidate, candidateSolver);
         try {
-          ColumnSolveResult result =
-              ColumnSolverFactory.create(candidateSolver).solve(candidate, id);
-          appendAutoCandidateSummary(summary, candidateSolver, result, null);
-          double score = scoreResult(result);
+          ColumnSolveResult result = runAutoProbeCandidate(candidate, candidateSolver, id);
+          appendAutoCandidateSummary(summary, candidateSolver, result,
+              autoProbeNote(candidate, result));
+          double score = scoreResult(result, candidate);
           if (score < bestScore) {
             bestScore = score;
             bestCandidate = candidate;
             bestResult = result;
             bestSolver = result.getSolverType();
           }
-          if (result.isSolved()) {
+          if (isAcceptableAutoCandidate(candidate, result)) {
             column.acceptAutoSolverCandidate(candidate, result.getSolverType());
             column.setLastAutoSolverSummary(summary.toString());
             column.recordAutoSolverEvent("selected " + result.getSolverType());
@@ -184,7 +203,7 @@ final class ColumnSolverFactory {
       }
 
       if (bestCandidate != null && bestResult != null && bestSolver != null
-          && bestResult.isSolved()) {
+          && isAcceptableAutoCandidate(bestCandidate, bestResult)) {
         column.acceptAutoSolverCandidate(bestCandidate, bestSolver);
         column.setLastAutoSolverSummary(summary.toString());
         column.recordAutoSolverEvent("selected best available " + bestSolver);
@@ -244,15 +263,18 @@ final class ColumnSolverFactory {
       try {
         column.solveInsideOut(id);
       } catch (RuntimeException exception) {
+        if (isAutoCandidateProbeMode()) {
+          throw exception;
+        }
         applyDampedFallback(column, null, id, "Inside-out failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, null, id,
             "Inside-out required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, null, id, "Inside-out did not satisfy convergence criteria",
             null);
       }
@@ -276,15 +298,18 @@ final class ColumnSolverFactory {
       try {
         column.solveMatrixInsideOut(id);
       } catch (RuntimeException exception) {
+        if (isAutoCandidateProbeMode()) {
+          throw exception;
+        }
         applyDampedFallback(column, null, id, "Matrix inside-out failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, null, id,
             "Matrix inside-out required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, null, id,
             "Matrix inside-out did not satisfy convergence criteria", null);
       }
@@ -305,20 +330,23 @@ final class ColumnSolverFactory {
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
       column.markSolverTypeUsed(getSolverType());
       DistillationColumn fallbackCandidate =
-          verifyAcceleratedResults ? createDampedFallbackCandidate(column) : null;
+          shouldPrepareAcceleratedFallback() ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
       try {
         column.solveWegstein(id);
       } catch (RuntimeException exception) {
+        if (isAutoCandidateProbeMode()) {
+          throw exception;
+        }
         applyDampedFallback(column, fallbackCandidate, id, "Wegstein failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "Wegstein required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "Wegstein did not satisfy convergence criteria", null);
         fallbackApplied = true;
@@ -343,20 +371,23 @@ final class ColumnSolverFactory {
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
       column.markSolverTypeUsed(getSolverType());
       DistillationColumn fallbackCandidate =
-          verifyAcceleratedResults ? createDampedFallbackCandidate(column) : null;
+          shouldPrepareAcceleratedFallback() ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
       try {
         column.solveSumRates(id);
       } catch (RuntimeException exception) {
+        if (isAutoCandidateProbeMode()) {
+          throw exception;
+        }
         applyDampedFallback(column, fallbackCandidate, id, "Sum-rates failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "Sum-rates required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "Sum-rates did not satisfy convergence criteria", null);
         fallbackApplied = true;
@@ -384,15 +415,18 @@ final class ColumnSolverFactory {
       try {
         column.solveNewton(id);
       } catch (RuntimeException exception) {
+        if (isAutoCandidateProbeMode()) {
+          throw exception;
+        }
         applyDampedFallback(column, null, id, "Newton failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, null, id, "Newton required guarded feed-flash product fallback",
             null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, null, id, "Newton did not satisfy convergence criteria", null);
       }
       return ColumnSolveResult.from(column, column.getLastSolverTypeUsed());
@@ -413,20 +447,23 @@ final class ColumnSolverFactory {
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
       column.markSolverTypeUsed(getSolverType());
       DistillationColumn fallbackCandidate =
-          verifyAcceleratedResults ? createDampedFallbackCandidate(column) : null;
+          shouldPrepareAcceleratedFallback() ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
       try {
         column.solveNaphtaliSandholm(id);
       } catch (RuntimeException exception) {
+        if (isAutoCandidateProbeMode()) {
+          throw exception;
+        }
         applyDampedFallback(column, fallbackCandidate, id, "Naphtali-Sandholm failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "Naphtali-Sandholm required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "Naphtali-Sandholm did not satisfy convergence criteria", null);
         fallbackApplied = true;
@@ -451,20 +488,23 @@ final class ColumnSolverFactory {
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
       column.markSolverTypeUsed(getSolverType());
       DistillationColumn fallbackCandidate =
-          verifyAcceleratedResults ? createDampedFallbackCandidate(column) : null;
+          shouldPrepareAcceleratedFallback() ? createDampedFallbackCandidate(column) : null;
       boolean fallbackApplied = false;
       try {
         column.solveMeshResidual(id);
       } catch (RuntimeException exception) {
+        if (isAutoCandidateProbeMode()) {
+          throw exception;
+        }
         applyDampedFallback(column, fallbackCandidate, id, "MESH residual solve failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "MESH residual solve required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "MESH residual solve did not satisfy convergence criteria", null);
         fallbackApplied = true;
@@ -618,6 +658,73 @@ final class ColumnSolverFactory {
   }
 
   /**
+   * Run one AUTO candidate probe without allowing the candidate wrapper to perform its own damped
+   * fallback solve.
+   *
+   * @param candidate candidate column copy
+   * @param candidateSolver solver to probe
+   * @param id calculation identifier
+   * @return result reported by the probed solver before AUTO-level fallback
+   */
+  private static ColumnSolveResult runAutoProbeCandidate(DistillationColumn candidate,
+      DistillationColumn.SolverType candidateSolver, UUID id) {
+    Boolean previousMode = autoCandidateProbeMode.get();
+    autoCandidateProbeMode.set(Boolean.TRUE);
+    try {
+      return ColumnSolverFactory.create(candidateSolver).solve(candidate, id);
+    } finally {
+      autoCandidateProbeMode.set(previousMode);
+    }
+  }
+
+  /**
+   * Check whether the current strategy call is an AUTO probe.
+   *
+   * @return {@code true} when damped fallback work should be deferred to AUTO
+   */
+  private static boolean isAutoCandidateProbeMode() {
+    return autoCandidateProbeMode.get().booleanValue();
+  }
+
+  /**
+   * Check whether an accelerator should prepare a damped validation/fallback copy.
+   *
+   * @return {@code true} when accelerated-result verification is enabled outside AUTO probing
+   */
+  private static boolean shouldPrepareAcceleratedFallback() {
+    return verifyAcceleratedResults && !isAutoCandidateProbeMode();
+  }
+
+  /**
+   * Build an explanatory note for an AUTO candidate probe.
+   *
+   * @param candidate candidate column after the probe
+   * @param result probe result
+   * @return note for the AUTO summary, or {@code null} when no note is needed
+   */
+  private static String autoProbeNote(DistillationColumn candidate, ColumnSolveResult result) {
+    if (candidate.wasFeedFlashFallbackApplied()) {
+      return "damped fallback deferred; candidate used guarded feed-flash products";
+    }
+    if (!result.isSolved()) {
+      return "damped fallback deferred; candidate did not satisfy convergence criteria";
+    }
+    return null;
+  }
+
+  /**
+   * Check whether an AUTO candidate can be accepted without running the live fallback.
+   *
+   * @param candidate candidate column after the probe
+   * @param result probe result
+   * @return {@code true} when the candidate is solved and did not rely on fallback products
+   */
+  private static boolean isAcceptableAutoCandidate(DistillationColumn candidate,
+      ColumnSolveResult result) {
+    return result != null && result.isSolved() && !candidate.wasFeedFlashFallbackApplied();
+  }
+
+  /**
    * Append feasibility pre-screen status to the automatic solver trace.
    *
    * @param summary summary builder receiving a one-line status
@@ -683,9 +790,10 @@ final class ColumnSolverFactory {
    * Score a candidate result for best-effort automatic fallback.
    *
    * @param result candidate result
+   * @param candidate candidate column, or {@code null} if only the result is available
    * @return finite scalar score where lower is better
    */
-  private static double scoreResult(ColumnSolveResult result) {
+  private static double scoreResult(ColumnSolveResult result, DistillationColumn candidate) {
     double score = residualScore(result.getTemperatureResidual())
         + residualScore(result.getMassResidual()) + residualScore(result.getEnergyResidual())
         + residualScore(result.getProductDrawResidualNorm());
@@ -694,6 +802,9 @@ final class ColumnSolverFactory {
     }
     if (!result.isSolved()) {
       score += 1.0e6;
+    }
+    if (candidate != null && candidate.wasFeedFlashFallbackApplied()) {
+      score += 5.0e5;
     }
     return score;
   }
