@@ -28,6 +28,8 @@
 		<skipFlattening>false</skipFlattening>
 		<argLine></argLine>
 		<jvm.module.opens.argLine></jvm.module.opens.argLine>
+		<!-- Exclude slow tests by default. Run with -DexcludedTestGroups= to include all tests -->
+		<excludedTestGroups>slow</excludedTestGroups>
 	</properties>
 	<licenses>
 		<license>
@@ -325,18 +327,19 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.5.4</version>
 				<configuration>
-					<!-- Add required module opens for XStream reflection when running tests on JDK
+					<!-- Add test heap and required module opens for XStream reflection when running tests on JDK
 					>= 17 -->
-					<argLine>${argLine}${jvm.module.opens.argLine}</argLine>
+					<argLine>${argLine} -Xmx3g${jvm.module.opens.argLine}</argLine>
+					<excludedGroups>${excludedTestGroups}</excludedGroups>
 				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<version>3.5.4</version>
 				<configuration>
-					<!-- Add required module opens for XStream reflection when running tests on JDK
+					<!-- Add test heap and required module opens for XStream reflection when running tests on JDK
 					>= 17 -->
-					<argLine>${argLine}${jvm.module.opens.argLine}</argLine>
+					<argLine>${argLine} -Xmx3g${jvm.module.opens.argLine}</argLine>
 				</configuration>
 			</plugin>
 			<plugin>

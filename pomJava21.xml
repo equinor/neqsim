@@ -27,6 +27,8 @@
 		<checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
 		<skipFlattening>false</skipFlattening>
 		<argLine></argLine>
+		<!-- Exclude slow tests by default. Run with -DexcludedTestGroups= to include all tests -->
+		<excludedTestGroups>slow</excludedTestGroups>
 	</properties>
 	<licenses>
 		<license>
@@ -319,10 +321,11 @@
 				<configuration>
 					<!-- Preserve any Jacoco agent injection (${argLine}) and add required module
 					opens for XStream reflection when running tests on JDK >= 17 -->
-					<argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED
+					<argLine>${argLine} -Xmx3g --add-opens=java.base/java.util=ALL-UNNAMED
 						--add-opens=java.base/java.lang=ALL-UNNAMED
 						--add-opens=java.base/java.io=ALL-UNNAMED
 						--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
+					<excludedGroups>${excludedTestGroups}</excludedGroups>
 				</configuration>
 				<version>3.5.4</version>
 			</plugin>
@@ -332,7 +335,7 @@
 				<configuration>
 					<!-- Preserve any Jacoco agent injection (${argLine}) and add required module
 					opens for XStream reflection when running integration tests on JDK >= 17 -->
-					<argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED
+					<argLine>${argLine} -Xmx3g --add-opens=java.base/java.util=ALL-UNNAMED
 						--add-opens=java.base/java.lang=ALL-UNNAMED
 						--add-opens=java.base/java.io=ALL-UNNAMED
 						--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>

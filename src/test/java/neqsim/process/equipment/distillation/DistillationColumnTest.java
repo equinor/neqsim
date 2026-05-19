@@ -302,7 +302,7 @@ public class DistillationColumnTest {
    * fractionator.
    */
   @Test
-  public void nglDebutanizerMidColumnFeedReportsMeshResidualFallback() {
+  public void nglDebutanizerMidColumnFeedConvergesWithMeshResidualSolver() {
     SystemInterface fluid = new neqsim.thermo.system.SystemPrEos(273.15, 1.01325);
     fluid.addComponent("methane", 24.423);
     fluid.addComponent("ethane", 38.0634);
@@ -357,18 +357,20 @@ public class DistillationColumnTest {
     String diagnostics = debutanizer.getConvergenceDiagnostics();
 
     assertTrue(deethanizer.solved(), deethanizer.getConvergenceDiagnostics());
-    assertFalse(debutanizer.solved(), diagnostics);
-    assertEquals(DistillationColumn.SolveStatus.FAILED, debutanizer.getLastSolveStatus(),
-        "MESH residual fallback should remain non-solved when product-draw residuals are high");
-    assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
-        debutanizer.getLastSolverTypeUsed(),
-        "The accepted fallback solver should be reported separately from the selected MESH solver");
+    assertTrue(debutanizer.solved(), diagnostics);
+    assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED,
+        debutanizer.getLastSolveStatus(), diagnostics);
+    assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL, debutanizer.getLastSolverTypeUsed(),
+        "The selected MESH residual solver should be reported as the accepted solver");
     assertTrue(debutanizer.isEnforceMeshResidualTolerance(),
         "Selected MESH residual solver should keep residual gating enabled");
     assertTrue(
-        debutanizer.getLastMeshProductDrawResidualNorm() > debutanizer
+        debutanizer.getLastMeshResidualNorm() <= debutanizer.getMeshResidualTolerance() + 1.0e-12,
+        "MESH residual norm should satisfy the active convergence gate");
+    assertTrue(
+        debutanizer.getLastMeshProductDrawResidualNorm() <= debutanizer
             .getMeshProductDrawResidualTolerance(),
-        "MESH residual fallback should expose the product-draw residual that prevents convergence");
+        "MESH product-draw residual should satisfy the active convergence gate");
     assertEquals(feedMass, productMass, feedMass * 1.0e-6,
         "Debutanizer external products must match feed mass");
   }
