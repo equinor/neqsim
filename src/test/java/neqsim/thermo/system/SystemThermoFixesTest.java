@@ -2,6 +2,7 @@ package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -134,5 +135,45 @@ class SystemThermoFixesTest {
     // Request aqueous phase — should return 0 (fallback) but not crash
     int idx = fluid.getPhaseIndex("aqueous");
     assertTrue(idx >= 0, "Should return a valid fallback index");
+  }
+
+  /**
+   * Verifies that extracting a gas phase after density ordering preserves cached EOS derivatives.
+   */
+  @Test
+  void testPhaseToSystemGasPreservesThermodynamicPropertiesAfterPhaseIndexSwap() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 50.0, 100.0);
+    fluid.addComponent("nitrogen", 0.005);
+    fluid.addComponent("CO2", 0.010);
+    fluid.addComponent("methane", 0.450);
+    fluid.addComponent("ethane", 0.150);
+    fluid.addComponent("propane", 0.150);
+    fluid.addComponent("i-butane", 0.080);
+    fluid.addComponent("n-butane", 0.080);
+    fluid.addComponent("i-pentane", 0.040);
+    fluid.addComponent("n-pentane", 0.035);
+    fluid.addComponent("n-hexane", 0.030);
+    fluid.setMixingRule("classic");
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.init(3);
+
+    assertEquals(2, fluid.getNumberOfPhases(), "Rich gas should be two-phase at this condition");
+    assertNotEquals(0, fluid.getPhaseIndex(0),
+        "Regression condition requires swapped phase storage");
+
+    double referenceKappa = fluid.getPhase(0).getKappa();
+    double referenceDensity = fluid.getPhase(0).getDensity("kg/m3");
+    double referenceEnthalpy = fluid.getPhase(0).getEnthalpy();
+
+    SystemInterface gasSystem = fluid.phaseToSystem("gas");
+
+    assertEquals(referenceKappa, gasSystem.getPhase(0).getKappa(), 1e-10,
+        "Extracted gas kappa should match the source gas phase");
+    assertEquals(referenceDensity, gasSystem.getPhase(0).getDensity("kg/m3"), 1e-8,
+        "Extracted gas density should match the source gas phase");
+    assertEquals(referenceEnthalpy, gasSystem.getPhase(0).getEnthalpy(), 1e-6,
+        "Extracted gas enthalpy should match the source gas phase");
   }
 }
