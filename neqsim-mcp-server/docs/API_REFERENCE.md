@@ -320,7 +320,7 @@ then modifies them based on the user's requirements.
 | `validation` | `error-flash` | A deliberately invalid flash input |
 | `safety` | `hazop-study` | Simulation-backed HAZOP from process scenarios and document evidence |
 | `safety` | `barrier-register` | Evidence-linked PSF/SCE barrier register |
-| `tool` | `<tool name>` | Canonical example for a schema-backed tool, such as `run_dynamic` |
+| `tool` | `<tool name>` | Canonical or contract-level example for any advertised MCP tool, such as `run_dynamic` or `run_relief` |
 
 ---
 
@@ -330,14 +330,12 @@ Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
 
 **Available schemas:**
 
-`SchemaCatalog.getToolNames()` currently advertises 23 schema-backed tool contracts.
-
-Complete list: `run_flash`, `run_process`, `validate_input`, `list_components`,
-`run_batch`, `get_property_table`, `get_phase_envelope`, `get_capabilities`,
-`run_pvt`, `run_flow_assurance`, `calculate_standard`, `run_pipeline`,
-`run_reservoir`, `run_field_economics`, `run_dynamic`, `run_bioprocess`,
-`size_equipment`, `compare_processes`, `manage_session`, `visualize`, `run_hazop`,
-`run_barrier_register`, and `run_safety_system_performance`.
+`SchemaCatalog.getToolNames()` advertises all 56 MCP server tools. Every listed tool has an
+`input` and `output` schema URI under `neqsim://schemas/{tool}/{type}`. High-use calculation and
+workflow tools have detailed tool-specific schemas. The remaining server, lifecycle, governance,
+and orchestration tools have generic contract schemas that expose common fields such as `action`,
+`inputJson`, `processJson`, `arguments`, `options`, `unitSystem`, and the standard response
+envelope.
 
 | Tool Name | Types | Description |
 |---|---|---|
@@ -348,6 +346,8 @@ Complete list: `run_flash`, `run_process`, `validate_input`, `list_components`,
 | `validate_input` | `input`, `output` | Validator JSON format |
 | `list_components` | `input`, `output` | Component search JSON format |
 | `run_dynamic`, `run_pvt`, `run_flow_assurance`, and others | `input`, `output` | Domain workflow JSON formats |
+| `run_relief`, `run_lopa`, `run_sil`, `run_risk_matrix`, `run_flare_network` | `input`, `output` | Safety and risk workflow contracts |
+| `manage_state`, `manage_security`, `manage_validation_profile`, `check_tool_access`, and other platform tools | `input`, `output` | Generic MCP contract schemas with standard response envelopes |
 
 ---
 

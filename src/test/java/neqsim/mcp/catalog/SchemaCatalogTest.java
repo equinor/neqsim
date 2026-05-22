@@ -120,7 +120,7 @@ class SchemaCatalogTest {
   void testGetToolNames() {
     List<String> tools = SchemaCatalog.getToolNames();
 
-    assertTrue(tools.size() >= 8);
+    assertTrue(tools.size() >= 56);
     assertTrue(tools.contains("run_flash"));
     assertTrue(tools.contains("run_process"));
     assertTrue(tools.contains("validate_input"));
@@ -129,6 +129,9 @@ class SchemaCatalogTest {
     assertTrue(tools.contains("get_property_table"));
     assertTrue(tools.contains("get_phase_envelope"));
     assertTrue(tools.contains("get_capabilities"));
+    assertTrue(tools.contains("run_relief"));
+    assertTrue(tools.contains("get_benchmark_trust"));
+    assertTrue(tools.contains("check_tool_access"));
   }
 
   @Test

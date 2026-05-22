@@ -203,9 +203,9 @@ type (flash vs. process) based on the presence of `"fluid"` / `"process"` keys.
 
 | Class | Purpose |
 |---|---|
-| `ExampleCatalog` | Canonical examples across flash, process, validation, and tool categories |
-| `SchemaCatalog` | JSON Schema (Draft 2020-12) for 23 schema-backed MCP tool input and output contracts |
-| `CapabilitiesRunner` | Machine-readable capability map, setup templates, process JSON contract, validation coverage, and response-contract coverage |
+| `ExampleCatalog` | Canonical and contract-level examples across flash, process, validation, safety, and all MCP tool categories |
+| `SchemaCatalog` | JSON Schema (Draft 2020-12) for all 56 MCP tool input and output contracts; high-use tools have detailed schemas and remaining tools have generic contract schemas |
+| `CapabilitiesRunner` | Machine-readable capability map, setup templates, process JSON contract, unit system, benchmark trust, lifecycle metadata, safety gates, validation coverage, and response-contract coverage |
 
 These are served as MCP Resources so LLMs can read them to learn the format:
 

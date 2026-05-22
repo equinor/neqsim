@@ -831,7 +831,28 @@ public final class ExampleCatalog {
     } else if ("run_safety_system_performance".equals(toolName)) {
       return safetySystemPerformance();
     }
+    if (SchemaCatalog.getToolNames().contains(toolName)) {
+      return genericToolExample(toolName);
+    }
     return null;
+  }
+
+  /**
+   * Returns a generic, contract-level example for MCP tools that do not yet have a dedicated
+   * runnable example.
+   *
+   * @param toolName schema-backed MCP tool name
+   * @return JSON example string for agents to adapt
+   */
+  private static String genericToolExample(String toolName) {
+    Map<String, Object> example = new LinkedHashMap<String, Object>();
+    example.put("tool", toolName);
+    example.put("action", "describe");
+    example.put("arguments", new LinkedHashMap<String, Object>());
+    example.put("notes", Arrays.asList("This is a contract-level starter for " + toolName,
+        "Fetch getCapabilities and neqsim://schemas/" + toolName + "/input before execution",
+        "Replace arguments with the tool-specific fields described in the capability descriptor"));
+    return GSON.toJson(example);
   }
 
   /**

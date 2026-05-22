@@ -32,6 +32,14 @@ class CapabilitiesRunnerTest {
     assertTrue(obj.has("toolCapabilities"));
     assertTrue(obj.has("setupTemplates"));
     assertTrue(obj.has("processJsonContract"));
+    assertTrue(obj.has("capabilityGraph"));
+    assertTrue(obj.has("equipmentPropertyOntology"));
+    assertTrue(obj.has("benchmarkRegistry"));
+    assertTrue(obj.has("unitSystem"));
+    assertTrue(obj.has("automaticFlowsheetBuilder"));
+    assertTrue(obj.has("optimizationUncertaintyWorkflows"));
+    assertTrue(obj.has("modelLifecycle"));
+    assertTrue(obj.has("safetyGatePolicy"));
     assertTrue(obj.has("engineeringDomains"));
     assertTrue(obj.has("trustModel"));
     assertTrue(obj.has("apiVersion"));
@@ -51,6 +59,11 @@ class CapabilitiesRunnerTest {
     assertTrue(toolCapabilities.has("runPVT"));
     assertTrue(toolCapabilities.has("runDynamic"));
     assertTrue(toolCapabilities.has("runSafetySystemPerformance"));
+    assertTrue(toolCapabilities.has("solveTask"));
+    assertTrue(toolCapabilities.has("runRelief"));
+    assertTrue(toolCapabilities.has("getBenchmarkTrust"));
+    assertTrue(toolCapabilities.has("checkToolAccess"));
+    assertTrue(toolCapabilities.entrySet().size() >= SchemaCatalog.getToolNames().size());
     JsonObject flashDescriptor = toolCapabilities.getAsJsonObject("runFlash");
     assertTrue(flashDescriptor.has("requiredFields"));
     assertTrue(flashDescriptor.has("supportedModels"));
@@ -67,6 +80,13 @@ class CapabilitiesRunnerTest {
     assertTrue(processContract.has("supportedEquipmentTypes"));
     assertTrue(processContract.has("commonPropertiesByEquipment"));
     assertTrue(processContract.has("units"));
+
+    JsonObject graph = obj.getAsJsonObject("capabilityGraph");
+    assertTrue(graph.get("nodeCount").getAsInt() > 50);
+    assertTrue(graph.get("edgeCount").getAsInt() > 50);
+
+    JsonObject safetyGate = obj.getAsJsonObject("safetyGatePolicy");
+    assertTrue(safetyGate.get("engineeringReviewRequired").getAsBoolean());
   }
 
   @Test

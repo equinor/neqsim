@@ -358,7 +358,7 @@ Returns ready-to-use JSON templates for tools.
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `category` | string | Yes | `flash`, `process`, or `validation` |
+| `category` | string | Yes | `flash`, `process`, `validation`, `safety`, or `tool` |
 | `name` | string | Yes | Example name (see table below) |
 
 **Available examples:**
@@ -373,6 +373,9 @@ Returns ready-to-use JSON templates for tools.
 | `process` | `simple-separation` | Stream → Separator |
 | `process` | `compression-with-cooling` | Stream → Compressor → Cooler |
 | `validation` | `error-flash` | Deliberately invalid input |
+| `safety` | `hazop-study` | Simulation-backed HAZOP study template |
+| `safety` | `barrier-register` | Evidence-linked barrier register template |
+| `tool` | `<schema tool name>` | Canonical or contract-level starter for any advertised MCP tool |
 
 ### 6. `getSchema` — JSON Schemas
 
@@ -386,12 +389,17 @@ Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
 | `schemaType` | string | Yes | `input` or `output` |
 
 Use `getCapabilities` or `neqsim://schema-catalog` to discover the full schema-backed tool list.
+All 56 advertised MCP tools have input and output schema URIs. High-use calculation and workflow
+tools have detailed schemas; long-tail server, lifecycle, governance, and orchestration tools have
+generic contract schemas with standard envelope fields.
 
 ### 7. `getCapabilities` — Capability Manifest
 
 Returns the machine-readable MCP capability map, including schema-backed tool descriptors,
 setup-template references, supported models and units, process JSON contract fields,
 validation coverage, response-contract coverage, examples, and benchmark-trust metadata.
+It also exposes graph metadata, an equipment/property ontology, unit-system guidance, model
+lifecycle metadata, optimization and uncertainty workflow descriptors, and safety-gate policy.
 
 Agents should call this before building unfamiliar workflows.
 
@@ -725,7 +733,7 @@ NeqSim uses specific component names. Use `searchComponents` to find them:
 ## Related Documentation
 
 - [MCP Core Layer](mcp_neqsim_core_layer) — Framework-agnostic runners, models, and catalogs in neqsim core
-- [MCP Agentic Workflow Improvements](mcp_agentic_workflow_improvements) — Capability descriptors, setup templates, response contracts, and coverage tests
+- [MCP Agentic Workflow Improvements](mcp_agentic_workflow_improvements) — All-tool schema/example coverage, setup templates, capability graph, lifecycle metadata, benchmark trust, and safety gates
 - [Web API / JSON Process Builder](web_api_json_process_builder) — JSON process definition format and session management
 - [AI Agents Reference](ai_agents_reference) — Full catalog of NeqSim AI agents and skills
 - [Model Context Protocol specification](https://spec.modelcontextprotocol.io/)

@@ -37,13 +37,15 @@ neqsim/mcp/
 │   ├── ValueWithUnit.java      # Numeric value + unit string
 │   └── DiagnosticIssue.java    # Validation issue with fix hint
 └── catalog/
-  ├── ExampleCatalog.java     # Canonical examples for base and schema-backed tools
-  └── SchemaCatalog.java      # JSON Schema for 23 schema-backed tool contracts
+  ├── ExampleCatalog.java     # Canonical examples for base tools and all MCP tools
+  └── SchemaCatalog.java      # JSON Schema contracts for all 56 MCP tools
 ```
 
 The capability discovery surface is part of the core layer. `CapabilitiesRunner` returns
-machine-readable descriptors for schema-backed tools, setup templates, process JSON fields,
-supported units, validation coverage, and response-contract coverage.
+machine-readable descriptors for all advertised MCP tools, setup templates, process JSON fields,
+supported units, validation coverage, benchmark trust, model lifecycle metadata, safety gates, and
+response-contract coverage. High-use tools have detailed schemas; the remaining tools have generic
+contract-level schemas so every tool can be discovered and validated consistently.
 
 ---
 
@@ -516,8 +518,9 @@ DiagnosticIssue issue = DiagnosticIssue.error(
 ### ExampleCatalog
 
 Provides ready-to-use JSON examples that LLMs use to learn input formats. In addition to
-the base `flash`, `process`, and `validation` categories, the `tool` category maps every
-schema-backed tool name to a canonical example through `getToolExample(String toolName)`.
+the base `flash`, `process`, `validation`, and `safety` categories, the `tool` category maps every
+advertised MCP tool name to a canonical or contract-level example through
+`getToolExample(String toolName)`.
 
 **Usage:**
 
@@ -528,18 +531,15 @@ String catalogJson = ExampleCatalog.getCatalogJson();
 
 ### SchemaCatalog
 
-Provides JSON Schema (Draft 2020-12) definitions for each schema-backed tool input and
+Provides JSON Schema (Draft 2020-12) definitions for each advertised MCP tool input and
 output. Schema catalog URIs use the same path served by the MCP server:
 `neqsim://schemas/{tool}/{type}`.
 
-Current schema-backed tools are:
-
-`run_flash`, `run_process`, `validate_input`, `list_components`, `run_batch`,
-`get_property_table`, `get_phase_envelope`, `get_capabilities`, `run_pvt`,
-`run_flow_assurance`, `calculate_standard`, `run_pipeline`, `run_reservoir`,
-`run_field_economics`, `run_dynamic`, `run_bioprocess`, `size_equipment`,
-`compare_processes`, `manage_session`, `visualize`, `run_hazop`,
-`run_barrier_register`, and `run_safety_system_performance`.
+`SchemaCatalog.getToolNames()` advertises all 56 MCP server tools. High-use tools such as
+`run_flash`, `run_process`, `run_batch`, `get_property_table`, `get_phase_envelope`, `run_pvt`,
+`run_dynamic`, `run_hazop`, and safety runners have detailed tool-specific schemas. The remaining
+server and governance tools use generic input/output schemas with standard envelope fields, so every
+advertised tool has a schema URI and a response-contract baseline.
 
 **Usage:**
 
@@ -569,7 +569,7 @@ and automation metadata:
 | `ComponentQueryTest` | Search, isValid, closestMatch, getInfo |
 | `ExampleCatalogTest` | All examples parse and contain required fields |
 | `SchemaCatalogTest` | All advertised tools have input and output schemas |
-| `CapabilitiesRunnerTest` | Every schema-backed capability resolves schemas, examples, templates, validation metadata, and response-contract metadata |
+| `CapabilitiesRunnerTest` | Every advertised capability resolves schemas, examples, templates, validation metadata, response-contract metadata, graph metadata, and safety review policy |
 | `McpRunnerContractTest` | Standard response-contract fixture remains satisfied |
 | `ModelClassTest` | ApiEnvelope, FlashRequest builder, ValueWithUnit |
 
@@ -612,7 +612,7 @@ and automation metadata:
 ## Related Documentation
 
 - [MCP Server Guide](mcp_server_guide) — Quarkus-based MCP server that wraps this layer
-- [MCP Agentic Workflow Improvements](mcp_agentic_workflow_improvements) — Capability-map and response-contract improvements for agent workflows
+- [MCP Agentic Workflow Improvements](mcp_agentic_workflow_improvements) — All-tool schema/example coverage, setup templates, capability graph, lifecycle metadata, benchmark trust, and safety gates
 - [Web API / JSON Process Builder](web_api_json_process_builder) — JSON process definition format
 - [AI Validation Framework](ai_validation_framework) — NeqSim's broader validation system
 - [AI Agents Reference](ai_agents_reference) — Full catalog of NeqSim AI agents

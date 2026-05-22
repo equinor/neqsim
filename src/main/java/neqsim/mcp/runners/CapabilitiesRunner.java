@@ -177,6 +177,16 @@ public class CapabilitiesRunner {
     root.add("toolCapabilities", buildToolCapabilities());
     root.add("setupTemplates", buildSetupTemplates());
     root.add("processJsonContract", buildProcessJsonContract());
+    root.add("capabilityGraph", buildCapabilityGraph());
+    root.add("equipmentPropertyOntology", buildEquipmentPropertyOntology());
+    root.add("benchmarkRegistry", buildBenchmarkRegistry());
+    root.add("unitSystem", buildUnitSystem());
+    root.add("automaticFlowsheetBuilder", buildAutomaticFlowsheetBuilder());
+    root.add("optimizationUncertaintyWorkflows", buildOptimizationUncertaintyWorkflows());
+    root.add("modelLifecycle", buildModelLifecycle());
+    root.add("safetyGatePolicy", buildSafetyGatePolicy());
+    root.addProperty("excludedFutureItem",
+        "External simulator interoperability such as CAPE-OPEN, FMI, and commercial simulator bridges");
 
     // --- Engineering Domains ---
     JsonObject domains = new JsonObject();
@@ -381,7 +391,103 @@ public class CapabilitiesRunner {
         Arrays.asList("demands", "measurementDevices", "logicSifs", "quantitativeSifs"),
         Collections.<String>emptyList(), Arrays.asList("seconds", "PFDavg", "SIL"),
         "safety-analysis", Arrays.asList("Safety performance findings require independent review"));
+    addAdditionalMcpToolCapabilities(tools);
     return tools;
+  }
+
+  /**
+   * Adds capability descriptors for MCP tools that use server-level or generic schema contracts.
+   *
+   * @param tools mutable tool capability map
+   */
+  private static void addAdditionalMcpToolCapabilities(JsonObject tools) {
+    addGenericToolCapability(tools, "getExample", "get_example", "discovery",
+        "Fetch a canonical example input by category and name", "capability-discovery");
+    addGenericToolCapability(tools, "getSchema", "get_schema", "discovery",
+        "Fetch an input or output JSON Schema by tool name", "unit-safe-schema");
+    addGenericToolCapability(tools, "listSimulationUnits", "list_simulation_units", "automation",
+        "Run a process and list addressable equipment units", "model-lifecycle");
+    addGenericToolCapability(tools, "listUnitVariables", "list_unit_variables", "automation",
+        "List addressable variables for one process unit", "model-lifecycle");
+    addGenericToolCapability(tools, "getSimulationVariable", "get_simulation_variable",
+        "automation", "Read a process variable by automation address", "model-lifecycle");
+    addGenericToolCapability(tools, "setSimulationVariable", "set_simulation_variable",
+        "automation", "Set an input variable and rerun a process", "model-lifecycle");
+    addGenericToolCapability(tools, "saveSimulationState", "save_simulation_state", "lifecycle",
+        "Save a process state snapshot", "model-lifecycle");
+    addGenericToolCapability(tools, "compareSimulationStates", "compare_simulation_states",
+        "lifecycle", "Compare two process state snapshots", "model-lifecycle");
+    addGenericToolCapability(tools, "diagnoseAutomation", "diagnose_automation", "automation",
+        "Diagnose a failed automation address or operation", "model-lifecycle");
+    addGenericToolCapability(tools, "getAutomationLearningReport", "get_automation_learning_report",
+        "automation", "Summarize automation corrections and operation history", "model-lifecycle");
+    addGenericToolCapability(tools, "crossValidateModels", "cross_validate_models", "uncertainty",
+        "Run one process under multiple EOS models", "optimization-uncertainty");
+    addGenericToolCapability(tools, "runParametricStudy", "run_parametric_study", "uncertainty",
+        "Sweep model inputs and collect output responses", "optimization-uncertainty");
+    addGenericToolCapability(tools, "solveTask", "solve_task", "workflow",
+        "Run an autonomous engineering task workflow", "flowsheet-builder");
+    addGenericToolCapability(tools, "composeWorkflow", "compose_workflow", "workflow",
+        "Chain multiple NeqSim MCP tools into a workflow", "flowsheet-builder");
+    addGenericToolCapability(tools, "validateResults", "validate_results", "validation",
+        "Validate simulation results against engineering rules", "benchmark-registry");
+    addGenericToolCapability(tools, "generateReport", "generate_report", "reporting",
+        "Generate a structured engineering report from result JSON", "visualization-reporting");
+    addGenericToolCapability(tools, "bridgeTaskWorkflow", "bridge_task_workflow", "workflow",
+        "Convert MCP output into task_solve results.json format", "flowsheet-builder");
+    addGenericToolCapability(tools, "runPlugin", "run_plugin", "platform",
+        "Run or list registered MCP runner plugins", "capability-discovery");
+    addGenericToolCapability(tools, "getProgress", "get_progress", "platform",
+        "Check progress of long-running simulations", "model-lifecycle");
+    addGenericToolCapability(tools, "streamSimulation", "stream_simulation", "platform",
+        "Run simulations with incremental progress polling", "model-lifecycle");
+    addGenericToolCapability(tools, "composeMultiServerWorkflow", "compose_multi_server_workflow",
+        "workflow", "Compose workflows across multiple MCP servers", "flowsheet-builder");
+    addGenericToolCapability(tools, "manageSecurity", "manage_security", "governance",
+        "Manage MCP API keys, rate limits, and audit logging", "safety-governance");
+    addGenericToolCapability(tools, "manageState", "manage_state", "lifecycle",
+        "Persist and restore simulation states across server restarts", "model-lifecycle");
+    addGenericToolCapability(tools, "manageValidationProfile", "manage_validation_profile",
+        "governance", "Configure jurisdiction-specific validation profiles", "safety-governance");
+    addGenericToolCapability(tools, "queryDataCatalog", "query_data_catalog", "data",
+        "Browse components, standards, materials, and EOS model data", "data-catalog");
+    addGenericToolCapability(tools, "runRelief", "run_relief", "safety",
+        "Size relief devices and API 521 fire input cases", "safety-governance");
+    addGenericToolCapability(tools, "runLOPA", "run_lopa", "safety",
+        "Run layer-of-protection analysis and required SIL gap checks", "safety-governance");
+    addGenericToolCapability(tools, "runSIL", "run_sil", "safety",
+        "Verify SIF PFDavg and SIL claims", "safety-governance");
+    addGenericToolCapability(tools, "runRiskMatrix", "run_risk_matrix", "safety",
+        "Score events on an ISO 31000 style risk matrix", "safety-governance");
+    addGenericToolCapability(tools, "runFlareNetwork", "run_flare_network", "safety",
+        "Calculate flare radiation and safe-distance screening", "safety-governance");
+    addGenericToolCapability(tools, "manageIndustrialProfile", "manage_industrial_profile",
+        "governance", "Configure tool access profiles for industrial deployment",
+        "safety-governance");
+    addGenericToolCapability(tools, "getBenchmarkTrust", "get_benchmark_trust", "benchmark",
+        "Fetch per-tool benchmark trust and validation maturity metadata", "benchmark-registry");
+    addGenericToolCapability(tools, "checkToolAccess", "check_tool_access", "governance",
+        "Check whether a tool is allowed in the active deployment profile", "safety-governance");
+  }
+
+  /**
+   * Adds a generic capability descriptor for a server-level MCP tool.
+   *
+   * @param tools mutable tool capability map
+   * @param mcpToolName public MCP tool method name
+   * @param schemaToolName schema catalog tool name
+   * @param workflowCategory workflow category
+   * @param purpose short purpose description
+   * @param setupTemplateId setup template id
+   */
+  private static void addGenericToolCapability(JsonObject tools, String mcpToolName,
+      String schemaToolName, String workflowCategory, String purpose, String setupTemplateId) {
+    addToolCapability(tools, mcpToolName, schemaToolName, "neqsim.mcp.server.NeqSimTools",
+        workflowCategory, purpose, Collections.<String>emptyList(),
+        Arrays.asList("action", "inputJson", "processJson", "arguments", "options"), eosModels(),
+        processUnits(), setupTemplateId,
+        Arrays.asList("Uses a generic MCP schema contract unless a dedicated schema is available",
+            "Review the capability descriptor and example before execution"));
   }
 
   /**
@@ -409,7 +515,8 @@ public class CapabilitiesRunner {
     descriptor.addProperty("apiVersion", neqsim.mcp.model.ApiEnvelope.API_VERSION);
     descriptor.addProperty("mcpToolName", mcpToolName);
     descriptor.addProperty("schemaToolName", schemaToolName);
-    descriptor.addProperty("runnerClass", "neqsim.mcp.runners." + runnerClass);
+    descriptor.addProperty("runnerClass",
+        runnerClass.indexOf('.') >= 0 ? runnerClass : "neqsim.mcp.runners." + runnerClass);
     descriptor.addProperty("workflowCategory", workflowCategory);
     descriptor.addProperty("maturityLevel", BenchmarkTrust.getMaturityLevel(mcpToolName));
     descriptor.add("requiredFields", toJsonArray(requiredFields));
@@ -621,6 +728,54 @@ public class CapabilitiesRunner {
         Arrays.asList("Start from processDefinition or barrier register evidence",
             "Preserve evidenceRefs for traceability", "Escalate findings for discipline review"),
         ExampleCatalog.safetyHazopStudy());
+    addSetupTemplate(templates, "flowsheet-builder",
+        "Convert process descriptions into validated process JSON",
+        Arrays.asList("getCapabilities", "getSchema", "getExample", "validateInput", "runProcess",
+            "composeWorkflow", "bridgeTaskWorkflow"),
+        Arrays.asList("Classify the source description into fluid, equipment, streams, and specs",
+            "Select an EOS and units from the capability manifest",
+            "Assemble process JSON using processJsonContract and equipmentPropertyOntology",
+            "Validate before running and preserve assumptions in provenance"),
+        "{\"source\":\"Feed gas enters a separator, then gas is compressed\",\"target\":\"run_process JSON\"}");
+    addSetupTemplate(templates, "benchmark-registry",
+        "Attach benchmark trust and validation evidence to tool results",
+        Arrays.asList("getBenchmarkTrust", "validateResults", "getCapabilities"),
+        Arrays.asList("Fetch per-tool benchmarkTrust before relying on a result",
+            "Compare validationCases and maturityLevel with the task criticality",
+            "Run validateResults for design-rule checks", "Report accuracy bounds and limitations"),
+        "{\"action\":\"getTool\",\"tool\":\"runFlash\"}");
+    addSetupTemplate(templates, "unit-safe-schema", "Build inputs with explicit units",
+        Arrays.asList("getSchema", "getCapabilities", "validateInput"),
+        Arrays.asList("Use value/unit objects or [value, unit] arrays instead of bare numbers",
+            "Pick units from unitSystem.dimensions",
+            "Validate dimensional intent before execution"),
+        "{\"temperature\":{\"value\":25.0,\"unit\":\"C\"},\"pressure\":{\"value\":80.0,\"unit\":\"bara\"}}");
+    addSetupTemplate(templates, "optimization-uncertainty",
+        "Run sensitivity, uncertainty, and model-risk workflows",
+        Arrays.asList("runParametricStudy", "runBatch", "crossValidateModels", "compareProcesses",
+            "runFieldEconomics"),
+        Arrays.asList("Define the base case and uncertain parameters with units",
+            "Run parametric sweeps or batch cases", "Cross-validate EOS choices where relevant",
+            "Summarize P10/P50/P90 or tornado drivers in the report"),
+        "{\"objective\":\"minimize compressor power\",\"parameters\":[{\"name\":\"outletPressure\",\"low\":60,\"high\":120,\"unit\":\"bara\"}]}");
+    addSetupTemplate(templates, "model-lifecycle",
+        "Create, inspect, save, restore, and compare process model states",
+        Arrays.asList("manageSession", "saveSimulationState", "compareSimulationStates",
+            "manageState", "listSimulationUnits", "listUnitVariables"),
+        Arrays.asList("Create or load a session", "Inspect addressable units and variables",
+            "Save snapshots before changes", "Compare snapshots after changes",
+            "Persist state only when the deployment profile allows it"),
+        "{\"action\":\"create\",\"processJson\":{\"fluid\":{},\"process\":[]}}");
+    addSetupTemplate(templates, "safety-governance",
+        "Apply review gates for safety, standards, and industrial deployment tools",
+        Arrays.asList("runRelief", "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork",
+            "manageIndustrialProfile", "checkToolAccess", "manageValidationProfile"),
+        Arrays.asList("Check tool access before execution",
+            "Select jurisdiction and standard basis",
+            "Require evidence references for safety findings",
+            "Keep engineeringReviewRequired true",
+            "Separate calculation output from design approval"),
+        "{\"profile\":\"ENTERPRISE\",\"tool\":\"runRelief\",\"approvalRequired\":true}");
     return templates;
   }
 
@@ -727,6 +882,351 @@ public class CapabilitiesRunner {
   }
 
   /**
+   * Builds a graph-style capability map for agents that reason over domains, tools, contracts, and
+   * workflows.
+   *
+   * @return capability graph object
+   */
+  private static JsonObject buildCapabilityGraph() {
+    JsonObject graph = new JsonObject();
+    JsonArray nodes = new JsonArray();
+    JsonArray edges = new JsonArray();
+    List<String> domains = Arrays.asList("thermodynamics", "process", "automation", "pvt",
+        "flow-assurance", "pipeline", "reservoir", "economics", "dynamic", "bioprocess", "safety",
+        "governance", "validation", "benchmark", "lifecycle", "workflow", "data", "reporting",
+        "visualization", "uncertainty", "platform", "discovery");
+    for (String domain : domains) {
+      addGraphNode(nodes, "domain:" + domain, "domain", domain, domain);
+    }
+    for (String toolName : SchemaCatalog.getToolNames()) {
+      String category = categoryForSchemaTool(toolName);
+      addGraphNode(nodes, "tool:" + toolName, "tool", toolName, category);
+      addGraphEdge(edges, "domain:" + category, "tool:" + toolName, "exposes");
+      addGraphEdge(edges, "tool:" + toolName, "schema:" + toolName, "hasSchema");
+      addGraphEdge(edges, "tool:" + toolName, "example:" + toolName, "hasExample");
+    }
+    addGraphNode(nodes, "contract:processJsonContract", "contract", "processJsonContract",
+        "process");
+    addGraphNode(nodes, "contract:unitSystem", "contract", "unitSystem", "validation");
+    addGraphNode(nodes, "contract:safetyGatePolicy", "contract", "safetyGatePolicy", "safety");
+    addGraphEdge(edges, "contract:processJsonContract", "domain:process", "describes");
+    addGraphEdge(edges, "contract:unitSystem", "domain:validation", "constrains");
+    addGraphEdge(edges, "contract:safetyGatePolicy", "domain:safety", "governs");
+    graph.add("nodes", nodes);
+    graph.add("edges", edges);
+    graph.addProperty("nodeCount", nodes.size());
+    graph.addProperty("edgeCount", edges.size());
+    graph.addProperty("scope", "MCP capability graph for agent discovery");
+    return graph;
+  }
+
+  /**
+   * Builds equipment and property ontology metadata for process JSON composition.
+   *
+   * @return ontology object
+   */
+  private static JsonObject buildEquipmentPropertyOntology() {
+    JsonObject ontology = new JsonObject();
+    JsonObject equipment = new JsonObject();
+    addEquipmentOntology(equipment, "Stream", Arrays.asList("outlet"),
+        Arrays.asList("flowRate", "temperature", "pressure", "fluidRef"), true,
+        Arrays.asList("flowRate", "temperature", "pressure"));
+    addEquipmentOntology(equipment, "Separator", Arrays.asList("gasOut", "liquidOut"),
+        Arrays.asList("entrainment", "mechanicalDesign"), true,
+        Arrays.asList("pressure", "gasOutStream.flowRate", "liquidOutStream.flowRate"));
+    addEquipmentOntology(equipment, "ThreePhaseSeparator",
+        Arrays.asList("gasOut", "oilOut", "waterOut"), Arrays.asList("retentionTime"), true,
+        Arrays.asList("gasOutStream.flowRate", "oilOutStream.flowRate", "waterOutStream.flowRate"));
+    addEquipmentOntology(equipment, "Compressor", Arrays.asList("outlet"),
+        Arrays.asList("outletPressure", "isentropicEfficiency", "polytropicEfficiency"), true,
+        Arrays.asList("power", "outletPressure", "isentropicEfficiency"));
+    addEquipmentOntology(equipment, "HeatExchanger", Arrays.asList("hx0", "hx1"),
+        Arrays.asList("UAvalue", "guessOutTemperature", "hotSide", "coldSide"), false,
+        Arrays.asList("duty", "UAvalue", "hotOut.temperature", "coldOut.temperature"));
+    addEquipmentOntology(equipment, "PipeBeggsAndBrills", Arrays.asList("outlet"),
+        Arrays.asList("diameter", "length", "elevation", "roughness", "numberOfIncrements"), false,
+        Arrays.asList("pressureDrop", "outletPressure", "flowRegime"));
+    addEquipmentOntology(equipment, "DistillationColumn",
+        Arrays.asList("gasOut", "liquidOut", "trayStreams"),
+        Arrays.asList("numberOfTrays", "hasReboiler", "hasCondenser", "feedTray"), false,
+        Arrays.asList("topTemperature", "bottomTemperature", "reboilerDuty"));
+    ontology.add("equipment", equipment);
+    ontology.add("propertyDimensions",
+        toJsonArray(Arrays.asList("temperature", "pressure", "flowRate", "energy", "power",
+            "length", "area", "volume", "time", "efficiency", "composition", "cost")));
+    ontology.add("portRules",
+        toJsonArray(Arrays.asList("Use name.port for equipment with multiple outlets",
+            "Default outlet is 'outlet'",
+            "Three-phase separators expose gasOut, oilOut, and waterOut",
+            "Heat exchangers expose side-specific outlets such as hx0 and hx1")));
+    return ontology;
+  }
+
+  /**
+   * Builds benchmark registry metadata for agent trust decisions.
+   *
+   * @return benchmark registry object
+   */
+  private static JsonObject buildBenchmarkRegistry() {
+    JsonObject registry = new JsonObject();
+    registry.addProperty("trustTool", "getBenchmarkTrust");
+    registry.addProperty("sourceClass", "neqsim.mcp.runners.BenchmarkTrust");
+    registry.add("benchmarkedTools",
+        toJsonArray(Arrays.asList("runFlash", "runProcess", "runPVT", "runFlowAssurance",
+            "calculateStandard", "runPipeline", "runReservoir", "runFieldEconomics", "runBatch",
+            "runDynamic", "runBioprocess", "crossValidateModels", "runParametricStudy",
+            "getPhaseEnvelope", "getPropertyTable", "sizeEquipment")));
+    registry.add("referenceTypes",
+        toJsonArray(Arrays.asList("NIST property data", "ISO/GPA/AGA standard examples",
+            "published VLE and hydrate references", "mass and energy balance closure",
+            "process convergence fixtures")));
+    registry.add("requiredTrustFields", toJsonArray(Arrays.asList("maturityLevel", "description",
+        "validationCases", "accuracyBounds", "knownLimitations", "referenceData")));
+    registry.add("agentPolicy",
+        toJsonArray(Arrays.asList(
+            "Fetch trust metadata before using results in engineering reports",
+            "Downgrade confidence when maturityLevel is TESTED or EXPERIMENTAL",
+            "Report knownLimitations together with numeric outputs",
+            "Use validateResults or independent benchmark checks for design-sensitive decisions")));
+    return registry;
+  }
+
+  /**
+   * Builds the unit-safe schema system advertised to agents.
+   *
+   * @return unit system object
+   */
+  private static JsonObject buildUnitSystem() {
+    JsonObject units = new JsonObject();
+    JsonObject dimensions = new JsonObject();
+    dimensions.add("temperature", toJsonArray(Arrays.asList("K", "C", "F", "R")));
+    dimensions.add("pressure",
+        toJsonArray(Arrays.asList("bara", "barg", "Pa", "kPa", "MPa", "psi", "psia", "atm")));
+    dimensions.add("flowRate",
+        toJsonArray(Arrays.asList("kg/hr", "kg/s", "mol/sec", "Sm3/day", "MSm3/day", "m3/hr")));
+    dimensions.add("energy", toJsonArray(Arrays.asList("J", "kJ", "J/mol", "J/kg", "kJ/hr")));
+    dimensions.add("power", toJsonArray(Arrays.asList("W", "kW", "MW", "hp")));
+    dimensions.add("length", toJsonArray(Arrays.asList("m", "cm", "mm", "inch", "ft", "km")));
+    dimensions.add("time", toJsonArray(Arrays.asList("s", "seconds", "min", "hr", "day", "year")));
+    dimensions.add("cost", toJsonArray(Arrays.asList("USD", "MUSD", "NOK", "MNOK", "EUR")));
+    units.add("dimensions", dimensions);
+    units.add("encodings",
+        toJsonArray(Arrays.asList("{\"value\": 25.0, \"unit\": \"C\"}",
+            "[25.0, \"C\"] for process equipment property setters",
+            "bare number only when schema default is clear")));
+    units.add("validationRules",
+        toJsonArray(Arrays.asList("Prefer explicit units in all agent-generated payloads",
+            "Validate physical bounds before run",
+            "Do not mix absolute and gauge pressure without declaring the unit",
+            "Report output units exactly as returned by the tool")));
+    return units;
+  }
+
+  /**
+   * Builds the automatic flowsheet builder workflow descriptor.
+   *
+   * @return flowsheet builder descriptor
+   */
+  private static JsonObject buildAutomaticFlowsheetBuilder() {
+    JsonObject builder = new JsonObject();
+    builder.addProperty("status", "workflowDescriptor");
+    builder.add("tools", toJsonArray(Arrays.asList("getCapabilities", "getSchema", "getExample",
+        "validateInput", "runProcess", "compareProcesses", "generateReport")));
+    builder.add("stages",
+        toJsonArray(Arrays.asList("extract fluid composition and conditions",
+            "map equipment names and stream topology", "choose EOS and unit system",
+            "compose processJsonContract payload", "validateInput", "runProcess",
+            "summarize assumptions and unresolved data gaps")));
+    builder.add("requiredHumanChecks", toJsonArray(Arrays.asList("component mapping confidence",
+        "missing operating envelope", "equipment design assumptions", "standards applicability")));
+    return builder;
+  }
+
+  /**
+   * Builds optimization, sensitivity, and uncertainty workflow descriptors.
+   *
+   * @return optimization and uncertainty descriptor
+   */
+  private static JsonObject buildOptimizationUncertaintyWorkflows() {
+    JsonObject workflows = new JsonObject();
+    workflows.add("standardTools", toJsonArray(Arrays.asList("runParametricStudy", "runBatch",
+        "crossValidateModels", "compareProcesses", "runFieldEconomics")));
+    workflows.add("patterns",
+        toJsonArray(Arrays.asList("one-factor-at-a-time sensitivity", "multi-case batch sweep",
+            "EOS model risk comparison", "scenario comparison",
+            "Monte Carlo or P10/P50/P90 post-processing", "tornado ranking for report outputs")));
+    workflows.add("requiredOutputs", toJsonArray(Arrays.asList("baseCase", "caseResults",
+        "uncertainParameters", "outputMetrics", "ranking", "warnings")));
+    workflows.add("agentPolicy",
+        toJsonArray(
+            Arrays.asList("Use full NeqSim simulations inside uncertainty loops when practical",
+                "Cache expensive base simulations only when physics assumptions remain fixed",
+                "Separate technical uncertainty from economic scenario uncertainty")));
+    return workflows;
+  }
+
+  /**
+   * Builds model lifecycle metadata for stateful and auditable agent workflows.
+   *
+   * @return model lifecycle object
+   */
+  private static JsonObject buildModelLifecycle() {
+    JsonObject lifecycle = new JsonObject();
+    lifecycle.add("tools",
+        toJsonArray(Arrays.asList("manageSession", "saveSimulationState", "compareSimulationStates",
+            "manageState", "listSimulationUnits", "listUnitVariables", "getSimulationVariable",
+            "setSimulationVariable")));
+    lifecycle.add("stateOperations", toJsonArray(Arrays.asList("create", "load", "snapshot",
+        "restore", "diff", "modify", "rerun", "export")));
+    lifecycle.add("auditFields", toJsonArray(Arrays.asList("sessionId", "modelVersion", "timestamp",
+        "changedVariables", "validation", "qualityGate", "provenance")));
+    lifecycle.add("guardrails",
+        toJsonArray(Arrays.asList("Snapshot before mutating a process",
+            "Compare snapshots after agent changes",
+            "Preserve unit annotations for every modified input",
+            "Do not persist plant states when governance blocks write operations")));
+    return lifecycle;
+  }
+
+  /**
+   * Builds certification-style safety gate metadata.
+   *
+   * @return safety gate policy object
+   */
+  private static JsonObject buildSafetyGatePolicy() {
+    JsonObject policy = new JsonObject();
+    policy.addProperty("engineeringReviewRequired", true);
+    policy.add("safetyTools",
+        toJsonArray(Arrays.asList("runRelief", "runLOPA", "runSIL", "runRiskMatrix",
+            "runFlareNetwork", "runHAZOP", "runBarrierRegister", "runSafetySystemPerformance")));
+    policy.add("approvalStages",
+        toJsonArray(Arrays.asList("input evidence completeness", "standards and jurisdiction check",
+            "calculation convergence and bounds check", "independent discipline review",
+            "management of change approval where required")));
+    policy.add("blockingConditions",
+        toJsonArray(Arrays.asList("missing source documents", "unsupported standard basis",
+            "failed validation", "qualityGate verdict failed",
+            "safety-critical result without evidenceRefs")));
+    policy.add("outputPolicy",
+        toJsonArray(Arrays.asList("Clearly separate screening calculation from approved design",
+            "Carry evidenceRefs forward",
+            "Include assumptions, limitations, and benchmark maturity in reports")));
+    return policy;
+  }
+
+  /**
+   * Adds a graph node.
+   *
+   * @param nodes graph node array
+   * @param id node id
+   * @param type node type
+   * @param label node label
+   * @param group node group
+   */
+  private static void addGraphNode(JsonArray nodes, String id, String type, String label,
+      String group) {
+    JsonObject node = new JsonObject();
+    node.addProperty("id", id);
+    node.addProperty("type", type);
+    node.addProperty("label", label);
+    node.addProperty("group", group);
+    nodes.add(node);
+  }
+
+  /**
+   * Adds a graph edge.
+   *
+   * @param edges graph edge array
+   * @param from source node id
+   * @param to target node id
+   * @param relation edge relation
+   */
+  private static void addGraphEdge(JsonArray edges, String from, String to, String relation) {
+    JsonObject edge = new JsonObject();
+    edge.addProperty("from", from);
+    edge.addProperty("to", to);
+    edge.addProperty("relation", relation);
+    edges.add(edge);
+  }
+
+  /**
+   * Adds equipment ontology metadata.
+   *
+   * @param equipment equipment object
+   * @param type equipment type
+   * @param ports outlet or stream ports
+   * @param properties common settable properties
+   * @param dynamicSupport whether dynamic simulation is commonly supported
+   * @param variables common automation variables
+   */
+  private static void addEquipmentOntology(JsonObject equipment, String type, List<String> ports,
+      List<String> properties, boolean dynamicSupport, List<String> variables) {
+    JsonObject item = new JsonObject();
+    item.add("ports", toJsonArray(ports));
+    item.add("properties", toJsonArray(properties));
+    item.addProperty("dynamicSupport", dynamicSupport);
+    item.add("automationVariables", toJsonArray(variables));
+    equipment.add(type, item);
+  }
+
+  /**
+   * Categorizes a schema tool name for the capability graph.
+   *
+   * @param toolName schema tool name
+   * @return graph domain category
+   */
+  private static String categoryForSchemaTool(String toolName) {
+    if (toolName.indexOf("flash") >= 0 || toolName.indexOf("property") >= 0
+        || toolName.indexOf("phase") >= 0 || toolName.indexOf("batch") >= 0) {
+      return "thermodynamics";
+    }
+    if (toolName.indexOf("process") >= 0 || toolName.indexOf("equipment") >= 0) {
+      return "process";
+    }
+    if (toolName.indexOf("simulation") >= 0 || toolName.indexOf("automation") >= 0) {
+      return "automation";
+    }
+    if (toolName.indexOf("safety") >= 0 || toolName.indexOf("hazop") >= 0
+        || toolName.indexOf("barrier") >= 0 || toolName.indexOf("relief") >= 0
+        || toolName.indexOf("lopa") >= 0 || toolName.indexOf("sil") >= 0
+        || toolName.indexOf("risk") >= 0 || toolName.indexOf("flare") >= 0) {
+      return "safety";
+    }
+    if (toolName.indexOf("benchmark") >= 0 || toolName.indexOf("validate") >= 0) {
+      return "benchmark";
+    }
+    if (toolName.indexOf("session") >= 0 || toolName.indexOf("state") >= 0) {
+      return "lifecycle";
+    }
+    if (toolName.indexOf("workflow") >= 0 || toolName.indexOf("task") >= 0) {
+      return "workflow";
+    }
+    if (toolName.indexOf("dynamic") >= 0) {
+      return "dynamic";
+    }
+    if (toolName.indexOf("pvt") >= 0) {
+      return "pvt";
+    }
+    if (toolName.indexOf("flow_assurance") >= 0) {
+      return "flow-assurance";
+    }
+    if (toolName.indexOf("pipeline") >= 0) {
+      return "pipeline";
+    }
+    if (toolName.indexOf("economics") >= 0) {
+      return "economics";
+    }
+    if (toolName.indexOf("schema") >= 0 || toolName.indexOf("capabilities") >= 0
+        || toolName.indexOf("example") >= 0) {
+      return "discovery";
+    }
+    if (toolName.indexOf("data") >= 0 || toolName.indexOf("components") >= 0) {
+      return "data";
+    }
+    return "platform";
+  }
+
+  /**
    * Returns setup template ids.
    *
    * @return list of setup template ids
@@ -736,7 +1236,9 @@ public class CapabilitiesRunner {
         "phase-envelope", "process-system", "process-model", "validation", "data-catalog",
         "pvt-experiment", "flow-assurance", "standards-calculation", "pipeline-flow",
         "reservoir-forecast", "field-economics", "dynamic-simulation", "bioprocess",
-        "equipment-sizing", "session-management", "visualization-reporting", "safety-analysis");
+        "equipment-sizing", "session-management", "visualization-reporting", "safety-analysis",
+        "flowsheet-builder", "benchmark-registry", "unit-safe-schema", "optimization-uncertainty",
+        "model-lifecycle", "safety-governance");
   }
 
   /**

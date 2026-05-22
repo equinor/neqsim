@@ -293,6 +293,12 @@ Verify: `java -version` should show 17 or higher.
 The server exposes 56 tools organized into three tiers plus platform tools,
 9 guided-workflow prompts, and 13 browsable resources.
 
+Discovery is intentionally machine-readable. `getCapabilities` describes all 56 tools with schema
+links, examples, setup templates, unit guidance, process JSON contracts, benchmark trust, lifecycle
+metadata, and safety-review policy. High-use tools have detailed schemas and runnable examples; the
+remaining tools have generic contract-level schemas and starter examples so agents can still detect
+and route every advertised capability.
+
 ## Complete Tool Inventory
 
 See the tier sections above for the governance model. Additional platform
@@ -854,8 +860,8 @@ Delegates to runner layer in neqsim core (src/main/java/neqsim/mcp/):
 │   ├── DiagnosticIssue.java               # Validation issue (severity + code + fix hint)
 │   └── ResultProvenance.java              # Trust metadata (EOS, assumptions, limitations)
 └── catalog/
-    ├── ExampleCatalog.java                # Ready-to-use examples for base and schema-backed tools
-    └── SchemaCatalog.java                 # JSON Schema definitions (schema-backed tools × in/out)
+    ├── ExampleCatalog.java                # Examples for base categories and all MCP tools
+    └── SchemaCatalog.java                 # JSON Schema definitions for all 56 MCP tools
 ```
 
 The MCP server is a **thin Quarkus wrapper** around the framework-agnostic
@@ -873,8 +879,8 @@ runner layer in neqsim core. This design means:
 ### Unit Tests (Runner Layer)
 
 The runner layer in neqsim core has focused JUnit 5 coverage across runners,
-schemas, examples, capability descriptors, standard response contracts, and
-validation behavior:
+schemas, examples, capability descriptors, standard response contracts, capability-graph metadata,
+setup templates, and validation behavior:
 
 ```bash
 # Run all MCP runner tests

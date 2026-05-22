@@ -1566,7 +1566,13 @@ public final class SchemaCatalog {
   // ========== Catalog Metadata ==========
 
   /**
-   * Returns the list of tools with available schemas.
+   * Returns the list of MCP tools with available schemas.
+   *
+   * <p>
+   * High-use tools have detailed tool-specific schemas. The remaining server tools have generic MCP
+   * envelope schemas so every advertised tool can be discovered, linked, and validated at the
+   * contract level by agents.
+   * </p>
    *
    * @return list of tool names
    */
@@ -1576,7 +1582,16 @@ public final class SchemaCatalog {
         "get_capabilities", "run_pvt", "run_flow_assurance", "calculate_standard", "run_pipeline",
         "run_reservoir", "run_field_economics", "run_dynamic", "run_bioprocess", "size_equipment",
         "compare_processes", "manage_session", "visualize", "run_hazop", "run_barrier_register",
-        "run_safety_system_performance"));
+        "run_safety_system_performance", "get_example", "get_schema", "list_simulation_units",
+        "list_unit_variables", "get_simulation_variable", "set_simulation_variable",
+        "save_simulation_state", "compare_simulation_states", "diagnose_automation",
+        "get_automation_learning_report", "cross_validate_models", "run_parametric_study",
+        "solve_task", "compose_workflow", "validate_results", "generate_report",
+        "bridge_task_workflow", "run_plugin", "get_progress", "stream_simulation",
+        "compose_multi_server_workflow", "manage_security", "manage_state",
+        "manage_validation_profile", "query_data_catalog", "run_relief", "run_lopa", "run_sil",
+        "run_risk_matrix", "run_flare_network", "manage_industrial_profile", "get_benchmark_trust",
+        "check_tool_access"));
   }
 
   /**
@@ -1645,6 +1660,10 @@ public final class SchemaCatalog {
       return "input".equals(schemaType) ? safetySystemPerformanceInputSchema()
           : safetySystemPerformanceOutputSchema();
     }
+    if (getToolNames().contains(toolName)) {
+      return "input".equals(schemaType) ? genericToolInputSchema(toolName)
+          : genericToolOutputSchema(toolName);
+    }
     return null;
   }
 
@@ -1708,6 +1727,34 @@ public final class SchemaCatalog {
     properties.put("status", enumProp("Result status", Arrays.asList("success", "ok", "error")));
     properties.put("message", stringProp("Human-readable status or error message"));
     properties.put("errors", typedArraySchema("Tool-specific error details"));
+    schema.put("properties", properties);
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Creates a generic JSON Schema for tools whose detailed input structure is server-specific.
+   *
+   * @param toolName the schema-backed MCP tool name
+   * @return JSON Schema string for a standard JSON object input
+   */
+  private static String genericToolInputSchema(String toolName) {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", toSchemaTitle(toolName) + "Input");
+    schema.put("description", "Generic input object for " + toolName
+        + ". Tool-specific examples, required fields, units, and setup templates are documented "
+        + "in getCapabilities.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("action", stringProp("Optional action selector for multi-mode tools"));
+    properties.put("inputJson",
+        stringProp("Serialized JSON payload accepted by string-based tools"));
+    properties.put("processJson",
+        objectProp("Process JSON definition when the tool operates on a model"));
+    properties.put("arguments", objectProp("Tool-specific argument object"));
+    properties.put("options", objectProp("Optional execution, validation, or reporting options"));
+    properties.put("unitSystem", stringProp("Preferred unit system or unit profile"));
     schema.put("properties", properties);
     return GSON.toJson(schema);
   }
