@@ -1176,8 +1176,10 @@ def compare_component_mass_balance(col, feed_stream, top_feed_stream,
     #     NeqSim's, and break the per-component balance.)
     n_top_uni = float(UNISIM_TARGET["overhead"]["molar_flow_kgmol_hr"])
     n_bot_uni = float(UNISIM_TARGET["bottoms"]["molar_flow_kgmol_hr"])
-    m_top_uni = _mass_flows_per_component(list(UNISIM_OVERHEAD_Y), n_top_uni, mw)
-    m_bot_uni = _mass_flows_per_component(list(UNISIM_BOTTOMS_X), n_bot_uni, mw)
+    m_top_uni = _mass_flows_per_component(
+        list(UNISIM_OVERHEAD_Y), n_top_uni, mw)
+    m_bot_uni = _mass_flows_per_component(
+        list(UNISIM_BOTTOMS_X), n_bot_uni, mw)
 
     # --- NeqSim products: same convention (mol × z × MW). ---
     z_oh = [float(oh.getFluid().getMolarComposition()[i]) for i in range(n)]
@@ -1205,7 +1207,8 @@ def compare_component_mass_balance(col, feed_stream, top_feed_stream,
             return f"{'—':>8}"
         return f"{(100.0 * num / base):>+8.2f}"
 
-    sep = "+" + "-" * 14 + "+" + "-" * 13 + "+" + ("-" * 47) + "+" + ("-" * 47) + "+"
+    sep = "+" + "-" * 14 + "+" + "-" * 13 + \
+        "+" + ("-" * 47) + "+" + ("-" * 47) + "+"
     head1 = (f"| {'Component':<12} | {'Inlet':>11} |"
              f" {'TOP answer':>11}  {'TOP NeqSim':>11}  "
              f"{'Δ kg/hr':>10}  {'Δ %':>7} |"
@@ -1247,8 +1250,10 @@ def compare_component_mass_balance(col, feed_stream, top_feed_stream,
           f"{PCT_FLOOR} kg/hr (% not meaningful).")
     print(f"  Mass per component computed as  n_total [kmol/hr] × x_i × MW_i "
           f"(NeqSim MWs).")
-    uni_closure = max(abs(m_top_uni[i] + m_bot_uni[i] - m_inlet[i]) for i in range(n))
-    neq_closure = max(abs(m_top_neq[i] + m_bot_neq[i] - m_inlet[i]) for i in range(n))
+    uni_closure = max(
+        abs(m_top_uni[i] + m_bot_uni[i] - m_inlet[i]) for i in range(n))
+    neq_closure = max(
+        abs(m_top_neq[i] + m_bot_neq[i] - m_inlet[i]) for i in range(n))
     print(f"  Per-component closure (max |top+bot − inlet|):  "
           f"answer = {uni_closure:.3e} kg/hr,  NeqSim = {neq_closure:.3e} kg/hr.")
 
@@ -1281,6 +1286,7 @@ def compare_component_mass_balance(col, feed_stream, top_feed_stream,
 
     # Log scale: useful because trace components span many orders of magnitude
     floor = 1e-4  # kg/hr
+
     def _safe(arr):
         return np.where(np.asarray(arr) > floor, arr, floor)
 
@@ -1558,7 +1564,8 @@ def main():
     print_header("Product composition comparison (overhead y, bottoms x)")
     compare_product_compositions(col, args.out_comp, show=not args.no_show)
 
-    print_header("Per-component mass balance (Inlet, TOP, BOTTOM — answer vs NeqSim)")
+    print_header(
+        "Per-component mass balance (Inlet, TOP, BOTTOM — answer vs NeqSim)")
     compare_component_mass_balance(col, feed_stream, top_feed_stream,
                                    args.out_massbal, show=not args.no_show)
 
