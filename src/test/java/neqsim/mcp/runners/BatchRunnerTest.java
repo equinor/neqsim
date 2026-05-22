@@ -30,6 +30,12 @@ class BatchRunnerTest {
 
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("ok", obj.get("status").getAsString(), "Expected ok but got: " + result);
+    assertTrue(obj.has("apiVersion"));
+    assertTrue(obj.has("tool"));
+    assertTrue(obj.has("data"));
+    assertTrue(obj.has("validation"));
+    assertTrue(obj.has("qualityGate"));
+    assertTrue(obj.has("warnings"));
 
     // Check summary
     JsonObject summary = obj.getAsJsonObject("summary");
@@ -50,6 +56,7 @@ class BatchRunnerTest {
     assertTrue(obj.has("provenance"), "Response should include provenance metadata");
     JsonObject provenance = obj.getAsJsonObject("provenance");
     assertTrue(provenance.has("thermodynamicModel"));
+    assertTrue(provenance.has("benchmarkTrustLevel"));
     assertTrue(provenance.has("calculationType"));
     String calcType = provenance.get("calculationType").getAsString();
     assertTrue(calcType.contains("batch"), "Provenance should mention batch calculation");
@@ -94,6 +101,9 @@ class BatchRunnerTest {
     String result = BatchRunner.run(null);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("error", obj.get("status").getAsString());
+    assertTrue(obj.has("apiVersion"));
+    assertTrue(obj.has("validation"));
+    assertTrue(obj.has("qualityGate"));
   }
 
   @Test

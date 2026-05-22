@@ -58,22 +58,7 @@ public class ProcessRunner {
    * @return a JSON string with the simulation result
    */
   public static String run(String json) {
-    if (json == null || json.trim().isEmpty()) {
-      return errorJson("INPUT_ERROR", "JSON input is null or empty",
-          "Provide a valid JSON process definition with 'fluid' and 'process' blocks");
-    }
-
-    long startTime = System.currentTimeMillis();
-    try {
-      String normalizedJson = normalizeProcessJson(json);
-      if (isProcessModelJson(normalizedJson)) {
-        return runProcessModel(normalizedJson, startTime, false, null);
-      }
-      return runProcessSystem(normalizedJson, startTime, false, null);
-    } catch (Exception e) {
-      return errorJson("SIMULATION_ERROR", "Process simulation failed: " + e.getMessage(),
-          "Check the JSON definition. Use Validator.validate() first to catch common issues.");
-    }
+    return validateAndRun(json);
   }
 
   /**
@@ -107,6 +92,8 @@ public class ProcessRunner {
       result.addProperty("status", "error");
       result.addProperty("phase", "validation");
       result.add("validation", validation);
+      ApiEnvelope.applyStandardFields(result, "runProcess", null, validation,
+          ApiEnvelope.qualityGate("failed", "Pre-flight validation failed", true));
       return GSON.toJson(result);
     }
 
@@ -164,7 +151,15 @@ public class ProcessRunner {
       String reportJson = simResult.getReportJson();
 
       ProcessResult result = new ProcessResult(name, process, reportJson);
-      ApiEnvelope<ProcessResult> envelope = ApiEnvelope.success(result);
+      ResultProvenance provenance = ResultProvenance.forProcess(extractModel(normalizedJson),
+          extractMixingRule(normalizedJson), extractEquipmentCount(normalizedJson));
+      provenance.setBenchmarkTrustLevel(BenchmarkTrust.getMaturityLevel("runProcess"));
+      provenance.addValidationPassed("Process simulation completed");
+
+      ApiEnvelope<ProcessResult> envelope = ApiEnvelope.success(result).withProvenance(provenance)
+          .withValidation(
+              ApiEnvelope.validationStatus(true, "simulation", "Typed process execution completed"))
+          .withQualityGate(ApiEnvelope.qualityGate("passed", "Process simulation completed", true));
 
       for (String warning : simResult.getWarnings()) {
         envelope.addWarning(warning);
@@ -195,6 +190,7 @@ public class ProcessRunner {
     String mixingRule = extractMixingRule(normalizedJson);
     int equipCount = extractEquipmentCount(normalizedJson);
     ResultProvenance provenance = ResultProvenance.forProcess(model, mixingRule, equipCount);
+    provenance.setBenchmarkTrustLevel(BenchmarkTrust.getMaturityLevel("runProcess"));
     provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
     provenance.setConverged(!result.isError());
 
@@ -212,6 +208,13 @@ public class ProcessRunner {
     JsonObject simObj = JsonParser.parseString(simJson).getAsJsonObject();
     addValidationIssues(simObj, validationIssues);
     simObj.add("provenance", GSON.toJsonTree(provenance));
+    ensureProcessDataBlock(simObj);
+    ApiEnvelope.applyStandardFields(simObj, "runProcess", provenance,
+        buildProcessValidationBlock(preValidationPassed, validationIssues),
+        ApiEnvelope.qualityGate(result.isError() ? "failed" : "passed",
+            result.isError() ? "Process simulation returned errors"
+                : "Process simulation completed",
+            true));
     return GSON.toJson(simObj);
   }
 
@@ -269,6 +272,7 @@ public class ProcessRunner {
 
     ResultProvenance provenance = ResultProvenance.forProcess(extractModel(normalizedJson),
         extractMixingRule(normalizedJson), extractEquipmentCount(normalizedJson));
+    provenance.setBenchmarkTrustLevel(BenchmarkTrust.getMaturityLevel("runProcess"));
     provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
     provenance.setConverged(buildResult.model.isModelConverged() || buildResult.model.size() <= 1);
     provenance.addAssumption("Multi-area ProcessModel executed from top-level JSON areas");
@@ -284,6 +288,10 @@ public class ProcessRunner {
     addValidationIssueLimitations(provenance, validationIssues);
     addValidationIssues(result, validationIssues);
     result.add("provenance", GSON.toJsonTree(provenance));
+    ensureProcessDataBlock(result);
+    ApiEnvelope.applyStandardFields(result, "runProcess", provenance,
+        buildProcessValidationBlock(preValidationPassed, validationIssues),
+        ApiEnvelope.qualityGate("passed", "ProcessModel simulation completed", true));
 
     return GSON.toJson(result);
   }
@@ -311,6 +319,15 @@ public class ProcessRunner {
       ProcessResult result = new ProcessResult("json-process-model", buildResult.model,
           buildResult.model.getReport_json(), buildResult.model.getProcessSystemNames());
       ApiEnvelope<ProcessResult> envelope = ApiEnvelope.success(result);
+      ResultProvenance provenance = ResultProvenance.forProcess(extractModel(normalizedJson),
+          extractMixingRule(normalizedJson), extractEquipmentCount(normalizedJson));
+      provenance.setBenchmarkTrustLevel(BenchmarkTrust.getMaturityLevel("runProcess"));
+      provenance.addAssumption("Multi-area ProcessModel executed from top-level JSON areas");
+      envelope.withProvenance(provenance)
+          .withValidation(ApiEnvelope.validationStatus(true, "simulation",
+              "Typed ProcessModel execution completed"))
+          .withQualityGate(
+              ApiEnvelope.qualityGate("passed", "ProcessModel simulation completed", true));
       for (String warning : buildResult.warnings) {
         envelope.addWarning(warning);
       }
@@ -618,6 +635,44 @@ public class ProcessRunner {
   }
 
   /**
+   * Builds a validation block for process runner responses.
+   *
+   * @param preValidationPassed true when pre-flight validation was executed and passed
+   * @param validationIssues validation issues from {@link Validator}
+   * @return validation JSON block
+   */
+  private static JsonObject buildProcessValidationBlock(boolean preValidationPassed,
+      JsonArray validationIssues) {
+    JsonObject validation = ApiEnvelope.validationStatus(preValidationPassed,
+        preValidationPassed ? "preflight" : "not_run",
+        preValidationPassed ? "Pre-flight validation passed"
+            : "Pre-flight validation was not run on this internal path");
+    validation.add("issues", validationIssues != null ? validationIssues : new JsonArray());
+    return validation;
+  }
+
+  /**
+   * Adds a strict data block while keeping legacy top-level fields.
+   *
+   * @param response process response object to mutate
+   */
+  private static void ensureProcessDataBlock(JsonObject response) {
+    if (response.has("data")) {
+      return;
+    }
+    JsonObject data = new JsonObject();
+    String[] fields = {"processSystemName", "processModelName", "areaCount", "areas", "report"};
+    for (String field : fields) {
+      if (response.has(field)) {
+        data.add(field, response.get(field));
+      }
+    }
+    if (data.size() > 0) {
+      response.add("data", data);
+    }
+  }
+
+  /**
    * Adds validation warnings to provenance limitations.
    *
    * @param provenance the provenance object to mutate
@@ -711,6 +766,10 @@ public class ProcessRunner {
     errors.add(err);
     result.add("errors", errors);
 
+    ApiEnvelope.applyStandardFields(result, "runProcess", null,
+        ApiEnvelope.validationStatus(false, "input_or_simulation", message),
+        ApiEnvelope.qualityGate("failed", message, true));
+
     return GSON.toJson(result);
   }
 
@@ -739,6 +798,11 @@ public class ProcessRunner {
       }
       result.add("warnings", warningArray);
     }
+
+    ApiEnvelope.applyStandardFields(result, "runProcess", null,
+        ApiEnvelope.validationStatus(false, "build_or_simulation",
+            "Process build or simulation returned errors"),
+        ApiEnvelope.qualityGate("failed", "Process build or simulation returned errors", true));
 
     return GSON.toJson(result);
   }

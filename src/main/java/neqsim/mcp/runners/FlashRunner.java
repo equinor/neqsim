@@ -170,6 +170,7 @@ public class FlashRunner {
     if (input.has("mixingRule")) {
       mixingRule = input.get("mixingRule").getAsString();
     }
+    addApplicabilityWarnings(warnings, model, pressureBara, components);
 
     // --- Parse optional flash specs ---
     double enthalpySpec = Double.NaN;
@@ -316,10 +317,19 @@ public class FlashRunner {
 
       // Provenance (trust metadata)
       ResultProvenance provenance = ResultProvenance.forFlash(model, flashType, mixingRule);
+      provenance.setBenchmarkTrustLevel(BenchmarkTrust.getMaturityLevel("runFlash"));
       provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
       provenance.addValidationPassed("component_names_verified");
       provenance.addValidationPassed("flash_converged");
+      for (String warning : warnings) {
+        provenance.addApplicabilityWarning(warning);
+      }
       result.add("provenance", GSON.toJsonTree(provenance));
+
+      JsonObject data = new JsonObject();
+      data.add("flash", meta);
+      data.add("fluid", fluidObj);
+      result.add("data", data);
 
       // Warnings
       if (!warnings.isEmpty()) {
@@ -329,6 +339,14 @@ public class FlashRunner {
         }
         result.add("warnings", warnArray);
       }
+
+      ApiEnvelope.applyStandardFields(result, "runFlash", provenance,
+          ApiEnvelope.validationStatus(true, "input_and_flash",
+              "Component names, units, and flash convergence checks passed"),
+          ApiEnvelope.qualityGate(warnings.isEmpty() ? "passed" : "warning",
+              warnings.isEmpty() ? "Flash calculation completed"
+                  : "Flash calculation completed with applicability warnings",
+              true));
 
       return GSON.toJson(result);
     } catch (Exception e) {
@@ -499,6 +517,56 @@ public class FlashRunner {
   }
 
   /**
+   * Adds model applicability warnings for common agent-facing mistakes.
+   *
+   * @param warnings warning list to append to
+   * @param model thermodynamic model name
+   * @param pressureBara pressure in bara
+   * @param components validated component map
+   */
+  private static void addApplicabilityWarnings(List<String> warnings, String model,
+      double pressureBara, Map<String, Double> components) {
+    if (isCubicModel(model) && pressureBara > 500.0) {
+      warnings.add("SRK/PR cubic EOS results above 500 bara should be benchmarked against "
+          + "GERG-2008 or reference data for high-pressure gas service.");
+    }
+    if (isCubicModel(model) && containsAssociatingComponent(components)) {
+      warnings.add("Water, glycol, alcohol, or acid-gas systems are outside the most reliable "
+          + "SRK/PR envelope. Use CPA or an electrolyte model when phase behavior or water "
+          + "content is decision-critical.");
+    }
+  }
+
+  /**
+   * Checks if a model is a cubic EOS with common association limitations.
+   *
+   * @param model thermodynamic model name
+   * @return true for SRK or PR
+   */
+  private static boolean isCubicModel(String model) {
+    return "SRK".equalsIgnoreCase(model) || "PR".equalsIgnoreCase(model);
+  }
+
+  /**
+   * Checks if a composition contains associating or strongly polar components.
+   *
+   * @param components component mole fractions by name
+   * @return true if a polar or associating component is present
+   */
+  private static boolean containsAssociatingComponent(Map<String, Double> components) {
+    for (String componentName : components.keySet()) {
+      String normalized = componentName.toLowerCase();
+      if (normalized.contains("water") || normalized.contains("h2o")
+          || normalized.contains("methanol") || normalized.contains("ethanol")
+          || normalized.contains("meg") || normalized.contains("deg") || normalized.contains("teg")
+          || normalized.contains("glycol")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Creates a SystemInterface based on the model type string.
    *
    * @param model the model name (e.g., "SRK", "PR", "CPA")
@@ -592,6 +660,7 @@ public class FlashRunner {
 
     // --- Parse mixing rule ---
     String mixingRule = request.getMixingRule() != null ? request.getMixingRule() : "classic";
+    addApplicabilityWarnings(warnings, model, pressureBara, components);
 
     // --- Validate flash specs ---
     ValueWithUnit enthalpySpec = request.getEnthalpy();
@@ -680,7 +749,21 @@ public class FlashRunner {
       FlashResult result =
           new FlashResult(model, flashType, fluid.getNumberOfPhases(), phaseNames, fluidResponse);
 
-      return ApiEnvelope.success(result, warnings);
+      ResultProvenance provenance = ResultProvenance.forFlash(model, flashType, mixingRule);
+      provenance.setBenchmarkTrustLevel(BenchmarkTrust.getMaturityLevel("runFlash"));
+      provenance.addValidationPassed("component_names_verified");
+      provenance.addValidationPassed("flash_converged");
+      for (String warning : warnings) {
+        provenance.addApplicabilityWarning(warning);
+      }
+
+      return ApiEnvelope.success(result, warnings).withProvenance(provenance)
+          .withValidation(ApiEnvelope.validationStatus(true, "input_and_flash",
+              "Component names, units, and flash convergence checks passed"))
+          .withQualityGate(ApiEnvelope.qualityGate(warnings.isEmpty() ? "passed" : "warning",
+              warnings.isEmpty() ? "Flash calculation completed"
+                  : "Flash calculation completed with applicability warnings",
+              true));
     } catch (Exception e) {
       return ApiEnvelope.error("RESPONSE_ERROR", "Failed to build response: " + e.getMessage(),
           "This is an internal error — please report it");
@@ -767,6 +850,10 @@ public class FlashRunner {
     }
     errors.add(err);
     result.add("errors", errors);
+
+    ApiEnvelope.applyStandardFields(result, "runFlash", null,
+        ApiEnvelope.validationStatus(false, "input_or_flash", message),
+        ApiEnvelope.qualityGate("failed", message, true));
 
     return GSON.toJson(result);
   }

@@ -65,6 +65,7 @@ public final class BenchmarkTrust {
     JsonObject tools = new JsonObject();
     tools.add("runFlash", buildFlashTrust());
     tools.add("runProcess", buildProcessTrust());
+    tools.add("runBatch", buildBatchTrust());
     tools.add("runPVT", buildPVTTrust());
     tools.add("runFlowAssurance", buildFlowAssuranceTrust());
     tools.add("calculateStandard", buildStandardsTrust());
@@ -104,6 +105,9 @@ public final class BenchmarkTrust {
       case "runProcess":
         root.add("trust", buildProcessTrust());
         break;
+      case "runBatch":
+        root.add("trust", buildBatchTrust());
+        break;
       case "runPVT":
         root.add("trust", buildPVTTrust());
         break;
@@ -137,6 +141,21 @@ public final class BenchmarkTrust {
       case "runBioprocess":
         root.add("trust", buildBioprocessTrust());
         break;
+      case "crossValidateModels":
+        root.add("trust", buildCrossValidationTrust());
+        break;
+      case "runParametricStudy":
+        root.add("trust", buildParametricTrust());
+        break;
+      case "getPhaseEnvelope":
+        root.add("trust", buildPhaseEnvelopeTrust());
+        break;
+      case "getPropertyTable":
+        root.add("trust", buildPropertyTableTrust());
+        break;
+      case "sizeEquipment":
+        root.add("trust", buildEquipmentSizingTrust());
+        break;
       default:
         root.addProperty("maturityLevel", "TESTED");
         root.addProperty("note", "No specific benchmark data available for this tool. "
@@ -145,6 +164,72 @@ public final class BenchmarkTrust {
     }
 
     return GSON.toJson(root);
+  }
+
+  /**
+   * Returns the maturity level declared for a tool.
+   *
+   * @param toolName the MCP tool name
+   * @return maturity level such as VALIDATED, TESTED, or EXPERIMENTAL
+   */
+  public static String getMaturityLevel(String toolName) {
+    if (toolName == null) {
+      return "TESTED";
+    }
+    JsonObject trust;
+    switch (toolName) {
+      case "runFlash":
+        trust = buildFlashTrust();
+        break;
+      case "runProcess":
+        trust = buildProcessTrust();
+        break;
+      case "runBatch":
+        trust = buildBatchTrust();
+        break;
+      case "runPVT":
+        trust = buildPVTTrust();
+        break;
+      case "runFlowAssurance":
+        trust = buildFlowAssuranceTrust();
+        break;
+      case "calculateStandard":
+        trust = buildStandardsTrust();
+        break;
+      case "runPipeline":
+        trust = buildPipelineTrust();
+        break;
+      case "runReservoir":
+        trust = buildReservoirTrust();
+        break;
+      case "runFieldEconomics":
+        trust = buildEconomicsTrust();
+        break;
+      case "runDynamic":
+        trust = buildDynamicTrust();
+        break;
+      case "runBioprocess":
+        trust = buildBioprocessTrust();
+        break;
+      case "crossValidateModels":
+        trust = buildCrossValidationTrust();
+        break;
+      case "runParametricStudy":
+        trust = buildParametricTrust();
+        break;
+      case "getPhaseEnvelope":
+        trust = buildPhaseEnvelopeTrust();
+        break;
+      case "getPropertyTable":
+        trust = buildPropertyTableTrust();
+        break;
+      case "sizeEquipment":
+        trust = buildEquipmentSizingTrust();
+        break;
+      default:
+        return "TESTED";
+    }
+    return trust.has("maturityLevel") ? trust.get("maturityLevel").getAsString() : "TESTED";
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -226,6 +311,26 @@ public final class BenchmarkTrust {
     limitations.add("Distillation column convergence can fail for highly non-ideal systems");
     limitations.add("Recycle loops may require manual convergence tuning");
     limitations.add("Dynamic simulation timestep must be small enough for controller stability");
+    trust.add("knownLimitations", limitations);
+
+    return trust;
+  }
+
+  /**
+   * Builds trust metadata for batch flash calculations.
+   *
+   * @return batch flash trust metadata
+   */
+  private static JsonObject buildBatchTrust() {
+    JsonObject trust = new JsonObject();
+    trust.addProperty("maturityLevel", "TESTED");
+    trust.addProperty("description",
+        "Batch flash calculations inherit accuracy from runFlash and add per-case status reporting.");
+
+    JsonArray limitations = new JsonArray();
+    limitations.add("Large batches can be slow because each case runs an independent flash");
+    limitations.add("Partial failures should be inspected case-by-case before using statistics");
+    limitations.add("Cases share base assumptions unless explicitly overridden");
     trust.add("knownLimitations", limitations);
 
     return trust;

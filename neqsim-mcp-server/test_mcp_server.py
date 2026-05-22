@@ -1,7 +1,7 @@
 """
 Comprehensive MCP Server Tests for NeqSim
 ==========================================
-Tests all 59 MCP tools through the real JSON-RPC protocol, verifying
+Tests all 63 MCP tools through the real JSON-RPC protocol, verifying
 correctness against known values from the NeqSim JUnit test suite.
 
 Tier 1 — Trusted Core (21 tools):
@@ -16,7 +16,7 @@ Tier 1 — Trusted Core (21 tools):
   - Automation API (units, variables, state save/compare, diagnostics)
   - Industrial profile, benchmark trust, tool access
 
-Tier 2 — Engineering Advanced (23 tools):
+Tier 2 — Engineering Advanced (28 tools):
   - PVT laboratory experiments
   - Flow assurance (hydrate, corrosion, wax)
   - Standards calculations (ISO 6976, AGA)
@@ -204,7 +204,7 @@ def test_protocol():
     r = recv()
     tools = r.get("result", {}).get("tools", [])
     tool_names = sorted([t["name"] for t in tools])
-    check("60 tools registered", len(tools) == 60, f"got {len(tools)}: {tool_names}")
+    check("63 tools registered", len(tools) == 63, f"got {len(tools)}: {tool_names}")
 
     # Tier 1 — Trusted Core (21 tools)
     tier1 = ["runFlash", "runProcess", "validateInput", "searchComponents",
@@ -217,10 +217,12 @@ def test_protocol():
     for name in tier1:
         check(f"tier1 tool '{name}'", name in tool_names)
 
-    # Tier 2 — Engineering Advanced (23 tools)
+    # Tier 2 — Engineering Advanced (28 tools)
     tier2 = ["crossValidateModels", "runParametricStudy", "runPVT",
              "runFlowAssurance", "calculateStandard", "runPipeline",
-             "runMaterialsReview", "runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess",
+             "runChemistry", "runMaterialsReview", "runOpenDrainReview",
+             "runNorsokS001Clause10Review", "runWaterHammer",
+             "runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess",
              "sizeEquipment", "compareProcesses", "validateResults",
              "runRelief", "runLOPA", "runSIL", "runRiskMatrix",
              "runFlareNetwork", "runHAZOP", "runBarrierRegister",
@@ -241,12 +243,12 @@ def test_protocol():
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/list", "params": {}})
     r = recv()
     resources = r.get("result", {}).get("resources", [])
-    check("6 resources", len(resources) == 6, f"got {len(resources)}")
+    check("7 resources", len(resources) == 7, f"got {len(resources)}")
 
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/templates/list", "params": {}})
     r = recv()
     templates = r.get("result", {}).get("resourceTemplates", [])
-    check("5 templates", len(templates) == 5, f"got {len(templates)}")
+    check("6 templates", len(templates) == 6, f"got {len(templates)}")
 
 
 def test_component_search():

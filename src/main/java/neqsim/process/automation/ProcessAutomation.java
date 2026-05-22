@@ -897,7 +897,106 @@ public class ProcessAutomation {
       addOutletStreamVariables(vars, unitName, unit);
     }
 
-    return vars;
+    return enrichVariableMetadata(vars);
+  }
+
+  /**
+   * Enriches sparse variable descriptors with metadata useful to agents.
+   *
+   * @param variables raw variables discovered from equipment
+   * @return enriched variable descriptors
+   */
+  private List<SimulationVariable> enrichVariableMetadata(List<SimulationVariable> variables) {
+    List<SimulationVariable> enrichedVariables = new ArrayList<SimulationVariable>();
+    for (SimulationVariable variable : variables) {
+      enrichedVariables.add(enrichVariableMetadata(variable));
+    }
+    return enrichedVariables;
+  }
+
+  /**
+   * Enriches a single variable descriptor.
+   *
+   * @param variable raw variable descriptor
+   * @return enriched variable descriptor
+   */
+  private SimulationVariable enrichVariableMetadata(SimulationVariable variable) {
+    SimulationVariable enriched = variable.withCategory(inferVariableCategory(variable))
+        .withWritableSafety(variable.getType() == VariableType.INPUT,
+            variable.getType() == VariableType.INPUT)
+        .withApplicability(inferApplicability(variable));
+    String name = variable.getName();
+
+    if ("temperature".equals(name) || "outletTemperature".equals(name)) {
+      return enriched.withBounds(Double.valueOf(1.0), Double.valueOf(2000.0))
+          .withUnitFamily("temperature");
+    }
+    if ("pressure".equals(name) || "outletPressure".equals(name)
+        || "dischargePressure".equals(name)) {
+      return enriched.withBounds(Double.valueOf(1.0e-6), Double.valueOf(10000.0))
+          .withUnitFamily("pressure");
+    }
+    if ("flowRate".equals(name)) {
+      return enriched.withBounds(Double.valueOf(0.0), null).withUnitFamily("flow");
+    }
+    if (name.toLowerCase().contains("efficiency")) {
+      return enriched.withBounds(Double.valueOf(0.0), Double.valueOf(1.0))
+          .withUnitFamily("fraction");
+    }
+    if ("percentValveOpening".equals(name)) {
+      return enriched.withBounds(Double.valueOf(0.0), Double.valueOf(100.0))
+          .withUnitFamily("fraction");
+    }
+    if ("Cv".equals(name) || "UAvalue".equals(name) || "speed".equals(name) || "length".equals(name)
+        || "diameter".equals(name) || "pipeWallRoughness".equals(name) || "volume".equals(name)
+        || "condenserRefluxRatio".equals(name)) {
+      return enriched.withBounds(Double.valueOf(0.0), null);
+    }
+    return enriched;
+  }
+
+  /**
+   * Infers a variable category from its address and property name.
+   *
+   * @param variable variable descriptor
+   * @return category string
+   */
+  private String inferVariableCategory(SimulationVariable variable) {
+    String address = variable.getAddress();
+    String name = variable.getName();
+    if (address.contains("Stream")) {
+      return "stream";
+    }
+    if (name.toLowerCase().contains("efficiency") || "power".equals(name) || "duty".equals(name)) {
+      return "performance";
+    }
+    if ("length".equals(name) || "diameter".equals(name) || "volume".equals(name)
+        || "pipeWallRoughness".equals(name)) {
+      return "geometry";
+    }
+    return variable.getType() == VariableType.INPUT ? "equipment_input" : "equipment_output";
+  }
+
+  /**
+   * Infers an applicability note for a variable.
+   *
+   * @param variable variable descriptor
+   * @return applicability note
+   */
+  private String inferApplicability(SimulationVariable variable) {
+    if (variable.getAddress().contains("gasOutStream")) {
+      return "Available for equipment with a gas outlet stream";
+    }
+    if (variable.getAddress().contains("liquidOutStream")) {
+      return "Available for equipment with a liquid outlet stream";
+    }
+    if (variable.getAddress().contains("outletStream")) {
+      return "Available for equipment with a single outlet stream";
+    }
+    if (variable.getType() == VariableType.INPUT) {
+      return "Writable input; rerun the process after changing this value";
+    }
+    return "Read-only output from the latest process run";
   }
 
   /**

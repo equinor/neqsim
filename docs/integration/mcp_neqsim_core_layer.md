@@ -1,6 +1,6 @@
 ---
 title: "MCP Core Layer: Runners, Models, and Catalogs"
-description: "Architecture and API reference for the MCP integration layer in neqsim core — FlashRunner, ProcessRunner, Validator, ComponentQuery, typed models (ApiEnvelope, FlashRequest, FlashResult), and example/schema catalogs. Framework-agnostic, testable with JUnit, portable to any MCP server or REST API."
+description: "Architecture and API reference for the MCP integration layer in neqsim core — runners, typed models, standard response contracts, capability discovery, setup templates, examples, and schema catalogs. Framework-agnostic, testable with JUnit, portable to any MCP server or REST API."
 ---
 
 # MCP Core Layer: Runners, Models, and Catalogs
@@ -27,7 +27,8 @@ neqsim/mcp/
 │   ├── FlashRunner.java        # Flash calculations (9 types × 6 EOS)
 │   ├── ProcessRunner.java      # Process simulation via JsonProcessBuilder
 │   ├── Validator.java          # Pre-flight input validation (12+ checks)
-│   └── ComponentQuery.java     # Component database search & fuzzy matching
+│   ├── ComponentQuery.java     # Component database search & fuzzy matching
+│   └── CapabilitiesRunner.java # Machine-readable capabilities and setup templates
 ├── model/
 │   ├── ApiEnvelope.java        # Standard response wrapper
 │   ├── FlashRequest.java       # Typed flash input (builder pattern)
@@ -36,9 +37,15 @@ neqsim/mcp/
 │   ├── ValueWithUnit.java      # Numeric value + unit string
 │   └── DiagnosticIssue.java    # Validation issue with fix hint
 └── catalog/
-    ├── ExampleCatalog.java     # 8 ready-to-use JSON examples
-    └── SchemaCatalog.java      # JSON Schema for 4 tools (input + output)
+  ├── ExampleCatalog.java     # Canonical examples for base tools and all MCP tools
+  └── SchemaCatalog.java      # JSON Schema contracts for all 63 MCP tools
 ```
+
+The capability discovery surface is part of the core layer. `CapabilitiesRunner` returns
+machine-readable descriptors for all advertised MCP tools, setup templates, process JSON fields,
+supported units, validation coverage, benchmark trust, model lifecycle metadata, safety gates, and
+response-contract coverage. High-use tools have detailed schemas; the remaining tools have generic
+contract-level schemas so every tool can be discovered and validated consistently.
 
 ---
 
@@ -145,11 +152,15 @@ FlashRunner converts all temperature units to Kelvin internally:
 
 #### Output JSON Structure
 
-The response follows the `FluidResponse` format used by NeqSim's monitoring layer:
+The response includes the standard MCP envelope fields plus the legacy `flash` and `fluid`
+fields used by existing clients:
 
 ```json
 {
+  "apiVersion": "1.0",
   "status": "success",
+  "tool": "run_flash",
+  "data": { "flash": { "model": "SRK", "flashType": "TP" } },
   "flash": {
     "model": "SRK",
     "flashType": "TP",
@@ -177,7 +188,11 @@ The response follows the `FluidResponse` format used by NeqSim's monitoring laye
         "propane": { "value": 0.05 }
       }
     }
-  }
+  },
+  "provenance": { "calculationType": "flash", "model": "SRK" },
+  "validation": { "valid": true, "phase": "runner" },
+  "qualityGate": { "verdict": "passed", "engineeringReviewRequired": true },
+  "warnings": []
 }
 ```
 
@@ -428,14 +443,20 @@ Standard response wrapper used by all runners:
 
 ```java
 public class ApiEnvelope<T> {
-    private String status;          // "success" or "error"
-    private T data;                 // The typed result
-    private String errorCode;       // Error code (if error)
-    private String errorMessage;    // Error description (if error)
-    private String fix;             // Remediation hint (if error)
-    private List<DiagnosticIssue> warnings;  // Non-fatal warnings
+  public static final String API_VERSION = "1.0";
+  private String status;                  // "success" or "error"
+  private T data;                         // The canonical typed result
+  private List<DiagnosticIssue> errors;   // Structured errors
+  private List<String> warnings;          // Non-fatal warnings
+  private ResultProvenance provenance;    // Model, convergence, assumptions, limitations
+  private JsonObject validation;          // Validation status and phase
+  private JsonObject qualityGate;         // Review and quality verdict
 }
 ```
+
+String-based runners also preserve legacy top-level fields such as `flash`, `fluid`, or
+`process` while adding the standard MCP fields: `apiVersion`, `tool`, `data`, `provenance`,
+`validation`, `qualityGate`, and `warnings`.
 
 ### FlashRequest
 
@@ -496,18 +517,10 @@ DiagnosticIssue issue = DiagnosticIssue.error(
 
 ### ExampleCatalog
 
-Provides 8 ready-to-use JSON examples that LLMs use to learn the input format:
-
-| Category | Name | Description |
-|----------|------|-------------|
-| `flash` | `tp-simple-gas` | TP flash of a simple natural gas |
-| `flash` | `tp-two-phase` | TP flash producing gas + liquid phases |
-| `flash` | `dew-point-t` | Dew point temperature calculation |
-| `flash` | `bubble-point-p` | Bubble point pressure calculation |
-| `flash` | `cpa-with-water` | CPA EOS flash with water |
-| `process` | `simple-separation` | Stream → Separator |
-| `process` | `compression-with-cooling` | Stream → Compressor → Cooler |
-| `validation` | `error-flash` | Deliberately invalid flash input |
+Provides ready-to-use JSON examples that LLMs use to learn input formats. In addition to
+the base `flash`, `process`, `validation`, and `safety` categories, the `tool` category maps every
+advertised MCP tool name to a canonical or contract-level example through
+`getToolExample(String toolName)`.
 
 **Usage:**
 
@@ -518,14 +531,15 @@ String catalogJson = ExampleCatalog.getCatalogJson();
 
 ### SchemaCatalog
 
-Provides JSON Schema (Draft 2020-12) definitions for each tool's input and output:
+Provides JSON Schema (Draft 2020-12) definitions for each advertised MCP tool input and
+output. Schema catalog URIs use the same path served by the MCP server:
+`neqsim://schemas/{tool}/{type}`.
 
-| Tool | Schema Types |
-|------|-------------|
-| `run_flash` | `input`, `output` |
-| `run_process` | `input`, `output` |
-| `validate_input` | `input`, `output` |
-| `search_components` | `input`, `output` |
+`SchemaCatalog.getToolNames()` advertises all 63 MCP server tools. High-use tools such as
+`run_flash`, `run_process`, `run_batch`, `get_property_table`, `get_phase_envelope`, `run_pvt`,
+`run_dynamic`, `run_hazop`, and safety runners have detailed tool-specific schemas. The remaining
+server and governance tools use generic input/output schemas with standard envelope fields, so every
+advertised tool has a schema URI and a response-contract baseline.
 
 **Usage:**
 
@@ -538,7 +552,9 @@ String catalogJson = SchemaCatalog.getCatalogJson();
 
 ## 4. Test Coverage
 
-The MCP core layer has 139+ JUnit 5 tests across 12 test classes:
+The MCP core layer has focused JUnit 5 coverage across runners, catalogs, schema coverage,
+standard response contracts, validation-first process execution, examples, benchmark trust,
+and automation metadata:
 
 | Test Class | Description |
 |------------|-------------|
@@ -552,7 +568,9 @@ The MCP core layer has 139+ JUnit 5 tests across 12 test classes:
 | `ValidatorTest` | All 12+ validation check codes |
 | `ComponentQueryTest` | Search, isValid, closestMatch, getInfo |
 | `ExampleCatalogTest` | All examples parse and contain required fields |
-| `SchemaCatalogTest` | All schemas are valid JSON Schema |
+| `SchemaCatalogTest` | All advertised tools have input and output schemas |
+| `CapabilitiesRunnerTest` | Every advertised capability resolves schemas, examples, templates, validation metadata, response-contract metadata, graph metadata, and safety review policy |
+| `McpRunnerContractTest` | Standard response-contract fixture remains satisfied |
 | `ModelClassTest` | ApiEnvelope, FlashRequest builder, ValueWithUnit |
 
 **Run all MCP tests from the NeqSim root:**
@@ -578,20 +596,23 @@ The MCP core layer has 139+ JUnit 5 tests across 12 test classes:
 3. **Framework-agnostic** — Zero dependencies on Quarkus, Spring, or any web framework.
    The layer depends only on NeqSim core and Gson.
 
-4. **Self-describing** — The `ExampleCatalog` and `SchemaCatalog` mean any LLM can discover
-   the correct JSON format without external documentation.
+4. **Self-describing** — The `ExampleCatalog`, `SchemaCatalog`, and `CapabilitiesRunner`
+  let an LLM discover examples, schemas, setup templates, supported fields, units,
+  validation coverage, and response contracts without external documentation.
 
 5. **Defensive validation** — The `Validator` catches common mistakes (misspelled components,
    wrong units, missing specs) before expensive simulation runs, with actionable fix hints.
 
-6. **Standard envelope** — All responses use the same `ApiEnvelope` structure with `status`,
-   `data`, `warnings`, and error details, making response parsing predictable.
+6. **Standard envelope** — Responses include `apiVersion`, `tool`, `data`, `provenance`,
+   `validation`, `qualityGate`, `warnings`, and structured error details, making response
+   parsing predictable while preserving legacy fields.
 
 ---
 
 ## Related Documentation
 
 - [MCP Server Guide](mcp_server_guide) — Quarkus-based MCP server that wraps this layer
+- [MCP Agentic Workflow Improvements](mcp_agentic_workflow_improvements) — All-tool schema/example coverage, setup templates, capability graph, lifecycle metadata, benchmark trust, and safety gates
 - [Web API / JSON Process Builder](web_api_json_process_builder) — JSON process definition format
 - [AI Validation Framework](ai_validation_framework) — NeqSim's broader validation system
 - [AI Agents Reference](ai_agents_reference) — Full catalog of NeqSim AI agents
