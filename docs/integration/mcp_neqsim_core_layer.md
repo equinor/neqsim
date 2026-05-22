@@ -159,7 +159,7 @@ fields used by existing clients:
 {
   "apiVersion": "1.0",
   "status": "success",
-  "tool": "run_flash",
+  "tool": "runFlash",
   "data": { "flash": { "model": "SRK", "flashType": "TP" } },
   "flash": {
     "model": "SRK",
@@ -448,6 +448,7 @@ public class ApiEnvelope<T> {
   private T data;                         // The canonical typed result
   private List<DiagnosticIssue> errors;   // Structured errors
   private List<String> warnings;          // Non-fatal warnings
+  private String tool;                    // MCP tool name, for example runFlash
   private ResultProvenance provenance;    // Model, convergence, assumptions, limitations
   private JsonObject validation;          // Validation status and phase
   private JsonObject qualityGate;         // Review and quality verdict
@@ -548,6 +549,11 @@ String schema = SchemaCatalog.getSchema("run_flash", "input");
 String catalogJson = SchemaCatalog.getCatalogJson();
 ```
 
+Schema names use snake_case tool identifiers, while response envelopes use the camelCase MCP method
+names such as `runFlash`. `SchemaCatalog.getSchema(toolName, schemaType)` accepts only `input` and
+`output`; invalid schema types return `null` so server resources can report schema-not-found instead
+of silently returning an output schema.
+
 ---
 
 ## 4. Test Coverage
@@ -568,9 +574,9 @@ and automation metadata:
 | `ValidatorTest` | All 12+ validation check codes |
 | `ComponentQueryTest` | Search, isValid, closestMatch, getInfo |
 | `ExampleCatalogTest` | All examples parse and contain required fields |
-| `SchemaCatalogTest` | All advertised tools have input and output schemas |
+| `SchemaCatalogTest` | All advertised tools have input and output schemas; invalid schema types are rejected |
 | `CapabilitiesRunnerTest` | Every advertised capability resolves schemas, examples, templates, validation metadata, response-contract metadata, graph metadata, and safety review policy |
-| `McpRunnerContractTest` | Standard response-contract fixture remains satisfied |
+| `McpRunnerContractTest` | Standard response-contract fixture remains satisfied for high-use calculation, automation, and lifecycle runners |
 | `ModelClassTest` | ApiEnvelope, FlashRequest builder, ValueWithUnit |
 
 **Run all MCP tests from the NeqSim root:**

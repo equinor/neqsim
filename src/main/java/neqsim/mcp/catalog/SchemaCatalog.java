@@ -1959,6 +1959,9 @@ public final class SchemaCatalog {
    * @return the JSON Schema string, or null if not found
    */
   public static String getSchema(String toolName, String schemaType) {
+    if (!"input".equals(schemaType) && !"output".equals(schemaType)) {
+      return null;
+    }
     if ("run_flash".equals(toolName)) {
       return "input".equals(schemaType) ? flashInputSchema() : flashOutputSchema();
     } else if ("run_process".equals(toolName)) {

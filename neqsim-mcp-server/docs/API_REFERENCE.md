@@ -419,6 +419,8 @@ then modifies them based on the user's requirements.
 ## `getSchema` — JSON Schemas
 
 Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
+The `type` path segment must be either `input` or `output`; invalid values return a
+schema-not-found response instead of defaulting to an output schema.
 
 **Available schemas:**
 

@@ -124,7 +124,7 @@ public class ProcessRunner {
    */
   public static ApiEnvelope<ProcessResult> runTyped(String json) {
     if (json == null || json.trim().isEmpty()) {
-      return ApiEnvelope.error("INPUT_ERROR", "JSON input is null or empty",
+      return typedError("INPUT_ERROR", "JSON input is null or empty",
           "Provide a valid JSON process definition with 'fluid' and 'process' blocks");
     }
 
@@ -143,7 +143,7 @@ public class ProcessRunner {
           issues.add(neqsim.mcp.model.DiagnosticIssue.error(err.getCode(), err.getMessage(),
               err.getRemediation()));
         }
-        return ApiEnvelope.errors(issues);
+        return ApiEnvelope.<ProcessResult>errors(issues).withTool("runProcess");
       }
 
       ProcessSystem process = simResult.getProcessSystem();
@@ -157,6 +157,7 @@ public class ProcessRunner {
       provenance.addValidationPassed("Process simulation completed");
 
       ApiEnvelope<ProcessResult> envelope = ApiEnvelope.success(result).withProvenance(provenance)
+          .withTool("runProcess")
           .withValidation(
               ApiEnvelope.validationStatus(true, "simulation", "Typed process execution completed"))
           .withQualityGate(ApiEnvelope.qualityGate("passed", "Process simulation completed", true));
@@ -167,9 +168,22 @@ public class ProcessRunner {
 
       return envelope;
     } catch (Exception e) {
-      return ApiEnvelope.error("SIMULATION_ERROR", "Process simulation failed: " + e.getMessage(),
+      return typedError("SIMULATION_ERROR", "Process simulation failed: " + e.getMessage(),
           "Check the JSON definition. Use Validator.validate() first to catch common issues.");
     }
+  }
+
+  /**
+   * Creates a typed process error envelope with tool metadata.
+   *
+   * @param code the diagnostic code
+   * @param message the diagnostic message
+   * @param remediation the remediation hint
+   * @return typed process error envelope
+   */
+  private static ApiEnvelope<ProcessResult> typedError(String code, String message,
+      String remediation) {
+    return ApiEnvelope.<ProcessResult>error(code, message, remediation).withTool("runProcess");
   }
 
   /**
@@ -311,14 +325,14 @@ public class ProcessRunner {
         issues.add(neqsim.mcp.model.DiagnosticIssue.error(err.getCode(), err.getMessage(),
             err.getRemediation()));
       }
-      return ApiEnvelope.errors(issues);
+      return ApiEnvelope.<ProcessResult>errors(issues).withTool("runProcess");
     }
 
     try {
       buildResult.model.run();
       ProcessResult result = new ProcessResult("json-process-model", buildResult.model,
           buildResult.model.getReport_json(), buildResult.model.getProcessSystemNames());
-      ApiEnvelope<ProcessResult> envelope = ApiEnvelope.success(result);
+      ApiEnvelope<ProcessResult> envelope = ApiEnvelope.success(result).withTool("runProcess");
       ResultProvenance provenance = ResultProvenance.forProcess(extractModel(normalizedJson),
           extractMixingRule(normalizedJson), extractEquipmentCount(normalizedJson));
       provenance.setBenchmarkTrustLevel(BenchmarkTrust.getMaturityLevel("runProcess"));
@@ -333,8 +347,7 @@ public class ProcessRunner {
       }
       return envelope;
     } catch (Exception e) {
-      return ApiEnvelope.error("SIMULATION_ERROR",
-          "Process model simulation failed: " + e.getMessage(),
+      return typedError("SIMULATION_ERROR", "Process model simulation failed: " + e.getMessage(),
           "Check area wiring, recycle settings, and equipment parameters in the 'areas' object.");
     }
   }

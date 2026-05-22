@@ -166,6 +166,12 @@ class SchemaCatalogTest {
   }
 
   @Test
+  void testGetSchemaInvalidTypeReturnsNull() {
+    assertNull(SchemaCatalog.getSchema("run_flash", "banana"));
+    assertNull(SchemaCatalog.getSchema("run_process", null));
+  }
+
+  @Test
   void testRootCauseSchemas() {
     String input = SchemaCatalog.getSchema("run_root_cause_analysis", "input");
     assertNotNull(input);

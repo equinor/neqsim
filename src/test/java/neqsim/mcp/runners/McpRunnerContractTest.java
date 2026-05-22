@@ -13,6 +13,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.mcp.catalog.ExampleCatalog;
+import neqsim.process.processmodel.lifecycle.ProcessModelState;
 
 /**
  * Golden contract tests for high-use MCP runner responses.
@@ -102,6 +103,39 @@ class McpRunnerContractTest {
     }
     if ("getCapabilities".equals(toolName)) {
       return CapabilitiesRunner.getCapabilities();
+    }
+    if ("listSimulationUnits".equals(toolName)) {
+      return AutomationRunner.listUnits(ExampleCatalog.processSimpleSeparation());
+    }
+    if ("listUnitVariables".equals(toolName)) {
+      return AutomationRunner.listVariables(ExampleCatalog.processSimpleSeparation(), "HP Sep");
+    }
+    if ("getSimulationVariable".equals(toolName)) {
+      return AutomationRunner.getVariable(ExampleCatalog.processSimpleSeparation(),
+          "HP Sep.gasOutStream.temperature", "C");
+    }
+    if ("setSimulationVariable".equals(toolName)) {
+      return AutomationRunner.setVariableAndRun(ExampleCatalog.processSimpleSeparation(),
+          "feed.temperature", 35.0, "C");
+    }
+    if ("saveSimulationState".equals(toolName)) {
+      return AutomationRunner.saveState(ExampleCatalog.processSimpleSeparation(), "base", "1.0");
+    }
+    if ("compareSimulationStates".equals(toolName)) {
+      ProcessModelState baseState = new ProcessModelState();
+      baseState.setName("base");
+      baseState.setVersion("1.0");
+      ProcessModelState updatedState = new ProcessModelState();
+      updatedState.setName("base");
+      updatedState.setVersion("1.1");
+      return AutomationRunner.compareStates(baseState.toJson(), updatedState.toJson());
+    }
+    if ("diagnoseAutomation".equals(toolName)) {
+      return AutomationRunner.diagnose(ExampleCatalog.processSimpleSeparation(),
+          "HP separator.gasOut.temp", "get");
+    }
+    if ("getAutomationLearningReport".equals(toolName)) {
+      return AutomationRunner.getLearningReport(ExampleCatalog.processSimpleSeparation());
     }
     throw new IllegalArgumentException("Unsupported contract tool: " + toolName);
   }

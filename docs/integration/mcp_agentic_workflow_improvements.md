@@ -16,7 +16,7 @@ FMI, and commercial simulator bridge work remains a separate future task.
 
 | Area | Before | After this update |
 |------|--------|-------------------|
-| Response parsing | Tools returned useful JSON, but response shape varied by runner | Calculation responses expose a standard MCP envelope with `apiVersion`, `tool`, `data`, `provenance`, `validation`, `qualityGate`, and `warnings` |
+| Response parsing | Tools returned useful JSON, but response shape varied by runner | High-use calculation, automation, and lifecycle responses expose a standard MCP envelope with `apiVersion`, `tool`, `data`, `provenance`, `validation`, `qualityGate`, and `warnings` |
 | Process execution | Agents could call process simulations directly and see runtime failures | `runProcess` can run validation first and return validation context with the process result |
 | Tool discovery | Capability metadata focused on the highest-use runners | `getCapabilities` describes all 63 MCP tools, including detailed descriptors for high-use tools and generic descriptors for the rest |
 | Schemas | Detailed schemas covered the high-use tool set | Every advertised MCP tool has an input and output schema URI; high-use tools keep detailed schemas, remaining tools get generic contract schemas |
@@ -65,9 +65,11 @@ result is.
 
 The focused tests now cover the discovery contract rather than only a few happy paths:
 
-- `SchemaCatalogTest` verifies every advertised MCP tool has input and output schemas.
+- `SchemaCatalogTest` verifies every advertised MCP tool has input and output schemas and rejects invalid schema types.
 - `CapabilitiesRunnerTest` verifies schema links, example links, setup templates, validation
   coverage, response-contract metadata, graph sections, and safety-review flags.
+- `McpRunnerContractTest` verifies high-use calculation, automation, and lifecycle runners satisfy
+  the standard response-envelope fixture.
 - Existing runner tests continue to cover flash, process, validation, examples, envelopes, batch,
   property-table, and phase-envelope behaviour.
 

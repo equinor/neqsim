@@ -166,32 +166,56 @@ Every tool response follows this envelope structure:
 
 ```json
 {
-  "status": "success | error",
   "apiVersion": "1.0",
+  "status": "success | error",
+  "tool": "runFlash",
+  "data": { "canonicalPayload": "..." },
   "provenance": {
     "model": "SRK",
     "flashType": "TP",
     "convergence": { "converged": true, "iterations": 8 },
     "assumptions": ["..."],
-    "limitations": ["..."],
-    "warnings": []
+    "limitations": ["..."]
   },
-  "data": { ... }
+  "validation": {
+    "valid": true,
+    "phase": "runner",
+    "message": "Runner input checks completed"
+  },
+  "qualityGate": {
+    "verdict": "passed",
+    "summary": "Calculation completed",
+    "engineeringReviewRequired": true
+  },
+  "warnings": []
 }
 ```
+
+String-based runners may also preserve legacy top-level fields such as `flash`, `fluid`,
+`process`, `units`, or `diff` for backward compatibility. New clients should read the canonical
+payload from `data` and use `tool` to identify the MCP operation that produced the response.
 
 ### Stable response fields
 
 | Field | Type | Guaranteed |
 |-------|------|------------|
-| `status` | `"success"` or `"error"` | Always present |
 | `apiVersion` | string | Always present |
-| `provenance.model` | string | Present on success |
-| `provenance.convergence.converged` | boolean | Present on success |
+| `status` | `"success"` or `"error"` | Always present |
+| `tool` | string | Present for tool runner responses |
+| `data` | object | Present for successful responses and standardized automation/lifecycle responses |
+| `provenance` | object | Present on standardized runner responses |
+| `validation.valid` | boolean | Present on standardized runner responses |
+| `qualityGate.verdict` | string | Present on standardized runner responses |
+| `warnings` | array | Always present on standardized runner responses |
+
+Schema resource paths use snake_case tool names such as `run_flash`, but response `tool` values use
+the MCP method names such as `runFlash`. Schema lookups accept only `input` and `output` as schema
+types; any other type is treated as schema-not-found.
 
 ### Warning taxonomy
 
-Warnings in `provenance.warnings` use these standard codes:
+Warnings in the root `warnings` array, and any tool-specific warning details, use these standard
+codes where a machine-readable code is available:
 
 | Code | Severity | Description |
 |------|----------|-------------|

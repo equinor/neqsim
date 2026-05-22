@@ -228,7 +228,7 @@ thermal conductivities, heat capacities, compressibility factors, and compositio
 {
   "apiVersion": "1.0",
   "status": "success",
-  "tool": "run_flash",
+  "tool": "runFlash",
   "data": { "flash": { "model": "SRK", "flashType": "TP" } },
   "flash": {
     "model": "SRK",

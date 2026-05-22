@@ -29,6 +29,14 @@
     "getPhaseEnvelope",
     "runPVT",
     "runDynamic",
-    "getCapabilities"
+    "getCapabilities",
+    "listSimulationUnits",
+    "listUnitVariables",
+    "getSimulationVariable",
+    "setSimulationVariable",
+    "saveSimulationState",
+    "compareSimulationStates",
+    "diagnoseAutomation",
+    "getAutomationLearningReport"
   ]
 }

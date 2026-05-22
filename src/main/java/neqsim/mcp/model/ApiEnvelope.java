@@ -11,14 +11,16 @@ import com.google.gson.JsonObject;
  * Standard API envelope for all MCP runner responses.
  *
  * <p>
- * Wraps a typed result payload with status, warnings, and errors in a consistent format. This
- * provides a dual interface — call {@link #toJson()} for the string-based MCP protocol, or use
- * {@link #getData()} for typed Java access.
+ * Wraps a typed result payload with status, tool metadata, warnings, errors, provenance,
+ * validation, and quality-gate metadata in a consistent format. This provides a dual interface —
+ * call {@link #toJson()} for the string-based MCP protocol, or use {@link #getData()} for typed
+ * Java access.
  * </p>
  *
  * <h2>Success envelope:</h2>
  *
- * <pre>{@code { "status": "success", "data": { ... }, "warnings": [] } }</pre>
+ * <pre>{@code { "apiVersion": "1.0", "status": "success", "tool": "runFlash", "data": { ... },
+ * "provenance": { ... }, "validation": { ... }, "qualityGate": { ... }, "warnings": [] } }</pre>
  *
  * <h2>Error envelope:</h2>
  *
@@ -39,6 +41,7 @@ public class ApiEnvelope<T> {
   private final T data;
   private final List<DiagnosticIssue> errors;
   private final List<String> warnings;
+  private String tool;
   private ResultProvenance provenance;
   private JsonObject validation;
   private JsonObject qualityGate;
@@ -247,6 +250,26 @@ public class ApiEnvelope<T> {
   }
 
   /**
+   * Gets the MCP tool name that produced this envelope.
+   *
+   * @return the tool name, or null if not attached
+   */
+  public String getTool() {
+    return tool;
+  }
+
+  /**
+   * Attaches the MCP tool name that produced this envelope.
+   *
+   * @param tool the tool name, such as {@code runFlash}
+   * @return this envelope for fluent use
+   */
+  public ApiEnvelope<T> withTool(String tool) {
+    this.tool = tool;
+    return this;
+  }
+
+  /**
    * Gets the calculation provenance.
    *
    * @return the provenance, or null if not attached
@@ -324,6 +347,9 @@ public class ApiEnvelope<T> {
     JsonObject root = new JsonObject();
     root.addProperty("apiVersion", API_VERSION);
     root.addProperty("status", status);
+    if (tool != null && !tool.trim().isEmpty()) {
+      root.addProperty("tool", tool);
+    }
 
     if (data != null) {
       root.add("data", GSON.toJsonTree(data));
