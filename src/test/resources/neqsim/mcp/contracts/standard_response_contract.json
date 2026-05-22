@@ -1,0 +1,34 @@
+{
+  "contractName": "NeqSim MCP standard response envelope",
+  "apiVersion": "1.0",
+  "requiredFields": [
+    "apiVersion",
+    "status",
+    "tool",
+    "data",
+    "provenance",
+    "validation",
+    "qualityGate",
+    "warnings"
+  ],
+  "requiredValidationFields": [
+    "valid",
+    "phase",
+    "message"
+  ],
+  "requiredQualityGateFields": [
+    "verdict",
+    "summary",
+    "engineeringReviewRequired"
+  ],
+  "successTools": [
+    "runFlash",
+    "runProcess",
+    "runBatch",
+    "getPropertyTable",
+    "getPhaseEnvelope",
+    "runPVT",
+    "runDynamic",
+    "getCapabilities"
+  ]
+}

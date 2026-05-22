@@ -239,12 +239,12 @@ def test_protocol():
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/list", "params": {}})
     r = recv()
     resources = r.get("result", {}).get("resources", [])
-    check("6 resources", len(resources) == 6, f"got {len(resources)}")
+    check("7 resources", len(resources) == 7, f"got {len(resources)}")
 
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/templates/list", "params": {}})
     r = recv()
     templates = r.get("result", {}).get("resourceTemplates", [])
-    check("5 templates", len(templates) == 5, f"got {len(templates)}")
+    check("6 templates", len(templates) == 6, f"got {len(templates)}")
 
 
 def test_component_search():

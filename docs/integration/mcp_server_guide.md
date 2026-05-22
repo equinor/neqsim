@@ -1,6 +1,6 @@
 ---
 title: "NeqSim MCP Server: LLM-Powered Thermodynamics"
-description: "Complete guide to the NeqSim MCP Server — a Quarkus-based Model Context Protocol server that gives any LLM (VS Code Copilot, Claude Desktop, Cursor) the ability to run rigorous thermodynamic flash calculations and process simulations through NeqSim. Covers installation, configuration, tools, resources, example conversations, testing, and troubleshooting."
+description: "Complete guide to the NeqSim MCP Server — a Quarkus-based Model Context Protocol server that gives any LLM (VS Code Copilot, Claude Desktop, Cursor) the ability to run rigorous thermodynamic flash calculations, process simulations, and agent-discoverable engineering workflows through NeqSim. Covers installation, configuration, tools, resources, examples, testing, and troubleshooting."
 ---
 
 # NeqSim MCP Server: LLM-Powered Thermodynamics
@@ -21,9 +21,9 @@ via STDIO transport for local clients or Streamable HTTP for web-based clients.
 | **Input validation** | "Check if my process JSON is valid before running it" |
 | **Component lookup** | "What components does NeqSim have that contain 'butane'?" |
 
-The LLM discovers the tools automatically via MCP, reads the embedded examples and schemas
-to learn the JSON format, and then calls the tools to compute answers with rigorous
-thermodynamic models.
+The LLM discovers the tools automatically via MCP, reads the capability manifest, embedded
+examples, schemas, and setup templates to learn the JSON format, and then calls the tools
+to compute answers with rigorous thermodynamic models.
 
 ---
 
@@ -35,11 +35,11 @@ neqsim-mcp-server/                         # Separate Maven project (Java 17+)
 ├── test_mcp_server.py                      # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
     ├── NeqSimTools.java                    # 56 @Tool MCP tools
-    ├── NeqSimResources.java                # 6 @Resource + 5 @ResourceTemplate
+    ├── NeqSimResources.java                # 7 @Resource + 6 @ResourceTemplate
     └── NeqSimPrompts.java                  # 9 @Prompt guided workflows
 
 Delegates to the framework-agnostic core layer in neqsim (neqsim.mcp.*):
-├── runners/   → FlashRunner, ProcessRunner, Validator, ComponentQuery
+├── runners/   → FlashRunner, ProcessRunner, Validator, ComponentQuery, CapabilitiesRunner
 ├── model/     → ApiEnvelope, FlashRequest, FlashResult, ValueWithUnit, DiagnosticIssue
 └── catalog/   → ExampleCatalog and SchemaCatalog for examples and JSON schemas
 ```
@@ -47,7 +47,7 @@ Delegates to the framework-agnostic core layer in neqsim (neqsim.mcp.*):
 The MCP server is a **thin Quarkus wrapper** around a framework-agnostic
 runner layer in neqsim core. This means:
 
-- **Stability** — Runners are tested with 139+ JUnit tests in the neqsim project
+- **Stability** — Runners, schemas, examples, capability descriptors, and response contracts are covered by focused JUnit tests in the neqsim project
 - **Portability** — Runners can be reused with any MCP framework, REST API, or CLI
 - **Separation** — The server can be extracted to a standalone repository
 
@@ -177,7 +177,9 @@ npx @modelcontextprotocol/inspector java -jar target/neqsim-mcp-server-1.0.0-SNA
 
 ## MCP Tools Reference
 
-The server exposes 6 tools via the Model Context Protocol.
+The server exposes 56 tools via the Model Context Protocol. The tools are organized by
+governance tier in the server README; this guide highlights the core tools and discovery
+surface most agents use first.
 
 ### 1. `runFlash` — Thermodynamic Flash Calculation
 
@@ -224,7 +226,10 @@ thermal conductivities, heat capacities, compressibility factors, and compositio
 
 ```json
 {
+  "apiVersion": "1.0",
   "status": "success",
+  "tool": "run_flash",
+  "data": { "flash": { "model": "SRK", "flashType": "TP" } },
   "flash": {
     "model": "SRK",
     "flashType": "TP",
@@ -251,9 +256,16 @@ thermal conductivities, heat capacities, compressibility factors, and compositio
         "propane": { "value": 0.05 }
       }
     }
-  }
+  },
+  "provenance": { "calculationType": "flash", "model": "SRK" },
+  "validation": { "valid": true, "phase": "runner" },
+  "qualityGate": { "verdict": "passed", "engineeringReviewRequired": true },
+  "warnings": []
 }
 ```
+
+The standard fields are common across MCP runners. Legacy top-level fields such as `flash`
+and `fluid` remain for backward compatibility; `data` is the canonical payload for new clients.
 
 **Dew/bubble point results:** The converged temperature appears in
 `fluid.conditions.overall.temperature` (Kelvin). Subtract 273.15 for Celsius.
@@ -370,8 +382,18 @@ Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `toolName` | string | Yes | `run_flash`, `run_process`, `validate_input`, or `search_components` |
+| `toolName` | string | Yes | Schema-backed tool name, for example `run_flash`, `run_process`, `run_dynamic`, or `run_hazop` |
 | `schemaType` | string | Yes | `input` or `output` |
+
+Use `getCapabilities` or `neqsim://schema-catalog` to discover the full schema-backed tool list.
+
+### 7. `getCapabilities` — Capability Manifest
+
+Returns the machine-readable MCP capability map, including schema-backed tool descriptors,
+setup-template references, supported models and units, process JSON contract fields,
+validation coverage, response-contract coverage, examples, and benchmark-trust metadata.
+
+Agents should call this before building unfamiliar workflows.
 
 ---
 
@@ -383,8 +405,10 @@ The server also exposes static resources and resource templates:
 |------|-----|-------------|
 | Resource | `neqsim://example-catalog` | Full catalog of all examples with descriptions |
 | Resource | `neqsim://schema-catalog` | Full catalog of all JSON schemas |
+| Resource | `neqsim://setup-templates` | Full catalog of major workflow setup templates |
 | Template | `neqsim://examples/{category}/{name}` | Specific example by category and name |
 | Template | `neqsim://schemas/{tool}/{type}` | Specific schema by tool and type |
+| Template | `neqsim://setup-templates/{id}` | Specific setup template by id |
 
 ---
 
@@ -393,11 +417,11 @@ The server also exposes static resources and resource templates:
 A typical interaction follows this flow:
 
 ```
-1. DISCOVERY     → LLM calls tools/list, finds 6 tools, reads descriptions
-2. LEARNING      → LLM calls getExample or getSchema to learn JSON format
-3. VALIDATION    → LLM calls validateInput to catch errors early (optional)
-4. COMPUTATION   → LLM calls runFlash or runProcess with constructed JSON
-5. INTERPRETATION → LLM reads JSON response, presents results in natural language
+1. DISCOVERY     → LLM calls tools/list and getCapabilities, then reads descriptors
+2. LEARNING      → LLM fetches a setup template, example, and schema for the selected tool
+3. VALIDATION    → LLM calls validateInput or uses schema constraints before execution
+4. COMPUTATION   → LLM calls runFlash, runProcess, or another schema-backed tool
+5. INTERPRETATION → LLM reads data, provenance, validation, qualityGate, and warnings
 ```
 
 ### Chat Example 1: Gas Density Lookup
@@ -648,7 +672,8 @@ python test_mcp_server.py
 
 ### Unit Tests (Core Layer)
 
-The runner layer in neqsim core has 139+ JUnit 5 tests:
+The runner layer in neqsim core has focused JUnit 5 coverage for runners, schemas,
+examples, capability descriptors, standard response contracts, and validation behavior:
 
 ```bash
 # From neqsim root
@@ -700,6 +725,7 @@ NeqSim uses specific component names. Use `searchComponents` to find them:
 ## Related Documentation
 
 - [MCP Core Layer](mcp_neqsim_core_layer) — Framework-agnostic runners, models, and catalogs in neqsim core
+- [MCP Agentic Workflow Improvements](mcp_agentic_workflow_improvements) — Capability descriptors, setup templates, response contracts, and coverage tests
 - [Web API / JSON Process Builder](web_api_json_process_builder) — JSON process definition format and session management
 - [AI Agents Reference](ai_agents_reference) — Full catalog of NeqSim AI agents and skills
 - [Model Context Protocol specification](https://spec.modelcontextprotocol.io/)

@@ -16,7 +16,7 @@ import com.google.gson.GsonBuilder;
  * queries, and validation. These examples serve a dual purpose:
  * </p>
  * <ul>
- * <li><strong>MCP Resources</strong> — served via {@code neqsim://example/{category}/{name}} URIs
+ * <li><strong>MCP Resources</strong> — served via {@code neqsim://examples/{category}/{name}} URIs
  * so that language models can read them and learn the input format</li>
  * <li><strong>Test fixtures</strong> — used by unit tests to verify runners work correctly</li>
  * </ul>
@@ -241,6 +241,24 @@ public final class ExampleCatalog {
         + "    \"methan\": 0.90,\n" + "    \"ethane\": 0.10\n" + "  }\n" + "}";
   }
 
+  /**
+   * Returns a component search example.
+   *
+   * @return JSON string for component search tools
+   */
+  public static String componentSearchMethane() {
+    return "{\n" + "  \"query\": \"meth\"\n" + "}";
+  }
+
+  /**
+   * Returns a capabilities discovery example.
+   *
+   * @return JSON string for capability discovery tools
+   */
+  public static String capabilitiesDiscovery() {
+    return "{\n" + "  \"includeExamples\": true,\n" + "  \"includeSetupTemplates\": true\n" + "}";
+  }
+
   // ========== PVT Examples ==========
 
   /**
@@ -266,6 +284,17 @@ public final class ExampleCatalog {
         + "  \"pressure_bara\": 200.0,\n" + "  \"components\": {\n" + "    \"methane\": 0.70,\n"
         + "    \"ethane\": 0.10,\n" + "    \"propane\": 0.05,\n" + "    \"n-heptane\": 0.15\n"
         + "  },\n" + "  \"experiment\": \"saturationPressure\"\n" + "}";
+  }
+
+  /**
+   * Returns a short dynamic simulation example based on the simple separator process.
+   *
+   * @return JSON string for DynamicRunner.run()
+   */
+  public static String dynamicSeparatorTransient() {
+    return "{\n" + "  \"processJson\": " + processSimpleSeparation() + ",\n"
+        + "  \"duration_seconds\": 60.0,\n" + "  \"timeStep_seconds\": 5.0,\n" + "  \"tuning\": {\n"
+        + "    \"pressureKp\": 1.0,\n" + "    \"pressureTi\": 30.0\n" + "  }\n" + "}";
   }
 
   // ========== Flow Assurance Examples ==========
@@ -692,10 +721,10 @@ public final class ExampleCatalog {
    * @return unmodifiable list of category names
    */
   public static List<String> getCategories() {
-    return Collections.unmodifiableList(
-        Arrays.asList("flash", "process", "validation", "batch", "property-table", "phase-envelope",
-            "pvt", "flow-assurance", "standards", "pipeline", "reservoir", "economics",
-            "bioprocess", "session", "visualization", "equipment-sizing", "comparison", "safety"));
+    return Collections.unmodifiableList(Arrays.asList("flash", "process", "validation", "batch",
+        "property-table", "phase-envelope", "pvt", "flow-assurance", "standards", "pipeline",
+        "reservoir", "economics", "bioprocess", "session", "visualization", "equipment-sizing",
+        "comparison", "safety", "tool"));
   }
 
   /**
@@ -742,8 +771,67 @@ public final class ExampleCatalog {
       return Arrays.asList("two-cases");
     } else if ("safety".equals(category)) {
       return Arrays.asList("barrier-register", "safety-system-performance", "hazop-study");
+    } else if ("tool".equals(category)) {
+      return SchemaCatalog.getToolNames();
     }
     return Collections.emptyList();
+  }
+
+  /**
+   * Returns a canonical example for a schema-backed MCP tool.
+   *
+   * @param toolName the schema tool name, such as {@code run_flash}
+   * @return JSON example string, or null if the tool is not recognized
+   */
+  public static String getToolExample(String toolName) {
+    if ("run_flash".equals(toolName)) {
+      return flashTPSimpleGas();
+    } else if ("run_process".equals(toolName)) {
+      return processSimpleSeparation();
+    } else if ("validate_input".equals(toolName)) {
+      return validationErrorFlash();
+    } else if ("list_components".equals(toolName)) {
+      return componentSearchMethane();
+    } else if ("run_batch".equals(toolName)) {
+      return batchTemperatureSweep();
+    } else if ("get_property_table".equals(toolName)) {
+      return propertyTableTemperatureSweep();
+    } else if ("get_phase_envelope".equals(toolName)) {
+      return phaseEnvelopeNaturalGas();
+    } else if ("get_capabilities".equals(toolName)) {
+      return capabilitiesDiscovery();
+    } else if ("run_pvt".equals(toolName)) {
+      return pvtCME();
+    } else if ("run_flow_assurance".equals(toolName)) {
+      return flowAssuranceHydrate();
+    } else if ("calculate_standard".equals(toolName)) {
+      return standardISO6976();
+    } else if ("run_pipeline".equals(toolName)) {
+      return pipelineMultiphase();
+    } else if ("run_reservoir".equals(toolName)) {
+      return reservoirDepletion();
+    } else if ("run_field_economics".equals(toolName)) {
+      return economicsNorwegianNCS();
+    } else if ("run_dynamic".equals(toolName)) {
+      return dynamicSeparatorTransient();
+    } else if ("run_bioprocess".equals(toolName)) {
+      return bioprocessAnaerobicDigestion();
+    } else if ("size_equipment".equals(toolName)) {
+      return sizingSeparator();
+    } else if ("compare_processes".equals(toolName)) {
+      return comparisonTwoCases();
+    } else if ("manage_session".equals(toolName)) {
+      return sessionCreate();
+    } else if ("visualize".equals(toolName)) {
+      return visualizationPhaseEnvelope();
+    } else if ("run_hazop".equals(toolName)) {
+      return safetyHazopStudy();
+    } else if ("run_barrier_register".equals(toolName)) {
+      return safetyBarrierRegister();
+    } else if ("run_safety_system_performance".equals(toolName)) {
+      return safetySystemPerformance();
+    }
+    return null;
   }
 
   /**
@@ -874,6 +962,8 @@ public final class ExampleCatalog {
       if ("hazop-study".equals(name)) {
         return safetyHazopStudy();
       }
+    } else if ("tool".equals(category)) {
+      return getToolExample(name);
     }
     return null;
   }
@@ -1002,6 +1092,13 @@ public final class ExampleCatalog {
     safetyExamples.put("hazop-study",
         "Simulation-backed IEC 61882 HAZOP worksheet from process scenarios and STID evidence");
     catalog.put("safety", safetyExamples);
+
+    // Tool-name aliases for agents that start from SchemaCatalog/CapabilitiesRunner.
+    Map<String, String> toolExamples = new LinkedHashMap<String, String>();
+    for (String toolName : SchemaCatalog.getToolNames()) {
+      toolExamples.put(toolName, "Canonical input example for MCP tool " + toolName);
+    }
+    catalog.put("tool", toolExamples);
 
     return GSON.toJson(catalog);
   }

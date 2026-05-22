@@ -320,6 +320,7 @@ then modifies them based on the user's requirements.
 | `validation` | `error-flash` | A deliberately invalid flash input |
 | `safety` | `hazop-study` | Simulation-backed HAZOP from process scenarios and document evidence |
 | `safety` | `barrier-register` | Evidence-linked PSF/SCE barrier register |
+| `tool` | `<tool name>` | Canonical example for a schema-backed tool, such as `run_dynamic` |
 
 ---
 
@@ -329,6 +330,15 @@ Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
 
 **Available schemas:**
 
+`SchemaCatalog.getToolNames()` currently advertises 23 schema-backed tool contracts.
+
+Complete list: `run_flash`, `run_process`, `validate_input`, `list_components`,
+`run_batch`, `get_property_table`, `get_phase_envelope`, `get_capabilities`,
+`run_pvt`, `run_flow_assurance`, `calculate_standard`, `run_pipeline`,
+`run_reservoir`, `run_field_economics`, `run_dynamic`, `run_bioprocess`,
+`size_equipment`, `compare_processes`, `manage_session`, `visualize`, `run_hazop`,
+`run_barrier_register`, and `run_safety_system_performance`.
+
 | Tool Name | Types | Description |
 |---|---|---|
 | `run_flash` | `input`, `output` | Flash calculation JSON format |
@@ -336,11 +346,12 @@ Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
 | `run_hazop` | `input`, `output` | Simulation-backed HAZOP study JSON format |
 | `run_barrier_register` | `input`, `output` | Barrier register JSON format |
 | `validate_input` | `input`, `output` | Validator JSON format |
-| `search_components` | `input`, `output` | Component search JSON format |
+| `list_components` | `input`, `output` | Component search JSON format |
+| `run_dynamic`, `run_pvt`, `run_flow_assurance`, and others | `input`, `output` | Domain workflow JSON formats |
 
 ---
 
-## Browsable MCP Resources (11 Endpoints)
+## Browsable MCP Resources (13 Endpoints)
 
 ### Catalog Resources (Static)
 
@@ -348,6 +359,7 @@ Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
 |---|---|
 | `neqsim://example-catalog` | Full catalog of all examples with descriptions |
 | `neqsim://schema-catalog` | Full catalog of all JSON schemas |
+| `neqsim://setup-templates` | Full catalog of major workflow setup templates |
 | `neqsim://components` | Component families: hydrocarbons, acid gases, glycols, olefins, etc. |
 | `neqsim://standards` | Design standards catalog: ASME, API, DNV, ISO, NORSOK |
 | `neqsim://models` | Equation of state models with usage recommendations |
@@ -359,6 +371,7 @@ Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
 |---|---|
 | `neqsim://examples/{category}/{name}` | Specific example by category and name |
 | `neqsim://schemas/{tool}/{type}` | Specific schema by tool name and type |
+| `neqsim://setup-templates/{id}` | Specific workflow setup template by id |
 | `neqsim://components/{name}` | Full properties for a component (Tc, Pc, omega, MW, etc.) |
 | `neqsim://standards/{code}` | Parameters for a specific design standard |
 | `neqsim://materials/{type}` | Material grades by type: pipe, plate, casing, etc. |

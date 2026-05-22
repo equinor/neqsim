@@ -41,8 +41,14 @@ class SchemaCatalogTest {
     JsonObject root = JsonParser.parseString(schema).getAsJsonObject();
 
     assertEquals("FlashOutput", root.get("title").getAsString());
+    assertStandardOutputProps(schema);
     assertTrue(root.has("properties"));
     JsonObject props = root.getAsJsonObject("properties");
+    assertTrue(props.has("apiVersion"));
+    assertTrue(props.has("data"));
+    assertTrue(props.has("provenance"));
+    assertTrue(props.has("validation"));
+    assertTrue(props.has("qualityGate"));
     assertTrue(props.has("status"));
     assertTrue(props.has("flash"));
     assertTrue(props.has("fluid"));
@@ -66,7 +72,14 @@ class SchemaCatalogTest {
     JsonObject root = JsonParser.parseString(schema).getAsJsonObject();
 
     assertEquals("ProcessOutput", root.get("title").getAsString());
+    assertStandardOutputProps(schema);
     assertTrue(root.has("properties"));
+    JsonObject props = root.getAsJsonObject("properties");
+    assertTrue(props.has("apiVersion"));
+    assertTrue(props.has("data"));
+    assertTrue(props.has("provenance"));
+    assertTrue(props.has("validation"));
+    assertTrue(props.has("qualityGate"));
   }
 
   @Test
@@ -92,6 +105,10 @@ class SchemaCatalogTest {
 
   @Test
   void testComponentSearchOutputSchema_isValidJson() {
+    String input = SchemaCatalog.componentSearchInputSchema();
+    JsonObject inputRoot = JsonParser.parseString(input).getAsJsonObject();
+    assertEquals("ComponentSearchInput", inputRoot.get("title").getAsString());
+
     String schema = SchemaCatalog.componentSearchOutputSchema();
     JsonObject root = JsonParser.parseString(schema).getAsJsonObject();
 
@@ -156,8 +173,8 @@ class SchemaCatalogTest {
 
     // Each tool should have input and output URIs
     JsonObject flash = root.getAsJsonObject("run_flash");
-    assertTrue(flash.get("inputSchemaUri").getAsString().contains("run_flash"));
-    assertTrue(flash.get("outputSchemaUri").getAsString().contains("run_flash"));
+    assertEquals("neqsim://schemas/run_flash/input", flash.get("inputSchemaUri").getAsString());
+    assertEquals("neqsim://schemas/run_flash/output", flash.get("outputSchemaUri").getAsString());
   }
 
   @Test
@@ -169,6 +186,7 @@ class SchemaCatalogTest {
     String output = SchemaCatalog.getSchema("run_batch", "output");
     assertNotNull(output);
     assertTrue(output.contains("BatchOutput"));
+    assertStandardOutputProps(output);
   }
 
   @Test
@@ -180,6 +198,7 @@ class SchemaCatalogTest {
     String output = SchemaCatalog.getSchema("get_property_table", "output");
     assertNotNull(output);
     assertTrue(output.contains("PropertyTableOutput"));
+    assertStandardOutputProps(output);
   }
 
   @Test
@@ -191,13 +210,60 @@ class SchemaCatalogTest {
     String output = SchemaCatalog.getSchema("get_phase_envelope", "output");
     assertNotNull(output);
     assertTrue(output.contains("PhaseEnvelopeOutput"));
+    assertStandardOutputProps(output);
+  }
+
+  @Test
+  void testPvtAndDynamicOutputSchemas() {
+    String pvtOutput = SchemaCatalog.getSchema("run_pvt", "output");
+    assertNotNull(pvtOutput);
+    assertTrue(pvtOutput.contains("PVTOutput"));
+    assertStandardOutputProps(pvtOutput);
+
+    String dynamicOutput = SchemaCatalog.getSchema("run_dynamic", "output");
+    assertNotNull(dynamicOutput);
+    assertTrue(dynamicOutput.contains("DynamicOutput"));
+    assertStandardOutputProps(dynamicOutput);
   }
 
   @Test
   void testCapabilitiesSchema() {
-    assertNull(SchemaCatalog.getSchema("get_capabilities", "input"));
+    String input = SchemaCatalog.getSchema("get_capabilities", "input");
+    assertNotNull(input);
+    assertTrue(input.contains("CapabilitiesInput"));
     String output = SchemaCatalog.getSchema("get_capabilities", "output");
     assertNotNull(output);
     assertTrue(output.contains("CapabilitiesOutput"));
+    assertTrue(output.contains("toolCapabilities"));
+    assertStandardOutputProps(output);
+  }
+
+  @Test
+  void testEveryAdvertisedToolHasInputAndOutputSchema() {
+    for (String toolName : SchemaCatalog.getToolNames()) {
+      String input = SchemaCatalog.getSchema(toolName, "input");
+      String output = SchemaCatalog.getSchema(toolName, "output");
+      assertNotNull(input, "Missing input schema for " + toolName);
+      assertNotNull(output, "Missing output schema for " + toolName);
+      JsonParser.parseString(input).getAsJsonObject();
+      JsonParser.parseString(output).getAsJsonObject();
+    }
+  }
+
+  /**
+   * Verifies that a schema includes the standard MCP output envelope fields.
+   *
+   * @param schema schema JSON string to inspect
+   */
+  private static void assertStandardOutputProps(String schema) {
+    JsonObject root = JsonParser.parseString(schema).getAsJsonObject();
+    JsonObject props = root.getAsJsonObject("properties");
+    assertTrue(props.has("apiVersion"));
+    assertTrue(props.has("tool"));
+    assertTrue(props.has("data"));
+    assertTrue(props.has("provenance"));
+    assertTrue(props.has("validation"));
+    assertTrue(props.has("qualityGate"));
+    assertTrue(props.has("warnings"));
   }
 }

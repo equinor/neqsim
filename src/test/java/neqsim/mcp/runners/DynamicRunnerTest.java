@@ -44,6 +44,12 @@ class DynamicRunnerTest {
 
     assertEquals("success", root.get("status").getAsString(),
         "runDynamic must succeed for a wired separator: " + result);
+    assertTrue(root.has("apiVersion"));
+    assertTrue(root.has("tool"));
+    assertTrue(root.has("validation"));
+    assertTrue(root.has("qualityGate"));
+    assertTrue(root.has("warnings"));
+    assertTrue(root.getAsJsonObject("provenance").has("benchmarkTrustLevel"));
     JsonObject data = root.getAsJsonObject("data");
     assertNotNull(data);
     assertTrue(data.has("transmitters"));
@@ -75,6 +81,9 @@ class DynamicRunnerTest {
     // The build may already error out at steady state; either way the response must NOT be
     // a raw NPE \u2014 it must be a structured error JSON the MCP client can parse.
     assertEquals("error", root.get("status").getAsString(), result);
+    assertTrue(root.has("apiVersion"));
+    assertTrue(root.has("validation"));
+    assertTrue(root.has("qualityGate"));
     String body = result.toLowerCase();
     assertTrue(!body.contains("nullpointerexception"),
         "Response must not leak a raw NullPointerException: " + result);

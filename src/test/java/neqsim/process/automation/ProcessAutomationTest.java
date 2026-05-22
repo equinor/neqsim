@@ -126,6 +126,12 @@ class ProcessAutomationTest {
       if (v.getName().equals("outletPressure")) {
         hasOutletPressure = true;
         assertEquals(VariableType.INPUT, v.getType());
+        assertEquals("pressure", v.getUnitFamily());
+        assertEquals("equipment_input", v.getCategory());
+        assertTrue(v.isWritable());
+        assertTrue(v.isInvalidatesProcess());
+        assertNotNull(v.getMinimumValue());
+        assertNotNull(v.getMaximumValue());
       }
       if (v.getName().equals("power")) {
         hasPower = true;
@@ -247,6 +253,8 @@ class ProcessAutomationTest {
     assertTrue(s.contains("unit.temp"));
     assertTrue(s.contains("OUTPUT"));
     assertTrue(s.contains("K"));
+    assertEquals("temperature", v.getUnitFamily());
+    assertFalse(v.isWritable());
   }
 
   @Test

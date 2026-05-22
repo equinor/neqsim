@@ -116,14 +116,14 @@ public class AutomationRunner {
           vars = auto.getVariableList(corrected);
           resolvedName = corrected;
           autoCorrection = corrected;
-          diag.recordFailure("list", unitName,
-              AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, corrected);
+          diag.recordFailure("list", unitName, AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND,
+              corrected);
         } else {
           // Return diagnostic with suggestions
           AutomationDiagnostics.DiagnosticResult diagResult =
               diag.diagnoseUnitNotFound(unitName, validUnits);
-          diag.recordFailure("list", unitName,
-              AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, null);
+          diag.recordFailure("list", unitName, AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND,
+              null);
           return diagResult.toJson();
         }
       }
@@ -134,9 +134,8 @@ public class AutomationRunner {
       if (autoCorrection != null) {
         result.addProperty("originalName", unitName);
         result.addProperty("autoCorrection", autoCorrection);
-        result.addProperty("remediation",
-            "Unit name auto-corrected from '" + unitName + "' to '" + autoCorrection
-                + "'. Use the corrected name in future calls.");
+        result.addProperty("remediation", "Unit name auto-corrected from '" + unitName + "' to '"
+            + autoCorrection + "'. Use the corrected name in future calls.");
       }
       result.addProperty("equipmentType", auto.getEquipmentType(resolvedName));
       JsonArray varsArray = new JsonArray();
@@ -147,6 +146,7 @@ public class AutomationRunner {
         varObj.addProperty("type", v.getType().name());
         varObj.addProperty("defaultUnit", v.getDefaultUnit());
         varObj.addProperty("description", v.getDescription());
+        addVariableMetadata(varObj, v);
         varsArray.add(varObj);
       }
       result.add("variables", varsArray);
@@ -395,6 +395,7 @@ public class AutomationRunner {
             varObj.addProperty("address", v.getAddress());
             varObj.addProperty("name", v.getName());
             varObj.addProperty("type", v.getType().name());
+            addVariableMetadata(varObj, v);
             varsArray.add(varObj);
           }
           result.add("availableVariables", varsArray);
@@ -440,6 +441,32 @@ public class AutomationRunner {
     } catch (Exception e) {
       return errorJson("ERROR", "Failed to get learning report: " + e.getMessage());
     }
+  }
+
+  /**
+   * Adds agent-facing metadata from a simulation variable to JSON.
+   *
+   * @param varObj mutable variable JSON object
+   * @param variable simulation variable descriptor
+   */
+  private static void addVariableMetadata(JsonObject varObj, SimulationVariable variable) {
+    varObj.addProperty("category", variable.getCategory());
+    varObj.addProperty("source", variable.getSource());
+    varObj.addProperty("unitFamily", variable.getUnitFamily());
+    if (variable.getMinimumValue() != null) {
+      varObj.addProperty("minimumValue", variable.getMinimumValue());
+    }
+    if (variable.getMaximumValue() != null) {
+      varObj.addProperty("maximumValue", variable.getMaximumValue());
+    }
+    JsonArray allowedValues = new JsonArray();
+    for (String allowedValue : variable.getAllowedValues()) {
+      allowedValues.add(allowedValue);
+    }
+    varObj.add("allowedValues", allowedValues);
+    varObj.addProperty("writable", variable.isWritable());
+    varObj.addProperty("invalidatesProcess", variable.isInvalidatesProcess());
+    varObj.addProperty("applicability", variable.getApplicability());
   }
 
   /**

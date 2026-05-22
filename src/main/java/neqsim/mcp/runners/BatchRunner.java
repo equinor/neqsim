@@ -8,14 +8,17 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.mcp.model.ApiEnvelope;
 import neqsim.mcp.model.ResultProvenance;
 
 /**
  * Stateless batch calculation runner for MCP integration.
  *
- * <p> Runs multiple flash calculations in a single call, sharing a common fluid definition. This is
+ * <p>
+ * Runs multiple flash calculations in a single call, sharing a common fluid definition. This is
  * designed for sensitivity studies and property sweeps where an agent needs to explore a parameter
- * space efficiently. Each case in the batch can vary temperature, pressure, or composition. </p>
+ * space efficiently. Each case in the batch can vary temperature, pressure, or composition.
+ * </p>
  *
  * <h2>Input JSON Format:</h2>
  *
@@ -25,8 +28,10 @@ import neqsim.mcp.model.ResultProvenance;
  * "pressure": {"value": 50.0, "unit": "bara"}}, {"temperature": {"value": 50.0, "unit": "C"},
  * "pressure": {"value": 50.0, "unit": "bara"}} ] } }</pre>
  *
- * <p> Each case can also override components or flash type to explore composition sensitivity or
- * different calculation modes within a single call. </p>
+ * <p>
+ * Each case can also override components or flash type to explore composition sensitivity or
+ * different calculation modes within a single call.
+ * </p>
  *
  * @author Even Solbraa @version 1.0
  */
@@ -173,7 +178,20 @@ public class BatchRunner {
     ResultProvenance provenance = ResultProvenance.forBatch(model, casesArray.size(), successCount);
     provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
     provenance.setConverged(errorCount == 0);
+    provenance.setBenchmarkTrustLevel(BenchmarkTrust.getMaturityLevel("runBatch"));
     response.add("provenance", GSON.toJsonTree(provenance));
+
+    JsonObject data = new JsonObject();
+    data.add("summary", summary.deepCopy());
+    data.add("results", results.deepCopy());
+    response.add("data", data);
+
+    String gateVerdict = errorCount == 0 ? "passed" : (successCount == 0 ? "failed" : "warning");
+    String gateSummary = errorCount == 0 ? "All batch cases completed"
+        : (successCount == 0 ? "All batch cases failed" : "Batch completed with failed cases");
+    ApiEnvelope.applyStandardFields(response, "runBatch", provenance,
+        ApiEnvelope.validationStatus(errorCount == 0, "calculation", gateSummary),
+        ApiEnvelope.qualityGate(gateVerdict, gateSummary, true));
 
     return GSON.toJson(response);
   }
@@ -219,6 +237,10 @@ public class BatchRunner {
     }
     errors.add(err);
     result.add("errors", errors);
+
+    ApiEnvelope.applyStandardFields(result, "runBatch", null,
+        ApiEnvelope.validationStatus(false, "input", message),
+        ApiEnvelope.qualityGate("failed", message, true));
 
     return GSON.toJson(result);
   }

@@ -7,6 +7,7 @@ import io.quarkiverse.mcp.server.ToolArg;
 import jakarta.enterprise.context.ApplicationScoped;
 import neqsim.mcp.catalog.ExampleCatalog;
 import neqsim.mcp.catalog.SchemaCatalog;
+import neqsim.mcp.model.ApiEnvelope;
 import neqsim.mcp.runners.BioprocessRunner;
 import neqsim.mcp.runners.ComponentQuery;
 import neqsim.mcp.runners.DynamicRunner;
@@ -156,7 +157,7 @@ public class NeqSimTools {
           + "top-level 'areas' containing named process-area JSON objects. "
           + "Use getExample(category='process', name='simple-separation') for a template.") String processJson) {
     try {
-      return withAutoValidation(ProcessRunner.run(processJson), "process");
+      return withAutoValidation(ProcessRunner.validateAndRun(processJson), "process");
     } catch (Exception e) {
       return errorJson("Process simulation failed: " + e.getMessage());
     }
@@ -214,17 +215,22 @@ public class NeqSimTools {
       + "compression-with-cooling), validation (error-flash), "
       + "batch (temperature-sweep, pressure-sweep), "
       + "property-table (temperature-sweep, pressure-sweep), "
-      + "phase-envelope (natural-gas), safety (barrier-register, hazop-study).")
-  public String getExample(@ToolArg(
-      description = "Example category: flash, process, validation, safety, etc.") String category,
-      @ToolArg(
-          description = "Example name, e.g. 'tp-simple-gas', 'simple-separation', or 'hazop-study'") String name) {
+      + "phase-envelope (natural-gas), safety (barrier-register, hazop-study), "
+      + "and tool examples keyed by schema-backed tool name. Use getCapabilities "
+      + "or neqsim://example-catalog to discover available examples.")
+  public String getExample(
+      @ToolArg(description = "Example category: flash, process, validation, safety, "
+          + "tool, etc.") final String category,
+      @ToolArg(description = "Example name, e.g. 'tp-simple-gas', "
+          + "'simple-separation', 'hazop-study', or a schema-backed tool name "
+          + "when category is 'tool'") final String name) {
     String example = ExampleCatalog.getExample(category, name);
     if (example != null) {
       return example;
     }
     return errorJson("Example not found: " + category + "/" + name
-        + ". Use getExample with a listed category such as flash, process, validation, or safety");
+        + ". Use getExample with a listed category such as flash, process, validation, "
+        + "safety, or tool");
   }
 
   /**
@@ -235,14 +241,17 @@ public class NeqSimTools {
    * @return JSON schema string
    */
   @Tool(description = "Get the JSON schema for a NeqSim tool's input or output format. "
-      + "Tools: run_flash, run_process, validate_input, list_components, "
-      + "run_batch, get_property_table, get_phase_envelope, get_capabilities, "
-      + "run_hazop, run_barrier_register. " + "Types: input, output.")
+      + "Schema-backed tools include run_flash, run_process, validate_input, "
+      + "list_components, run_batch, get_property_table, get_phase_envelope, "
+      + "get_capabilities, run_pvt, run_flow_assurance, calculate_standard, "
+      + "run_pipeline, run_reservoir, run_field_economics, run_dynamic, "
+      + "run_bioprocess, size_equipment, compare_processes, manage_session, "
+      + "visualize, run_hazop, run_barrier_register, and "
+      + "run_safety_system_performance. Types: input, output.")
   public String getSchema(
-      @ToolArg(description = "Tool name: run_flash, run_process, validate_input, list_components, "
-          + "run_batch, get_property_table, get_phase_envelope, get_capabilities, run_hazop, "
-          + "or run_barrier_register") String toolName,
-      @ToolArg(description = "Schema type: input or output") String schemaType) {
+      @ToolArg(description = "Schema-backed tool name, e.g. run_flash, run_process, "
+          + "run_dynamic, run_hazop, or run_safety_system_performance") final String toolName,
+      @ToolArg(description = "Schema type: input or output") final String schemaType) {
     String schema = SchemaCatalog.getSchema(toolName, schemaType);
     if (schema != null) {
       return schema;
@@ -545,10 +554,12 @@ public class NeqSimTools {
    * @return JSON capabilities manifest
    */
   @Tool(description = "Discover what NeqSim can calculate. Returns a structured manifest "
-      + "of supported thermodynamic models, flash types, equipment types, engineering domains, "
-      + "and calculation modes. Call this first to understand available capabilities "
-      + "before deciding which tool to use. Also describes the trust model and provenance "
-      + "metadata included in every response.")
+      + "of supported thermodynamic models, flash types, equipment types, engineering "
+      + "domains, and calculation modes. Call this first to understand available "
+      + "capabilities before deciding which tool to use. Also describes the trust "
+      + "model and provenance metadata included in every response, schema-backed "
+      + "tool descriptors, setup templates, process JSON contracts, validation "
+      + "coverage, and response-contract coverage.")
   public String getCapabilities() {
     try {
       return CapabilitiesRunner.getCapabilities();
@@ -606,8 +617,11 @@ public class NeqSimTools {
 
   private static String errorJson(String message) {
     JsonObject error = new JsonObject();
+    error.addProperty("apiVersion", ApiEnvelope.API_VERSION);
     error.addProperty("status", "error");
     error.addProperty("message", message);
+    error.add("validation", ApiEnvelope.validationStatus(false, "server", message));
+    error.add("qualityGate", ApiEnvelope.qualityGate("failed", message, true));
     return error.toString();
   }
 
@@ -1878,7 +1892,25 @@ public class NeqSimTools {
       }
       return GSON_PRETTY.toJson(result);
     } catch (Exception e) {
-      // If validation itself fails, return the original result unchanged
+      return appendAutoValidationFailure(resultJson, e.getMessage());
+    }
+  }
+
+  /**
+   * Adds an auto-validation failure block to a calculation result.
+   *
+   * @param resultJson the calculation response JSON
+   * @param message the validation failure message
+   * @return result JSON with an {@code autoValidation} failure block where possible
+   */
+  private static String appendAutoValidationFailure(String resultJson, String message) {
+    try {
+      JsonObject result = JsonParser.parseString(resultJson).getAsJsonObject();
+      JsonObject validation = ApiEnvelope.validationStatus(false, "auto_validation",
+          "Automatic engineering validation failed: " + message);
+      result.add("autoValidation", validation);
+      return GSON_PRETTY.toJson(result);
+    } catch (Exception ignored) {
       return resultJson;
     }
   }

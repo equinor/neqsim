@@ -407,7 +407,7 @@ public class AISchemaDiscovery implements Serializable {
     sb.append("```java\n");
     sb.append("ThermodynamicOperations ops = new ThermodynamicOperations(fluid);\n");
     sb.append("ops.TPflash();  // Calculate phase equilibrium\n");
-    sb.append("fluid.init(3);  // Initialize properties\n");
+    sb.append("fluid.initProperties();  // Initialize thermodynamic and transport properties\n");
     sb.append("```\n\n");
     sb.append("## Getting Properties\n");
     sb.append("```java\n");

@@ -102,6 +102,7 @@ class ExampleCatalogTest {
     assertTrue(categories.contains("batch"));
     assertTrue(categories.contains("property-table"));
     assertTrue(categories.contains("phase-envelope"));
+    assertTrue(categories.contains("tool"));
   }
 
   @Test
@@ -141,6 +142,19 @@ class ExampleCatalogTest {
     assertTrue(root.has("batch"));
     assertTrue(root.has("property-table"));
     assertTrue(root.has("phase-envelope"));
+    assertTrue(root.has("tool"));
+  }
+
+  @Test
+  void testToolExamplesCoverAllSchemaTools() {
+    List<String> toolExamples = ExampleCatalog.getExampleNames("tool");
+    assertEquals(SchemaCatalog.getToolNames().size(), toolExamples.size());
+
+    for (String toolName : SchemaCatalog.getToolNames()) {
+      String example = ExampleCatalog.getExample("tool", toolName);
+      assertNotNull(example, "Missing canonical tool example for " + toolName);
+      JsonParser.parseString(example).getAsJsonObject();
+    }
   }
 
   @Test

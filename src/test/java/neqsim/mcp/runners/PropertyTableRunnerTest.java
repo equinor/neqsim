@@ -29,12 +29,19 @@ class PropertyTableRunnerTest {
     assertTrue("success".equals(obj.get("status").getAsString()),
         "Expected success but got: " + result);
     assertTrue(obj.has("table"));
+    assertTrue(obj.has("apiVersion"));
+    assertTrue(obj.has("tool"));
+    assertTrue(obj.has("data"));
+    assertTrue(obj.has("validation"));
+    assertTrue(obj.has("qualityGate"));
+    assertTrue(obj.has("warnings"));
     assertTrue(obj.getAsJsonArray("table").size() > 0, "Table should have data points");
     assertTrue(obj.has("provenance"), "Response should include provenance metadata");
 
     // Check provenance has required fields
     JsonObject provenance = obj.getAsJsonObject("provenance");
     assertTrue(provenance.has("thermodynamicModel"));
+    assertTrue(provenance.has("benchmarkTrustLevel"));
     assertTrue(provenance.has("calculationType"));
     assertTrue(provenance.has("assumptions"));
     assertTrue(provenance.has("limitations"));
@@ -61,6 +68,9 @@ class PropertyTableRunnerTest {
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertTrue("error".equals(obj.get("status").getAsString()));
     assertTrue(obj.get("code").getAsString().contains("MISSING"));
+    assertTrue(obj.has("apiVersion"));
+    assertTrue(obj.has("validation"));
+    assertTrue(obj.has("qualityGate"));
   }
 
   @Test
