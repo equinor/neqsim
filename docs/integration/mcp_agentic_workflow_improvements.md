@@ -78,7 +78,12 @@ no schema, no example, no validation story, or no predictable response shape.
 
 ## What This Does Not Claim
 
-This update does not certify every MCP tool for final design use. It improves discoverability,
-contract coverage, validation metadata, and review routing. Engineering-critical results still need
-professional review, benchmark checks, standards context, and independent verification where the
-task requires it.
+This update completes the MCP foundation for agentic NeqSim workflows: advanced workflows are now
+discoverable, schema-backed, unit-aware, benchmark-aware, lifecycle-aware, and review-gated. Some
+higher-level workflows, such as P&ID-to-flowsheet generation and full Monte Carlo or Pareto
+optimization, are exposed as standardized agent workflows rather than certified autonomous execution
+engines.
+
+Engineering-critical results still need professional review, benchmark checks, standards context,
+and independent verification where the task requires it. The remaining work is deeper execution
+automation and broader industrial validation, not basic MCP capability discovery.
