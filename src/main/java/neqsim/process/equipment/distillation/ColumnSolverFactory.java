@@ -52,14 +52,13 @@ final class ColumnSolverFactory {
    * their own state without spending another full damped-substitution run inside each rejected
    * candidate; AUTO applies the robust fallback once after ranking the probes.
    */
-  private static final ThreadLocal<Boolean> autoCandidateProbeMode =
-      new ThreadLocal<Boolean>() {
-        /** {@inheritDoc} */
-        @Override
-        protected Boolean initialValue() {
-          return Boolean.FALSE;
-        }
-      };
+  private static final ThreadLocal<Boolean> autoCandidateProbeMode = new ThreadLocal<Boolean>() {
+    /** {@inheritDoc} */
+    @Override
+    protected Boolean initialValue() {
+      return Boolean.FALSE;
+    }
+  };
 
   /** Utility class constructor. */
   private ColumnSolverFactory() {}
@@ -138,8 +137,8 @@ final class ColumnSolverFactory {
 
       DistillationColumn candidateSource = createAutoCandidate(column);
       if (candidateSource == null) {
-        appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
-            null, "pipeline seed copy failed; live damped fallback used");
+        appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION, null,
+            "pipeline seed copy failed; live damped fallback used");
         return runAutoFallbackOnLiveColumn(column, id, summary);
       }
       boolean shortcutApplied = candidateSource.tryAutomaticShortcutInitialization(summary);
@@ -448,9 +447,10 @@ final class ColumnSolverFactory {
       column.markSolverTypeUsed(getSolverType());
       DistillationColumn fallbackCandidate =
           shouldPrepareAcceleratedFallback() ? createDampedFallbackCandidate(column) : null;
+      boolean accepted = false;
       boolean fallbackApplied = false;
       try {
-        column.solveNaphtaliSandholm(id);
+        accepted = column.solveNaphtaliSandholm(id);
       } catch (RuntimeException exception) {
         if (isAutoCandidateProbeMode()) {
           throw exception;
@@ -463,7 +463,7 @@ final class ColumnSolverFactory {
             "Naphtali-Sandholm required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
+      if (!fallbackApplied && !accepted && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "Naphtali-Sandholm did not satisfy convergence criteria", null);
         fallbackApplied = true;
@@ -587,8 +587,7 @@ final class ColumnSolverFactory {
     if (column.hasCondenser && column.hasReboiler) {
       if (column.numberOfTrays >= 12) {
         return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
-            DistillationColumn.SolverType.INSIDE_OUT,
-            DistillationColumn.SolverType.MESH_RESIDUAL,
+            DistillationColumn.SolverType.INSIDE_OUT, DistillationColumn.SolverType.MESH_RESIDUAL,
             DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
       }
       if (column.numberOfTrays >= 6) {
@@ -644,8 +643,8 @@ final class ColumnSolverFactory {
     prepareAutoCandidate(candidateSource, DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
     try {
       ColumnSolveResult result = DAMPED.solve(candidateSource, id);
-      appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
-          result, "relaxed base solve");
+      appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION, result,
+          "relaxed base solve");
       return result;
     } catch (RuntimeException exception) {
       appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION, null,
