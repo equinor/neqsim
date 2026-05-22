@@ -60,6 +60,12 @@ public class PipelineRunner {
           "Ensure the JSON is well-formed");
     }
 
+    String analysis = getString(input, "analysis", getString(input, "mode", "beggsAndBrill"));
+    if ("waterHammer".equalsIgnoreCase(analysis) || "liquidHammer".equalsIgnoreCase(analysis)
+        || "hydraulicTransient".equalsIgnoreCase(analysis)) {
+      return WaterHammerRunner.run(json);
+    }
+
     long startTime = System.currentTimeMillis();
 
     // --- Create fluid ---
@@ -81,28 +87,7 @@ public class PipelineRunner {
 
       // --- Create pipeline ---
       PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("Pipeline", feed);
-
-      if (input.has("length_m")) {
-        pipe.setLength(input.get("length_m").getAsDouble());
-      }
-      if (input.has("diameter_m")) {
-        pipe.setDiameter(input.get("diameter_m").getAsDouble());
-      }
-      if (input.has("pipeWallRoughness_m")) {
-        pipe.setPipeWallRoughness(input.get("pipeWallRoughness_m").getAsDouble());
-      }
-      if (input.has("inletElevation_m")) {
-        pipe.setInletElevation(input.get("inletElevation_m").getAsDouble());
-      }
-      if (input.has("outletElevation_m")) {
-        pipe.setOutletElevation(input.get("outletElevation_m").getAsDouble());
-      }
-      if (input.has("angle_degrees")) {
-        pipe.setAngle(input.get("angle_degrees").getAsDouble());
-      }
-      if (input.has("numberOfSegments")) {
-        pipe.setNumberOfIncrements(input.get("numberOfSegments").getAsInt());
-      }
+      applyPipeConfiguration(pipe, input);
 
       // --- Run simulation ---
       ProcessSystem process = new ProcessSystem();
@@ -121,10 +106,11 @@ public class PipelineRunner {
           feed.getPressure() - pipe.getOutletStream().getPressure());
       data.addProperty("inletTemperature_C", feed.getTemperature() - 273.15);
       data.addProperty("outletTemperature_C", pipe.getOutletStream().getTemperature() - 273.15);
-      data.addProperty("length_m",
-          input.has("length_m") ? input.get("length_m").getAsDouble() : 0.0);
-      data.addProperty("diameter_m",
-          input.has("diameter_m") ? input.get("diameter_m").getAsDouble() : 0.0);
+      JsonObject pipeInput = getPipeInput(input);
+      Double length = getOptionalDouble(input, pipeInput, "length_m", "length");
+      Double diameter = getOptionalDouble(input, pipeInput, "diameter_m", "diameter");
+      data.addProperty("length_m", length == null ? 0.0 : length.doubleValue());
+      data.addProperty("diameter_m", diameter == null ? 0.0 : diameter.doubleValue());
 
       result.add("data", data);
 
@@ -154,10 +140,20 @@ public class PipelineRunner {
     double tempK = 288.15;
     if (input.has("temperature")) {
       tempK = parseTemperature(input.get("temperature"));
+    } else if (input.has("temperature_C")) {
+      tempK = input.get("temperature_C").getAsDouble() + 273.15;
+    } else if (input.has("temperature_K")) {
+      tempK = input.get("temperature_K").getAsDouble();
     }
     double pBara = 50.0;
     if (input.has("pressure")) {
       pBara = parsePressure(input.get("pressure"));
+    } else if (input.has("pressure_bara")) {
+      pBara = input.get("pressure_bara").getAsDouble();
+    } else if (input.has("pressure_bar")) {
+      pBara = input.get("pressure_bar").getAsDouble();
+    } else if (input.has("pressure_barg")) {
+      pBara = input.get("pressure_barg").getAsDouble() + 1.01325;
     }
     SystemInterface fluid = createFluid(model, tempK, pBara);
     if (input.has("components")) {
@@ -170,6 +166,120 @@ public class PipelineRunner {
     fluid.setMixingRule(mixingRule);
     fluid.setMultiPhaseCheck(true);
     return fluid;
+  }
+
+  /**
+   * Applies pipe geometry and solver settings from either top-level JSON fields or a nested
+   * {@code pipe} object.
+   *
+   * @param pipe the pipeline object to configure
+   * @param input the runner input JSON containing optional pipe settings
+   */
+  private static void applyPipeConfiguration(PipeBeggsAndBrills pipe, JsonObject input) {
+    JsonObject pipeInput = getPipeInput(input);
+
+    Double length = getOptionalDouble(input, pipeInput, "length_m", "length");
+    if (length != null) {
+      pipe.setLength(length.doubleValue());
+    }
+
+    Double diameter = getOptionalDouble(input, pipeInput, "diameter_m", "diameter");
+    if (diameter != null) {
+      pipe.setDiameter(diameter.doubleValue());
+    }
+
+    Double roughness =
+        getOptionalDouble(input, pipeInput, "pipeWallRoughness_m", "roughness_m", "roughness");
+    if (roughness != null) {
+      pipe.setPipeWallRoughness(roughness.doubleValue());
+    }
+
+    Double elevation = getOptionalDouble(input, pipeInput, "elevation_m", "elevationChange_m");
+    Double inletElevation = getOptionalDouble(input, pipeInput, "inletElevation_m");
+    Double outletElevation = getOptionalDouble(input, pipeInput, "outletElevation_m");
+    if (elevation != null) {
+      pipe.setElevation(elevation.doubleValue());
+    } else if (inletElevation != null && outletElevation != null) {
+      pipe.setInletElevation(inletElevation.doubleValue());
+      pipe.setOutletElevation(outletElevation.doubleValue());
+      pipe.setElevation(outletElevation.doubleValue() - inletElevation.doubleValue());
+    }
+
+    Double angle = getOptionalDouble(input, pipeInput, "angle_degrees", "angle_deg");
+    if (angle != null) {
+      pipe.setAngle(angle.doubleValue());
+    }
+
+    Integer numberOfSegments =
+        getOptionalInt(input, pipeInput, "numberOfSegments", "numberOfIncrements", "numberOfNodes");
+    if (numberOfSegments != null) {
+      pipe.setNumberOfIncrements(numberOfSegments.intValue());
+    }
+  }
+
+  /**
+   * Returns the nested pipe object when present, otherwise the original input object.
+   *
+   * @param input the runner input JSON
+   * @return nested pipe settings or the input object when no nested object exists
+   */
+  private static JsonObject getPipeInput(JsonObject input) {
+    if (input.has("pipe") && input.get("pipe").isJsonObject()) {
+      return input.getAsJsonObject("pipe");
+    }
+    return input;
+  }
+
+  /**
+   * Reads the first matching double value from a primary or secondary JSON object.
+   *
+   * @param primary the JSON object checked first
+   * @param secondary the JSON object checked when the primary has no matching field
+   * @param names accepted field names in priority order
+   * @return the parsed double value, or {@code null} when no field is present
+   */
+  private static Double getOptionalDouble(JsonObject primary, JsonObject secondary,
+      String... names) {
+    JsonElement element = getOptionalElement(primary, names);
+    if (element == null && secondary != primary) {
+      element = getOptionalElement(secondary, names);
+    }
+    return element == null ? null : Double.valueOf(element.getAsDouble());
+  }
+
+  /**
+   * Reads the first matching integer value from a primary or secondary JSON object.
+   *
+   * @param primary the JSON object checked first
+   * @param secondary the JSON object checked when the primary has no matching field
+   * @param names accepted field names in priority order
+   * @return the parsed integer value, or {@code null} when no field is present
+   */
+  private static Integer getOptionalInt(JsonObject primary, JsonObject secondary, String... names) {
+    JsonElement element = getOptionalElement(primary, names);
+    if (element == null && secondary != primary) {
+      element = getOptionalElement(secondary, names);
+    }
+    return element == null ? null : Integer.valueOf(element.getAsInt());
+  }
+
+  /**
+   * Finds the first non-null JSON field matching one of the supplied names.
+   *
+   * @param object the JSON object to inspect
+   * @param names accepted field names in priority order
+   * @return the matching JSON element, or {@code null} when no field is present
+   */
+  private static JsonElement getOptionalElement(JsonObject object, String... names) {
+    if (object == null) {
+      return null;
+    }
+    for (String name : names) {
+      if (object.has(name) && !object.get(name).isJsonNull()) {
+        return object.get(name);
+      }
+    }
+    return null;
   }
 
   /**
@@ -249,6 +359,21 @@ public class PipelineRunner {
       default:
         return value;
     }
+  }
+
+  /**
+   * Gets a string field from a JSON object with a fallback value.
+   *
+   * @param input source JSON object
+   * @param name field name
+   * @param defaultValue fallback value when the field is missing
+   * @return string field value or fallback value
+   */
+  private static String getString(JsonObject input, String name, String defaultValue) {
+    if (input != null && input.has(name) && !input.get(name).isJsonNull()) {
+      return input.get(name).getAsString();
+    }
+    return defaultValue;
   }
 
   /**

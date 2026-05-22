@@ -43,11 +43,14 @@ This documentation is organized into the following sections:
 | [mercury_removal.md](mercury_removal) | **Mercury removal guard beds** — chemisorption (PuraSpec), bed loading, breakthrough, degradation, mechanical design, cost |
 | [bioprocessing.md](bioprocessing) | **Bio-processing** — reactors, fermenters, solid-liquid separators, LLE, evaporators, dryers, crystallizers |
 | [processmodel/](processmodel/) | ProcessSystem and flowsheet management |
+| [process_json_export_and_e300_fluids.md](process_json_export_and_e300_fluids) | **Process JSON export** — self-contained ProcessSystem/ProcessModel JSON for MCP, including E300-equivalent component properties and volume correction |
 | [simulation-hooks-and-events.md](simulation-hooks-and-events) | **Lifecycle hooks, event bus, auto-validation** for ProcessSystem and ProcessModel |
 | [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
 | [controllers.md](controllers) | Process controllers and logic |
 | [unisim-to-neqsim-conversion.md](unisim-to-neqsim-conversion) | **UniSim/HYSYS conversion** — convert `.usc` models to NeqSim with E300 full-fluid transfer and export back to UniSim |
-| [piping_route_builder.md](piping_route_builder) | **STID/E3D line-list piping route builder** — convert route tables into serial Beggs-and-Brill hydraulic models |
+| [piping_route_builder.md](piping_route_builder) | **STID/E3D line-list piping route builder** — convert route tables into serial Beggs-and-Brill hydraulic models and water-hammer screening handoffs |
+| [water_hammer_implementation.md](../wiki/water_hammer_implementation.md) | **Water hammer/liquid hammer screening** — fast valve closure, pump trip, STID route, tagreader event, and MCP runWaterHammer workflow |
+| [operational_evidence_package.md](operational_evidence_package) | **Operational evidence package** — combine P&ID/STID references, tagreader values, scenario actions, and bottleneck detection |
 | [exergy-analysis.md](exergy-analysis) | **Exergy analysis** — plant-wide destruction hotspots for ProcessSystem and ProcessModel |
 
 ### Process Design Guide
@@ -61,7 +64,6 @@ This documentation is organized into the following sections:
 | Document | Description |
 |----------|-------------|
 | [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK) | **Automated equipment sizing and optimization framework** |
-| [OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](OPTIMIZATION_IMPROVEMENT_PROPOSAL) | Implementation status and roadmap |
 
 **Key Features:**
 - `AutoSizeable` interface - Equipment auto-sizing from flow requirements
@@ -76,6 +78,7 @@ This documentation is organized into the following sections:
 |----------|-------------|
 | [optimization/OPTIMIZATION_AND_CONSTRAINTS.md](optimization/OPTIMIZATION_AND_CONSTRAINTS) | **COMPREHENSIVE: Complete guide to optimization algorithms, constraint types, bottleneck analysis** |
 | [optimization/OPTIMIZATION_OVERVIEW.md](optimization/OPTIMIZATION_OVERVIEW) | When to use which optimizer |
+| [optimization/process-researcher.md](optimization/process-researcher) | **Process researcher** - generate and rank candidate flowsheets from feed/product targets, including reaction routes |
 | [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK) | Equipment capacity limits and utilization tracking |
 
 **Key Features:**
@@ -165,7 +168,7 @@ This documentation is organized into the following sections:
 | Streams | [streams.md](equipment/streams) | Stream, EnergyStream, VirtualStream |
 | Separators | [separators.md](equipment/separators) | Separator, ThreePhaseSeparator, GasScrubber |
 | Heat Exchangers | [heat_exchangers.md](equipment/heat_exchangers) | Heater, Cooler, HeatExchanger |
-| Compressors | [compressors.md](equipment/compressors) | Compressor, CompressorChart |
+| Compressors | [compressors.md](equipment/compressors) | Compressor, CompressorChart, CompressorWashing |
 | Pumps | [pumps.md](equipment/pumps) | Pump, PumpChart |
 | Expanders | [expanders.md](equipment/expanders) | Expander, TurboExpanderCompressor |
 | Valves | [valves.md](equipment/valves) | ThrottlingValve, SafetyValve, BlowdownValve |
@@ -180,6 +183,7 @@ This documentation is organized into the following sections:
 | H2S Scavengers | [H2S_scavenger_guide.md](H2S_scavenger_guide) | H2S chemical scavenging (triazine, glyoxal, iron sponge) |
 | Reactors | [reactors.md](equipment/reactors) | GibbsReactor |
 | Pipelines | [pipelines.md](equipment/pipelines) | Pipeline, AdiabaticPipe, TopsidePiping, Riser |
+| **Water Hammer Screening** | [water_hammer_implementation.md](../wiki/water_hammer_implementation.md) | WaterHammerPipe, WaterHammerStudy, MCP runWaterHammer |
 | **Piping Route Builder** | [piping_route_builder.md](piping_route_builder) | PipingRouteBuilder for STID/E3D line-list route hydraulics |
 | **CO2 Well Analysis** | [co2_injection_well_analysis.md](co2_injection_well_analysis) | CO2InjectionWellAnalyzer, ImpurityMonitor, TransientWellbore, CO2FlowCorrections |
 | Looped Networks | [looped_networks.md](equipment/looped_networks) | LoopedPipeNetwork, Hardy Cross solver |

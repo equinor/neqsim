@@ -11,6 +11,7 @@ Extends render_html_generic.py with:
 
 import re
 import shutil
+from collections import Counter
 from pathlib import Path
 
 import book_builder
@@ -40,11 +41,12 @@ def _html_head(title):
 <style>
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 body {{
-  font-family: Georgia, 'Times New Roman', serif;
-  color: #222;
-  background: #f9f9f9;
-  display: flex;
-  min-height: 100vh;
+    font-family: Georgia, 'Times New Roman', serif;
+    color: #222;
+    background: #f9f9f9;
+    display: flex;
+    min-height: 100vh;
+    overflow-x: hidden;
 }}
 
 /* Sidebar */
@@ -90,11 +92,13 @@ nav.sidebar a:hover {{
 
 /* Main content */
 main {{
-  flex: 1;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 2rem 2.5rem;
-  background: #fff;
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 2.5rem;
+    background: #fff;
 }}
 main h1 {{
   font-size: 1.8rem;
@@ -173,8 +177,16 @@ main th {{
   color: #1a1a1a;
 }}
 main figure {{
-  margin: 1.5rem auto;
-  text-align: center;
+    margin: 1.5rem auto;
+    text-align: center;
+}}
+main figure.numbered-figure {{
+    max-width: 82%;
+}}
+main figure.numbered-figure img {{
+    max-width: 100%;
+    max-height: 460px;
+    object-fit: contain;
 }}
 main figcaption {{
   font-size: 0.88rem;
@@ -507,8 +519,8 @@ figure.lecture-fig {{
   margin: 1.8rem auto;
   padding: 0.9rem 1rem 0.7rem;
   background: #fafbfc;
-  border-left: 3px solid #1a5276;
-  border-radius: 0 4px 4px 0;
+    border: none;
+    border-radius: 4px;
   max-width: 92%;
   page-break-inside: avoid;
   break-inside: avoid;
@@ -533,12 +545,24 @@ figure.lecture-fig figcaption strong {{
   color: #0d3b66;
   margin-right: 0.3rem;
 }}
-figure.lecture-fig figcaption .fig-source {{
-  display: block;
-  margin-top: 0.35rem;
-  font-size: 0.78rem;
-  color: #777;
-  font-style: italic;
+
+p.figure-discussion {{
+    max-width: 92%;
+    margin: 1.2rem auto 0.35rem;
+    color: #2c3e50;
+    font-size: 0.95rem;
+    line-height: 1.65;
+}}
+p.figure-discussion strong {{
+    color: #0d3b66;
+}}
+p.figure-discussion em {{
+    color: #475569;
+}}
+
+.figure-inset {{
+    page-break-inside: avoid;
+    break-inside: avoid;
 }}
 
 /* Worked-example callout */
@@ -576,10 +600,11 @@ figure.lecture-fig figcaption .fig-source {{
 
 /* Responsive */
 @media (max-width: 900px) {{
-  nav.sidebar {{ display: none; }}
-  main {{ padding: 1rem; }}
-  .title-page .tp-title {{ font-size: 1.6rem; }}
-  .title-page .tp-decoration {{ width: 100px; height: 100px; }}
+    nav.sidebar {{ display: none; }}
+    main {{ padding: 1rem; }}
+    main figure.numbered-figure {{ max-width: 100%; }}
+    .title-page .tp-title {{ font-size: 1.6rem; }}
+    .title-page .tp-decoration {{ width: 100px; height: 100px; }}
 }}
 
 @media print {{
@@ -736,55 +761,78 @@ def _humanise_deck(name: str) -> str:
     return stem or name
 
 
-def _figure_discussion(entry, section_topic):
-    """Generate a short contextual discussion paragraph for a lecture figure.
+def _figure_summary(entry):
+    """Return a concise prose summary from slide title/body metadata.
 
-    When the manifest carries the slide's own title and bullet text (extracted
-    from the PPTX/PDF), use them so the caption reflects what the lecturer
-    actually wrote on the slide. Falls back to a deck-level reference when
-    slide text is unavailable.
+    When the manifest carries the slide's own title and bullet text, use it so
+    the book figure reflects the actual engineering content of the source
+    slide rather than only its file name.
     """
-    deck = _humanise_deck(entry.get("source", ""))
-    page = entry.get("page")
-    where = f"slide {page}" if page else "the slide deck"
     slide_title = (entry.get("slide_title") or "").strip()
     slide_body = (entry.get("slide_body") or "").strip()
-
-    parts = []
-    # Use slide bullets/body as the discussion. Skip the slide *title*
-    # because lecturers often write it in ALL CAPS as a divider banner
-    # ("IDENTIFICATION OF BUSINESS CASE - TASKS") which reads poorly inline.
     if slide_body:
         # Convert bullet-separator into commas for prose flow.
         prose = slide_body.replace(" \u2022 ", "; ")
-        parts.append(_esc(prose))
-    elif slide_title:
-        # No body text but we have a title — use it as a short caption,
-        # title-cased so it doesn't shout.
+        prose = re.sub(r"\bB\s*\?\?", "B", prose)
+        prose = re.sub(r"\?{2,}|!{2,}", "", prose)
+        prose = re.sub(r"(-?\d+(?:\.\d+)?)\s*;\s*o\s*;\s*C\b", r"\1 °C", prose)
+        prose = re.sub(r"\b(?:Source|Ref)\s*:\s*[^.;]+[.;]?", "", prose, flags=re.IGNORECASE)
+        prose = re.sub(r"\s+([,.;:])", r"\1", prose)
+        prose = re.sub(r"\s*;\s*", "; ", prose)
+        prose = re.sub(r"\s+", " ", prose).strip()
+        return prose.rstrip(".") + "."
+    if slide_title:
         title = slide_title
         if title.isupper():
             title = title.title()
-        parts.append(_esc(title) + ".")
-    parts.append(
-        f"<span class=\"fig-source\">Source: <em>{_esc(deck)}</em>, "
-        f"{where}.</span>"
-    )
-    return " ".join(parts)
+        return title.rstrip(".") + "."
+    return ""
+
+
+def _figure_discussion(entry, section_topic):
+    """Generate a short contextual caption for a lecture-derived figure."""
+    summary = _figure_summary(entry)
+    if summary:
+        return _esc(summary)
+    return "Visual evidence used in the course material."
+
+
+def _figure_text_reference(entry, section_topic, n_label):
+    """Return an in-text reference paragraph for an inserted figure."""
+    topic = re.sub(r"<[^>]+>", "", section_topic or "").strip()
+    summary = _figure_summary(entry)
+    if topic:
+        first = (f"<strong>Figure {n_label}</strong> connects this section on "
+                 f"<em>{_esc(topic)}</em> to the visual evidence used in the "
+                 "course material.")
+    else:
+        first = (f"<strong>Figure {n_label}</strong> provides a visual anchor "
+                 "for the field-development discussion in this chapter.")
+    if summary:
+        second = f" It highlights this point: {_esc(summary)}"
+    else:
+        second = " It should be read as supporting evidence for the surrounding engineering argument."
+    third = (" The field-development question is which uncertainty, interface, "
+             "bottleneck, or value driver the figure makes visible, and how that "
+             "should affect concept selection or operation.")
+    return f'<p class="figure-discussion">{first}{second}{third}</p>'
 
 
 def _render_inline_figure(entry, section_topic, n_label):
     """Render a single inline lecture figure with discussion caption."""
     rel = "../" + entry["file"]
-    deck = _humanise_deck(entry.get("source", ""))
     return (
+        '<div class="figure-inset">' +
+        _figure_text_reference(entry, section_topic, n_label) +
         '<figure class="lecture-fig">'
         f'<img src="{_esc(rel)}" loading="lazy" '
-        f'alt="Lecture figure {n_label} from {_esc(deck)}"/>'
+        f'alt="Figure {n_label}"/>'
         '<figcaption>'
-        f'<strong>Lecture figure {n_label}.</strong> '
+        f'<strong>Figure {n_label}.</strong> '
         f'{_figure_discussion(entry, section_topic)}'
         '</figcaption>'
         '</figure>'
+        '</div>'
     )
 
 
@@ -1037,12 +1085,10 @@ def _inject_lecture_figures(md_text, entries, ch_num, max_figures=8,
         scores.sort(reverse=True)
         best_score, _, best_idx = scores[0]
         if best_score <= 0:
-            # No keyword hit anywhere — pick the least-loaded non-admin section.
-            non_admin = [i for i in range(n_sec) if not _is_admin(spans[i][2])]
-            if non_admin:
-                best_idx = min(non_admin, key=lambda i: len(alloc[i]))
-            else:
-                best_idx = min(range(n_sec), key=lambda i: len(alloc[i]))
+            # No keyword hit anywhere — do not force the figure into an
+            # arbitrary section. It is better to omit an uncertain figure than
+            # to place it where the surrounding text cannot discuss it.
+            continue
         alloc[best_idx].append(e)
 
     # Walk md_text and rebuild with figures inserted at the END of each
@@ -1426,6 +1472,18 @@ def _md_to_html(md_text):
             i += 1
             continue
 
+        # Blockquotes
+        if stripped.startswith(">"):
+            close_list()
+            quote_lines = []
+            while i < len(lines) and lines[i].strip().startswith(">"):
+                quote_lines.append(re.sub(r"^>\s?", "", lines[i].strip()))
+                i += 1
+            html_parts.append(
+                f"<blockquote><p>{_inline_fmt(' '.join(quote_lines).strip())}</p></blockquote>"
+            )
+            continue
+
         # Headings
         hm = re.match(r"^(#{1,4})\s+(.+)", line)
         if hm:
@@ -1443,7 +1501,13 @@ def _md_to_html(md_text):
             close_list()
             caption = img_m.group(1)
             src = img_m.group(2)
-            html_parts.append(f'<figure><img src="{_esc(src)}" alt="{_esc(caption)}"/>')
+            fig_class = (
+                ' class="numbered-figure"'
+                if caption.strip().lower().startswith("figure ") else ""
+            )
+            html_parts.append(
+                f'<figure{fig_class}><img src="{_esc(src)}" alt="{_esc(caption)}"/>'
+            )
             if caption:
                 html_parts.append(f"<figcaption>{_inline_fmt(caption)}</figcaption>")
             html_parts.append("</figure>")
@@ -1552,6 +1616,7 @@ def _md_to_html(md_text):
                 and not lines[i].strip().startswith("#") \
                 and not lines[i].strip().startswith("```") \
                 and not re.match(r"^!\[", lines[i].strip()) \
+                and not lines[i].strip().startswith(">") \
                 and not lines[i].strip().startswith("- ") \
                 and not lines[i].strip().startswith("* ") \
                 and not re.match(r"^\d+\.\s", lines[i].strip()) \
@@ -1576,6 +1641,27 @@ def _inline_fmt(text):
     # Italic (but not ** and not math $)
     text = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"<em>\1</em>", text)
     return text
+
+
+def _deduplicate_heading_ids(html_text):
+    """Return HTML with duplicate heading id attributes made unique."""
+    all_id_counts = Counter(re.findall(r'\bid="([^"]+)"', html_text))
+    heading_ids = re.findall(r'<h[1-6][^>]*\bid="([^"]+)"', html_text)
+    for heading_id in heading_ids:
+        all_id_counts[heading_id] -= 1
+    seen_ids = {id_value for id_value, count in all_id_counts.items() if count > 0}
+
+    def replace_heading_id(match):
+        prefix, base_id, suffix = match.groups()
+        unique_id = base_id
+        counter = 2
+        while unique_id in seen_ids:
+            unique_id = f"{base_id}-{counter}"
+            counter += 1
+        seen_ids.add(unique_id)
+        return f'{prefix}{unique_id}{suffix}'
+
+    return re.sub(r'(<h[1-6][^>]*\bid=")([^"]+)(")', replace_heading_id, html_text)
 
 
 def _render_table(lines):
@@ -1605,7 +1691,7 @@ def _render_table(lines):
 # Sidebar generation
 # ---------------------------------------------------------------------------
 
-def _build_sidebar(cfg):
+def _build_sidebar(cfg, include_references=False):
     """Build sidebar navigation HTML from book config."""
     items = []
     items.append(f'<h2>{_esc(cfg.get("title", "Book"))}</h2>')
@@ -1624,6 +1710,9 @@ def _build_sidebar(cfg):
     for bm in cfg.get("backmatter", []):
         label = bm.replace("_", " ").title()
         items.append(f'<li><a href="#{bm}">{_esc(label)}</a></li>')
+
+    if include_references:
+        items.append('<li><a href="#references">References</a></li>')
 
     items.append("</ul>")
     return "\n".join(items)
@@ -1659,16 +1748,22 @@ def render_book_html(book_dir, chapter_filter=None):
 
     # Collect all cited keys across chapters (global numbering)
     all_cited_keys = collect_all_cited_keys_from_chapters(book_dir, cfg)
+    include_references = bool(all_cited_keys and bib_entries)
 
-    # Cross-chapter de-dup state for lecture-figure injection.
+    # Cross-chapter de-dup state for optional lecture-figure injection.
     _seen_lecture_files: set = set()
     _seen_lecture_hashes: set = set()
+    inject_lecture_figures = bool(
+        cfg.get("settings", {}).get("inject_lecture_figures", False))
 
-    # Load lecture-figure manifest (if produced by extract_lecture_figures.py).
+    # Load lecture-figure manifest only when explicitly enabled. Auto-extracted
+    # slide images can contain OCR artifacts, duplicate labels, decorative
+    # placeholders, or stale source text, so production books should rely on
+    # curated chapter figures by default.
     lecture_manifest_path = (book_dir / "figures" / "lectures" / "auto"
                              / "manifest.json")
     lecture_entries_by_chapter: dict = {}
-    if lecture_manifest_path.exists():
+    if inject_lecture_figures and lecture_manifest_path.exists():
         try:
             import json as _json
             mf = _json.loads(
@@ -1697,7 +1792,7 @@ def render_book_html(book_dir, chapter_filter=None):
     # Sidebar
     if not chapter_filter:
         parts.append('<nav class="sidebar">')
-        parts.append(_build_sidebar(cfg))
+        parts.append(_build_sidebar(cfg, include_references=include_references))
         parts.append("</nav>")
 
     parts.append("<main>")
@@ -1823,9 +1918,10 @@ def render_book_html(book_dir, chapter_filter=None):
             # Strip empty "## References" sections (will be rendered at end)
             text = re.sub(
                 r'##\s+References\s*\n?(?:\s*\n)*', '', text)
-            # Inject auto-extracted lecture figures inline between sections,
-            # each wrapped in a <figure> with a discussion caption tied to
-            # the surrounding heading.
+            # Optionally inject auto-extracted lecture figures inline between
+            # sections, each wrapped in a <figure> with a discussion caption
+            # tied to the surrounding heading. This is off by default for
+            # release builds; enable with settings.inject_lecture_figures.
             inline_entries = lecture_entries_by_chapter.get(ch["dir"], [])
             if inline_entries:
                 text = _inject_lecture_figures(
@@ -1870,6 +1966,14 @@ def render_book_html(book_dir, chapter_filter=None):
     # Copy chapter figures into submission/figures/ so relative src paths work
     figures_out = submission_dir / "figures"
     figures_out.mkdir(parents=True, exist_ok=True)
+    frontmatter_figures = book_dir / "frontmatter" / "figures"
+    if frontmatter_figures.is_dir():
+        for img_file in frontmatter_figures.rglob("*"):
+            if img_file.suffix.lower() in (".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp"):
+                rel_img = img_file.relative_to(frontmatter_figures)
+                out_img = figures_out / rel_img
+                out_img.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(str(img_file), str(out_img))
     for _ch_num, ch, _pt in book_builder.iter_chapters(cfg):
         ch_fig_dir = book_builder.resolve_chapter_dir(book_dir, ch) / "figures"
         if ch_fig_dir.is_dir():
@@ -1890,10 +1994,24 @@ def render_book_html(book_dir, chapter_filter=None):
             shutil.rmtree(lectures_dst)
         shutil.copytree(str(lectures_src), str(lectures_dst))
 
+    # Copy backmatter asset folders so links such as
+    # review_exam_preparation_assets/figures/example.png resolve from
+    # submission/book.html and can be embedded into standalone HTML.
+    backmatter_dir = book_dir / "backmatter"
+    if backmatter_dir.is_dir():
+        for asset_dir in backmatter_dir.iterdir():
+            if not asset_dir.is_dir() or not asset_dir.name.endswith("_assets"):
+                continue
+            asset_dst = submission_dir / asset_dir.name
+            if asset_dst.exists():
+                shutil.rmtree(asset_dst)
+            shutil.copytree(str(asset_dir), str(asset_dst))
+
     # Rewrite "../../figures/..." (chapter-section relative) to "../figures/..."
     # so that submission/book.html (one level under book root) resolves correctly.
     html_text = "\n".join(parts)
     html_text = html_text.replace('src="../../figures/', 'src="../figures/')
+    html_text = _deduplicate_heading_ids(html_text)
 
     out_name = "book.html" if not chapter_filter else f"{chapter_filter}.html"
     out_path = submission_dir / out_name

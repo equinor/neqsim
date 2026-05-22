@@ -40,6 +40,11 @@ public class TPflash extends Flash {
   private static final double MULTIPHASE_RESCUE_LIQUID_SUM_Z_OVER_K_LIMIT = 5.0;
   /** Minimum log K spread for liquid endpoint rescue. */
   private static final double MULTIPHASE_RESCUE_LIQUID_LOG_K_SPREAD_LIMIT = 3.0;
+  /**
+   * Minimum extensive Gibbs-energy reduction (J) required for the spurious-multiphase rescue to
+   * collapse a two-phase result to a single phase. Avoids false triggers from numerical noise.
+   */
+  private static final double SPURIOUS_MULTIPHASE_GIBBS_DROP_THRESHOLD_J = 1.0;
   /** Guard preventing recursive rescue attempts while the local seed flash is running. */
   private static final ThreadLocal<Boolean> MULTIPHASE_RESCUE_ACTIVE = new ThreadLocal<Boolean>() {
     @Override
@@ -51,6 +56,20 @@ public class TPflash extends Flash {
   SystemInterface clonedSystem;
   double presdiff = 1.0;
   private final RachfordRice rachfordRice = new RachfordRice();
+  /**
+   * Extensive single-phase Gibbs energy (J) at the overall feed composition, evaluated on the
+   * better cubic root (gas or liquid) at the very beginning of {@link #runInternal()}. Used as a
+   * cheap reference value by {@link #rescueSpuriousMultiphaseEndpoint()} to decide whether the
+   * converged multiphase result is metastable and should be collapsed back to a single phase. NaN
+   * means the reference is not available (e.g. single-component or single-phase systems).
+   */
+  private double referenceSinglePhaseGibbs = Double.NaN;
+  /**
+   * Phase type corresponding to {@link #referenceSinglePhaseGibbs} — the densest/most-stable cubic
+   * root identified at the start of {@link #runInternal()}. Used as the collapse target when the
+   * spurious-multiphase rescue triggers.
+   */
+  private PhaseType referenceSinglePhaseType = null;
 
   /**
    * <p>
@@ -345,6 +364,13 @@ public class TPflash extends Flash {
     }
     // logger.debug("minimum gibbs phase " + minGibbsPhase);
     minimumGibbsEnergy = system.getPhase(minGibbsPhase).getGibbsEnergy();
+    // Cache the better single-phase Gibbs and its phase type for the post-convergence
+    // spurious-multiphase acceptance check at the end of runInternal(). This is the
+    // extensive Gibbs at the overall feed composition for the densest cubic root,
+    // and is the correct reference for deciding whether the converged multiphase split
+    // is metastable. Capturing it here avoids cloning + re-initialising the system later.
+    referenceSinglePhaseGibbs = minimumGibbsEnergy;
+    referenceSinglePhaseType = system.getPhase(minGibbsPhase).getType();
 
     if (system.getPhase(0).getNumberOfComponents() == 1 || system.getMaxNumberOfPhases() == 1) {
       system.setNumberOfPhases(1);
@@ -669,6 +695,8 @@ public class TPflash extends Flash {
       TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
       operation.run();
       rescueSinglePhaseMultiphaseEndpoint();
+      // rescueSpuriousMultiphaseEndpoint() is called once at the end of runInternal()
+      // after orderByDensity(), so it is intentionally not repeated here.
     } else {
       try {
         // Checks if gas or oil is the most stable phase
@@ -716,6 +744,7 @@ public class TPflash extends Flash {
       logger.warn("Final init after orderByDensity failed: " + ex.getMessage());
     }
     rescueSinglePhaseMultiphaseEndpoint();
+    rescueSpuriousMultiphaseEndpoint();
 
     // Final chemical equilibrium call after all phase reordering
     // This ensures chemical equilibrium is solved on the final phase configuration
@@ -921,6 +950,97 @@ public class TPflash extends Flash {
       system.setBeta(phaseIndex, source.getBeta(phaseIndex));
     }
     system.normalizeBeta();
+    system.init(1);
+  }
+
+  /**
+   * Post-convergence acceptance test that collapses a spurious multiphase result to a single phase
+   * when the converged multiphase Gibbs energy is higher than the reference single-phase Gibbs
+   * captured at the start of {@link #runInternal()}.
+   *
+   * <p>
+   * This closes a structural gap in TPflash/TPmultiflash: the two-phase Newton/successive-
+   * substitution loop converges to a stationary point of the equilibrium equations that is a local
+   * Gibbs minimum on the multiphase manifold but is not guaranteed to be lower than the homogeneous
+   * single-phase Gibbs at the overall feed composition. Michelsen's stability analysis in
+   * TPmultiflash only decides whether to <em>add</em> a phase; it never tests whether the converged
+   * multiphase state should be <em>collapsed</em>. Near the cubic-EOS critical region (typically
+   * PR/SRK with light + heavy hydrocarbons) this manifests as isolated low-density "spike" cells in
+   * density / phase maps where the Newton has locked onto a metastable VLE root.
+   * </p>
+   *
+   * <p>
+   * The reference single-phase Gibbs ({@link #referenceSinglePhaseGibbs}) is the better of the two
+   * cubic roots (gas and liquid) evaluated on the feed at the start of the flash, so the comparison
+   * is exact, requires no cloning, and adds only a single subtraction beyond the
+   * {@code getGibbsEnergy()} call (no extra {@code init} is performed — {@code init(1)} from the
+   * preceding {@code orderByDensity} is sufficient). A threshold of
+   * {@link #SPURIOUS_MULTIPHASE_GIBBS_DROP_THRESHOLD_J} joules avoids triggering on numerical
+   * noise. Skipped for chemical / electrolyte systems.
+   * </p>
+   *
+   * <p>
+   * Hot-path cost when the rescue does not trigger: a handful of field reads plus one
+   * {@link SystemInterface#getGibbsEnergy()} call (which sums per-phase Gibbs). Guards are ordered
+   * cheapest-first so single-phase results — the dominant case after the {@code removePhase}
+   * cleanup immediately preceding this call — exit after two field reads.
+   * </p>
+   */
+  private void rescueSpuriousMultiphaseEndpoint() {
+    // Cheapest-first guards combined into a single short-circuit expression. Single-phase
+    // results (the dominant case after the removePhase cleanup just above the call site) bail
+    // on the first term without touching any property method.
+    final int numPhases = system.getNumberOfPhases();
+    if (numPhases < 2 || !system.doMultiPhaseCheck() || referenceSinglePhaseType == null
+        || Double.isNaN(referenceSinglePhaseGibbs)
+        || system.getPhase(0).getNumberOfComponents() <= 1) {
+      return;
+    }
+    // Smallest beta — fast path for the 2-phase case (overwhelmingly common); generic loop
+    // for 3+. Reject if any phase fraction is already negligible: the post-init cleanup will
+    // collapse it and the multiphase Gibbs is essentially equal to the single-phase value.
+    double smallestBeta;
+    if (numPhases == 2) {
+      final double b0 = system.getBeta(0);
+      final double b1 = system.getBeta(1);
+      smallestBeta = (b0 < b1) ? b0 : b1;
+    } else {
+      smallestBeta = system.getBeta(0);
+      for (int i = 1; i < numPhases; i++) {
+        final double b = system.getBeta(i);
+        if (b < smallestBeta) {
+          smallestBeta = b;
+        }
+      }
+    }
+    if (smallestBeta < 1.0e-3) {
+      return;
+    }
+    // hasIons() loops components; defer until we know we actually have a candidate.
+    if (system.isChemicalSystem() || system.hasIons()) {
+      return;
+    }
+    // Compare current multiphase Gibbs to the cached single-phase reference at the feed.
+    // Negated > guards against NaN naturally. init(1) (from the preceding orderByDensity) is
+    // sufficient — getGibbsEnergy() is used after init(1) throughout runInternal().
+    final double currentGibbs = system.getGibbsEnergy();
+    if (!(currentGibbs - referenceSinglePhaseGibbs > SPURIOUS_MULTIPHASE_GIBBS_DROP_THRESHOLD_J)) {
+      return;
+    }
+    // Spurious multiphase confirmed: single-phase reference is more stable. Collapse.
+    if (logger.isDebugEnabled()) {
+      logger.debug(
+          "Collapsing spurious multiphase result: G_multiphase={} J, G_reference_single={} J ({}), drop={} J",
+          currentGibbs, referenceSinglePhaseGibbs, referenceSinglePhaseType,
+          currentGibbs - referenceSinglePhaseGibbs);
+    }
+    system.setNumberOfPhases(1);
+    system.setPhaseIndex(0, 0);
+    system.setBeta(0, 1.0);
+    system.setPhaseType(0, referenceSinglePhaseType);
+    // init(0) recomputes fugacity coefficients for the chosen cubic root at the feed
+    // composition; init(1) finalises mass balance / extensive properties.
+    system.init(0);
     system.init(1);
   }
 

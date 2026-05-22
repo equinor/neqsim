@@ -566,6 +566,10 @@ def _preprocess_chapter(text, ch_num, figures_dir=None, key_to_num=None,
     # Resolve citations
     if key_to_num:
         text = resolve_citations_numbered_plain(text, key_to_num)
+    # Some generated chapters already contain HTML-style bibliography anchors,
+    # for example [[1](#ref-1)]. Pandoc converts those to Typst label links,
+    # which fail when the labels are not emitted in the PDF bibliography.
+    text = re.sub(r"\[([0-9]+)\]\(#ref-[^)]+\)", r"\1", text)
     # Strip empty "## References" placeholder
     text = re.sub(r'##\s+References\s*\n?(?:\s*\n)*', '', text)
 
@@ -614,6 +618,45 @@ def _preprocess_chapter(text, ch_num, figures_dir=None, key_to_num=None,
     return text
 
 
+def _keep_typst_ordered_lists_continuous(text):
+    """Keep consecutive Typst ordered-list items in one list block.
+
+    Pandoc preserves blank lines between loose Markdown list items. Typst treats
+    those blank lines as list terminators, so each following ``+`` item starts a
+    new list at 1. This removes only the separator blanks between consecutive
+    top-level ordered-list items.
+    """
+    lines = text.splitlines()
+    fixed = []
+    index = 0
+    in_ordered_list = False
+
+    while index < len(lines):
+        line = lines[index]
+
+        if line.strip() == "":
+            next_index = index + 1
+            while next_index < len(lines) and lines[next_index].strip() == "":
+                next_index += 1
+
+            if (in_ordered_list and next_index < len(lines)
+                    and lines[next_index].startswith("+ ")):
+                index = next_index
+                continue
+
+            fixed.append(line)
+            in_ordered_list = False
+            index += 1
+            continue
+
+        fixed.append(line)
+        if line.startswith("+ "):
+            in_ordered_list = True
+        index += 1
+
+    return "\n".join(fixed) + ("\n" if text.endswith("\n") else "")
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -651,6 +694,16 @@ def render_book_pdf(book_dir, chapter_filter=None):
 
     submission_dir = book_dir / "submission"
     submission_dir.mkdir(parents=True, exist_ok=True)
+    frontmatter_figures = book_dir / "frontmatter" / "figures"
+    if frontmatter_figures.is_dir():
+        figures_dir = submission_dir / "figures"
+        figures_dir.mkdir(parents=True, exist_ok=True)
+        for img_file in frontmatter_figures.rglob("*"):
+            if img_file.suffix.lower() in (".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp"):
+                rel_img = img_file.relative_to(frontmatter_figures)
+                dest = figures_dir / rel_img
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(img_file, dest)
 
     # Load bibliography and build citation numbering
     bib_path = book_dir / "refs.bib"
@@ -714,6 +767,7 @@ def render_book_pdf(book_dir, chapter_filter=None):
                 if result.returncode == 0 and typ_frag.exists():
                     frag_text = typ_frag.read_text(encoding="utf-8")
                     frag_text = postprocess_typst(frag_text)
+                    frag_text = _keep_typst_ordered_lists_continuous(frag_text)
                     # Wrap in a scope that disables heading numbering
                     frag_text = (
                         '#set heading(numbering: none)\n'
@@ -796,6 +850,7 @@ def render_book_pdf(book_dir, chapter_filter=None):
         if typ_fragment.exists():
             frag_text = typ_fragment.read_text(encoding="utf-8")
             frag_text = postprocess_typst(frag_text)
+            frag_text = _keep_typst_ordered_lists_continuous(frag_text)
             chapter_fragments.append(frag_text)
 
         # Cleanup temp
@@ -842,6 +897,7 @@ def render_book_pdf(book_dir, chapter_filter=None):
     # Final postprocessing on the assembled document (catches bibliography
     # fragments and any cross-fragment issues missed by per-chapter passes).
     full_typst = postprocess_typst(full_typst)
+    full_typst = _keep_typst_ordered_lists_continuous(full_typst)
 
     # Write master file
     master_typ = submission_dir / "book.typ"

@@ -263,7 +263,9 @@ The residual enthalpy and entropy are essential for process simulation (heat exc
 
 $$H^{\text{res}} = A^{\text{res}} + TS^{\text{res}} + PV - nRT$$
 
-$$C_P^{\text{res}} = C_V^{\text{res}} + T \frac{(\partial P / \partial T)_V^2}{(\partial P / \partial V)_T} + nR$$
+$$C_P - C_V = -T \frac{(\partial P / \partial T)_V^2}{(\partial P / \partial V)_T}$$
+
+For residual properties, the ideal-gas contribution is added separately according to the reference state used by the property package.
 
 For CPA, these derivatives include contributions from both the cubic and association terms, which must be computed consistently. The association contribution to enthalpy is particularly important because the degree of hydrogen bonding changes with temperature — breaking hydrogen bonds absorbs energy, contributing to the anomalously high heat capacity of water.
 
@@ -301,7 +303,7 @@ The **isobaric thermal expansion coefficient** measures volume response to tempe
 
 $$\alpha_P = \frac{1}{V}\left(\frac{\partial V}{\partial T}\right)_P = -\frac{1}{V}\frac{(\partial P/\partial T)_V}{(\partial P/\partial V)_T}$$
 
-Both quantities require first derivatives of the EoS and are straightforward to compute once the pressure equation and its derivatives are available. For water, the thermal expansion coefficient has an anomalous behavior — it is negative below 4°C (water contracts upon heating) — which CPA captures through the temperature dependence of association.
+Both quantities require first derivatives of the EoS and are straightforward to compute once the pressure equation and its derivatives are available. For water, the thermal expansion coefficient has an anomalous behavior: it is negative below about 4°C at atmospheric pressure. Standard CPA improves many associating-fluid properties, but reproducing this density maximum quantitatively is a demanding test and should be verified against water-property data before relying on it for design.
 
 ### 2.5.6 Summary of Derivative Relations
 
@@ -425,27 +427,23 @@ Near the phase boundary (bubble or dew point), the flash can converge slowly bec
 - **Help**: the association term provides a strong driving force for phase splitting in water–hydrocarbon systems, making the flash more robust
 - **Hinder**: near critical points of associating systems, the association term creates steep gradients in the fugacity surface
 
-## 2.9 Gibbs Phase Rule and Degrees of Freedom
+## 2.9 Degrees of Freedom in CPA Flash Problems
 
-### 2.9.1 The Phase Rule
+### 2.9.1 Phase Counts in Associating Systems
 
-Gibbs' phase rule states that the number of independent intensive variables (degrees of freedom) is:
+Building on the phase rule introduced in Section 2.6, the number of stable phases determines the structure of the flash problem. For a binary water–methane system ($C = 2$):
 
-$$F = C - \pi + 2$$
-
-where $C$ is the number of components and $\pi$ is the number of phases. For a binary water–methane system ($C = 2$):
-
-- **Single phase** ($\pi = 1$): $F = 3$ — temperature, pressure, and composition are independent
-- **Two phases** ($\pi = 2$): $F = 2$ — specifying T and P determines all compositions
-- **Three phases** ($\pi = 3$): $F = 1$ — only one variable is independent (a three-phase line in T–P space)
+- **Single phase** ($\pi = 1$): temperature, pressure, and composition can vary independently
+- **Two phases** ($\pi = 2$): specifying T and P fixes the equilibrium phase compositions for a given binary pair
+- **Three phases** ($\pi = 3$): only one intensive variable can be varied along the three-phase line
 
 ### 2.9.2 Implications for CPA Flash Calculations
 
 The phase rule determines the structure of the flash problem:
 
-For a **two-phase flash** (TP specification, $\pi = 2$), we specify $T$, $P$, and the $C - 1$ independent feed compositions, totaling $C + 1$ specifications. The unknowns are the $C - 1$ independent compositions in each phase plus the vapor fraction $\beta$, totaling $2(C-1) + 1 = 2C - 1$. The $C$ equilibrium equations ($\mu_i^L = \mu_i^V$) plus $C$ normalization constraints ($\sum y_i = 1$, $\sum x_i = 1$) provide $2C$ equations, matching the unknowns.
+For a **two-phase flash** (TP specification, $\pi = 2$), we specify $T$, $P$, and the $C - 1$ independent feed compositions. The flash then solves for the phase fraction and the independent phase compositions subject to material balance, composition normalization, and equality of fugacity for every component. Algorithms such as Rachford–Rice eliminate some of these unknowns, but the closure comes from the same equilibrium and balance equations.
 
-For a **three-phase flash** (relevant for water–oil–gas systems), the system has $3(C-1) + 2$ unknowns (compositions in three phases plus two phase fractions) and $3C$ equations ($C$ equilibrium equations per phase pair times 2, plus 3 normalization constraints). The three-phase flash is significantly more challenging numerically and is one of CPA's strong points — it naturally handles the aqueous phase that forms in water-containing hydrocarbon systems.
+For a **three-phase flash** (relevant for water–oil–gas systems), the flash includes three phase-composition vectors and two independent phase fractions. The additional phase makes the stability analysis and initialization more important. This is one of CPA's practical strengths: the association term gives a physically meaningful aqueous phase in water-containing hydrocarbon systems.
 
 ### 2.9.3 Counting Degrees of Freedom with Association
 
@@ -495,9 +493,6 @@ Key points from this chapter:
 
 *Figure 2.4: Ex01 Fugacity*
 
+![Figure 2.5: Ex03 Gibbs Mixing](figures/fig_ch02_ex03_gibbs_mixing.png)
 
-## Figures
-
-![Figure 2.1: Ex03 Gibbs Mixing](figures/fig_ch02_ex03_gibbs_mixing.png)
-
-*Figure 2.1: Ex03 Gibbs Mixing*
+*Figure 2.5: Ex03 Gibbs Mixing*

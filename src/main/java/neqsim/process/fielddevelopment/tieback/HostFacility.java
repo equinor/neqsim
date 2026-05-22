@@ -1,6 +1,9 @@
 package neqsim.process.fielddevelopment.tieback;
 
 import java.io.Serializable;
+import java.util.List;
+import neqsim.process.fielddevelopment.evaluation.BottleneckAnalyzer;
+import neqsim.process.fielddevelopment.evaluation.BottleneckAnalyzer.BottleneckResult;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -240,6 +243,104 @@ public class HostFacility implements Serializable {
    */
   public boolean canAcceptOilRate(double additionalRateBopd) {
     return additionalRateBopd <= getSpareOilCapacity();
+  }
+
+  /**
+   * Assesses whether the host can accept additional production.
+   *
+   * <p>
+   * The method first checks the explicit nameplate spare capacities. If a detailed
+   * {@link ProcessSystem} is attached, it also runs {@link BottleneckAnalyzer} and flags active
+   * process bottlenecks that could make the nameplate spare capacity misleading.
+   * </p>
+   *
+   * @param additionalGasMSm3d additional gas rate in MSm3/d
+   * @param additionalOilBopd additional oil rate in bbl/d
+   * @param additionalWaterM3d additional produced water rate in m3/d
+   * @param additionalLiquidM3d additional total liquid rate in m3/d
+   * @return host capacity report with pass/fail status and bottleneck summary
+   */
+  public HostCapacityReport assessCapacity(double additionalGasMSm3d, double additionalOilBopd,
+      double additionalWaterM3d, double additionalLiquidM3d) {
+    boolean gasOk = additionalGasMSm3d <= getSpareGasCapacity();
+    boolean oilOk = additionalOilBopd <= getSpareOilCapacity();
+    boolean waterOk = waterCapacityM3d <= 0.0 || additionalWaterM3d <= getSpareWaterCapacity();
+    boolean liquidOk = liquidCapacityM3d <= 0.0 || additionalLiquidM3d <= getSpareLiquidCapacity();
+
+    boolean processModelUsed = false;
+    boolean processOk = true;
+    String primaryBottleneckName = null;
+    double primaryBottleneckUtilization = 0.0;
+    int activeBottleneckCount = 0;
+    String processMessage = "No process model attached";
+
+    if (processSystem != null) {
+      processModelUsed = true;
+      try {
+        processSystem.run();
+        BottleneckAnalyzer analyzer = new BottleneckAnalyzer(processSystem);
+        List<BottleneckResult> active = analyzer.getActiveBottlenecks();
+        activeBottleneckCount = active.size();
+        BottleneckResult primary = analyzer.getPrimaryBottleneck();
+        if (primary != null) {
+          primaryBottleneckName = primary.getEquipmentName();
+          primaryBottleneckUtilization = primary.getUtilization();
+          processOk = primary.getUtilization() < 0.95;
+          processMessage = String.format("Primary process bottleneck %s at %.0f%% utilization",
+              primary.getEquipmentName(), primary.getUtilization() * 100.0);
+        } else {
+          processMessage = "Process model has no recognized bottlenecking equipment";
+        }
+      } catch (Exception e) {
+        processOk = false;
+        processMessage = "Process model capacity check failed: " + e.getMessage();
+      }
+    }
+
+    boolean capacityAvailable = gasOk && oilOk && waterOk && liquidOk && processOk;
+    String summary = buildCapacitySummary(additionalGasMSm3d, additionalOilBopd, additionalWaterM3d,
+        additionalLiquidM3d, gasOk, oilOk, waterOk, liquidOk, processMessage);
+
+    return new HostCapacityReport(name, capacityAvailable, gasOk, oilOk, waterOk, liquidOk,
+        processOk, processModelUsed, additionalGasMSm3d, getSpareGasCapacity(), additionalOilBopd,
+        getSpareOilCapacity(), additionalWaterM3d, getSpareWaterCapacity(), additionalLiquidM3d,
+        getSpareLiquidCapacity(), primaryBottleneckName, primaryBottleneckUtilization,
+        activeBottleneckCount, summary);
+  }
+
+  /**
+   * Builds a concise capacity summary string.
+   *
+   * @param additionalGasMSm3d additional gas rate in MSm3/d
+   * @param additionalOilBopd additional oil rate in bbl/d
+   * @param additionalWaterM3d additional produced water rate in m3/d
+   * @param additionalLiquidM3d additional total liquid rate in m3/d
+   * @param gasOk true if gas capacity passes
+   * @param oilOk true if oil capacity passes
+   * @param waterOk true if water capacity passes
+   * @param liquidOk true if liquid capacity passes
+   * @param processMessage process-model bottleneck message
+   * @return formatted capacity summary
+   */
+  private String buildCapacitySummary(double additionalGasMSm3d, double additionalOilBopd,
+      double additionalWaterM3d, double additionalLiquidM3d, boolean gasOk, boolean oilOk,
+      boolean waterOk, boolean liquidOk, String processMessage) {
+    StringBuilder summary = new StringBuilder();
+    summary.append("Capacity: ");
+    summary.append(String.format("Gas %.2f/%.2f MSm3/d %s; ", additionalGasMSm3d,
+        getSpareGasCapacity(), gasOk ? "OK" : "LIMIT"));
+    summary.append(String.format("Oil %.0f/%.0f bbl/d %s; ", additionalOilBopd,
+        getSpareOilCapacity(), oilOk ? "OK" : "LIMIT"));
+    if (waterCapacityM3d > 0.0) {
+      summary.append(String.format("Water %.0f/%.0f m3/d %s; ", additionalWaterM3d,
+          getSpareWaterCapacity(), waterOk ? "OK" : "LIMIT"));
+    }
+    if (liquidCapacityM3d > 0.0) {
+      summary.append(String.format("Liquid %.0f/%.0f m3/d %s; ", additionalLiquidM3d,
+          getSpareLiquidCapacity(), liquidOk ? "OK" : "LIMIT"));
+    }
+    summary.append(processMessage);
+    return summary.toString();
   }
 
   // ============================================================================
@@ -553,6 +654,303 @@ public class HostFacility implements Serializable {
     this.processSystem = processSystem;
   }
 
+  /**
+   * Gets the total liquid capacity.
+   *
+   * @return liquid capacity in m3/d
+   */
+  public double getLiquidCapacityM3d() {
+    return liquidCapacityM3d;
+  }
+
+  /**
+   * Sets the total liquid capacity.
+   *
+   * @param liquidCapacityM3d liquid capacity in m3/d
+   */
+  public void setLiquidCapacityM3d(double liquidCapacityM3d) {
+    this.liquidCapacityM3d = liquidCapacityM3d;
+  }
+
+  /**
+   * Gets the total liquid utilization.
+   *
+   * @return liquid utilization as a fraction from 0 to 1
+   */
+  public double getLiquidUtilization() {
+    return liquidUtilization;
+  }
+
+  /**
+   * Sets the total liquid utilization.
+   *
+   * @param liquidUtilization liquid utilization as a fraction from 0 to 1
+   */
+  public void setLiquidUtilization(double liquidUtilization) {
+    this.liquidUtilization = Math.max(0, Math.min(1, liquidUtilization));
+  }
+
+  /**
+   * Report from host capacity assessment.
+   */
+  public static final class HostCapacityReport implements Serializable {
+    private static final long serialVersionUID = 1001L;
+
+    private final String hostName;
+    private final boolean capacityAvailable;
+    private final boolean gasCapacityAvailable;
+    private final boolean oilCapacityAvailable;
+    private final boolean waterCapacityAvailable;
+    private final boolean liquidCapacityAvailable;
+    private final boolean processCapacityAvailable;
+    private final boolean processModelUsed;
+    private final double requiredGasMSm3d;
+    private final double spareGasMSm3d;
+    private final double requiredOilBopd;
+    private final double spareOilBopd;
+    private final double requiredWaterM3d;
+    private final double spareWaterM3d;
+    private final double requiredLiquidM3d;
+    private final double spareLiquidM3d;
+    private final String primaryBottleneckName;
+    private final double primaryBottleneckUtilization;
+    private final int activeBottleneckCount;
+    private final String summary;
+
+    /**
+     * Creates a host capacity report.
+     *
+     * @param hostName host name
+     * @param capacityAvailable true if all capacity checks pass
+     * @param gasCapacityAvailable true if gas capacity passes
+     * @param oilCapacityAvailable true if oil capacity passes
+     * @param waterCapacityAvailable true if water capacity passes
+     * @param liquidCapacityAvailable true if liquid capacity passes
+     * @param processCapacityAvailable true if process model has acceptable bottleneck utilization
+     * @param processModelUsed true if an attached process model was checked
+     * @param requiredGasMSm3d required gas rate in MSm3/d
+     * @param spareGasMSm3d spare gas capacity in MSm3/d
+     * @param requiredOilBopd required oil rate in bbl/d
+     * @param spareOilBopd spare oil capacity in bbl/d
+     * @param requiredWaterM3d required water rate in m3/d
+     * @param spareWaterM3d spare water capacity in m3/d
+     * @param requiredLiquidM3d required liquid rate in m3/d
+     * @param spareLiquidM3d spare liquid capacity in m3/d
+     * @param primaryBottleneckName primary bottleneck equipment name
+     * @param primaryBottleneckUtilization primary bottleneck utilization fraction
+     * @param activeBottleneckCount number of active bottlenecks above threshold
+     * @param summary concise text summary
+     */
+    private HostCapacityReport(String hostName, boolean capacityAvailable,
+        boolean gasCapacityAvailable, boolean oilCapacityAvailable, boolean waterCapacityAvailable,
+        boolean liquidCapacityAvailable, boolean processCapacityAvailable, boolean processModelUsed,
+        double requiredGasMSm3d, double spareGasMSm3d, double requiredOilBopd, double spareOilBopd,
+        double requiredWaterM3d, double spareWaterM3d, double requiredLiquidM3d,
+        double spareLiquidM3d, String primaryBottleneckName, double primaryBottleneckUtilization,
+        int activeBottleneckCount, String summary) {
+      this.hostName = hostName;
+      this.capacityAvailable = capacityAvailable;
+      this.gasCapacityAvailable = gasCapacityAvailable;
+      this.oilCapacityAvailable = oilCapacityAvailable;
+      this.waterCapacityAvailable = waterCapacityAvailable;
+      this.liquidCapacityAvailable = liquidCapacityAvailable;
+      this.processCapacityAvailable = processCapacityAvailable;
+      this.processModelUsed = processModelUsed;
+      this.requiredGasMSm3d = requiredGasMSm3d;
+      this.spareGasMSm3d = spareGasMSm3d;
+      this.requiredOilBopd = requiredOilBopd;
+      this.spareOilBopd = spareOilBopd;
+      this.requiredWaterM3d = requiredWaterM3d;
+      this.spareWaterM3d = spareWaterM3d;
+      this.requiredLiquidM3d = requiredLiquidM3d;
+      this.spareLiquidM3d = spareLiquidM3d;
+      this.primaryBottleneckName = primaryBottleneckName;
+      this.primaryBottleneckUtilization = primaryBottleneckUtilization;
+      this.activeBottleneckCount = activeBottleneckCount;
+      this.summary = summary;
+    }
+
+    /**
+     * Gets the host name.
+     *
+     * @return host name
+     */
+    public String getHostName() {
+      return hostName;
+    }
+
+    /**
+     * Checks whether all capacity checks pass.
+     *
+     * @return true if capacity is available
+     */
+    public boolean isCapacityAvailable() {
+      return capacityAvailable;
+    }
+
+    /**
+     * Checks whether gas capacity passes.
+     *
+     * @return true if gas capacity passes
+     */
+    public boolean isGasCapacityAvailable() {
+      return gasCapacityAvailable;
+    }
+
+    /**
+     * Checks whether oil capacity passes.
+     *
+     * @return true if oil capacity passes
+     */
+    public boolean isOilCapacityAvailable() {
+      return oilCapacityAvailable;
+    }
+
+    /**
+     * Checks whether water capacity passes.
+     *
+     * @return true if water capacity passes
+     */
+    public boolean isWaterCapacityAvailable() {
+      return waterCapacityAvailable;
+    }
+
+    /**
+     * Checks whether total liquid capacity passes.
+     *
+     * @return true if liquid capacity passes
+     */
+    public boolean isLiquidCapacityAvailable() {
+      return liquidCapacityAvailable;
+    }
+
+    /**
+     * Checks whether process-model capacity passes.
+     *
+     * @return true if process-model capacity passes
+     */
+    public boolean isProcessCapacityAvailable() {
+      return processCapacityAvailable;
+    }
+
+    /**
+     * Checks whether a process model was used.
+     *
+     * @return true if a process model was checked
+     */
+    public boolean isProcessModelUsed() {
+      return processModelUsed;
+    }
+
+    /**
+     * Gets the required gas rate.
+     *
+     * @return required gas rate in MSm3/d
+     */
+    public double getRequiredGasMSm3d() {
+      return requiredGasMSm3d;
+    }
+
+    /**
+     * Gets the spare gas capacity.
+     *
+     * @return spare gas capacity in MSm3/d
+     */
+    public double getSpareGasMSm3d() {
+      return spareGasMSm3d;
+    }
+
+    /**
+     * Gets the required oil rate.
+     *
+     * @return required oil rate in bbl/d
+     */
+    public double getRequiredOilBopd() {
+      return requiredOilBopd;
+    }
+
+    /**
+     * Gets the spare oil capacity.
+     *
+     * @return spare oil capacity in bbl/d
+     */
+    public double getSpareOilBopd() {
+      return spareOilBopd;
+    }
+
+    /**
+     * Gets the required water rate.
+     *
+     * @return required water rate in m3/d
+     */
+    public double getRequiredWaterM3d() {
+      return requiredWaterM3d;
+    }
+
+    /**
+     * Gets the spare water capacity.
+     *
+     * @return spare water capacity in m3/d
+     */
+    public double getSpareWaterM3d() {
+      return spareWaterM3d;
+    }
+
+    /**
+     * Gets the required total liquid rate.
+     *
+     * @return required liquid rate in m3/d
+     */
+    public double getRequiredLiquidM3d() {
+      return requiredLiquidM3d;
+    }
+
+    /**
+     * Gets the spare total liquid capacity.
+     *
+     * @return spare liquid capacity in m3/d
+     */
+    public double getSpareLiquidM3d() {
+      return spareLiquidM3d;
+    }
+
+    /**
+     * Gets the primary bottleneck name.
+     *
+     * @return primary bottleneck name, or null if none was found
+     */
+    public String getPrimaryBottleneckName() {
+      return primaryBottleneckName;
+    }
+
+    /**
+     * Gets the primary bottleneck utilization.
+     *
+     * @return utilization as a fraction from 0 to 1
+     */
+    public double getPrimaryBottleneckUtilization() {
+      return primaryBottleneckUtilization;
+    }
+
+    /**
+     * Gets the active bottleneck count.
+     *
+     * @return number of active bottlenecks above threshold
+     */
+    public int getActiveBottleneckCount() {
+      return activeBottleneckCount;
+    }
+
+    /**
+     * Gets the summary string.
+     *
+     * @return capacity summary
+     */
+    public String getSummary() {
+      return summary;
+    }
+  }
+
   @Override
   public String toString() {
     return String.format(
@@ -698,6 +1096,28 @@ public class HostFacility implements Serializable {
      */
     public Builder waterCapacity(double capacityM3d) {
       facility.setWaterCapacityM3d(capacityM3d);
+      return this;
+    }
+
+    /**
+     * Sets the liquid capacity.
+     *
+     * @param capacityM3d liquid capacity in m3/d
+     * @return this builder
+     */
+    public Builder liquidCapacity(double capacityM3d) {
+      facility.setLiquidCapacityM3d(capacityM3d);
+      return this;
+    }
+
+    /**
+     * Sets the associated process system.
+     *
+     * @param processSystem process system for detailed capacity analysis
+     * @return this builder
+     */
+    public Builder processSystem(ProcessSystem processSystem) {
+      facility.setProcessSystem(processSystem);
       return this;
     }
 

@@ -11,6 +11,7 @@ The `neqsim.process.corrosion` package provides industry-standard corrosion asse
 
 | Class | Standard | Purpose |
 |-------|----------|---------|
+| [`MaterialsReviewEngine`](materials_review) | NORSOK M-001/M-506, ISO 15156, API 581/583, API 941 | Process-wide materials review from process simulation and STID/material registers |
 | [`NorsokM506CorrosionRate`](norsok_m506_corrosion_rate) | NORSOK M-506 | CO2 corrosion rate prediction (mm/yr) |
 | [`NorsokM001MaterialSelection`](norsok_m001_material_selection) | NORSOK M-001 | Material grade recommendation and corrosion allowance |
 | [`SourServiceAssessment`](sour_service_assessment) | ISO 15156 / NACE MR0175 | Sour region classification, SSC/HIC/SOHIC risk |
@@ -32,6 +33,8 @@ The corrosion module integrates with the pipeline mechanical design system:
 | [`Pipeline`](../equipment/pipeline_simulation) | Convenience methods for corrosion analysis on pipeline equipment |
 
 See the [Pipeline Corrosion Integration Guide](pipeline_corrosion_integration) for full workflow.
+
+For asset- or project-level review packages, see the [Process-Wide Materials Review](materials_review), which combines process conditions, STID/material-register data, degradation mechanisms, CUI screening, remaining-life checks, and MCP integration.
 
 ## Quick Start
 
@@ -122,9 +125,11 @@ print(f"Severity: {model.getCorrosionSeverity()}")
 | CGA G-2.1 | Ammonia piping/equipment | `AmmoniaCompatibility` |
 | ASME B31.3 / B31.12 | Process piping / H2 piping | `AmmoniaCompatibility`, `HydrogenMaterialAssessment` |
 | API 941 | Nelson curves / HTHA | `HydrogenMaterialAssessment`, `NelsonCurveAssessment` |
+| API 581 / API 583 | CUI and risk-based inspection screening | `MaterialsReviewEngine`, `CUIRiskAssessment` |
 
 ## Related Documentation
 
 - [Flow Assurance Screening Tools](../../pvtsimulation/flowassurance/flow_assurance_screening_tools) — De Waard-Milliams (simpler screening model), cooldown, scale, wax
+- [Process-Wide Materials Review](materials_review) — STID-backed material, degradation, integrity, and lifetime review
 - [Pipeline Mechanical Design](../pipeline_mechanical_design) — Wall thickness, stress analysis, cost estimation
 - [Erosion Prediction](../../pvtsimulation/flowassurance/erosion_prediction) — API RP 14E and DNV RP O501

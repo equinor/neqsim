@@ -2,6 +2,7 @@ package neqsim.process.equipment.pipeline;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -185,6 +186,7 @@ public class WaterHammerPipe extends Pipeline {
    */
   @Override
   public void setLength(double length) {
+    super.setLength(length);
     this.length = length;
   }
 
@@ -197,15 +199,19 @@ public class WaterHammerPipe extends Pipeline {
   public void setLength(double length, String unit) {
     switch (unit.toLowerCase()) {
       case "m":
+        super.setLength(length);
         this.length = length;
         break;
       case "km":
+        super.setLength(length * 1000);
         this.length = length * 1000;
         break;
       case "ft":
+        super.setLength(length * 0.3048);
         this.length = length * 0.3048;
         break;
       default:
+        super.setLength(length);
         this.length = length;
     }
   }
@@ -217,6 +223,7 @@ public class WaterHammerPipe extends Pipeline {
    */
   @Override
   public void setDiameter(double diameter) {
+    super.setDiameter(diameter);
     this.diameter = diameter;
   }
 
@@ -229,15 +236,20 @@ public class WaterHammerPipe extends Pipeline {
   public void setDiameter(double diameter, String unit) {
     switch (unit.toLowerCase()) {
       case "m":
+        super.setDiameter(diameter);
         this.diameter = diameter;
         break;
       case "mm":
+        super.setDiameter(diameter / 1000);
         this.diameter = diameter / 1000;
         break;
       case "in":
+      case "inch":
+        super.setDiameter(diameter * 0.0254);
         this.diameter = diameter * 0.0254;
         break;
       default:
+        super.setDiameter(diameter);
         this.diameter = diameter;
     }
   }
@@ -249,7 +261,18 @@ public class WaterHammerPipe extends Pipeline {
    */
   @Override
   public void setWallThickness(double thickness) {
+    super.setWallThickness(thickness);
     this.wallThickness = thickness;
+  }
+
+  /**
+   * Get the pipe wall thickness used by the hydraulic transient model.
+   *
+   * @return wall thickness in meters
+   */
+  @Override
+  public double getWallThickness() {
+    return wallThickness;
   }
 
   /**
@@ -258,7 +281,28 @@ public class WaterHammerPipe extends Pipeline {
    * @param roughness Roughness in meters
    */
   public void setRoughness(double roughness) {
+    super.setPipeWallRoughness(roughness);
     this.roughness = roughness;
+  }
+
+  /**
+   * Set the pipe wall roughness using the generic pipeline property name.
+   *
+   * @param roughness roughness in meters, must be non-negative
+   */
+  @Override
+  public void setPipeWallRoughness(double roughness) {
+    setRoughness(roughness);
+  }
+
+  /**
+   * Get the pipe wall roughness used by the transient friction calculation.
+   *
+   * @return pipe wall roughness in meters
+   */
+  @Override
+  public double getPipeWallRoughness() {
+    return roughness;
   }
 
   /**
@@ -268,6 +312,27 @@ public class WaterHammerPipe extends Pipeline {
    */
   public void setNumberOfNodes(int nodes) {
     this.numberOfNodes = Math.max(10, nodes);
+  }
+
+  /**
+   * Sets the generic number of increments as the water-hammer node count.
+   *
+   * @param numberOfIncrements requested number of computational nodes, minimum 10
+   */
+  @Override
+  public void setNumberOfIncrements(int numberOfIncrements) {
+    super.setNumberOfIncrements(numberOfIncrements);
+    setNumberOfNodes(numberOfIncrements);
+  }
+
+  /**
+   * Gets the generic number of increments as the water-hammer node count.
+   *
+   * @return number of computational nodes
+   */
+  @Override
+  public int getNumberOfIncrements() {
+    return numberOfNodes;
   }
 
   /**
@@ -285,7 +350,37 @@ public class WaterHammerPipe extends Pipeline {
    * @param elevation Elevation change in meters
    */
   public void setElevationChange(double elevation) {
+    super.setElevation(elevation);
     this.elevationChange = elevation;
+  }
+
+  /**
+   * Set the generic elevation change used by the transient model.
+   *
+   * @param elevation elevation change from inlet to outlet in meters
+   */
+  @Override
+  public void setElevation(double elevation) {
+    setElevationChange(elevation);
+  }
+
+  /**
+   * Get the elevation change used by the transient model.
+   *
+   * @return elevation change from inlet to outlet in meters
+   */
+  @Override
+  public double getElevation() {
+    return elevationChange;
+  }
+
+  /**
+   * Get the elevation change using the transient property name.
+   *
+   * @return elevation change from inlet to outlet in meters
+   */
+  public double getElevationChange() {
+    return elevationChange;
   }
 
   /**
@@ -298,12 +393,84 @@ public class WaterHammerPipe extends Pipeline {
   }
 
   /**
+   * Set the upstream boundary condition type from a JSON-friendly string.
+   *
+   * @param type boundary type name, one of RESERVOIR, VALVE, CLOSED_END, or CONSTANT_FLOW
+   * @throws IllegalArgumentException if the boundary type is unsupported
+   */
+  public void setUpstreamBoundary(String type) {
+    this.upstreamBoundary = parseBoundaryType(type);
+  }
+
+  /**
+   * Get the upstream boundary condition type.
+   *
+   * @return upstream boundary condition type
+   */
+  public BoundaryType getUpstreamBoundary() {
+    return upstreamBoundary;
+  }
+
+  /**
+   * Get the upstream boundary condition name for automation and JSON reports.
+   *
+   * @return upstream boundary condition enum name
+   */
+  public String getUpstreamBoundaryName() {
+    return upstreamBoundary.name();
+  }
+
+  /**
    * Set the downstream boundary condition type.
    *
    * @param type Boundary type
    */
   public void setDownstreamBoundary(BoundaryType type) {
     this.downstreamBoundary = type;
+  }
+
+  /**
+   * Set the downstream boundary condition type from a JSON-friendly string.
+   *
+   * @param type boundary type name, one of RESERVOIR, VALVE, CLOSED_END, or CONSTANT_FLOW
+   * @throws IllegalArgumentException if the boundary type is unsupported
+   */
+  public void setDownstreamBoundary(String type) {
+    this.downstreamBoundary = parseBoundaryType(type);
+  }
+
+  /**
+   * Get the downstream boundary condition type.
+   *
+   * @return downstream boundary condition type
+   */
+  public BoundaryType getDownstreamBoundary() {
+    return downstreamBoundary;
+  }
+
+  /**
+   * Get the downstream boundary condition name for automation and JSON reports.
+   *
+   * @return downstream boundary condition enum name
+   */
+  public String getDownstreamBoundaryName() {
+    return downstreamBoundary.name();
+  }
+
+  /**
+   * Parses a boundary condition name into a {@link BoundaryType}.
+   *
+   * @param type boundary type name, must not be null or blank
+   * @return parsed boundary condition type
+   * @throws IllegalArgumentException if the boundary type is missing or unsupported
+   */
+  private BoundaryType parseBoundaryType(String type) {
+    if (type == null || type.trim().isEmpty()) {
+      throw new IllegalArgumentException("Boundary type cannot be null or empty");
+    }
+    String normalized = type.trim().replace('-', '_').replace(' ', '_')
+        .toUpperCase(Locale.ROOT);
+    return BoundaryType.valueOf(normalized);
   }
 
   /**
@@ -325,12 +492,39 @@ public class WaterHammerPipe extends Pipeline {
   }
 
   /**
+   * Set the valve opening as percent open.
+   *
+   * @param percentOpening valve opening in percent, where 0 is closed and 100 is fully open
+   */
+  public void setValveOpeningPercent(double percentOpening) {
+    setValveOpening(percentOpening / 100.0);
+  }
+
+  /**
+   * Get the valve opening as percent open.
+   *
+   * @return valve opening in percent
+   */
+  public double getValveOpeningPercent() {
+    return valveOpening * 100.0;
+  }
+
+  /**
    * Set the Courant number for time step control.
    *
    * @param cn Courant number (typically 1.0 for stability)
    */
   public void setCourantNumber(double cn) {
     this.courantNumber = cn;
+  }
+
+  /**
+   * Get the Courant number used for stability guidance.
+   *
+   * @return Courant number
+   */
+  public double getCourantNumber() {
+    return courantNumber;
   }
 
   /**
@@ -502,6 +696,8 @@ public class WaterHammerPipe extends Pipeline {
       minPressureEnvelope[i] = pressureProfile[i];
     }
 
+    pressureDrop = (pressureProfile[0] - pressureProfile[numberOfNodes - 1]) / 1e5;
+
     // Store downstream conditions for valve BC
     downstreamHead = head[numberOfNodes - 1];
 
@@ -601,6 +797,8 @@ public class WaterHammerPipe extends Pipeline {
     currentTime += dt;
     pressureHistory.add(pressureProfile[numberOfNodes - 1]);
     timeHistory.add(currentTime);
+
+    pressureDrop = (pressureProfile[0] - pressureProfile[numberOfNodes - 1]) / 1e5;
 
     // Update outlet stream
     updateOutletStream();
@@ -839,6 +1037,63 @@ public class WaterHammerPipe extends Pipeline {
   }
 
   /**
+   * Get the maximum pressure envelope in a specified unit.
+   *
+   * @param unit unit name, for example Pa, bar, or psi
+   * @return maximum pressure envelope in the requested unit
+   */
+  public double[] getMaxPressureEnvelope(String unit) {
+    return convertPressureArray(maxPressureEnvelope, unit);
+  }
+
+  /**
+   * Get the minimum pressure envelope in a specified unit.
+   *
+   * @param unit unit name, for example Pa, bar, or psi
+   * @return minimum pressure envelope in the requested unit
+   */
+  public double[] getMinPressureEnvelope(String unit) {
+    return convertPressureArray(minPressureEnvelope, unit);
+  }
+
+  /**
+   * Converts a pressure array to the requested unit.
+   *
+   * @param pressures pressure values in Pa
+   * @param unit requested unit, for example Pa, bar, or psi
+   * @return converted pressure values
+   */
+  private double[] convertPressureArray(double[] pressures, String unit) {
+    double[] profile = new double[pressures.length];
+    double factor = getPressureConversionFactor(unit);
+    for (int i = 0; i < pressures.length; i++) {
+      profile[i] = pressures[i] * factor;
+    }
+    return profile;
+  }
+
+  /**
+   * Gets the conversion factor from Pa to a requested pressure unit.
+   *
+   * @param unit requested unit, for example Pa, bar, or psi
+   * @return conversion factor from Pa to the requested unit
+   */
+  private double getPressureConversionFactor(String unit) {
+    if (unit == null) {
+      return 1.0;
+    }
+    switch (unit.toLowerCase(Locale.ROOT)) {
+      case "bar":
+      case "bara":
+        return 1.0e-5;
+      case "psi":
+        return 1.0 / 6894.76;
+      default:
+        return 1.0;
+    }
+  }
+
+  /**
    * Get the overall maximum pressure.
    *
    * @return Maximum pressure in Pa
@@ -934,6 +1189,19 @@ public class WaterHammerPipe extends Pipeline {
    */
   public double getWaveSpeed() {
     return waveSpeed;
+  }
+
+  /**
+   * Get the last calculated pressure drop from inlet to outlet.
+   *
+   * @return pressure drop in bar
+   */
+  @Override
+  public double getPressureDrop() {
+    if (pressureProfile == null || pressureProfile.length == 0) {
+      return pressureDrop;
+    }
+    return (pressureProfile[0] - pressureProfile[pressureProfile.length - 1]) / 1e5;
   }
 
   /**

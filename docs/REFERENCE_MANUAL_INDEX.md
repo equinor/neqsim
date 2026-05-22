@@ -65,7 +65,6 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | --------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
 | Overview              | [docs/README.md](README)                                                                   | Package overview and quick start                                        |
 | Modules               | [docs/modules.md](modules)                                                                 | Architecture and module structure                                       |
-| **O&G Design Review** | [docs/NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md](NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW) | **Comprehensive capability review for oil & gas design and operations** |
 
 ### Chapter 2: Quickstart Guides (NEW!)
 
@@ -95,6 +94,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | GitHub Setup    | [docs/wiki/Getting-started-with-NeqSim-and-Github.md](wiki/Getting-started-with-NeqSim-and-Github) | NeqSim and GitHub setup       |
 | Developer Setup | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP)                                 | Development environment setup |
 | Productization Roadmap | [docs/development/PRODUCTIZATION_ROADMAP.md](development/PRODUCTIZATION_ROADMAP)              | Adoption, trust, contributor scaling plan |
+| Image Tools, Agents, and Skills | [docs/development/image_tools_agents_skills.md](development/image_tools_agents_skills)        | Engineering-image workflow for P&IDs, drawings, scanned PDFs, maps, screenshots, and related agents/skills |
 | Benchmark Gallery | [docs/benchmarks/index.md](benchmarks/index)                                                    | Validation against NIST and published data |
 | Consolidated Benchmarks | [docs/benchmarks/consolidated_benchmarks.md](benchmarks/consolidated_benchmarks)          | All benchmark results from task-solving studies |
 
@@ -207,7 +207,6 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Interfacial Props               | [docs/physical_properties/interfacial_properties.md](physical_properties/interfacial_properties)           | Interfacial tension, etc.                                                                         |
 | Scale Potential                 | [docs/physical_properties/scale_potential.md](physical_properties/scale_potential)                         | Scale potential calculations                                                                      |
 | **Adsorption Isotherm Models**  | [docs/thermo/adsorption_isotherms.md](thermo/adsorption_isotherms)                                         | **Langmuir, BET, Freundlich, Sips, DRA potential theory, capillary condensation**                 |
-| Adsorption Review               | [docs/physical_properties/adsorption_review.md](physical_properties/adsorption_review)                     | Adsorption modeling review and enhancement proposal                                               |
 | Steam Tables                    | [docs/wiki/steam_tables_if97.md](wiki/steam_tables_if97)                                                   | IF97 steam table implementation                                                                   |
 | Thermodynamic Workflows         | [docs/thermo/thermodynamic_workflows.md](thermo/thermodynamic_workflows)                                   | Common thermodynamic workflows                                                                    |
 | Interaction Tables              | [docs/thermo/inter_table_guide.md](thermo/inter_table_guide)                                               | Binary interaction parameters                                                                     |  |
@@ -220,6 +219,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Mineral Scale Formation**      | [docs/pvtsimulation/mineral_scale_formation.md](pvtsimulation/mineral_scale_formation)                             | **Carbonate/sulfate scale, seawater mixing, SR calculations**     |
 | **Scale Prediction API**         | [docs/pvtsimulation/scale_prediction_api.md](pvtsimulation/scale_prediction_api)                                   | **API reference: empirical vs EOS, solid solution, compatibility** |
 | **pH Stabilization & Corrosion** | [docs/pvtsimulation/ph_stabilization_corrosion.md](pvtsimulation/ph_stabilization_corrosion)                       | **Corrosion control, FeCO3 layer, Electrolyte CPA EoS**           |
+| **Chemical Compatibility & RCA** | [docs/chemistry/chemical_compatibility_guide.md](chemistry/chemical_compatibility_guide)                           | **Production chemistry: compatibility, scale/CI/acid/scavenger, root cause analysis** |
 | Hydrate Models                   | [docs/thermo/hydrate_models.md](thermo/hydrate_models)                                                             | Hydrate equilibrium models                                        |
 | Hydrate Flash                    | [docs/thermodynamicoperations/hydrate_flash_operations.md](thermodynamicoperations/hydrate_flash_operations)       | Hydrate flash operations                                          |
 | Wax Characterization             | [docs/thermo/characterization/wax_characterization.md](thermo/characterization/wax_characterization)               | Wax modeling, WAT calculation, flow assurance                     |
@@ -239,7 +239,6 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Logical Operations   | [docs/wiki/logical_unit_operations.md](wiki/logical_unit_operations)                           | Logical unit operations                   |
 | Process Design       | [docs/process/process_design_guide.md](process/process_design_guide)                           | Process design guide                      |
 | Design Framework     | [docs/process/DESIGN_FRAMEWORK.md](process/DESIGN_FRAMEWORK)                                   | Automated design & optimization framework |
-| Optimization Roadmap | [docs/process/OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](process/OPTIMIZATION_IMPROVEMENT_PROPOSAL) | Optimization implementation status        |
 | Pipeline Network Optimization | [docs/process/pipeline_network_optimization.md](process/pipeline_network_optimization) | NLP optimizer, sparse solver, Pareto, benchmarks |
 
 ### Chapter 12: Process Systems & Models
@@ -250,6 +249,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | ProcessSystem         | [docs/process/processmodel/process_system.md](process/processmodel/process_system)                                         | ProcessSystem class (connections, stream introspection, named controllers, unified elements) |
 | ProcessModel          | [docs/process/processmodel/process_model.md](process/processmodel/process_model)                                           | Multi-process models      |
 | ProcessModule         | [docs/process/processmodel/process_module.md](process/processmodel/process_module)                                         | Modular process units     |
+| Process JSON Export   | [docs/process/process_json_export_and_e300_fluids.md](process/process_json_export_and_e300_fluids)                         | Export ProcessSystem and ProcessModel JSON for MCP, including E300-equivalent component properties, volume correction, stream-specific fluids, recycle settings, and convergence checks |
 | Graph Simulation      | [docs/process/processmodel/graph_simulation.md](process/processmodel/graph_simulation)                                     | Graph-based simulation    |
 | Diagram Export        | [docs/process/processmodel/diagram_export.md](process/processmodel/diagram_export)                                         | PFD diagram export        |
 | DEXPI Architecture    | [docs/process/processmodel/DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY.md](process/processmodel/DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY) | DEXPI integration         |
@@ -284,8 +284,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Separator Entrainment Notebook | [examples/notebooks/separator_entrainment_modeling.ipynb](../examples/notebooks/separator_entrainment_modeling.ipynb) | **Jupyter notebook: separator entrainment modeling** — physics-based entrainment, droplet distributions, grade efficiency, internals selection, K-factor analysis, flow regime maps |
 | Separator Vendor Curves & Calibration Notebook | [examples/notebooks/separator_vendor_curves_and_calibration.ipynb](../examples/notebooks/separator_vendor_curves_and_calibration.ipynb) | **Jupyter notebook: vendor curves & calibration** — expanded internals database (70+ records), 25 vendor-certified efficiency curves, vendor vs generic comparison, calibration framework (manual, auto, grouped, batch), JSON calibration reports, full database catalog export |
 | Separator Dynamic Entrainment Notebook | [examples/notebooks/separator_dynamic_entrainment.ipynb](../examples/notebooks/separator_dynamic_entrainment.ipynb) | **Jupyter notebook: dynamic separator entrainment** — transient simulation with enhanced entrainment, entrainment tracking over time, feed rate disturbance response, with/without entrainment comparison, three-phase separator dynamic, matplotlib visualizations |
-| Distillation       | [docs/process/equipment/distillation.md](process/equipment/distillation)       | Distillation columns, **ColumnSpecification (product purity, reflux ratio, component recovery, flow rate, duty)**, Builder pattern, solver options, MESH residual diagnostics                                      |
-| Distillation Wiki  | [docs/wiki/distillation_column.md](wiki/distillation_column)                   | Distillation column equations, solver details, convergence diagnostics, and MESH residual monitoring                                                                                                                |
+| Distillation       | [docs/process/equipment/distillation.md](process/equipment/distillation)       | Distillation columns, **ColumnSpecification**, builder pattern, solver options including **AUTO**, specification homotopy, side draws, pumparounds, condenser/reboiler modes, hydraulic pressure-drop coupling, shortcut initialization, tray efficiency, dynamic screening, rate-based packed columns, and MESH residual diagnostics |
+| Distillation Wiki  | [docs/wiki/distillation_column.md](wiki/distillation_column)                   | Distillation column equations, solver details including **AUTO**, specification homotopy, outer tear variables for side draws, pumparounds, and hydraulics, convergence diagnostics, and MESH residual monitoring                                                                                                                |
 | Absorbers          | [docs/process/equipment/absorbers.md](process/equipment/absorbers)             | Absorption equipment: **SimpleTEGAbsorber (Fs-factor sizing, dew point validation), SimpleAmineAbsorber (MDEA/DEA/MEA gas sweetening, design validation), RateBasedAbsorber (Onda/Billet-Schultes mass transfer, Hatta enhancement, packed column design)** |
 | **H2S Scavenger**  | [docs/process/H2S_scavenger_guide.md](process/H2S_scavenger_guide)             | **Chemical scavenging of H2S from gas - triazine, glyoxal, iron sponge, caustic, liquid redox**                                                                                                                    |
 | Membrane           | [docs/wiki/membrane_separation.md](wiki/membrane_separation)                   | Membrane separation                                                                                                                                                                                                |
@@ -433,6 +433,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Process Engineering Utilities v2** | [docs/process/engineering_utilities_v2.md](process/engineering_utilities_v2)                                     | **PinchAnalyzer, DCFCalculator, DebottleneckAnalyzer, FiredHeater, ProcessValidator, CoolingWaterSystem**                                |
 | **Optimization & Constraints Guide** | [docs/process/optimization/OPTIMIZATION_AND_CONSTRAINTS.md](process/optimization/OPTIMIZATION_AND_CONSTRAINTS)   | **COMPREHENSIVE: Complete guide to optimization algorithms, constraint types, bottleneck analysis, and practical examples**               |
 | **Optimization Overview**            | [docs/process/optimization/OPTIMIZATION_OVERVIEW.md](process/optimization/OPTIMIZATION_OVERVIEW)                 | **START HERE: Introduction to process optimization, when to use ProcessOptimizationEngine vs ProductionOptimizer**                        |
+| **Process Researcher**               | [docs/process/optimization/process-researcher.md](process/optimization/process-researcher)                       | **Generate, simulate, optimize, and rank candidate flowsheets from feed/product targets, including reaction routes**                      |
 | **ProductionOptimizer Tutorial**     | [docs/examples/ProductionOptimizer_Tutorial.md](examples/ProductionOptimizer_Tutorial)                           | **Interactive Jupyter notebook with complete ProductionOptimizer guide: algorithms, single/multi-variable, Pareto, constraints**          |
 | **Python Optimization Tutorial**     | [docs/examples/NeqSim_Python_Optimization.md](examples/NeqSim_Python_Optimization)                               | **Using SciPy/Python optimizers with NeqSim process simulations: constraints, Pareto, global optimization**                               |
 | **Capacity Constraint Framework**    | [docs/process/CAPACITY_CONSTRAINT_FRAMEWORK.md](process/CAPACITY_CONSTRAINT_FRAMEWORK)                           | **Framework for equipment capacity limits, bottleneck detection, utilization tracking, and AIV/FIV vibration analysis**                   |
@@ -443,6 +444,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **MCP Core Layer**                   | [docs/integration/mcp_neqsim_core_layer.md](integration/mcp_neqsim_core_layer)                                  | **MCP runners (FlashRunner, ProcessRunner, Validator, ComponentQuery), typed models, example/schema catalogs**                            |
 | **MCP Getting Started**              | [docs/integration/mcp_getting_started.md](integration/mcp_getting_started)                                       | **5-minute guide: connect any LLM to NeqSim via MCP — setup, first calculation, tool selection, common patterns**                        |
 | **MCP Server Guide**                | [docs/integration/mcp_server_guide.md](integration/mcp_server_guide)                                             | **Quarkus MCP Server for VS Code Copilot, Claude Desktop, Cursor — installation, tools, resources, testing**                              |
+| **MCP Agentic Workflow Improvements** | [docs/integration/mcp_agentic_workflow_improvements.md](integration/mcp_agentic_workflow_improvements)          | **Response contracts, provenance, validation-first execution, all-tool schema/example coverage, setup templates, process JSON contracts, benchmark trust, lifecycle metadata, safety gates, and coverage tests for MCP agent workflows** |
 | **Production Optimization Guide**    | [docs/examples/PRODUCTION_OPTIMIZATION_GUIDE.md](examples/PRODUCTION_OPTIMIZATION_GUIDE)                         | **Complete guide to production optimization with Java and Python examples**                                                               |
 | **Pressure Boundary Optimization**   | [docs/process/pressure_boundary_optimization.md](process/pressure_boundary_optimization)                         | **Calculate flow rates for pressure boundaries, generate Eclipse VFP lift curves, optimize compressor power**                             |
 | **Flow Rate Optimization**           | [docs/process/optimization/flow-rate-optimization.md](process/optimization/flow-rate-optimization)               | **Comprehensive flow rate optimizer with lift curve generation for Eclipse reservoir simulation**                                         |
@@ -520,6 +522,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Document                              | Path                                                                                                             | Description                                                                                                     |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | **Corrosion Module Overview**         | [docs/process/corrosion/index.md](process/corrosion/)                                                           | **Package overview, quick start, standards coverage for NORSOK M-506 and M-001**                                 |
+| **Process-Wide Materials Review**     | [docs/process/corrosion/materials_review.md](process/corrosion/materials_review)                                 | **STID-backed material selection, degradation, CUI, remaining-life, and MCP materials review workflow**           |
 | **NORSOK M-506 Corrosion Rate**       | [docs/process/corrosion/norsok_m506_corrosion_rate.md](process/corrosion/norsok_m506_corrosion_rate)             | **CO2 corrosion rate prediction — fugacity, pH, correction factors, parameter sweeps, JSON reporting**           |
 | **NORSOK M-001 Material Selection**   | [docs/process/corrosion/norsok_m001_material_selection.md](process/corrosion/norsok_m001_material_selection)     | **Material grade recommendation — sweet/sour classification, CRA selection, chloride SCC, corrosion allowance** |
 | **Pipeline Corrosion Integration**    | [docs/process/corrosion/pipeline_corrosion_integration.md](process/corrosion/pipeline_corrosion_integration)     | **Automated corrosion analysis from process simulation — stream extraction, combined mechanical + corrosion**    |
@@ -623,6 +626,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | --------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
 | PSV Dynamic Sizing Wiki     | [docs/wiki/psv_dynamic_sizing_example.md](wiki/psv_dynamic_sizing_example)           | PSV dynamic sizing                                                                    |
 | PSV Dynamic Sizing          | [docs/safety/psv_dynamic_sizing_example.md](safety/psv_dynamic_sizing_example)       | PSV sizing example                                                                    |
+| Trapped Inventory Calculator | [docs/safety/trapped_inventory_calculator.md](safety/trapped_inventory_calculator) | Evidence-linked trapped inventory for isolation, blowdown, flare-load, and MDMT screening |
+| Trapped Liquid Fire Rupture | [docs/safety/trapped_liquid_fire_rupture.md](safety/trapped_liquid_fire_rupture) | Blocked-in liquid segment fire rupture screening with material, flange, PFP, and source-term handoff |
 | **Relief Valve Sizing API** | [docs/safety/relief_valve_sizing_api.md](safety/relief_valve_sizing_api)             | **API 520/521 PSV sizing for gas, liquid, and two-phase relief with fire heat input** |
 | PSD Valve Trip              | [docs/wiki/psd_valve_hihi_trip.md](wiki/psd_valve_hihi_trip)                         | PSD valve HIHI trip                                                                   |
 | Rupture Disks               | [docs/safety/rupture_disk_dynamic_behavior.md](safety/rupture_disk_dynamic_behavior) | Rupture disk behavior                                                                 |
@@ -639,6 +644,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document            | Path                                                                                     | Description                |
 | ------------------- | ---------------------------------------------------------------------------------------- | -------------------------- |
+| ESD Dynamic Testing | [docs/safety/esd_testing_workflow.md](safety/esd_testing_workflow)                       | ESD dynamic testing with process logic, tagreader evidence, and criteria reports |
 | ESD Blowdown        | [docs/safety/ESD_BLOWDOWN_SYSTEM.md](safety/ESD_BLOWDOWN_SYSTEM)                         | ESD blowdown system        |
 | Pressure Monitoring | [docs/safety/PRESSURE_MONITORING_ESD.md](safety/PRESSURE_MONITORING_ESD)                 | Pressure monitoring ESD    |
 | Fire Heat Transfer  | [docs/safety/fire_heat_transfer_enhancements.md](safety/fire_heat_transfer_enhancements) | Fire heat transfer         |
@@ -653,6 +659,21 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Choke Protection    | [docs/wiki/choke_collapse_psd_protection.md](wiki/choke_collapse_psd_protection)       | Choke collapse protection     |
 | Safety Chain Tests  | [docs/safety/integration_safety_chain_tests.md](safety/integration_safety_chain_tests) | Safety chain tests            |
 | Scenario Generation | [docs/process/safety/scenario-generation.md](process/safety/scenario-generation)       | Automatic scenario generation |
+| Release Dispersion Scenarios | [docs/process/safety/release-dispersion-scenarios.md](process/safety/release-dispersion-scenarios) | Automatic leak source terms, gas dispersion screening, scenario taxonomy, trapped inventory, CFD source-term handoff cases, and industrial-readiness guidance from ProcessSystem streams |
+| Barrier Management  | [docs/safety/barrier_management.md](safety/barrier_management)                         | Evidence-linked PSF/SCE barrier register and safety-analysis handoffs |
+| Automated HAZOP     | [docs/safety/automated_hazop_from_stid.md](safety/automated_hazop_from_stid)           | STID/P&ID, plant data, NeqSim process simulation, HAZOP worksheet, barrier handoff, and report workflow |
+| Open Drain Review   | [docs/safety/open_drain_review.md](safety/open_drain_review)                           | NORSOK S-001 Clause 9 open-drain review using NeqSim-calculated liquid leak rate, firewater load, liquid density, pressure, and drain hydraulic capacity plus STID/tagreader evidence |
+
+### Chapter 34b: Consequence Analysis & QRA
+
+| Document                   | Path                                                                                | Description                                                                       |
+| -------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Depressurization (API 521) | [docs/safety/depressurization_per_API_521.md](safety/depressurization_per_API_521) | Transient blowdown via VU-flash, BDV sizing, fire heat input                      |
+| MDMT Assessment            | [docs/safety/mdmt_assessment.md](safety/mdmt_assessment)                           | UCS-66 / API 579 / EN 13445 minimum design metal temperature                      |
+| Dispersion & Consequence   | [docs/safety/dispersion_and_consequence.md](safety/dispersion_and_consequence)     | Gaussian/heavy-gas dispersion, jet/pool/VCE/BLEVE, probit, IRPA roll-up           |
+| HAZOP Worksheet            | [docs/safety/HAZOP.md](safety/HAZOP)                                               | IEC 61882 guidewords, process parameters, deviation rows, and text reports        |
+| FMEA / FMECA               | [docs/safety/FMEA.md](safety/FMEA)                                                 | IEC 60812 RPN = S·O·D, criticality threshold filtering                            |
+| Event & Fault Trees        | [docs/safety/event_fault_trees.md](safety/event_fault_trees)                       | IEC 61025 / 62502 ETA + FTA with β-factor common-cause and k-of-N voting gates    |
 
 ### Chapter 35: Risk Simulation Framework
 
@@ -672,7 +693,7 @@ Comprehensive operational risk simulation framework for equipment failure analys
 | **Dependency Analysis**        | [docs/risk/dependency-analysis.md](risk/dependency-analysis)                       | DependencyAnalyzer, cascade failure trees, cross-installation effects                     |
 | **Mathematical Reference**     | [docs/risk/mathematical-reference.md](risk/mathematical-reference)                 | Complete formulas: reliability, system availability, Monte Carlo, risk calculations       |
 | **API Reference**              | [docs/risk/api-reference.md](risk/api-reference)                                   | Full API documentation for all risk simulation classes                                    |
-| **Reliability Data Guide**     | [docs/risk/RELIABILITY_DATA_GUIDE.md](risk/RELIABILITY_DATA_GUIDE)                 | OREDA-based reliability data, failure rate sources, equipment categories                  |
+| **Reliability Data Guide**     | [docs/risk/RELIABILITY_DATA_GUIDE.md](risk/RELIABILITY_DATA_GUIDE)                 | Multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA), CSV format  |
 | **Physics-Based Integration**  | [docs/risk/PHYSICS_BASED_RISK_INTEGRATION.md](risk/PHYSICS_BASED_RISK_INTEGRATION) | **Integration of physics-based models with risk simulation for dynamic failure analysis** |
 
 ### Chapter 35a: Advanced Risk Framework (**NEW**)
@@ -705,8 +726,8 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 
 | Class                        | Package                     | Purpose                                  |
 | ---------------------------- | --------------------------- | ---------------------------------------- |
-| `EquipmentFailureMode`       | `process.equipment.failure` | Failure mode definitions with OREDA data |
-| `ReliabilityDataSource`      | `process.equipment.failure` | OREDA-based reliability data access      |
+| `EquipmentFailureMode`       | `process.equipment.failure` | Failure mode definitions with reliability data |
+| `ReliabilityDataSource`      | `process.equipment.failure` | Multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA) |
 | `ProductionImpactAnalyzer`   | `process.safety.risk`       | Production loss analysis                 |
 | `DegradedOperationOptimizer` | `process.safety.risk`       | Degraded mode optimization               |
 | `OperationalRiskSimulator`   | `process.safety.risk`       | Monte Carlo simulation engine            |
@@ -714,6 +735,32 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | `ProcessTopologyAnalyzer`    | `process.util.topology`     | Process graph extraction                 |
 | `FunctionalLocation`         | `process.util.topology`     | STID tag parsing (ISO 14224)             |
 | `DependencyAnalyzer`         | `process.util.topology`     | Equipment dependency analysis            |
+| `RootCauseAnalyzer`          | `process.diagnostics`       | Bayesian-inspired equipment RCA          |
+| `HypothesisGenerator`        | `process.diagnostics`       | Equipment-specific hypothesis libraries  |
+| `EvidenceCollector`          | `process.diagnostics`       | Time-series evidence scoring             |
+| `SimulationVerifier`         | `process.diagnostics`       | Clone-perturb-compare verification       |
+| `RootCauseReport`            | `process.diagnostics`       | Ranked diagnosis with JSON/text output   |
+
+### Chapter 35b: Equipment Diagnostics
+
+Root cause analysis framework for equipment operational anomalies using Bayesian-inspired
+hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verification.
+
+| Document                   | Path                                                                               | Description                                                               |
+| -------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **Root Cause Analysis**    | [docs/diagnostics/root_cause_analysis.md](diagnostics/root_cause_analysis)         | RCA framework architecture, confidence scoring, usage examples            |
+
+#### Key Classes in Diagnostics Framework
+
+| Class                  | Package                   | Purpose                                              |
+| ---------------------- | ------------------------- | ---------------------------------------------------- |
+| `Symptom`              | `process.diagnostics`     | 12 observable symptoms (TRIP, HIGH_VIBRATION, etc.)  |
+| `Hypothesis`           | `process.diagnostics`     | Ranked failure hypothesis with evidence and actions  |
+| `HypothesisGenerator`  | `process.diagnostics`     | Registry-based hypothesis generation with OREDA      |
+| `EvidenceCollector`    | `process.diagnostics`     | Time-series trend, threshold, and correlation analysis |
+| `SimulationVerifier`   | `process.diagnostics`     | Process model perturbation and verification scoring  |
+| `RootCauseReport`      | `process.diagnostics`     | Ranked report with JSON, text, and map output        |
+| `RootCauseAnalyzer`    | `process.diagnostics`     | Main orchestrator integrating all components         |
 
 ---
 
@@ -803,6 +850,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | ------------ | ---------------------------------------------------------------------------- | ------------------------ |
 | Digital Twin | [docs/process/digital-twin-integration.md](process/digital-twin-integration) | Digital twin integration |
 | Plant Data & Tagreader | [docs/process/plant-data-tagreader.md](process/plant-data-tagreader) | Connecting NeqSim to plant historians (PI/IP.21) via tagreader |
+| Operational Evidence Package | [docs/process/operational_evidence_package.md](process/operational_evidence_package) | Combine P&ID/STID references, tagreader values, NeqSim scenario actions, and bottleneck detection into one operational study |
 | Lifecycle    | [docs/process/lifecycle/README.md](process/lifecycle/)                       | Lifecycle management     |
 
 ### Chapter 42: AI/ML Integration
@@ -836,6 +884,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Document                                                | Path                                                                                                                                                                   | Description                                                                                                             |
 | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Optimization Overview                                   | [docs/process/optimization/README.md](process/optimization/)                                                                                                           | Optimization module                                                                                                     |
+| **Process Researcher**                                  | [docs/process/optimization/process-researcher.md](process/optimization/process-researcher)                                                                              | **Candidate flowsheet generation and ranking from feed/product specifications, including reaction-route candidates**     |
 | **Flow Rate Optimization**                              | [docs/process/optimization/flow-rate-optimization.md](process/optimization/flow-rate-optimization)                                                                     | **Comprehensive flow rate optimizer with lift curve generation for Eclipse reservoir simulation**                       |
 | **Multi-Objective Optimization**                        | [docs/process/optimization/multi-objective-optimization.md](process/optimization/multi-objective-optimization)                                                         | **Pareto front generation for competing objectives (throughput vs energy)**                                             |
 | **Constraint Framework**                                | [docs/process/optimization/constraint-framework.md](process/optimization/constraint-framework)                                                                         | **Unified ProcessConstraint interface bridging equipment, internal, and external optimizer constraints**                |
@@ -890,6 +939,8 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Mathematical Reference**        | [docs/fielddevelopment/MATHEMATICAL_REFERENCE.md](fielddevelopment/MATHEMATICAL_REFERENCE)                                 | **NEW** Mathematical foundations for all calculations                   |
 | **API Guide**                     | [docs/fielddevelopment/API_GUIDE.md](fielddevelopment/API_GUIDE)                                                           | **NEW** Detailed usage examples for all components                      |
 | **Integrated Framework**          | [docs/fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK) | PVT→Reservoir→Well→Process integration guide                            |
+| **Decision Engine Workflows**      | [docs/fielddevelopment/DECISION_ENGINE_WORKFLOWS.md](fielddevelopment/DECISION_ENGINE_WORKFLOWS)                           | Tieback, greenfield, portfolio, process, reservoir, and reporting workflows |
+| **Host Tie-In Capacity**          | [docs/fielddevelopment/HOST_TIE_IN_CAPACITY.md](fielddevelopment/HOST_TIE_IN_CAPACITY)                                     | Base-host and satellite production capacity, holdback, process bottlenecks, and debottleneck decisions |
 | **Strategy**                      | [docs/fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md](fielddevelopment/FIELD_DEVELOPMENT_STRATEGY)                         | Field development strategy and roadmap                                  |
 | **Late-Life Operations**          | [docs/fielddevelopment/LATE_LIFE_OPERATIONS.md](fielddevelopment/LATE_LIFE_OPERATIONS)                                     | **Turndown, debottlenecking, and decommissioning timing analysis**      |
 | **Multi-Scenario VFP Generation** | [docs/fielddevelopment/MULTI_SCENARIO_PRODUCTION_OPTIMIZATION.md](fielddevelopment/MULTI_SCENARIO_PRODUCTION_OPTIMIZATION) | VFP tables with varying GOR/water cut for reservoir simulation coupling |
@@ -944,7 +995,6 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Code Patterns**                  | [docs/development/CODE_PATTERNS.md](development/CODE_PATTERNS)                                   | **Copy-paste starters for common coding tasks**                                       |
 | **Task Log**                       | [docs/development/TASK_LOG.md](development/TASK_LOG)                                             | **Searchable log of all solved tasks**                                                |
 | **Lessons Learned**                | [docs/development/LESSONS_LEARNED.md](development/LESSONS_LEARNED)                               | **Practical lessons from 45+ solved tasks (EOS, convergence, API gotchas)**           |
-| **Workflow Review**                | [docs/development/WORKFLOW_REVIEW.md](development/WORKFLOW_REVIEW)                               | **Comparative review: NeqSim task solver vs commercial tools and AI frameworks**      |
 | Build Guide                        | [docs/development/BUILD.md](development/BUILD)                                                   | Build system, Maven profiles, packaging                                               |
 | Getting Started (Developer)        | [docs/development/GETTING_STARTED_DEVELOPER.md](development/GETTING_STARTED_DEVELOPER)           | Quick-start guide for new contributors                                                |
 | Project Structure Recommendations  | [docs/development/PROJECT_STRUCTURE_RECOMMENDATIONS.md](development/PROJECT_STRUCTURE_RECOMMENDATIONS) | Recommended package layout and module boundaries                                 |
@@ -971,6 +1021,9 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **ESP Pump Tutorial**                     | [docs/examples/ESP_Pump_Tutorial.md](examples/ESP_Pump_Tutorial)                                               | **Electric Submersible Pump simulation and sizing**                                                                |
 | **Graph-Based Simulation**                | [docs/examples/GraphBasedProcessSimulation.md](examples/GraphBasedProcessSimulation)                           | **Graph-based process simulation tutorial**                                                                        |
 | **Field Development Workflow**            | [docs/examples/FieldDevelopmentWorkflow.md](examples/FieldDevelopmentWorkflow)                                 | **End-to-end field development workflow example**                                                                  |
+| **Field Development Decision Engine**     | [examples/notebooks/field_development_decision_engine.ipynb](../examples/notebooks/field_development_decision_engine) | **Concept templates, lifecycle emissions, MCDA ranking, portfolio optimization, and report-ready tables** |
+| **Field Development Process Coupling**    | [examples/notebooks/field_development_process_reservoir_coupling.ipynb](../examples/notebooks/field_development_process_reservoir_coupling) | **Tieback route networks, gathering allocation, process utility generation, and VFP/schedule export** |
+| **Host Tie-In Capacity and Holdback**     | [examples/notebooks/host_tie_in_capacity_and_holdback.ipynb](../examples/notebooks/host_tie_in_capacity_and_holdback) | **Brownfield host capacity, satellite holdback, process-equipment bottlenecks, and debottleneck value** |
 | **Multi-Scenario VFP Tutorial**           | [docs/examples/MultiScenarioVFP_Tutorial.ipynb](examples/MultiScenarioVFP_Tutorial)                            | **VFP generation with varying GOR/water cut scenarios**                                                            |
 | **Production System Bottleneck Analysis** | [docs/examples/ProductionSystem_BottleneckAnalysis.ipynb](examples/ProductionSystem_BottleneckAnalysis)        | **Multi-well system optimization, bottleneck identification, and well prioritization**                             |
 | **Integrated Production & Risk Analysis** | [docs/examples/IntegratedProductionRiskAnalysis.ipynb](examples/IntegratedProductionRiskAnalysis)              | **Complete operational workflow combining bottleneck analysis with risk simulation, Monte Carlo, and risk matrix** |
@@ -1005,8 +1058,13 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Document                   | Path                                                                                                       | Description                                                 |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
 | Chemical Reactions         | [docs/chemicalreactions/README.md](chemicalreactions/)                                                     | Chemical reactions module                                   |
-| Deep Review                | [docs/chemicalreactions/CHEMICAL_REACTION_DEEP_REVIEW.md](chemicalreactions/CHEMICAL_REACTION_DEEP_REVIEW) | Chemical reaction deep review                               |
 | Sulfur Deposition Analysis | [docs/chemicalreactions/sulfur_deposition_analysis.md](chemicalreactions/sulfur_deposition_analysis)       | Sulfur formation, solubility, deposition, and FeS corrosion |
+| Chemistry & Integrity      | [docs/chemistry/index.md](chemistry/)                                                                      | Open standards-traceable chemical integrity stack (scale, corrosion, scavengers, RCA, MCP) |
+| Electrolyte Scale (Davies) | [docs/chemistry/electrolyte_scale.md](chemistry/electrolyte_scale)                                         | Davies SI math, ion conventions, North-Sea worked example   |
+| Mechanistic CO2 Corrosion  | [docs/chemistry/mechanistic_corrosion.md](chemistry/mechanistic_corrosion)                                 | NORSOK + Nesic + Langmuir inhibitor with worked example     |
+| Packed-bed Scavenger       | [docs/chemistry/packed_bed_scavenger.md](chemistry/packed_bed_scavenger)                                   | 1D PFR PDE for H2S scavenger sizing and breakthrough        |
+| Closed-loop Deposition     | [docs/chemistry/closed_loop_deposition.md](chemistry/closed_loop_deposition)                               | Coupling pipe hydraulics with `ScaleDepositionAccumulator`  |
+| MCP `runChemistry` tool    | [docs/chemistry/mcp.md](chemistry/mcp)                                                                     | JSON schema for the chemistry MCP tool                      |
 
 ### Appendix B: Statistics
 

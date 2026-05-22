@@ -835,4 +835,3 @@ for JSON output structure and full configuration options.
 
 - [Motor Mechanical Design Guide](motor-mechanical-design.md) — foundation, vibration, cooling, bearings, noise, enclosure standards
 - [Mechanical Design Framework](mechanical_design.md) — base mechanical design architecture and class hierarchy
-- [Electrical Design Proposal](../development/ELECTRICAL_DESIGN_PROPOSAL.md) — original architecture blueprint

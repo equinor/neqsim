@@ -16,6 +16,7 @@ import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pipeline.Pipeline;
+import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reactor.GibbsReactor;
 import neqsim.process.equipment.separator.Separator;
@@ -803,8 +804,33 @@ public class ProcessAutomation {
           "Pipe inner diameter"));
       vars.add(new SimulationVariable(unitName + ".pipeWallRoughness", "pipeWallRoughness",
           VariableType.INPUT, "m", "Pipe wall roughness"));
+        vars.add(new SimulationVariable(unitName + ".wallThickness", "wallThickness",
+          VariableType.INPUT, "m", "Pipe wall thickness"));
+        vars.add(new SimulationVariable(unitName + ".elevation", "elevation", VariableType.INPUT,
+          "m", "Pipe elevation change from inlet to outlet"));
       vars.add(new SimulationVariable(unitName + ".pressureDrop", "pressureDrop",
           VariableType.OUTPUT, "bara", "Pressure drop across pipe"));
+        if (unit instanceof WaterHammerPipe) {
+        vars.add(new SimulationVariable(unitName + ".valveOpening", "valveOpening",
+          VariableType.INPUT, "", "Water-hammer valve opening fraction"));
+        vars.add(new SimulationVariable(unitName + ".valveOpeningPercent",
+          "valveOpeningPercent", VariableType.INPUT, "%",
+          "Water-hammer valve opening percentage"));
+        vars.add(new SimulationVariable(unitName + ".waveSpeed", "waveSpeed",
+          VariableType.INPUT, "m/s", "Acoustic wave speed override or calculated value"));
+        vars.add(new SimulationVariable(unitName + ".numberOfNodes", "numberOfNodes",
+          VariableType.INPUT, "", "Water-hammer computational node count"));
+        vars.add(new SimulationVariable(unitName + ".courantNumber", "courantNumber",
+          VariableType.INPUT, "", "Courant number for stable transient time steps"));
+        vars.add(new SimulationVariable(unitName + ".maxStableTimeStep", "maxStableTimeStep",
+          VariableType.OUTPUT, "s", "Maximum stable time step from the Courant limit"));
+        vars.add(new SimulationVariable(unitName + ".waveRoundTripTime", "waveRoundTripTime",
+          VariableType.OUTPUT, "s", "Pipe acoustic wave round-trip time"));
+        vars.add(new SimulationVariable(unitName + ".maxPressure", "maxPressure",
+          VariableType.OUTPUT, "bara", "Maximum pressure envelope during transient"));
+        vars.add(new SimulationVariable(unitName + ".minPressure", "minPressure",
+          VariableType.OUTPUT, "bara", "Minimum pressure envelope during transient"));
+        }
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
@@ -871,7 +897,106 @@ public class ProcessAutomation {
       addOutletStreamVariables(vars, unitName, unit);
     }
 
-    return vars;
+    return enrichVariableMetadata(vars);
+  }
+
+  /**
+   * Enriches sparse variable descriptors with metadata useful to agents.
+   *
+   * @param variables raw variables discovered from equipment
+   * @return enriched variable descriptors
+   */
+  private List<SimulationVariable> enrichVariableMetadata(List<SimulationVariable> variables) {
+    List<SimulationVariable> enrichedVariables = new ArrayList<SimulationVariable>();
+    for (SimulationVariable variable : variables) {
+      enrichedVariables.add(enrichVariableMetadata(variable));
+    }
+    return enrichedVariables;
+  }
+
+  /**
+   * Enriches a single variable descriptor.
+   *
+   * @param variable raw variable descriptor
+   * @return enriched variable descriptor
+   */
+  private SimulationVariable enrichVariableMetadata(SimulationVariable variable) {
+    SimulationVariable enriched = variable.withCategory(inferVariableCategory(variable))
+        .withWritableSafety(variable.getType() == VariableType.INPUT,
+            variable.getType() == VariableType.INPUT)
+        .withApplicability(inferApplicability(variable));
+    String name = variable.getName();
+
+    if ("temperature".equals(name) || "outletTemperature".equals(name)) {
+      return enriched.withBounds(Double.valueOf(1.0), Double.valueOf(2000.0))
+          .withUnitFamily("temperature");
+    }
+    if ("pressure".equals(name) || "outletPressure".equals(name)
+        || "dischargePressure".equals(name)) {
+      return enriched.withBounds(Double.valueOf(1.0e-6), Double.valueOf(10000.0))
+          .withUnitFamily("pressure");
+    }
+    if ("flowRate".equals(name)) {
+      return enriched.withBounds(Double.valueOf(0.0), null).withUnitFamily("flow");
+    }
+    if (name.toLowerCase().contains("efficiency")) {
+      return enriched.withBounds(Double.valueOf(0.0), Double.valueOf(1.0))
+          .withUnitFamily("fraction");
+    }
+    if ("percentValveOpening".equals(name)) {
+      return enriched.withBounds(Double.valueOf(0.0), Double.valueOf(100.0))
+          .withUnitFamily("fraction");
+    }
+    if ("Cv".equals(name) || "UAvalue".equals(name) || "speed".equals(name) || "length".equals(name)
+        || "diameter".equals(name) || "pipeWallRoughness".equals(name) || "volume".equals(name)
+        || "condenserRefluxRatio".equals(name)) {
+      return enriched.withBounds(Double.valueOf(0.0), null);
+    }
+    return enriched;
+  }
+
+  /**
+   * Infers a variable category from its address and property name.
+   *
+   * @param variable variable descriptor
+   * @return category string
+   */
+  private String inferVariableCategory(SimulationVariable variable) {
+    String address = variable.getAddress();
+    String name = variable.getName();
+    if (address.contains("Stream")) {
+      return "stream";
+    }
+    if (name.toLowerCase().contains("efficiency") || "power".equals(name) || "duty".equals(name)) {
+      return "performance";
+    }
+    if ("length".equals(name) || "diameter".equals(name) || "volume".equals(name)
+        || "pipeWallRoughness".equals(name)) {
+      return "geometry";
+    }
+    return variable.getType() == VariableType.INPUT ? "equipment_input" : "equipment_output";
+  }
+
+  /**
+   * Infers an applicability note for a variable.
+   *
+   * @param variable variable descriptor
+   * @return applicability note
+   */
+  private String inferApplicability(SimulationVariable variable) {
+    if (variable.getAddress().contains("gasOutStream")) {
+      return "Available for equipment with a gas outlet stream";
+    }
+    if (variable.getAddress().contains("liquidOutStream")) {
+      return "Available for equipment with a liquid outlet stream";
+    }
+    if (variable.getAddress().contains("outletStream")) {
+      return "Available for equipment with a single outlet stream";
+    }
+    if (variable.getType() == VariableType.INPUT) {
+      return "Writable input; rerun the process after changing this value";
+    }
+    return "Read-only output from the latest process run";
   }
 
   /**
@@ -1008,6 +1133,19 @@ public class ProcessAutomation {
         if (unit instanceof ThrottlingValve) {
           return ((ThrottlingValve) unit).getPercentValveOpening();
         }
+        if (unit instanceof WaterHammerPipe) {
+          return ((WaterHammerPipe) unit).getValveOpeningPercent();
+        }
+        break;
+      case "valveOpening":
+        if (unit instanceof WaterHammerPipe) {
+          return ((WaterHammerPipe) unit).getValveOpening();
+        }
+        break;
+      case "valveOpeningPercent":
+        if (unit instanceof WaterHammerPipe) {
+          return ((WaterHammerPipe) unit).getValveOpeningPercent();
+        }
         break;
       case "UAvalue":
         if (unit instanceof HeatExchanger) {
@@ -1079,9 +1217,54 @@ public class ProcessAutomation {
           return ((Pipeline) unit).getPipeWallRoughness();
         }
         break;
+      case "wallThickness":
+        if (unit instanceof Pipeline) {
+          return ((Pipeline) unit).getWallThickness();
+        }
+        break;
+      case "elevation":
+        if (unit instanceof Pipeline) {
+          return ((Pipeline) unit).getElevation();
+        }
+        break;
       case "pressureDrop":
         if (unit instanceof Pipeline) {
           return ((Pipeline) unit).getPressureDrop();
+        }
+        break;
+      case "numberOfNodes":
+        if (unit instanceof WaterHammerPipe) {
+          return ((WaterHammerPipe) unit).getNumberOfNodes();
+        }
+        break;
+      case "courantNumber":
+        if (unit instanceof WaterHammerPipe) {
+          return ((WaterHammerPipe) unit).getCourantNumber();
+        }
+        break;
+      case "waveSpeed":
+        if (unit instanceof WaterHammerPipe) {
+          return ((WaterHammerPipe) unit).getWaveSpeed();
+        }
+        break;
+      case "maxStableTimeStep":
+        if (unit instanceof WaterHammerPipe) {
+          return ((WaterHammerPipe) unit).getMaxStableTimeStep();
+        }
+        break;
+      case "waveRoundTripTime":
+        if (unit instanceof WaterHammerPipe) {
+          return ((WaterHammerPipe) unit).getWaveRoundTripTime();
+        }
+        break;
+      case "maxPressure":
+        if (unit instanceof WaterHammerPipe) {
+          return ((WaterHammerPipe) unit).getMaxPressure(hasUnit ? uom : "bar");
+        }
+        break;
+      case "minPressure":
+        if (unit instanceof WaterHammerPipe) {
+          return ((WaterHammerPipe) unit).getMinPressure(hasUnit ? uom : "bar");
         }
         break;
       case "dischargePressure":
@@ -1216,6 +1399,10 @@ public class ProcessAutomation {
           ((ThrottlingValve) unit).setPercentValveOpening(value);
           return;
         }
+        if (unit instanceof WaterHammerPipe) {
+          ((WaterHammerPipe) unit).setValveOpeningPercent(value);
+          return;
+        }
         break;
       case "UAvalue":
         if (unit instanceof HeatExchanger) {
@@ -1265,6 +1452,48 @@ public class ProcessAutomation {
       case "pipeWallRoughness":
         if (unit instanceof Pipeline) {
           ((Pipeline) unit).setPipeWallRoughness(value);
+          return;
+        }
+        break;
+      case "wallThickness":
+        if (unit instanceof Pipeline) {
+          ((Pipeline) unit).setWallThickness(value);
+          return;
+        }
+        break;
+      case "elevation":
+        if (unit instanceof Pipeline) {
+          ((Pipeline) unit).setElevation(value);
+          return;
+        }
+        break;
+      case "valveOpening":
+        if (unit instanceof WaterHammerPipe) {
+          ((WaterHammerPipe) unit).setValveOpening(value);
+          return;
+        }
+        break;
+      case "valveOpeningPercent":
+        if (unit instanceof WaterHammerPipe) {
+          ((WaterHammerPipe) unit).setValveOpeningPercent(value);
+          return;
+        }
+        break;
+      case "numberOfNodes":
+        if (unit instanceof WaterHammerPipe) {
+          ((WaterHammerPipe) unit).setNumberOfNodes((int) Math.round(value));
+          return;
+        }
+        break;
+      case "courantNumber":
+        if (unit instanceof WaterHammerPipe) {
+          ((WaterHammerPipe) unit).setCourantNumber(value);
+          return;
+        }
+        break;
+      case "waveSpeed":
+        if (unit instanceof WaterHammerPipe) {
+          ((WaterHammerPipe) unit).setWaveSpeed(value);
           return;
         }
         break;

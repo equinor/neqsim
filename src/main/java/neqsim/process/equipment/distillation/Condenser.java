@@ -74,6 +74,15 @@ public class Condenser extends SimpleTray {
   }
 
   /**
+   * Checks whether this condenser is configured as a total condenser.
+   *
+   * @return {@code true} when the condenser is configured as total, otherwise {@code false}
+   */
+  public boolean isTotalCondenser() {
+    return totalCondenser;
+  }
+
+  /**
    * <p>
    * Getter for the field <code>refluxRatio</code>.
    * </p>
@@ -124,7 +133,7 @@ public class Condenser extends SimpleTray {
   /** {@inheritDoc} */
   @Override
   public StreamInterface getGasOutStream() {
-    if (totalCondenser) {
+    if (totalCondenser && mixedStreamSplitter != null) {
       return new Stream("", mixedStreamSplitter.getSplitStream(1));
     } else {
       return super.getGasOutStream();
@@ -145,7 +154,7 @@ public class Condenser extends SimpleTray {
   /** {@inheritDoc} */
   @Override
   public StreamInterface getLiquidOutStream() {
-    if (totalCondenser || separation_with_liquid_reflux) {
+    if ((totalCondenser || separation_with_liquid_reflux) && mixedStreamSplitter != null) {
       return mixedStreamSplitter.getSplitStream(0);
     } else {
       return super.getLiquidOutStream();
@@ -158,7 +167,7 @@ public class Condenser extends SimpleTray {
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public StreamInterface getLiquidProductStream() {
-    if (separation_with_liquid_reflux) {
+    if (separation_with_liquid_reflux && mixedStreamSplitter != null) {
       return mixedStreamSplitter.getSplitStream(1);
     } else {
       return null;
@@ -170,16 +179,8 @@ public class Condenser extends SimpleTray {
   public void run(UUID id) {
     // System.out.println("guess temperature " + getTemperature());
     if (refluxIsSet && totalCondenser) {
-      UUID oldID = getCalculationIdentifier();
-      SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
-      mixedStream.setThermoSystem(thermoSystem2);
-      ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
-      if (streams.size() > 0) {
-        mixedStream.getThermoSystem().setNumberOfPhases(2);
-        mixedStream.getThermoSystem().init(0);
-        mixStream();
-      }
-      double enthalpy = calcMixStreamEnthalpy();
+      prepareMixedStreamForRefluxFlash();
+      ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
       try {
         testOps.bubblePointTemperatureFlash();
       } catch (Exception e) {
@@ -189,7 +190,8 @@ public class Condenser extends SimpleTray {
       // mixedStream.getThermoSystem().prettyPrint();
 
       mixedStreamSplitter = new Splitter("splitter", mixedStream, 2);
-      mixedStreamSplitter.setSplitFactors(new double[] {refluxRatio, 1.0 - refluxRatio});
+      double refluxFraction = refluxRatio <= 0.0 ? 0.0 : refluxRatio / (1.0 + refluxRatio);
+      mixedStreamSplitter.setSplitFactors(new double[] {refluxFraction, 1.0 - refluxFraction});
       mixedStreamSplitter.run();
     } else if (!refluxIsSet) {
       UUID oldID = getCalculationIdentifier();
@@ -197,7 +199,8 @@ public class Condenser extends SimpleTray {
       setCalculationIdentifier(oldID);
     } else if (separation_with_liquid_reflux) {
       super.run(id);
-      Stream liquidstream = new Stream("temp liq stream", mixedStream.getFluid().phaseToSystem(1));
+      StreamInterface liquidstream = super.getLiquidOutStream().clone();
+      liquidstream.setName("temp liq stream");
       liquidstream.run();
       if (liquidstream.getFlowRate("kg/hr") < this.reflux_value) {
         liquidstream.setFlowRate(this.reflux_value + 1, this.reflux_unit);
@@ -207,11 +210,8 @@ public class Condenser extends SimpleTray {
       mixedStreamSplitter.setFlowRates(new double[] {this.reflux_value, -1}, this.reflux_unit);
       mixedStreamSplitter.run();
     } else {
-      SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
-      // System.out.println("total number of moles " +
-      // thermoSystem2.getTotalNumberOfMoles());
-      mixedStream.setThermoSystem(thermoSystem2);
-      ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
+      prepareMixedStreamForRefluxFlash();
+      ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
       testOps.PVrefluxFlash(refluxRatio, 0);
     }
     // System.out.println("enthalpy: " +
@@ -224,5 +224,21 @@ public class Condenser extends SimpleTray {
     // System.out.println("beta " + mixedStream.getThermoSystem().getBeta())
 
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Prepare the mixed stream before a condenser reflux flash.
+   *
+   * @throws IllegalStateException if no inlet streams are connected
+   */
+  private void prepareMixedStreamForRefluxFlash() {
+    if (streams.isEmpty()) {
+      throw new IllegalStateException("Condenser has no inlet streams");
+    }
+    SystemInterface thermoSystem = streams.get(0).getThermoSystem().clone();
+    mixedStream.setThermoSystem(thermoSystem);
+    mixedStream.getThermoSystem().setNumberOfPhases(2);
+    mixedStream.getThermoSystem().init(0);
+    mixStream();
   }
 }

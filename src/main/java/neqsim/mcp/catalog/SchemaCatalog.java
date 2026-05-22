@@ -1,5 +1,6 @@
 package neqsim.mcp.catalog;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -13,8 +14,9 @@ import com.google.gson.GsonBuilder;
  *
  * <p>
  * Provides JSON Schema strings describing the input/output format of each MCP tool. These schemas
- * are designed to be served as MCP Resources via URIs like {@code neqsim://schema/run_flash/input},
- * enabling language models to understand the expected data format without trial and error.
+ * are designed to be served as MCP Resources via URIs like
+ * {@code neqsim://schemas/run_flash/input}, enabling language models to understand the expected
+ * data format without trial and error.
  * </p>
  *
  * <p>
@@ -122,6 +124,7 @@ public final class SchemaCatalog {
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    addStandardOutputProperties(properties);
 
     // status
     Map<String, Object> status = new LinkedHashMap<String, Object>();
@@ -180,7 +183,10 @@ public final class SchemaCatalog {
     Map<String, Object> schema = new LinkedHashMap<String, Object>();
     schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
     schema.put("title", "ProcessInput");
-    schema.put("description", "Input for a process simulation (run_process tool)");
+    schema.put("description",
+        "Input for a process simulation (run_process tool). Accepts either a single "
+            + "ProcessSystem with 'fluid' and 'process', or a multi-area ProcessModel with "
+            + "top-level 'areas'.");
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
@@ -196,7 +202,8 @@ public final class SchemaCatalog {
     Map<String, Object> process = new LinkedHashMap<String, Object>();
     process.put("type", "array");
     process.put("description",
-        "Ordered list of equipment units. Each unit has 'type', 'name', 'inlet', and 'properties'.");
+        "Ordered list of equipment units. Each unit has 'type', 'name', 'inlet', "
+            + "and 'properties'.");
     Map<String, Object> processItems = new LinkedHashMap<String, Object>();
     processItems.put("type", "object");
     Map<String, Object> unitProps = new LinkedHashMap<String, Object>();
@@ -213,8 +220,22 @@ public final class SchemaCatalog {
     process.put("items", processItems);
     properties.put("process", process);
 
+    Map<String, Object> areas = new LinkedHashMap<String, Object>();
+    areas.put("type", "object");
+    areas.put("description",
+        "Named ProcessModel areas. Each property value is a standard process JSON object "
+            + "with 'fluid' and 'process'.");
+    properties.put("areas", areas);
+
     schema.put("properties", properties);
-    schema.put("required", Arrays.asList("fluid", "process"));
+    List<Map<String, Object>> alternatives = new ArrayList<Map<String, Object>>();
+    Map<String, Object> processSystemRequired = new LinkedHashMap<String, Object>();
+    processSystemRequired.put("required", Arrays.asList("fluid", "process"));
+    alternatives.add(processSystemRequired);
+    Map<String, Object> processModelRequired = new LinkedHashMap<String, Object>();
+    processModelRequired.put("required", Collections.singletonList("areas"));
+    alternatives.add(processModelRequired);
+    schema.put("anyOf", alternatives);
 
     return GSON.toJson(schema);
   }
@@ -232,8 +253,20 @@ public final class SchemaCatalog {
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    addStandardOutputProperties(properties);
     properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
     properties.put("processSystemName", stringProp("Name of the built process system"));
+    properties.put("processModelName", stringProp("Name of the built process model"));
+    Map<String, Object> areaCount = new LinkedHashMap<String, Object>();
+    areaCount.put("type", "integer");
+    areaCount.put("description", "Number of areas in a process model response");
+    properties.put("areaCount", areaCount);
+
+    Map<String, Object> areas = new LinkedHashMap<String, Object>();
+    areas.put("type", "array");
+    areas.put("items", stringProp("Process area name"));
+    areas.put("description", "ProcessModel area names when the input used top-level 'areas'");
+    properties.put("areas", areas);
 
     Map<String, Object> report = new LinkedHashMap<String, Object>();
     report.put("type", "object");
@@ -327,6 +360,26 @@ public final class SchemaCatalog {
    *
    * @return JSON Schema string
    */
+  public static String componentSearchInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "ComponentSearchInput");
+    schema.put("description",
+        "Input for component database search (list_components/searchComponents tool)");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("query", stringProp("Component name or partial name, e.g. methane, water, CO2"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("query"));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for component search output.
+   *
+   * @return JSON Schema string
+   */
   public static String componentSearchOutputSchema() {
     Map<String, Object> schema = new LinkedHashMap<String, Object>();
     schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
@@ -335,6 +388,7 @@ public final class SchemaCatalog {
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    addStandardOutputProperties(properties);
     properties.put("status", stringProp("Result status"));
     properties.put("query", stringProp("The search query used"));
     Map<String, Object> matchCount = new LinkedHashMap<String, Object>();
@@ -351,6 +405,29 @@ public final class SchemaCatalog {
 
     schema.put("properties", properties);
 
+    return GSON.toJson(schema);
+  }
+
+  // ========== Capabilities Discovery Schemas ==========
+
+  /**
+   * Returns the JSON Schema for capability discovery input.
+   *
+   * @return JSON Schema string
+   */
+  public static String capabilitiesInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "CapabilitiesInput");
+    schema.put("description",
+        "Optional input for capability discovery. The getCapabilities MCP tool takes no arguments; "
+            + "this schema exists so agents can treat discovery like other schema-backed tools.");
+    schema.put("type", "object");
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("includeExamples", boolProp("Whether a client wants example references"));
+    properties.put("includeSetupTemplates",
+        boolProp("Whether a client wants setup-template references"));
+    schema.put("properties", properties);
     return GSON.toJson(schema);
   }
 
@@ -423,8 +500,9 @@ public final class SchemaCatalog {
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    addStandardOutputProperties(properties);
     properties.put("status",
-        enumProp("Overall batch status", Arrays.asList("success", "partial", "error")));
+        enumProp("Overall batch status", Arrays.asList("ok", "success", "partial", "error")));
 
     Map<String, Object> summary = new LinkedHashMap<String, Object>();
     summary.put("type", "object");
@@ -533,6 +611,7 @@ public final class SchemaCatalog {
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    addStandardOutputProperties(properties);
     properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
     properties.put("model", stringProp("Thermodynamic model used"));
     properties.put("sweep", stringProp("Variable swept (temperature or pressure)"));
@@ -600,6 +679,7 @@ public final class SchemaCatalog {
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    addStandardOutputProperties(properties);
     properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
 
     Map<String, Object> envelope = new LinkedHashMap<String, Object>();
@@ -645,9 +725,14 @@ public final class SchemaCatalog {
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    addStandardOutputProperties(properties);
     properties.put("status", stringProp("Result status"));
     properties.put("engine", stringProp("Engine name (NeqSim)"));
     properties.put("description", stringProp("Engine description"));
+    properties.put("toolCapabilities",
+        objectProp(
+            "Machine-readable descriptors for high-use MCP tools, including required fields, "
+                + "supported models, units, limitations, and response contract fields"));
 
     Map<String, Object> thermo = new LinkedHashMap<String, Object>();
     thermo.put("type", "object");
@@ -730,6 +815,7 @@ public final class SchemaCatalog {
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    addStandardOutputProperties(properties);
     properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
     properties.put("experiment", stringProp("Experiment type performed"));
 
@@ -877,6 +963,160 @@ public final class SchemaCatalog {
     return GSON.toJson(schema);
   }
 
+  /**
+   * Returns the JSON Schema for water-hammer screening input.
+   *
+   * @return JSON Schema string
+   */
+  public static String waterHammerInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "WaterHammerInput");
+    schema.put("description", "Input for water/liquid hammer screening (run_water_hammer tool)");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("studyName", stringProp("Study name or scenario identifier"));
+    properties.put("model", enumProp("Thermodynamic model", Arrays.asList("SRK", "PR")));
+
+    Map<String, Object> components = new LinkedHashMap<String, Object>();
+    components.put("type", "object");
+    components.put("description", "Component-to-mole-fraction map, defaults to water if omitted");
+    Map<String, Object> addProps = new LinkedHashMap<String, Object>();
+    addProps.put("type", "number");
+    components.put("additionalProperties", addProps);
+    properties.put("components", components);
+
+    properties.put("temperature_C", numberProp("Inlet temperature in Celsius"));
+    properties.put("pressure_bara", numberProp("Inlet pressure in bara"));
+    properties.put("designPressure_bara", numberProp("Pipe design pressure or MAOP in bara"));
+    properties.put("simulationTime_s", numberProp("Simulation duration in seconds"));
+    properties.put("timeStep_s", numberProp("Requested transient time step in seconds"));
+    properties.put("closureTime_s", numberProp("Default valve closure duration in seconds"));
+
+    Map<String, Object> flowRate = new LinkedHashMap<String, Object>();
+    flowRate.put("type", "object");
+    Map<String, Object> frProps = new LinkedHashMap<String, Object>();
+    frProps.put("value", numberProp("Numeric flow-rate value"));
+    frProps.put("unit", stringProp("Flow-rate unit, for example kg/hr"));
+    flowRate.put("properties", frProps);
+    properties.put("flowRate", flowRate);
+
+    Map<String, Object> pipe = new LinkedHashMap<String, Object>();
+    pipe.put("type", "object");
+    pipe.put("description", "Equivalent pipe geometry for single-line screening");
+    Map<String, Object> pipeProps = new LinkedHashMap<String, Object>();
+    pipeProps.put("length_m", numberProp("Pipe length in metres"));
+    pipeProps.put("diameter_m", numberProp("Pipe internal diameter in metres"));
+    pipeProps.put("wallThickness_m", numberProp("Pipe wall thickness in metres"));
+    pipeProps.put("roughness_m", numberProp("Pipe roughness in metres"));
+    pipeProps.put("elevation_m", numberProp("Elevation change from inlet to outlet in metres"));
+    pipeProps.put("numberOfNodes", intProp("Transient computational node count"));
+    pipeProps.put("waveSpeed_m_s", numberProp("Optional acoustic wave-speed override"));
+    pipe.put("properties", pipeProps);
+    properties.put("pipe", pipe);
+
+    Map<String, Object> route = new LinkedHashMap<String, Object>();
+    route.put("type", "object");
+    route.put("description",
+        "Optional STID/E3D route with segments containing length, diameter, elevation, "
+            + "wall thickness, roughness, and minorLosses");
+    properties.put("stidRoute", route);
+
+    Map<String, Object> fieldData = new LinkedHashMap<String, Object>();
+    fieldData.put("type", "object");
+    fieldData.put("description",
+        "Optional tagreader overrides such as inletPressure_bara, inletTemperature_C, "
+            + "flowRate_kg_hr, and valveOpening");
+    properties.put("fieldData", fieldData);
+
+    Map<String, Object> events = new LinkedHashMap<String, Object>();
+    events.put("type", "array");
+    events.put("description",
+        "Valve event schedule with type, startTime_s, duration_s, startOpening, endOpening");
+    events.put("items", objectProp("Valve closure or opening event"));
+    properties.put("eventSchedule", events);
+
+    schema.put("properties", properties);
+    schema.put("required", Arrays.asList("flowRate", "pipe"));
+    return GSON.toJson(schema);
+  }
+
+  // ========== Root-Cause Analysis Schemas ==========
+
+  /**
+   * Returns the JSON Schema for root-cause analysis input.
+   *
+   * @return JSON Schema string
+   */
+  public static String rootCauseInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "RootCauseAnalysisInput");
+    schema.put("description",
+        "Input for equipment root-cause analysis (run_root_cause_analysis tool)");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("equipmentName", stringProp("Name of the equipment to diagnose"));
+    properties.put("symptom",
+        enumProp("Observed symptom",
+            Arrays.asList("TRIP", "HIGH_VIBRATION", "SEAL_FAILURE", "HIGH_TEMPERATURE",
+                "LOW_EFFICIENCY", "PRESSURE_DEVIATION", "FLOW_DEVIATION", "HIGH_POWER",
+                "SURGE_EVENT", "FOULING", "ABNORMAL_NOISE", "LIQUID_CARRYOVER")));
+    properties.put("processJson",
+        stringProp("ProcessSystem JSON definition accepted by ProcessSystem.fromJsonAndRun"));
+    properties.put("simulationEnabled",
+        boolProp("Whether to run conservative NeqSim perturbation verification"));
+    properties.put("historianCsv", stringProp(
+        "CSV text with header row time,<tag1>,<tag2>... from tagreader or historian export"));
+
+    Map<String, Object> designLimits = new LinkedHashMap<String, Object>();
+    designLimits.put("type", "object");
+    designLimits.put("description",
+        "Map of tag/parameter to [low, high] limits, for example {\"vibration\": [0, 8]}.");
+    properties.put("designLimits", designLimits);
+
+    Map<String, Object> stidData = new LinkedHashMap<String, Object>();
+    stidData.put("type", "object");
+    stidData.put("description",
+        "STID/design data map such as design point, rated speed, normal operating value, "
+            + "or datasheet references");
+    properties.put("stidData", stidData);
+
+    schema.put("properties", properties);
+    schema.put("required", Arrays.asList("equipmentName", "symptom", "processJson"));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for root-cause analysis output.
+   *
+   * @return JSON Schema string
+   */
+  public static String rootCauseOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "RootCauseAnalysisOutput");
+    schema.put("description", "Output from root-cause analysis with ranked hypotheses");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+    properties.put("equipment", stringProp("Diagnosed equipment name"));
+    properties.put("equipmentType", stringProp("Classified equipment type"));
+    properties.put("symptom", stringProp("Analyzed symptom"));
+    properties.put("dataPointsAnalyzed", intProp("Number of historian data points analyzed"));
+    properties.put("parametersAnalyzed", intProp("Number of historian parameters analyzed"));
+    properties.put("hypotheses",
+        typedArraySchema(
+            "Ranked hypotheses with confidenceScore, priorProbability, likelihoodScore, "
+                + "verificationScore, evidence, recommendedActions, and simulationSummary"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
+    return GSON.toJson(schema);
+  }
+
   // ========== Reservoir Schemas ==========
 
   /**
@@ -992,6 +1232,39 @@ public final class SchemaCatalog {
 
     schema.put("properties", properties);
     schema.put("required", Arrays.asList("processJson", "duration_seconds", "timeStep_seconds"));
+
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for dynamic simulation output.
+   *
+   * @return JSON Schema string
+   */
+  public static String dynamicOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "DynamicOutput");
+    schema.put("description", "Output of dynamic simulation (run_dynamic tool)");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    addStandardOutputProperties(properties);
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+
+    Map<String, Object> data = new LinkedHashMap<String, Object>();
+    data.put("type", "object");
+    data.put("description",
+        "Dynamic time-series data, including duration, timestep, transmitters, and controllers");
+    properties.put("data", data);
+
+    Map<String, Object> errors = new LinkedHashMap<String, Object>();
+    errors.put("type", "array");
+    errors.put("items", objectProp("Dynamic simulation error detail"));
+    properties.put("errors", errors);
+
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
 
     return GSON.toJson(schema);
   }
@@ -1234,19 +1507,448 @@ public final class SchemaCatalog {
     return GSON.toJson(schema);
   }
 
+  // ========== HAZOP Study Schemas ==========
+
+  /**
+   * Returns the JSON Schema for simulation-backed HAZOP study input.
+   *
+   * @return JSON Schema string
+   */
+  public static String hazopInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "HAZOPStudyInput");
+    schema.put("description",
+        "Input for run_hazop: process JSON plus optional STID/P&ID-extracted nodes, "
+            + "failure modes, and barrier register");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("studyId", stringProp("Stable HAZOP study identifier"));
+    properties.put("processDefinition", objectProp("Standard run_process JSON definition"));
+    properties.put("processJson", stringProp("Alternative string form of the process JSON"));
+    properties.put("nodes", typedArraySchema(
+        "HAZOP nodes with nodeId, designIntent, equipment, safeguards, and evidenceRefs"));
+    properties.put("failureModes", typedArraySchema(
+        "AutomaticScenarioGenerator failure modes such as COOLING_LOSS or VALVE_STUCK_CLOSED"));
+    properties.put("enableAllFailureModes", boolProp("Enable every supported failure mode"));
+    properties.put("runSimulations", boolProp("Run generated scenarios against copied processes"));
+    properties.put("barrierRegister",
+        objectProp("Optional register block accepted by run_barrier_register"));
+    schema.put("properties", properties);
+    schema.put("anyOf", Arrays.asList(requiredSchema("processDefinition"),
+        requiredSchema("processJson"), requiredSchema("fluid", "process")));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for simulation-backed HAZOP study output.
+   *
+   * @return JSON Schema string
+   */
+  public static String hazopOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "HAZOPStudyOutput");
+    schema.put("description",
+        "Output from run_hazop with worksheet rows, scenario results, and report markdown");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+    properties.put("studyId", stringProp("HAZOP study identifier"));
+    properties.put("summary", objectProp("Node, row, failure-mode, and simulation counts"));
+    properties.put("process", objectProp("Baseline process simulation summary"));
+    properties.put("nodes", typedArraySchema("Node-level text reports"));
+    properties.put("hazopRows", typedArraySchema("Generated IEC 61882 worksheet rows"));
+    properties.put("scenarioResults", typedArraySchema("Per-scenario simulation result values"));
+    properties.put("qualityGates", objectProp("Human-review and evidence quality gates"));
+    properties.put("barrierRegisterHandoff", objectProp("Optional barrier-register analysis"));
+    properties.put("reportMarkdown", stringProp("Markdown report suitable for task reports"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
+    return GSON.toJson(schema);
+  }
+
+  // ========== Safety Barrier Register Schemas ==========
+
+  /**
+   * Returns the JSON Schema for barrier-register input.
+   *
+   * @return JSON Schema string
+   */
+  public static String barrierRegisterInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "BarrierRegisterInput");
+    schema.put("description",
+        "Evidence-linked safety barrier register input for run_barrier_register");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("action", enumProp("Operation to perform",
+        Arrays.asList("validate", "summary", "audit", "lopaInput", "bowTieInput")));
+
+    Map<String, Object> register = new LinkedHashMap<String, Object>();
+    register.put("type", "object");
+    register.put("description",
+        "Barrier register with evidence, performanceStandards, barriers, and SCEs");
+    Map<String, Object> registerProps = new LinkedHashMap<String, Object>();
+    registerProps.put("registerId", stringProp("Stable barrier register identifier"));
+    registerProps.put("name", stringProp("Register display name"));
+
+    Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+    evidence.put("type", "array");
+    evidence.put("description", "Document evidence extracted from technical documents");
+    Map<String, Object> evidenceItem = new LinkedHashMap<String, Object>();
+    evidenceItem.put("type", "object");
+    Map<String, Object> evidenceProps = new LinkedHashMap<String, Object>();
+    evidenceProps.put("evidenceId", stringProp("Evidence identifier"));
+    evidenceProps.put("documentId", stringProp("Document number or tag"));
+    evidenceProps.put("sourceReference", stringProp("Page, table, drawing coordinate, or tag"));
+    evidenceProps.put("excerpt", stringProp("Quoted source text supporting the claim"));
+    evidenceProps.put("confidence", numberProp("Extraction confidence from 0 to 1"));
+    evidenceItem.put("properties", evidenceProps);
+    evidence.put("items", evidenceItem);
+    registerProps.put("evidence", evidence);
+
+    registerProps.put("performanceStandards",
+        typedArraySchema("Performance standards for PSFs, SIFs, or SCE functions"));
+    registerProps.put("barriers", typedArraySchema("Barrier or protection-layer records"));
+    registerProps.put("safetyCriticalElements", typedArraySchema("SCE records with barrierRefs"));
+    register.put("properties", registerProps);
+    register.put("required", Arrays.asList("registerId", "barriers"));
+    properties.put("register", register);
+
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("register"));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for barrier-register output.
+   *
+   * @return JSON Schema string
+   */
+  public static String barrierRegisterOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "BarrierRegisterOutput");
+    schema.put("description",
+        "Output from run_barrier_register with validation and safety-analysis handoffs");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+    properties.put("summary", objectProp("Counts of SCEs, barriers, evidence, and impairments"));
+    properties.put("validation", objectProp("Validation findings and remediation hints"));
+    properties.put("impairedBarriers",
+        typedArraySchema("Impaired, bypassed, or unavailable barriers"));
+    properties.put("equipmentBarrierMap", objectProp("Equipment tag to barrier mapping"));
+    properties.put("lopaHandoff", objectProp("LOPA-compatible protection layer handoff"));
+    properties.put("silHandoff", objectProp("SIL verification handoff candidates"));
+    properties.put("bowTieHandoff", objectProp("Bow-tie barrier handoff"));
+    properties.put("qraHandoff", objectProp("QRA screening multipliers by hazard"));
+    properties.put("registerExport", objectProp("Full normalized BarrierRegister export"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for safety-system performance input.
+   *
+   * @return JSON Schema string
+   */
+  public static String safetySystemPerformanceInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "SafetySystemPerformanceInput");
+    schema.put("description",
+        "Input for run_safety_system_performance: barrier register plus STID-derived demands, detectors, and optional SIF data");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("register", objectProp("Barrier register accepted by run_barrier_register"));
+    properties.put("barrierRegister",
+        objectProp("Alias for register for agent handoff compatibility"));
+    properties.put("demands", typedArraySchema(
+        "Demand/capacity cases with demandId, barrierId, category, demandValue, capacityValue, units, response time, availability, and evidenceRefs"));
+    properties.put("demandCases", typedArraySchema("Alias for demands"));
+    properties.put("measurementDevices", typedArraySchema(
+        "FireDetector or GasDetector definitions with name/tag/type/location/responseTimeSeconds"));
+    properties.put("logicSifs", typedArraySchema(
+        "Cause-and-effect voting SIFs with name, votingLogic, and detector states"));
+    properties.put("quantitativeSifs", typedArraySchema(
+        "SIL/PFD SIFs with claimedSIL, pfdAvg or components, architecture, proof-test interval, and protectedEquipment"));
+    properties.put("safetyInstrumentedFunctions",
+        typedArraySchema("Mixed logic or quantitative SIF definitions"));
+    schema.put("properties", properties);
+    schema.put("anyOf", Arrays.asList(requiredSchema("register"), requiredSchema("barrierRegister"),
+        requiredSchema("registerId", "barriers")));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for safety-system performance output.
+   *
+   * @return JSON Schema string
+   */
+  public static String safetySystemPerformanceOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "SafetySystemPerformanceOutput");
+    schema.put("description",
+        "Output from run_safety_system_performance with report, standards templates, and STID extraction templates");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+    properties.put("summary", objectProp("Overall verdict and parsed input counts"));
+    properties.put("performanceReport",
+        objectProp("SafetySystemPerformanceReport with assessments and findings"));
+    properties.put("standardsTemplates",
+        objectProp("NORSOK S-001, ISO 13702, and TR1055-style screening templates"));
+    properties.put("stidExtractionTemplates", objectProp(
+        "Extraction templates for C&E, SRS, firewater datasheets, detector layouts, and PFP schedules"));
+    properties.put("registerExport", objectProp("Normalized BarrierRegister export"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for materials review input.
+   *
+   * @return JSON Schema string
+   */
+  public static String materialsReviewInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "MaterialsReviewInput");
+    schema.put("description",
+        "Input for run_materials_review. Accepts processJson plus normalized STID/materials-register items.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("projectName", stringProp("Project, asset, or review name"));
+    properties.put("designLifeYears", numberProp("Default design life in years"));
+    properties.put("processJson", objectProp("Optional runProcess-style process definition"));
+    properties.put("materialsRegister", typedArraySchema(
+        "Review items with tag, equipmentType, existingMaterial, sourceReferences, and service envelope"));
+    properties.put("items", typedArraySchema("Alias for materialsRegister"));
+    properties.put("stidData", objectProp(
+        "Normalized STID/technical database extract with lineList, equipment, materialsRegister, inspectionData, or materialCertificates arrays"));
+    properties.put("includeMechanisms", typedArraySchema(
+        "Optional mechanism names to document intended scope; engine auto-detects mechanisms from data"));
+    schema.put("properties", properties);
+    schema.put("anyOf", Arrays.asList(requiredSchema("processJson"),
+        requiredSchema("materialsRegister"), requiredSchema("items"), requiredSchema("stidData")));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for materials review output.
+   *
+   * @return JSON Schema string
+   */
+  public static String materialsReviewOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "MaterialsReviewOutput");
+    schema.put("description",
+        "Output from run_materials_review with item verdicts, mechanisms, material recommendations, and integrity life screening.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+    properties.put("reviewType", stringProp("materials_integrity_review"));
+    properties.put("overallVerdict",
+        enumProp("Overall verdict", Arrays.asList("PASS", "PASS_WITH_WARNINGS", "FAIL")));
+    properties.put("itemCount", intProp("Number of reviewed items"));
+    properties.put("failedItems", intProp("Number of failed items"));
+    properties.put("warningItems", intProp("Number of items with warnings"));
+    properties.put("items", typedArraySchema(
+        "Item results with damageMechanisms, recommendation, integrityLife, confidence, and standardsApplied"));
+    properties.put("standardsApplied",
+        typedArraySchema("Standards and recommended practices used"));
+    properties.put("limitations", typedArraySchema("Limitations and assumptions"));
+    properties.put("provenance", objectProp("MCP result provenance"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for open-drain review input.
+   *
+   * @return JSON Schema string
+   */
+  public static String openDrainReviewInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "OpenDrainReviewInput");
+    schema.put("description",
+        "Input for run_open_drain_review. Accepts normalized STID/P&ID evidence and optional tagreader summaries for NORSOK S-001 Clause 9 review.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("projectName", stringProp("Project, asset, or review name"));
+    properties.put("defaultLiquidLeakRateKgPerS",
+        numberProp("Default worst credible process fire leak rate in kg/s, commonly 5 kg/s"));
+    properties.put("items", typedArraySchema(
+        "Review items with areaId, areaType, drainSystemType, sourceReferences, and evidence values"));
+    properties.put("openDrainAreas", typedArraySchema("Alias for open-drain area review items"));
+    properties.put("drainAreas", typedArraySchema("Alias for drain area review items"));
+    properties.put("stidData", objectProp(
+        "Normalized STID/P&ID extract with openDrainAreas, drainAreas, areaDrains, drainSystems, helideckDrains, temporaryStorageAreas, lineList, or equipment arrays"));
+    properties.put("tagreaderData", objectProp(
+        "Optional tagreader summary with sump level, backpressure, pump status, valve status, and backflow evidence"));
+    schema.put("properties", properties);
+    schema.put("anyOf", Arrays.asList(requiredSchema("items"), requiredSchema("openDrainAreas"),
+        requiredSchema("drainAreas"), requiredSchema("stidData")));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for open-drain review output.
+   *
+   * @return JSON Schema string
+   */
+  public static String openDrainReviewOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "OpenDrainReviewOutput");
+    schema.put("description",
+        "Output from run_open_drain_review with item verdicts, NORSOK S-001 Clause 9 assessments, evidence values, and provenance.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+    properties.put("reviewType", stringProp("open_drain_review"));
+    properties.put("overallVerdict",
+        enumProp("Overall verdict", Arrays.asList("PASS", "PASS_WITH_WARNINGS", "FAIL")));
+    properties.put("itemCount", intProp("Number of reviewed drain areas or systems"));
+    properties.put("failedItems", intProp("Number of failed items"));
+    properties.put("warningItems", intProp("Number of items with warnings"));
+    properties.put("results", typedArraySchema(
+        "Item results with areaId, verdict, confidence, evidenceValues, sourceReferences, and assessments"));
+    properties.put("standardsApplied", typedArraySchema("Standards and clauses used"));
+    properties.put("limitations", typedArraySchema("Limitations and assumptions"));
+    properties.put("provenance", objectProp("MCP result provenance"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for NORSOK S-001 Clause 10 process safety review input.
+   *
+   * @return JSON Schema string
+   */
+  public static String norsokS001Clause10ReviewInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "NorsokS001Clause10ReviewInput");
+    schema.put("description",
+        "Input for run_norsok_s001_clause10_review. Accepts normalized C&E, SRS, PSV, STID/P&ID, instrument-data, and tagreader evidence for NORSOK S-001 Clause 10 process safety system review.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("projectName", stringProp("Project, asset, or review name"));
+    properties.put("items", typedArraySchema(
+        "Review items with functionId, functionType, equipmentTag, sourceReferences, lifecycle evidence, and Clause 10 evidence values"));
+    properties.put("processSafetyFunctions", typedArraySchema("Process safety function records"));
+    properties.put("psdValves", typedArraySchema("PSD/shutdown valve and final-element evidence"));
+    properties.put("psvs", typedArraySchema("PSV and relief protection evidence"));
+    properties.put("alarms", typedArraySchema("Alarm and operator action evidence"));
+    properties.put("sifs", typedArraySchema("SIF, logic solver, and SRS evidence"));
+    properties.put("secondaryPressureProtection",
+        typedArraySchema("Instrumented secondary pressure protection evidence"));
+    properties.put("stidData", objectProp(
+        "Normalized STID/P&ID/C&E/SRS/PSV extract with processSafetyFunctions, psdValves, psvs, alarms, sifs, secondaryPressureProtection, utilityDependencies, survivabilityItems, instrumentData, or tagreaderEvidence arrays"));
+    properties.put("tagreaderData", objectProp(
+        "Optional tagreader or instrument-data summary with bypass, override, proof-test, demand-failure, and response-time evidence"));
+    properties.put("lifecycleEvidence", objectProp(
+        "Optional HAZID/HAZOP/LOPA to SRS to SIS/ESD/FGS implementation to verification/testing/operation traceability summary"));
+    properties.put("safetySystemPerformanceInput", objectProp(
+        "Optional input passed to run_safety_system_performance and embedded in the result"));
+    properties.put("operationalStudyInput",
+        objectProp("Optional input passed to runOperationalStudy and embedded in the result"));
+    properties.put("dynamicSimulationInput", objectProp(
+        "Optional input passed to run_dynamic and embedded as transient process evidence. Use for dynamic SIS/ESD/FGS/PSD scenario evidence when the ProcessSystem model implements the safety logic or valve actions."));
+    schema.put("properties", properties);
+    schema.put("anyOf",
+        Arrays.asList(requiredSchema("items"), requiredSchema("processSafetyFunctions"),
+            requiredSchema("stidData"), requiredSchema("tagreaderData"),
+            requiredSchema("lifecycleEvidence")));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for NORSOK S-001 Clause 10 process safety review output.
+   *
+   * @return JSON Schema string
+   */
+  public static String norsokS001Clause10ReviewOutputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "NorsokS001Clause10ReviewOutput");
+    schema.put("description",
+        "Output from run_norsok_s001_clause10_review with Clause 10 item verdicts, requirement assessments, evidence values, optional embedded analysis outputs, and provenance.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
+    properties.put("reviewType", stringProp("norsok_s001_clause10_review"));
+    properties.put("overallVerdict",
+        enumProp("Overall verdict", Arrays.asList("PASS", "PASS_WITH_WARNINGS", "FAIL")));
+    properties.put("itemCount", intProp("Number of reviewed functions and coverage records"));
+    properties.put("failedItems", intProp("Number of failed review items"));
+    properties.put("warningItems", intProp("Number of review items with warnings"));
+    properties.put("results", typedArraySchema(
+        "Item results with functionId, functionType, verdict, confidence, sourceReferences, evidenceValues, and assessments"));
+    properties.put("embeddedAnalyses", objectProp(
+        "Optional safetySystemPerformance, operationalStudy, and dynamicSimulation outputs embedded by the runner"));
+    properties.put("extractionTemplates",
+        typedArraySchema("Recommended document and instrument extraction templates"));
+    properties.put("provenance", objectProp("MCP result provenance"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("status"));
+    return GSON.toJson(schema);
+  }
+
   // ========== Catalog Metadata ==========
 
   /**
-   * Returns the list of tools with available schemas.
+   * Returns the list of MCP tools with available schemas.
+   *
+   * <p>
+   * High-use tools have detailed tool-specific schemas. The remaining server tools have generic MCP
+   * envelope schemas so every advertised tool can be discovered, linked, and validated at the
+   * contract level by agents.
+   * </p>
    *
    * @return list of tool names
    */
   public static List<String> getToolNames() {
     return Collections.unmodifiableList(Arrays.asList("run_flash", "run_process", "validate_input",
         "list_components", "run_batch", "get_property_table", "get_phase_envelope",
-        "get_capabilities", "run_pvt", "run_flow_assurance", "calculate_standard", "run_pipeline",
-        "run_reservoir", "run_field_economics", "run_dynamic", "run_bioprocess", "size_equipment",
-        "compare_processes", "manage_session", "visualize"));
+        "get_capabilities", "run_pvt", "run_flow_assurance", "run_chemistry", "calculate_standard",
+        "run_pipeline", "run_water_hammer", "run_root_cause_analysis", "run_materials_review",
+        "run_open_drain_review", "run_norsok_s001_clause10_review", "run_reservoir",
+        "run_field_economics", "run_dynamic", "run_bioprocess", "size_equipment",
+        "compare_processes", "manage_session", "visualize", "run_hazop", "run_barrier_register",
+        "run_safety_system_performance", "get_example", "get_schema", "list_simulation_units",
+        "run_operational_study", "list_unit_variables", "get_simulation_variable",
+        "set_simulation_variable", "save_simulation_state", "compare_simulation_states",
+        "diagnose_automation", "get_automation_learning_report", "cross_validate_models",
+        "run_parametric_study", "solve_task", "compose_workflow", "validate_results",
+        "generate_report", "bridge_task_workflow", "run_plugin", "get_progress",
+        "stream_simulation", "compose_multi_server_workflow", "manage_security", "manage_state",
+        "manage_validation_profile", "query_data_catalog", "run_relief", "run_lopa", "run_sil",
+        "run_risk_matrix", "run_flare_network", "manage_industrial_profile", "get_benchmark_trust",
+        "check_tool_access"));
   }
 
   /**
@@ -1257,6 +1959,9 @@ public final class SchemaCatalog {
    * @return the JSON Schema string, or null if not found
    */
   public static String getSchema(String toolName, String schemaType) {
+    if (!"input".equals(schemaType) && !"output".equals(schemaType)) {
+      return null;
+    }
     if ("run_flash".equals(toolName)) {
       return "input".equals(schemaType) ? flashInputSchema() : flashOutputSchema();
     } else if ("run_process".equals(toolName)) {
@@ -1264,7 +1969,8 @@ public final class SchemaCatalog {
     } else if ("validate_input".equals(toolName)) {
       return "input".equals(schemaType) ? validateInputSchema() : validateOutputSchema();
     } else if ("list_components".equals(toolName)) {
-      return "output".equals(schemaType) ? componentSearchOutputSchema() : null;
+      return "input".equals(schemaType) ? componentSearchInputSchema()
+          : componentSearchOutputSchema();
     } else if ("run_batch".equals(toolName)) {
       return "input".equals(schemaType) ? batchInputSchema() : batchOutputSchema();
     } else if ("get_property_table".equals(toolName)) {
@@ -1272,32 +1978,65 @@ public final class SchemaCatalog {
     } else if ("get_phase_envelope".equals(toolName)) {
       return "input".equals(schemaType) ? phaseEnvelopeInputSchema() : phaseEnvelopeOutputSchema();
     } else if ("get_capabilities".equals(toolName)) {
-      return "output".equals(schemaType) ? capabilitiesOutputSchema() : null;
+      return "input".equals(schemaType) ? capabilitiesInputSchema() : capabilitiesOutputSchema();
     } else if ("run_pvt".equals(toolName)) {
       return "input".equals(schemaType) ? pvtInputSchema() : pvtOutputSchema();
     } else if ("run_flow_assurance".equals(toolName)) {
-      return "input".equals(schemaType) ? flowAssuranceInputSchema() : null;
+      return "input".equals(schemaType) ? flowAssuranceInputSchema()
+          : genericToolOutputSchema(toolName);
     } else if ("calculate_standard".equals(toolName)) {
-      return "input".equals(schemaType) ? standardsInputSchema() : null;
+      return "input".equals(schemaType) ? standardsInputSchema()
+          : genericToolOutputSchema(toolName);
     } else if ("run_pipeline".equals(toolName)) {
-      return "input".equals(schemaType) ? pipelineInputSchema() : null;
+      return "input".equals(schemaType) ? pipelineInputSchema() : genericToolOutputSchema(toolName);
+    } else if ("run_water_hammer".equals(toolName)) {
+      return "input".equals(schemaType) ? waterHammerInputSchema()
+          : genericToolOutputSchema(toolName);
+    } else if ("run_root_cause_analysis".equals(toolName)) {
+      return "input".equals(schemaType) ? rootCauseInputSchema() : rootCauseOutputSchema();
+    } else if ("run_materials_review".equals(toolName)) {
+      return "input".equals(schemaType) ? materialsReviewInputSchema()
+          : materialsReviewOutputSchema();
+    } else if ("run_open_drain_review".equals(toolName)) {
+      return "input".equals(schemaType) ? openDrainReviewInputSchema()
+          : openDrainReviewOutputSchema();
+    } else if ("run_norsok_s001_clause10_review".equals(toolName)) {
+      return "input".equals(schemaType) ? norsokS001Clause10ReviewInputSchema()
+          : norsokS001Clause10ReviewOutputSchema();
     } else if ("run_reservoir".equals(toolName)) {
-      return "input".equals(schemaType) ? reservoirInputSchema() : null;
+      return "input".equals(schemaType) ? reservoirInputSchema()
+          : genericToolOutputSchema(toolName);
     } else if ("run_field_economics".equals(toolName)) {
-      return "input".equals(schemaType) ? fieldEconomicsInputSchema() : null;
+      return "input".equals(schemaType) ? fieldEconomicsInputSchema()
+          : genericToolOutputSchema(toolName);
     } else if ("run_dynamic".equals(toolName)) {
-      return "input".equals(schemaType) ? dynamicInputSchema() : null;
+      return "input".equals(schemaType) ? dynamicInputSchema() : dynamicOutputSchema();
     } else if ("run_bioprocess".equals(toolName)) {
-      return "input".equals(schemaType) ? bioprocessInputSchema() : null;
+      return "input".equals(schemaType) ? bioprocessInputSchema()
+          : genericToolOutputSchema(toolName);
     } else if ("size_equipment".equals(toolName)) {
       return "input".equals(schemaType) ? equipmentSizingInputSchema()
           : equipmentSizingOutputSchema();
     } else if ("compare_processes".equals(toolName)) {
-      return "input".equals(schemaType) ? comparisonInputSchema() : null;
+      return "input".equals(schemaType) ? comparisonInputSchema()
+          : genericToolOutputSchema(toolName);
     } else if ("manage_session".equals(toolName)) {
-      return "input".equals(schemaType) ? sessionInputSchema() : null;
+      return "input".equals(schemaType) ? sessionInputSchema() : genericToolOutputSchema(toolName);
     } else if ("visualize".equals(toolName)) {
-      return "input".equals(schemaType) ? visualizationInputSchema() : null;
+      return "input".equals(schemaType) ? visualizationInputSchema()
+          : genericToolOutputSchema(toolName);
+    } else if ("run_hazop".equals(toolName)) {
+      return "input".equals(schemaType) ? hazopInputSchema() : hazopOutputSchema();
+    } else if ("run_barrier_register".equals(toolName)) {
+      return "input".equals(schemaType) ? barrierRegisterInputSchema()
+          : barrierRegisterOutputSchema();
+    } else if ("run_safety_system_performance".equals(toolName)) {
+      return "input".equals(schemaType) ? safetySystemPerformanceInputSchema()
+          : safetySystemPerformanceOutputSchema();
+    }
+    if (getToolNames().contains(toolName)) {
+      return "input".equals(schemaType) ? genericToolInputSchema(toolName)
+          : genericToolOutputSchema(toolName);
     }
     return null;
   }
@@ -1311,14 +2050,111 @@ public final class SchemaCatalog {
     Map<String, Object> catalog = new LinkedHashMap<String, Object>();
     for (String tool : getToolNames()) {
       Map<String, String> schemas = new LinkedHashMap<String, String>();
-      schemas.put("inputSchemaUri", "neqsim://schema/" + tool + "/input");
-      schemas.put("outputSchemaUri", "neqsim://schema/" + tool + "/output");
+      schemas.put("inputSchemaUri", "neqsim://schemas/" + tool + "/input");
+      schemas.put("outputSchemaUri", "neqsim://schemas/" + tool + "/output");
       catalog.put(tool, schemas);
     }
     return GSON.toJson(catalog);
   }
 
   // ========== Helpers ==========
+
+  /**
+   * Adds shared MCP response-envelope properties to an output schema.
+   *
+   * @param properties mutable schema properties map
+   */
+  private static void addStandardOutputProperties(Map<String, Object> properties) {
+    properties.put("apiVersion", stringProp("MCP response contract version"));
+    properties.put("tool", stringProp("MCP tool name that produced the response"));
+    properties.put("data", objectProp("Canonical result payload; legacy top-level fields remain"));
+    properties.put("provenance", objectProp(
+        "Calculation provenance including model, convergence, trust level, and limitations"));
+    properties.put("validation", objectProp("Validation status, phase, issues, and remediation"));
+    properties.put("qualityGate", objectProp("Machine-readable result quality gate"));
+
+    Map<String, Object> warnings = new LinkedHashMap<String, Object>();
+    warnings.put("type", "array");
+    Map<String, Object> warningItems = new LinkedHashMap<String, Object>();
+    warningItems.put("type", "string");
+    warnings.put("items", warningItems);
+    warnings.put("description", "Non-fatal warnings and applicability notes");
+    properties.put("warnings", warnings);
+  }
+
+  /**
+   * Creates a generic JSON Schema for tools whose detailed output structure is tool-specific.
+   *
+   * @param toolName the schema-backed MCP tool name
+   * @return JSON Schema string for a standard JSON object response
+   */
+  private static String genericToolOutputSchema(String toolName) {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", toSchemaTitle(toolName) + "Output");
+    schema.put("description", "Generic output object for " + toolName
+        + ". Tool-specific fields are documented in the capability map and examples.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    addStandardOutputProperties(properties);
+    properties.put("status", enumProp("Result status", Arrays.asList("success", "ok", "error")));
+    properties.put("message", stringProp("Human-readable status or error message"));
+    properties.put("errors", typedArraySchema("Tool-specific error details"));
+    schema.put("properties", properties);
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Creates a generic JSON Schema for tools whose detailed input structure is server-specific.
+   *
+   * @param toolName the schema-backed MCP tool name
+   * @return JSON Schema string for a standard JSON object input
+   */
+  private static String genericToolInputSchema(String toolName) {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", toSchemaTitle(toolName) + "Input");
+    schema.put("description", "Generic input object for " + toolName
+        + ". Tool-specific examples, required fields, units, and setup templates are documented "
+        + "in getCapabilities.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("action", stringProp("Optional action selector for multi-mode tools"));
+    properties.put("inputJson",
+        stringProp("Serialized JSON payload accepted by string-based tools"));
+    properties.put("processJson",
+        objectProp("Process JSON definition when the tool operates on a model"));
+    properties.put("arguments", objectProp("Tool-specific argument object"));
+    properties.put("options", objectProp("Optional execution, validation, or reporting options"));
+    properties.put("unitSystem", stringProp("Preferred unit system or unit profile"));
+    schema.put("properties", properties);
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Converts a snake_case tool name to a compact schema title prefix.
+   *
+   * @param toolName the snake_case tool name
+   * @return title-cased schema prefix without separators
+   */
+  private static String toSchemaTitle(String toolName) {
+    StringBuilder builder = new StringBuilder();
+    boolean upperNext = true;
+    for (int i = 0; i < toolName.length(); i++) {
+      char ch = toolName.charAt(i);
+      if (ch == '_' || ch == '-') {
+        upperNext = true;
+      } else if (upperNext) {
+        builder.append(Character.toUpperCase(ch));
+        upperNext = false;
+      } else {
+        builder.append(ch);
+      }
+    }
+    return builder.toString();
+  }
 
   /**
    * Creates a ValueWithUnit JSON Schema fragment (oneOf: number or object).
@@ -1402,6 +2238,19 @@ public final class SchemaCatalog {
   }
 
   /**
+   * Creates a simple boolean property schema.
+   *
+   * @param description the property description
+   * @return the schema map
+   */
+  private static Map<String, Object> boolProp(String description) {
+    Map<String, Object> prop = new LinkedHashMap<String, Object>();
+    prop.put("type", "boolean");
+    prop.put("description", description);
+    return prop;
+  }
+
+  /**
    * Creates an enum string property schema.
    *
    * @param description the property description
@@ -1414,5 +2263,46 @@ public final class SchemaCatalog {
     prop.put("description", description);
     prop.put("enum", values);
     return prop;
+  }
+
+  /**
+   * Creates a generic object property schema.
+   *
+   * @param description the property description
+   * @return the schema map
+   */
+  private static Map<String, Object> objectProp(String description) {
+    Map<String, Object> prop = new LinkedHashMap<String, Object>();
+    prop.put("type", "object");
+    prop.put("description", description);
+    return prop;
+  }
+
+  /**
+   * Creates a generic array of object schema.
+   *
+   * @param description the array description
+   * @return the schema map
+   */
+  private static Map<String, Object> typedArraySchema(String description) {
+    Map<String, Object> array = new LinkedHashMap<String, Object>();
+    array.put("type", "array");
+    array.put("description", description);
+    Map<String, Object> item = new LinkedHashMap<String, Object>();
+    item.put("type", "object");
+    array.put("items", item);
+    return array;
+  }
+
+  /**
+   * Creates a minimal JSON Schema required-field alternative.
+   *
+   * @param fields field names that must be present
+   * @return the schema map
+   */
+  private static Map<String, Object> requiredSchema(String... fields) {
+    Map<String, Object> required = new LinkedHashMap<String, Object>();
+    required.put("required", Arrays.asList(fields));
+    return required;
   }
 }

@@ -99,12 +99,12 @@ The publication of CPA marked the beginning of rapid development and industrial 
 
 - **1996–2000**: Initial parameter fitting and validation for water, alcohols, glycols
 - **2000–2006**: Extension to multicomponent systems; Equinor (then Statoil) began internal adoption
-- **2006–2010**: Simplified CPA (sCPA) developed for computational efficiency \cite{Kontogeorgis1999}; electrolyte CPA formulated \cite{MariboMogensen2012}
+- **2006–2012**: sCPA-style computational variants matured in industrial implementations, building on late-1990s simplified CPA work \cite{Kontogeorgis1999}; electrolyte CPA was formulated \cite{MariboMogensen2012}
 - **2010–2015**: PR-CPA variant; UMR-CPA (Universal Mixing Rules + CPA); broad industrial deployment
 - **2015–2020**: Asphaltene modeling with CPA; improved cross-association schemes
 - **2020–present**: Fully implicit solvers; Anderson acceleration \cite{Anderson1965}; Broyden methods \cite{Broyden1965} for faster convergence
 
-Today, CPA is implemented in most major process simulators and is the recommended model for systems involving water, alcohols, glycols, and CO$_2$ in the petroleum industry.
+Today, CPA is implemented in several commercial, academic, and open-source process simulators. It is commonly recommended for petroleum and CCS systems where water, alcohols, glycols, CO$_2$, or other associating/solvating components control the phase behavior.
 
 ## 1.4 Quantifying the Need for CPA: A Worked Example
 
@@ -112,7 +112,7 @@ Before presenting the NeqSim implementation, let us quantify the improvement CPA
 
 ### 1.4.1 Case Study: North Sea Gas Dehydration
 
-Consider a typical North Sea gas processing scenario. A production separator operates at 70 bar and 30°C, producing a gas that must be dehydrated to pipeline specification (< 7 lb water/MMscf). The gas composition is approximately: methane 84%, ethane 7%, propane 3.5%, i-butane 0.5%, n-butane 1%, CO$_2$ 2.5%, N$_2$ 0.5%, and water at saturation.
+Consider an illustrative offshore gas processing scenario. A production separator operates at 70 bar and 30°C, producing a gas that must be dehydrated to pipeline specification (< 7 lb water/MMscf). The gas composition is approximately: methane 84%, ethane 7%, propane 3.5%, i-butane 0.5%, n-butane 1%, CO$_2$ 2.5%, N$_2$ 0.5%, and water at saturation. The numbers below are representative of benchmark calculations and design studies; exact values depend on the gas composition, water-saturation method, and parameter set.
 
 **With SRK:** The predicted water content of the gas at separator conditions is approximately 850 mg/Sm$^3$, overestimating the experimental value by roughly 40%. This error propagates through the dehydration design: the TEG circulation rate is under-specified, the contactor is undersized, and the dry gas fails to meet the pipeline water specification. The root cause is that SRK over-predicts the fugacity of water in the aqueous phase because it does not account for the hydrogen-bond stabilization of liquid water.
 
@@ -138,7 +138,7 @@ To provide a broader perspective, the table below compares the typical predictio
 | TEG–water | Dew point depression | 20–60% | 3–10% | 6× |
 | H$_2$S–water | Water content | 20–80% | 5–12% | 4–7× |
 
-*Table 1.2: Systematic comparison of SRK and CPA prediction accuracy for industrial systems.*
+*Table 1.2: Representative comparison of SRK and CPA prediction accuracy for industrial systems. The ranges summarize typical literature and benchmark behavior rather than a single universal validation data set.*
 
 The improvement is consistently an order of magnitude, reflecting the fundamental physics that CPA captures and classical cubic EoS miss: the directional, saturable, temperature-dependent nature of hydrogen bonding.
 
@@ -155,7 +155,7 @@ NeqSim (Non-Equilibrium Simulator) is an open-source Java library for thermodyna
 
 The NeqSim CPA class hierarchy follows a layered architecture:
 
-```
+```text
 SystemSrkEos (standard SRK)
   └── SystemSrkCPA (base SRK-CPA)
         └── SystemSrkCPAs (simplified sCPA)
@@ -184,7 +184,7 @@ Several commercial and academic software packages implement CPA. NeqSim distingu
 | Python interface | Yes (jpype) | COM/API | COM | Varies |
 | Parameter database | Equinor set | Infochem set | Calsep set | Custom |
 
-*Table 1.3: Comparison of CPA implementations across software platforms.*
+*Table 1.3: High-level comparison of CPA implementations across software platforms. Commercial capabilities are version-dependent and should be checked against the vendor documentation for a specific project.*
 
 The advanced solver options in NeqSim (fully implicit, Broyden, Anderson acceleration) provide significant advantages for difficult systems near critical points and for large-scale process simulations where computational speed matters.
 

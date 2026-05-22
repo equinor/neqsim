@@ -1,7 +1,7 @@
 """
 Comprehensive MCP Server Tests for NeqSim
 ==========================================
-Tests all 47 MCP tools through the real JSON-RPC protocol, verifying
+Tests all 63 MCP tools through the real JSON-RPC protocol, verifying
 correctness against known values from the NeqSim JUnit test suite.
 
 Tier 1 — Trusted Core (21 tools):
@@ -16,11 +16,12 @@ Tier 1 — Trusted Core (21 tools):
   - Automation API (units, variables, state save/compare, diagnostics)
   - Industrial profile, benchmark trust, tool access
 
-Tier 2 — Engineering Advanced (13 tools):
+Tier 2 — Engineering Advanced (28 tools):
   - PVT laboratory experiments
   - Flow assurance (hydrate, corrosion, wax)
   - Standards calculations (ISO 6976, AGA)
   - Pipeline flow simulation
+    - Materials selection, corrosion, degradation, and integrity review
   - Reservoir material balance
   - Field development economics
   - Dynamic transient simulation
@@ -30,8 +31,9 @@ Tier 2 — Engineering Advanced (13 tools):
   - Engineering validation
   - Cross-model validation
   - Parametric studies
+    - Relief, LOPA, SIL, risk matrix, flare, HAZOP, barrier register, safety performance
 
-Tier 3 — Experimental (13 tools):
+Tier 3 — Experimental (14 tools):
   - Session management
   - Task solver, workflow composition
   - Report generation, visualization
@@ -71,7 +73,7 @@ def start_server():
             "id": next_id(),
             "method": "initialize",
             "params": {
-                "protocolVersion": "2024-11-05",
+                "protocolVersion": "2025-11-25",
                 "capabilities": {},
                 "clientInfo": {"name": "neqsim-test", "version": "1.0"},
             },
@@ -202,7 +204,7 @@ def test_protocol():
     r = recv()
     tools = r.get("result", {}).get("tools", [])
     tool_names = sorted([t["name"] for t in tools])
-    check("48 tools registered", len(tools) == 48, f"got {len(tools)}: {tool_names}")
+    check("63 tools registered", len(tools) == 63, f"got {len(tools)}: {tool_names}")
 
     # Tier 1 — Trusted Core (21 tools)
     tier1 = ["runFlash", "runProcess", "validateInput", "searchComponents",
@@ -215,11 +217,17 @@ def test_protocol():
     for name in tier1:
         check(f"tier1 tool '{name}'", name in tool_names)
 
-    # Tier 2 — Engineering Advanced (13 tools)
+    # Tier 2 — Engineering Advanced (28 tools)
     tier2 = ["crossValidateModels", "runParametricStudy", "runPVT",
              "runFlowAssurance", "calculateStandard", "runPipeline",
+             "runChemistry", "runMaterialsReview", "runOpenDrainReview",
+             "runNorsokS001Clause10Review", "runWaterHammer",
              "runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess",
-             "sizeEquipment", "compareProcesses", "validateResults"]
+             "sizeEquipment", "compareProcesses", "validateResults",
+             "runRelief", "runLOPA", "runSIL", "runRiskMatrix",
+             "runFlareNetwork", "runHAZOP", "runBarrierRegister",
+             "runSafetySystemPerformance", "runOperationalStudy",
+             "runRootCauseAnalysis"]
     for name in tier2:
         check(f"tier2 tool '{name}'", name in tool_names)
 
@@ -235,12 +243,12 @@ def test_protocol():
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/list", "params": {}})
     r = recv()
     resources = r.get("result", {}).get("resources", [])
-    check("6 resources", len(resources) == 6, f"got {len(resources)}")
+    check("7 resources", len(resources) == 7, f"got {len(resources)}")
 
     send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/templates/list", "params": {}})
     r = recv()
     templates = r.get("result", {}).get("resourceTemplates", [])
-    check("5 templates", len(templates) == 5, f"got {len(templates)}")
+    check("6 templates", len(templates) == 6, f"got {len(templates)}")
 
 
 def test_component_search():
@@ -338,6 +346,15 @@ def test_examples_and_schemas():
 
     r = call_tool("getExample", {"category": "phase-envelope", "name": "natural-gas"})
     check("phase-env example has components", "components" in r)
+
+    r = call_tool("getExample", {"category": "materials-review", "name": "stid-register"})
+    check("materials-review example has register", "materialsRegister" in r)
+
+    r = call_tool("getSchema", {"toolName": "run_materials_review", "schemaType": "input"})
+    check("materials-review input schema", "properties" in r)
+
+    r = call_tool("getSchema", {"toolName": "run_materials_review", "schemaType": "output"})
+    check("materials-review output schema", "properties" in r)
 
 
 # ---------------------------------------------------------------------------
@@ -1313,6 +1330,40 @@ def test_pipeline_single_phase_gas():
     check("pipeline status=success", r.get("status") == "success", r.get("message", ""))
 
 
+# --- Materials review tools ---
+
+def test_materials_review_stid_register():
+    """Run a STID/material-register-backed materials review."""
+    print("\n=== Materials Review: STID Register ===")
+    payload = {
+        "projectName": "Synthetic MCP materials review",
+        "designLifeYears": 25,
+        "materialsRegister": [
+            {
+                "tag": "DEMO-LINE-001",
+                "equipmentType": "Pipeline",
+                "existingMaterial": "Carbon Steel API 5L X65",
+                "sourceReferences": ["synthetic STID line-list row 1"],
+                "service": {
+                    "temperature_C": 85.0,
+                    "pressure_bara": 95.0,
+                    "co2_mole_fraction": 0.04,
+                    "h2s_mole_fraction": 0.0008,
+                    "free_water": True,
+                    "chloride_mg_per_l": 55000.0,
+                    "pH": 5.2,
+                    "flow_velocity_m_per_s": 7.5,
+                },
+            }
+        ],
+    }
+    r = call_tool("runMaterialsReview", {"materialsReviewJson": json.dumps(payload)})
+    check("materials review status=success", r.get("status") == "success", r.get("message", ""))
+    check("materials review item count", r.get("itemCount") == 1)
+    check("materials review has recommendation", "recommendation" in r.get("items", [{}])[0])
+    check("materials review has standards", "NORSOK M-001" in r.get("standardsApplied", []))
+
+
 # --- Reservoir tools ---
 
 def test_reservoir_simple_tank():
@@ -1902,6 +1953,7 @@ if __name__ == "__main__":
         test_flow_assurance_hydrate()
         test_calculate_standard_iso6976()
         test_pipeline_single_phase_gas()
+        test_materials_review_stid_register()
         test_reservoir_simple_tank()
         test_field_economics_production_profile()
         test_dynamic_separator()

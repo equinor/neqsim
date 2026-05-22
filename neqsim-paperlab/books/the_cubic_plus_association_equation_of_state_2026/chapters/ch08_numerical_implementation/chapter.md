@@ -212,7 +212,7 @@ The computational advantage comes from the per-step cost reduction \cite{Solbraa
 | Matrix-vector product | — | $O(n^2)$ |
 | **Total per step** | **$O(n^3)$** | **$O(n^2)$** |
 
-*Table 8.2: Per-step computational cost: full Newton vs. Broyden update. For systems with $n > 5$ site types, the $O(n^2)$ vs. $O(n^3)$ difference becomes significant.*
+*Table 8.1: Per-step computational cost: full Newton vs. Broyden update. For systems with $n > 5$ site types, the $O(n^2)$ vs. $O(n^3)$ difference becomes significant.*
 
 ### 8.5.4 NeqSim Implementation
 
@@ -272,7 +272,7 @@ A typical benchmark for CPA solvers involves computing the phase equilibrium of 
 | Broyden Implicit | — | 5–10 | 5–10 |
 | Anderson Acceleration ($m=3$) | 3–5 | 5–10 | 15–50 |
 
-*Table 8.1: Typical iteration counts for different CPA solver strategies.*
+*Table 8.2: Typical iteration counts for different CPA solver strategies.*
 
 Figure 8.12 illustrates the convergence behavior of these solvers for a representative binary system: successive substitution converges linearly (constant slope on semilog scale), Anderson mixing achieves superlinear convergence, and the Broyden solver transitions from initial quadratic convergence to superlinear rank-1 updates. Figure 8.11 compares the overall speedup of the accelerated solvers across the full 11-system benchmark suite.
 
@@ -366,7 +366,7 @@ The Anderson acceleration solver handles this case well because it smooths out t
 
 ### 8.9.3 Case Study 3: Three-Phase VLLE Flash
 
-The three-phase flash (vapor–liquid–liquid) for a methane–n-hexane–water system at 30 bar and 25°C demonstrates the importance of stability analysis:
+A three-phase flash (vapor–liquid–liquid) for a hydrocarbon–water system, such as methane–n-hexane–water under conditions where both a hydrocarbon-rich liquid and an aqueous liquid are stable, demonstrates the importance of stability analysis. The exact pressure and temperature window should be checked from a phase-envelope or stability calculation for the chosen composition:
 
 1. An initial two-phase VLE flash converges but gives an unstable liquid phase
 2. Tangent plane distance analysis (TPD) identifies the instability and suggests a third phase
@@ -388,7 +388,7 @@ Based on extensive benchmarking with NeqSim, the following solver selection guid
 | Research, exploring new parameter sets | Anderson Acceleration | Handles diverse conditions |
 | Parametric sweeps over wide T, P | Fully Implicit Newton | Avoids failures at boundary conditions |
 
-*Table 8.2: Solver selection guidelines for CPA calculations in NeqSim.*
+*Table 8.3: Solver selection guidelines for CPA calculations in NeqSim.*
 
 ```python
 from neqsim import jneqsim
@@ -410,9 +410,9 @@ print(f"Number of phases: {fluid.getNumberOfPhases()}")
 print(f"Gas density: {fluid.getPhase('gas').getDensity('kg/m3'):.2f} kg/m3")
 ```
 
-## 8.9 Performance Optimization
+## 8.10 Performance Optimization
 
-### 8.9.1 Analytical vs. Numerical Derivatives
+### 8.10.1 Analytical vs. Numerical Derivatives
 
 A critical performance factor is the use of analytical derivatives rather than finite differences. For a system with $c$ components and $N_s$ sites:
 
@@ -421,7 +421,7 @@ A critical performance factor is the use of analytical derivatives rather than f
 
 The speedup from analytical derivatives is typically 3–10x for mixtures with 5–10 components.
 
-### 8.9.2 Exploiting Symmetry
+### 8.10.2 Exploiting Symmetry
 
 Many association schemes have symmetric sites (e.g., the two proton sites on water are identical). Exploiting this symmetry:
 
@@ -429,7 +429,7 @@ Many association schemes have symmetric sites (e.g., the two proton sites on wat
 - Reduces the Jacobian size: halves the number of rows and columns
 - Provides analytical solutions for pure components (see Chapter 4)
 
-### 8.9.3 Caching and Reuse
+### 8.10.3 Caching and Reuse
 
 In flash calculations, the fugacity coefficients are evaluated many times at similar conditions. Performance can be improved by:
 
@@ -437,11 +437,11 @@ In flash calculations, the fugacity coefficients are evaluated many times at sim
 - **Reusing site fractions** from the previous iteration as initial guesses
 - **Storing intermediate quantities**: $g(\rho)$, $\exp(\varepsilon/RT)$, etc.
 
-## 8.10 Comprehensive Benchmark: Solver Performance Across 11 Systems
+## 8.11 Comprehensive Benchmark: Solver Performance Across 11 Systems
 
 This section presents systematic benchmark results from \cite{Solbraa2026}, comparing five CPA solver algorithms across 11 industrially relevant systems with up to 10 components.
 
-### 8.10.1 Benchmark Systems
+### 8.11.1 Benchmark Systems
 
 | ID | System | Components | $n_s$ | Phase behavior |
 |----|--------|------------|--------|----------------|
@@ -457,9 +457,11 @@ This section presents systematic benchmark results from \cite{Solbraa2026}, comp
 | B6 | MEG + water | MEG, H$_2$O | 8 | Single-phase aqueous |
 | B7 | NG + water + TEG | 6 comp. | 8 | VLE (gas + TEG) |
 
-*Table 8.5: The 11-system benchmark suite.*
+*Table 8.4: The 11-system benchmark suite.*
 
-### 8.10.2 Speedup Results: Fully Implicit (Coupled) Solver
+The table gives abbreviated system labels for the benchmark suite. Reproducing the timings requires the full compositions, temperature-pressure grid, repetition count, JVM warm-up approach, and solver tolerances from the companion benchmark notebooks or source scripts.
+
+### 8.11.2 Speedup Results: Fully Implicit (Coupled) Solver
 
 The fully implicit solver eliminates the inner iteration loop by solving the volume, composition, and site fractions simultaneously. Benchmark results show:
 
@@ -477,19 +479,19 @@ The fully implicit solver eliminates the inner iteration loop by solving the vol
 | MEG + water | 8 | 0.119 | **8.4×** | 0.00000 |
 | NG + water + TEG | 8 | 0.276 | **3.6×** | 0.00000 |
 
-*Table 8.6: Speedup of the fully implicit solver vs. standard nested solver \cite{Solbraa2026}. All systems show zero thermodynamic accuracy loss.*
+*Table 8.5: Speedup of the fully implicit solver vs. standard nested solver \cite{Solbraa2026}. The reported validation column shows agreement to the displayed numerical tolerance for this benchmark suite.*
 
 Key observations:
 
 - **Speedup range: 1.9× to 32.8×** depending on the system (see Figure 8.5 for a visual comparison)
-- **Zero accuracy loss**: the implicit solver converges to the same thermodynamic solution with machine-precision agreement
+- **No material accuracy loss in the benchmark**: the implicit solver converges to the same reported thermodynamic solution within the benchmark tolerance
 - **Speedup increases with the number of association sites** ($n_s$) because eliminating the inner loop saves more iterations when the site balance is expensive (see Figure 8.8)
 - The exceptional 32.8× for the ternary associating system reflects the compounding effect of multiple associating species requiring many inner iterations in the nested solver
 - The speedup is consistent across (T, P) conditions — Figures 8.6 and 8.7 show heatmaps of the time ratio across the phase space for pure water and the 10-component oil–gas–water–MEG system respectively
 - There is no simple monotonic trend between speedup and component count (Figure 8.10), confirming that the speedup depends primarily on the number of association sites and the fraction of associating components
 - Figure 8.9 shows the full distribution of timing ratios, with the interquartile range for most systems lying well below 1.0
 
-### 8.10.3 Speedup Results: Anderson Acceleration with Site Reduction
+### 8.11.3 Speedup Results: Anderson Acceleration with Site Reduction
 
 Combining Anderson acceleration (§8.6) with the site symmetry reduction from §8.7 gives the best performance for glycol systems:
 
@@ -502,9 +504,9 @@ Combining Anderson acceleration (§8.6) with the site symmetry reduction from §
 | NG + water + MEG | 8→4 | 340.4 | 185.9 | **1.83×** |
 | NG + water + TEG | 8→4 | 379.6 | 198.1 | **1.92×** |
 
-*Table 8.7: Combined Anderson acceleration + site type reduction benchmarks \cite{Solbraa2026}.*
+*Table 8.6: Combined Anderson acceleration + site type reduction benchmarks \cite{Solbraa2026}.*
 
-### 8.10.4 Solver Selection Recommendations
+### 8.11.4 Solver Selection Recommendations
 
 Based on these comprehensive benchmarks:
 
@@ -517,9 +519,9 @@ Based on these comprehensive benchmarks:
 | NG + water + glycol (4C+4C) | Anderson + Reduced | 2.0× |
 | Simple pure components | Any (comparable) | ~1× |
 
-*Table 8.8: Best solver by system type.*
+*Table 8.7: Best solver by system type.*
 
-### 8.10.5 An Important Discovery: Solver-Dependent Equilibria
+### 8.11.5 An Important Discovery: Solver-Dependent Equilibria
 
 During benchmarking, a subtle but important phenomenon was discovered: near phase boundaries, nested-family and coupled-family solvers can converge to **distinct equilibria** for certain systems. For the water–methanol system at 350 K:
 
@@ -530,11 +532,11 @@ During benchmarking, a subtle but important phenomenon was discovered: near phas
 | Water fugacity coeff. (liquid) | 0.4233 | 0.4195 | 0.9% |
 | Liquid mole fraction | 0.758 | 0.677 | 10.7% |
 
-*Table 8.9: Distinct equilibria from nested vs. coupled solvers near the phase boundary for water–methanol at 350 K.*
+*Table 8.8: Distinct equilibria from nested vs. coupled solvers near the phase boundary for water–methanol at 350 K.*
 
-This occurs because the solvers explore different parts of the Gibbs energy surface and can settle into different local minima. Both solutions satisfy the equilibrium conditions to machine precision. This highlights the importance of stability analysis (§8.12) and the need for robustness testing when comparing results from different CPA implementations.
+This occurs because the solvers explore different parts of the Gibbs energy surface and can settle into different local minima. Both solutions satisfy the equilibrium conditions to machine precision. This highlights the importance of stability analysis (§8.13) and the need for robustness testing when comparing results from different CPA implementations.
 
-### 8.10.6 When to Use Each Solver in NeqSim
+### 8.11.6 When to Use Each Solver in NeqSim
 
 | Solver | NeqSim Class | Best For | Limitations |
 |--------|-------------|----------|-------------|
@@ -543,9 +545,9 @@ This occurs because the solvers explore different parts of the Gibbs energy surf
 | Broyden | `SystemSrkCPAstatoilBroydenImplicit` | General purpose, good balance | May need restart |
 | Anderson | `SystemSrkCPAstatoilAndersonMixing` | Weakly convergent systems | Tuning of history depth |
 
-*Table 8.10: CPA solver variants in NeqSim and their recommended use cases.*
+*Table 8.9: CPA solver variants in NeqSim and their recommended use cases.*
 
-### 8.10.7 Detailed Timing Results: All Solvers Across 11 Systems
+### 8.11.7 Detailed Timing Results: All Solvers Across 11 Systems
 
 The complete timing results from \cite{Solbraa2026} reveal the nuanced performance landscape:
 
@@ -563,7 +565,7 @@ The complete timing results from \cite{Solbraa2026} reveal the nuanced performan
 | NG + water + MEG | 299.8 | 307.3 | 253.3 | **170.6** | 1.18 | 1.76 |
 | NG + water + TEG | 342.9 | 212.5 | 264.4 | **188.7** | 1.30 | 1.82 |
 
-*Table 8.11: Complete benchmark timing (ms for 20 repetitions) across all solvers and systems \cite{Solbraa2026}. $S_B$: Broyden speedup over standard; $S_A$: Anderson speedup over standard. Bold = fastest solver per system.*
+*Table 8.10: Complete benchmark timing (ms for 20 repetitions) across all solvers and systems \cite{Solbraa2026}. $S_B$: Broyden speedup over standard; $S_A$: Anderson speedup over standard. Bold = fastest solver per system.*
 
 Several patterns emerge from this detailed comparison:
 
@@ -573,11 +575,11 @@ Several patterns emerge from this detailed comparison:
 - **The implicit solver can be slower** than standard for NG + water (0.53× speedup) because the larger augmented Jacobian adds overhead when the inner iteration converges quickly
 - **Simple non-associating pure components** show minimal difference between solvers, as the CPA association term is negligible
 
-## 8.11 Worked Example: Diagnosing and Fixing Convergence Failure
+## 8.12 Worked Example: Diagnosing and Fixing Convergence Failure
 
 Understanding solver behavior in practice requires examining real cases where convergence is challenging. This section presents a systematic troubleshooting workflow.
 
-### 8.11.1 Case: Water–CO$_2$ Near the Three-Phase Line
+### 8.12.1 Case: Water–CO$_2$ Near the Three-Phase Line
 
 The water–CO$_2$ system at moderate pressures (50–100 bar) and temperatures near 25°C can exhibit vapor–liquid–liquid equilibrium (VLLE). The flash algorithm must simultaneously handle:
 
@@ -590,7 +592,7 @@ This three-phase region creates convergence difficulties for two reasons:
 1. **Phase identification**: the algorithm must determine that three phases exist, not two
 2. **Near-critical CO$_2$**: the CO$_2$ liquid and vapor phases have similar densities near the CO$_2$ critical point (31°C, 73.8 bar)
 
-### 8.11.2 Troubleshooting Workflow
+### 8.12.2 Troubleshooting Workflow
 
 **Step 1: Enable multi-phase check**
 
@@ -619,7 +621,7 @@ The fully implicit solver treats the site fractions as additional variables in t
 
 Start from a slightly different temperature or pressure where convergence is easy, then use the converged result as the initial guess for the difficult condition.
 
-### 8.11.3 Convergence Metrics
+### 8.12.3 Convergence Metrics
 
 The key metrics to monitor are:
 
@@ -631,13 +633,13 @@ The key metrics to monitor are:
 | Material balance | $\| \sum_i z_i - \beta \sum_i y_i - (1-\beta)\sum_i x_i \|$ | $< 10^{-14}$ |
 | Gibbs energy | Must decrease at each outer iteration | Monotonic decrease |
 
-*Table 8.3: Convergence metrics and targets for CPA flash calculations.*
+*Table 8.11: Convergence metrics and targets for CPA flash calculations.*
 
-## 8.12 Stability Analysis for CPA Systems
+## 8.13 Stability Analysis for CPA Systems
 
 A flash calculation can converge to a false solution (e.g., finding two phases when three exist) if the stability analysis is not performed correctly. This section describes the stability analysis algorithm as implemented in NeqSim.
 
-### 8.12.1 The Tangent Plane Distance
+### 8.13.1 The Tangent Plane Distance
 
 For a single-phase system with composition $\mathbf{z}$, the system is stable if the tangent plane distance (TPD) is non-negative for all trial compositions $\mathbf{w}$:
 
@@ -649,7 +651,7 @@ $$\text{TPD}(\mathbf{w}) = \sum_{i=1}^{C} w_i \left[\ln w_i + \ln \varphi_i(\mat
 
 If any trial composition gives $\text{TPD} < 0$, the system is unstable and must split into additional phases.
 
-### 8.12.2 Special Considerations for Associating Systems
+### 8.13.2 Special Considerations for Associating Systems
 
 For CPA, the stability analysis has additional subtleties:
 
@@ -662,9 +664,9 @@ For CPA, the stability analysis has additional subtleties:
    - $w_i = z_i / K_i$ (for liquid-like trial phases)
    - Pure water composition (for aqueous trial phases in water-containing systems)
 
-## 8.13 Volume Root-Finding in CPA
+## 8.14 Volume Root-Finding in CPA
 
-### 8.13.1 The Challenge
+### 8.14.1 The Challenge
 
 Unlike classical cubic EoS where the cubic polynomial in $Z$ (or $V$) can be solved analytically, CPA requires iterative volume root-finding because the association term introduces implicit composition and density dependence. The pressure equation:
 
@@ -672,11 +674,11 @@ $$P(V) = P^{\text{SRK}}(V) + P^{\text{assoc}}(V, X_A(V))$$
 
 cannot be solved in closed form because $X_A$ depends on $V$ through the density-dependent association strength $\Delta^{AB}$.
 
-### 8.13.2 Nested vs. Simultaneous Approaches
+### 8.14.2 Nested vs. Simultaneous Approaches
 
 **Nested approach**: At each trial volume $V_k$, solve the site balance $X_A(V_k)$ to convergence, then evaluate $P(V_k)$ and update $V$:
 
-```
+```text
 repeat:
     V_k = V_{k-1} + delta_V  (volume update)
     solve X_A(V_k) iteratively
@@ -696,7 +698,7 @@ $$\mathbf{J} = \begin{pmatrix} \partial P/\partial V & \partial P/\partial X_A \
 
 The simultaneous approach converges in fewer iterations but requires more derivatives per iteration. It is the default in NeqSim's fully implicit solver.
 
-### 8.13.3 Multiple Roots
+### 8.14.3 Multiple Roots
 
 At subcritical conditions, CPA produces multiple volume roots analogous to the cubic case. The volume solver must:
 
@@ -706,7 +708,7 @@ At subcritical conditions, CPA produces multiple volume roots analogous to the c
 
 For CPA, the association term always reduces the pressure at a given volume (association is attractive), which shifts the liquid root to smaller volumes compared to pure SRK. This can improve liquid density predictions but also creates a narrower convergence basin for the liquid root.
 
-### 8.13.4 Initial Guess Strategies
+### 8.14.4 Initial Guess Strategies
 
 Good initial guesses for the volume root greatly improve convergence:
 
@@ -717,7 +719,7 @@ Good initial guesses for the volume root greatly improve convergence:
 | Dense phase (CO$_2$) | $V_0 = 2b$ to $5b$ | Intermediate density range |
 | Aqueous | $V_0 = 18$ cm$^3$/mol | Near experimental water molar volume |
 
-*Table 8.4: Initial volume guess strategies for CPA root-finding.*
+*Table 8.12: Initial volume guess strategies for CPA root-finding.*
 
 For supercritical fluids (especially CO$_2$ near the critical point), the initial guess can determine which root is found. NeqSim uses a continuation strategy: start from a well-converged solution at nearby conditions and track the root as conditions change.
 

@@ -45,7 +45,7 @@ books/<book_slug>/
     ├── book.html
     ├── book.docx
     ├── book.pdf
-    ├── book.odf
+   ├── book.odt
     └── figures_chNN/          # PDF renderer copies figures here for Typst
 ```
 
@@ -376,7 +376,7 @@ The `book-build` command runs these steps in order:
 | HTML | `submission/book.html` | Single-page with sidebar navigation, KaTeX |
 | Word | `submission/book.docx` | Native OMML equations, TOC, page numbers |
 | PDF | `submission/book.pdf` | Via Typst, publisher page size |
-| ODF | `submission/book.odf` | Unicode equation fallback |
+| ODT | `submission/book.odt` | Unicode equation fallback |
 
 ### PDF Figure Handling
 

@@ -1,4 +1,43 @@
 {
+  "pid symbols": [
+    "neqsim-pid-process-operations",
+    "neqsim-technical-document-reading"
+  ],
+  "p&id symbols": [
+    "neqsim-pid-process-operations",
+    "neqsim-technical-document-reading"
+  ],
+  "closing a valve": [
+    "neqsim-pid-process-operations",
+    "neqsim-water-hammer",
+    "neqsim-controllability-operability",
+    "neqsim-dynamic-simulation"
+  ],
+  "valve action": [
+    "neqsim-pid-process-operations",
+    "neqsim-controllability-operability",
+    "neqsim-dynamic-simulation"
+  ],
+  "connect pid to plant data": [
+    "neqsim-pid-process-operations",
+    "neqsim-plant-data"
+  ],
+  "active train from pid and tags": [
+    "neqsim-pid-process-operations",
+    "neqsim-plant-data"
+  ],
+  "root cause analysis": [
+    "neqsim-root-cause-analysis"
+  ],
+  "equipment anomaly diagnosis": [
+    "neqsim-root-cause-analysis"
+  ],
+  "compressor high vibration": [
+    "neqsim-root-cause-analysis"
+  ],
+  "separator carryover diagnosis": [
+    "neqsim-root-cause-analysis"
+  ],
   "a simulation fails to converge": [
     "neqsim-troubleshooting"
   ],
@@ -303,11 +342,17 @@
   "neqsim-technical-document-reading": [
     "neqsim-technical-document-reading"
   ],
+  "neqsim-trapped-liquid-fire-rupture": [
+    "neqsim-trapped-liquid-fire-rupture"
+  ],
   "neqsim-troubleshooting": [
     "neqsim-troubleshooting"
   ],
   "neqsim-unisim-reader": [
     "neqsim-unisim-reader"
+  ],
+  "neqsim-water-hammer": [
+    "neqsim-water-hammer"
   ],
   "norsok": [
     "neqsim-standards-lookup"
@@ -517,7 +562,8 @@
     "neqsim-technical-document-reading"
   ],
   "pipeline hydraulics": [
-    "neqsim-flow-assurance"
+    "neqsim-flow-assurance",
+    "neqsim-water-hammer"
   ],
   "planning implementations": [
     "neqsim-capability-map"
@@ -681,7 +727,47 @@
   "iec 61511": ["neqsim-process-safety"],
   "alarp": ["neqsim-process-safety"],
   "process safety": ["neqsim-process-safety"],
+  "barrier management": ["neqsim-process-safety"],
+  "barrierestyring": ["neqsim-process-safety"],
+  "safety critical elements": ["neqsim-process-safety"],
+  "sce": ["neqsim-process-safety"],
+  "psf": ["neqsim-process-safety"],
+  "performance standard": ["neqsim-process-safety"],
   "hazard analysis": ["neqsim-process-safety"],
+  "consequence analysis": ["neqsim-consequence-analysis"],
+  "jet fire": ["neqsim-consequence-analysis"],
+  "pool fire": ["neqsim-consequence-analysis"],
+  "vce": ["neqsim-consequence-analysis"],
+  "vapour cloud explosion": ["neqsim-consequence-analysis"],
+  "bleve": ["neqsim-consequence-analysis"],
+  "gaussian plume": ["neqsim-consequence-analysis"],
+  "dispersion": ["neqsim-consequence-analysis"],
+  "probit": ["neqsim-consequence-analysis"],
+  "qra": ["neqsim-consequence-analysis"],
+  "irpa": ["neqsim-consequence-analysis"],
+  "individual risk": ["neqsim-consequence-analysis"],
+  "thermal radiation": ["neqsim-consequence-analysis"],
+  "fmea": ["neqsim-hazid-fmea-eta-fta"],
+  "fmeca": ["neqsim-hazid-fmea-eta-fta"],
+  "event tree": ["neqsim-hazid-fmea-eta-fta"],
+  "eta": ["neqsim-hazid-fmea-eta-fta"],
+  "fault tree": ["neqsim-hazid-fmea-eta-fta"],
+  "fta": ["neqsim-hazid-fmea-eta-fta"],
+  "minimal cut sets": ["neqsim-hazid-fmea-eta-fta"],
+  "common cause": ["neqsim-hazid-fmea-eta-fta"],
+  "beta factor": ["neqsim-hazid-fmea-eta-fta"],
+  "escalation": ["neqsim-hazid-fmea-eta-fta"],
+  "domino": ["neqsim-hazid-fmea-eta-fta"],
+  "hazid": ["neqsim-hazid-fmea-eta-fta"],
+  "depressurization": ["neqsim-depressurization-mdmt"],
+  "depressurisation": ["neqsim-depressurization-mdmt"],
+  "blowdown": ["neqsim-depressurization-mdmt"],
+  "bdv": ["neqsim-depressurization-mdmt"],
+  "mdmt": ["neqsim-depressurization-mdmt"],
+  "minimum design metal temperature": ["neqsim-depressurization-mdmt"],
+  "ucs-66": ["neqsim-depressurization-mdmt"],
+  "api 521": ["neqsim-depressurization-mdmt"],
+  "low temperature embrittlement": ["neqsim-depressurization-mdmt"],
   "pinch analysis": ["neqsim-heat-integration"],
   "heat integration": ["neqsim-heat-integration"],
   "composite curve": ["neqsim-heat-integration"],
@@ -712,6 +798,17 @@
   "flare network": ["neqsim-relief-flare-network"],
   "fire case": ["neqsim-relief-flare-network"],
   "relief load": ["neqsim-relief-flare-network"],
+  "trapped liquid fire rupture": ["neqsim-trapped-liquid-fire-rupture"],
+  "blocked-in liquid": ["neqsim-trapped-liquid-fire-rupture"],
+  "blocked liquid": ["neqsim-trapped-liquid-fire-rupture"],
+  "thermal expansion rupture": ["neqsim-trapped-liquid-fire-rupture"],
+  "no pressure relief": ["neqsim-trapped-liquid-fire-rupture"],
+  "pfp demand": ["neqsim-trapped-liquid-fire-rupture"],
+  "passive fire protection demand": ["neqsim-trapped-liquid-fire-rupture"],
+  "flange fire failure": ["neqsim-trapped-liquid-fire-rupture"],
+  "pipe fire rupture": ["neqsim-trapped-liquid-fire-rupture"],
+  "fire rupture study": ["neqsim-trapped-liquid-fire-rupture"],
+  "trapped inventory fire": ["neqsim-trapped-liquid-fire-rupture"],
   "operating envelope": ["neqsim-controllability-operability"],
   "operability": ["neqsim-controllability-operability"],
   "turndown": ["neqsim-controllability-operability"],
@@ -734,6 +831,17 @@
   "utility duty": ["neqsim-utilities-specification"],
   "norsok u-001": ["neqsim-utilities-specification"],
   "results.json": ["neqsim-professional-reporting"],
+  "water hammer": ["neqsim-water-hammer"],
+  "liquid hammer": ["neqsim-water-hammer"],
+  "hydraulic surge": ["neqsim-water-hammer"],
+  "hydraulic transient": ["neqsim-water-hammer"],
+  "pump trip": ["neqsim-water-hammer", "neqsim-dynamic-simulation"],
+  "check valve slam": ["neqsim-water-hammer"],
+  "esd valve closure": ["neqsim-water-hammer", "neqsim-pid-process-operations"],
+  "fast valve closure": ["neqsim-water-hammer", "neqsim-pid-process-operations"],
+  "runwaterhammer": ["neqsim-water-hammer"],
+  "waterhammerpipe": ["neqsim-water-hammer"],
+  "waterhammerstudy": ["neqsim-water-hammer"],
   "report schema": ["neqsim-professional-reporting"],
   "professional report": ["neqsim-professional-reporting"],
   "executive summary": ["neqsim-professional-reporting"],

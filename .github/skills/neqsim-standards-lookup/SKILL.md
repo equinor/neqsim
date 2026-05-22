@@ -38,6 +38,53 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Well casing/tubing | API 5CT, API TR 5C3, NORSOK D-010 | `api_standards.csv`, `norsok_standards.csv` |
 | Flange | ASME B16.5 | `asme_standards.csv` |
 
+## TR/NORSOK Integration Classes
+
+Use these Java classes when a task references Equinor technical requirements,
+STS0131, TR1965, TR2237, or NORSOK P-002:
+
+| Scope | Class | Use |
+|-------|-------|-----|
+| Gas scrubber conformance | `neqsim.process.mechanicaldesign.separator.conformity.ConformityRuleSet.create("TR1965")` | Checks TR1965 K-factor, gas/liquid margins, entrainment, and scrubber layout metadata configured on `GasScrubberMechanicalDesign`. |
+| Blowdown fire acceptance | `neqsim.process.safety.depressurization.STS0131AcceptanceCriteria` | Evaluates `DepressurizationResult` against time-to-escape/time-to-rupture pressure, inventory, and escalated fire-rate limits. |
+| Piping/line sizing | `neqsim.process.mechanicaldesign.pipeline.NorsokP002LineSizingValidator` | Screens `PipeLineInterface` velocity, pressure gradient, and erosional velocity using NORSOK P-002 style limits. |
+| Leak detection sensitivity | `neqsim.process.safety.leakdetection.MassBalanceLeakDetector` | Estimates minimum detectable leak rate from flow, pressure, temperature, and linepack uncertainty. |
+| Performance standards | `neqsim.process.safety.barrier.TR2237Templates` | Creates starter barrier registers with TR2237-style performance standards and NORSOK S-001 topic mappings. |
+| Standards review | `neqsim.process.safety.compliance.StandardsDesignReview` | Converts supported calculated checks from a `ProcessSystem` into `StandardsComplianceReport`. |
+| Overpressure LOPA targets | `LOPAResult.getSTS0131OverpressureTargetFrequency(...)` | Selects target event frequency from STS0131 pressure severity bands. |
+| LEL endpoint policy | `GasDispersionAnalyzer.builder().sts0131IntegralEndpoint()` | Uses 20% LFL for integral dispersion tools; `sts0131CfdEndpoint()` uses 50% LFL. |
+
+### TR1965 Gas Scrubber Pattern
+
+```java
+GasScrubber scrubber = new GasScrubber("inlet scrubber", feed);
+scrubber.run();
+scrubber.initMechanicalDesign();
+GasScrubberMechanicalDesign design = scrubber.getMechanicalDesign();
+design.setInnerDiameter(2.0);
+design.setMeshPad(3.0, 100.0);
+design.setLaHHElevationM(0.5);
+design.setInletDeviceElevationM(1.2);
+design.setMeshPadElevationM(2.3);
+design.setLiquidEntrainmentLitresPerMSm3(5.0);
+design.setLiquidDesignMarginFraction(0.25);
+design.setConformityRules("TR1965");
+ConformityReport report = design.checkConformity();
+```
+
+### STS0131 Blowdown Acceptance Pattern
+
+```java
+DepressurizationResult blowdown = simulator.run();
+STS0131AcceptanceCriteria criteria = new STS0131AcceptanceCriteria()
+  .setTimeToEscapeS(120.0)
+  .setEstimatedTimeToRuptureS(300.0)
+  .setMaximumPressureAtRuptureBara(15.0)
+  .setMaximumRemainingMassKg(500.0)
+  .setMaximumEscalatedFireRateKgPerS(2.0);
+STS0131AcceptanceResult acceptance = blowdown.evaluateSTS0131(criteria);
+```
+
 ## Database Query Pattern (Java)
 
 ```java

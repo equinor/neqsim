@@ -66,6 +66,7 @@ public class ProcessSafetyAnalyzer implements Serializable {
     ProcessSystem referenceSystem = requireBaseProcessSystem();
     ProcessSystem scenarioSystem = referenceSystem.copy();
     scenario.applyTo(scenarioSystem);
+    scenarioSystem.run();
 
     ProcessSafetyAnalysisSummary summary = buildSummary(scenario, referenceSystem, scenarioSystem);
     if (resultRepository != null) {

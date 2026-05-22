@@ -486,13 +486,18 @@ def render_book_odf(book_dir, chapter_filter=None):
         _add_page_break(doc, styles)
 
         # ── Preface and other frontmatter ──
+        frontmatter_figures = book_dir / "frontmatter" / "figures"
         for fm in cfg.get("frontmatter", []):
             if fm in ("title_page", "copyright"):
                 continue
             fm_path = book_dir / "frontmatter" / f"{fm}.md"
             if fm_path.exists():
                 text = _strip_html_comments(fm_path.read_text(encoding="utf-8"))
-                _render_md_to_odf(doc, text, styles)
+                _render_md_to_odf(
+                    doc,
+                    text,
+                    styles,
+                    figures_dir=frontmatter_figures if frontmatter_figures.exists() else None)
                 _add_page_break(doc, styles)
 
     # ── Chapters ──

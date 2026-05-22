@@ -96,7 +96,7 @@ final class ColumnMeshState implements Serializable {
         vaporFractions[trayIndex][compIndex] = componentFraction(vapor, componentName);
         liquidFractions[trayIndex][compIndex] = componentFraction(liquid, componentName);
       }
-      List<StreamInterface> feeds = column.getFeedStreams(trayIndex);
+      List<StreamInterface> feeds = column.getExternalFeedStreams(trayIndex);
       for (StreamInterface feed : feeds) {
         for (int compIndex = 0; compIndex < componentCount; compIndex++) {
           feedComponentFlows[trayIndex][compIndex] +=
@@ -196,7 +196,6 @@ final class ColumnMeshState implements Serializable {
   private static double componentFraction(StreamInterface stream, String componentName) {
     try {
       SystemInterface system = stream.getThermoSystem();
-      system.init(0);
       return system.getComponent(componentName).getz();
     } catch (Exception ex) {
       return 0.0;

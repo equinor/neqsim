@@ -85,9 +85,9 @@ def download_doc_files(inst_code, all_docs, out_dir):
 
     for doc_no, info in sorted(all_docs.items()):
         for f in info.get("files", []):
-            fname = f.get("fileName", "")
+            fname = f.get("fileName") or ""
             file_id = f.get("id", None)
-            blob_id = f.get("blobId", "")
+            blob_id = f.get("blobId") or ""
 
             if not fname.lower().endswith(".pdf") or not file_id:
                 continue

@@ -9,11 +9,11 @@
  *
  * <h2>MCP Resource URIs:</h2>
  * <ul>
- * <li>{@code neqsim://example/{category}/{name}} — example JSON inputs</li>
- * <li>{@code neqsim://schema/{toolName}/input} — JSON Schema for tool inputs</li>
- * <li>{@code neqsim://schema/{toolName}/output} — JSON Schema for tool outputs</li>
- * <li>{@code neqsim://catalog/examples} — listing of all examples</li>
- * <li>{@code neqsim://catalog/schemas} — listing of all schemas</li>
+ * <li>{@code neqsim://example-catalog} — listing of all examples</li>
+ * <li>{@code neqsim://examples/{category}/{name}} — example JSON inputs</li>
+ * <li>{@code neqsim://schema-catalog} — listing of all schemas</li>
+ * <li>{@code neqsim://schemas/{toolName}/input} — JSON Schema for tool inputs</li>
+ * <li>{@code neqsim://schemas/{toolName}/output} — JSON Schema for tool outputs</li>
  * </ul>
  */
 package neqsim.mcp.catalog;

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.pipeline.WaterHammerPipe.BoundaryType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -234,6 +235,29 @@ public class WaterHammerPipeTest {
 
     pipe.setDiameter(8, "in");
     assertEquals(0.2032, pipe.getDiameter(), 0.001);
+  }
+
+  @Test
+  void testFactoryAndJsonFriendlyProperties() {
+    assertTrue(EquipmentFactory.createEquipment("hammer", "waterHammer") instanceof WaterHammerPipe);
+
+    pipe.setUpstreamBoundary("closed end");
+    pipe.setDownstreamBoundary("constant-flow");
+    assertEquals(BoundaryType.CLOSED_END, pipe.getUpstreamBoundary());
+    assertEquals(BoundaryType.CONSTANT_FLOW, pipe.getDownstreamBoundary());
+
+    pipe.setNumberOfIncrements(12);
+    assertEquals(12, pipe.getNumberOfNodes());
+
+    pipe.setPipeWallRoughness(3.0e-5);
+    pipe.setElevation(7.5);
+    pipe.setWallThickness(0.012);
+    assertEquals(3.0e-5, pipe.getPipeWallRoughness(), 1.0e-12);
+    assertEquals(7.5, pipe.getElevation(), 1.0e-12);
+    assertEquals(0.012, pipe.getWallThickness(), 1.0e-12);
+
+    pipe.setValveOpeningPercent(25.0);
+    assertEquals(0.25, pipe.getValveOpening(), 1.0e-12);
   }
 
   @Test

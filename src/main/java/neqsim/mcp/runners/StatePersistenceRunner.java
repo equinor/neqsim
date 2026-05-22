@@ -122,7 +122,7 @@ public final class StatePersistenceRunner {
     saveEnvelope.addProperty("version", version);
     saveEnvelope.addProperty("sessionId", sessionId);
     saveEnvelope.addProperty("savedAt", Instant.now().toString());
-    saveEnvelope.addProperty("neqsimVersion", "3.7.0");
+    saveEnvelope.addProperty("neqsimVersion", "3.10.0");
     saveEnvelope.add("sessionState", stateObj);
 
     // If input has processDefinition (raw JSON that built the process), include it
@@ -434,7 +434,7 @@ public final class StatePersistenceRunner {
     exportDoc.addProperty("format", "neqsim-exported-session");
     exportDoc.addProperty("formatVersion", "1.0.0");
     exportDoc.addProperty("exportedAt", Instant.now().toString());
-    exportDoc.addProperty("neqsimVersion", "3.7.0");
+    exportDoc.addProperty("neqsimVersion", "3.10.0");
     exportDoc.addProperty("sessionId", sessionId);
     exportDoc.add("sessionState", stateObj);
 

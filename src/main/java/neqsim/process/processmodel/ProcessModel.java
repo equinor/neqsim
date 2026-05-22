@@ -2,16 +2,25 @@ package neqsim.process.processmodel;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.AccelerationMethod;
 import neqsim.process.util.event.ProcessEvent;
 import neqsim.process.util.event.ProcessEventBus;
 import neqsim.process.util.report.Report;
@@ -36,9 +45,112 @@ public class ProcessModel implements Runnable, Serializable {
   static Logger logger = LogManager.getLogger(ProcessModel.class);
   private Map<String, ProcessSystem> processes = new LinkedHashMap<>();
 
+  /** Metadata key used for JSON round-trip inter-area stream rewiring. */
+  private static final String INTER_AREA_LINKS_KEY = "interAreaLinks";
+
+  /**
+   * Internal JSON reference to a stream produced inside one process area.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  private static final class AreaStreamReference {
+    /** Name of the process area that produces the stream. */
+    private final String areaName;
+
+    /** Stream reference within the producing area's JSON schema. */
+    private final String streamReference;
+
+    /**
+     * Creates a stream reference descriptor.
+     *
+     * @param areaName name of the producing process area
+     * @param streamReference stream reference inside the producing area
+     */
+    private AreaStreamReference(String areaName, String streamReference) {
+      this.areaName = areaName;
+      this.streamReference = streamReference;
+    }
+  }
+
+  /**
+   * Cached inter-area topology used during model execution.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  private static final class AreaExecutionPlan {
+    /** Ordered execution levels; areas in the same level may run concurrently. */
+    private final List<List<ProcessSystem>> levels;
+
+    /** Downstream area adjacency map, keyed by process identity. */
+    private final Map<ProcessSystem, java.util.Set<ProcessSystem>> successors;
+
+    /** Boundary streams keyed by object identity. */
+    private final java.util.Set<Object> boundaryStreams;
+
+    /** Areas that consume each boundary stream, keyed by stream identity. */
+    private final Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers;
+
+    /** Structure versions observed when this plan was built. */
+    private final Map<ProcessSystem, Long> structureVersions;
+
+    /**
+     * Creates an immutable execution-plan holder.
+     *
+     * @param levels ordered inter-area execution levels
+     * @param successors downstream area adjacency map
+     * @param boundaryStreams streams crossing process-area boundaries
+     * @param boundaryConsumers consumer areas for each boundary stream
+     * @param structureVersions process structure versions observed while building the plan
+     */
+    private AreaExecutionPlan(List<List<ProcessSystem>> levels,
+        Map<ProcessSystem, java.util.Set<ProcessSystem>> successors,
+        java.util.Set<Object> boundaryStreams,
+        Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers,
+        Map<ProcessSystem, Long> structureVersions) {
+      this.levels = levels;
+      this.successors = successors;
+      this.boundaryStreams = boundaryStreams;
+      this.boundaryConsumers = boundaryConsumers;
+      this.structureVersions = structureVersions;
+    }
+  }
+
   private boolean runStep = false;
   private int maxIterations = 50;
   private boolean useOptimizedExecution = true;
+
+  /** Cached inter-area execution plan for the current model topology. */
+  private transient AreaExecutionPlan cachedAreaExecutionPlan;
+
+  /** True when the cached inter-area execution plan must be rebuilt. */
+  private transient boolean areaExecutionPlanDirty = true;
+
+  /**
+   * When true, model-level parallel area execution temporarily disables inner ProcessSystem
+   * parallelism for areas running in the same level. This avoids nested work submitted to the same
+   * fixed-size shared thread pool.
+   */
+  private boolean preventNestedParallelExecution = true;
+
+  /**
+   * When true, ProcessModel chooses per execution level whether outer area parallelism or inner
+   * ProcessSystem parallelism is expected to give better throughput.
+   */
+  private boolean useAdaptiveModelParallelism = true;
+
+  /**
+   * When true, clean process areas may be skipped on later outer iterations when their boundary
+   * streams did not change beyond convergence tolerances.
+   */
+  private boolean useIncrementalAreaExecution = true;
+
+  /** Whether fast recycle convergence options have been requested for large models. */
+  private boolean useFastRecycleConvergence = false;
+
+  /** Whether coordinated acceleration should be enabled for recycle-heavy child areas. */
+  private boolean useCoordinatedRecycleAcceleration = false;
 
   /**
    * Transient listener for model-level progress callbacks. Marked transient to avoid serialization
@@ -182,6 +294,9 @@ public class ProcessModel implements Runnable, Serializable {
   private double lastMaxTemperatureError = Double.MAX_VALUE;
   private double lastMaxPressureError = Double.MAX_VALUE;
   private boolean modelConverged = false;
+  private boolean lastAllProcessesSolved = false;
+  private boolean lastBoundaryValuesConverged = false;
+  private int lastBoundaryStreamCount = 0;
 
   /**
    * Checks if the model is running in step mode.
@@ -228,6 +343,150 @@ public class ProcessModel implements Runnable, Serializable {
    */
   public void setUseOptimizedExecution(boolean useOptimizedExecution) {
     this.useOptimizedExecution = useOptimizedExecution;
+  }
+
+  /**
+   * Returns whether nested parallel execution is prevented during model-level parallel area runs.
+   *
+   * @return true if ProcessSystems in the same parallel area level are run sequentially internally
+   */
+  public boolean isPreventNestedParallelExecution() {
+    return preventNestedParallelExecution;
+  }
+
+  /**
+   * Enable or disable nested parallel execution prevention.
+   *
+   * <p>
+   * When enabled, areas that run concurrently at the {@code ProcessModel} level temporarily execute
+   * their child {@link ProcessSystem}s in sequential mode. This keeps area-level workers from
+   * blocking while also submitting inner unit-operation work to the same shared thread pool.
+   * </p>
+   *
+   * @param preventNestedParallelExecution true to prevent nested parallel submissions
+   */
+  public void setPreventNestedParallelExecution(boolean preventNestedParallelExecution) {
+    this.preventNestedParallelExecution = preventNestedParallelExecution;
+  }
+
+  /**
+   * Returns whether adaptive model-level parallelism is enabled.
+   *
+   * @return true if ProcessModel may choose inner ProcessSystem parallelism for wide child areas
+   */
+  public boolean isUseAdaptiveModelParallelism() {
+    return useAdaptiveModelParallelism;
+  }
+
+  /**
+   * Enable or disable adaptive model-level parallelism.
+   *
+   * <p>
+   * When enabled, a ProcessModel execution level with multiple independent areas may run those
+   * areas sequentially while preserving child ProcessSystem optimized execution if the children
+   * expose substantially more parallel work than the outer area level. This avoids the blunt choice
+   * of always using outer area parallelism with child parallelism disabled.
+   * </p>
+   *
+   * @param useAdaptiveModelParallelism true to enable adaptive outer-vs-inner parallelism choice
+   */
+  public void setUseAdaptiveModelParallelism(boolean useAdaptiveModelParallelism) {
+    this.useAdaptiveModelParallelism = useAdaptiveModelParallelism;
+  }
+
+  /**
+   * Returns whether incremental area execution is enabled for outer iterations.
+   *
+   * @return true if unchanged areas may be skipped on later outer iterations
+   */
+  public boolean isUseIncrementalAreaExecution() {
+    return useIncrementalAreaExecution;
+  }
+
+  /**
+   * Enable or disable incremental area execution for converging large models.
+   *
+   * <p>
+   * When enabled, the first outer iteration runs every area. Later iterations rerun only areas
+   * downstream of boundary streams that changed beyond the configured flow, temperature, or
+   * pressure tolerances. If lifecycle hooks or event publishing are enabled, all areas are run to
+   * preserve callback semantics.
+   * </p>
+   *
+   * @param useIncrementalAreaExecution true to allow skipping clean areas in later iterations
+   */
+  public void setUseIncrementalAreaExecution(boolean useIncrementalAreaExecution) {
+    this.useIncrementalAreaExecution = useIncrementalAreaExecution;
+  }
+
+  /**
+   * Explicitly enables the fast large-model execution profile.
+   *
+   * <p>
+   * This profile keeps the conservative model-level safeguards enabled, turns on flash warm-start
+   * for child ProcessSystems, and applies Wegstein acceleration to all existing Recycle units. The
+   * same recycle acceleration is applied to ProcessSystems added after the profile is enabled.
+   * </p>
+   *
+   * @return number of Recycle units updated across all currently registered areas
+   */
+  public int enableFastLargeModelMode() {
+    preventNestedParallelExecution = true;
+    useAdaptiveModelParallelism = true;
+    useIncrementalAreaExecution = true;
+    useFastRecycleConvergence = true;
+    setUseCoordinatedRecycleAcceleration(true);
+    setUseFlashWarmStart(true);
+    return setRecycleAccelerationMethod(AccelerationMethod.WEGSTEIN);
+  }
+
+  /**
+   * Returns whether fast recycle convergence has been requested for this model.
+   *
+   * @return true if newly added ProcessSystems should receive fast recycle settings
+   */
+  public boolean isUseFastRecycleConvergence() {
+    return useFastRecycleConvergence;
+  }
+
+  /**
+   * Enable or disable propagation of fast recycle convergence settings.
+   *
+   * <p>
+   * When enabled, existing and newly added {@link ProcessSystem}s receive Wegstein acceleration on
+   * their {@link neqsim.process.equipment.util.Recycle} units. Disabling this flag stops
+   * propagation to later areas but does not reset acceleration methods already applied to existing
+   * recycles.
+   * </p>
+   *
+   * @param useFastRecycleConvergence true to apply fast recycle settings to registered areas
+   */
+  public void setUseFastRecycleConvergence(boolean useFastRecycleConvergence) {
+    this.useFastRecycleConvergence = useFastRecycleConvergence;
+    if (useFastRecycleConvergence) {
+      setRecycleAccelerationMethod(AccelerationMethod.WEGSTEIN);
+    }
+  }
+
+  /**
+   * Enable or disable coordinated recycle acceleration across all registered ProcessSystems.
+   *
+   * @param useCoordinatedRecycleAcceleration true to enable coordinated recycle acceleration
+   */
+  public void setUseCoordinatedRecycleAcceleration(boolean useCoordinatedRecycleAcceleration) {
+    this.useCoordinatedRecycleAcceleration = useCoordinatedRecycleAcceleration;
+    for (ProcessSystem p : processes.values()) {
+      p.setUseCoordinatedRecycleAcceleration(useCoordinatedRecycleAcceleration);
+    }
+  }
+
+  /**
+   * Returns whether coordinated recycle acceleration is propagated to child ProcessSystems.
+   *
+   * @return true if coordinated recycle acceleration is enabled at model level
+   */
+  public boolean isUseCoordinatedRecycleAcceleration() {
+    return useCoordinatedRecycleAcceleration;
   }
 
   /**
@@ -482,8 +741,30 @@ public class ProcessModel implements Runnable, Serializable {
     if (useFlashWarmStart) {
       process.setUseFlashWarmStart(true);
     }
+    if (useFastRecycleConvergence) {
+      process.setRecycleAccelerationMethod(AccelerationMethod.WEGSTEIN);
+    }
+    if (useCoordinatedRecycleAcceleration) {
+      process.setUseCoordinatedRecycleAcceleration(true);
+    }
     processes.put(name, process);
+    invalidateTopology();
     return true;
+  }
+
+  /**
+   * Invalidates cached inter-area topology for this model.
+   *
+   * <p>
+   * The cache is invalidated automatically by {@link #add(String, ProcessSystem)} and
+   * {@link #remove(String)}. Call this method explicitly after mutating stream wiring inside an
+   * already registered {@link ProcessSystem}, because the model cannot observe those internal
+   * topology changes directly.
+   * </p>
+   */
+  public void invalidateTopology() {
+    areaExecutionPlanDirty = true;
+    cachedAreaExecutionPlan = null;
   }
 
   /**
@@ -593,7 +874,11 @@ public class ProcessModel implements Runnable, Serializable {
    * @return a boolean
    */
   public boolean remove(String name) {
-    return processes.remove(name) != null;
+    boolean removed = processes.remove(name) != null;
+    if (removed) {
+      invalidateTopology();
+    }
+    return removed;
   }
 
   /**
@@ -611,7 +896,7 @@ public class ProcessModel implements Runnable, Serializable {
    * @param method acceleration method to apply (must not be {@code null})
    * @return total number of {@code Recycle} units updated across all areas
    */
-  public int setRecycleAccelerationMethod(neqsim.process.equipment.util.AccelerationMethod method) {
+  public int setRecycleAccelerationMethod(AccelerationMethod method) {
     if (method == null) {
       throw new IllegalArgumentException("AccelerationMethod must not be null");
     }
@@ -727,28 +1012,15 @@ public class ProcessModel implements Runnable, Serializable {
     }
 
     if (runStep) {
-      // Step mode: just run each process once in step mode
-      int areaIdx = 0;
-      for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
-        try {
-          if (Thread.currentThread().isInterrupted()) {
-            logger.debug("Thread was interrupted, exiting run()...");
-            return;
-          }
-          notifyBeforeProcessArea(entry.getKey(), entry.getValue(), areaIdx, totalAreas, 1);
-          entry.getValue().run_step();
-          notifyProcessAreaComplete(entry.getKey(), entry.getValue(), areaIdx, totalAreas, 1);
-        } catch (Exception e) {
-          logger.error("Error running process step: " + e.getMessage(), e);
-          publishModelEvent(ProcessEvent.EventType.ERROR,
-              "Error in process area '" + entry.getKey() + "': " + e.getMessage(),
-              ProcessEvent.Severity.ERROR);
-          if (!notifyProcessAreaError(entry.getKey(), entry.getValue(), e)) {
-            break;
-          }
-        }
-        areaIdx++;
-      }
+      lastIterationCount = 1;
+      modelConverged = true;
+      lastMaxFlowError = 0.0;
+      lastMaxTemperatureError = 0.0;
+      lastMaxPressureError = 0.0;
+      lastAllProcessesSolved = true;
+      lastBoundaryValuesConverged = true;
+      lastBoundaryStreamCount = collectBoundaryStreams().size();
+      runAllProcessStepsWithHooks(1);
       notifyModelComplete(1, true);
       publishModelEvent(ProcessEvent.EventType.SIMULATION_COMPLETE,
           "ProcessModel step mode completed", ProcessEvent.Severity.INFO);
@@ -759,13 +1031,19 @@ public class ProcessModel implements Runnable, Serializable {
       lastMaxFlowError = Double.MAX_VALUE;
       lastMaxTemperatureError = Double.MAX_VALUE;
       lastMaxPressureError = Double.MAX_VALUE;
+      lastAllProcessesSolved = false;
+      lastBoundaryValuesConverged = false;
+      lastBoundaryStreamCount = 0;
 
       // Capture initial stream states for convergence tracking. Restrict to
       // streams that cross area boundaries - these are the only streams whose
       // values change between outer iterations. For a 500-stream plant with
       // 10 boundary streams this cuts capture cost by ~50x.
       java.util.Set<Object> boundaryStreams = collectBoundaryStreams();
-      Map<String, double[]> previousStreamStates = captureStreamStates(boundaryStreams);
+      lastBoundaryStreamCount = boundaryStreams.size();
+      Map<Object, double[]> previousBoundaryStreamStates =
+          captureBoundaryStreamStates(boundaryStreams);
+      java.util.Set<ProcessSystem> dirtyAreas = null;
 
       int iterations = 0;
       while (!Thread.currentThread().isInterrupted() && iterations < maxIterations) {
@@ -773,12 +1051,16 @@ public class ProcessModel implements Runnable, Serializable {
         notifyBeforeIteration(iterations + 1);
 
         // Run all processes - use parallel execution for independent systems
-        runAllProcessesWithHooks(iterations + 1);
+        runAllProcessesWithHooks(iterations + 1, dirtyAreas);
         iterations++;
 
         // Capture current stream states and calculate errors
-        Map<String, double[]> currentStreamStates = captureStreamStates(boundaryStreams);
-        double[] errors = calculateConvergenceErrors(previousStreamStates, currentStreamStates);
+        Map<Object, double[]> currentBoundaryStreamStates =
+            captureBoundaryStreamStates(boundaryStreams);
+        double[] errors =
+            calculateConvergenceErrors(previousBoundaryStreamStates, currentBoundaryStreamStates);
+        java.util.Set<Object> changedBoundaryStreams =
+            findChangedBoundaryStreams(previousBoundaryStreamStates, currentBoundaryStreamStates);
         lastMaxFlowError = errors[0];
         lastMaxTemperatureError = errors[1];
         lastMaxPressureError = errors[2];
@@ -788,6 +1070,8 @@ public class ProcessModel implements Runnable, Serializable {
         boolean valuesConverged =
             lastMaxFlowError < flowTolerance && lastMaxTemperatureError < temperatureTolerance
                 && lastMaxPressureError < pressureTolerance;
+        lastAllProcessesSolved = allProcessesSolved;
+        lastBoundaryValuesConverged = valuesConverged;
 
         if (logger.isDebugEnabled()) {
           logger.debug("Iteration " + iterations + ": flowErr=" + lastMaxFlowError + ", tempErr="
@@ -798,7 +1082,10 @@ public class ProcessModel implements Runnable, Serializable {
         double maxError = getError();
 
         // Notify iteration complete
-        boolean iterConverged = allProcessesSolved && valuesConverged && iterations > 1;
+        boolean boundaryDrivenModel = !boundaryStreams.isEmpty();
+        boolean minimumIterationsMet = boundaryStreams.isEmpty() || iterations > 1;
+        boolean iterConverged =
+            valuesConverged && minimumIterationsMet && (allProcessesSolved || boundaryDrivenModel);
         notifyIterationComplete(iterations, iterConverged, maxError);
 
         // Converged if all processes solved AND values are not changing
@@ -809,7 +1096,8 @@ public class ProcessModel implements Runnable, Serializable {
         }
 
         // Update previous states for next iteration
-        previousStreamStates = currentStreamStates;
+        previousBoundaryStreamStates = currentBoundaryStreamStates;
+        dirtyAreas = getDirtyAreasForNextIteration(changedBoundaryStreams);
       }
       lastIterationCount = iterations;
 
@@ -841,10 +1129,21 @@ public class ProcessModel implements Runnable, Serializable {
    * </p>
    */
   private void runAllProcesses() {
+    runAllProcesses(null);
+  }
+
+  /**
+   * Runs runnable ProcessSystems, using parallel execution for independent systems.
+   *
+   * @param runnableAreas process areas to run, or {@code null} to run every area
+   */
+  private void runAllProcesses(java.util.Set<ProcessSystem> runnableAreas) {
     if (processes.size() <= 1) {
       // Single process - run directly, no parallelism overhead
       for (ProcessSystem process : processes.values()) {
-        runSingleProcess(process);
+        if (shouldRunArea(process, runnableAreas)) {
+          runSingleProcess(process);
+        }
       }
       return;
     }
@@ -855,19 +1154,28 @@ public class ProcessModel implements Runnable, Serializable {
     // previous all-or-nothing logic: a 6-area plant with 4 independent areas
     // and one producer→consumer pair now parallelises the 4 (plus the pair
     // serialised) instead of falling back to fully sequential.
-    List<List<ProcessSystem>> levels = buildAreaExecutionLevels();
+    List<List<ProcessSystem>> levels = getAreaExecutionLevels();
     for (List<ProcessSystem> level : levels) {
       if (Thread.currentThread().isInterrupted()) {
         return;
       }
-      if (level.size() == 1) {
-        runSingleProcess(level.get(0));
+      List<ProcessSystem> activeLevel = filterRunnableAreas(level, runnableAreas);
+      if (activeLevel.isEmpty()) {
+        continue;
+      }
+      if (activeLevel.size() == 1) {
+        runSingleProcess(activeLevel.get(0));
+      } else if (shouldPreserveInnerParallelism(activeLevel)) {
+        for (ProcessSystem process : activeLevel) {
+          runSingleProcess(process, true);
+        }
       } else {
         List<Future<?>> futures = new ArrayList<>();
-        for (ProcessSystem process : level) {
+        for (ProcessSystem process : activeLevel) {
           final ProcessSystem proc = process;
+          final boolean allowInnerParallel = !preventNestedParallelExecution;
           futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
-            runSingleProcess(proc);
+            runSingleProcess(proc, allowInnerParallel);
           }));
         }
         waitForFutures(futures);
@@ -881,15 +1189,120 @@ public class ProcessModel implements Runnable, Serializable {
    * @param process the process to run
    */
   private void runSingleProcess(ProcessSystem process) {
+    runSingleProcess(process, true);
+  }
+
+  /**
+   * Runs a single ProcessSystem with optional child-level parallelism.
+   *
+   * @param process the process to run
+   * @param allowInnerParallelExecution true to allow the child ProcessSystem to choose optimized
+   *        parallel/hybrid execution, false to force sequential child execution for this run
+   */
+  private void runSingleProcess(ProcessSystem process, boolean allowInnerParallelExecution) {
+    boolean previousOptimizedExecution = process.isUseOptimizedExecution();
     try {
-      if (useOptimizedExecution) {
-        process.runOptimized();
-      } else {
-        process.run();
-      }
+      process.setUseOptimizedExecution(useOptimizedExecution && allowInnerParallelExecution);
+      process.run();
     } catch (Exception e) {
       logger.error("Error running process " + process.getName() + ": " + e.getMessage(), e);
+    } finally {
+      process.setUseOptimizedExecution(previousOptimizedExecution);
     }
+  }
+
+  /**
+   * Runs all ProcessSystems once in step mode using insertion order.
+   */
+  private void runAllProcessSteps() {
+    for (ProcessSystem process : processes.values()) {
+      if (Thread.currentThread().isInterrupted()) {
+        return;
+      }
+      runSingleProcessStep(process);
+    }
+  }
+
+  /**
+   * Runs a single ProcessSystem once in step mode.
+   *
+   * @param process the process to run in step mode
+   */
+  private void runSingleProcessStep(ProcessSystem process) {
+    try {
+      process.run_step();
+    } catch (Exception e) {
+      logger.error("Error running process step " + process.getName() + ": " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Runs all ProcessSystems in step mode with optional progress hooks.
+   *
+   * @param iterationNumber step-mode iteration number reported to progress hooks
+   */
+  private void runAllProcessStepsWithHooks(int iterationNumber) {
+    if (progressListener == null && !publishEvents) {
+      runAllProcessSteps();
+      return;
+    }
+
+    int totalAreas = processes.size();
+    int areaIdx = 0;
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      try {
+        if (Thread.currentThread().isInterrupted()) {
+          logger.debug("Thread was interrupted, exiting run()...");
+          return;
+        }
+        notifyBeforeProcessArea(entry.getKey(), entry.getValue(), areaIdx, totalAreas,
+            iterationNumber);
+        entry.getValue().run_step();
+        notifyProcessAreaComplete(entry.getKey(), entry.getValue(), areaIdx, totalAreas,
+            iterationNumber);
+      } catch (Exception e) {
+        logger.error("Error running process step: " + e.getMessage(), e);
+        publishModelEvent(ProcessEvent.EventType.ERROR,
+            "Error in process area '" + entry.getKey() + "': " + e.getMessage(),
+            ProcessEvent.Severity.ERROR);
+        if (!notifyProcessAreaError(entry.getKey(), entry.getValue(), e)) {
+          break;
+        }
+      }
+      areaIdx++;
+    }
+  }
+
+  /**
+   * Checks whether a process area should run in the current outer iteration.
+   *
+   * @param process process area to check
+   * @param runnableAreas process areas selected for execution, or {@code null} for all areas
+   * @return true if the area should be run
+   */
+  private boolean shouldRunArea(ProcessSystem process, java.util.Set<ProcessSystem> runnableAreas) {
+    return runnableAreas == null || runnableAreas.contains(process);
+  }
+
+  /**
+   * Filters a level down to areas selected for execution.
+   *
+   * @param level process areas in one execution level
+   * @param runnableAreas process areas selected for execution, or {@code null} for all areas
+   * @return active areas from the level in original order
+   */
+  private List<ProcessSystem> filterRunnableAreas(List<ProcessSystem> level,
+      java.util.Set<ProcessSystem> runnableAreas) {
+    if (runnableAreas == null) {
+      return level;
+    }
+    List<ProcessSystem> activeLevel = new ArrayList<>();
+    for (ProcessSystem process : level) {
+      if (runnableAreas.contains(process)) {
+        activeLevel.add(process);
+      }
+    }
+    return activeLevel;
   }
 
   /**
@@ -900,18 +1313,29 @@ public class ProcessModel implements Runnable, Serializable {
    * @param iterationNumber current outer iteration number (starts at 1)
    */
   private void runAllProcessesWithHooks(int iterationNumber) {
+    runAllProcessesWithHooks(iterationNumber, null);
+  }
+
+  /**
+   * Runs all ProcessSystems with listener hooks and optional dirty-area filtering.
+   *
+   * @param iterationNumber current outer iteration number (starts at 1)
+   * @param runnableAreas process areas to run, or {@code null} to run every area
+   */
+  private void runAllProcessesWithHooks(int iterationNumber,
+      java.util.Set<ProcessSystem> runnableAreas) {
     int totalAreas = processes.size();
 
     // If no listener is attached and events disabled, delegate to the
     // parallel-aware method
     if (progressListener == null && !publishEvents) {
-      runAllProcesses();
+      runAllProcesses(runnableAreas);
       return;
     }
 
     // Build area execution levels. Areas on the same level run in parallel;
     // consecutive levels run sequentially. Hooks fire before/after each area.
-    List<List<ProcessSystem>> levels = buildAreaExecutionLevels();
+    List<List<ProcessSystem>> levels = getAreaExecutionLevels();
     // Map each ProcessSystem to its insertion-order index for hook indexing.
     Map<ProcessSystem, Integer> areaIndex = new java.util.IdentityHashMap<>();
     Map<ProcessSystem, String> areaName = new java.util.IdentityHashMap<>();
@@ -928,13 +1352,14 @@ public class ProcessModel implements Runnable, Serializable {
       if (Thread.currentThread().isInterrupted()) {
         return;
       }
+      List<ProcessSystem> activeLevel = level;
       // Fire "before" hooks for all areas in this level first (main thread)
-      for (ProcessSystem process : level) {
+      for (ProcessSystem process : activeLevel) {
         notifyBeforeProcessArea(areaName.get(process), process, areaIndex.get(process), totalAreas,
             iterationNumber);
       }
-      if (level.size() == 1) {
-        ProcessSystem process = level.get(0);
+      if (activeLevel.size() == 1) {
+        ProcessSystem process = activeLevel.get(0);
         try {
           runSingleProcess(process);
           notifyProcessAreaComplete(areaName.get(process), process, areaIndex.get(process),
@@ -947,21 +1372,84 @@ public class ProcessModel implements Runnable, Serializable {
             return;
           }
         }
+      } else if (shouldPreserveInnerParallelism(activeLevel)) {
+        for (ProcessSystem process : activeLevel) {
+          try {
+            runSingleProcess(process, true);
+            notifyProcessAreaComplete(areaName.get(process), process, areaIndex.get(process),
+                totalAreas, iterationNumber);
+          } catch (Exception e) {
+            publishModelEvent(ProcessEvent.EventType.ERROR,
+                "Error in process area '" + areaName.get(process) + "': " + e.getMessage(),
+                ProcessEvent.Severity.ERROR);
+            if (!notifyProcessAreaError(areaName.get(process), process, e)) {
+              return;
+            }
+          }
+        }
       } else {
         List<Future<?>> futures = new ArrayList<>();
-        for (ProcessSystem process : level) {
+        for (ProcessSystem process : activeLevel) {
           final ProcessSystem proc = process;
+          final boolean allowInnerParallel = !preventNestedParallelExecution;
           futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
-            runSingleProcess(proc);
+            runSingleProcess(proc, allowInnerParallel);
           }));
         }
         waitForFutures(futures);
         // Fire "after" hooks for the completed level
-        for (ProcessSystem process : level) {
+        for (ProcessSystem process : activeLevel) {
           notifyProcessAreaComplete(areaName.get(process), process, areaIndex.get(process),
               totalAreas, iterationNumber);
         }
       }
+    }
+  }
+
+  /**
+   * Determines whether a parallel area level should preserve child ProcessSystem parallelism.
+   *
+   * @param activeLevel process areas ready to run at the same model dependency level
+   * @return true if the level should run areas sequentially with child optimized execution enabled
+   */
+  private boolean shouldPreserveInnerParallelism(List<ProcessSystem> activeLevel) {
+    if (!useAdaptiveModelParallelism || !preventNestedParallelExecution || !useOptimizedExecution
+        || activeLevel == null || activeLevel.size() <= 1) {
+      return false;
+    }
+    int maxInnerParallelism = 1;
+    int innerParallelismScore = 0;
+    for (ProcessSystem process : activeLevel) {
+      int estimatedParallelism = estimateInnerParallelism(process);
+      maxInnerParallelism = Math.max(maxInnerParallelism, estimatedParallelism);
+      innerParallelismScore += Math.max(0, estimatedParallelism - 1);
+    }
+    return maxInnerParallelism > activeLevel.size() && innerParallelismScore >= activeLevel.size();
+  }
+
+  /**
+   * Estimates useful child-level parallelism for a ProcessSystem.
+   *
+   * @param process process area to inspect
+   * @return estimated maximum child parallelism, with one as the conservative floor
+   */
+  private int estimateInnerParallelism(ProcessSystem process) {
+    if (process == null || process.hasAdjusters()) {
+      return 1;
+    }
+    try {
+      neqsim.process.processmodel.graph.ProcessGraph.ParallelPartition partition =
+          process.getParallelPartition();
+      if (partition == null) {
+        return 1;
+      }
+      return Math.max(1, partition.getMaxParallelism());
+    } catch (Exception exception) {
+      if (logger.isDebugEnabled()) {
+        logger.debug("Could not estimate inner parallelism for process " + process.getName(),
+            exception);
+      }
+      return 1;
     }
   }
 
@@ -1026,22 +1514,91 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
-   * Partitions ProcessSystems into execution levels based on inter-area stream dependencies. Areas
-   * at the same level share no producer/consumer link and can run in parallel; areas at level N+1
-   * start only after all areas at level N complete.
-   *
-   * <p>
-   * Direction is inferred from stream ownership: if a stream is an outlet of some equipment in area
-   * A and also present (directly or as a consumed inlet) in area B, then A is the producer and B is
-   * the consumer, so A → B in the meta-graph. Ambiguous links (stream is produced in both areas)
-   * fall back to insertion order to preserve legacy behaviour.
-   * </p>
+   * Gets cached inter-area execution levels, rebuilding only after topology invalidation.
    *
    * @return ordered list of execution levels; each level contains areas that can run in parallel
    */
-  private List<List<ProcessSystem>> buildAreaExecutionLevels() {
+  private List<List<ProcessSystem>> getAreaExecutionLevels() {
+    return getAreaExecutionPlan().levels;
+  }
+
+  /**
+   * Gets the cached inter-area execution plan.
+   *
+   * @return cached execution plan for the current model topology
+   */
+  private AreaExecutionPlan getAreaExecutionPlan() {
+    if (cachedAreaExecutionPlan == null || areaExecutionPlanDirty
+        || isAreaExecutionPlanStale(cachedAreaExecutionPlan)) {
+      cachedAreaExecutionPlan = buildAreaExecutionPlan();
+      areaExecutionPlanDirty = false;
+    }
+    return cachedAreaExecutionPlan;
+  }
+
+  /**
+   * Checks whether a cached area execution plan is stale.
+   *
+   * @param plan cached plan to inspect
+   * @return true if registered areas or child topology versions differ from the cached plan
+   */
+  private boolean isAreaExecutionPlanStale(AreaExecutionPlan plan) {
+    if (plan == null || plan.structureVersions.size() != processes.size()) {
+      return true;
+    }
+    for (ProcessSystem process : processes.values()) {
+      Long cachedVersion = plan.structureVersions.get(process);
+      if (cachedVersion == null || cachedVersion.longValue() != process.getStructureVersion()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Captures structure versions for all process areas in insertion order.
+   *
+   * @param allProcesses process areas to capture
+   * @return identity map from process area to current structure version
+   */
+  private Map<ProcessSystem, Long> captureStructureVersions(List<ProcessSystem> allProcesses) {
+    Map<ProcessSystem, Long> structureVersions = new java.util.IdentityHashMap<>();
+    for (ProcessSystem process : allProcesses) {
+      structureVersions.put(process, Long.valueOf(process.getStructureVersion()));
+    }
+    return structureVersions;
+  }
+
+  /**
+   * Builds the inter-area execution plan from current ProcessSystem stream wiring.
+   *
+   * <p>
+   * Direction is inferred from stream ownership: if a stream is an outlet of some equipment in area
+   * A and also present as a consumed inlet or member stream in area B, then A is the producer and B
+   * is the consumer, so A → B in the meta-graph. Ambiguous links fall back to insertion order to
+   * preserve legacy behaviour.
+   * </p>
+   *
+   * @return execution plan containing levels, adjacency, and boundary-stream consumers
+   */
+  private AreaExecutionPlan buildAreaExecutionPlan() {
     List<ProcessSystem> allProcesses = new ArrayList<>(processes.values());
     int n = allProcesses.size();
+    Map<ProcessSystem, Long> structureVersions = captureStructureVersions(allProcesses);
+
+    Map<ProcessSystem, java.util.Set<ProcessSystem>> successorMap = new IdentityHashMap<>();
+    java.util.Set<Object> boundaryStreams =
+        java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    Map<Object, java.util.Set<ProcessSystem>> boundaryConsumers = new IdentityHashMap<>();
+    for (ProcessSystem process : allProcesses) {
+      successorMap.put(process,
+          java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>()));
+    }
+
+    if (n == 0) {
+      return new AreaExecutionPlan(new ArrayList<>(), successorMap, boundaryStreams,
+          boundaryConsumers, structureVersions);
+    }
 
     // Index processes by their position in the insertion order for
     // tie-breaking on ambiguous shared-stream directions.
@@ -1090,6 +1647,42 @@ public class ProcessModel implements Runnable, Serializable {
       members.add(mem);
     }
 
+    java.util.Map<Object, Integer> occurrenceCounts = new java.util.IdentityHashMap<>();
+    for (int i = 0; i < n; i++) {
+      java.util.Set<Object> seen =
+          java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+      seen.addAll(outputs.get(i));
+      seen.addAll(members.get(i));
+      for (Object stream : seen) {
+        occurrenceCounts.merge(stream, 1, Integer::sum);
+      }
+    }
+    for (Map.Entry<Object, Integer> entry : occurrenceCounts.entrySet()) {
+      if (entry.getValue() == null || entry.getValue() < 2) {
+        continue;
+      }
+      Object stream = entry.getKey();
+      boundaryStreams.add(stream);
+      java.util.Set<ProcessSystem> consumers =
+          java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+      java.util.Set<ProcessSystem> participants =
+          java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+      for (int j = 0; j < n; j++) {
+        boolean produced = outputs.get(j).contains(stream);
+        boolean member = members.get(j).contains(stream);
+        if (produced || member) {
+          participants.add(allProcesses.get(j));
+        }
+        if (member && !produced) {
+          consumers.add(allProcesses.get(j));
+        }
+      }
+      if (consumers.isEmpty()) {
+        consumers.addAll(participants);
+      }
+      boundaryConsumers.put(stream, consumers);
+    }
+
     // Build directed adjacency: A → B iff some stream is outputs(A) and also
     // appears in members(B) but not in outputs(B).
     int[] inDegree = new int[n];
@@ -1117,6 +1710,7 @@ public class ProcessModel implements Runnable, Serializable {
         }
         if (linked) {
           successors.get(i).add(j);
+          successorMap.get(allProcesses.get(i)).add(allProcesses.get(j));
           inDegree[j]++;
         }
       }
@@ -1150,7 +1744,8 @@ public class ProcessModel implements Runnable, Serializable {
         single.add(p);
         fallback.add(single);
       }
-      return fallback;
+      return new AreaExecutionPlan(fallback, successorMap, boundaryStreams, boundaryConsumers,
+          structureVersions);
     }
 
     int maxLevel = 0;
@@ -1164,7 +1759,8 @@ public class ProcessModel implements Runnable, Serializable {
     for (int i = 0; i < n; i++) {
       levels.get(level[i]).add(allProcesses.get(i));
     }
-    return levels;
+    return new AreaExecutionPlan(levels, successorMap, boundaryStreams, boundaryConsumers,
+        structureVersions);
   }
 
   /**
@@ -1187,57 +1783,6 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
-   * Capture current state of all streams in all processes.
-   *
-   * @return map of stream name to [flowRate, temperature, pressure]
-   */
-  private Map<String, double[]> captureStreamStates() {
-    return captureStreamStates(null);
-  }
-
-  /**
-   * Capture current state of streams in all processes, optionally restricted to the supplied
-   * boundary set.
-   *
-   * <p>
-   * For multi-area {@link ProcessModel}s, inter-area convergence is driven only by streams that
-   * cross area boundaries. Passing the boundary set avoids scanning every stream in every iteration
-   * (O(N×M) → O(boundary)). When {@code boundaryStreams} is {@code null} or empty, all streams are
-   * captured (backward-compatible behaviour).
-   * </p>
-   *
-   * @param boundaryStreams identity-set of streams to capture, or {@code null} for all streams
-   * @return map of stream name to [flowRate, temperature, pressure]
-   */
-  private Map<String, double[]> captureStreamStates(java.util.Set<Object> boundaryStreams) {
-    Map<String, double[]> states = new LinkedHashMap<>();
-    boolean filter = boundaryStreams != null && !boundaryStreams.isEmpty();
-    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
-      String processName = entry.getKey();
-      ProcessSystem process = entry.getValue();
-      for (Object unit : process.getUnitOperations()) {
-        if (!(unit instanceof StreamInterface)) {
-          continue;
-        }
-        if (filter && !boundaryStreams.contains(unit)) {
-          continue;
-        }
-        StreamInterface stream = (StreamInterface) unit;
-        String key = processName + "." + stream.getName();
-        try {
-          double flow = stream.getFlowRate("kg/hr");
-          double temp = stream.getTemperature("K");
-          double press = stream.getPressure("bara");
-          states.put(key, new double[] {flow, temp, press});
-        } catch (Exception e) {
-          // Skip streams that can't be read
-        }
-      }
-    }
-    return states;
-  }
-
-  /**
    * Collect the identity-set of streams that cross area boundaries in the current
    * {@link ProcessModel}. A stream is a boundary stream if it appears in at least two
    * {@link ProcessSystem}s.
@@ -1245,28 +1790,111 @@ public class ProcessModel implements Runnable, Serializable {
    * @return identity-based set of boundary streams (may be empty)
    */
   private java.util.Set<Object> collectBoundaryStreams() {
-    java.util.Set<Object> boundary =
-        java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
-    if (processes.size() < 2) {
-      return boundary;
+    return getAreaExecutionPlan().boundaryStreams;
+  }
+
+  /**
+   * Capture current boundary stream states by stream object identity.
+   *
+   * @param boundaryStreams identity-set of streams to capture
+   * @return identity map from stream object to [flowRate, temperature, pressure]
+   */
+  private Map<Object, double[]> captureBoundaryStreamStates(java.util.Set<Object> boundaryStreams) {
+    Map<Object, double[]> states = new java.util.IdentityHashMap<>();
+    if (boundaryStreams == null || boundaryStreams.isEmpty()) {
+      return states;
     }
-    // For each stream object count how many processes contain it as a unit.
-    java.util.Map<Object, Integer> counts = new java.util.IdentityHashMap<>();
-    for (ProcessSystem process : processes.values()) {
-      java.util.Set<Object> seen =
-          java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
-      for (Object unit : process.getUnitOperations()) {
-        if (unit instanceof StreamInterface && seen.add(unit)) {
-          counts.merge(unit, 1, Integer::sum);
+    for (Object boundaryObject : boundaryStreams) {
+      if (!(boundaryObject instanceof StreamInterface)) {
+        continue;
+      }
+      StreamInterface stream = (StreamInterface) boundaryObject;
+      try {
+        double flow = stream.getFlowRate("kg/hr");
+        double temp = stream.getTemperature("K");
+        double press = stream.getPressure("bara");
+        states.put(boundaryObject, new double[] {flow, temp, press});
+      } catch (Exception exception) {
+        // Skip streams that cannot be read.
+      }
+    }
+    return states;
+  }
+
+  /**
+   * Finds boundary streams that changed beyond any configured convergence tolerance.
+   *
+   * @param previous previous boundary stream states
+   * @param current current boundary stream states
+   * @return identity-set of changed boundary stream objects
+   */
+  private java.util.Set<Object> findChangedBoundaryStreams(Map<Object, double[]> previous,
+      Map<Object, double[]> current) {
+    java.util.Set<Object> changed =
+        java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    for (Map.Entry<Object, double[]> entry : current.entrySet()) {
+      double[] prev = previous.get(entry.getKey());
+      if (prev == null) {
+        changed.add(entry.getKey());
+        continue;
+      }
+      double[] curr = entry.getValue();
+      double flowBase = Math.max(Math.abs(prev[0]), 1e-10);
+      double tempBase = Math.max(prev[1], 1.0);
+      double pressBase = Math.max(prev[2], 1e-10);
+      boolean flowChanged = Math.abs(curr[0] - prev[0]) / flowBase >= flowTolerance;
+      boolean tempChanged = Math.abs(curr[1] - prev[1]) / tempBase >= temperatureTolerance;
+      boolean pressureChanged = Math.abs(curr[2] - prev[2]) / pressBase >= pressureTolerance;
+      if (flowChanged || tempChanged || pressureChanged) {
+        changed.add(entry.getKey());
+      }
+    }
+    return changed;
+  }
+
+  /**
+   * Selects areas to rerun on the next outer iteration based on changed boundary streams.
+   *
+   * @param changedBoundaryStreams streams that changed beyond convergence tolerance
+   * @return areas to run on the next iteration, or {@code null} to run every area
+   */
+  private java.util.Set<ProcessSystem> getDirtyAreasForNextIteration(
+      java.util.Set<Object> changedBoundaryStreams) {
+    if (!useIncrementalAreaExecution || progressListener != null || publishEvents
+        || changedBoundaryStreams == null || changedBoundaryStreams.isEmpty()) {
+      return null;
+    }
+    AreaExecutionPlan plan = getAreaExecutionPlan();
+    java.util.Set<ProcessSystem> dirtyAreas =
+        java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+    java.util.ArrayDeque<ProcessSystem> queue = new java.util.ArrayDeque<>();
+    for (Object stream : changedBoundaryStreams) {
+      java.util.Set<ProcessSystem> consumers = plan.boundaryConsumers.get(stream);
+      if (consumers == null) {
+        return null;
+      }
+      for (ProcessSystem consumer : consumers) {
+        if (dirtyAreas.add(consumer)) {
+          queue.add(consumer);
         }
       }
     }
-    for (Map.Entry<Object, Integer> e : counts.entrySet()) {
-      if (e.getValue() != null && e.getValue() >= 2) {
-        boundary.add(e.getKey());
+    while (!queue.isEmpty()) {
+      ProcessSystem current = queue.poll();
+      java.util.Set<ProcessSystem> successors = plan.successors.get(current);
+      if (successors == null) {
+        continue;
+      }
+      for (ProcessSystem successor : successors) {
+        if (dirtyAreas.add(successor)) {
+          queue.add(successor);
+        }
       }
     }
-    return boundary;
+    if (dirtyAreas.isEmpty() || dirtyAreas.size() >= processes.size()) {
+      return null;
+    }
+    return dirtyAreas;
   }
 
   /**
@@ -1276,13 +1904,12 @@ public class ProcessModel implements Runnable, Serializable {
    * @param current current stream states
    * @return array of [maxFlowError, maxTempError, maxPressError]
    */
-  private double[] calculateConvergenceErrors(Map<String, double[]> previous,
-      Map<String, double[]> current) {
+  private double[] calculateConvergenceErrors(Map<?, double[]> previous, Map<?, double[]> current) {
     double maxFlowErr = 0.0;
     double maxTempErr = 0.0;
     double maxPressErr = 0.0;
 
-    for (String key : current.keySet()) {
+    for (Object key : current.keySet()) {
       if (previous.containsKey(key)) {
         double[] prev = previous.get(key);
         double[] curr = current.get(key);
@@ -1318,6 +1945,11 @@ public class ProcessModel implements Runnable, Serializable {
     sb.append("Converged: ").append(modelConverged ? "YES" : "NO").append("\n");
     sb.append("Iterations: ").append(lastIterationCount).append(" / ").append(maxIterations)
         .append("\n");
+    sb.append("Boundary streams tracked: ").append(lastBoundaryStreamCount).append("\n");
+    sb.append("Boundary values converged: ").append(lastBoundaryValuesConverged ? "YES" : "NO")
+        .append("\n");
+    sb.append("All process areas solved: ").append(lastAllProcessesSolved ? "YES" : "NO")
+        .append("\n");
     sb.append("\nFinal Errors (relative):\n");
     sb.append(String.format("  Flow rate:    %.2e (tolerance: %.2e) %s\n", lastMaxFlowError,
         flowTolerance, lastMaxFlowError < flowTolerance ? "OK" : "NOT CONVERGED"));
@@ -1329,10 +1961,56 @@ public class ProcessModel implements Runnable, Serializable {
 
     sb.append("\nProcess Status:\n");
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
-      sb.append(String.format("  %-30s: %s\n", entry.getKey(),
-          entry.getValue().solved() ? "SOLVED" : "NOT SOLVED"));
+      boolean processSolved = entry.getValue().solved();
+      sb.append(
+          String.format("  %-30s: %s\n", entry.getKey(), processSolved ? "SOLVED" : "NOT SOLVED"));
+      if (!processSolved) {
+        List<String> unsolvedUnits = getUnsolvedUnitNames(entry.getValue());
+        if (!unsolvedUnits.isEmpty()) {
+          sb.append("    Unsolved units: ").append(formatUnitNameList(unsolvedUnits, 12))
+              .append("\n");
+        }
+      }
     }
     return sb.toString();
+  }
+
+  /**
+   * Gets names of unit operations that currently report unsolved status.
+   *
+   * @param process process system to inspect
+   * @return list of unsolved unit names in process execution order
+   */
+  private List<String> getUnsolvedUnitNames(ProcessSystem process) {
+    List<String> names = new ArrayList<>();
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (!unit.solved()) {
+        names.add(unit.getName());
+      }
+    }
+    return names;
+  }
+
+  /**
+   * Formats a unit-name list for compact convergence diagnostics.
+   *
+   * @param unitNames names to format
+   * @param maxNames maximum number of names to include before truncating
+   * @return comma-separated unit list with truncation count when needed
+   */
+  private String formatUnitNameList(List<String> unitNames, int maxNames) {
+    StringBuilder names = new StringBuilder();
+    int includedNames = Math.min(unitNames.size(), maxNames);
+    for (int unitIndex = 0; unitIndex < includedNames; unitIndex++) {
+      if (unitIndex > 0) {
+        names.append(", ");
+      }
+      names.append(unitNames.get(unitIndex));
+    }
+    if (unitNames.size() > maxNames) {
+      names.append(", ... (").append(unitNames.size() - maxNames).append(" more)");
+    }
+    return names.toString();
   }
 
   /**
@@ -1462,6 +2140,64 @@ public class ProcessModel implements Runnable, Serializable {
    */
   public Collection<ProcessSystem> getAllProcesses() {
     return processes.values();
+  }
+
+  /**
+   * Creates a Graphviz exporter for common plant-wide and per-area DOT diagrams.
+   *
+   * @return a new {@link ProcessModelGraphvizExporter} for this model
+   */
+  public ProcessModelGraphvizExporter createGraphvizExporter() {
+    return new ProcessModelGraphvizExporter(this);
+  }
+
+  /**
+   * Generates a common Graphviz DOT diagram for the full process model.
+   *
+   * <p>
+   * The common diagram uses one Graphviz cluster per process area and draws cross-area stream links
+   * when areas share live stream objects.
+   * </p>
+   *
+   * @return DOT-format string for the full process model
+   */
+  public String toDOT() {
+    return createGraphvizExporter().toDot();
+  }
+
+  /**
+   * Exports a common Graphviz DOT diagram for the full process model.
+   *
+   * @param filename destination file name for the common DOT graph
+   */
+  public void exportToGraphviz(String filename) {
+    try {
+      createGraphvizExporter().exportDOT(Paths.get(filename));
+    } catch (IOException exception) {
+      logger.error("Error exporting ProcessModel to Graphviz", exception);
+    }
+  }
+
+  /**
+   * Exports one Graphviz DOT file per process area.
+   *
+   * @param outputDirectory directory where area DOT files are written
+   * @return map from area name to written DOT file path
+   * @throws IOException if the directory cannot be created or a file cannot be written
+   */
+  public Map<String, Path> exportAreaDOT(Path outputDirectory) throws IOException {
+    return createGraphvizExporter().exportAreaDOT(outputDirectory);
+  }
+
+  /**
+   * Exports one Graphviz DOT file per process area.
+   *
+   * @param outputDirectory directory where area DOT files are written
+   * @return map from area name to written DOT file path
+   * @throws IOException if the directory cannot be created or a file cannot be written
+   */
+  public Map<String, Path> exportAreaDOT(String outputDirectory) throws IOException {
+    return exportAreaDOT(Paths.get(outputDirectory));
   }
 
   /**
@@ -1682,15 +2418,41 @@ public class ProcessModel implements Runnable, Serializable {
    * @return JSON string representing all process areas
    */
   public String toJson(boolean prettyPrint) {
-    JsonProcessExporter exporter = new JsonProcessExporter();
-    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
-    com.google.gson.JsonObject areas = new com.google.gson.JsonObject();
+    JsonObject root = new JsonObject();
+    JsonObject areas = new JsonObject();
+    IdentityHashMap<StreamInterface, AreaStreamReference> producedStreamReferences =
+        new IdentityHashMap<>();
+    Map<String, JsonObject> exportedAreas = new LinkedHashMap<>();
 
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
-      com.google.gson.JsonObject areaJson = exporter.toJsonObject(entry.getValue());
-      areas.add(entry.getKey(), areaJson);
+      JsonProcessExporter exporter = new JsonProcessExporter();
+      JsonObject areaJson = exporter.toJsonObject(entry.getValue());
+      exportedAreas.put(entry.getKey(), areaJson);
+      collectProducedStreamReferences(entry.getKey(), entry.getValue(), exporter,
+          producedStreamReferences);
+    }
+
+    for (Map.Entry<String, JsonObject> entry : exportedAreas.entrySet()) {
+      areas.add(entry.getKey(), entry.getValue());
     }
     root.add("areas", areas);
+    root.addProperty("runStep", isRunStep());
+    root.addProperty("maxIterations", getMaxIterations());
+    root.addProperty("flowTolerance", getFlowTolerance());
+    root.addProperty("temperatureTolerance", getTemperatureTolerance());
+    root.addProperty("pressureTolerance", getPressureTolerance());
+    root.addProperty("useOptimizedExecution", isUseOptimizedExecution());
+    root.addProperty("preventNestedParallelExecution", isPreventNestedParallelExecution());
+    root.addProperty("useAdaptiveModelParallelism", isUseAdaptiveModelParallelism());
+    root.addProperty("useIncrementalAreaExecution", isUseIncrementalAreaExecution());
+    root.addProperty("useFastRecycleConvergence", isUseFastRecycleConvergence());
+    root.addProperty("useCoordinatedRecycleAcceleration", isUseCoordinatedRecycleAcceleration());
+    root.addProperty("useFlashWarmStart", isUseFlashWarmStart());
+
+    JsonArray interAreaLinks = exportInterAreaLinks(producedStreamReferences);
+    if (interAreaLinks.size() > 0) {
+      root.add(INTER_AREA_LINKS_KEY, interAreaLinks);
+    }
 
     com.google.gson.Gson gson;
     if (prettyPrint) {
@@ -1700,6 +2462,87 @@ public class ProcessModel implements Runnable, Serializable {
       gson = new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create();
     }
     return gson.toJson(root);
+  }
+
+  /**
+   * Collects stream references that are locally produced by one process area.
+   *
+   * @param areaName name of the process area being exported
+   * @param process process area being exported
+   * @param exporter exporter used for this area
+   * @param producedStreamReferences identity map to populate with produced stream references
+   */
+  private void collectProducedStreamReferences(String areaName, ProcessSystem process,
+      JsonProcessExporter exporter,
+      IdentityHashMap<StreamInterface, AreaStreamReference> producedStreamReferences) {
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit instanceof StreamInterface) {
+        addProducedStreamReference(areaName, (StreamInterface) unit, exporter,
+            producedStreamReferences);
+      }
+      List<StreamInterface> outlets = unit.getOutletStreams();
+      if (outlets != null) {
+        for (StreamInterface outlet : outlets) {
+          addProducedStreamReference(areaName, outlet, exporter, producedStreamReferences);
+        }
+      }
+    }
+  }
+
+  /**
+   * Adds one locally produced stream reference to the identity map.
+   *
+   * @param areaName name of the producing process area
+   * @param stream produced stream object
+   * @param exporter exporter used for this area
+   * @param producedStreamReferences identity map to populate with produced stream references
+   */
+  private void addProducedStreamReference(String areaName, StreamInterface stream,
+      JsonProcessExporter exporter,
+      IdentityHashMap<StreamInterface, AreaStreamReference> producedStreamReferences) {
+    if (stream == null || producedStreamReferences.containsKey(stream)) {
+      return;
+    }
+    String streamReference = exporter.getStreamReference(stream);
+    if (streamReference != null) {
+      producedStreamReferences.put(stream, new AreaStreamReference(areaName, streamReference));
+    }
+  }
+
+  /**
+   * Exports live inter-area stream links for model-level JSON round-tripping.
+   *
+   * @param producedStreamReferences identity map from produced streams to source references
+   * @return JSON array of inter-area link definitions
+   */
+  private JsonArray exportInterAreaLinks(
+      IdentityHashMap<StreamInterface, AreaStreamReference> producedStreamReferences) {
+    JsonArray links = new JsonArray();
+    for (Map.Entry<String, ProcessSystem> areaEntry : processes.entrySet()) {
+      String targetAreaName = areaEntry.getKey();
+      ProcessSystem targetProcess = areaEntry.getValue();
+      for (ProcessEquipmentInterface unit : targetProcess.getUnitOperations()) {
+        if (unit instanceof StreamInterface) {
+          continue;
+        }
+        List<StreamInterface> inlets = getEquipmentInletStreams(unit);
+        for (int inletIndex = 0; inletIndex < inlets.size(); inletIndex++) {
+          StreamInterface inlet = inlets.get(inletIndex);
+          AreaStreamReference source = producedStreamReferences.get(inlet);
+          if (source == null || source.areaName.equals(targetAreaName)) {
+            continue;
+          }
+          JsonObject link = new JsonObject();
+          link.addProperty("sourceArea", source.areaName);
+          link.addProperty("source", source.streamReference);
+          link.addProperty("targetArea", targetAreaName);
+          link.addProperty("targetUnit", unit.getName());
+          link.addProperty("targetInletIndex", inletIndex);
+          links.add(link);
+        }
+      }
+    }
+    return links;
   }
 
   /**
@@ -1733,6 +2576,44 @@ public class ProcessModel implements Runnable, Serializable {
     }
 
     ProcessModel model = new ProcessModel();
+    if (root.has("runStep")) {
+      model.setRunStep(root.get("runStep").getAsBoolean());
+    }
+    if (root.has("maxIterations")) {
+      model.setMaxIterations(root.get("maxIterations").getAsInt());
+    }
+    if (root.has("flowTolerance")) {
+      model.setFlowTolerance(root.get("flowTolerance").getAsDouble());
+    }
+    if (root.has("temperatureTolerance")) {
+      model.setTemperatureTolerance(root.get("temperatureTolerance").getAsDouble());
+    }
+    if (root.has("pressureTolerance")) {
+      model.setPressureTolerance(root.get("pressureTolerance").getAsDouble());
+    }
+    if (root.has("useOptimizedExecution")) {
+      model.setUseOptimizedExecution(root.get("useOptimizedExecution").getAsBoolean());
+    }
+    if (root.has("preventNestedParallelExecution")) {
+      model.setPreventNestedParallelExecution(
+          root.get("preventNestedParallelExecution").getAsBoolean());
+    }
+    if (root.has("useAdaptiveModelParallelism")) {
+      model.setUseAdaptiveModelParallelism(root.get("useAdaptiveModelParallelism").getAsBoolean());
+    }
+    if (root.has("useIncrementalAreaExecution")) {
+      model.setUseIncrementalAreaExecution(root.get("useIncrementalAreaExecution").getAsBoolean());
+    }
+    if (root.has("useFastRecycleConvergence")) {
+      model.setUseFastRecycleConvergence(root.get("useFastRecycleConvergence").getAsBoolean());
+    }
+    if (root.has("useCoordinatedRecycleAcceleration")) {
+      model.setUseCoordinatedRecycleAcceleration(
+          root.get("useCoordinatedRecycleAcceleration").getAsBoolean());
+    }
+    if (root.has("useFlashWarmStart")) {
+      model.setUseFlashWarmStart(root.get("useFlashWarmStart").getAsBoolean());
+    }
     com.google.gson.JsonObject areas = root.getAsJsonObject("areas");
 
     for (Map.Entry<String, com.google.gson.JsonElement> entry : areas.entrySet()) {
@@ -1745,7 +2626,302 @@ public class ProcessModel implements Runnable, Serializable {
         logger.warn("Failed to build area '{}': {}", areaName, result);
       }
     }
+    if (root.has(INTER_AREA_LINKS_KEY) && root.get(INTER_AREA_LINKS_KEY).isJsonArray()) {
+      List<String> warnings = model.applyInterAreaLinks(root.getAsJsonArray(INTER_AREA_LINKS_KEY));
+      for (String warning : warnings) {
+        logger.warn(warning);
+      }
+    }
     return model;
+  }
+
+  /**
+   * Applies model-level inter-area stream links after all process areas have been built.
+   *
+   * @param interAreaLinks JSON array with sourceArea, source, targetArea, targetUnit, and
+   *        targetInletIndex fields
+   * @return warnings for links that could not be applied
+   */
+  public List<String> applyInterAreaLinks(JsonArray interAreaLinks) {
+    List<String> warnings = new ArrayList<>();
+    if (interAreaLinks == null) {
+      return warnings;
+    }
+    boolean topologyChanged = false;
+    for (JsonElement linkElement : interAreaLinks) {
+      if (!linkElement.isJsonObject()) {
+        warnings.add("Skipping interAreaLinks entry because it is not a JSON object");
+        continue;
+      }
+      topologyChanged =
+          applyInterAreaLink(linkElement.getAsJsonObject(), warnings) || topologyChanged;
+    }
+    if (topologyChanged) {
+      invalidateTopology();
+    }
+    return warnings;
+  }
+
+  /**
+   * Applies one inter-area stream link.
+   *
+   * @param link JSON link definition
+   * @param warnings mutable warning list to append to
+   * @return true if the link was applied and model topology changed
+   */
+  private boolean applyInterAreaLink(JsonObject link, List<String> warnings) {
+    String sourceArea = getString(link, "sourceArea");
+    String sourceReference = getString(link, "source");
+    String targetArea = getString(link, "targetArea");
+    String targetUnitName = getString(link, "targetUnit");
+    int targetInletIndex =
+        link.has("targetInletIndex") ? link.get("targetInletIndex").getAsInt() : 0;
+
+    ProcessSystem sourceProcess = processes.get(sourceArea);
+    ProcessSystem targetProcess = processes.get(targetArea);
+    if (sourceProcess == null) {
+      warnings.add("Inter-area link source area not found: " + sourceArea);
+      return false;
+    }
+    if (targetProcess == null) {
+      warnings.add("Inter-area link target area not found: " + targetArea);
+      return false;
+    }
+
+    StreamInterface sourceStream = resolveAreaStreamReference(sourceProcess, sourceReference);
+    if (sourceStream == null) {
+      warnings
+          .add("Inter-area link source stream not found: " + sourceArea + "::" + sourceReference);
+      return false;
+    }
+
+    ProcessEquipmentInterface targetUnit = targetProcess.getUnit(targetUnitName);
+    if (targetUnit == null) {
+      warnings.add("Inter-area link target unit not found: " + targetArea + "::" + targetUnitName);
+      return false;
+    }
+    if (!replaceInletReference(targetUnit, targetInletIndex, sourceStream)) {
+      warnings.add("Could not apply inter-area link to " + targetArea + "::" + targetUnitName
+          + " inlet " + targetInletIndex);
+      return false;
+    }
+    targetProcess.invalidateGraph();
+    return true;
+  }
+
+  /**
+   * Gets a string field from a JSON object.
+   *
+   * @param object JSON object to inspect
+   * @param field field name
+   * @return field value, or an empty string when absent
+   */
+  private String getString(JsonObject object, String field) {
+    if (object.has(field) && !object.get(field).isJsonNull()) {
+      return object.get(field).getAsString();
+    }
+    return "";
+  }
+
+  /**
+   * Resolves a stream reference inside one process area.
+   *
+   * @param process process area containing the referenced unit
+   * @param reference stream reference such as {@code feed}, {@code Sep.gasOut}, or
+   *        {@code Tee.split0}
+   * @return resolved stream, or {@code null} when no stream matches the reference
+   */
+  private StreamInterface resolveAreaStreamReference(ProcessSystem process, String reference) {
+    if (reference == null || reference.trim().isEmpty()) {
+      return null;
+    }
+    String unitName = reference;
+    String port = "outlet";
+    if (reference.contains(".")) {
+      String[] parts = reference.split("\\.", 2);
+      unitName = parts[0];
+      port = parts[1].toLowerCase();
+    }
+    ProcessEquipmentInterface unit = process.getUnit(unitName);
+    if (unit == null) {
+      return null;
+    }
+    if (unit instanceof StreamInterface) {
+      return (StreamInterface) unit;
+    }
+    return resolveEquipmentOutlet(unit, port);
+  }
+
+  /**
+   * Resolves a port name on an equipment unit to an outlet stream.
+   *
+   * @param unit equipment unit producing the stream
+   * @param port outlet port name
+   * @return outlet stream, or {@code null} when no matching port exists
+   */
+  private StreamInterface resolveEquipmentOutlet(ProcessEquipmentInterface unit, String port) {
+    try {
+      if ("gasout".equals(port) || "gas".equals(port)) {
+        return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
+      }
+      if ("liquidout".equals(port) || "liquid".equals(port)) {
+        return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
+      }
+      if ("oilout".equals(port) || "oil".equals(port)) {
+        return (StreamInterface) unit.getClass().getMethod("getOilOutStream").invoke(unit);
+      }
+      if ("waterout".equals(port) || "water".equals(port)) {
+        return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
+      }
+      int splitIndex = parseNumericSuffix(port, "split");
+      if (splitIndex >= 0) {
+        return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class).invoke(unit,
+            splitIndex);
+      }
+      int outletIndex = parseNumericSuffix(port, "outlet");
+      if (outletIndex >= 0 && unit instanceof HeatExchanger) {
+        return ((HeatExchanger) unit).getOutStream(outletIndex);
+      }
+      int heatExchangerIndex = parseNumericSuffix(port, "hx");
+      if (heatExchangerIndex >= 0 && unit instanceof HeatExchanger) {
+        return ((HeatExchanger) unit).getOutStream(heatExchangerIndex);
+      }
+      if (unit instanceof HeatExchanger) {
+        return ((HeatExchanger) unit).getOutStream(0);
+      }
+      return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
+    } catch (Exception exception) {
+      List<StreamInterface> outlets = unit.getOutletStreams();
+      if (outlets != null && !outlets.isEmpty()) {
+        return outlets.get(0);
+      }
+      return null;
+    }
+  }
+
+  /**
+   * Parses a non-negative integer suffix from a port name.
+   *
+   * @param value port name to parse
+   * @param prefix expected prefix before the number
+   * @return parsed suffix, or {@code -1} when the value does not match
+   */
+  private int parseNumericSuffix(String value, String prefix) {
+    if (value == null || !value.startsWith(prefix) || value.length() <= prefix.length()) {
+      return -1;
+    }
+    try {
+      return Integer.parseInt(value.substring(prefix.length()));
+    } catch (NumberFormatException exception) {
+      return -1;
+    }
+  }
+
+  /**
+   * Replaces one inlet reference on an equipment unit with a live inter-area stream.
+   *
+   * @param targetUnit equipment whose inlet should be replaced
+   * @param targetInletIndex zero-based inlet index
+   * @param sourceStream replacement source stream
+   * @return true if the inlet was replaced
+   */
+  private boolean replaceInletReference(ProcessEquipmentInterface targetUnit, int targetInletIndex,
+      StreamInterface sourceStream) {
+    if (targetUnit instanceof HeatExchanger) {
+      try {
+        ((HeatExchanger) targetUnit).setFeedStream(targetInletIndex, sourceStream);
+        return true;
+      } catch (Exception exception) {
+        return false;
+      }
+    }
+    if (invokeIndexedStreamReplacement(targetUnit, targetInletIndex, sourceStream)) {
+      return true;
+    }
+    if (targetInletIndex == 0 && invokeSingleInletSetter(targetUnit, sourceStream)) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Invokes a {@code replaceStream(int, StreamInterface)} style method when available.
+   *
+   * @param targetUnit equipment whose inlet should be replaced
+   * @param targetInletIndex zero-based inlet index
+   * @param sourceStream replacement source stream
+   * @return true if a replacement method existed and completed
+   */
+  private boolean invokeIndexedStreamReplacement(ProcessEquipmentInterface targetUnit,
+      int targetInletIndex, StreamInterface sourceStream) {
+    try {
+      java.lang.reflect.Method replaceStream =
+          targetUnit.getClass().getMethod("replaceStream", int.class, StreamInterface.class);
+      replaceStream.invoke(targetUnit, targetInletIndex, sourceStream);
+      return true;
+    } catch (Exception exception) {
+      return false;
+    }
+  }
+
+  /**
+   * Invokes a single-inlet setter on equipment with one inlet.
+   *
+   * @param targetUnit equipment whose inlet should be replaced
+   * @param sourceStream replacement source stream
+   * @return true if a setter existed and completed
+   */
+  private boolean invokeSingleInletSetter(ProcessEquipmentInterface targetUnit,
+      StreamInterface sourceStream) {
+    try {
+      java.lang.reflect.Method setInletStream =
+          targetUnit.getClass().getMethod("setInletStream", StreamInterface.class);
+      setInletStream.invoke(targetUnit, sourceStream);
+      return true;
+    } catch (Exception firstException) {
+      try {
+        java.lang.reflect.Method setFeedStream =
+            targetUnit.getClass().getMethod("setFeedStream", StreamInterface.class);
+        setFeedStream.invoke(targetUnit, sourceStream);
+        return true;
+      } catch (Exception secondException) {
+        return false;
+      }
+    }
+  }
+
+  /**
+   * Gets inlet streams from equipment with a reflection fallback for legacy unit operations.
+   *
+   * @param unit equipment unit to inspect
+   * @return list of current inlet streams, possibly empty
+   */
+  private List<StreamInterface> getEquipmentInletStreams(ProcessEquipmentInterface unit) {
+    List<StreamInterface> inlets = new ArrayList<>();
+    try {
+      List<StreamInterface> listedInlets = unit.getInletStreams();
+      if (listedInlets != null) {
+        for (StreamInterface inlet : listedInlets) {
+          if (inlet != null) {
+            inlets.add(inlet);
+          }
+        }
+      }
+    } catch (Exception exception) {
+      // Fall back below for equipment without robust getInletStreams support.
+    }
+    if (inlets.isEmpty()) {
+      try {
+        StreamInterface inlet =
+            (StreamInterface) unit.getClass().getMethod("getInletStream").invoke(unit);
+        if (inlet != null) {
+          inlets.add(inlet);
+        }
+      } catch (Exception exception) {
+        // No single inlet accessor available.
+      }
+    }
+    return inlets;
   }
 
   /**

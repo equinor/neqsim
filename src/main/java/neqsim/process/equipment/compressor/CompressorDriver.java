@@ -697,12 +697,30 @@ public class CompressorDriver implements Serializable {
   }
 
   /**
+   * Get VFD efficiency curve coefficients.
+   *
+   * @return copy of coefficients [a, b, c] for the VFD efficiency curve
+   */
+  public double[] getVfdEfficiencyCoefficients() {
+    return Arrays.copyOf(vfdEfficiencyCoeffs, vfdEfficiencyCoeffs.length);
+  }
+
+  /**
    * Set gas turbine temperature derate factor.
    *
    * @param factor power reduction per K above ISO (typically 0.003-0.007)
    */
   public void setTemperatureDerateFactor(double factor) {
     this.temperatureDerateFactor = factor;
+  }
+
+  /**
+   * Get gas turbine temperature derate factor.
+   *
+   * @return power reduction per Kelvin above ISO temperature
+   */
+  public double getTemperatureDerateFactor() {
+    return temperatureDerateFactor;
   }
 
   /**
@@ -852,6 +870,30 @@ public class CompressorDriver implements Serializable {
    */
   public boolean isMaxPowerCurveTableEnabled() {
     return useMaxPowerCurveTable;
+  }
+
+  /**
+   * Get the tabular max-power curve speed points.
+   *
+   * @return copy of speed points in RPM, or null if no table is configured
+   */
+  public double[] getMaxPowerCurveSpeeds() {
+    if (maxPowerCurveSpeeds == null) {
+      return null;
+    }
+    return Arrays.copyOf(maxPowerCurveSpeeds, maxPowerCurveSpeeds.length);
+  }
+
+  /**
+   * Get the tabular max-power curve power points.
+   *
+   * @return copy of power points in kW, or null if no table is configured
+   */
+  public double[] getMaxPowerCurvePowers() {
+    if (maxPowerCurvePowers == null) {
+      return null;
+    }
+    return Arrays.copyOf(maxPowerCurvePowers, maxPowerCurvePowers.length);
   }
 
   /**

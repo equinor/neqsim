@@ -4282,7 +4282,7 @@ public abstract class SystemThermo implements SystemInterface {
     newSystem.init(0);
     newSystem.setNumberOfPhases(1);
     newSystem.setPhaseType(0, getPhase(phaseNumber).getType()); // phaseType[phaseNumber]);
-    newSystem.init(1);
+    newSystem.init(3);
     return newSystem;
   }
 
@@ -4310,7 +4310,7 @@ public abstract class SystemThermo implements SystemInterface {
     newSystem.setNumberOfPhases(1);
     // newSystem.setPhaseType(0,
     // getPhase(phaseNumber1).getType()); //phaseType[phaseNumber]);
-    newSystem.init(1);
+    newSystem.init(3);
     return newSystem;
   }
 
@@ -4332,7 +4332,7 @@ public abstract class SystemThermo implements SystemInterface {
     setPhaseType(0, newPhase.getType());
     initBeta();
     init_x_y();
-    this.init(1);
+    this.init(3);
     return this;
   }
 

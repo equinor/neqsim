@@ -30,7 +30,7 @@ The system is designed to support controlled engineering use through:
   convergence status, assumptions, limitations, warnings).
 
 Built with [Quarkus MCP Server](https://docs.quarkiverse.io/quarkus-mcp-server/dev/)
-(STDIO + HTTP/SSE transport). Ships as a single uber-jar (~55 MB) — no extra services needed.
+(STDIO + Streamable HTTP transport). Ships as a single uber-jar (~55 MB) — no extra services needed.
 
 See [MCP_CONTRACT.md](MCP_CONTRACT.md) for the complete stable API contract.
 
@@ -88,7 +88,7 @@ Each tool has documented accuracy bounds and clear error behavior.
 | Tool | Category | Description |
 |------|----------|-------------|
 | `runFlash` | CALCULATION | Phase equilibrium flash (TP, PH, PS, dew/bubble point, hydrate) |
-| `runProcess` | CALCULATION | Process simulation from JSON definition |
+| `runProcess` | CALCULATION | ProcessSystem or ProcessModel simulation from JSON definition |
 | `calculateStandard` | CALCULATION | Gas/oil quality per 22 standards (ISO, AGA, GPA, EN) |
 | `getPropertyTable` | CALCULATION | Property table across T or P range |
 | `getPhaseEnvelope` | CALCULATION | Full PT phase envelope |
@@ -104,8 +104,8 @@ Each tool has documented accuracy bounds and clear error behavior.
 
 ### Auto-Validation
 
-Six calculation tools (`runFlash`, `runProcess`, `runPVT`, `runPipeline`,
-`calculateStandard`, and `runFlowAssurance`) automatically validate their
+Seven calculation tools (`runFlash`, `runProcess`, `runPVT`, `runPipeline`,
+`calculateStandard`, `runFlowAssurance`, and `runMaterialsReview`) automatically validate their
 output against engineering design rules. In governed deployment profiles,
 validation is automatically applied and cannot be disabled.
 
@@ -129,7 +129,7 @@ limitations, and unsupported conditions.
 
 ---
 
-## Tier 2 — Engineering Advanced (11 tools)
+## Tier 2 — Engineering Advanced (23 tools)
 
 Tested against literature and industry cases. Available in `DESKTOP_ENGINEER`
 and `STUDY_TEAM` modes. Blocked in `DIGITAL_TWIN` and `ENTERPRISE` by
@@ -140,6 +140,7 @@ code-level `enforceAccess()` — returns structured error JSON, not a silent ski
 | `runPVT` | PVT lab experiments (CME, CVD, DL, separator, swelling, GOR) |
 | `runPipeline` | Multiphase pipeline flow (Beggs & Brill) |
 | `runFlowAssurance` | Hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion |
+| `runMaterialsReview` | Process-wide material selection, degradation, CUI, and remaining-life review from process/STID data |
 | `crossValidateModels` | Cross-validate process under multiple EOS models |
 | `runParametricStudy` | Multi-variable parametric sweep |
 | `runBatch` | Multi-point sensitivity sweep |
@@ -148,6 +149,17 @@ code-level `enforceAccess()` — returns structured error JSON, not a silent ski
 | `generateReport` | Structured engineering report generation |
 | `generateVisualization` | Inline SVG/Mermaid/HTML visualization |
 | `queryDataCatalog` | Browse component, standards, material, and EOS databases |
+| `setSimulationVariable` | Set an input variable and re-run a simulation |
+| `saveSimulationState` | Save process state as a JSON snapshot |
+| `runOperationalStudy` | P&ID/tag-driven valve scenarios, field-data binding, controller response metrics, and evidence-package bottleneck reports on a local simulation copy |
+| `runRelief` | PSV sizing per API 520/521 |
+| `runLOPA` | Layer of Protection Analysis per IEC 61511 / CCPS |
+| `runSIL` | SIL verification per IEC 61508 / IEC 61511 |
+| `runRiskMatrix` | 5x5 risk matrix scoring per ISO 31000 / NORSOK Z-013 |
+| `runFlareNetwork` | Flare radiation and safe-distance contours |
+| `runHAZOP` | Simulation-backed IEC 61882 HAZOP worksheets from ProcessSystem scenarios |
+| `runBarrierRegister` | Evidence-linked PSF/SCE barrier register handoffs |
+| `runSafetySystemPerformance` | Active/passive safety-system performance analysis with quantitative SIL/PFD bridge |
 
 ---
 
@@ -217,8 +229,8 @@ Pick **jar** or **Docker** — both are first-class paths.
 **1. Download the jar + checksum**
 
 ```bash
-# Replace VERSION with the latest release (e.g. 3.7.0)
-VERSION=3.7.0
+# Replace VERSION with the latest release (e.g. 3.10.0)
+VERSION=3.10.0
 curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar"
 curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar.sha256"
 ```
@@ -232,7 +244,7 @@ sha256sum -c neqsim-mcp-server-${VERSION}-runner.jar.sha256
 **3. Connect to your LLM** (see config snippets below)
 
 ```
-java -jar neqsim-mcp-server-3.7.0-runner.jar
+java -jar neqsim-mcp-server-${VERSION}-runner.jar
 ```
 
 </td><td>
@@ -242,7 +254,7 @@ java -jar neqsim-mcp-server-3.7.0-runner.jar
 ```bash
 docker pull ghcr.io/equinor/neqsim-mcp-server:latest
 # or pin a version:
-docker pull ghcr.io/equinor/neqsim-mcp-server:3.7.0
+docker pull ghcr.io/equinor/neqsim-mcp-server:${VERSION}
 ```
 
 **2. Smoke-test**
@@ -280,8 +292,14 @@ Verify: `java -version` should show 17 or higher.
 
 ## Capabilities Overview
 
-The server exposes 48 tools organized into three tiers plus platform tools,
-9 guided-workflow prompts, and 11 browsable resources.
+The server exposes 63 tools organized into three tiers plus platform tools,
+9 guided-workflow prompts, and 13 browsable resources.
+
+Discovery is intentionally machine-readable. `getCapabilities` describes all 63 tools with schema
+links, examples, setup templates, unit guidance, process JSON contracts, benchmark trust, lifecycle
+metadata, and safety-review policy. High-use tools have detailed schemas and runnable examples; the
+remaining tools have generic contract-level schemas and starter examples so agents can still detect
+and route every advertised capability.
 
 ## Complete Tool Inventory
 
@@ -321,14 +339,16 @@ Write operations (`setSimulationVariable`, `saveSimulationState`) are
 | `dynamic_simulation` | Dynamic simulation with controller setup |
 | `pipeline_sizing` | Multiphase pipeline sizing |
 
-### Browsable Resources (11)
+### Browsable Resources (13)
 
 | URI | Description |
 |-----|-------------|
 | `neqsim://example-catalog` | Full catalog of all examples |
 | `neqsim://schema-catalog` | Full catalog of all JSON schemas |
+| `neqsim://setup-templates` | Major workflow setup templates |
 | `neqsim://examples/{category}/{name}` | Specific example by category and name |
 | `neqsim://schemas/{tool}/{type}` | Specific schema by tool and input/output |
+| `neqsim://setup-templates/{id}` | Specific setup template by id |
 | `neqsim://components` | Component families (hydrocarbons, acid gases, glycols, etc.) |
 | `neqsim://components/{name}` | Full properties for a component (Tc, Pc, omega, MW) |
 | `neqsim://standards` | Design standards catalog (ASME, API, DNV, ISO, NORSOK) |
@@ -360,7 +380,7 @@ Edit `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or
       "command": "java",
       "args": [
         "-jar",
-        "/path/to/neqsim-mcp-server-3.7.0-runner.jar"
+        "/path/to/neqsim-mcp-server-3.10.0-runner.jar"
       ]
     }
   }
@@ -407,7 +427,7 @@ Add to `.vscode/mcp.json`:
       "command": "java",
       "args": [
         "-jar",
-        "/path/to/neqsim-mcp-server-3.7.0-runner.jar"
+        "/path/to/neqsim-mcp-server-3.10.0-runner.jar"
       ]
     }
   }
@@ -441,19 +461,20 @@ Restart VS Code.
 Any MCP STDIO client works. Point it at one of:
 
 ```bash
-java -jar /path/to/neqsim-mcp-server-3.7.0-runner.jar          # jar
+java -jar /path/to/neqsim-mcp-server-3.10.0-runner.jar         # jar
 docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest    # docker
 ```
 
-### HTTP/SSE Transport
+### Streamable HTTP Transport
 
-The server also supports HTTP/SSE transport for web-based clients and remote
-access. By default, the SSE endpoint is available at `http://localhost:8080/mcp`
-when the server starts. CORS is configured for local development frontends
-(`localhost:3000`, `localhost:5173`).
+The server also supports Streamable HTTP transport for web-based clients and
+remote access. By default, the current MCP HTTP endpoint is available at
+`http://localhost:8080/mcp` when the server starts. The legacy HTTP/SSE endpoint
+remains available at `http://localhost:8080/mcp/sse` for older clients. CORS is
+configured for local development frontends (`localhost:3000`, `localhost:5173`).
 
-To use HTTP/SSE with an MCP client that supports it, configure the server URL
-instead of stdin/stdout command:
+To use Streamable HTTP with an MCP client that supports it, configure the server
+URL instead of stdin/stdout command:
 
 ```json
 {
@@ -486,8 +507,9 @@ and **auto-validation** against engineering design rules.
 
 > "Simulate gas at 80 bara going through a separator then a compressor to 150 bara"
 
-The LLM discovers NeqSim's tools automatically via MCP, reads the embedded
-examples and schemas, then calls the tools to compute rigorous answers.
+The LLM discovers NeqSim's tools automatically via MCP, reads the capability
+manifest, embedded examples, schemas, and setup templates, then calls the tools
+to compute rigorous answers.
 
 ---
 
@@ -648,7 +670,7 @@ If you want to build from source (for development or to use the latest unrelease
 |---|---|---|
 | JDK | 17+ | Quarkus requires Java 17. NeqSim core still compiles with Java 8. |
 | Maven | 3.9+ | Or use the Maven wrapper (`mvnw` / `mvnw.cmd`) from the parent project |
-| NeqSim core | 3.6.1 | Must be installed to local Maven repo first (see below) |
+| NeqSim core | 3.10.0 | Must be installed to local Maven repo first (see below) |
 
 ### Build steps
 
@@ -689,11 +711,11 @@ This produces: `target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar` (~55 MB).
 **3. Verify the server works:**
 
 ```bash
-echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}' \
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}' \
   | java -jar target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar 2>/dev/null
 ```
 
-**4. Run the comprehensive test suite** (111 checks):
+**4. Run the comprehensive test suite:**
 
 ```bash
 python test_mcp_server.py
@@ -734,19 +756,20 @@ response schemas for all tools and browsable resources, see
 
 ## How the LLM Uses the Server (Typical Flow)
 
-1. **Discovery** — The LLM calls `tools/list` and finds the 48 available tools. It reads
+1. **Discovery** — The LLM calls `tools/list` and finds the 63 available tools. It reads
    the descriptions to understand what each tool does. Or it calls `getCapabilities`
    for a structured manifest of all NeqSim capabilities. It can also browse
-   `neqsim://components` and `neqsim://models` to discover available data.
+  `neqsim://components`, `neqsim://models`, and `neqsim://setup-templates` to
+  discover available data and setup patterns.
 
-2. **Learning the format** — The LLM calls `getExample` or `getSchema` to see
-   the expected JSON format for the tool it wants to use.
+2. **Learning the format** — The LLM calls `getExample` or `getSchema`, or fetches
+  `neqsim://setup-templates/{id}`, to see the expected JSON format and workflow setup.
 
 3. **Validation (optional)** — Before running an expensive calculation, the LLM
    calls `validateInput` to catch typos and missing fields.
 
 4. **Computation** — The LLM calls `runFlash`, `runProcess`, `runPVT`,
-   `runFlowAssurance`, `runPipeline`, `runFieldEconomics`, or any domain tool
+  `runFlowAssurance`, `runPipeline`, `runMaterialsReview`, `runFieldEconomics`, or any domain tool
    and gets physical results.
 
 5. **Iteration** — Using `manageSession`, the LLM can incrementally build and
@@ -783,11 +806,11 @@ runFlash({
 
 ```
 neqsim-mcp-server/                        # Separate Maven project (Java 17+)
-├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.11.0
+├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.12.0
 ├── test_mcp_server.py                     # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
-    ├── NeqSimTools.java                   # 48 @Tool-annotated MCP tools
-    ├── NeqSimResources.java               # 6 @Resource + 5 @ResourceTemplate (11 endpoints)
+  ├── NeqSimTools.java                   # 63 @Tool-annotated MCP tools
+    ├── NeqSimResources.java               # 7 @Resource + 6 @ResourceTemplate (13 endpoints)
     └── NeqSimPrompts.java                 # 9 @Prompt guided workflows
 
 Delegates to runner layer in neqsim core (src/main/java/neqsim/mcp/):
@@ -839,8 +862,8 @@ Delegates to runner layer in neqsim core (src/main/java/neqsim/mcp/):
 │   ├── DiagnosticIssue.java               # Validation issue (severity + code + fix hint)
 │   └── ResultProvenance.java              # Trust metadata (EOS, assumptions, limitations)
 └── catalog/
-    ├── ExampleCatalog.java                # Ready-to-use examples (flash + process)
-    └── SchemaCatalog.java                 # JSON Schema definitions (tools × in/out)
+    ├── ExampleCatalog.java                # Examples for base categories and all MCP tools
+    └── SchemaCatalog.java                 # JSON Schema definitions for all 56 MCP tools
 ```
 
 The MCP server is a **thin Quarkus wrapper** around the framework-agnostic
@@ -857,7 +880,9 @@ runner layer in neqsim core. This design means:
 
 ### Unit Tests (Runner Layer)
 
-The runner layer in neqsim core has 139+ JUnit 5 tests across 12 test classes:
+The runner layer in neqsim core has focused JUnit 5 coverage across runners,
+schemas, examples, capability descriptors, standard response contracts, capability-graph metadata,
+setup templates, and validation behavior:
 
 ```bash
 # Run all MCP runner tests
@@ -867,11 +892,11 @@ The runner layer in neqsim core has 139+ JUnit 5 tests across 12 test classes:
 ### Integration Tests (MCP Server)
 
 The `test_mcp_server.py` script launches the server, communicates over STDIO,
-and validates all 48 tools across all three tiers:
+and validates all 63 tools across all three tiers:
 
 | Category | Checks | Description |
 |---|---|---|
-| Protocol | 9 | Tool/resource/template registration (48 tools, 6 resources, 5 templates) |
+| Protocol | 9 | Tool/resource/template registration (63 tools, 7 resources, 6 templates) |
 | Component search | 9 | Exact, partial, empty, no-match |
 | Examples & schemas | 10 | Catalog retrieval |
 | Flash calculations | 30 | SRK, PR, CPA; single/two-phase; density, Z, viscosity |
@@ -879,7 +904,7 @@ and validates all 48 tools across all three tiers:
 | Process simulation | 13 | Separator, compressor, cooler, heater, valve, multi-unit trains |
 | Validation | 22 | Valid input, unknown components, bad models, missing specs |
 | Error handling | 2 | Graceful failure on bad input |
-| Tier 2 tools | 14 | PVT, pipeline, flow assurance, standards, reservoir, economics, dynamic, sizing, comparison |
+| Tier 2 tools | 16 | PVT, pipeline, flow assurance, materials review, standards, reservoir, economics, dynamic, sizing, comparison, operational studies |
 | Tier 3 tools | 17 | Sessions, task solver, workflow, reports, plugins, streaming, visualization, state, security |
 | Governance tools | 6 | Industrial profile, benchmark trust, tool access |
 | Catalog round-trip | 10 | All examples run end-to-end through the server |
@@ -895,7 +920,7 @@ and validates all 48 tools across all three tiers:
 | Natural gas dew point | Physical range | \[-80, 20\] °C |
 | Separator mass balance | Closure | < 0.1% |
 | ISO 6976 methane GCV | 37.706 MJ/Sm³ | ±0.5% |
-| Trust report completeness | 15 tools | All present |
+| Trust report completeness | 16 tools | All present |
 | Trust page structure | Required fields | Non-null |
 
 ```bash
@@ -907,7 +932,7 @@ python test_mcp_server.py
 
 ## Troubleshooting
 
-### Build Fails — "Could not find artifact com.equinor.neqsim:neqsim:3.6.1"
+### Build Fails — "Could not find artifact com.equinor.neqsim:neqsim:3.10.0"
 
 The neqsim core library must be installed first:
 

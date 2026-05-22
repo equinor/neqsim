@@ -1,5 +1,6 @@
 package neqsim.process.processmodel;
 
+import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -9,22 +10,31 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.compressor.AntiSurge;
+import neqsim.process.equipment.compressor.BoundaryCurve;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.CompressorChartInterface;
+import neqsim.process.equipment.compressor.CompressorDriver;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
+import neqsim.process.equipment.pipeline.PipeLineInterface;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.splitter.ComponentSplitter;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.AccelerationMethod;
 import neqsim.process.equipment.util.Adjuster;
+import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.phase.PhaseInterface;
@@ -47,6 +57,14 @@ public class JsonProcessExporter {
 
   /** Map from stream identity to the reference string that reaches it. */
   private final IdentityHashMap<StreamInterface, String> streamRefMap =
+      new IdentityHashMap<StreamInterface, String>();
+
+  /** Map from materialized boundary stream identity to named fluid reference. */
+  private final IdentityHashMap<StreamInterface, String> boundaryFluidRefMap =
+      new IdentityHashMap<StreamInterface, String>();
+
+  /** Map from explicit stream unit identity to named fluid reference. */
+  private final IdentityHashMap<StreamInterface, String> streamUnitFluidRefMap =
       new IdentityHashMap<StreamInterface, String>();
 
   /** Map from equipment name to processed flag. */
@@ -89,12 +107,18 @@ public class JsonProcessExporter {
    */
   public JsonObject toJsonObject(ProcessSystem process) {
     streamRefMap.clear();
+    boundaryFluidRefMap.clear();
+    streamUnitFluidRefMap.clear();
     processed.clear();
 
     List<ProcessEquipmentInterface> units = process.getUnitOperations();
 
     // Phase 1: Build stream reference map (stream identity -> "equipmentName.port")
     buildStreamRefMap(units);
+
+    // Phase 1b: Materialize inlet streams owned by other ProcessSystems.
+    List<StreamInterface> boundaryStreams = registerExternalInletStreams(units);
+    registerStreamUnitFluids(units);
 
     // Phase 2: Extract fluid definition from the first feed stream
     SystemInterface fluid = findFeedFluid(units);
@@ -107,8 +131,23 @@ public class JsonProcessExporter {
       root.add("fluid", exportFluid(fluid));
     }
 
+    JsonObject namedFluids = exportStreamUnitFluids(units);
+    JsonObject boundaryFluids = exportBoundaryFluids(boundaryStreams);
+    for (Map.Entry<String, com.google.gson.JsonElement> entry : boundaryFluids.entrySet()) {
+      namedFluids.add(entry.getKey(), entry.getValue());
+    }
+    if (namedFluids.size() > 0) {
+      root.add("fluids", namedFluids);
+    }
+
     // Process section — ordered array of units
     JsonArray processArray = new JsonArray();
+    for (StreamInterface boundaryStream : boundaryStreams) {
+      JsonObject boundaryJson = exportBoundaryStream(boundaryStream);
+      if (boundaryJson != null) {
+        processArray.add(boundaryJson);
+      }
+    }
     for (ProcessEquipmentInterface unit : units) {
       JsonObject unitJson = exportUnit(unit);
       if (unitJson != null) {
@@ -135,6 +174,248 @@ public class JsonProcessExporter {
         mapOutletStreams(unit);
       }
     }
+  }
+
+  /**
+   * Registers inlet streams that are not produced by, or explicitly added to, the exported process.
+   *
+   * <p>
+   * Multi-area {@link ProcessModel}s often share stream objects between {@link ProcessSystem}
+   * instances. When an area is exported independently, those shared input streams have no local
+   * producer and would otherwise become blank or unresolved inlet references in JSON. This method
+   * assigns each external stream a synthetic boundary stream name and stores it in
+   * {@link #streamRefMap}, allowing downstream equipment to wire to an explicit feed stream after
+   * JSON import.
+   * </p>
+   *
+   * @param units process units being exported
+   * @return external inlet streams in deterministic export order
+   */
+  private List<StreamInterface> registerExternalInletStreams(
+      List<ProcessEquipmentInterface> units) {
+    List<StreamInterface> boundaryStreams = new ArrayList<StreamInterface>();
+    IdentityHashMap<StreamInterface, Boolean> seen =
+        new IdentityHashMap<StreamInterface, Boolean>();
+    Map<String, Boolean> usedNames = new LinkedHashMap<String, Boolean>();
+
+    for (ProcessEquipmentInterface unit : units) {
+      usedNames.put(unit.getName(), Boolean.TRUE);
+    }
+
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit instanceof StreamInterface) {
+        continue;
+      }
+      for (StreamInterface inlet : getInletStreams(unit)) {
+        if (inlet == null || streamRefMap.containsKey(inlet) || seen.containsKey(inlet)) {
+          continue;
+        }
+        if (inlet.getFluid() == null) {
+          continue;
+        }
+        String boundaryName = uniqueBoundaryStreamName(inlet, usedNames);
+        String fluidRef = boundaryName + "_fluid";
+        streamRefMap.put(inlet, boundaryName);
+        boundaryFluidRefMap.put(inlet, fluidRef);
+        boundaryStreams.add(inlet);
+        seen.put(inlet, Boolean.TRUE);
+        usedNames.put(boundaryName, Boolean.TRUE);
+      }
+    }
+    return boundaryStreams;
+  }
+
+  /**
+   * Gets the inlet streams for an equipment unit with a reflection fallback for legacy equipment.
+   *
+   * @param unit equipment unit to inspect
+   * @return list of non-null inlet streams, possibly empty
+   */
+  private List<StreamInterface> getInletStreams(ProcessEquipmentInterface unit) {
+    List<StreamInterface> inlets = new ArrayList<StreamInterface>();
+    try {
+      List<StreamInterface> listedInlets = unit.getInletStreams();
+      if (listedInlets != null) {
+        for (StreamInterface inlet : listedInlets) {
+          if (inlet != null) {
+            inlets.add(inlet);
+          }
+        }
+      }
+    } catch (Exception e) {
+      // Fall back below for legacy equipment without a robust getInletStreams implementation.
+    }
+    if (inlets.isEmpty()) {
+      try {
+        StreamInterface inlet =
+            (StreamInterface) unit.getClass().getMethod("getInletStream").invoke(unit);
+        if (inlet != null) {
+          inlets.add(inlet);
+        }
+      } catch (Exception e) {
+        // No single inlet accessor available.
+      }
+    }
+    return inlets;
+  }
+
+  /**
+   * Creates a unique synthetic boundary stream name for an external inlet stream.
+   *
+   * @param stream external inlet stream
+   * @param usedNames names already used in the exported process
+   * @return unique boundary stream name safe for dot-notation references
+   */
+  private String uniqueBoundaryStreamName(StreamInterface stream, Map<String, Boolean> usedNames) {
+    String originalName = stream.getName();
+    String baseName = originalName == null ? "stream" : originalName.trim();
+    if (baseName.isEmpty()) {
+      baseName = "stream";
+    }
+    baseName = "boundary_" + baseName.replaceAll("[^A-Za-z0-9_]+", "_");
+    if (baseName.endsWith("_")) {
+      baseName = baseName.substring(0, baseName.length() - 1);
+    }
+    if (baseName.isEmpty()) {
+      baseName = "boundary_stream";
+    }
+
+    String candidate = baseName;
+    int suffix = 2;
+    while (usedNames.containsKey(candidate)) {
+      candidate = baseName + "_" + suffix;
+      suffix++;
+    }
+    return candidate;
+  }
+
+  /**
+   * Exports named fluids for all materialized boundary streams.
+   *
+   * @param boundaryStreams external inlet streams to export
+   * @return JSON object containing one named fluid per boundary stream
+   */
+  private JsonObject exportBoundaryFluids(List<StreamInterface> boundaryStreams) {
+    JsonObject fluids = new JsonObject();
+    for (StreamInterface boundaryStream : boundaryStreams) {
+      String fluidRef = boundaryFluidRefMap.get(boundaryStream);
+      if (fluidRef != null && boundaryStream.getFluid() != null) {
+        fluids.add(fluidRef, exportFluid(boundaryStream.getFluid()));
+      }
+    }
+    return fluids;
+  }
+
+  /**
+   * Registers named fluid references for explicit stream units.
+   *
+   * @param units process units to inspect
+   */
+  private void registerStreamUnitFluids(List<ProcessEquipmentInterface> units) {
+    Map<String, Boolean> usedRefs = new LinkedHashMap<String, Boolean>();
+    for (ProcessEquipmentInterface unit : units) {
+      if (!(unit instanceof StreamInterface)) {
+        continue;
+      }
+      StreamInterface stream = (StreamInterface) unit;
+      if (stream.getFluid() == null) {
+        continue;
+      }
+      String baseRef = sanitizeFluidReference(unit.getName()) + "_fluid";
+      String fluidRef = makeUniqueFluidReference(baseRef, usedRefs);
+      streamUnitFluidRefMap.put(stream, fluidRef);
+    }
+  }
+
+  /**
+   * Exports named fluids for explicit stream units.
+   *
+   * @param units process units to inspect
+   * @return JSON object containing one named fluid per stream unit
+   */
+  private JsonObject exportStreamUnitFluids(List<ProcessEquipmentInterface> units) {
+    JsonObject fluids = new JsonObject();
+    for (ProcessEquipmentInterface unit : units) {
+      if (!(unit instanceof StreamInterface)) {
+        continue;
+      }
+      StreamInterface stream = (StreamInterface) unit;
+      String fluidRef = streamUnitFluidRefMap.get(stream);
+      if (fluidRef != null && stream.getFluid() != null) {
+        fluids.add(fluidRef, exportFluid(stream.getFluid()));
+      }
+    }
+    return fluids;
+  }
+
+  /**
+   * Sanitizes a stream name for use as a named-fluid key.
+   *
+   * @param name stream name to sanitize
+   * @return sanitized fluid-reference base name
+   */
+  private String sanitizeFluidReference(String name) {
+    String sanitized = name == null ? "stream" : name.replaceAll("[^A-Za-z0-9_]+", "_");
+    sanitized = sanitized.replaceAll("_+", "_");
+    while (sanitized.startsWith("_")) {
+      sanitized = sanitized.substring(1);
+    }
+    while (sanitized.endsWith("_")) {
+      sanitized = sanitized.substring(0, sanitized.length() - 1);
+    }
+    return sanitized.isEmpty() ? "stream" : sanitized;
+  }
+
+  /**
+   * Makes a unique fluid-reference key.
+   *
+   * @param baseRef preferred fluid-reference key
+   * @param usedRefs map of already-used keys
+   * @return unique fluid-reference key
+   */
+  private String makeUniqueFluidReference(String baseRef, Map<String, Boolean> usedRefs) {
+    String candidate = baseRef;
+    int suffix = 2;
+    while (usedRefs.containsKey(candidate)) {
+      candidate = baseRef + "_" + suffix;
+      suffix++;
+    }
+    usedRefs.put(candidate, Boolean.TRUE);
+    return candidate;
+  }
+
+  /**
+   * Exports a materialized boundary stream unit for an external inlet stream.
+   *
+   * @param boundaryStream external inlet stream to export as a local stream
+   * @return stream JSON definition, or null if the stream was not registered
+   */
+  private JsonObject exportBoundaryStream(StreamInterface boundaryStream) {
+    String streamName = streamRefMap.get(boundaryStream);
+    if (streamName == null) {
+      return null;
+    }
+
+    JsonObject json = new JsonObject();
+    json.addProperty("type", "Stream");
+    json.addProperty("name", streamName);
+    String fluidRef = boundaryFluidRefMap.get(boundaryStream);
+    if (fluidRef != null) {
+      json.addProperty("fluidRef", fluidRef);
+    }
+    exportStreamProperties(json, boundaryStream, true);
+    return json;
+  }
+
+  /**
+   * Gets the JSON stream reference assigned to a stream during the most recent export.
+   *
+   * @param stream stream object to look up
+   * @return JSON reference such as {@code feed}, {@code HP Sep.gasOut}, or {@code null} when the
+   *         stream was not part of the most recent export
+   */
+  public String getStreamReference(StreamInterface stream) {
+    return streamRefMap.get(stream);
   }
 
   /**
@@ -179,6 +460,16 @@ public class JsonProcessExporter {
     } else if (unit instanceof Splitter) {
       Splitter splitter = (Splitter) unit;
       List<StreamInterface> outlets = splitter.getOutletStreams();
+      if (outlets != null) {
+        for (int i = 0; i < outlets.size(); i++) {
+          if (outlets.get(i) != null) {
+            streamRefMap.put(outlets.get(i), name + ".split" + i);
+          }
+        }
+      }
+    } else if (unit instanceof Manifold) {
+      Manifold manifold = (Manifold) unit;
+      List<StreamInterface> outlets = manifold.getOutletStreams();
       if (outlets != null) {
         for (int i = 0; i < outlets.size(); i++) {
           if (outlets.get(i) != null) {
@@ -273,6 +564,10 @@ public class JsonProcessExporter {
       fluidJson.addProperty("multiPhaseCheck", true);
     }
 
+    if (fluid.getPhase(0) != null) {
+      fluidJson.addProperty("useVolumeCorrection", fluid.getPhase(0).useVolumeCorrection());
+    }
+
     // Components: separate database components from characterized fractions
     JsonObject components = new JsonObject();
     JsonArray characterizedComponents = new JsonArray();
@@ -293,6 +588,12 @@ public class JsonProcessExporter {
         charComp.addProperty("Tc", comp.getTC());
         charComp.addProperty("Pc", comp.getPC());
         charComp.addProperty("acentricFactor", comp.getAcentricFactor());
+        addFiniteProperty(charComp, "normalBoilingPoint", comp.getNormalBoilingPoint());
+        addFiniteProperty(charComp, "criticalVolume", comp.getCriticalVolume());
+        addFiniteProperty(charComp, "parachor", comp.getParachorParameter());
+        addFiniteProperty(charComp, "racketZ", comp.getRacketZ());
+        addFiniteProperty(charComp, "volumeCorrection", comp.getVolumeCorrectionConst());
+        addFiniteProperty(charComp, "volumeShift", comp.getVolumeCorrectionConst());
         if (comp.isIsPlusFraction()) {
           charComp.addProperty("isPlusFraction", true);
         }
@@ -309,6 +610,8 @@ public class JsonProcessExporter {
       fluidJson.add("characterizedComponents", characterizedComponents);
     }
 
+    fluidJson.add("componentProperties", exportComponentProperties(fluid));
+
     // Export BICs (binary interaction parameters) if any non-zero values
     exportBinaryInteractionParameters(fluidJson, fluid);
 
@@ -316,9 +619,73 @@ public class JsonProcessExporter {
   }
 
   /**
-   * Exports binary interaction parameters (kij) from the fluid's mixing rule. Only exports
-   * non-zero BICs to keep the JSON compact. The builder uses these to override the default
-   * database BICs when reconstructing the fluid.
+   * Exports component-level property overrides for all components in a fluid.
+   *
+   * @param fluid the fluid system to export
+   * @return component property definitions for rebuilding E300-like fluids
+   */
+  private JsonArray exportComponentProperties(SystemInterface fluid) {
+    JsonArray componentProperties = new JsonArray();
+    for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+      componentProperties.add(exportComponentProperties(fluid.getPhase(0).getComponent(i)));
+    }
+    return componentProperties;
+  }
+
+  /**
+   * Exports component-level properties that are not preserved by component name and composition
+   * alone.
+   *
+   * @param component the component to export
+   * @return a JSON object with component properties
+   */
+  private JsonObject exportComponentProperties(ComponentInterface component) {
+    JsonObject props = new JsonObject();
+    props.addProperty("name", component.getComponentName());
+    props.addProperty("moleFraction", component.getz());
+    addFiniteProperty(props, "molarMass", component.getMolarMass());
+    addFiniteProperty(props, "density", component.getNormalLiquidDensity());
+    addFiniteProperty(props, "Tc", component.getTC());
+    addFiniteProperty(props, "Pc", component.getPC());
+    addFiniteProperty(props, "acentricFactor", component.getAcentricFactor());
+    addFiniteProperty(props, "normalBoilingPoint", component.getNormalBoilingPoint());
+    addFiniteProperty(props, "criticalVolume", component.getCriticalVolume());
+    addFiniteProperty(props, "parachor", component.getParachorParameter());
+    addFiniteProperty(props, "racketZ", component.getRacketZ());
+    addFiniteProperty(props, "volumeCorrection", component.getVolumeCorrectionConst());
+    addFiniteProperty(props, "volumeShift", component.getVolumeCorrectionConst());
+    if (component instanceof ComponentEos) {
+      ComponentEos eosComponent = (ComponentEos) component;
+      if (eosComponent.hasOmegaAOverride()) {
+        addFiniteProperty(props, "omegaA", eosComponent.getOmegaAOverride());
+      }
+    }
+    if (component.isIsTBPfraction()) {
+      props.addProperty("isTBPfraction", true);
+    }
+    if (component.isIsPlusFraction()) {
+      props.addProperty("isPlusFraction", true);
+    }
+    return props;
+  }
+
+  /**
+   * Adds a numeric property when the value can be represented in standard JSON.
+   *
+   * @param json the object to update
+   * @param name the property name
+   * @param value the property value
+   */
+  private void addFiniteProperty(JsonObject json, String name, double value) {
+    if (!Double.isNaN(value) && !Double.isInfinite(value)) {
+      json.addProperty(name, value);
+    }
+  }
+
+  /**
+   * Exports binary interaction parameters (kij) from the fluid's mixing rule. Only exports non-zero
+   * BICs to keep the JSON compact. The builder uses these to override the default database BICs
+   * when reconstructing the fluid.
    *
    * @param fluidJson the fluid JSON object to add BICs to
    * @param fluid the fluid system
@@ -400,13 +767,22 @@ public class JsonProcessExporter {
     String typeName = getTypeName(unit);
     json.addProperty("type", typeName);
     json.addProperty("name", unit.getName());
+    if (unit.getTagName() != null && !unit.getTagName().trim().isEmpty()) {
+      json.addProperty("tagName", unit.getTagName());
+    }
 
     if (unit instanceof StreamInterface) {
-      exportStreamProperties(json, (StreamInterface) unit);
+      StreamInterface stream = (StreamInterface) unit;
+      String fluidRef = streamUnitFluidRefMap.get(stream);
+      if (fluidRef != null) {
+        json.addProperty("fluidRef", fluidRef);
+      }
+      exportStreamProperties(json, stream);
     } else if (unit instanceof Mixer) {
       exportMixerInlets(json, (Mixer) unit);
-    } else if (unit instanceof HeatExchanger && !(unit instanceof Heater)
-        && !(unit instanceof Cooler)) {
+    } else if (unit instanceof Manifold) {
+      exportManifoldInlets(json, (Manifold) unit);
+    } else if (unit instanceof HeatExchanger) {
       exportHeatExchangerInlets(json, (HeatExchanger) unit);
     } else {
       // Single-inlet equipment — resolve inlet stream reference
@@ -468,14 +844,17 @@ public class JsonProcessExporter {
     if (unit instanceof Cooler) {
       return "Cooler";
     }
-    if (unit instanceof Heater) {
-      return "Heater";
-    }
     if (unit instanceof HeatExchanger) {
       return "HeatExchanger";
     }
+    if (unit instanceof Heater) {
+      return "Heater";
+    }
     if (unit instanceof Mixer) {
       return "Mixer";
+    }
+    if (unit instanceof Manifold) {
+      return "Manifold";
     }
     if (unit instanceof ComponentSplitter) {
       return "ComponentSplitter";
@@ -506,10 +885,22 @@ public class JsonProcessExporter {
    * @param stream the stream to export
    */
   private void exportStreamProperties(JsonObject json, StreamInterface stream) {
+    exportStreamProperties(json, stream, false);
+  }
+
+  /**
+   * Exports Stream-specific properties: flowRate, temperature, pressure.
+   *
+   * @param json the unit JSON object to populate
+   * @param stream the stream to export
+   * @param includeZeroValues true to include zero-valued state fields for boundary streams
+   */
+  private void exportStreamProperties(JsonObject json, StreamInterface stream,
+      boolean includeZeroValues) {
     JsonObject props = new JsonObject();
 
     double flowRate = stream.getFlowRate("kg/hr");
-    if (flowRate > 0) {
+    if (flowRate > 0 || includeZeroValues) {
       JsonArray flowArr = new JsonArray();
       flowArr.add(flowRate);
       flowArr.add("kg/hr");
@@ -517,7 +908,7 @@ public class JsonProcessExporter {
     }
 
     double temperature = stream.getTemperature("C");
-    if (temperature != 0) {
+    if (temperature != 0 || includeZeroValues) {
       JsonArray tempArr = new JsonArray();
       tempArr.add(temperature);
       tempArr.add("C");
@@ -525,7 +916,7 @@ public class JsonProcessExporter {
     }
 
     double pressure = stream.getPressure("bara");
-    if (pressure > 0) {
+    if (pressure > 0 || includeZeroValues) {
       JsonArray pressArr = new JsonArray();
       pressArr.add(pressure);
       pressArr.add("bara");
@@ -545,6 +936,28 @@ public class JsonProcessExporter {
    */
   private void exportMixerInlets(JsonObject json, Mixer mixer) {
     List<StreamInterface> inlets = mixer.getInletStreams();
+    if (inlets != null && !inlets.isEmpty()) {
+      JsonArray inletsArr = new JsonArray();
+      for (StreamInterface inlet : inlets) {
+        String ref = streamRefMap.get(inlet);
+        if (ref != null) {
+          inletsArr.add(ref);
+        }
+      }
+      if (inletsArr.size() > 0) {
+        json.add("inlets", inletsArr);
+      }
+    }
+  }
+
+  /**
+   * Exports Manifold inlets as an "inlets" array.
+   *
+   * @param json the unit JSON object
+   * @param manifold the manifold
+   */
+  private void exportManifoldInlets(JsonObject json, Manifold manifold) {
+    List<StreamInterface> inlets = manifold.getInletStreams();
     if (inlets != null && !inlets.isEmpty()) {
       JsonArray inletsArr = new JsonArray();
       for (StreamInterface inlet : inlets) {
@@ -596,6 +1009,15 @@ public class JsonProcessExporter {
       if (outP > 0) {
         props.addProperty("outletPressure", outP);
       }
+      props.addProperty("speed", comp.getSpeed());
+      props.addProperty("minimumSpeed", comp.getMinimumSpeed());
+      props.addProperty("maximumSpeed", comp.getMaximumSpeed());
+      props.addProperty("solveSpeed", comp.isSolveSpeed());
+      props.addProperty("autoSpeedMode", comp.isAutoSpeedMode());
+      double targetSpeed = comp.getTargetSpeed();
+      if (targetSpeed > 0.0) {
+        props.addProperty("targetSpeed", targetSpeed);
+      }
       double polyEff = comp.getPolytropicEfficiency();
       if (polyEff > 0 && polyEff <= 1.0) {
         props.addProperty("polytropicEfficiency", polyEff);
@@ -603,17 +1025,42 @@ public class JsonProcessExporter {
       if (comp.usePolytropicCalc()) {
         props.addProperty("usePolytropicCalc", true);
       }
+      JsonObject compressorChart = exportCompressorChart(comp);
+      if (compressorChart != null && compressorChart.size() > 0) {
+        props.add("compressorChart", compressorChart);
+      }
+      JsonObject driver = exportCompressorDriver(comp.getDriver());
+      if (driver != null && driver.size() > 0) {
+        props.add("driver", driver);
+      }
+      JsonObject antiSurge = exportAntiSurge(comp.getAntiSurge());
+      if (antiSurge != null && antiSurge.size() > 0) {
+        props.add("antiSurge", antiSurge);
+      }
     } else if (unit instanceof ThrottlingValve) {
       ThrottlingValve valve = (ThrottlingValve) unit;
       double outP = valve.getOutletPressure();
       if (outP > 0) {
         props.addProperty("outletPressure", outP);
       }
+    } else if (unit instanceof HeatExchanger) {
+      HeatExchanger hx = (HeatExchanger) unit;
+      props.addProperty("UAvalue", hx.getUAvalue());
+      JsonArray guessOutTemperature = new JsonArray();
+      guessOutTemperature.add(hx.getGuessOutTemperature());
+      guessOutTemperature.add(hx.guessOutTemperatureUnit);
+      props.add("guessOutTemperature", guessOutTemperature);
     } else if (unit instanceof Heater || unit instanceof Cooler) {
       Heater heater = (Heater) unit;
       double pressureDrop = heater.getPressureDrop();
       if (pressureDrop != 0) {
         props.addProperty("pressureDrop", pressureDrop);
+      }
+      if (heater.hasOutletPressureSpecification()) {
+        JsonArray outPArr = new JsonArray();
+        outPArr.add(heater.getSpecifiedOutletPressure());
+        outPArr.add(heater.getSpecifiedOutletPressureUnit());
+        props.add("outletPressure", outPArr);
       }
       // Export outlet temperature from the outlet stream
       List<StreamInterface> heaterOuts = heater.getOutletStreams();
@@ -632,6 +1079,15 @@ public class JsonProcessExporter {
       }
     } else if (unit instanceof Splitter) {
       Splitter splitter = (Splitter) unit;
+      double[] flowRates = splitter.getFlowRates();
+      if (flowRates != null && flowRates.length > 0) {
+        JsonArray flowRatesArr = new JsonArray();
+        for (double flowRate : flowRates) {
+          flowRatesArr.add(flowRate);
+        }
+        props.add("flowRates", flowRatesArr);
+        props.addProperty("flowUnit", splitter.getFlowUnit());
+      }
       double[] factors = splitter.getSplitFactors();
       if (factors != null && factors.length > 0) {
         JsonArray factorsArr = new JsonArray();
@@ -650,8 +1106,40 @@ public class JsonProcessExporter {
         }
         props.add("splitFactors", factorsArr);
       }
-    } else if (unit instanceof AdiabaticPipe) {
-      AdiabaticPipe pipe = (AdiabaticPipe) unit;
+    } else if (unit instanceof Manifold) {
+      Manifold manifold = (Manifold) unit;
+      double[] factors = manifold.getSplitFactors();
+      if (factors != null && factors.length > 0) {
+        JsonArray factorsArr = new JsonArray();
+        for (double f : factors) {
+          factorsArr.add(f);
+        }
+        props.add("splitFactors", factorsArr);
+      }
+    } else if (unit instanceof Recycle) {
+      Recycle recycle = (Recycle) unit;
+      props.addProperty("flowTolerance", recycle.getFlowTolerance());
+      props.addProperty("compositionTolerance", recycle.getCompositionTolerance());
+      props.addProperty("temperatureTolerance", recycle.getTemperatureTolerance());
+      props.addProperty("pressureTolerance", recycle.getPressureTolerance());
+      props.addProperty("priority", recycle.getPriority());
+      props.addProperty("maxIterations", recycle.getMaxIterations());
+      AccelerationMethod accelerationMethod = recycle.getAccelerationMethod();
+      if (accelerationMethod != null) {
+        props.addProperty("accelerationMethod", accelerationMethod.name());
+      }
+      props.addProperty("wegsteinQMin", recycle.getWegsteinQMin());
+      props.addProperty("wegsteinQMax", recycle.getWegsteinQMax());
+      props.addProperty("wegsteinDelayIterations", recycle.getWegsteinDelayIterations());
+      if (recycle.getDownstreamProperty() != null && !recycle.getDownstreamProperty().isEmpty()) {
+        JsonArray downstreamProperties = new JsonArray();
+        for (String property : recycle.getDownstreamProperty()) {
+          downstreamProperties.add(property);
+        }
+        props.add("downstreamProperty", downstreamProperties);
+      }
+    } else if (unit instanceof PipeLineInterface) {
+      PipeLineInterface pipe = (PipeLineInterface) unit;
       double length = pipe.getLength();
       if (length > 0) {
         props.addProperty("length", length);
@@ -660,8 +1148,219 @@ public class JsonProcessExporter {
       if (diameter > 0) {
         props.addProperty("diameter", diameter);
       }
+      props.addProperty("elevation", pipe.getElevation());
+      double pipeWallRoughness = pipe.getPipeWallRoughness();
+      if (pipeWallRoughness > 0) {
+        props.addProperty("pipeWallRoughness", pipeWallRoughness);
+      }
+      int numberOfIncrements = pipe.getNumberOfIncrements();
+      if (numberOfIncrements > 0) {
+        props.addProperty("numberOfIncrements", numberOfIncrements);
+      }
+    } else if (unit instanceof Calculator) {
+      JsonObject calculator = exportCalculatorProperties((Calculator) unit);
+      for (Map.Entry<String, com.google.gson.JsonElement> entry : calculator.entrySet()) {
+        props.add(entry.getKey(), entry.getValue());
+      }
     }
 
     return props.size() > 0 ? props : null;
+  }
+
+  /**
+   * Exports compressor chart settings and curve arrays.
+   *
+   * @param compressor the compressor containing the chart
+   * @return chart settings, speed curves, and boundary curves
+   */
+  private JsonObject exportCompressorChart(Compressor compressor) {
+    JsonObject chartJson = new JsonObject();
+    CompressorChartInterface chart = compressor.getCompressorChart();
+    if (chart == null) {
+      return chartJson;
+    }
+    chartJson.addProperty("chartType", compressor.getCompressorChartType());
+    chartJson.addProperty("class", chart.getClass().getSimpleName());
+    chartJson.addProperty("useCompressorChart", chart.isUseCompressorChart());
+    chartJson.addProperty("headUnit", chart.getHeadUnit());
+    chartJson.addProperty("useRealKappa", chart.useRealKappa());
+    double[] chartConditions = chart.getChartConditions();
+    if (chartConditions != null) {
+      chartJson.add("chartConditions", toJsonArray(chartConditions));
+    }
+    double[] speeds = chart.getSpeeds();
+    double[][] flows = chart.getFlows();
+    double[][] heads = chart.getHeads();
+    double[][] efficiencies = chart.getPolytropicEfficiencies();
+    if (speeds != null && flows != null && heads != null && efficiencies != null) {
+      chartJson.add("speeds", toJsonArray(speeds));
+      chartJson.add("flows", toJsonMatrix(flows));
+      chartJson.add("heads", toJsonMatrix(heads));
+      chartJson.add("polytropicEfficiencies", toJsonMatrix(efficiencies));
+    }
+    JsonObject surgeCurve = exportBoundaryCurve(chart.getSurgeCurve());
+    if (surgeCurve != null && surgeCurve.size() > 0) {
+      chartJson.add("surgeCurve", surgeCurve);
+    }
+    JsonObject stoneWallCurve = exportBoundaryCurve((BoundaryCurve) chart.getStoneWallCurve());
+    if (stoneWallCurve != null && stoneWallCurve.size() > 0) {
+      chartJson.add("stoneWallCurve", stoneWallCurve);
+    }
+    return chartJson;
+  }
+
+  /**
+   * Exports compressor driver settings and max-power curves.
+   *
+   * @param driver the compressor driver to export
+   * @return JSON object with driver settings, or an empty object when no driver is configured
+   */
+  private JsonObject exportCompressorDriver(CompressorDriver driver) {
+    JsonObject driverJson = new JsonObject();
+    if (driver == null) {
+      return driverJson;
+    }
+    driverJson.addProperty("type", driver.getDriverType().name());
+    driverJson.addProperty("ratedPower", driver.getRatedPower());
+    driverJson.addProperty("maxPower", driver.getMaxPower());
+    driverJson.addProperty("minPower", driver.getMinPower());
+    driverJson.addProperty("driverEfficiency", driver.getDriverEfficiency());
+    driverJson.addProperty("responseTime", driver.getResponseTime());
+    driverJson.addProperty("inertia", driver.getInertia());
+    driverJson.addProperty("maxAcceleration", driver.getMaxAcceleration());
+    driverJson.addProperty("maxDeceleration", driver.getMaxDeceleration());
+    driverJson.addProperty("ambientTemperature", driver.getAmbientTemperature());
+    driverJson.addProperty("ambientPressure", driver.getAmbientPressure());
+    driverJson.addProperty("overloadProtectionEnabled", driver.isOverloadProtectionEnabled());
+    driverJson.addProperty("overloadTripDelay", driver.getOverloadTripDelay());
+    driverJson.addProperty("minSpeed", driver.getMinSpeed());
+    driverJson.addProperty("maxSpeed", driver.getMaxSpeed());
+    driverJson.addProperty("ratedSpeed", driver.getRatedSpeed());
+    driverJson.addProperty("temperatureDerateFactor", driver.getTemperatureDerateFactor());
+    driverJson.add("vfdEfficiencyCoefficients", toJsonArray(driver.getVfdEfficiencyCoefficients()));
+
+    double[] maxPowerCoefficients = driver.getMaxPowerCurveCoefficients();
+    if (maxPowerCoefficients != null) {
+      driverJson.add("maxPowerCurveCoefficients", toJsonArray(maxPowerCoefficients));
+      driverJson.addProperty("maxPowerCurveEnabled", driver.isMaxPowerCurveEnabled());
+    }
+    if (driver.isMaxPowerCurveTableEnabled()) {
+      double[] speeds = driver.getMaxPowerCurveSpeeds();
+      double[] powers = driver.getMaxPowerCurvePowers();
+      if (speeds != null && powers != null) {
+        JsonObject curve = new JsonObject();
+        curve.add("speeds", toJsonArray(speeds));
+        curve.add("powers", toJsonArray(powers));
+        curve.addProperty("powerUnit", "kW");
+        driverJson.add("maxPowerSpeedCurve", curve);
+      }
+    }
+    return driverJson;
+  }
+
+  /**
+   * Exports a compressor boundary curve.
+   *
+   * @param curve the boundary curve to export
+   * @return JSON object with active state, flow values, and head values
+   */
+  private JsonObject exportBoundaryCurve(BoundaryCurve curve) {
+    JsonObject curveJson = new JsonObject();
+    if (curve == null) {
+      return curveJson;
+    }
+    curveJson.addProperty("active", curve.isActive());
+    double[] flow = curve.getFlow();
+    double[] head = curve.getHead();
+    if (flow != null && head != null) {
+      curveJson.add("flow", toJsonArray(flow));
+      curveJson.add("head", toJsonArray(head));
+    }
+    return curveJson;
+  }
+
+  /**
+   * Exports anti-surge controller settings.
+   *
+   * @param antiSurge the anti-surge controller
+   * @return JSON object with controller settings
+   */
+  private JsonObject exportAntiSurge(AntiSurge antiSurge) {
+    JsonObject antiSurgeJson = new JsonObject();
+    if (antiSurge == null) {
+      return antiSurgeJson;
+    }
+    antiSurgeJson.addProperty("active", antiSurge.isActive());
+    antiSurgeJson.addProperty("surge", antiSurge.isSurge());
+    antiSurgeJson.addProperty("surgeControlFactor", antiSurge.getSurgeControlFactor());
+    antiSurgeJson.addProperty("currentSurgeFraction", antiSurge.getCurrentSurgeFraction());
+    antiSurgeJson.addProperty("controlStrategy", antiSurge.getControlStrategy().name());
+    antiSurgeJson.addProperty("minimumRecycleFlow", antiSurge.getMinimumRecycleFlow());
+    antiSurgeJson.addProperty("maximumRecycleFlow", antiSurge.getMaximumRecycleFlow());
+    antiSurgeJson.addProperty("valvePosition", antiSurge.getValvePosition());
+    antiSurgeJson.addProperty("valveResponseTime", antiSurge.getValveResponseTime());
+    antiSurgeJson.addProperty("valveRateLimit", antiSurge.getValveRateLimit());
+    antiSurgeJson.addProperty("targetValvePosition", antiSurge.getTargetValvePosition());
+    antiSurgeJson.addProperty("surgeControlLineOffset", antiSurge.getSurgeControlLineOffset());
+    antiSurgeJson.addProperty("useHotGasBypass", antiSurge.isUseHotGasBypass());
+    antiSurgeJson.addProperty("hotGasBypassFlow", antiSurge.getHotGasBypassFlow());
+    antiSurgeJson.addProperty("surgeWarningMargin", antiSurge.getSurgeWarningMargin());
+    antiSurgeJson.addProperty("predictiveHorizon", antiSurge.getPredictiveHorizon());
+    return antiSurgeJson;
+  }
+
+  /**
+   * Exports calculator equipment references.
+   *
+   * @param calculator the calculator to export
+   * @return JSON object with input and output equipment names
+   */
+  private JsonObject exportCalculatorProperties(Calculator calculator) {
+    JsonObject calculatorJson = new JsonObject();
+    JsonArray inputs = new JsonArray();
+    for (ProcessEquipmentInterface input : calculator.getInputVariable()) {
+      if (input != null) {
+        inputs.add(input.getName());
+      }
+    }
+    if (inputs.size() > 0) {
+      calculatorJson.add("calculatorInputs", inputs);
+    }
+    ProcessEquipmentInterface output = calculator.getOutputVariable();
+    if (output != null) {
+      calculatorJson.addProperty("calculatorOutput", output.getName());
+    }
+    if (calculator.getName().toLowerCase().startsWith("anti surge calculator")) {
+      calculatorJson.addProperty("calculationType", "antiSurge");
+    }
+    return calculatorJson;
+  }
+
+  /**
+   * Converts a double array to a JSON array.
+   *
+   * @param values values to convert
+   * @return JSON array containing the same values
+   */
+  private JsonArray toJsonArray(double[] values) {
+    JsonArray array = new JsonArray();
+    for (double value : values) {
+      array.add(value);
+    }
+    return array;
+  }
+
+  /**
+   * Converts a double matrix to a JSON array of arrays.
+   *
+   * @param values matrix values to convert
+   * @return JSON matrix containing the same values
+   */
+  private JsonArray toJsonMatrix(double[][] values) {
+    JsonArray matrix = new JsonArray();
+    for (double[] row : values) {
+      matrix.add(toJsonArray(row));
+    }
+    return matrix;
   }
 }

@@ -1,6 +1,6 @@
 ---
 name: neqsim-technical-document-reading
-description: "Reads and extracts structured engineering data from technical documents (PDFs, Word, Excel, CSV) and engineering images/drawings (P&IDs, vendor datasheets, mechanical arrangements, performance maps). USE WHEN: a user provides engineering documents or images — equipment data sheets, technical requirements, design basis, well test reports, P&ID descriptions, inspection reports, standards, vendor drawings, compressor maps, phase envelopes — and needs structured data for process simulation. Covers document classification, extraction patterns by document type, image/figure analysis with view_image, unit normalization, data quality scoring, and output formats."
+description: "Reads and extracts structured engineering data from technical documents (PDFs, Word, Excel, CSV) and engineering images/drawings (P&IDs, vendor datasheets, mechanical arrangements, performance maps). USE WHEN: a user provides engineering documents or images — equipment data sheets, technical requirements, design basis, well test reports, P&ID descriptions, inspection reports, standards, vendor drawings, compressor maps, phase envelopes, material certificates, trapped-liquid fire rupture evidence packs, or water-hammer route/event evidence — and needs structured data for process simulation. Covers document classification, extraction patterns by document type, image/figure analysis with view_image, unit normalization, data quality scoring, and output formats."
 last_verified: "2026-07-04"
 ---
 
@@ -18,6 +18,22 @@ formats usable by process simulation, mechanical design, and engineering analysi
 > 3. Normalize units, component names, and field names to standard conventions
 > 4. Validate extracted data against physical bounds and completeness checks
 > 5. Output structured JSON/dict for downstream consumption
+
+For P&ID-driven operational studies, also load `neqsim-pid-process-operations`.
+That skill converts symbols into a process graph, classifies valve functions,
+maps instrument bubbles to historian tags, and defines steady-state or dynamic
+NeqSim scenario actions.
+
+For water-hammer or liquid-hammer screening, also load `neqsim-water-hammer`.
+Extract route geometry, wall thickness, roughness/piping class, fittings, valve
+closure timing, design pressure, and tagreader event references so the output can
+feed `WaterHammerStudy` or MCP `runWaterHammer`.
+
+For trapped-liquid fire rupture studies, also load
+`neqsim-trapped-liquid-fire-rupture`. Extract segment boundaries, line numbers,
+pipe geometry, material grade/certificate data, flange/gasket/bolt ratings,
+fire/PFP basis, relief availability, acceptance criteria, and explicit evidence
+gaps before handing data to the solver.
 
 ---
 
@@ -37,6 +53,8 @@ When a document is provided, classify it first:
 | **P&ID / PFD Description** | Equipment tags, line numbers, instrument tags, connectivity | Topology, instrumentation, control philosophy |
 | **Piping Specification** | Material classes, pressure ratings, wall schedules | Pipe sizes, materials, ratings, corrosion allowance |
 | **Line List / Piping Route Table** | Tabular line numbers, NPS, schedule, from/to nodes, straight length, fittings, valves, elevations | Route segments for `PipingRouteBuilder`: segment id, nodes, internal diameter, wall thickness, length, elevation, K values, source refs |
+| **Water-Hammer Evidence Pack** | STID/P&ID route, valve data sheet, pump trip log, tagreader pressure/flow/valve-position event window | Route segments, design pressure, event schedule, closure/trip timing, field-data overrides for `runWaterHammer` |
+| **Trapped Liquid Fire Rupture Evidence Pack** | Combination of P&IDs/STIDs, line lists, piping specs, material certificates, flange/gasket data, fire/PFP documents, and relief basis | Segment id, isolation boundary, trapped volume inputs, material grade, flange class, fire exposure, PFP endurance, relief availability, acceptance criteria, evidence gaps |
 | **Inspection Report** | Thickness measurements, corrosion rates, anomaly locations | Wall thickness, corrosion rate, remaining life |
 | **Material Certificate** | Heat numbers, SMYS/SMTS, chemical composition, Charpy values | Mechanical properties, chemical analysis, grade |
 | **Standards Document** | ISO/API/ASME/DNV/NORSOK header, normative references | Design formulas, factors, limits, test requirements |
@@ -91,6 +109,12 @@ DOCUMENT_SIGNATURES = {
         r"(?i)stress\s*iso(metric)?", r"(?i)from\s+node.*to\s+node",
         r"(?i)nominal\s+(size|diameter)", r"(?i)straight\s+length"
     ],
+    "trapped_liquid_fire_rupture": [
+        r"(?i)trapped\s+liquid", r"(?i)blocked[-\s]?in\s+liquid",
+        r"(?i)thermal\s+expansion", r"(?i)fire\s+exposure",
+        r"(?i)no\s+pressure\s+relief", r"(?i)passive\s+fire\s+protection|PFP",
+        r"(?i)flange\s+(failure|leak|rupture)", r"(?i)pipe\s+rupture"
+    ],
     "engineering_drawing_pid": [
         r"(?i)piping\s+.*instrument.*diagram", r"(?i)P&ID",
         r"(?i)P\s*&\s*I\s*D", r"(?i)instrument\s+diagram"
@@ -113,6 +137,65 @@ DOCUMENT_SIGNATURES = {
     ],
 }
 ```
+
+### Trapped-Liquid Fire Rupture Extraction Schema
+
+When the downstream task is trapped liquid, blocked-in liquid, fire rupture,
+PFP demand, or no pressure relief on liquid-filled piping, build this study
+input block:
+
+```json
+{
+    "study_type": "trapped_liquid_fire_rupture",
+    "segments": [
+        {
+            "segment_id": "...",
+            "line_numbers": ["..."],
+            "isolation_boundary": {
+                "upstream": {"tag": "...", "source": "..."},
+                "downstream": {"tag": "...", "source": "..."},
+                "vents_drains_relief_paths": []
+            },
+            "pipe_geometry": {
+                "internal_diameter_m": {"value": null, "source": "...", "confidence": 0.0},
+                "wall_thickness_m": {"value": null, "source": "...", "confidence": 0.0},
+                "exposed_length_m": {"value": null, "source": "...", "confidence": 0.0}
+            },
+            "material": {
+                "grade": {"value": null, "source": "..."},
+                "smys_MPa": {"value": null, "source": "..."},
+                "smts_MPa": {"value": null, "source": "..."}
+            },
+            "flange_gasket_bolt": {
+                "class": {"value": null, "source": "..."},
+                "gasket_type": {"value": null, "source": "..."},
+                "temperature_rating_source": "..."
+            },
+            "fluid_and_conditions": {
+                "fluid_description": "...",
+                "composition": [],
+                "operating_pressure_bara": {"value": null, "source": "..."},
+                "operating_temperature_C": {"value": null, "source": "..."}
+            },
+            "fire_and_pfp": {
+                "fire_type": "api521_pool_fire | fixed_heat_flux | radiative_fire | unknown",
+                "heat_flux_W_m2": {"value": null, "source": "..."},
+                "pfp_required_endurance_s": {"value": null, "source": "..."}
+            },
+            "relief_and_acceptance": {
+                "relief_available": {"value": null, "source": "..."},
+                "relief_set_pressure_bara": {"value": null, "source": "..."},
+                "acceptance_criteria": []
+            },
+            "evidence_gaps": []
+        }
+    ]
+}
+```
+
+Extraction priority for conflicting values: material certificate > piping spec >
+line list > P&ID annotation > narrative report > inferred/default. Always report
+conflicts rather than silently choosing one value.
 
 ---
 
@@ -786,6 +869,12 @@ PID_EXTRACTION = {
 For route pressure-drop work, pass `route_segments` to
 `neqsim.process.equipment.pipeline.routing.PipingRouteBuilder` and save
 `route.toJson()` with the task results.
+
+For operational studies, also create a `pid_operational_model` block as defined
+in `neqsim-pid-process-operations`. Include symbol semantics, valve normal and
+fail positions when stated, control links, drains, vents, bypasses, check valves,
+and logical tag names for plant data binding. Flag uncertain symbol readings;
+do not infer live valve state from drawing normal position alone.
 
 #### 3.7.4 Vendor API Datasheet Image Extraction
 

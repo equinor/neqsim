@@ -242,6 +242,23 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   }
 
   /**
+   * Returns both inlet streams of the heat exchanger.
+   *
+   * @return a list containing the non-null inlet streams for side 0 and side 1
+   */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    List<StreamInterface> inlets = new ArrayList<StreamInterface>();
+    if (inStream[0] != null) {
+      inlets.add(inStream[0]);
+    }
+    if (inStream[1] != null) {
+      inlets.add(inStream[1]);
+    }
+    return inlets;
+  }
+
+  /**
    * Returns the first outlet stream (side 0) of the heat exchanger.
    *
    * <p>

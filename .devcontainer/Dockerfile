@@ -1,8 +1,8 @@
 # NeqSim Development Container
-# Uses the official devcontainers Java image with Java 11 (matches pom.xml compiler target).
+# Uses the official devcontainers Java image with Java 21.
 # Python 3.12 is added via devcontainer features for Jupyter notebook development.
 
-ARG VARIANT="11"
+ARG VARIANT="21"
 FROM mcr.microsoft.com/devcontainers/java:1-${VARIANT}
 
 # Install Maven via SDKMAN

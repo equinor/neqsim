@@ -332,8 +332,8 @@ Machine learning (ML) models trained on existing CPA parameter databases can pre
 
 For applications requiring millions of flash calculations (e.g., reservoir simulation), CPA can be too slow. ML surrogate models trained on CPA results can provide:
 
-- 100–1000× speedup over direct CPA calculation
-- Accuracy of 0.1–1% for interpolation within the training range
+- large speedups over direct CPA calculation when the surrogate is evaluated inside its validated interpolation domain
+- sub-percent to few-percent interpolation accuracy for well-sampled training ranges, with independent validation required before use in design
 - Automatic differentiation for gradient-based optimization
 
 ### 12.7.3 Hybrid Approaches
@@ -357,7 +357,7 @@ The transition to clean energy is driving interest in hydrogen as an energy carr
 
 ### 12.8.2 CPA for H$_2$ Systems
 
-Hydrogen is a non-associating, quantum gas (significant quantum corrections needed below ~100 K) that interacts weakly with water. CPA models H$_2$:
+Hydrogen is a non-associating gas that interacts weakly with water. For ordinary gas-network, CCS, and process-plant temperatures, CPA treats H$_2$ as a classical non-associating component; quantum-fluid corrections are mainly relevant for cryogenic hydrogen or very-low-temperature property work.
 
 - As a non-associating component (no association sites)
 - With binary parameters to water (for H$_2$ solubility in water)
@@ -426,7 +426,7 @@ Process digital twins require real-time thermodynamic predictions. CPA's combina
 
 - **Online process optimization**: CPA running in the control system
 - **Predictive maintenance**: detecting property drift through model predictions
-- **Autonomous operations**: CPA as the thermodynamic engine in autonomous process control
+- **Decision-support workflows**: CPA as a validated thermodynamic engine inside advisory or supervised optimization systems
 
 NeqSim's automation API, combined with CPA, provides a ready-made foundation for digital twin applications.
 
@@ -499,17 +499,17 @@ The transition to low-carbon energy creates new demands for thermodynamic modeli
 
 CPA is well-positioned for these applications because it handles the key molecular interactions (hydrogen bonding in water/ammonia/amines, solvation with CO$_2$, non-associating gases H$_2$/N$_2$/CH$_4$) within a single thermodynamic framework.
 
-### 12.11.3 Towards Autonomous Process Design
+### 12.11.3 Towards AI-Assisted Process Design
 
-The combination of CPA with modern AI and optimization tools points toward autonomous process design:
+The combination of CPA with modern AI and optimization tools points toward AI-assisted process design:
 
 1. An AI agent receives process specifications
 2. It selects the appropriate fluid model (CPA for associating systems)
 3. It builds and runs the process simulation using NeqSim
 4. It optimizes the design against techno-economic criteria
-5. It validates the results against engineering standards
+5. It validates the results against engineering standards and human engineering review
 
-NeqSim's automation API (`ProcessAutomation`) and the agentic infrastructure (`AgentSession`, `TaskResultValidator`) provide the technical foundation for this vision. The CPA equation of state, with its balance of rigor, accuracy, and computational efficiency, is ideally suited as the thermodynamic engine in such autonomous workflows.
+NeqSim's automation API (`ProcessAutomation`) and the agentic infrastructure (`AgentSession`, `TaskResultValidator`) provide a technical foundation for this workflow. The CPA equation of state, with its balance of rigor, accuracy, and computational efficiency, can serve as the thermodynamic engine when the model choice, parameter set, and operating envelope have been validated for the application.
 
 ## 12.12 Detailed Formulation of Electrolyte CPA (e-CPA)
 
@@ -563,7 +563,7 @@ The salting-out effect — reduced gas solubility in brine compared to pure wate
 
 ### 12.12.4 Ion-Specific Parameters: The Advanced e-CPA
 
-A significant improvement to e-CPA was proposed by \cite{Solbraa2026}, who introduced **ion-specific** short-range interaction parameters $W_0$ in the Debye–Hückel term. In the standard formulation, the $W_0$ parameter is a single salt-specific value. The advanced formulation allows each ion to have its own $W_0$, fitted to mean ionic activity coefficient data.
+A recent e-CPA extension reported by \cite{Solbraa2026} introduced **ion-specific** short-range interaction parameters $W_0$ in the Debye–Hückel term. In the standard formulation, the $W_0$ parameter is a single salt-specific value. The advanced formulation allows each ion to have its own $W_0$, fitted to mean ionic activity coefficient data.
 
 The results across five representative salts demonstrate substantial accuracy improvements:
 
@@ -582,7 +582,7 @@ The improvement is visualized in Figure 12.8, which shows the parity plot of pre
 
 The improvement is most dramatic for Na$_2$SO$_4$ (92% reduction in MAE) and CaCl$_2$ (73%), which are the salts most poorly described by the standard approach. Note the sign reversal for CaCl$_2$: the divalent Ca$^{2+}$ cation has a negative $W_0$, reflecting its stronger hydration shell that modifies the local solvent structure differently from monovalent cations.
 
-An important finding from this work is that **the Born solvation contribution is negligible** for activity coefficients. Although the Born term contributes significantly to the raw fugacity coefficient $\ln \varphi_i$, these contributions cancel exactly when computing the activity coefficient $\gamma_i = \varphi_i / \varphi_i^\infty$:
+An important finding from this work is that **the Born solvation contribution largely cancels** in the activity coefficients under the chosen reference-state formulation. Although the Born term contributes significantly to the raw fugacity coefficient $\ln \varphi_i$, most of that contribution is also present in the infinite-dilution reference used for $\gamma_i = \varphi_i / \varphi_i^\infty$:
 
 | Contribution | $\ln \varphi_{\text{Na}^+}$ | $\Delta$(Adv − CPA) |
 |:---|:---:|:---:|
@@ -592,7 +592,7 @@ An important finding from this work is that **the Born solvation contribution is
 
 *Table 12.8: Cancellation of Born solvation in the activity coefficient \cite{Solbraa2026}.*
 
-This means that efforts to improve e-CPA should focus on the Debye–Hückel term and the ion-specific $W_0$ parameters rather than on refining the Born model.
+This means that, for the reported activity-coefficient regressions, improvements in the Debye–Hückel term and the ion-specific $W_0$ parameters are more important than refinements to the Born model.
 
 ### 12.12.5 Chloride Ion Transferability
 

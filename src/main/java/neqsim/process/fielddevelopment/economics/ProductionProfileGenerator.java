@@ -3,6 +3,9 @@ package neqsim.process.fielddevelopment.economics;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
+import neqsim.process.equipment.reservoir.SimpleReservoir;
+import neqsim.process.fielddevelopment.concept.ReservoirInput;
 
 /**
  * Generates production decline profiles using Arps decline curve analysis.
@@ -491,6 +494,309 @@ public class ProductionProfileGenerator implements Serializable {
     }
 
     return profile;
+  }
+
+  // ============================================================================
+  // RESERVOIR-COUPLED HELPERS
+  // ============================================================================
+
+  /**
+   * Generates a resource-capped profile from reservoir screening input.
+   *
+   * @param reservoir reservoir input with resource estimate and recovery factor
+   * @param peakRatePerDay peak rate in Sm3/d for gas profiles or bbl/d for oil profiles
+   * @param gasProfile true for gas profiles, false for oil profiles
+   * @param startYear first production year
+   * @param totalYears total forecast years
+   * @return annual production profile capped at recoverable resource
+   */
+  public Map<Integer, Double> generateFromReservoirInput(ReservoirInput reservoir,
+      double peakRatePerDay, boolean gasProfile, int startYear, int totalYears) {
+    Map<Integer, Double> unconstrained =
+        generateFullProfile(peakRatePerDay, 2, 5, gasProfile ? 0.12 : 0.15, 0.5,
+            gasProfile ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, startYear, totalYears,
+            peakRatePerDay * 0.05);
+    double recoverableVolume = getRecoverableVolumeInProfileUnit(reservoir, gasProfile);
+    return capProfileToCumulativeLimit(unconstrained, recoverableVolume);
+  }
+
+  /**
+   * Generates a resource-capped profile from a SimpleReservoir in-place volume.
+   *
+   * @param reservoir SimpleReservoir instance with initialized in-place fluids
+   * @param gasProfile true to use gas in place, false to use oil in place
+   * @param recoveryFactor recovery factor from zero to one
+   * @param peakRatePerDay peak rate in Sm3/d for gas profiles or bbl/d for oil profiles
+   * @param startYear first production year
+   * @param totalYears total forecast years
+   * @return annual production profile capped at recoverable resource
+   */
+  public Map<Integer, Double> generateFromSimpleReservoir(SimpleReservoir reservoir,
+      boolean gasProfile, double recoveryFactor, double peakRatePerDay, int startYear,
+      int totalYears) {
+    Map<Integer, Double> profile =
+        generateFullProfile(peakRatePerDay, 2, 5, gasProfile ? 0.12 : 0.15, 0.5,
+            gasProfile ? DeclineType.EXPONENTIAL : DeclineType.HYPERBOLIC, startYear, totalYears,
+            peakRatePerDay * 0.05);
+    double inPlace =
+        gasProfile ? reservoir.getGasInPlace("Sm3") : reservoir.getOilInPlace("Sm3") * 6.28981;
+    return capProfileToCumulativeLimit(profile, Math.max(0.0, inPlace * recoveryFactor));
+  }
+
+  /**
+   * Caps a profile at a cumulative production limit.
+   *
+   * @param profile original annual production profile
+   * @param cumulativeLimit cumulative limit in the same annual production unit
+   * @return capped production profile
+   */
+  public static Map<Integer, Double> capProfileToCumulativeLimit(Map<Integer, Double> profile,
+      double cumulativeLimit) {
+    Map<Integer, Double> capped = new LinkedHashMap<Integer, Double>();
+    if (profile == null || profile.isEmpty() || cumulativeLimit <= 0.0) {
+      return capped;
+    }
+    double cumulative = 0.0;
+    for (Map.Entry<Integer, Double> entry : profile.entrySet()) {
+      double remaining = cumulativeLimit - cumulative;
+      if (remaining <= 0.0) {
+        break;
+      }
+      double annual = Math.min(entry.getValue(), remaining);
+      capped.put(entry.getKey(), annual);
+      cumulative += annual;
+    }
+    return capped;
+  }
+
+  /**
+   * Fits an exponential decline case to annual production history.
+   *
+   * @param history annual production history with positive volumes
+   * @return fitted decline case
+   */
+  public HistoryMatchedDeclineCase fitHistoryMatchedDecline(Map<Integer, Double> history) {
+    TreeMap<Integer, Double> sortedHistory = new TreeMap<Integer, Double>(history);
+    int count = 0;
+    double sumX = 0.0;
+    double sumY = 0.0;
+    double sumXX = 0.0;
+    double sumXY = 0.0;
+    int firstYear = sortedHistory.isEmpty() ? 0 : sortedHistory.firstKey();
+    int lastYear = sortedHistory.isEmpty() ? 0 : sortedHistory.lastKey();
+    for (Map.Entry<Integer, Double> entry : sortedHistory.entrySet()) {
+      if (entry.getValue() != null && entry.getValue() > 0.0) {
+        double x = entry.getKey() - firstYear;
+        double y = Math.log(entry.getValue() / DAYS_PER_YEAR);
+        sumX += x;
+        sumY += y;
+        sumXX += x * x;
+        sumXY += x * y;
+        count++;
+      }
+    }
+    if (count < 2) {
+      double rate = sortedHistory.isEmpty() ? 0.0 : sortedHistory.get(firstYear) / DAYS_PER_YEAR;
+      return new HistoryMatchedDeclineCase(firstYear, lastYear, rate, 0.0, 1.0);
+    }
+    double denominator = count * sumXX - sumX * sumX;
+    double slope = denominator == 0.0 ? 0.0 : (count * sumXY - sumX * sumY) / denominator;
+    double intercept = (sumY - slope * sumX) / count;
+    double initialRatePerDay = Math.exp(intercept);
+    double declineRate = Math.max(0.0, -slope);
+    return new HistoryMatchedDeclineCase(firstYear, lastYear, initialRatePerDay, declineRate,
+        calculateFitQuality(sortedHistory, firstYear, intercept, slope));
+  }
+
+  /**
+   * Generates a forecast profile from a fitted history-matched decline case.
+   *
+   * @param declineCase fitted decline case
+   * @param forecastStartYear first forecast year
+   * @param forecastYears number of forecast years
+   * @param economicLimit minimum economic rate
+   * @return forecast production profile
+   */
+  public Map<Integer, Double> generateHistoryMatchedProfile(HistoryMatchedDeclineCase declineCase,
+      int forecastStartYear, int forecastYears, double economicLimit) {
+    int yearOffset = Math.max(0, forecastStartYear - declineCase.getFirstHistoryYear());
+    double forecastRate = declineCase.getInitialRatePerDay()
+        * Math.exp(-declineCase.getAnnualDeclineRate() * yearOffset);
+    return generateExponentialDecline(forecastRate, declineCase.getAnnualDeclineRate(),
+        forecastStartYear, forecastYears, economicLimit);
+  }
+
+  /**
+   * Exports a production profile as a rate table for VFP/export workflows.
+   *
+   * @param profile annual production profile
+   * @param rateUnit average-rate unit label such as Sm3/d or bbl/d
+   * @param exportPressureBara export or tubing-head pressure in bara
+   * @return CSV text with year, annual volume, average rate, unit, and pressure
+   */
+  public static String toVfpRateTableCsv(Map<Integer, Double> profile, String rateUnit,
+      double exportPressureBara) {
+    StringBuilder csv = new StringBuilder();
+    csv.append("year,annual_production,average_rate_per_day,rate_unit,export_pressure_bara\n");
+    if (profile == null) {
+      return csv.toString();
+    }
+    for (Map.Entry<Integer, Double> entry : new TreeMap<Integer, Double>(profile).entrySet()) {
+      double annualProduction = entry.getValue() == null ? 0.0 : entry.getValue();
+      csv.append(String.format("%d,%.6g,%.6g,%s,%.3f%n", entry.getKey(), annualProduction,
+          annualProduction / DAYS_PER_YEAR, rateUnit, exportPressureBara));
+    }
+    return csv.toString();
+  }
+
+  /**
+   * Gets recoverable resource in the profile unit.
+   *
+   * @param reservoir reservoir input
+   * @param gasProfile true for gas profile unit Sm3, false for oil profile unit bbl
+   * @return recoverable resource in Sm3 for gas or bbl for oil
+   */
+  private double getRecoverableVolumeInProfileUnit(ReservoirInput reservoir, boolean gasProfile) {
+    if (reservoir == null) {
+      return Double.POSITIVE_INFINITY;
+    }
+    double recoverable = reservoir.getRecoverableResourceEstimate();
+    String unit = reservoir.getResourceUnit() == null ? "" : reservoir.getResourceUnit();
+    if (gasProfile) {
+      if (unit.equalsIgnoreCase("GSm3")) {
+        return recoverable * 1.0e9;
+      }
+      if (unit.equalsIgnoreCase("MSm3")) {
+        return recoverable * 1.0e6;
+      }
+      if (unit.equalsIgnoreCase("MMboe")) {
+        return recoverable * 1.0e6 * 6000.0;
+      }
+      return recoverable;
+    }
+    if (unit.equalsIgnoreCase("MMbbl")) {
+      return recoverable * 1.0e6;
+    }
+    if (unit.equalsIgnoreCase("MSm3")) {
+      return recoverable * 1.0e6 * 6.28981;
+    }
+    if (unit.equalsIgnoreCase("MMboe")) {
+      return recoverable * 1.0e6;
+    }
+    return recoverable;
+  }
+
+  /**
+   * Calculates linear-regression fit quality for a log-production history.
+   *
+   * @param history sorted production history
+   * @param firstYear first history year
+   * @param intercept fitted intercept
+   * @param slope fitted slope
+   * @return coefficient of determination
+   */
+  private double calculateFitQuality(TreeMap<Integer, Double> history, int firstYear,
+      double intercept, double slope) {
+    double mean = 0.0;
+    int count = 0;
+    for (Double value : history.values()) {
+      if (value != null && value > 0.0) {
+        mean += Math.log(value / DAYS_PER_YEAR);
+        count++;
+      }
+    }
+    if (count == 0) {
+      return 0.0;
+    }
+    mean /= count;
+    double ssTot = 0.0;
+    double ssErr = 0.0;
+    for (Map.Entry<Integer, Double> entry : history.entrySet()) {
+      if (entry.getValue() != null && entry.getValue() > 0.0) {
+        double x = entry.getKey() - firstYear;
+        double y = Math.log(entry.getValue() / DAYS_PER_YEAR);
+        double predicted = intercept + slope * x;
+        ssTot += (y - mean) * (y - mean);
+        ssErr += (y - predicted) * (y - predicted);
+      }
+    }
+    return ssTot > 0.0 ? 1.0 - ssErr / ssTot : 1.0;
+  }
+
+  /**
+   * Fitted decline case from production history.
+   */
+  public static final class HistoryMatchedDeclineCase implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final int firstHistoryYear;
+    private final int lastHistoryYear;
+    private final double initialRatePerDay;
+    private final double annualDeclineRate;
+    private final double fitQuality;
+
+    /**
+     * Creates a fitted decline case.
+     *
+     * @param firstHistoryYear first history year
+     * @param lastHistoryYear last history year
+     * @param initialRatePerDay initial fitted rate per day
+     * @param annualDeclineRate annual exponential decline rate
+     * @param fitQuality coefficient of determination from zero to one
+     */
+    public HistoryMatchedDeclineCase(int firstHistoryYear, int lastHistoryYear,
+        double initialRatePerDay, double annualDeclineRate, double fitQuality) {
+      this.firstHistoryYear = firstHistoryYear;
+      this.lastHistoryYear = lastHistoryYear;
+      this.initialRatePerDay = initialRatePerDay;
+      this.annualDeclineRate = annualDeclineRate;
+      this.fitQuality = fitQuality;
+    }
+
+    /**
+     * Gets first history year.
+     *
+     * @return first history year
+     */
+    public int getFirstHistoryYear() {
+      return firstHistoryYear;
+    }
+
+    /**
+     * Gets last history year.
+     *
+     * @return last history year
+     */
+    public int getLastHistoryYear() {
+      return lastHistoryYear;
+    }
+
+    /**
+     * Gets initial fitted rate.
+     *
+     * @return initial rate per day
+     */
+    public double getInitialRatePerDay() {
+      return initialRatePerDay;
+    }
+
+    /**
+     * Gets annual decline rate.
+     *
+     * @return annual decline rate as a fraction
+     */
+    public double getAnnualDeclineRate() {
+      return annualDeclineRate;
+    }
+
+    /**
+     * Gets fit quality.
+     *
+     * @return coefficient of determination from zero to one
+     */
+    public double getFitQuality() {
+      return fitQuality;
+    }
   }
 
   // ============================================================================

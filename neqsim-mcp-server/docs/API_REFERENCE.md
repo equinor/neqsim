@@ -105,9 +105,13 @@ and compositions.
 
 ## `runProcess` — Process Simulation
 
-Builds and runs a flowsheet from a JSON definition. Supports streams, separators,
-compressors, coolers, heaters, valves, mixers, splitters, heat exchangers, distillation
-columns, and pipelines.
+Builds and runs a flowsheet from a JSON definition. Supports single-area
+`ProcessSystem` JSON (`fluid` + `process`) and multi-area `ProcessModel` JSON
+with top-level `areas`. The stable core supports streams, separators,
+compressors, coolers, heaters, valves, mixers, splitters, heat exchangers,
+distillation columns, and pipelines; the builder also accepts additional
+factory-backed equipment types where their constructor and stream wiring fit the
+generic JSON pattern.
 
 **Parameters:**
 
@@ -178,6 +182,168 @@ columns, and pipelines.
 }
 ```
 
+**Multi-area process models** — use top-level `"areas"` with one standard
+process JSON object per area:
+
+```json
+{
+  "areas": {
+    "separation": {
+      "fluid": { "model": "SRK", "temperature": 298.15, "pressure": 50.0,
+        "components": { "methane": 0.9, "ethane": 0.1 } },
+      "process": [
+        { "type": "Stream", "name": "feed", "properties": { "flowRate": [10000.0, "kg/hr"] } },
+        { "type": "Separator", "name": "Sep", "inlet": "feed" }
+      ]
+    },
+    "compression": {
+      "fluid": { "model": "SRK", "temperature": 298.15, "pressure": 50.0,
+        "components": { "methane": 0.9, "ethane": 0.1 } },
+      "process": [
+        { "type": "Stream", "name": "compFeed", "properties": { "flowRate": [10000.0, "kg/hr"] } },
+        { "type": "Compressor", "name": "Comp", "inlet": "compFeed",
+          "properties": { "outletPressure": [80.0, "bara"] } }
+      ]
+    }
+  }
+}
+```
+
+**Extended factory-backed equipment:** `Pump`, `Expander`, `Tank`,
+`ComponentSplitter`, `Recycle`, `Adjuster`, `GasScrubber`,
+`ThreePhaseSeparator`, `SimpleReservoir`, `Flare`, `FlareStack`, `FuelCell`,
+`Electrolyzer`, `CO2Electrolyzer`, `WindTurbine`, `WindFarm`,
+`BatteryStorage`, `SolarPanel`, `OffshoreEnergySystem`,
+`AmmoniaSynthesisReactor`, and `SubseaPowerCable` are recognized by validation
+and routed through `EquipmentFactory`. Equipment that needs non-generic
+construction or custom multi-port semantics may still require a dedicated MCP
+runner or builder extension.
+
+---
+
+## `runOperationalStudy` — P&ID and Plant-Data Operational Studies
+
+Runs plant-agnostic operational studies using the `neqsim.process.operations`
+helpers. The tool works on a local simulation copy only; it does not write to
+plant historians, control systems, or field devices.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `operationalJson` | JSON string | Operational study input. Use `{"action":"getSchema"}` for the full input guide. |
+
+**Actions:**
+
+| Action | Purpose |
+|---|---|
+| `getSchema` | Return supported actions, binding fields, and action types |
+| `validateTagMap` | Validate logical tag bindings against a `runProcess`-style model |
+| `applyFieldData` | Apply logical or historian-keyed values through automation addresses and measurement field inputs |
+| `runScenario` | Execute ordered operational actions such as valve opening changes, variable writes, steady-state runs, or transient steps |
+| `runEvidencePackage` | Apply field data, compare BENCHMARK tags, run scenarios, and return base/scenario bottleneck reports |
+| `evaluateControllerResponse` | Calculate controller-response metrics from time, process-value, and controller-output arrays |
+
+**Scenario action types:** `SET_VARIABLE`, `SET_VALVE_OPENING`,
+`APPLY_FIELD_INPUTS`, `RUN_STEADY_STATE`, and `RUN_TRANSIENT`.
+
+**Example:**
+
+```json
+{
+  "action": "runScenario",
+  "processJson": { "fluid": {}, "process": [] },
+  "actions": [
+    { "type": "SET_VALVE_OPENING", "target": "Outlet Valve", "value": 15.0 },
+    { "type": "SET_VARIABLE", "target": "Outlet Valve.outletPressure", "value": 45.0, "unit": "bara" },
+    { "type": "RUN_STEADY_STATE" }
+  ]
+}
+```
+
+For P&ID-driven studies, keep public inputs limited to logical names and
+automation addresses. Store private historian tag names in task-local or private
+configuration files.
+
+**Evidence package example:**
+
+```json
+{
+  "action": "runEvidencePackage",
+  "studyName": "operations screen",
+  "processJson": { "fluid": {}, "process": [] },
+  "tagBindings": [
+    {
+      "logicalTag": "outlet_valve_position",
+      "automationAddress": "Outlet Valve.percentValveOpening",
+      "unit": "%",
+      "role": "INPUT"
+    },
+    {
+      "logicalTag": "outlet_pressure",
+      "automationAddress": "Outlet Valve.outletPressure",
+      "unit": "bara",
+      "role": "BENCHMARK"
+    }
+  ],
+  "fieldData": {
+    "outlet_valve_position": 70.0,
+    "outlet_pressure": 49.0
+  },
+  "benchmarkToleranceFraction": 0.05,
+  "scenarios": [
+    {
+      "scenarioName": "raise valve loading",
+      "actions": [
+        { "type": "SET_VALVE_OPENING", "target": "Outlet Valve", "value": 90.0 },
+        { "type": "RUN_STEADY_STATE" }
+      ]
+    }
+  ]
+}
+```
+
+The response contains `evidencePackage.baseCapacity.bottleneck` and one
+`evidencePackage.scenarioStudies[].capacity.bottleneck` per scenario. Bottleneck
+fields include `equipmentName`, `constraintName`, `utilizationPercent`,
+`marginPercent`, `exceeded`, `nearLimit`, and detailed constraint metadata. The
+base bottleneck first uses `ProcessSystem.findBottleneck()` and then falls back
+to the registered equipment capacity strategies when equipment-specific
+constraints are not attached directly to the process units.
+
+---
+
+## `runHAZOP` — Simulation-backed HAZOP Study
+
+Generates a first-pass IEC 61882 HAZOP worksheet from a NeqSim process
+definition, optional STID/P&ID-extracted nodes, selected failure modes, and an
+optional barrier register. The tool runs the baseline process, generates
+equipment-failure scenarios, executes those scenarios against copied process
+models, and returns HAZOP rows with simulation evidence.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `hazopJson` | JSON string | HAZOP study input with `processDefinition`, optional `nodes`, `failureModes`, `barrierRegister`, and `runSimulations` |
+
+**Input highlights:**
+
+- `processDefinition` uses the same JSON format as `runProcess`.
+- `nodes[]` may include `nodeId`, `designIntent`, `equipment`, `safeguards`, and `evidenceRefs`.
+- `failureModes[]` may include `COOLING_LOSS`, `VALVE_STUCK_CLOSED`, `COMPRESSOR_TRIP`, `PUMP_TRIP`, or `BLOCKED_OUTLET`.
+- `barrierRegister` is passed to `runBarrierRegister` and returned as a handoff block.
+
+**Output highlights:**
+
+- `hazopRows` with node, guideword, parameter, cause, consequence, safeguards, recommendation, and evidence references.
+- `scenarioResults` with per-scenario status, execution time, and captured KPI values.
+- `qualityGates` showing human review, document evidence, and generated-row checks.
+- `reportMarkdown` for engineering report generation.
+
+Use `getExample` with category `safety` and name `hazop-study` for a complete
+template. Use `getSchema` with tool name `run_hazop` for JSON Schema.
+
 ---
 
 ## `validateInput` — Pre-flight Validation
@@ -244,25 +410,42 @@ then modifies them based on the user's requirements.
 | `process` | `simple-separation` | Stream → Separator |
 | `process` | `compression-with-cooling` | Stream → Compressor → Cooler |
 | `validation` | `error-flash` | A deliberately invalid flash input |
+| `safety` | `hazop-study` | Simulation-backed HAZOP from process scenarios and document evidence |
+| `safety` | `barrier-register` | Evidence-linked PSF/SCE barrier register |
+| `tool` | `<tool name>` | Canonical or contract-level example for any advertised MCP tool, such as `run_dynamic` or `run_relief` |
 
 ---
 
 ## `getSchema` — JSON Schemas
 
 Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
+The `type` path segment must be either `input` or `output`; invalid values return a
+schema-not-found response instead of defaulting to an output schema.
 
 **Available schemas:**
+
+`SchemaCatalog.getToolNames()` advertises all 63 MCP server tools. Every listed tool has an
+`input` and `output` schema URI under `neqsim://schemas/{tool}/{type}`. High-use calculation and
+workflow tools have detailed tool-specific schemas. The remaining server, lifecycle, governance,
+and orchestration tools have generic contract schemas that expose common fields such as `action`,
+`inputJson`, `processJson`, `arguments`, `options`, `unitSystem`, and the standard response
+envelope.
 
 | Tool Name | Types | Description |
 |---|---|---|
 | `run_flash` | `input`, `output` | Flash calculation JSON format |
 | `run_process` | `input`, `output` | Process simulation JSON format |
+| `run_hazop` | `input`, `output` | Simulation-backed HAZOP study JSON format |
+| `run_barrier_register` | `input`, `output` | Barrier register JSON format |
 | `validate_input` | `input`, `output` | Validator JSON format |
-| `search_components` | `input`, `output` | Component search JSON format |
+| `list_components` | `input`, `output` | Component search JSON format |
+| `run_dynamic`, `run_pvt`, `run_flow_assurance`, and others | `input`, `output` | Domain workflow JSON formats |
+| `run_relief`, `run_lopa`, `run_sil`, `run_risk_matrix`, `run_flare_network` | `input`, `output` | Safety and risk workflow contracts |
+| `manage_state`, `manage_security`, `manage_validation_profile`, `check_tool_access`, and other platform tools | `input`, `output` | Generic MCP contract schemas with standard response envelopes |
 
 ---
 
-## Browsable MCP Resources (11 Endpoints)
+## Browsable MCP Resources (13 Endpoints)
 
 ### Catalog Resources (Static)
 
@@ -270,6 +453,7 @@ Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
 |---|---|
 | `neqsim://example-catalog` | Full catalog of all examples with descriptions |
 | `neqsim://schema-catalog` | Full catalog of all JSON schemas |
+| `neqsim://setup-templates` | Full catalog of major workflow setup templates |
 | `neqsim://components` | Component families: hydrocarbons, acid gases, glycols, olefins, etc. |
 | `neqsim://standards` | Design standards catalog: ASME, API, DNV, ISO, NORSOK |
 | `neqsim://models` | Equation of state models with usage recommendations |
@@ -281,6 +465,7 @@ Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
 |---|---|
 | `neqsim://examples/{category}/{name}` | Specific example by category and name |
 | `neqsim://schemas/{tool}/{type}` | Specific schema by tool name and type |
+| `neqsim://setup-templates/{id}` | Specific workflow setup template by id |
 | `neqsim://components/{name}` | Full properties for a component (Tc, Pc, omega, MW, etc.) |
 | `neqsim://standards/{code}` | Parameters for a specific design standard |
 | `neqsim://materials/{type}` | Material grades by type: pipe, plate, casing, etc. |

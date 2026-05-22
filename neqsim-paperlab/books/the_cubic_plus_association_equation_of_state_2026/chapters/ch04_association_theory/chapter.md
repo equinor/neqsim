@@ -450,19 +450,6 @@ For water, $T^* \approx 550$ K at liquid densities, which is close to the critic
 
 For weaker associating species (e.g., H$_2$S with $\varepsilon/R \approx 500$ K), $T^*$ is much lower, and association effects on bulk properties are less dramatic — consistent with H$_2$S being a gas at ambient conditions despite having two bonding sites.
 
-## Summary
-
-Key points from this chapter:
-
-- Wertheim's TPT provides a rigorous statistical mechanical framework for associating fluids
-- Molecules are modeled with discrete association sites, each forming at most one bond
-- The site balance equation $X_A = 1/(1 + \rho \sum_j x_j \sum_{B_j} X_{B_j} \Delta^{AB})$ is the central equation
-- The association strength $\Delta^{AB}$ depends on energy ($\varepsilon$), volume ($\beta$), density ($g(\rho)$), and temperature
-- Association schemes (2B, 3B, 4C, etc.) specify the number and type of sites per molecule
-- The Helmholtz energy from association is $A^{\text{assoc}}/nRT = \sum_i x_i \sum_{A_i} (\ln X_{A_i} - X_{A_i}/2 + 1/2)$
-- Simple schemes have analytical solutions; complex mixtures require iterative solution
-- Site symmetry reduction exploits the equivalence of sites within an association scheme, reducing system dimensionality by up to 75% with no loss of accuracy
-
 ## 4.12 Exploiting Site Symmetry: Exact Dimensionality Reduction
 
 ### 4.12.1 The Type-Averaging Theorem
@@ -540,6 +527,19 @@ The type-averaged association strength matrix for a water (4C) + MEG (4C) system
 
 The sparsity of this matrix — half the entries are zero — further reduces the computational cost of evaluating the site balance and its derivatives.
 
+## Summary
+
+Key points from this chapter:
+
+- Wertheim's TPT provides a rigorous statistical mechanical framework for associating fluids
+- Molecules are modeled with discrete association sites, each forming at most one bond
+- The site balance equation $X_A = 1/(1 + \rho \sum_j x_j \sum_{B_j} X_{B_j} \Delta^{AB})$ is the central equation
+- The association strength $\Delta^{AB}$ depends on energy ($\varepsilon$), volume ($\beta$), density ($g(\rho)$), and temperature
+- Association schemes (2B, 3B, 4C, etc.) specify the number and type of sites per molecule
+- The Helmholtz energy from association is $A^{\text{assoc}}/nRT = \sum_i x_i \sum_{A_i} (\ln X_{A_i} - X_{A_i}/2 + 1/2)$
+- Simple schemes have analytical solutions; complex mixtures require iterative solution
+- Site symmetry reduction exploits the equivalence of sites within an association scheme, reducing system dimensionality with no thermodynamic approximation
+
 ## Exercises
 
 1. **Exercise 4.1:** For a pure 2B fluid with $\varepsilon/R = 2500$ K and $\beta = 0.02$, compute $X_A$ at $T = 300$ K for densities from 0 to 30 mol/L. Plot $X_A$ vs. density and interpret the result.
@@ -552,7 +552,7 @@ The sparsity of this matrix — half the entries are zero — further reduces th
 
 5. **Exercise 4.5:** For a water (4C) + TEG (4C) system, write out the full site balance equations in both the individual-site basis ($n_s = 8$) and the type-averaged basis ($p = 4$). Verify that they yield identical solutions for $\tilde{X}_{i,\alpha}$.
 
-6. **Exercise 4.6:** A water (4C) + methanol (3B) + MEG (4C) mixture has $n_s = 11$ individual sites. Determine the number of unique site types $p$ and the multiplicities $m_{i,\alpha}$ for each component. What is the dimensionality reduction factor?
+6. **Exercise 4.6:** A water (4C) + methanol (2B, NeqSim default) + MEG (4C) mixture has $n_s = 10$ individual sites. Determine the number of unique site types $p$ and the multiplicities $m_{i,\alpha}$ for each component. What is the dimensionality reduction factor?
 
 ## References
 
@@ -569,44 +569,38 @@ The sparsity of this matrix — half the entries are zero — further reduces th
 
 *Figure 4.2: 02 Delta Vs Temperature*
 
-![Figure 4.3: Ex01 Xa Vs Rho](figures/fig_ch04_ex01_XA_vs_rho.png)
+![Figure 4.3: 03 Cpa Vs Srk Water](figures/fig_ch04_03_cpa_vs_srk_water.png)
 
-*Figure 4.3: Ex01 Xa Vs Rho*
+*Figure 4.3: 03 Cpa Vs Srk Water*
 
-![Figure 4.4: Ex02 2B Vs 4C](figures/fig_ch04_ex02_2B_vs_4C.png)
+![Figure 4.4: 04 Rdf Vs Packing](figures/fig_ch04_04_rdf_vs_packing.png)
 
-*Figure 4.4: Ex02 2B Vs 4C*
+*Figure 4.4: 04 Rdf Vs Packing*
 
-![Figure 4.5: Ex04 Helmholtz And Bonding](figures/fig_ch04_ex04_helmholtz_and_bonding.png)
+![Figure 4.5: 05 Helmholtz Assoc Vs T](figures/fig_ch04_05_helmholtz_assoc_vs_T.png)
 
-*Figure 4.5: Ex04 Helmholtz And Bonding*
+*Figure 4.5: 05 Helmholtz Assoc Vs T*
 
+![Figure 4.6: 06 Association Schemes](figures/fig_ch04_06_association_schemes.png)
 
-## Figures
+*Figure 4.6: 06 Association Schemes*
 
-![Figure 4.1: 04 Rdf Vs Packing](figures/fig_ch04_04_rdf_vs_packing.png)
+![Figure 4.7: 07 Solver Speedup Paperlab](figures/fig_ch04_07_solver_speedup_paperlab.png)
 
-*Figure 4.1: 04 Rdf Vs Packing*
+*Figure 4.7: 07 Solver Speedup Paperlab*
 
-![Figure 4.2: 05 Helmholtz Assoc Vs T](figures/fig_ch04_05_helmholtz_assoc_vs_T.png)
+![Figure 4.8: 08 Site Reduction Jacobian](figures/fig_ch04_08_site_reduction_jacobian.png)
 
-*Figure 4.2: 05 Helmholtz Assoc Vs T*
+*Figure 4.8: 08 Site Reduction Jacobian*
 
-![Figure 4.3: 06 Association Schemes](figures/fig_ch04_06_association_schemes.png)
+![Figure 4.9: Ex01 Xa Vs Rho](figures/fig_ch04_ex01_XA_vs_rho.png)
 
-*Figure 4.3: 06 Association Schemes*
+*Figure 4.9: Ex01 Xa Vs Rho*
 
-![Figure 4.4: 07 Solver Speedup Paperlab](figures/fig_ch04_07_solver_speedup_paperlab.png)
+![Figure 4.10: Ex02 2B Vs 4C](figures/fig_ch04_ex02_2B_vs_4C.png)
 
-*Figure 4.4: 07 Solver Speedup Paperlab*
+*Figure 4.10: Ex02 2B Vs 4C*
 
-![Figure 4.5: 08 Site Reduction Jacobian](figures/fig_ch04_08_site_reduction_jacobian.png)
+![Figure 4.11: Ex04 Helmholtz And Bonding](figures/fig_ch04_ex04_helmholtz_and_bonding.png)
 
-*Figure 4.5: 08 Site Reduction Jacobian*
-
-
-## Figures
-
-![Figure 4.1: 03 Cpa Vs Srk Water](figures/fig_ch04_03_cpa_vs_srk_water.png)
-
-*Figure 4.1: 03 Cpa Vs Srk Water*
+*Figure 4.11: Ex04 Helmholtz And Bonding*

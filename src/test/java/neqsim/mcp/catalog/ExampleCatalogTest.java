@@ -10,7 +10,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 import neqsim.mcp.runners.FlashRunner;
+import neqsim.mcp.runners.NorsokS001Clause10ReviewRunner;
+import neqsim.mcp.runners.OpenDrainReviewRunner;
 import neqsim.mcp.runners.ProcessRunner;
+import neqsim.mcp.runners.RootCauseRunner;
 import neqsim.mcp.runners.Validator;
 
 /**
@@ -102,6 +105,10 @@ class ExampleCatalogTest {
     assertTrue(categories.contains("batch"));
     assertTrue(categories.contains("property-table"));
     assertTrue(categories.contains("phase-envelope"));
+    assertTrue(categories.contains("root-cause"));
+    assertTrue(categories.contains("open-drain-review"));
+    assertTrue(categories.contains("process-safety-review"));
+    assertTrue(categories.contains("tool"));
   }
 
   @Test
@@ -112,6 +119,10 @@ class ExampleCatalogTest {
 
     List<String> processExamples = ExampleCatalog.getExampleNames("process");
     assertEquals(2, processExamples.size());
+    assertTrue(ExampleCatalog.getExampleNames("root-cause").contains("compressor-high-vibration"));
+    assertTrue(ExampleCatalog.getExampleNames("open-drain-review").contains("norsok-s001-stid"));
+    assertTrue(
+        ExampleCatalog.getExampleNames("process-safety-review").contains("norsok-s001-clause10"));
 
     List<String> unknown = ExampleCatalog.getExampleNames("unknown");
     assertTrue(unknown.isEmpty());
@@ -141,6 +152,19 @@ class ExampleCatalogTest {
     assertTrue(root.has("batch"));
     assertTrue(root.has("property-table"));
     assertTrue(root.has("phase-envelope"));
+    assertTrue(root.has("tool"));
+  }
+
+  @Test
+  void testToolExamplesCoverAllSchemaTools() {
+    List<String> toolExamples = ExampleCatalog.getExampleNames("tool");
+    assertEquals(SchemaCatalog.getToolNames().size(), toolExamples.size());
+
+    for (String toolName : SchemaCatalog.getToolNames()) {
+      String example = ExampleCatalog.getExample("tool", toolName);
+      assertNotNull(example, "Missing canonical tool example for " + toolName);
+      JsonParser.parseString(example).getAsJsonObject();
+    }
   }
 
   @Test
@@ -179,5 +203,90 @@ class ExampleCatalogTest {
     assertNotNull(example);
     JsonObject root = JsonParser.parseString(example).getAsJsonObject();
     assertTrue(root.has("components"));
+  }
+
+  @Test
+  void testRootCauseExample_runsSuccessfully() {
+    String example = ExampleCatalog.getExample("root-cause", "compressor-high-vibration");
+    assertNotNull(example);
+    JsonObject input = JsonParser.parseString(example).getAsJsonObject();
+    assertEquals("HIGH_VIBRATION", input.get("symptom").getAsString());
+    assertTrue(input.has("processJson"));
+    JsonObject processJson =
+        JsonParser.parseString(input.get("processJson").getAsString()).getAsJsonObject();
+    assertTrue(processJson.has("process"));
+
+    String result = RootCauseRunner.run(example);
+    JsonObject output = JsonParser.parseString(result).getAsJsonObject();
+    assertEquals("success", output.get("status").getAsString());
+    assertTrue(output.has("hypotheses"));
+  }
+
+  @Test
+  void testRootCauseSeparatorLiquidCarryover_runsSuccessfully() {
+    String example = ExampleCatalog.getExample("root-cause", "separator-liquid-carryover");
+    assertNotNull(example);
+    JsonObject input = JsonParser.parseString(example).getAsJsonObject();
+    assertEquals("LIQUID_CARRYOVER", input.get("symptom").getAsString());
+    assertTrue(input.has("historianCsv"));
+    assertTrue(input.has("stidData"));
+    assertTrue(input.getAsJsonObject("stidData").has("tagreaderSource"));
+
+    String result = RootCauseRunner.run(example);
+    JsonObject output = JsonParser.parseString(result).getAsJsonObject();
+    assertEquals("success", output.get("status").getAsString());
+    assertTrue(output.has("hypotheses"));
+  }
+
+  @Test
+  void testRootCauseHeatExchangerFouling_runsSuccessfully() {
+    String example = ExampleCatalog.getExample("root-cause", "hx-fouling");
+    assertNotNull(example);
+    JsonObject input = JsonParser.parseString(example).getAsJsonObject();
+    assertEquals("FOULING", input.get("symptom").getAsString());
+    assertTrue(input.has("historianCsv"));
+    assertTrue(input.has("stidData"));
+    assertTrue(input.getAsJsonObject("stidData").has("tagreaderSource"));
+    assertTrue(input.getAsJsonObject("stidData").has("designUA_W_K"));
+
+    String result = RootCauseRunner.run(example);
+    JsonObject output = JsonParser.parseString(result).getAsJsonObject();
+    assertEquals("success", output.get("status").getAsString());
+    assertTrue(output.has("hypotheses"));
+  }
+
+  @Test
+  void testRootCauseExampleNames() {
+    List<String> names = ExampleCatalog.getExampleNames("root-cause");
+    assertEquals(3, names.size());
+    assertTrue(names.contains("compressor-high-vibration"));
+    assertTrue(names.contains("separator-liquid-carryover"));
+    assertTrue(names.contains("hx-fouling"));
+  }
+
+  @Test
+  void testOpenDrainReviewExample_runsSuccessfully() {
+    String example = ExampleCatalog.getExample("open-drain-review", "norsok-s001-stid");
+    assertNotNull(example);
+    JsonObject input = JsonParser.parseString(example).getAsJsonObject();
+    assertTrue(input.has("stidData"));
+
+    String result = OpenDrainReviewRunner.run(example);
+    JsonObject output = JsonParser.parseString(result).getAsJsonObject();
+    assertEquals("success", output.get("status").getAsString());
+    assertEquals("open_drain_review", output.get("reviewType").getAsString());
+  }
+
+  @Test
+  void testNorsokS001Clause10ReviewExample_runsSuccessfully() {
+    String example = ExampleCatalog.getExample("process-safety-review", "norsok-s001-clause10");
+    assertNotNull(example);
+    JsonObject input = JsonParser.parseString(example).getAsJsonObject();
+    assertTrue(input.has("stidData"));
+
+    String result = NorsokS001Clause10ReviewRunner.run(example);
+    JsonObject output = JsonParser.parseString(result).getAsJsonObject();
+    assertEquals("success", output.get("status").getAsString());
+    assertEquals("norsok_s001_clause10_review", output.get("reviewType").getAsString());
   }
 }

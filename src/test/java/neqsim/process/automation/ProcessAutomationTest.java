@@ -16,6 +16,7 @@ import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
+import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
@@ -126,6 +127,12 @@ class ProcessAutomationTest {
       if (v.getName().equals("outletPressure")) {
         hasOutletPressure = true;
         assertEquals(VariableType.INPUT, v.getType());
+        assertEquals("pressure", v.getUnitFamily());
+        assertEquals("equipment_input", v.getCategory());
+        assertTrue(v.isWritable());
+        assertTrue(v.isInvalidatesProcess());
+        assertNotNull(v.getMinimumValue());
+        assertNotNull(v.getMaximumValue());
       }
       if (v.getName().equals("power")) {
         hasPower = true;
@@ -134,6 +141,46 @@ class ProcessAutomationTest {
     }
     assertTrue(hasOutletPressure, "Compressor should expose outletPressure as INPUT");
     assertTrue(hasPower, "Compressor should expose power as OUTPUT");
+  }
+
+  @Test
+  void testWaterHammerPipeVariables() {
+    SystemInterface water = new SystemSrkEos(298.15, 10.0);
+    water.addComponent("water", 1.0);
+    water.setMixingRule("classic");
+
+    Stream waterFeed = new Stream("water feed", water);
+    waterFeed.setFlowRate(100.0, "kg/hr");
+    WaterHammerPipe hammer = new WaterHammerPipe("Hammer Line", waterFeed);
+    hammer.setLength(500.0);
+    hammer.setDiameter(0.15);
+    hammer.setNumberOfNodes(30);
+
+    ProcessSystem waterProcess = new ProcessSystem();
+    waterProcess.add(waterFeed);
+    waterProcess.add(hammer);
+    waterProcess.run();
+    ProcessAutomation waterAutomation = waterProcess.getAutomation();
+
+    List<SimulationVariable> variables = waterAutomation.getVariableList("Hammer Line");
+    boolean hasValveOpening = false;
+    boolean hasMaxPressure = false;
+    for (SimulationVariable variable : variables) {
+      if ("valveOpeningPercent".equals(variable.getName())) {
+        hasValveOpening = true;
+        assertEquals(VariableType.INPUT, variable.getType());
+      }
+      if ("maxPressure".equals(variable.getName())) {
+        hasMaxPressure = true;
+        assertEquals(VariableType.OUTPUT, variable.getType());
+      }
+    }
+    assertTrue(hasValveOpening, "WaterHammerPipe should expose valveOpeningPercent");
+    assertTrue(hasMaxPressure, "WaterHammerPipe should expose maxPressure");
+
+    waterAutomation.setVariableValue("Hammer Line.valveOpeningPercent", 40.0, "%");
+    assertEquals(40.0, waterAutomation.getVariableValue("Hammer Line.valveOpeningPercent", "%"),
+        1.0e-12);
   }
 
   @Test
@@ -247,6 +294,8 @@ class ProcessAutomationTest {
     assertTrue(s.contains("unit.temp"));
     assertTrue(s.contains("OUTPUT"));
     assertTrue(s.contains("K"));
+    assertEquals("temperature", v.getUnitFamily());
+    assertFalse(v.isWritable());
   }
 
   @Test

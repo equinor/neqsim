@@ -1,38 +1,38 @@
 EquipmentType,SubType,MTBF_hours,MTTR_hours,Source,Notes
-Compressor,Centrifugal,25000,72,OREDA 2015,Offshore gas service
-Compressor,Reciprocating,8000,48,OREDA 2015,High-pressure gas
-Compressor,Screw,15000,36,OREDA 2015,Low-pressure gas
-Pump,Centrifugal,35000,24,OREDA 2015,Single stage
-Pump,Reciprocating,15000,36,OREDA 2015,Plunger type
-Pump,Progressive Cavity,12000,24,OREDA 2015,Viscous fluids
-Pump,Multistage,30000,48,OREDA 2015,High pressure
-HeatExchanger,Shell-and-Tube,200000,120,OREDA 2015,Standard service
-HeatExchanger,Plate,150000,48,OREDA 2015,Compact type
-HeatExchanger,Air Cooler,50000,24,OREDA 2015,Fin-fan type
-Separator,Two-Phase,300000,48,OREDA 2015,Gas-liquid
-Separator,Three-Phase,250000,72,OREDA 2015,Oil-gas-water
-Separator,Scrubber,350000,24,OREDA 2015,Gas cleaning
-Valve,Control,50000,8,OREDA 2015,Pneumatic actuated
-Valve,Safety PSV,100000,24,OREDA 2015,Spring loaded
-Valve,On-Off,150000,4,OREDA 2015,Ball type
-Valve,Check,200000,4,OREDA 2015,Swing type
-Motor,Electric,100000,48,OREDA 2015,Standard induction
-Motor,Variable Speed,75000,72,OREDA 2015,With VFD
-Turbine,Gas,15000,168,OREDA 2015,Industrial frame
-Turbine,Steam,20000,120,OREDA 2015,Condensing type
-Generator,Gas Turbine,12000,96,OREDA 2015,Package unit
-Generator,Diesel,8000,48,OREDA 2015,Standby service
-Vessel,Pressure,500000,168,OREDA 2015,ASME code
-Vessel,Atmospheric,600000,120,OREDA 2015,Storage tank
-Piping,Carbon Steel,1000000,24,OREDA 2015,General service
-Piping,Stainless Steel,1500000,48,OREDA 2015,Corrosive service
-Instrumentation,Transmitter,100000,4,OREDA 2015,Electronic type
-Instrumentation,Flow Meter,75000,8,OREDA 2015,Coriolis type
-Instrumentation,Level Gauge,150000,4,OREDA 2015,Displacer type
-Filter,Strainer,100000,8,OREDA 2015,Basket type
-Filter,Coalescer,75000,24,OREDA 2015,Gas dehydration
-Expander,Turbo,20000,96,OREDA 2015,Gas processing
+Compressor,Centrifugal,25000,72,IOGP/SINTEF,Offshore gas service typical range 20k-35k hrs
+Compressor,Reciprocating,8000,48,IOGP/SINTEF,High-pressure gas service
+Compressor,Screw,15000,36,CCPS 1989,Low-pressure gas service
+Pump,Centrifugal,35000,24,CCPS 1989,Single stage process pump
+Pump,Reciprocating,15000,36,CCPS 1989,Plunger type positive displacement
+Pump,Progressive Cavity,12000,24,Lees 2012,Viscous fluids
+Pump,Multistage,30000,48,CCPS 1989,High pressure boiler feed / injection
+HeatExchanger,Shell-and-Tube,200000,120,CCPS 1989,Standard carbon steel service
+HeatExchanger,Plate,150000,48,Lees 2012,Compact plate type
+HeatExchanger,Air Cooler,50000,24,IOGP/SINTEF,Fin-fan cooler offshore
+Separator,Two-Phase,300000,48,IOGP/SINTEF,Gas-liquid separator
+Separator,Three-Phase,250000,72,IOGP/SINTEF,Oil-gas-water production separator
+Separator,Scrubber,350000,24,IOGP/SINTEF,Gas cleaning / inlet scrubber
+Valve,Control,50000,8,CCPS 1989,Pneumatic actuated control valve
+Valve,Safety PSV,100000,24,CCPS 1989,Spring loaded pressure safety valve
+Valve,On-Off,150000,4,CCPS 1989,Ball type shutdown valve
+Valve,Check,200000,4,CCPS 1989,Swing type check valve
+Motor,Electric,100000,48,IEEE 493-2007,Standard induction motor >250 HP
+Motor,Variable Speed,75000,72,IEEE 493-2007,With variable frequency drive
+Turbine,Gas,15000,168,IOGP/SINTEF,Industrial frame gas turbine
+Turbine,Steam,20000,120,Lees 2012,Condensing type steam turbine
+Generator,Gas Turbine,12000,96,IOGP/SINTEF,Package gas turbine generator
+Generator,Diesel,8000,48,IEEE 493-2007,Standby diesel generator
+Vessel,Pressure,500000,168,CCPS 1989,ASME code pressure vessel
+Vessel,Atmospheric,600000,120,CCPS 1989,Atmospheric storage tank
+Piping,Carbon Steel,1000000,24,CCPS 1989,General process piping per section
+Piping,Stainless Steel,1500000,48,Lees 2012,Corrosive service piping
+Instrumentation,Transmitter,100000,4,SINTEF PDS,Electronic pressure/temperature transmitter
+Instrumentation,Flow Meter,75000,8,SINTEF PDS,Coriolis type flow meter
+Instrumentation,Level Gauge,150000,4,SINTEF PDS,Displacer / guided-wave radar
+Filter,Strainer,100000,8,CCPS 1989,Basket type strainer
+Filter,Coalescer,75000,24,CCPS 1989,Gas dehydration coalescer
+Expander,Turbo,20000,96,IOGP/SINTEF,Turbo-expander for gas processing
 Absorber,Packed Column,400000,120,API 689,Glycol contactor
 Distillation,Tray Column,350000,168,API 689,Fractionation
-Heater,Fired,30000,48,OREDA 2015,Direct fired
-Heater,Electric,80000,24,OREDA 2015,Immersion type
+Heater,Fired,30000,48,CCPS 1989,Direct fired heater / furnace
+Heater,Electric,80000,24,Lees 2012,Immersion type electric heater

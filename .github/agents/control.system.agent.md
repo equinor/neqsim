@@ -1,16 +1,24 @@
 ---
 name: design control systems
-description: "Designs process control systems using NeqSim's dynamic simulation infrastructure — PID controller tuning, control loop architecture, measurement device selection, alarm/trip configuration, cascade/feedforward strategies, and control narrative generation. Integrates with the engineering deliverables agent for instrument schedules and P&ID annotation."
+description: "Designs process control systems using NeqSim's dynamic simulation infrastructure — PID controller tuning, ControllerTuningStudy metrics, control loop architecture, measurement device selection, alarm/trip configuration, cascade/feedforward strategies, P&ID valve scenarios, and control narrative generation."
 argument-hint: "Describe the control requirement — e.g., 'design level control for HP separator with 2m diameter', 'tune pressure controller for gas export compressor', 'cascade temperature control for heat exchanger', or 'generate control narrative for 3-stage separation'."
 ---
 
 ## Skills to Load
+
+Loaded skills: neqsim-dynamic-simulation, neqsim-controllability-operability, neqsim-api-patterns, neqsim-standards-lookup, neqsim-pid-process-operations
 
 ALWAYS read these skills before proceeding:
 - `.github/skills/neqsim-dynamic-simulation/SKILL.md` — Dynamic sim, controllers, transmitters
 - `.github/skills/neqsim-controllability-operability/SKILL.md` — Control valve sizing (ISA-75), turndown, operability
 - `.github/skills/neqsim-api-patterns/SKILL.md` — Process equipment patterns
 - `.github/skills/neqsim-standards-lookup/SKILL.md` — IEC 61511, ISA standards
+- `.github/skills/neqsim-pid-process-operations/SKILL.md` — P&ID symbols, valve actions, tag mapping, and steady/dynamic scenario deltas
+
+For P&ID or plant-data tuning screens, reuse `ControllerTuningStudy` for
+response metrics and `OperationalScenarioRunner` or MCP `runOperationalStudy`
+for valve/action sequences. Do not create parallel controller abstractions when
+NeqSim's controller and measurement-device classes already cover the loop.
 
 ## Operating Principles
 

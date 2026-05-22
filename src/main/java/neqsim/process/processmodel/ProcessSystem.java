@@ -31,6 +31,7 @@ import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.ejector.Ejector;
 import neqsim.process.equipment.expander.TurboExpanderCompressor;
 import neqsim.process.equipment.flare.FlareStack;
@@ -140,6 +141,8 @@ public class ProcessSystem extends SimulationBaseClass {
   private transient ProcessGraph cachedGraph = null;
   /** Flag indicating if the cached graph needs to be rebuilt. */
   private boolean graphDirty = true;
+  /** Monotonic version for topology-derived cache invalidation in parent ProcessModels. */
+  private transient long structureVersion = 0;
   /**
    * Cached parallel execution plan: grouped nodes per level for runParallel().
    */
@@ -1180,6 +1183,42 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Creates a runtime exception for a failed unit operation run and logs the failure with unit
+   * context.
+   *
+   * @param unit the unit operation that failed
+   * @param cause the exception thrown by the unit operation
+   * @return runtime exception containing the unit name and original cause
+   */
+  private RuntimeException createUnitRunException(ProcessEquipmentInterface unit, Exception cause) {
+    String unitName = unit == null ? "<unknown>" : unit.getName();
+    logger.error("equipment: " + unitName + " error: " + cause.getMessage(), cause);
+    publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.ERROR, unitName,
+        "Unit error: " + cause.getMessage(), ProcessEvent.Severity.ERROR));
+    return new RuntimeException("Failed to run unit operation " + unitName, cause);
+  }
+
+  /**
+   * Converts an execution exception from a worker thread into the original runtime failure when
+   * possible.
+   *
+   * @param mode the execution mode that failed
+   * @param exception the execution exception returned by the worker future
+   * @return runtime exception to propagate to the process caller
+   */
+  private RuntimeException createWorkerExecutionException(String mode,
+      java.util.concurrent.ExecutionException exception) {
+    Throwable cause = exception.getCause();
+    if (cause instanceof java.util.concurrent.CompletionException && cause.getCause() != null) {
+      cause = cause.getCause();
+    }
+    if (cause instanceof RuntimeException) {
+      return (RuntimeException) cause;
+    }
+    return new RuntimeException(mode + " execution failed", cause == null ? exception : cause);
+  }
+
+  /**
    * Checks if the process contains any Adjuster units that require iterative convergence.
    *
    * @return true if there are Adjuster units in the process
@@ -1425,7 +1464,7 @@ public class ProcessSystem extends SimulationBaseClass {
             try {
               runUnitProfiled(unit, id);
             } catch (Exception ex) {
-              logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+              throw createUnitRunException(unit, ex);
             }
           }
         }
@@ -1442,7 +1481,7 @@ public class ProcessSystem extends SimulationBaseClass {
                 try {
                   runUnitProfiled(unit, calcId);
                 } catch (Exception ex) {
-                  logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+                  throw createUnitRunException(unit, ex);
                 }
               }
             }
@@ -1452,7 +1491,7 @@ public class ProcessSystem extends SimulationBaseClass {
           try {
             future.get();
           } catch (java.util.concurrent.ExecutionException ex) {
-            logger.error("Parallel execution error: " + ex.getMessage(), ex);
+            throw createWorkerExecutionException("Parallel", ex);
           }
         }
       }
@@ -1530,17 +1569,22 @@ public class ProcessSystem extends SimulationBaseClass {
                 runUnitProfiled(unit, id);
               }
             } catch (Exception ex) {
-              logger.error("error running unit operation " + unit.getName() + " " + ex.getMessage(),
-                  ex);
+              throw createUnitRunException(unit, ex);
             }
           }
           if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
             try {
               runUnitProfiled(unit, id);
             } catch (Exception ex) {
-              logger.error(ex.getMessage(), ex);
+              throw createUnitRunException(unit, ex);
             }
           }
+        }
+
+        if (recycleController.isUseCoordinatedAcceleration()
+            && recycleController.getRecyclesAtCurrentPriority().size() > 1
+            && !recycleController.solvedCurrentPriorityLevel() && iter > 1) {
+          recycleController.runSimultaneousAcceleration();
         }
 
         if (!recycleController.solvedAll() || recycleController.hasHigherPriorityLevel()) {
@@ -1883,7 +1927,7 @@ public class ProcessSystem extends SimulationBaseClass {
           try {
             runUnitProfiled(unit, id);
           } catch (Exception ex) {
-            logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+            throw createUnitRunException(unit, ex);
           }
         }
       } else if (levelGroups.size() == 1) {
@@ -1894,7 +1938,7 @@ public class ProcessSystem extends SimulationBaseClass {
             try {
               runUnitProfiled(unit, id);
             } catch (Exception ex) {
-              logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+              throw createUnitRunException(unit, ex);
             }
           }
         }
@@ -1910,8 +1954,7 @@ public class ProcessSystem extends SimulationBaseClass {
                 try {
                   runUnitProfiled(unitToRun, calcId);
                 } catch (Exception ex) {
-                  logger.error("equipment: " + unitToRun.getName() + " error: " + ex.getMessage(),
-                      ex);
+                  throw createUnitRunException(unitToRun, ex);
                 }
               }));
             }
@@ -1925,7 +1968,7 @@ public class ProcessSystem extends SimulationBaseClass {
                   try {
                     runUnitProfiled(unit, calcId);
                   } catch (Exception ex) {
-                    logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+                    throw createUnitRunException(unit, ex);
                   }
                 }
               }
@@ -1937,7 +1980,7 @@ public class ProcessSystem extends SimulationBaseClass {
           try {
             future.get();
           } catch (java.util.concurrent.ExecutionException ex) {
-            logger.error("Parallel execution error: " + ex.getMessage(), ex);
+            throw createWorkerExecutionException("Parallel", ex);
           }
         }
       }
@@ -2061,7 +2104,7 @@ public class ProcessSystem extends SimulationBaseClass {
             try {
               runUnitProfiled(unit, calcId);
             } catch (Exception ex) {
-              logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+              throw createUnitRunException(unit, ex);
             }
           }
         }
@@ -2088,7 +2131,7 @@ public class ProcessSystem extends SimulationBaseClass {
       java.util.concurrent.CompletableFuture
           .allOf(taskFutures.toArray(new java.util.concurrent.CompletableFuture[0])).get();
     } catch (java.util.concurrent.ExecutionException ex) {
-      logger.error("Dataflow execution error: " + ex.getMessage(), ex);
+      throw createWorkerExecutionException("Dataflow", ex);
     }
 
     for (ProcessEquipmentInterface unit : unitOperations) {
@@ -2408,17 +2451,14 @@ public class ProcessSystem extends SimulationBaseClass {
               runUnitProfiled(unit, id);
             }
           } catch (Exception ex) {
-            logger.error("error running unit uperation " + unit.getName() + " " + ex.getMessage(),
-                ex);
-            publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.ERROR,
-                unit.getName(), "Unit error: " + ex.getMessage(), ProcessEvent.Severity.ERROR));
+            throw createUnitRunException(unit, ex);
           }
         }
         if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
           try {
             runUnitProfiled(unit, id);
           } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
+            throw createUnitRunException(unit, ex);
           }
         }
       }
@@ -2473,11 +2513,8 @@ public class ProcessSystem extends SimulationBaseClass {
           break;
         }
         unitOperations.get(i).run(id);
-        // }
       } catch (Exception ex) {
-        // String error = ex.getMessage();
-        logger.error(
-            "equipment: " + unitOperations.get(i).getName() + " errror: " + ex.getMessage(), ex);
+        throw createUnitRunException(unitOperations.get(i), ex);
       }
     }
     for (int i = 0; i < unitOperations.size(); i++) {
@@ -3307,8 +3344,10 @@ public class ProcessSystem extends SimulationBaseClass {
     /* */
     if (recycleController.solvedAll()) {
       for (int i = 0; i < unitOperations.size(); i++) {
-        logger.info("unit " + unitOperations.get(i).getName() + " solved: "
-            + unitOperations.get(i).solved());
+        if (logger.isDebugEnabled()) {
+          logger.debug("unit " + unitOperations.get(i).getName() + " solved: "
+              + unitOperations.get(i).solved());
+        }
         if (!unitOperations.get(i).solved()) {
           return false;
         }
@@ -3317,6 +3356,72 @@ public class ProcessSystem extends SimulationBaseClass {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Build a human-readable convergence diagnostic report for the process system.
+   *
+   * <p>
+   * The report lists unsolved unit operations and expands distillation column residual diagnostics
+   * so notebook users can identify the unit and convergence gate that prevented the process from
+   * solving.
+   * </p>
+   *
+   * @return multi-line diagnostic report for recycle and unit-operation convergence
+   */
+  public String getConvergenceDiagnostics() {
+    StringBuilder diagnostics = new StringBuilder();
+    diagnostics.append("ProcessSystem Diagnostics:\n");
+    diagnostics.append("  Name: ").append(getName()).append("\n");
+    diagnostics.append("  Units: ").append(unitOperations.size()).append("\n");
+    diagnostics.append("  Recycles solved: ").append(recycleController.solvedAll()).append("\n");
+
+    int unsolvedUnits = 0;
+    diagnostics.append("  Unsolved units:\n");
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      boolean unitSolved = false;
+      try {
+        unitSolved = unit.solved();
+      } catch (Exception ex) {
+        diagnostics.append("    - ").append(unit.getName()).append(" (")
+            .append(unit.getClass().getSimpleName()).append(") threw ")
+            .append(ex.getClass().getSimpleName()).append(" while checking solved state: ")
+            .append(ex.getMessage()).append("\n");
+        unsolvedUnits++;
+        continue;
+      }
+      if (!unitSolved) {
+        diagnostics.append("    - ").append(unit.getName()).append(" (")
+            .append(unit.getClass().getSimpleName()).append(")\n");
+        if (unit instanceof DistillationColumn) {
+          appendIndentedDiagnostics(diagnostics,
+              ((DistillationColumn) unit).getConvergenceDiagnostics(), "      ");
+        }
+        unsolvedUnits++;
+      }
+    }
+    if (unsolvedUnits == 0) {
+      diagnostics.append("    none\n");
+    }
+    if (hasRecycles()) {
+      diagnostics.append("  Recycle diagnostics:\n");
+      appendIndentedDiagnostics(diagnostics, recycleController.getConvergenceDiagnostics(), "    ");
+    }
+    return diagnostics.toString();
+  }
+
+  /**
+   * Append a multi-line diagnostic block using a fixed indentation prefix.
+   *
+   * @param diagnostics destination report builder
+   * @param block diagnostic block to append
+   * @param indent prefix added before every line of {@code block}
+   */
+  private void appendIndentedDiagnostics(StringBuilder diagnostics, String block, String indent) {
+    String[] lines = block.split("\\R");
+    for (String line : lines) {
+      diagnostics.append(indent).append(line).append("\n");
+    }
   }
 
   /** {@inheritDoc} */
@@ -4542,16 +4647,147 @@ public class ProcessSystem extends SimulationBaseClass {
     return minimumFlowForMassBalanceError;
   }
 
+  /**
+   * Calculates total inlet flow for a unit from its reported inlet streams.
+   *
+   * @param unitOp unit operation to inspect
+   * @param unit flow-rate unit
+   * @return total inlet flow in the requested unit, or fallback flow for source units
+   */
   private double calculateInletFlow(ProcessEquipmentInterface unitOp, String unit) {
     try {
-      // Try to get inlet flow from the unit operation's thermodynamic system
+      List<StreamInterface> inletStreams = getReportedInletStreams(unitOp);
+      if (inletStreams != null && !inletStreams.isEmpty()) {
+        return sumStreamFlows(inletStreams, unit);
+      }
+    } catch (Exception e) {
+      logger.debug("Could not read inlet streams for unit {}: {}", unitOp.getName(),
+          e.getMessage());
+    }
+
+    if (unitOp instanceof StreamInterface) {
+      try {
+        return ((StreamInterface) unitOp).getFlowRate(unit);
+      } catch (Exception e) {
+        logger.debug("Could not read stream flow for unit {}: {}", unitOp.getName(),
+            e.getMessage());
+      }
+    }
+
+    try {
       if (unitOp.getThermoSystem() != null) {
         return unitOp.getThermoSystem().getFlowRate(unit);
       }
     } catch (Exception e) {
-      // Ignore and return 0
+      logger.debug("Could not read thermo-system flow for unit {}: {}", unitOp.getName(),
+          e.getMessage());
     }
     return 0.0;
+  }
+
+  /**
+   * Gets inlet streams reported by equipment-specific getter methods.
+   *
+   * @param unitOp unit operation to inspect
+   * @return list of inlet streams reported by the unit operation
+   */
+  private List<StreamInterface> getReportedInletStreams(ProcessEquipmentInterface unitOp) {
+    List<StreamInterface> inletStreams = new ArrayList<>();
+    addUniqueStreams(unitOp.getInletStreams(), inletStreams);
+    if (!inletStreams.isEmpty()) {
+      return inletStreams;
+    }
+    addStreamsFromGetter(unitOp, "getInputStreams", inletStreams);
+    if (!inletStreams.isEmpty()) {
+      return inletStreams;
+    }
+    addStreamsFromGetter(unitOp, "getInletStream", inletStreams);
+    return inletStreams;
+  }
+
+  /**
+   * Adds stream entries to a destination list while preserving identity uniqueness.
+   *
+   * @param sourceStreams source stream entries
+   * @param destination destination stream list
+   */
+  private void addUniqueStreams(Iterable<StreamInterface> sourceStreams,
+      List<StreamInterface> destination) {
+    if (sourceStreams == null) {
+      return;
+    }
+    for (StreamInterface stream : sourceStreams) {
+      addUniqueStream(stream, destination);
+    }
+  }
+
+  /**
+   * Adds a stream if the same stream object is not already present.
+   *
+   * @param stream stream to add
+   * @param streams destination stream list
+   */
+  private void addUniqueStream(StreamInterface stream, List<StreamInterface> streams) {
+    if (stream == null) {
+      return;
+    }
+    for (StreamInterface existing : streams) {
+      if (existing == stream) {
+        return;
+      }
+    }
+    streams.add(stream);
+  }
+
+  /**
+   * Adds streams returned by a no-argument getter if the unit exposes it.
+   *
+   * @param unitOp unit operation to inspect
+   * @param getterName name of the getter method
+   * @param streams destination stream list
+   */
+  private void addStreamsFromGetter(ProcessEquipmentInterface unitOp, String getterName,
+      List<StreamInterface> streams) {
+    try {
+      java.lang.reflect.Method getter = unitOp.getClass().getMethod(getterName);
+      getter.setAccessible(true);
+      Object value = getter.invoke(unitOp);
+      if (value instanceof StreamInterface) {
+        addUniqueStream((StreamInterface) value, streams);
+      } else if (value instanceof Iterable<?>) {
+        for (Object stream : (Iterable<?>) value) {
+          if (stream instanceof StreamInterface) {
+            addUniqueStream((StreamInterface) stream, streams);
+          }
+        }
+      } else if (value instanceof StreamInterface[]) {
+        for (StreamInterface stream : (StreamInterface[]) value) {
+          addUniqueStream(stream, streams);
+        }
+      }
+    } catch (NoSuchMethodException e) {
+      logger.trace("Unit {} has no {} method", unitOp.getName(), getterName);
+    } catch (Exception e) {
+      logger.debug("Could not invoke {} on unit {}: {}", getterName, unitOp.getName(),
+          e.getMessage());
+    }
+  }
+
+  /**
+   * Sums flow rates for reported streams.
+   *
+   * @param streams streams to sum
+   * @param unit flow-rate unit
+   * @return total flow rate in the requested unit
+   */
+  private double sumStreamFlows(List<StreamInterface> streams, String unit) {
+    double totalFlow = 0.0;
+    for (StreamInterface stream : streams) {
+      if (stream != null) {
+        totalFlow += stream.getFlowRate(unit);
+      }
+    }
+    return totalFlow;
   }
 
   private double calculatePercentError(double massBalanceError, double inletFlow) {
@@ -5057,9 +5293,11 @@ public class ProcessSystem extends SimulationBaseClass {
     try {
       switch (port) {
         case "gasout":
+        case "gasoutstream":
         case "gas":
           return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
         case "liquidout":
+        case "liquidoutstream":
         case "liquid":
           return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
         case "oilout":
@@ -5068,14 +5306,49 @@ public class ProcessSystem extends SimulationBaseClass {
         case "waterout":
         case "water":
           return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
+        case "out":
+        case "outstream":
         case "outlet":
         default:
+          // Handle legacy indexed split aliases: "splitStream_0", "splitStream_1", etc.
+          if (port.startsWith("splitstream_") && port.length() > 12) {
+            try {
+              int idx = Integer.parseInt(port.substring(12));
+              return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class)
+                  .invoke(unit, idx);
+            } catch (NumberFormatException nfe) {
+              // fall through to default outlet
+            }
+          }
           // Handle indexed split streams: "split0", "split1", etc.
           if (port.startsWith("split") && port.length() > 5) {
             try {
               int idx = Integer.parseInt(port.substring(5));
               return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class)
                   .invoke(unit, idx);
+            } catch (NumberFormatException nfe) {
+              // fall through to default outlet
+            }
+          }
+          // Handle indexed HeatExchanger ports emitted by JsonProcessExporter:
+          // "outlet1", "outlet2", etc. Plain "outlet" remains the first outlet.
+          if (port.startsWith("outlet") && port.length() > 6) {
+            try {
+              int idx = Integer.parseInt(port.substring(6));
+              if (unit instanceof HeatExchanger) {
+                return ((HeatExchanger) unit).getOutStream(idx);
+              }
+            } catch (NumberFormatException nfe) {
+              // fall through to default outlet
+            }
+          }
+          // Handle indexed HeatExchanger ports: "hx0", "hx1", etc.
+          if (port.startsWith("hx") && port.length() > 2) {
+            try {
+              int idx = Integer.parseInt(port.substring(2));
+              if (unit instanceof HeatExchanger) {
+                return ((HeatExchanger) unit).getOutStream(idx);
+              }
             } catch (NumberFormatException nfe) {
               // fall through to default outlet
             }
@@ -5280,6 +5553,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * </p>
    */
   public void invalidateGraph() {
+    structureVersion++;
     graphDirty = true;
     cachedGraph = null;
     cachedParallelPlan = null;
@@ -5298,6 +5572,40 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   private void invalidateStructureCaches() {
     invalidateGraph();
+  }
+
+  /**
+   * Returns the current topology version for this process system.
+   *
+   * <p>
+   * The value increments whenever topology-derived caches are invalidated, including unit additions
+   * and explicit calls to {@link #invalidateGraph()}. Parent {@link ProcessModel}s use this to
+   * detect child wiring changes after an area has already been registered.
+   * </p>
+   *
+   * @return monotonic structure version for topology-sensitive caches
+   */
+  public long getStructureVersion() {
+    return structureVersion;
+  }
+
+  /**
+   * Enable or disable coordinated Broyden acceleration for coupled recycle groups.
+   *
+   * @param useCoordinatedAcceleration true to apply coordinated acceleration across
+   *        current-priority recycle loops
+   */
+  public void setUseCoordinatedRecycleAcceleration(boolean useCoordinatedAcceleration) {
+    recycleController.setUseCoordinatedAcceleration(useCoordinatedAcceleration);
+  }
+
+  /**
+   * Returns whether coordinated recycle acceleration is enabled.
+   *
+   * @return true if coordinated recycle acceleration is enabled
+   */
+  public boolean isUseCoordinatedRecycleAcceleration() {
+    return recycleController.isUseCoordinatedAcceleration();
   }
 
   /**

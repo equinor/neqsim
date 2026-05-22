@@ -11,7 +11,6 @@ The Design Framework provides an integrated workflow for automated equipment siz
 
 | Document | Description |
 |----------|-------------|
-| [OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](OPTIMIZATION_IMPROVEMENT_PROPOSAL) | Implementation roadmap and status |
 | [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE) | Production optimization examples |
 | [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK) | Multi-constraint equipment framework |
 | [process_design_guide.md](process_design_guide) | Complete process design workflow |
@@ -165,7 +164,7 @@ spec.setKFactor(0.08);
 spec.setDiameter(2.5, "m");
 spec.setLength(7.5, "m");
 
-// Valve  
+// Valve
 spec.setCv(150.0);
 spec.setMaxValveOpening(90.0);
 
@@ -192,19 +191,19 @@ ProcessBasis basis = ProcessBasis.builder()
     .setFeedFlowRate(50000.0, "kg/hr")
     .setFeedPressure(85.0, "bara")
     .setFeedTemperature(50.0, "C")
-    
+
     // Stage pressures
     .addStagePressure(1, 80.0, "bara")
     .addStagePressure(2, 20.0, "bara")
     .addStagePressure(3, 2.0, "bara")
-    
+
     // Company standards
     .setCompanyStandard("Equinor", "TR2000")
     .setSafetyFactor(1.15)
-    
+
     // Ambient conditions
     .setAmbientTemperature(15.0, "C")
-    
+
     .build();
 ```
 
@@ -270,7 +269,7 @@ DesignResult result = optimizer.optimize();  // Full optimization
 
 **ProcessModule Support:**
 - Use `forProcess(ProcessModule)` for modular process structures
-- Check mode with `optimizer.isModuleMode()` 
+- Check mode with `optimizer.isModuleMode()`
 - Access the module with `optimizer.getModule()`
 - All child ProcessSystems are automatically evaluated for constraints
 
@@ -293,18 +292,18 @@ if (result.isConverged()) {
     // Get metrics
     int iterations = result.getIterations();
     double objective = result.getObjectiveValue();
-    
+
     // Get optimized values
     double gasFlow = result.getOptimizedFlowRate("Export Gas");
-    
+
     // Get equipment sizes
     Map<String, Double> sizes = result.getEquipmentSizes("HP-Separator");
     double diameter = sizes.get("diameter");
-    
+
     // Check constraints
     boolean violated = result.hasViolations();
     List<String> warnings = result.getWarnings();
-    
+
     // Get summary report
     String summary = result.getSummary();
 }
@@ -454,8 +453,8 @@ sep.autoSize("Equinor", "NORSOK-P-001");
 **Example query flow:**
 ```java
 // When Separator.autoSize("Equinor", "NORSOK-P-001") is called:
-SELECT SPECIFICATION, MAXVALUE, MINVALUE 
-FROM TechnicalRequirements_Process 
+SELECT SPECIFICATION, MAXVALUE, MINVALUE
+FROM TechnicalRequirements_Process
 WHERE EQUIPMENTTYPE='Separator' AND Company='Equinor'
 
 // Returns: GasLoadFactor = 0.12-0.15, LiquidRetentionTime = 2-5 min, etc.
@@ -656,7 +655,7 @@ System.out.println("Bottleneck equipment: " + bottleneck.getName());
 if (bottleneck instanceof CapacityConstrainedEquipment) {
     CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) bottleneck;
     CapacityConstraint activeConstraint = constrained.getBottleneckConstraint();
-    
+
     System.out.println("Active constraint: " + activeConstraint.getName());
     System.out.println("Current value: " + activeConstraint.getCurrentValue());
     System.out.println("Design limit: " + activeConstraint.getDesignValue());
@@ -768,9 +767,9 @@ System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
 // Get all constrained equipment
 for (CapacityConstrainedEquipment equip : process.getConstrainedEquipment()) {
     System.out.println("\n" + equip.getName() + ":");
-    
+
     for (CapacityConstraint c : equip.getCapacityConstraints().values()) {
-        String status = c.isViolated() ? "⚠️ EXCEEDED" : 
+        String status = c.isViolated() ? "⚠️ EXCEEDED" :
                        c.isNearLimit() ? "⚡ NEAR LIMIT" : "✓ OK";
         System.out.printf("  %-20s: %6.1f / %6.1f %s (%5.1f%%) %s%n",
             c.getName(),

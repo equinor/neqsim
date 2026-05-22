@@ -120,11 +120,14 @@ public final class IndustrialProfile {
    * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for screening
    * studies and engineering workflows. Available in DESKTOP_ENGINEER and STUDY_TEAM.
    */
-  private static final Set<String> ENGINEERING_ADVANCED =
-      Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runPVT", "runPipeline",
+  private static final Set<String> ENGINEERING_ADVANCED = Collections.unmodifiableSet(
+      new HashSet<>(Arrays.asList("runPVT", "runPipeline", "runWaterHammer", "runRootCauseAnalysis",
           "runFlowAssurance", "crossValidateModels", "runParametricStudy", "runBatch",
           "sizeEquipment", "compareProcesses", "generateReport", "generateVisualization",
-          "queryDataCatalog", "setSimulationVariable", "saveSimulationState")));
+          "queryDataCatalog", "setSimulationVariable", "saveSimulationState", "runMaterialsReview",
+          "runOpenDrainReview", "runNorsokS001Clause10Review", "runOperationalStudy",
+          "runRelief", "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork",
+          "runHAZOP", "runBarrierRegister", "runSafetySystemPerformance")));
 
   /**
    * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools that
@@ -171,6 +174,11 @@ public final class IndustrialProfile {
     map.put("runFlowAssurance", ToolCategory.CALCULATION);
     map.put("calculateStandard", ToolCategory.CALCULATION);
     map.put("runPipeline", ToolCategory.CALCULATION);
+    map.put("runWaterHammer", ToolCategory.CALCULATION);
+    map.put("runRootCauseAnalysis", ToolCategory.CALCULATION);
+    map.put("runMaterialsReview", ToolCategory.CALCULATION);
+    map.put("runOpenDrainReview", ToolCategory.CALCULATION);
+    map.put("runNorsokS001Clause10Review", ToolCategory.CALCULATION);
     map.put("runReservoir", ToolCategory.CALCULATION);
     map.put("runFieldEconomics", ToolCategory.CALCULATION);
     map.put("runDynamic", ToolCategory.CALCULATION);
@@ -180,11 +188,21 @@ public final class IndustrialProfile {
     map.put("sizeEquipment", ToolCategory.CALCULATION);
     map.put("compareProcesses", ToolCategory.CALCULATION);
     map.put("generateVisualization", ToolCategory.CALCULATION);
+    // Process safety tools (API 520/521, IEC 61508/61511, ISO 31000)
+    map.put("runRelief", ToolCategory.CALCULATION);
+    map.put("runLOPA", ToolCategory.CALCULATION);
+    map.put("runSIL", ToolCategory.CALCULATION);
+    map.put("runRiskMatrix", ToolCategory.CALCULATION);
+    map.put("runFlareNetwork", ToolCategory.CALCULATION);
+    map.put("runHAZOP", ToolCategory.CALCULATION);
+    map.put("runBarrierRegister", ToolCategory.CALCULATION);
+    map.put("runSafetySystemPerformance", ToolCategory.CALCULATION);
 
     // Execution tools — modify state, write data
     map.put("setSimulationVariable", ToolCategory.EXECUTION);
     map.put("saveSimulationState", ToolCategory.EXECUTION);
     map.put("compareSimulationStates", ToolCategory.EXECUTION);
+    map.put("runOperationalStudy", ToolCategory.EXECUTION);
     map.put("manageSession", ToolCategory.EXECUTION);
     map.put("solveTask", ToolCategory.EXECUTION);
     map.put("composeWorkflow", ToolCategory.EXECUTION);

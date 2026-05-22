@@ -32,7 +32,7 @@ benchmark trust metadata.
 | Tool | Category | Since | Description |
 |------|----------|-------|-------------|
 | `runFlash` | CALCULATION | v1.0 | Flash calculation (TP, PH, PS, dew, bubble, hydrate) |
-| `runProcess` | CALCULATION | v1.0 | Process simulation from JSON definition |
+| `runProcess` | CALCULATION | v1.0 | ProcessSystem or ProcessModel simulation from JSON definition |
 | `runPVT` | CALCULATION | v1.1 | PVT lab experiments (CME, CVD, DL, saturation, separator, swelling, GOR, viscosity) |
 | `runPipeline` | CALCULATION | v1.1 | Multiphase pipeline flow (Beggs & Brill) |
 | `calculateStandard` | CALCULATION | v1.1 | Gas/oil quality per 22 standards (ISO, AGA, GPA, EN, ASTM) |
@@ -79,6 +79,8 @@ industrial validation.
 | Tool | Category | Since | Description |
 |------|----------|-------|-------------|
 | `runFlowAssurance` | CALCULATION | v1.1 | Flow assurance (hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion) |
+| `runWaterHammer` | CALCULATION | v1.5 | Water/liquid hammer screening for fast valve closures, pump trips, STID routes, tagreader event windows, and pressure envelopes |
+| `runMaterialsReview` | CALCULATION | v1.5 | Process-wide material selection, degradation, CUI, remaining-life, and STID-backed integrity review |
 | `crossValidateModels` | CALCULATION | v1.1 | Cross-validate process under multiple EOS models |
 | `runParametricStudy` | CALCULATION | v1.1 | Multi-variable parametric sweep |
 | `runBatch` | CALCULATION | v1.0 | Multi-point sensitivity sweep |
@@ -87,6 +89,16 @@ industrial validation.
 | `generateReport` | ADVISORY | v1.1 | Generate structured engineering reports |
 | `queryDataCatalog` | ADVISORY | v1.2 | Browse thermodynamic databases (components, standards, materials, EOS models) |
 | `generateVisualization` | CALCULATION | v1.2 | Inline SVG/Mermaid/HTML visualization |
+| `runRelief` | CALCULATION | v1.3 | PSV sizing per API 520 (gas/liquid/two-phase) and API 521 fire heat input |
+| `runLOPA` | CALCULATION | v1.3 | Layer of Protection Analysis per IEC 61511 / CCPS, with required-SIL gap analysis |
+| `runSIL` | CALCULATION | v1.3 | SIL verification per IEC 61508 / 61511 (1oo1, 1oo2, 2oo3 architectures) |
+| `runRiskMatrix` | CALCULATION | v1.3 | 5×5 risk matrix scoring per ISO 31000 / NORSOK Z-013 |
+| `runFlareNetwork` | CALCULATION | v1.3 | Flare radiation profile and API 521 safe-distance contour |
+| `runHAZOP` | CALCULATION | v1.4 | Simulation-backed IEC 61882 HAZOP worksheets from ProcessSystem scenarios and document evidence |
+| `runBarrierRegister` | CALCULATION | v1.4 | Evidence-linked PSF/SCE barrier register validation with LOPA/SIL/bow-tie/QRA handoffs |
+| `runSafetySystemPerformance` | CALCULATION | v1.4 | Active/passive safety-system performance analysis with quantitative SIL/PFD bridge |
+| `runOperationalStudy` | EXECUTION | v1.5 | P&ID/tag-driven valve scenarios, field-data binding, controller response metrics, evidence-package bottleneck reports, and operating-envelope margin/trip screening on local simulation copies |
+| `runRootCauseAnalysis` | CALCULATION | v1.6 | Bayesian root cause analysis integrating OREDA, historian, STID, and simulation for ranked failure hypotheses |
 
 ## Experimental Tools
 
@@ -140,6 +152,7 @@ and must not be used for engineering decisions without independent validation.
 | `design_gas_processing` | Step-by-step gas processing design |
 | `pvt_study` | Complete PVT study workflow |
 | `flow_assurance_screening` | Pipeline flow assurance screening |
+| `water_hammer_screening` | Fast valve-closure and pump-trip hydraulic surge screening |
 | `field_development_screening` | Field development concept screening |
 | `co2_ccs_chain` | CO2 CCS chain analysis |
 | `teg_dehydration_design` | TEG dehydration unit design |
@@ -153,32 +166,56 @@ Every tool response follows this envelope structure:
 
 ```json
 {
-  "status": "success | error",
   "apiVersion": "1.0",
+  "status": "success | error",
+  "tool": "runFlash",
+  "data": { "canonicalPayload": "..." },
   "provenance": {
     "model": "SRK",
     "flashType": "TP",
     "convergence": { "converged": true, "iterations": 8 },
     "assumptions": ["..."],
-    "limitations": ["..."],
-    "warnings": []
+    "limitations": ["..."]
   },
-  "data": { ... }
+  "validation": {
+    "valid": true,
+    "phase": "runner",
+    "message": "Runner input checks completed"
+  },
+  "qualityGate": {
+    "verdict": "passed",
+    "summary": "Calculation completed",
+    "engineeringReviewRequired": true
+  },
+  "warnings": []
 }
 ```
+
+String-based runners may also preserve legacy top-level fields such as `flash`, `fluid`,
+`process`, `units`, or `diff` for backward compatibility. New clients should read the canonical
+payload from `data` and use `tool` to identify the MCP operation that produced the response.
 
 ### Stable response fields
 
 | Field | Type | Guaranteed |
 |-------|------|------------|
-| `status` | `"success"` or `"error"` | Always present |
 | `apiVersion` | string | Always present |
-| `provenance.model` | string | Present on success |
-| `provenance.convergence.converged` | boolean | Present on success |
+| `status` | `"success"` or `"error"` | Always present |
+| `tool` | string | Present for tool runner responses |
+| `data` | object | Present for successful responses and standardized automation/lifecycle responses |
+| `provenance` | object | Present on standardized runner responses |
+| `validation.valid` | boolean | Present on standardized runner responses |
+| `qualityGate.verdict` | string | Present on standardized runner responses |
+| `warnings` | array | Always present on standardized runner responses |
+
+Schema resource paths use snake_case tool names such as `run_flash`, but response `tool` values use
+the MCP method names such as `runFlash`. Schema lookups accept only `input` and `output` as schema
+types; any other type is treated as schema-not-found.
 
 ### Warning taxonomy
 
-Warnings in `provenance.warnings` use these standard codes:
+Warnings in the root `warnings` array, and any tool-specific warning details, use these standard
+codes where a machine-readable code is available:
 
 | Code | Severity | Description |
 |------|----------|-------------|
@@ -218,6 +255,7 @@ of the server version.
 | 1.0 | 1.0.0+ | Initial stable release |
 | 1.1 | 1.1.0+ | Extended domain, session, workflow tools |
 | 1.2 | 1.2.0+ | Platform tools, industrial governance, benchmark trust |
+| 1.5 | 1.5.0+ | Operational evidence packages, materials review, and water-hammer screening |
 
 ---
 
@@ -280,8 +318,8 @@ requirements.
 | Category | Description | Examples |
 |----------|-------------|---------|
 | `ADVISORY` | Read-only discovery and validation; always allowed | `getCapabilities`, `getExample`, `getSchema`, `validateInput`, `searchComponents` |
-| `CALCULATION` | Stateless engineering calculations | `runFlash`, `runProcess`, `runPVT`, `runPipeline`, `calculateStandard` |
-| `EXECUTION` | State-modifying operations; may require approval | `setSimulationVariable`, `manageSession`, `solveTask` |
+| `CALCULATION` | Stateless engineering calculations | `runFlash`, `runProcess`, `runPVT`, `runPipeline`, `runWaterHammer`, `runMaterialsReview`, `calculateStandard` |
+| `EXECUTION` | State-modifying operations; may require approval | `setSimulationVariable`, `runOperationalStudy`, `manageSession`, `solveTask` |
 | `PLATFORM` | Security, persistence, multi-server; restricted in production | `manageSecurity`, `manageState`, `composeMultiServerWorkflow` |
 
 ### Industrial Core Toolset
@@ -304,7 +342,7 @@ compareSimulationStates, diagnoseAutomation, getAutomationLearningReport,
 getProgress
 ```
 
-Tools such as `runFlowAssurance`, `crossValidateModels`, `runParametricStudy`,
+Tools such as `runFlowAssurance`, `runWaterHammer`, `runMaterialsReview`, `crossValidateModels`, `runParametricStudy`,
 `runBatch`, `sizeEquipment`, `compareProcesses`, and `generateReport` are
 available as **Advanced** tools and may be promoted to the core as formal
 qualification evidence is added.
@@ -322,7 +360,7 @@ and deployment configuration.
 
 ### Auto-Validation Pipeline
 
-When auto-validation is enabled (default in all modes), the following six
+When auto-validation is enabled (default in all modes), selected
 CALCULATION tools automatically append an `"autoValidation"` block to the
 response:
 
@@ -349,7 +387,7 @@ Validation results include:
 ```
 
 Auto-validated tools: `runFlash`, `runProcess`, `runPVT`, `runFlowAssurance`,
-`calculateStandard`, `runPipeline`.
+`runWaterHammer`, `runMaterialsReview`, `calculateStandard`, `runPipeline`.
 
 ### Benchmark Trust Metadata
 

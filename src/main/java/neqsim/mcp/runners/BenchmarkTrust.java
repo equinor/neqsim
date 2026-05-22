@@ -65,10 +65,14 @@ public final class BenchmarkTrust {
     JsonObject tools = new JsonObject();
     tools.add("runFlash", buildFlashTrust());
     tools.add("runProcess", buildProcessTrust());
+    tools.add("runBatch", buildBatchTrust());
     tools.add("runPVT", buildPVTTrust());
     tools.add("runFlowAssurance", buildFlowAssuranceTrust());
     tools.add("calculateStandard", buildStandardsTrust());
     tools.add("runPipeline", buildPipelineTrust());
+    tools.add("runWaterHammer", buildWaterHammerTrust());
+    tools.add("runRootCauseAnalysis", buildRootCauseTrust());
+    tools.add("runMaterialsReview", buildMaterialsReviewTrust());
     tools.add("runReservoir", buildReservoirTrust());
     tools.add("runFieldEconomics", buildEconomicsTrust());
     tools.add("runDynamic", buildDynamicTrust());
@@ -101,6 +105,9 @@ public final class BenchmarkTrust {
       case "runProcess":
         root.add("trust", buildProcessTrust());
         break;
+      case "runBatch":
+        root.add("trust", buildBatchTrust());
+        break;
       case "runPVT":
         root.add("trust", buildPVTTrust());
         break;
@@ -112,6 +119,15 @@ public final class BenchmarkTrust {
         break;
       case "runPipeline":
         root.add("trust", buildPipelineTrust());
+        break;
+      case "runWaterHammer":
+        root.add("trust", buildWaterHammerTrust());
+        break;
+      case "runRootCauseAnalysis":
+        root.add("trust", buildRootCauseTrust());
+        break;
+      case "runMaterialsReview":
+        root.add("trust", buildMaterialsReviewTrust());
         break;
       case "runReservoir":
         root.add("trust", buildReservoirTrust());
@@ -125,6 +141,21 @@ public final class BenchmarkTrust {
       case "runBioprocess":
         root.add("trust", buildBioprocessTrust());
         break;
+      case "crossValidateModels":
+        root.add("trust", buildCrossValidationTrust());
+        break;
+      case "runParametricStudy":
+        root.add("trust", buildParametricTrust());
+        break;
+      case "getPhaseEnvelope":
+        root.add("trust", buildPhaseEnvelopeTrust());
+        break;
+      case "getPropertyTable":
+        root.add("trust", buildPropertyTableTrust());
+        break;
+      case "sizeEquipment":
+        root.add("trust", buildEquipmentSizingTrust());
+        break;
       default:
         root.addProperty("maturityLevel", "TESTED");
         root.addProperty("note", "No specific benchmark data available for this tool. "
@@ -133,6 +164,72 @@ public final class BenchmarkTrust {
     }
 
     return GSON.toJson(root);
+  }
+
+  /**
+   * Returns the maturity level declared for a tool.
+   *
+   * @param toolName the MCP tool name
+   * @return maturity level such as VALIDATED, TESTED, or EXPERIMENTAL
+   */
+  public static String getMaturityLevel(String toolName) {
+    if (toolName == null) {
+      return "TESTED";
+    }
+    JsonObject trust;
+    switch (toolName) {
+      case "runFlash":
+        trust = buildFlashTrust();
+        break;
+      case "runProcess":
+        trust = buildProcessTrust();
+        break;
+      case "runBatch":
+        trust = buildBatchTrust();
+        break;
+      case "runPVT":
+        trust = buildPVTTrust();
+        break;
+      case "runFlowAssurance":
+        trust = buildFlowAssuranceTrust();
+        break;
+      case "calculateStandard":
+        trust = buildStandardsTrust();
+        break;
+      case "runPipeline":
+        trust = buildPipelineTrust();
+        break;
+      case "runReservoir":
+        trust = buildReservoirTrust();
+        break;
+      case "runFieldEconomics":
+        trust = buildEconomicsTrust();
+        break;
+      case "runDynamic":
+        trust = buildDynamicTrust();
+        break;
+      case "runBioprocess":
+        trust = buildBioprocessTrust();
+        break;
+      case "crossValidateModels":
+        trust = buildCrossValidationTrust();
+        break;
+      case "runParametricStudy":
+        trust = buildParametricTrust();
+        break;
+      case "getPhaseEnvelope":
+        trust = buildPhaseEnvelopeTrust();
+        break;
+      case "getPropertyTable":
+        trust = buildPropertyTableTrust();
+        break;
+      case "sizeEquipment":
+        trust = buildEquipmentSizingTrust();
+        break;
+      default:
+        return "TESTED";
+    }
+    return trust.has("maturityLevel") ? trust.get("maturityLevel").getAsString() : "TESTED";
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -214,6 +311,26 @@ public final class BenchmarkTrust {
     limitations.add("Distillation column convergence can fail for highly non-ideal systems");
     limitations.add("Recycle loops may require manual convergence tuning");
     limitations.add("Dynamic simulation timestep must be small enough for controller stability");
+    trust.add("knownLimitations", limitations);
+
+    return trust;
+  }
+
+  /**
+   * Builds trust metadata for batch flash calculations.
+   *
+   * @return batch flash trust metadata
+   */
+  private static JsonObject buildBatchTrust() {
+    JsonObject trust = new JsonObject();
+    trust.addProperty("maturityLevel", "TESTED");
+    trust.addProperty("description",
+        "Batch flash calculations inherit accuracy from runFlash and add per-case status reporting.");
+
+    JsonArray limitations = new JsonArray();
+    limitations.add("Large batches can be slow because each case runs an independent flash");
+    limitations.add("Partial failures should be inspected case-by-case before using statistics");
+    limitations.add("Cases share base assumptions unless explicitly overridden");
     trust.add("knownLimitations", limitations);
 
     return trust;
@@ -306,6 +423,112 @@ public final class BenchmarkTrust {
     limitations.add("Slug flow prediction is approximate");
     limitations.add("Not suitable for very high GVF (>0.99) or very low GVF (<0.01)");
     limitations.add("Does not model terrain effects (slug catcher sizing)");
+    trust.add("knownLimitations", limitations);
+
+    return trust;
+  }
+
+  /**
+   * Builds trust metadata for the water-hammer screening tool.
+   *
+   * @return JSON object with trust metadata
+   */
+  private static JsonObject buildWaterHammerTrust() {
+    JsonObject trust = new JsonObject();
+    trust.addProperty("maturityLevel", "TESTED");
+    trust.addProperty("description",
+        "Water-hammer / liquid-hammer screening using a "
+            + "single-line Method of Characteristics transient model. Suitable for fast ranking "
+            + "of valve closure and pump-trip scenarios before a detailed surge study.");
+
+    JsonArray cases = new JsonArray();
+    cases.add(validationCase("Joukowsky pressure rise for instantaneous closure", "SRK",
+        "Peak pressure envelope consistent with rho*a*deltaV estimate",
+        "Classic water-hammer theory"));
+    cases.add(validationCase("Courant-limited transient stability", "MOC",
+        "Stable time step follows dx/a condition", "NeqSim JUnit test suite"));
+    trust.add("validationCases", cases);
+
+    JsonArray limitations = new JsonArray();
+    limitations.add("Equivalent single-line model; split varying-diameter routes into sections");
+    limitations.add("Valve closure curves are linear unless event schedule provides alternatives");
+    limitations.add("Support loads, pipe stress, vapor cavity collapse, and detailed pump curves "
+        + "require specialist surge software or vendor data");
+    limitations.add("Use as a screening and evidence-pack tool, not as final design approval");
+    trust.add("knownLimitations", limitations);
+
+    return trust;
+  }
+
+  /**
+   * Builds trust metadata for the materials review tool.
+   *
+   * @return JSON object with trust metadata
+   */
+  private static JsonObject buildMaterialsReviewTrust() {
+    JsonObject trust = new JsonObject();
+    trust.addProperty("maturityLevel", "TESTED");
+    trust.addProperty("description",
+        "Process-wide materials review orchestrating tested NeqSim corrosion calculators "
+            + "(NORSOK M-506, NORSOK M-001, ISO 15156/NACE MR0175, chloride SCC, "
+            + "oxygen corrosion, dense CO2, hydrogen, ammonia, CUI, and remaining-life screening). "
+            + "Suitable for screening, challenge/support work, and STID-backed review packages.");
+
+    JsonArray cases = new JsonArray();
+    cases.add(validationCase("Wet CO2/H2S line material review", "SRK/process register",
+        "Identifies CO2 corrosion, sour service, material recommendation, and corrosion allowance",
+        "NORSOK M-001/M-506 regression tests"));
+    cases.add(validationCase("Insulated chloride service", "STID register",
+        "Identifies chloride SCC, oxygen corrosion, CUI risk, and inspection interval",
+        "API 581/API 583 and corrosion unit tests"));
+    trust.add("validationCases", cases);
+
+    JsonArray limitations = new JsonArray();
+    limitations
+        .add("Screening-level; final materials selection requires discipline engineer approval");
+    limitations.add("Quality depends on normalized STID/materials-register completeness");
+    limitations.add("API 579/API 581 quantitative RBI is not fully implemented in this runner");
+    limitations.add("Document retrieval and OCR are handled outside the Java runner");
+    trust.add("knownLimitations", limitations);
+
+    return trust;
+  }
+
+  /**
+   * Builds trust metadata for the root-cause analysis tool.
+   *
+   * @return JSON object with trust metadata
+   */
+  private static JsonObject buildRootCauseTrust() {
+    JsonObject trust = new JsonObject();
+    trust.addProperty("maturityLevel", "TESTED");
+    trust.addProperty("description", "Equipment root-cause analysis that combines OREDA-style "
+        + "priors, hypothesis-specific historian/STID evidence fingerprints, and conservative "
+        + "process-simulation perturbation checks. Suitable for operations troubleshooting and "
+        + "shift-to-shift investigation support, not for replacing discipline engineer review.");
+
+    JsonArray cases = new JsonArray();
+    cases.add(validationCase("Compressor high vibration", "SRK process model",
+        "Ranks bearing degradation, rotor imbalance, liquid ingestion, and misalignment using "
+            + "vibration/level/bearing-temperature evidence patterns",
+        "RootCauseAnalyzerTest and OREDA-style hypothesis library"));
+    cases.add(validationCase("Compressor efficiency degradation", "SRK process model",
+        "Applies compressor efficiency perturbation and compares KPI direction with historian tags",
+        "SimulationVerifier regression tests"));
+    cases.add(validationCase("Separator liquid carryover", "Process historian + STID",
+        "Uses level, demister differential pressure, feed-rate, and carryover fingerprints",
+        "Root-cause diagnosis package tests"));
+    trust.add("validationCases", cases);
+
+    JsonArray limitations = new JsonArray();
+    limitations
+        .add("Confidence scores are Bayesian-inspired rankings, not calibrated " + "probabilities");
+    limitations.add("Quality depends on historian tag mapping, data quality, and STID/design-limit "
+        + "completeness");
+    limitations.add("Simulation verification is limited to supported perturbations and reports "
+        + "neutral when unsupported");
+    limitations.add("Final operating decisions require qualified rotating-equipment, process, "
+        + "or control-system review");
     trust.add("knownLimitations", limitations);
 
     return trust;

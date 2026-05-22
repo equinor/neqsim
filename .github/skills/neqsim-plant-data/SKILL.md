@@ -1,14 +1,22 @@
 ---
 name: neqsim-plant-data
-description: "Connecting NeqSim process simulations to plant historian data via tagreader. USE WHEN: reading data from OSIsoft PI or Aspen IP.21 historians, building tag mappings for process equipment, comparing simulated vs measured values, running digital twin loops, or integrating NeqSim models with operational data. Covers tagreader API, tag mapping patterns, data quality handling, mock data generation, and model-vs-plant comparison workflows."
+description: "Connecting NeqSim process simulations to plant historian data via tagreader. USE WHEN: reading data from OSIsoft PI or Aspen IP.21 historians, building tag mappings for process equipment, comparing simulated vs measured values, running digital twin loops, integrating NeqSim models with operational data, or extracting event windows for water-hammer screening. Covers tagreader API, tag mapping patterns, data quality handling, mock data generation, model-vs-plant comparison workflows, and valve/pump transient snapshots."
 last_verified: "2026-07-04"
 ---
 
 # Plant Data Integration with Tagreader
 
 Patterns for connecting NeqSim process simulations to real plant data from
-OSIsoft PI and Aspen IP.21 historians using the
-[tagreader-python](https://github.com/equinor/tagreader-python) package.
+OSIsoft PI and Aspen IP.21 historians using the tagreader package.
+
+For P&ID-driven operational studies, also load `neqsim-pid-process-operations`
+to map instrument bubbles and valve symbols to logical tag names, infer active
+state, and drive steady-state or dynamic NeqSim scenarios.
+
+For water-hammer or liquid-hammer screening, also load `neqsim-water-hammer` and
+extract short event windows with inlet pressure, temperature, flow rate, valve
+position, pump speed/status, and observed closure/trip timing for MCP
+`runWaterHammer`.
 
 ## Installation
 
@@ -28,7 +36,8 @@ pi_sources = tagreader.list_sources("piwebapi")     # OSIsoft PI Web API
 aspen_sources = tagreader.list_sources("aspenone")   # Aspen IP.21 REST API
 ```
 
-For non-Equinor servers, supply `url`, `auth`, and optionally `verify_ssl`:
+For custom historian deployments, supply `url`, `auth`, and optionally
+`verify_ssl`:
 
 ```python
 from requests_ntlm import HttpNtlmAuth
@@ -49,7 +58,7 @@ c.connect()
 c = tagreader.IMSClient("MY_ASPEN_SOURCE", "aspenone")
 c.connect()
 
-# Non-Equinor with custom auth
+# Custom deployment with explicit auth
 c = tagreader.IMSClient(
     datasource="myplant",
     imstype="aspenone",
@@ -68,9 +77,9 @@ c.connect()
 | `datasource` | Yes | Name of the data source (from `list_sources()`) |
 | `imstype` | Yes | `"piwebapi"` or `"aspenone"` |
 | `tz` | No | Timezone for timestamps. Default: `"Europe/Oslo"` |
-| `url` | No | Server URL (needed for non-Equinor servers) |
+| `url` | No | Server URL for custom deployments |
 | `verify_ssl` | No | SSL verification. Default: `True` |
-| `auth` | No | Auth object. Default: Kerberos (Equinor) |
+| `auth` | No | Auth object. Default is determined by the configured source |
 | `cache` | No | Local disk cache for avoiding re-reads |
 
 ### Searching for Tags
@@ -307,7 +316,7 @@ def get_plant_value(df, tag_map, param_name, aggregation='mean'):
 
 ## Naming Conventions for Plant Tags
 
-Common NCS / ISO 14617 tag naming patterns:
+Common ISA/ISO-style tag naming patterns:
 
 | Prefix | Meaning | Example |
 |--------|---------|--------|
@@ -323,6 +332,23 @@ Common NCS / ISO 14617 tag naming patterns:
 | `.OP` | Output (controller) | — |
 
 Tag structure: `SOURCE-SYSTEMNUMBER_TAGTYPE_SEQUENCE.ATTRIBUTE`
+
+## Active State from P&ID and Historian Tags
+
+Do not infer active equipment or train state from one tag alone. Combine P&ID
+topology with independent historian indicators:
+
+| Indicator | Active evidence | Inactive evidence |
+|-----------|-----------------|-------------------|
+| Flow | above meter noise threshold | zero or near-zero flow |
+| Valve position | inlet and outlet path open | inlet or outlet path closed |
+| Pressure | follows connected process pressure | static, isolated, or decaying pressure |
+| Temperature | process-like trend | ambient or stagnant trend |
+| Level | credible level with movement | frozen, bad quality, or maintenance state |
+| Rotating equipment | run status, speed, or power | stopped or zero power |
+
+Store the logical P&ID tag map separately from private historian tag names. Save
+the task-local binding in `step1_scope_and_research/references/tag_mapping.json`.
 
 ## Mock Data for Demo/Testing
 
@@ -558,9 +584,8 @@ Step 1-4: Local Development
   ├── Compare model vs plant
   └── Tune model parameters
 
-Step 5: NeqSimAPI (Cloud)
-  └── Deploy model as REST endpoint
-      https://neqsimapi.app.radix.equinor.com/docs
+Step 5: NeqSimAPI or another deployment target
+    └── Deploy model as a REST endpoint in the user's environment
 
 Step 6: Live Digital Twin
   ├── Sigma: auto-connects PI/Aspen tags to NeqSimAPI
@@ -573,14 +598,14 @@ Step 7: What-If / Prediction
   └── Generate VFP tables for reservoir simulation
 ```
 
-## STID → Tagreader → CSV → NeqSim Pipeline
+## Document Repository -> Tagreader -> CSV -> NeqSim Pipeline
 
 When engineering tasks involve real plant equipment, the full data integration
-pipeline flows from STID document retrieval through historian data to NeqSim
+pipeline flows from engineering document retrieval through historian data to NeqSim
 simulation. All outputs go inside the task folder.
 
 ```
-STID (tag search)  →  Tagreader (historian read)  →  CSV (persistent snapshot)  →  NeqSim (simulation)
+Documents (tag search)  ->  Tagreader (historian read)  ->  CSV snapshot  ->  NeqSim
         ↓                      ↓                            ↓                            ↓
   references/           references/                   references/                  step2_analysis/
   ├── *.pdf             ├── plant_data_raw.csv        ├── plant_data_cleaned.csv   └── notebook.ipynb
@@ -605,10 +630,10 @@ FIGURES_DIR = TASK_DIR / "figures"
 REFS_DIR.mkdir(parents=True, exist_ok=True)
 FIGURES_DIR.mkdir(exist_ok=True)
 
-# ── 1. STID: retrieve documents for equipment tags ──
-# (Run from terminal before notebook, or use stidapi in code)
-# python devtools/stid_download.py --task-dir {TASK_DIR} \
-#     --inst MYINST --tags 35-KA001A 35-KA001B --convert-png
+# ── 1. Document repository: retrieve documents for equipment tags ──
+# (Run from terminal before notebook, or use a private retrieval backend)
+# Use the project's private document retrieval command or place documents
+# directly in REFS_DIR before running the notebook.
 
 # ── 2. TAG MAP: define logical names → historian tags ──
 TAG_MAP = {
@@ -708,8 +733,8 @@ print(f"Digital twin results: {len(df_results)} points → {csv_results}")
 
 | File | Location | Content | Purpose |
 |------|----------|---------|---------|
-| `*.pdf` | `references/` | STID engineering drawings | Vendor data extraction |
-| `stid_retrieval_manifest.json` | `references/` | STID download traceability | Provenance |
+| `*.pdf` | `references/` | Engineering drawings and datasheets | Vendor data extraction |
+| `document_retrieval_manifest.json` | `references/` | Document retrieval traceability | Provenance |
 | `tag_mapping.json` | `references/` | Logical name → PI/IP.21 tag | Reproducibility |
 | `plant_data_raw.csv` | `references/` | Raw historian snapshot | Offline rerun |
 | `plant_data_cleaned.csv` | `references/` | Quality-filtered data | Analysis input |
@@ -745,3 +770,70 @@ folder and anyone can reproduce the analysis.
 | Timezone confusion | Specify `tz` parameter in `IMSClient` constructor |
 | Java type errors when passing plant values to NeqSim | Always use `float(value)` — Python numpy types don't auto-convert |
 | Model diverges with noisy plant data | Filter outliers and validate inputs before each `process.run()` |
+
+## Root Cause Analysis Integration
+
+Tagreader data feeds directly into the `neqsim.process.diagnostics.RootCauseAnalyzer`
+for automated equipment diagnosis. See `neqsim-root-cause-analysis` skill for
+the full framework.
+
+### Tagreader to RCA Workflow
+
+```python
+import tagreader
+import pandas as pd
+import json
+
+# 1. Tag mapping from P&ID / STID (parameter name → historian tag)
+tag_map = {
+    "VT-101.PV": "vibration_mm_s",
+    "TT-101.PV": "discharge_temp_C",
+    "PT-101.PV": "suction_pressure_bara",
+    "FT-101.PV": "mass_flow_kg_hr",
+    "JI-101.PV": "power_kW",
+}
+
+# 2. Pull data from historian
+c = tagreader.IMSClient("plant-server", "piwebapi")
+df = c.read(list(tag_map.keys()), "2025-06-01", "2025-06-15")
+df = df.rename(columns=tag_map)
+
+# 3. Save to task folder for reproducibility
+csv_path = TASK_DIR / "step1_scope_and_research" / "references" / "historian_export.csv"
+df.to_csv(str(csv_path), index=True)
+
+# 4. Convert to CSV string for RCA input
+historian_csv = df.reset_index().to_csv(index=False)
+
+# 5. Build RCA input JSON
+rca_input = {
+    "processJson": json.dumps(process_json),
+    "equipmentName": "Compressor-1",
+    "symptom": "HIGH_VIBRATION",
+    "historianCsv": historian_csv,
+    "simulationEnabled": True,
+    "designLimits": {
+        "vibration_mm_s": [None, 7.1],
+        "discharge_temp_C": [None, 180.0],
+    },
+    "stidData": {
+        "tagreaderSource": "PI Web API: " + ", ".join(tag_map.keys()),
+        "sourceReference": "DS-K-101 rev.C",
+    },
+}
+
+# 6. Run RCA
+RootCauseRunner = ns.JClass("neqsim.mcp.runners.RootCauseRunner")
+result = json.loads(str(RootCauseRunner.run(json.dumps(rca_input))))
+```
+
+### Key Points
+
+- **Tag mapping** links plant tags to the parameter names used in hypothesis
+  fingerprints (e.g., `vibration`, `bearingTemperature`, `lubeOilPressure`)
+- **CSV format**: first column is timestamp (seconds or datetime), remaining
+  columns are parameter names — this is what `EvidenceCollector.loadFromCsv()` expects
+- **Source traceability**: include `tagreaderSource` in `stidData` so the RCA
+  report links each evidence item to the original historian tag
+- **Reproducibility**: always save the historian export CSV to
+  `step1_scope_and_research/references/` so the analysis can be rerun offline

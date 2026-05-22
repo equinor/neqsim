@@ -420,7 +420,20 @@ public class BottleneckAnalysisOptimizerTest {
   public void testCompressorInvalidWhenOutsideChartRange() {
     // Push flow rate very high to force compressors outside their valid envelope
     inletStream.setFlowRate(5000000.0, "kg/hr"); // 2.5x nominal
-    processSystem.run();
+    RuntimeException processRunFailure = null;
+    try {
+      processSystem.run();
+    } catch (RuntimeException exception) {
+      processRunFailure = exception;
+    }
+
+    boolean processRejectedExtremeFlow =
+        processRunFailure != null && processRunFailure.getMessage() != null
+            && processRunFailure.getMessage().contains("Failed to run unit operation")
+            && processRunFailure.getMessage().contains("Compressor Outlet Manifold");
+    if (processRunFailure != null && !processRejectedExtremeFlow) {
+      throw processRunFailure;
+    }
 
     // At least one compressor should have invalid simulation
     boolean anyInvalid = !ups1Comp.isSimulationValid() || !ups2Comp.isSimulationValid()
@@ -437,7 +450,8 @@ public class BottleneckAnalysisOptimizerTest {
     // At very high flow, compressors should either:
     // - Have zero/negative polytropic head
     // - Have speed outside chart range
-    Assertions.assertTrue(anyInvalid || !ups3Errors.isEmpty(),
+    // - Cause the downstream manifold run to reject the infeasible operating point
+    Assertions.assertTrue(anyInvalid || !ups3Errors.isEmpty() || processRejectedExtremeFlow,
         "At extreme flow rates, compressors should show invalid simulation or validation errors");
   }
 

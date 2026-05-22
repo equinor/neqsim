@@ -403,11 +403,12 @@ def _render_table_to_doc(doc, table_lines):
         para.paragraph_format.space_before = Pt(3)
         para.paragraph_format.space_after = Pt(3)
         para.paragraph_format.first_line_indent = Cm(0)
-        run = para.add_run(cell_text)
-        run.bold = True
-        run.font.size = Pt(9)
-        run.font.name = "Times New Roman"
-        run.font.color.rgb = RGBColor(0x1A, 0x1A, 0x1A)
+        _add_rich_text_with_math(para, cell_text)
+        for run in para.runs:
+            run.bold = True
+            run.font.size = Pt(9)
+            run.font.name = "Times New Roman"
+            run.font.color.rgb = RGBColor(0x1A, 0x1A, 0x1A)
 
     # Data rows
     for i, row_data in enumerate(data_rows):
@@ -423,9 +424,10 @@ def _render_table_to_doc(doc, table_lines):
             para.paragraph_format.space_before = Pt(2)
             para.paragraph_format.space_after = Pt(2)
             para.paragraph_format.first_line_indent = Cm(0)
-            run = para.add_run(cell_text)
-            run.font.size = Pt(9)
-            run.font.name = "Times New Roman"
+            _add_rich_text_with_math(para, cell_text)
+            for run in para.runs:
+                run.font.size = Pt(9)
+                run.font.name = "Times New Roman"
 
     _apply_booktabs_style(table)
 
@@ -1231,13 +1233,17 @@ def render_book_word(book_dir, chapter_filter=None):
         _add_page_break(doc)
 
         # Other frontmatter
+        frontmatter_figures = book_dir / "frontmatter" / "figures"
         for fm in cfg.get("frontmatter", []):
             if fm in ("title_page", "copyright"):
                 continue
             fm_path = book_dir / "frontmatter" / f"{fm}.md"
             if fm_path.exists():
                 text = _strip_html_comments(fm_path.read_text(encoding="utf-8"))
-                _render_md_to_doc(doc, text)
+                _render_md_to_doc(
+                    doc,
+                    text,
+                    figures_dir=frontmatter_figures if frontmatter_figures.exists() else None)
                 _add_page_break(doc)
 
     # Chapters

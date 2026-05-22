@@ -1,0 +1,92 @@
+{
+  "title": "The Cubic Plus Association Equation of State (CPA-EoS): From Fundamentals to Industrial Applications",
+  "target_journal": "technical_book",
+  "paper_type": "characterization",
+  "project_type": "book",
+  "created": "2026-05-05T00:00:00",
+  "status": "book_draft",
+  "novelty_statement": "A reproducible technical monograph that connects CPA equation-of-state theory, NeqSim implementation details, and industrial applications for water-hydrocarbon, gas processing, and CO2 systems.",
+  "research_questions": [
+    {
+      "id": "RQ1",
+      "question": "How can CPA-EoS be derived from thermodynamic fundamentals and association theory in a form useful for engineering calculations?",
+      "hypothesis": "A layered treatment from cubic equations of state through Wertheim association theory makes the CPA formulation accessible without losing mathematical rigor.",
+      "method": "Trace the derivation through Parts I and II of the book and cross-check notation against the nomenclature and chapter equations.",
+      "acceptance_criterion": "All core CPA symbols, residual Helmholtz terms, site fractions, and mixture rules are defined consistently across the manuscript."
+    },
+    {
+      "id": "RQ2",
+      "question": "Which numerical implementation details are required for robust CPA calculations in NeqSim?",
+      "hypothesis": "The book can document the practical solver choices, parameter workflows, and stability checks needed for reproducible CPA calculations.",
+      "method": "Review the numerical implementation chapter and associated notebooks for flash, parameter, and solver examples.",
+      "acceptance_criterion": "The manuscript includes executable examples and implementation guidance for CPA setup, parameter use, and solver behavior."
+    },
+    {
+      "id": "RQ3",
+      "question": "Where does CPA-EoS provide practical value for industrial systems?",
+      "hypothesis": "CPA adds the most value in associating systems such as water-hydrocarbon phase behavior, glycol dehydration, hydrate-related calculations, and CO2 systems with water.",
+      "method": "Use the application chapters and generated figure dossier to document the covered industrial cases.",
+      "acceptance_criterion": "The final book covers water-hydrocarbon, gas processing, and CO2 application chapters with reproducible figures and cited references."
+    }
+  ],
+  "benchmark_design": {
+    "algorithms": [
+      "NeqSim CPA equation-of-state implementation"
+    ],
+    "eos_models": [
+      "SRK-CPA",
+      "CPA"
+    ],
+    "fluid_families": [
+      "pure associating fluids",
+      "water-hydrocarbon systems",
+      "glycol-water systems",
+      "CO2-water systems",
+      "gas processing mixtures"
+    ],
+    "metrics": [
+      "chapter_coverage",
+      "figure_file_coverage",
+      "citation_coverage",
+      "notebook_reproducibility"
+    ],
+    "source_artifacts": [
+      "book.yaml",
+      "nomenclature.yaml",
+      "refs.bib",
+      "figure_dossier.json",
+      "evidence_report.json"
+    ]
+  },
+  "manuscript_outline": {
+    "sections": [
+      "Front matter",
+      "Part I: Foundations",
+      "Part II: The CPA Model",
+      "Part III: Applications and Validation",
+      "Back matter"
+    ],
+    "key_figures": [
+      "CPA association and site-fraction figures",
+      "Pure-component parameter and regression figures",
+      "Water-hydrocarbon application figures",
+      "Gas processing and CO2 system figures"
+    ],
+    "key_tables": [
+      "Nomenclature",
+      "CPA parameter tables",
+      "Application comparison tables"
+    ]
+  },
+  "replication": {
+    "experiments": [],
+    "note": "This book currently commits generated evidence and figure dossiers. Root-level numerical claim replication will be added as chapter notebooks are promoted to explicit experiments."
+  },
+  "workflow_log": [
+    {
+      "stage": "plan",
+      "status": "created_from_existing_book_artifacts",
+      "date": "2026-05-05T00:00:00"
+    }
+  ]
+}

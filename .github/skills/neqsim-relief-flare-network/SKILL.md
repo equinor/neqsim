@@ -1,7 +1,7 @@
 ---
 name: neqsim-relief-flare-network
 version: "1.0.0"
-description: "Relief and flare system design — PSV sizing per API 520 (gas/liquid/two-phase, fire case), API 521 fire heat input, flare load summation, flare-tip sizing, radiation contour (API 521 §6), header back-pressure & Mach. USE WHEN: a task involves PSV sizing, relief contingency analysis, flare network hydraulics, flare radiation/dispersion, or PSV→flare integration. Anchors on neqsim.process.util.fire.ReliefValveSizing, neqsim.process.equipment.flare.{Flare, FlareStack}, neqsim.process.equipment.valve.SafetyValve."
+description: "Relief and flare system design — PSV sizing per API 520 (gas/liquid/two-phase, fire case), API 521 fire heat input, flare load summation, flare-tip sizing, radiation contour (API 521 §6), header back-pressure & Mach. USE WHEN: a task involves PSV sizing, relief contingency analysis, thermal relief for trapped liquid, flare network hydraulics, flare radiation/dispersion, or PSV→flare integration. Anchors on neqsim.process.util.fire.ReliefValveSizing, neqsim.process.equipment.flare.{Flare, FlareStack}, neqsim.process.equipment.valve.SafetyValve."
 last_verified: "2026-04-26"
 requires:
   java_packages: [neqsim.process.util.fire, neqsim.process.equipment.flare, neqsim.process.equipment.valve]
@@ -16,6 +16,8 @@ summation, flare-tip selection, and radiation/dispersion checks per **API 520**,
 ## When to Use
 
 - Sizing a single PSV (gas / liquid / two-phase / fire case)
+- Checking whether a blocked-in liquid segment needs thermal relief or source-term
+    handoff after rupture screening
 - API 521 fire heat input on wetted area
 - Aggregating simultaneous relief loads to a flare header
 - Flare tip diameter and stack height (radiation)
@@ -183,6 +185,7 @@ FlareDispersionSurrogateDTO disp = flare.getDispersionSurrogate();
 ## Related Skills
 
 - [`neqsim-process-safety`](../neqsim-process-safety/SKILL.md) — when PSV is the IPL of last resort in LOPA
+- [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — blocked-in liquid fire rupture screening before thermal relief/PFP decisions
 - [`neqsim-dynamic-simulation`](../neqsim-dynamic-simulation/SKILL.md) — depressurization (blowdown) is separate from PSV
 - [`neqsim-mechanical-design`](../neqsim-api-patterns/SKILL.md) — PSV mechanical via `SafetyValveMechanicalDesign`
 - [`neqsim-standards-lookup`](../neqsim-standards-lookup/SKILL.md) — API 520 / 521 / 526 / 537

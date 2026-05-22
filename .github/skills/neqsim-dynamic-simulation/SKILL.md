@@ -17,6 +17,11 @@ Guide for transient/dynamic process simulation in NeqSim.
 - Compressor surge analysis
 - Pipeline transients (slug flow)
 - Emergency depressurization (EDP/ESD)
+- P&ID-derived valve actions where pressure, level, controller response, or inventory release changes with time
+
+For valve-action studies that start from P&ID symbols and plant data, also load
+`neqsim-pid-process-operations` to define the process graph, valve semantics,
+historian tag mapping, and event schedule before running `runTransient`.
 
 ## Dynamic Simulation Architecture
 
@@ -197,6 +202,20 @@ ax2.set_xlabel("Time (min)")
 ax2.grid(True)
 plt.tight_layout()
 ```
+
+## P&ID Valve-Action Dynamic Studies
+
+Use this pattern when evaluating actions such as closing an outlet valve,
+opening a bypass, tripping a shutdown valve, or opening a drain/vent:
+
+1. Run and validate the steady-state base case.
+2. Define an event schedule with action type, affected valve, start time, and ramp duration.
+3. Map each P&ID valve to the correct NeqSim role: control valve, boundary switch, check-valve direction constraint, or blowdown/flare path.
+4. Run `process.runTransient(dt)` for controller and inventory dynamics, or use `neqsim-depressurization-mdmt` for dedicated blowdown/MDMT cases.
+5. Save time series for pressure, level, temperature, valve position, flow, and any flare or vent stream.
+
+Minimum result keys: `max_pressure_bara`, `max_level_m`, `min_temperature_C`,
+`peak_flare_flow_kg_s`, `time_to_alarm_s`, and `time_to_new_steady_state_s`.
 
 ## Depressurization / Blowdown
 

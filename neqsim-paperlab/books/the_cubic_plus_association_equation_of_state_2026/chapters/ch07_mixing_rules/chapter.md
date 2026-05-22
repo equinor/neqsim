@@ -195,7 +195,7 @@ In NeqSim, the solvation parameters are stored in the binary parameter database 
 
 ### 7.4.5 Solvation Parameter Table
 
-The following table summarizes the solvation parameters available in NeqSim for common systems:
+The following table gives representative solvation-parameter ranges for common systems. Actual values are parameter-set and database dependent; for project work, query the NeqSim binary parameter database or cite the specific regression source used.
 
 | Solvating Pair | $\varepsilon^{\text{cross}}/R$ (K) | $\beta^{\text{cross}}$ | Effect on System |
 |----------------|--------------------------------------|----------------------|------------------|
@@ -205,7 +205,7 @@ The following table summarizes the solvation parameters available in NeqSim for 
 | Water–toluene | ~750 | 0.01–0.02 | Similar to benzene, slightly weaker |
 | Methanol–CO$_2$ | ~900 | 0.02–0.04 | Important for CO$_2$ drying systems |
 
-*Table 7.3: Solvation parameters for common pairs in NeqSim CPA.*
+*Table 7.3: Representative solvation-parameter ranges for common CPA pairs.*
 
 ## 7.5 Temperature-Dependent Binary Interaction Parameters
 
@@ -231,7 +231,7 @@ For CPA with properly parameterized association, the need for temperature-depend
 
 ### 7.6.1 Mixing Rule 10
 
-NeqSim's mixing rule 10 is the standard CPA mixing rule that handles:
+NeqSim's mixing rule 10 combines the standard cubic one-fluid mixing rule for the SRK/PR part with CPA association handling:
 
 1. **Self-association**: parameters loaded from the pure-component database
 2. **Cross-association**: CR-1 rule applied automatically between all self-associating species
@@ -260,7 +260,7 @@ for i in range(fluid.getNumberOfPhases()):
     print(f"Phase {i} ({phase.getType()}): {phase.getDensity('kg/m3'):.1f} kg/m3")
 ```
 
-### 7.5.2 The CPAMixingRuleHandler
+### 7.6.2 The CPAMixingRuleHandler
 
 In NeqSim's internal architecture, the `CPAMixingRuleHandler` class manages:
 
@@ -273,9 +273,9 @@ Two mixing rule types are available:
 - `CPA_RADOCH`: the standard CPA mixing rule
 - `PCSAFTA_RADOCH`: a variant compatible with PC-SAFT-style association
 
-## 7.6 Binary Interaction Parameter Fitting
+## 7.7 Binary Interaction Parameter Fitting
 
-### 7.6.1 Fitting $k_{ij}$ for CPA
+### 7.7.1 Fitting $k_{ij}$ for CPA
 
 The cubic binary interaction parameter $k_{ij}$ in CPA is fitted to binary mixture data:
 
@@ -287,7 +287,7 @@ The objective function typically minimizes:
 
 $$F = \sum_k \left(\frac{P_k^{\text{calc}} - P_k^{\text{exp}}}{P_k^{\text{exp}}}\right)^2 + w \sum_k \left(\frac{y_{i,k}^{\text{calc}} - y_{i,k}^{\text{exp}}}{y_{i,k}^{\text{exp}}}\right)^2$$
 
-### 7.6.2 When to Fit Cross-Association Parameters
+### 7.7.2 When to Fit Cross-Association Parameters
 
 For systems where the combining rules give poor results, the cross-association parameters ($\varepsilon^{\text{cross}}$ and $\beta^{\text{cross}}$) can be fitted directly:
 
@@ -295,7 +295,7 @@ For systems where the combining rules give poor results, the cross-association p
 2. **Highly asymmetric association** (strong acid + weak base): may need fitted $\varepsilon^{\text{cross}}$
 3. **Standard cross-association** (water–methanol, water–MEG): CR-1 usually sufficient
 
-### 7.6.3 Database of Binary Parameters
+### 7.7.3 Database of Binary Parameters
 
 NeqSim maintains a database of fitted $k_{ij}$ and cross-association parameters for common pairs. Key systems include:
 
@@ -309,11 +309,11 @@ NeqSim maintains a database of fitted $k_{ij}$ and cross-association parameters 
 | Water–TEG | $-0.0125$ | No (cross-assoc.) | Fitted to VLE |
 | Methanol–methane | 0.0270 | No | Fitted to VLE |
 
-*Table 7.3: Selected binary parameters in the NeqSim CPA database.*
+*Table 7.4: Selected binary parameters in the NeqSim CPA database.*
 
-## 7.7 Multicomponent Mixtures
+## 7.8 Multicomponent Mixtures
 
-### 7.7.1 Prediction of Multicomponent Behavior
+### 7.8.1 Prediction of Multicomponent Behavior
 
 A major strength of CPA is the prediction of multicomponent behavior from binary parameters alone. For a system with $c$ components, CPA requires only:
 
@@ -324,7 +324,7 @@ A major strength of CPA is the prediction of multicomponent behavior from binary
 
 This is particularly valuable for systems like natural gas + water + methanol, where ternary and higher-order data may be scarce.
 
-### 7.7.2 Competitive Association
+### 7.8.2 Competitive Association
 
 In multicomponent mixtures, different species compete for hydrogen bonding sites. For example, in a water–methanol–methane system:
 
@@ -357,35 +357,35 @@ for i in range(fluid.getNumberOfPhases()):
     print(f"Phase {i} ({phase.getType()}): x_MeOH = {x_meoh:.4f}")
 ```
 
-## 7.8 Worked Example: Cross-Association in Water–Methanol
+## 7.9 Worked Example: Cross-Association in Water–Methanol
 
 To illustrate the combining rules in practice, let us trace the computation of cross-association parameters for the water–methanol system.
 
-### 7.8.1 Pure Component Parameters
+### 7.9.1 Pure Component Parameters
 
 Water (4C scheme): $\varepsilon^{\text{water}}/R = 2003.2$ K, $\beta^{\text{water}} = 0.0692$, $b^{\text{water}} = 1.4515 \times 10^{-5}$ m$^3$/mol.
 
-Methanol (2B scheme): $\varepsilon^{\text{MeOH}}/R = 2625.7$ K, $\beta^{\text{MeOH}} = 0.0163$, $b^{\text{MeOH}} = 3.0978 \times 10^{-5}$ m$^3$/mol.
+Methanol (2B scheme): $\varepsilon^{\text{MeOH}}/R = 2957.6$ K, $\beta^{\text{MeOH}} = 0.0161$, $b^{\text{MeOH}} = 3.0978 \times 10^{-5}$ m$^3$/mol.
 
-### 7.8.2 Applying the CR-1 Combining Rule
+### 7.9.2 Applying the CR-1 Combining Rule
 
 The CR-1 rule gives:
 
-$$\varepsilon^{\text{cross}}/R = \frac{\varepsilon^{\text{water}}/R + \varepsilon^{\text{MeOH}}/R}{2} = \frac{2003.2 + 2625.7}{2} = 2314.5 \text{ K}$$
+$$\varepsilon^{\text{cross}}/R = \frac{\varepsilon^{\text{water}}/R + \varepsilon^{\text{MeOH}}/R}{2} = \frac{2003.2 + 2957.6}{2} = 2480.4 \text{ K}$$
 
 $$\beta^{\text{cross}} = \sqrt{\beta^{\text{water}} \times \beta^{\text{MeOH}}} \times \left(\frac{\sqrt{b^{\text{water}} \times b^{\text{MeOH}}}}{(b^{\text{water}} + b^{\text{MeOH}})/2}\right)^3$$
 
-$$= \sqrt{0.0692 \times 0.0163} \times \left(\frac{\sqrt{1.4515 \times 3.0978} \times 10^{-5}}{(1.4515 + 3.0978)/2 \times 10^{-5}}\right)^3$$
+$$= \sqrt{0.0692 \times 0.0161} \times \left(\frac{\sqrt{1.4515 \times 3.0978} \times 10^{-5}}{(1.4515 + 3.0978)/2 \times 10^{-5}}\right)^3$$
 
-The geometric mean of $\beta$ values is $\sqrt{0.0692 \times 0.0163} = 0.0336$. The size correction factor (the ratio in parentheses) accounts for the asymmetry in molecular size between water and methanol.
+The geometric mean of $\beta$ values is $\sqrt{0.0692 \times 0.0161} = 0.0334$. The size correction factor (the ratio in parentheses) accounts for the asymmetry in molecular size between water and methanol.
 
-### 7.8.3 Physical Interpretation
+### 7.9.3 Physical Interpretation
 
-The cross-association energy (2314.5 K) is intermediate between water–water (2003.2 K) and methanol–methanol (2625.7 K). This reflects the fact that a water–methanol hydrogen bond is expected to have intermediate strength.
+The cross-association energy (2480.4 K) is intermediate between water–water (2003.2 K) and methanol–methanol (2957.6 K). This reflects the fact that a water–methanol hydrogen bond is expected to have intermediate strength.
 
-The cross-association volume parameter $\beta^{\text{cross}} = 0.0336$ is the geometric mean corrected for molecular size. The size correction ensures that the effective bonding volume accounts for the different molecular sizes.
+The cross-association volume parameter starts from $\beta^{\text{cross}} \approx 0.0334$ before size correction. The size correction ensures that the effective bonding volume accounts for the different molecular sizes.
 
-### 7.8.4 Impact on Phase Behavior
+### 7.9.4 Impact on Phase Behavior
 
 The water–methanol system is completely miscible, with strong negative deviations from Raoult's law. CPA with the CR-1 combining rule captures:
 
@@ -393,7 +393,7 @@ The water–methanol system is completely miscible, with strong negative deviati
 2. The azeotrope at $x_{\text{MeOH}} \approx 0.89$ and 64.5°C
 3. The heat of mixing (exothermic, with a minimum near $x_{\text{MeOH}} \approx 0.35$)
 
-## 7.9 Summary of Mixing Rule Selection
+## 7.10 Summary of Mixing Rule Selection
 
 For practical use, the following decision tree helps select the appropriate mixing rule:
 
@@ -405,11 +405,11 @@ For practical use, the following decision tree helps select the appropriate mixi
 
 In NeqSim, mixing rule 10 (`fluid.setMixingRule(10)`) automatically handles cases 1–3 using the pre-fitted parameter database.
 
-## 7.10 Advanced Mixing Rules: Huron–Vidal and Beyond
+## 7.11 Advanced Mixing Rules: Huron–Vidal and Beyond
 
 While CPA with van der Waals mixing rules handles most oil and gas applications, it is instructive to compare with more sophisticated approaches.
 
-### 7.10.1 The Huron–Vidal Mixing Rule
+### 7.11.1 The Huron–Vidal Mixing Rule
 
 Huron and Vidal \cite{Huron1979} proposed a mixing rule that connects the equation of state to activity coefficient models at infinite pressure:
 
@@ -419,7 +419,7 @@ where $G^{E,\infty}$ is the excess Gibbs energy at infinite pressure (from an ac
 
 This approach provides much more flexibility for describing highly non-ideal mixtures — but at the cost of requiring binary NRTL/UNIQUAC parameters (or Wilson \cite{Wilson1964} parameters) instead of a single $k_{ij}$.
 
-### 7.10.2 The MHV2 and Wong–Sandler Mixing Rules
+### 7.11.2 The MHV2 and Wong–Sandler Mixing Rules
 
 \cite{Michelsen1990} derived the Modified Huron–Vidal second-order (MHV2) mixing rule that connects the EoS to $G^E$ models at zero pressure rather than infinite pressure:
 
@@ -427,7 +427,7 @@ $$q(a_m, b_m) = \sum_i x_i q(a_i, b_i) + \frac{G^E}{C_1}$$
 
 The Wong–Sandler \cite{Wong1992} mixing rule takes a different approach, enforcing the correct second virial coefficient composition dependence while recovering a $G^E$ model at low pressures. Michelsen and Hendriks \cite{MichelsenHendriks2001} further analyzed the theoretical foundations of these approaches. Both methods provide excellent results for polar/non-ideal systems.
 
-### 7.10.3 Why CPA Does Not Need Advanced Mixing Rules
+### 7.11.3 Why CPA Does Not Need Advanced Mixing Rules
 
 The key insight is that CPA achieves the flexibility of advanced mixing rules through the association term rather than through the mixing rule itself. Consider the water–hydrocarbon system:
 
@@ -438,11 +438,11 @@ The key insight is that CPA achieves the flexibility of advanced mixing rules th
 | CPA + van der Waals | 1 ($k_{ij}$) | Association term | Good |
 | CPA + fitted $\beta^{\text{cross}}$ | 2 ($k_{ij}$, $\beta^{\text{cross}}$) | Association + tuning | Excellent |
 
-*Table 7.4: Comparison of mixing rule approaches for water–hydrocarbon systems.*
+*Table 7.5: Comparison of mixing rule approaches for water–hydrocarbon systems.*
 
 CPA with simple van der Waals mixing rules achieves comparable or better accuracy than SRK with advanced mixing rules, while maintaining a more physically grounded framework and better extrapolation capability.
 
-### 7.10.4 When Advanced Mixing Rules Might Still Be Needed
+### 7.11.4 When Advanced Mixing Rules Might Still Be Needed
 
 There are situations where even CPA with standard mixing rules may benefit from advanced approaches:
 
@@ -467,7 +467,7 @@ This fundamental difference means:
 | CO$_2$–water | $\pm 0.01$ changes solubility by 20% | $\pm 0.01$ changes solubility by 10% |
 | Methane–ethane | Similar sensitivity (~5% per 0.01) | Same (no association) |
 
-*Table 7.5: Sensitivity of predictions to $k_{ij}$ perturbation.*
+*Table 7.6: Sensitivity of predictions to $k_{ij}$ perturbation.*
 
 ### 7.11.2 Practical Implications
 

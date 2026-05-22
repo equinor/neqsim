@@ -327,7 +327,21 @@ checks before writing Step 1 content:
    `@literature.scout` to populate `step1_scope_and_research/references/`
    and the `## Literature & Reference Documents` section of `notes.md`.
 
-Loaded skills: neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-troubleshooting, neqsim-input-validation, neqsim-capability-map, neqsim-platform-modeling
+Loaded skills: neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-troubleshooting, neqsim-input-validation, neqsim-capability-map, neqsim-platform-modeling, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations, neqsim-water-hammer
+
+For operational plant tasks involving P&ID symbols, valve actions, live plant
+data, active train state, isolation, evacuation, or dynamic response, load
+`neqsim-pid-process-operations` together with `neqsim-technical-document-reading`,
+`neqsim-process-extraction`, `neqsim-plant-data`, `neqsim-controllability-operability`,
+and `neqsim-dynamic-simulation`. Keep public outputs plant-agnostic; use private
+prompt files or private skills for site-specific document sources, historian
+source names, tag maps, operator procedures, and company requirements.
+Use `neqsim.process.operations` for Java deliverables and MCP `runOperationalStudy`
+for tool-based tag-map validation, field-data application, valve scenarios, and
+controller-response metrics.
+For fast liquid-hammer cases, route the extracted STID geometry, tagreader event
+window, and valve closure schedule through `neqsim-water-hammer` and MCP
+`runWaterHammer` before deciding whether a detailed surge study is required.
 
 ---
 
@@ -676,6 +690,11 @@ notebooks:
       Comprehensive and the missing documents would materially change the method,
       constraints, or recommendation. For Quick tasks, proceed with documented
       assumptions unless the calculation is invalid without the document.
+      For trapped-liquid fire rupture studies, load `neqsim-trapped-liquid-fire-rupture`
+      and retrieve the full evidence pack before calculation: P&ID/STID isolation
+      boundaries, line lists, piping specs, material certificates, flange/bolt/gasket
+      data, fire-zone/PFP documents, relief/thermal relief basis, and acceptance
+      criteria. Missing evidence must be written to `results.json` as assumptions/gaps.
    - **Extract figures from reference PDFs** placed in `step1_scope_and_research/references/`:
      ```bash
      python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/

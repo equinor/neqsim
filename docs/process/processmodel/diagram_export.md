@@ -22,8 +22,30 @@ String dot = process.toDOT();
 process.createDiagramExporter()
     .setTitle("Gas Processing Plant")
     .setDetailLevel(DiagramDetailLevel.STANDARD)
-    .exportAsSVG(Path.of("diagram.svg"));
+    .exportSVG(Paths.get("diagram.svg"));
 ```
+
+## Multi-Area ProcessModel Export
+
+For full plant models built as a `ProcessModel`, NeqSim can generate both a common DOT graph and
+one DOT file per process area.
+
+```java
+ProcessModel plant = ProcessModel.fromJsonAndRun(modelJsonString);
+
+// Common plant-wide DOT with one cluster per ProcessSystem area.
+String commonDot = plant.toDOT();
+plant.exportToGraphviz("plant.dot");
+
+// Detailed per-area DOT files written automatically to the directory.
+Map<String, Path> areaFiles = plant.exportAreaDOT(Paths.get("plant-diagrams"));
+```
+
+The common graph is useful for plotting the whole plant in one view. The per-area files keep large
+models readable and are named from the area names, for example `separation.dot` and
+`compression.dot`. Cross-area edges are drawn when one `ProcessSystem` consumes a live stream
+produced by another area; JSON builder round-trips recreate these shared streams from
+`interAreaLinks`.
 
 ## Features
 
@@ -217,7 +239,7 @@ exporter.setShowStreamValues(true)
 Generates HTML tables with:
 - Stream name header
 - Temperature (T)
-- Pressure (P)  
+- Pressure (P)
 - Flow rate (F)
 
 ### Control Equipment Filtering

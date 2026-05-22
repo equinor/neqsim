@@ -36,6 +36,42 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-05-08 — Safety-system barrier performance analyzer
+**Type:** E (Feature) / G (Workflow)
+**Keywords:** safety critical systems, barrier performance, major accident risk, deluge, firewater, fire gas detection, passive fire protection, SIS voting, STID, performance standards
+**Solution:** `src/main/java/neqsim/process/safety/barrier/SafetySystemPerformanceAnalyzer.java`; tests in `src/test/java/neqsim/process/safety/barrier/SafetySystemPerformanceAnalyzerTest.java`
+**Notes:** Added an analyzer that bridges the existing `BarrierRegister`, `FireDetector`/`GasDetector`, and `neqsim.process.logic.sis.SafetyInstrumentedFunction` models. Reusable lesson: assess active/passive safety-system barriers as a reporting layer over existing evidence, instruments, and SIS logic instead of creating parallel detector or SIF abstractions.
+
+### 2026-05-08 — Recompressor barrier verification technical safety screen
+**Type:** F (Design) / G (Workflow)
+**Keywords:** barrier verification, technical safety, closed flare, recompressor, HAZOP, FMEA, LOPA, bow-tie, risk matrix, STID, tagreader
+**Solution:** `private task folder (redacted)`
+**Notes:** Completed a separate barrier and technical-safety screening study using prior NeqSim source-term results and a real STID retrieval package curated into a barrier-linked evidence inventory. Reusable lesson: broad document retrieval should be converted into a small traceable evidence map, and current barrier credit should still be withheld until status, effectiveness, independence, proof-test/SRS evidence, event replay, and material/MDMT records are verified.
+
+### 2026-05-08 — Closed-flare recompressor blowdown verification screen
+**Type:** F (Design) / G (Workflow)
+**Keywords:** closed flare, recompressor, blowdown, trapped inventory, depressurization, MDMT, flare load, tagreader, STID, technical safety
+**Solution:** `private task folder (redacted)`; reusable code in `src/main/java/neqsim/process/safety/inventory/TrappedInventoryCalculator.java`; tests in `src/test/java/neqsim/process/safety/inventory/TrappedInventoryCalculatorTest.java`
+**Notes:** Reused a private, consistency-checked recompressor inventory and dynamic blowdown source-term task, screened transient flare load versus documented capacity context, and generated Word/HTML report outputs. Added `TrappedInventoryCalculator` to bridge documented equipment/pipe volume evidence to NeqSim blowdown inputs. Reusable lesson: distinguish small transient blowdown loads from sustained closed-flare/recompression operating margin, and treat low blowdown temperatures as an MDMT follow-up until material/wall data are verified.
+
+### 2026-05-07 — Confidential gas precompression inlet velocity screen
+**Type:** B (Process) / G (Workflow)
+**Keywords:** STID, tagreader, P&ID, pressure drop, gas velocity, scrubber, compressor suction, Word report, PipeBeggsAndBrills
+**Solution:** `private task folder (redacted)`
+**Notes:** Retrieved route P&IDs and equipment design documents from STID, extracted line/nozzle diameters, read 24-hour historian averages with tagreader, used NeqSim gas properties plus a PipeBeggsAndBrills straight-pipe check, and generated a Word report. Reusable lesson: reject inconsistent historian unit metadata, document the adopted flow-unit interpretation, and separate measured route pressure loss from straight-pipe friction and local equipment/minor losses.
+
+### 2026-05-07 — Confidential STID UniSim power extraction
+**Type:** B (Process) / G (Workflow)
+**Keywords:** STID, UniSim, HYSYS, process simulation, total power, compressor duty, document retrieval
+**Solution:** `private task folder (redacted)`
+**Notes:** Searched multiple installation scopes for the newest runnable `.usc` case, inspected zip attachments before selecting the latest case file, ran the selected UniSim case through COM, and reported total mechanical power as compressor plus pump duty. Reusable pattern: keep STID identifiers and asset-specific power values private, while recording the selection and power-accounting method publicly.
+
+### 2026-05-06 — Confidential separator carry-over cooler scaling screen
+**Type:** B (Process) / G (Workflow)
+**Keywords:** separator carry-over, cooler scaling, anti-surge recycle, STID, tagreader, NaCl source term, compressor calibration, plate heat exchanger
+**Solution:** `private task folder (redacted)`
+**Notes:** Built a NeqSim gas-path screening model from separator gas outlet through a suction cooler, scrubber, and recompressor with measured fixed anti-surge recycle. STID and tagreader manifests were kept in the private task folder. Reusable pattern: model anti-surge recycle as a measured stream when compressor maps are unavailable, then evaluate NaCl risk first as a water carry-over source term and halite saturation threshold before claiming a deposition/fouling rate.
+
 ### 2026-04-29 — Route-level piping hydraulic builder for STID line lists
 **Type:** E (Feature) / G (Workflow)
 **Keywords:** PipingRouteBuilder, STID, E3D, line list, piping route, pressure drop, PipeBeggsAndBrills, fittings, K-value, equivalent length
@@ -446,7 +482,7 @@ requirement`, or `confidential compressor route`.
 **Keywords:** electrical design, separator, heater, cooler, pipeline, heat tracing, cathodic protection, system electrical design, load list, transformer sizing, emergency generator
 **Solution:** `src/main/java/neqsim/process/electricaldesign/separator/SeparatorElectricalDesign.java`, `heatexchanger/HeatExchangerElectricalDesign.java`, `pipeline/PipelineElectricalDesign.java`, `system/SystemElectricalDesign.java`
 **Notes:**
-- Implemented Phases 2-3 of ELECTRICAL_DESIGN_PROPOSAL.md
+- Implemented electrical design phases 2-3.
 - SeparatorElectricalDesign: models control valves, instrumentation, lighting, optional heat tracing (no shaft power)
 - HeatExchangerElectricalDesign: auto-detects type (ELECTRIC_HEATER / AIR_COOLER / SHELL_AND_TUBE) from equipment class
 - PipelineElectricalDesign: heat tracing (W/m × length), cathodic protection, instrumentation

@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -456,6 +457,38 @@ class TPFlashTest {
           "Known methane/nC7 phase-map spot should contain a gas phase");
       assertTrue(fluid.hasPhaseType(PhaseType.OIL),
           "Known methane/nC7 phase-map spot should contain an oil phase");
+    }
+  }
+
+  /**
+   * Regression test for spurious low-density spikes in the methane/n-heptane PR phase map. At these
+   * (P, T) cells TPmultiflash previously converged to a metastable GAS/OIL split whose Gibbs energy
+   * is well above the homogeneous single-phase OIL state, producing isolated density spikes around
+   * 340 kg/m^3 surrounded by dense (~580 kg/m^3) neighbours. The post-convergence single-phase
+   * collapse rescue in TPflash must remove these spurious spikes.
+   */
+  @Test
+  void testMethaneHeptaneSpuriousLowDensitySpikesAreCollapsed() {
+    double[][] spuriousCells =
+        new double[][] {{80.0, 175.0}, {90.0, 180.0}, {92.5, 180.0}, {95.0, 182.0}};
+
+    for (int i = 0; i < spuriousCells.length; i++) {
+      SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
+      ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+      fluid.setPressure(spuriousCells[i][0], "bara");
+      fluid.setTemperature(spuriousCells[i][1], "K");
+
+      operations.TPflash();
+      fluid.initPhysicalProperties("density");
+
+      double density = fluid.getDensity("kg/m3");
+      assertTrue(density > 500.0,
+          "Spurious low-density spike at P=" + spuriousCells[i][0] + " bara, T="
+              + spuriousCells[i][1] + " K: density=" + density
+              + " kg/m^3 (expected > 500 kg/m^3 after rescue collapse).");
+      assertFalse(fluid.hasPhaseType(PhaseType.GAS),
+          "Spurious GAS phase should be removed at P=" + spuriousCells[i][0] + " bara, T="
+              + spuriousCells[i][1] + " K after spurious-multiphase rescue.");
     }
   }
 
