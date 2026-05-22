@@ -113,7 +113,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * UniSim-style Legacy Inside-Out (Boston-Sullivan) two-loop method with
      * configurable equilibrium error and heat-spec error tolerances.
      */
-    LEGACY_INSIDE_OUT
+    LEGACY_INSIDE_OUT,
+    /**
+     * Boston-Sullivan (1974) inside-out two-loop method: outer EOS flash +
+     * K-value/enthalpy linearisation, inner tridiagonal component MB +
+     * bubble-T + energy-balance V/L sweep. Independent implementation in
+     * {@link BostonSullivanInsideOut}.
+     */
+    BOSTON_SULLIVAN_IO
   }
 
   // --- Legacy Inside-Out (UniSim-style) configuration ---
@@ -622,6 +629,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       case LEGACY_INSIDE_OUT:
         solveLegacyInsideOut(id);
         break;
+      case BOSTON_SULLIVAN_IO:
+        solveBostonSullivanIO(id);
+        break;
       case DIRECT_SUBSTITUTION:
       default:
         solveSequential(id, 1.0);
@@ -817,6 +827,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         break;
       case LEGACY_INSIDE_OUT:
         solveLegacyInsideOut(id);
+        break;
+      case BOSTON_SULLIVAN_IO:
+        solveBostonSullivanIO(id);
         break;
       case DIRECT_SUBSTITUTION:
       default:
@@ -2835,13 +2848,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
       massErr = getMassBalanceError();
       energyErr = getEnergyBalanceError();
+      double compErr = getMaxComponentImbalance();
 
       if (convergenceHistory != null) {
         recordConvergence(new double[] { err, massErr, energyErr });
       }
 
-      logger.info("newton iteration {} tempErr={} massErr={} energyErr={}", iter, err, massErr,
-          energyErr);
+      logger.info(
+          "newton iteration {} tempErr={} massErr={} energyErr={} maxComponentImbalance={}",
+          iter, err, massErr, energyErr, compErr);
 
       boolean energyOk = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
       if (err <= baseTempTolerance && massErr <= baseMassTolerance && energyOk) {
@@ -3000,6 +3015,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     err = computeTemperatureResidual();
     massErr = getMassBalanceError();
     energyErr = getEnergyBalanceError();
+    double finalCompErr = getMaxComponentImbalance();
+    logger.info(
+        "newton final tempErr={} massErr={} energyErr={} maxComponentImbalance={} iters={}",
+        err, massErr, energyErr, finalCompErr, iter);
 
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
   }
@@ -3052,8 +3071,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     prepareColumnForSolve();
 
     // Initialize and run the Naphtali-Sandholm solver with ORIGINAL feed systems
-    NaphtaliSandholmSolver solver =
-        new NaphtaliSandholmSolver(this, originalFeedSystems, originalFeedFlowRates);
+    NaphtaliSandholmSolver solver = new NaphtaliSandholmSolver(this, originalFeedSystems, originalFeedFlowRates);
     solver.setMaxIterations(maxNumberOfIterations);
     solver.setTolerance(1.0e-8);
 
@@ -3125,6 +3143,60 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (!converged) {
       logger.warn(
           "Legacy Inside-Out did not converge: iters={}, eqErr={}, heatErr={}",
+          lastIterationCount, lastMassResidual, lastEnergyResidual);
+    }
+
+    hasBeenSolvedBefore = true;
+  }
+
+  /**
+   * Solve the column using the new Boston-Sullivan inside-out implementation
+   * ({@link BostonSullivanInsideOut}). This is an independent implementation
+   * of the two-loop algorithm (outer EOS flash + K-value/enthalpy
+   * linearisation, inner tridiagonal component MB + bubble-T + energy-balance
+   * V/L sweep) and does NOT delegate to {@link #solveInsideOut(UUID)}.
+   *
+   * <p>
+   * Recommended use: as a second-opinion solver for columns where
+   * {@link SolverType#NAPHTALI_SANDHOLM} converges with a residual energy
+   * imbalance at the feed tray.
+   * </p>
+   *
+   * @param id calculation identifier
+   */
+  private void solveBostonSullivanIO(UUID id) {
+    if (feedStreams.isEmpty()) {
+      resetLastSolveMetrics();
+      return;
+    }
+
+    // Seed trays by running a few damped sequential-substitution sweeps so the
+    // trays' thermo systems are populated before BS-IO reads them.
+    int savedMax = maxNumberOfIterations;
+    try {
+      maxNumberOfIterations = Math.min(5, savedMax);
+      solveSequential(id, 0.5);
+    } catch (Exception ignored) {
+      // Seed pass may fail; BS-IO will fall back to defaults.
+    } finally {
+      maxNumberOfIterations = savedMax;
+    }
+
+    BostonSullivanInsideOut solver = new BostonSullivanInsideOut(this);
+    solver.setMaxOuterIterations(Math.max(10, maxNumberOfIterations / 5));
+    solver.setMaxInnerIterations(Math.max(10, maxNumberOfIterations / 2));
+    boolean converged = solver.solve(id);
+
+    lastIterationCount = solver.getLastOuterIterations();
+    lastTemperatureResidual = solver.getLastTemperatureResidual();
+    lastMassResidual = solver.getLastMassBalanceError();
+    lastEnergyResidual = solver.getLastEnergyBalanceError();
+    lastSolveTimeSeconds = solver.getLastSolveTimeSeconds();
+    err = converged ? 0.0 : 1.0e10;
+
+    if (!converged) {
+      logger.warn(
+          "Boston-Sullivan IO did not converge: outer={}, massErr={}, energyErr={}",
           lastIterationCount, lastMassResidual, lastEnergyResidual);
     }
 
@@ -3663,13 +3735,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Newton variable {@code T[j]} — the solver is still free to move it as the
    * energy balance requires.
    *
-   * <p>Useful when a reference profile (e.g. from another simulator or a
+   * <p>
+   * Useful when a reference profile (e.g. from another simulator or a
    * historian record) is known and you want to bring the solver into the
-   * correct basin of attraction without over-constraining the model.</p>
+   * correct basin of attraction without over-constraining the model.
+   * </p>
    *
-   * @param stageIndex bottom-up stage index (0 = reboiler if present,
-   *                   numberOfTrays - 1 = top). Out-of-range indices are
-   *                   silently ignored.
+   * @param stageIndex   bottom-up stage index (0 = reboiler if present,
+   *                     numberOfTrays - 1 = top). Out-of-range indices are
+   *                     silently ignored.
    * @param temperatureK seed temperature in Kelvin; pass {@link Double#NaN} to
    *                     clear a previously set seed.
    */
@@ -4104,6 +4178,64 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     double columnRelative = totalInlet > 1e-12 ? totalResidual / totalInlet : totalResidual;
     return Math.max(trayRelativeError, columnRelative);
+  }
+
+  /**
+   * Calculate the worst per-tray, per-component molar imbalance, relative to the
+   * tray's total inlet molar flow.
+   *
+   * <p>
+   * For each tray i and component c, this computes
+   * {@code (sum_in n_{c,j}) - n_{c,out}} where the inlet sum is taken over every
+   * stream connected to the tray (feed, vapor from below, liquid from above) and
+   * the outlet uses the combined tray thermo system (which represents the union
+   * of the vapor and liquid leaving the tray). The result is divided by the
+   * tray's total inlet molar flow to give a dimensionless residual.
+   * </p>
+   *
+   * <p>
+   * This metric is stricter than {@link #getMassBalanceError()} because the
+   * latter only checks total mass per tray. A solver can satisfy the total mass
+   * balance while silently losing or gaining individual species (e.g. heavy
+   * pseudo-components with near-zero K-values). The per-component imbalance
+   * exposes such leaks.
+   * </p>
+   *
+   * @return maximum relative component imbalance across all trays and components
+   */
+  public double getMaxComponentImbalance() {
+    double worstRel = 0.0;
+    for (int i = 0; i < numberOfTrays; i++) {
+      SystemInterface traySys = trays.get(i).getThermoSystem();
+      if (traySys == null) {
+        continue;
+      }
+      int nc = traySys.getNumberOfComponents();
+      int numInputs = trays.get(i).getNumberOfInputStreams();
+      double[] inletMol = new double[nc];
+      double totalInletMol = 0.0;
+      for (int j = 0; j < numInputs; j++) {
+        SystemInterface f = trays.get(i).getStream(j).getFluid();
+        if (f == null) {
+          continue;
+        }
+        for (int c = 0; c < nc; c++) {
+          double m = f.getComponent(c).getTotalFlowRate("mol/hr");
+          inletMol[c] += m;
+          totalInletMol += m;
+        }
+      }
+      double denom = Math.max(totalInletMol, 1.0e-12);
+      for (int c = 0; c < nc; c++) {
+        double outMol = traySys.getComponent(c).getTotalFlowRate("mol/hr");
+        double imb = Math.abs(inletMol[c] - outMol);
+        double rel = imb / denom;
+        if (rel > worstRel) {
+          worstRel = rel;
+        }
+      }
+    }
+    return worstRel;
   }
 
   /** Maximum number of entries stored in the convergence history list. */

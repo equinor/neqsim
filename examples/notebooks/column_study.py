@@ -934,29 +934,29 @@ UNISIM_OVERHEAD_Y = [
 
 UNISIM_BOTTOMS_X = [
     0.000000000000000,
-    5.97296226077841e-10,
-    3.17857672248332e-16,
-    1.39007943417817e-09,
-    1.87118646694352e-10,
-    1.02466903151263e-06,
-    4.19127244860309e-04,
-    4.08920192379211e-03,
-    2.58407920409853e-02,
-    4.68959023678474e-02,
-    6.63036983580072e-02,
-    0.130370647853579,
-    0.164428154380332,
-    0.164989150155456,
-    8.81824614784974e-02,
-    0.115061036398155,
-    4.24208204213709e-02,
-    3.04128244434246e-02,
-    0.032607963058484,
-    2.27312171013093e-02,
-    1.64675592412304e-02,
-    1.86027516552455e-02,
-    1.61618032720863e-02,
-    1.40138617618106e-02,
+    4.92773658118898e-09,
+    1.36263500614108e-15,
+    3.88232080795727e-09,
+    5.20052565133252e-10,
+    1.80503109571400e-06,
+    7.17197628951103e-04,
+    5.88793551133260e-03,
+    3.86149009412084e-02,
+    6.03473977317615e-02,
+    8.61824889742931e-02,
+    0.149295503380979,
+    0.199414265481622,
+    0.182688669992533,
+    8.84272029616364e-02,
+    9.45822934530711e-02,
+    2.87454032774206e-02,
+    1.78736131065749e-02,
+    1.66327197279631e-02,
+    1.01111522744886e-02,
+    6.49982914953815e-03,
+    6.39937766721663e-03,
+    4.62881241561424e-03,
+    2.94942196258824e-03,
 ]
 
 
@@ -1102,6 +1102,215 @@ def compare_product_compositions(col, out_path: Path, show: bool):
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=150, bbox_inches="tight")
     print(f"\nProduct composition plot saved to: {out_path}")
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+
+# ---------------------------------------------------------------------------
+# Per-component mass balance comparison (Inlet, TOP, BOTTOM — UniSim vs NeqSim)
+# ---------------------------------------------------------------------------
+def _mass_flows_per_component(z, total_mol_kmol_hr, mw_kg_per_kmol):
+    """Per-component mass flow from molar flow × mole fraction × MW.
+
+    mass_i [kg/hr] = n_total [kmol/hr] * z_i * MW_i [kg/kmol]
+
+    Using molar flow (not total mass) on both sides + a uniform MW vector
+    guarantees that the per-component balance closes whenever the overall
+    mole balance closes — which it does for both UniSim and NeqSim. Going
+    via total_mass + (z·MW)/Σ(z·MW) instead would mix mass flows reported
+    with one MW set (UniSim's) and a normalisation done with another
+    (NeqSim's), and break the per-component balance.
+    """
+    return [total_mol_kmol_hr * z[i] * mw_kg_per_kmol[i]
+            for i in range(len(z))]
+
+
+def compare_component_mass_balance(col, feed_stream, top_feed_stream,
+                                   out_path: Path, show: bool):
+    """Per-component mass flow (kg/hr) comparison:
+        Inlet (main + top reflux), TOP (overhead), BOTTOM (reboiler)
+    for UniSim vs NeqSim. Prints a table and saves a bar-chart figure."""
+    oh = col.getGasOutStream()
+    btm = col.getLiquidOutStream()
+
+    # Component names and MW from the NeqSim fluid (same order as _COMPONENT_ORDER).
+    fluid = oh.getFluid().clone()
+    n = int(fluid.getNumberOfComponents())
+    phase0 = fluid.getPhase(0)
+    comp_names = [str(phase0.getComponent(i).getComponentName())
+                  for i in range(n)]
+    # NeqSim getMolarMass() returns kg/mol -> *1000 = g/mol = kg/kmol
+    mw = [float(phase0.getComponent(i).getMolarMass()) * 1000.0
+          for i in range(n)]
+
+    # --- Inlet: main feed + top reflux (UniSim and NeqSim agree by construction;
+    #     the input dicts define the feed). Compute from the input dicts so the
+    #     "Inlet" column is the same physical reference for both sides. ---
+    z_main = [max(float(MANUAL_FEED["molar_composition"].get(c, 0.0)), 0.0)
+              for c in _COMPONENT_ORDER]
+    s_main = sum(z_main)
+    z_main = [v / s_main for v in z_main] if s_main > 0 else z_main
+    z_top_feed = [max(float(MANUAL_TOP_FEED["molar_composition"].get(c, 0.0)), 0.0)
+                  for c in _COMPONENT_ORDER]
+    s_topf = sum(z_top_feed)
+    z_top_feed = [v / s_topf for v in z_top_feed] if s_topf > 0 else z_top_feed
+
+    m_main_kg = float(MANUAL_FEED["mass_flow_kg_hr"])
+    m_topf_kg = float(MANUAL_TOP_FEED["mass_flow_kg_hr"])
+    # Use the molar flows that the NeqSim Stream objects actually compute
+    # from (composition, mass flow). That keeps the inlet split on the same
+    # molar basis as the per-component products below.
+    n_main_kmol = float(feed_stream.getFlowRate("kmol/hr"))
+    n_topf_kmol = float(top_feed_stream.getFlowRate("kmol/hr"))
+    m_inlet_main = _mass_flows_per_component(z_main, n_main_kmol, mw)
+    m_inlet_topf = _mass_flows_per_component(z_top_feed, n_topf_kmol, mw)
+    m_inlet = [m_inlet_main[i] + m_inlet_topf[i] for i in range(n)]
+
+    # --- UniSim products: total MOL × x × MW (NeqSim MWs). This guarantees
+    #     per-component closure whenever UniSim's overall mole balance
+    #     closes, even if UniSim's internal pseudo-component MWs differ
+    #     from NeqSim's. (Using total_mass × (x·MW)/Σ(x·MW) instead would
+    #     mix mass reported in UniSim's MW set with normalisation done in
+    #     NeqSim's, and break the per-component balance.)
+    n_top_uni = float(UNISIM_TARGET["overhead"]["molar_flow_kgmol_hr"])
+    n_bot_uni = float(UNISIM_TARGET["bottoms"]["molar_flow_kgmol_hr"])
+    m_top_uni = _mass_flows_per_component(list(UNISIM_OVERHEAD_Y), n_top_uni, mw)
+    m_bot_uni = _mass_flows_per_component(list(UNISIM_BOTTOMS_X), n_bot_uni, mw)
+
+    # --- NeqSim products: same convention (mol × z × MW). ---
+    z_oh = [float(oh.getFluid().getMolarComposition()[i]) for i in range(n)]
+    z_btm = [float(btm.getFluid().getMolarComposition()[i]) for i in range(n)]
+    n_top_neq = float(oh.getFlowRate("kmol/hr"))
+    n_bot_neq = float(btm.getFlowRate("kmol/hr"))
+    m_top_neq = _mass_flows_per_component(z_oh, n_top_neq, mw)
+    m_bot_neq = _mass_flows_per_component(z_btm, n_bot_neq, mw)
+
+    # --- Numerical table ---------------------------------------------------
+    # Threshold below which % deviations are meaningless (avoids printing
+    # +522300% noise for water-in-bottoms etc.). 0.01 kg/hr ≈ 0.01 %% of feed.
+    PCT_FLOOR = 0.01  # kg/hr
+
+    def _fmt_kg(v):
+        # Compact, aligned; tiny values shown in scientific.
+        if v == 0.0:
+            return f"{0.0:>11.3f}"
+        if abs(v) < 0.001:
+            return f"{v:>11.3e}"
+        return f"{v:>11.3f}"
+
+    def _fmt_pct(num, base):
+        if base < PCT_FLOOR:
+            return f"{'—':>8}"
+        return f"{(100.0 * num / base):>+8.2f}"
+
+    sep = "+" + "-" * 14 + "+" + "-" * 13 + "+" + ("-" * 47) + "+" + ("-" * 47) + "+"
+    head1 = (f"| {'Component':<12} | {'Inlet':>11} |"
+             f" {'TOP UniSim':>11}  {'TOP NeqSim':>11}  "
+             f"{'Δ kg/hr':>10}  {'Δ %':>7} |"
+             f" {'BOT UniSim':>11}  {'BOT NeqSim':>11}  "
+             f"{'Δ kg/hr':>10}  {'Δ %':>7} |")
+    print(sep)
+    print(head1)
+    print(sep)
+
+    # Natural component order (light → heavy), matching _COMPONENT_ORDER /
+    # the column's own component ordering. Easier to read than "sort by inlet"
+    # because related cuts (C6*, C7*, C8*, ...) stay adjacent.
+    order = list(range(n))
+    sum_inlet = sum_top_u = sum_top_n = sum_bot_u = sum_bot_n = 0.0
+    for i in order:
+        d_top = m_top_neq[i] - m_top_uni[i]
+        d_bot = m_bot_neq[i] - m_bot_uni[i]
+        sum_inlet += m_inlet[i]
+        sum_top_u += m_top_uni[i]
+        sum_top_n += m_top_neq[i]
+        sum_bot_u += m_bot_uni[i]
+        sum_bot_n += m_bot_neq[i]
+        print(f"| {comp_names[i]:<12} | {_fmt_kg(m_inlet[i])} |"
+              f" {_fmt_kg(m_top_uni[i])}  {_fmt_kg(m_top_neq[i])}  "
+              f"{d_top:>+10.3f}  {_fmt_pct(d_top, m_top_uni[i])} |"
+              f" {_fmt_kg(m_bot_uni[i])}  {_fmt_kg(m_bot_neq[i])}  "
+              f"{d_bot:>+10.3f}  {_fmt_pct(d_bot, m_bot_uni[i])} |")
+
+    d_top_tot = sum_top_n - sum_top_u
+    d_bot_tot = sum_bot_n - sum_bot_u
+    print(sep)
+    print(f"| {'TOTAL':<12} | {sum_inlet:>11.3f} |"
+          f" {sum_top_u:>11.3f}  {sum_top_n:>11.3f}  "
+          f"{d_top_tot:>+10.3f}  {(100.0 * d_top_tot / sum_top_u):>+8.2f} |"
+          f" {sum_bot_u:>11.3f}  {sum_bot_n:>11.3f}  "
+          f"{d_bot_tot:>+10.3f}  {(100.0 * d_bot_tot / sum_bot_u):>+8.2f} |")
+    print(sep)
+    print(f"  Rows in natural component order (light → heavy).  '—' = base < "
+          f"{PCT_FLOOR} kg/hr (% not meaningful).")
+    print(f"  Mass per component computed as  n_total [kmol/hr] × x_i × MW_i "
+          f"(NeqSim MWs).")
+    uni_closure = max(abs(m_top_uni[i] + m_bot_uni[i] - m_inlet[i]) for i in range(n))
+    neq_closure = max(abs(m_top_neq[i] + m_bot_neq[i] - m_inlet[i]) for i in range(n))
+    print(f"  Per-component closure (max |top+bot − inlet|):  "
+          f"UniSim = {uni_closure:.3e} kg/hr,  NeqSim = {neq_closure:.3e} kg/hr.")
+
+    # --- Bar-chart figure ---------------------------------------------------
+    x_idx = np.arange(n)
+    width = 0.18
+
+    fig, (ax_lin, ax_log) = plt.subplots(2, 1, figsize=(15, 10),
+                                         constrained_layout=True)
+
+    # Linear scale: Inlet + 4 product bars per component
+    ax_lin.bar(x_idx - 2 * width, m_inlet, width, color="gray",
+               edgecolor="black", linewidth=0.4, label="Inlet (feeds)")
+    ax_lin.bar(x_idx - 1 * width, m_top_uni, width, color="tab:blue",
+               edgecolor="black", linewidth=0.4, label="TOP UniSim")
+    ax_lin.bar(x_idx + 0 * width, m_top_neq, width, color="tab:cyan",
+               edgecolor="black", linewidth=0.4, label="TOP NeqSim")
+    ax_lin.bar(x_idx + 1 * width, m_bot_uni, width, color="tab:red",
+               edgecolor="black", linewidth=0.4, label="BOTTOM UniSim")
+    ax_lin.bar(x_idx + 2 * width, m_bot_neq, width, color="tab:orange",
+               edgecolor="black", linewidth=0.4, label="BOTTOM NeqSim")
+    ax_lin.set_xticks(x_idx)
+    ax_lin.set_xticklabels(comp_names, rotation=60, ha="right")
+    ax_lin.set_ylabel("Mass flow (kg/hr)")
+    ax_lin.set_title("Per-component mass balance — linear scale "
+                     "(Inlet vs TOP vs BOTTOM, UniSim vs NeqSim)")
+    ax_lin.grid(True, axis="y", alpha=0.3)
+    ax_lin.set_axisbelow(True)
+    ax_lin.legend(loc="upper right")
+
+    # Log scale: useful because trace components span many orders of magnitude
+    floor = 1e-4  # kg/hr
+    def _safe(arr):
+        return np.where(np.asarray(arr) > floor, arr, floor)
+
+    ax_log.bar(x_idx - 2 * width, _safe(m_inlet), width, color="gray",
+               edgecolor="black", linewidth=0.4, label="Inlet (feeds)")
+    ax_log.bar(x_idx - 1 * width, _safe(m_top_uni), width, color="tab:blue",
+               edgecolor="black", linewidth=0.4, label="TOP UniSim")
+    ax_log.bar(x_idx + 0 * width, _safe(m_top_neq), width, color="tab:cyan",
+               edgecolor="black", linewidth=0.4, label="TOP NeqSim")
+    ax_log.bar(x_idx + 1 * width, _safe(m_bot_uni), width, color="tab:red",
+               edgecolor="black", linewidth=0.4, label="BOTTOM UniSim")
+    ax_log.bar(x_idx + 2 * width, _safe(m_bot_neq), width, color="tab:orange",
+               edgecolor="black", linewidth=0.4, label="BOTTOM NeqSim")
+    ax_log.set_yscale("log")
+    ax_log.set_ylim(floor, max(max(m_inlet), max(m_bot_uni)) * 2)
+    ax_log.set_xticks(x_idx)
+    ax_log.set_xticklabels(comp_names, rotation=60, ha="right")
+    ax_log.set_ylabel("Mass flow (kg/hr, log scale)")
+    ax_log.set_title("Per-component mass balance — log scale")
+    ax_log.grid(True, axis="y", which="both", alpha=0.3)
+    ax_log.set_axisbelow(True)
+    ax_log.legend(loc="lower center", ncol=5, framealpha=0.95)
+
+    fig.suptitle("20VE105_205 — Per-component mass balance "
+                 "(kg/hr): Inlet vs TOP vs BOTTOM, UniSim vs NeqSim",
+                 fontsize=13, fontweight="bold")
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=150, bbox_inches="tight")
+    print(f"\nComponent mass-balance plot saved to: {out_path}")
     if show:
         plt.show()
     else:
@@ -1285,6 +1494,10 @@ def main():
                         default=Path(__file__).resolve().parent /
                         "column_study_compositions.png",
                         help="Output PNG path for the product composition bar chart.")
+    parser.add_argument("--out-massbal", type=Path,
+                        default=Path(__file__).resolve().parent /
+                        "column_study_component_massbalance.png",
+                        help="Output PNG path for the per-component mass balance plot.")
     parser.add_argument("--no-show", action="store_true",
                         help="Don't open the plot window (still saves PNG).")
     parser.add_argument("--sweep", action="store_true",
@@ -1344,6 +1557,10 @@ def main():
 
     print_header("Product composition comparison (overhead y, bottoms x)")
     compare_product_compositions(col, args.out_comp, show=not args.no_show)
+
+    print_header("Per-component mass balance (Inlet, TOP, BOTTOM — UniSim vs NeqSim)")
+    compare_component_mass_balance(col, feed_stream, top_feed_stream,
+                                   args.out_massbal, show=not args.no_show)
 
 
 if __name__ == "__main__":

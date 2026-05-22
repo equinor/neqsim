@@ -416,9 +416,6 @@ public class NaphtaliSandholmSolver {
         norm = vectorNorm(residual);
         double mbAfterSR = computeMassBalanceError();
         double energyAfterSR = computeMaxRelativeEnergyError();
-        System.out.println("[NS] after SR: mbErr=" + String.format("%.4f", mbAfterSR * 100)
-            + "% energyErr=" + String.format("%.2f", energyAfterSR * 100) + "% ||F||="
-            + String.format("%.3e", norm));
         if (mbAfterSR < 0.005 && energyAfterSR < 0.05 && norm < tolerance) {
           System.out.println("[NS] SR fully converged (||F|| below tol) — accepting");
           applyResultsToColumn(id, 0, norm, startTime);
@@ -545,24 +542,26 @@ public class NaphtaliSandholmSolver {
         logger.debug("NS iter {}: ||F|| = {} alpha={}", iter,
             String.format("%.6e", newNorm), String.format("%.4f", alpha));
 
-        // Log energy progress every 5 iterations at info level
-        if (iter % 5 == 0 || iter <= 3 || iter == 1) {
+        // Log every iteration while we diagnose the component-imbalance signal.
+        {
           double mbIt = computeMassBalanceError();
           double eIt = computeMaxRelativeEnergyError();
-          logger.info("NS Newton iter {}: ||F||={} mb={}% energy={}% T[top]={}C alpha={}",
+          double compIt = computeMaxComponentImbalance();
+          logger.info(
+              "NS Newton iter {}: ||F||={} mb={}% energy={}% maxComp={}% T[top]={}C alpha={}",
               iter, String.format("%.4e", newNorm),
               String.format("%.4f", mbIt * 100),
               String.format("%.2f", eIt * 100),
+              String.format("%.4f", compIt * 100),
               String.format("%.1f", T[N - 1] - 273.15),
               String.format("%.4f", alpha));
-          if (iter <= 5 || iter % 25 == 0) {
-            System.out.println("[Newton] iter " + iter + ": ||F||="
-                + String.format("%.4e", newNorm) + " mb=" + String.format("%.4f", mbIt * 100)
-                + "% energy=" + String.format("%.2f", eIt * 100) + "% T[top]="
-                + String.format("%.1f", T[N - 1] - 273.15) + "C T[0]="
-                + String.format("%.1f", T[0] - 273.15) + "C alpha="
-                + String.format("%.4f", alpha));
-          }
+          System.out.println("[Newton] iter " + iter + ": ||F||="
+              + String.format("%.4e", newNorm) + " mb=" + String.format("%.4f", mbIt * 100)
+              + "% energy=" + String.format("%.2f", eIt * 100) + "% maxComp="
+              + String.format("%.4f", compIt * 100) + "% T[top]="
+              + String.format("%.1f", T[N - 1] - 273.15) + "C T[0]="
+              + String.format("%.1f", T[0] - 273.15) + "C alpha="
+              + String.format("%.4f", alpha));
         }
 
         if (Double.isNaN(newNorm) || Double.isInfinite(newNorm)) {
@@ -1187,14 +1186,14 @@ public class NaphtaliSandholmSolver {
    * for wide-boiling stripper topologies — and replaces it with a sweep that:
    * </p>
    * <ol>
-   *   <li>Anchors V[N-1] (top vapor leaving column) to total feed minus a
-   *       sensible bottoms estimate, so the overall MB closes.</li>
-   *   <li>Distributes V[j] approximately linearly between feed trays.</li>
-   *   <li>Computes L[j] from per-tray material balance:
-   *       L[j] = L[j+1] + V[j-1] - V[j] + F_j (top down).</li>
-   *   <li>Updates liq[j][i] from x[i] = z_i preserved-ratio normalization
-   *       against L[j] (preserves the Rachford-Rice flash compositions set
-   *       by initializeTrayState).</li>
+   * <li>Anchors V[N-1] (top vapor leaving column) to total feed minus a
+   * sensible bottoms estimate, so the overall MB closes.</li>
+   * <li>Distributes V[j] approximately linearly between feed trays.</li>
+   * <li>Computes L[j] from per-tray material balance:
+   * L[j] = L[j+1] + V[j-1] - V[j] + F_j (top down).</li>
+   * <li>Updates liq[j][i] from x[i] = z_i preserved-ratio normalization
+   * against L[j] (preserves the Rachford-Rice flash compositions set
+   * by initializeTrayState).</li>
    * </ol>
    *
    * <p>
@@ -1257,7 +1256,7 @@ public class NaphtaliSandholmSolver {
 
     // ----- 3. Per-component overhead split via Kremser -----
     // For a column with N equilibrium stages: fraction of component i leaving
-    // overhead ≈ (S^(N+1) - S) / (S^(N+1) - 1)  where S = K V/L is the
+    // overhead ≈ (S^(N+1) - S) / (S^(N+1) - 1) where S = K V/L is the
     // stripping factor. Light (S >> 1) → frac ≈ 1; heavy (S << 1) → frac ≈ 0.
     double Vavg = overheadGuess;
     double Lavg = totalFeed - overheadGuess + sumFliq; // very rough
@@ -1291,7 +1290,7 @@ public class NaphtaliSandholmSolver {
     V[N - 1] = overheadTotal; // enforce top boundary
 
     // L profile by global per-tray MB walking up:
-    // L[j+1] = V[j] + L[j] - V[j-1] - F[j]   (V[-1] = 0)
+    // L[j+1] = V[j] + L[j] - V[j-1] - F[j] (V[-1] = 0)
     L[0] = bottomsTotal;
     double VbelowTotal = 0.0;
     for (int j = 0; j < N - 1; j++) {
@@ -1303,7 +1302,7 @@ public class NaphtaliSandholmSolver {
     // ----- 5. Per-component flows via forward shooting from reboiler -----
     // Boundary at j=0: L_i[0] = bottoms_i.
     // At each tray j, vapor leaving uses Wilson-K equilibrium with x[j]:
-    //   V_i[j] = K_ij × x_i[j] × V[j], renormalized so Σ V_i[j] = V[j].
+    // V_i[j] = K_ij × x_i[j] × V[j], renormalized so Σ V_i[j] = V[j].
     // Then component MB to advance: L_i[j+1] = V_i[j] + L_i[j] - V_i[j-1] - F_i[j]
     double[][] Liloc = new double[N][C];
     double[][] Viloc = new double[N][C];
@@ -1336,7 +1335,8 @@ public class NaphtaliSandholmSolver {
       }
 
       if (j < N - 1) {
-        // Component MB on tray j (steady state): V_i[j-1] + L_i[j+1] + F_i[j] = V_i[j] + L_i[j]
+        // Component MB on tray j (steady state): V_i[j-1] + L_i[j+1] + F_i[j] = V_i[j]
+        // + L_i[j]
         for (int i = 0; i < C; i++) {
           double Fij = feedLiq[j][i] + feedVap[j][i];
           double Lnext = Viloc[j][i] + Liloc[j][i] - VimPrev[i] - Fij;
@@ -1355,8 +1355,8 @@ public class NaphtaliSandholmSolver {
       Viloc[N - 1][i] = overhead_i[i];
     }
     // Recompute L_i[N-1] from top-tray MB so per-tray MB still holds at top:
-    //   V_i[N-2] + L_i[N] (=0) + F_i[N-1] = V_i[N-1] + L_i[N-1]
-    //   ⇒ L_i[N-1] = V_i[N-2] + F_i[N-1] - V_i[N-1]
+    // V_i[N-2] + L_i[N] (=0) + F_i[N-1] = V_i[N-1] + L_i[N-1]
+    // ⇒ L_i[N-1] = V_i[N-2] + F_i[N-1] - V_i[N-1]
     for (int i = 0; i < C; i++) {
       double Fij = feedLiq[N - 1][i] + feedVap[N - 1][i];
       double VimN2 = (N >= 2) ? Viloc[N - 2][i] : 0.0;
@@ -1368,7 +1368,7 @@ public class NaphtaliSandholmSolver {
     // The default T-seed is a linear ramp between reboiler and top, which
     // produces a smooth T-profile. The real column has a sharp pinch at the
     // feed tray (separator-like step from rectifying to stripping section).
-    // For each non-pinned tray, Newton-solve  sum(K_i(T) * x_i) = 1  using
+    // For each non-pinned tray, Newton-solve sum(K_i(T) * x_i) = 1 using
     // Wilson K, then re-run the forward component shoot and overhead
     // projection so Liloc / Viloc stay consistent with the new T-profile.
     for (int bpIter = 0; bpIter < 12; bpIter++) {
@@ -1490,7 +1490,6 @@ public class NaphtaliSandholmSolver {
     // fixed Kremser overhead split). Jacobi sweeps inflated the boilup and
     // contaminated the bottoms. Reverted; relying on Step 6.5 Wilson BP +
     // the downstream SR phase to fix the energy balance.
-
 
     // Copy into solver state and refresh total L[j], V[j] from the components.
     for (int j = 0; j < N; j++) {
@@ -2303,10 +2302,10 @@ public class NaphtaliSandholmSolver {
       // This left middle-section trays cold for columns where BP's CMO
       // initialization is poor (e.g. wide-boiling binaries with feed
       // in the middle). To fix this, we now:
-      //   (a) Set L[j] = sum_i liq[j][i] from the tridiagonal solution
-      //   (b) Apply overall MB closure at the anchor (L[0]=totalFeed-V[N-1]
-      //       when useOverallMBClosure, or boilup ratio otherwise)
-      //   (c) Cascade overall MB up the column to redistribute V[j]
+      // (a) Set L[j] = sum_i liq[j][i] from the tridiagonal solution
+      // (b) Apply overall MB closure at the anchor (L[0]=totalFeed-V[N-1]
+      // when useOverallMBClosure, or boilup ratio otherwise)
+      // (c) Cascade overall MB up the column to redistribute V[j]
       //
       // To keep the iteration stable, the new L/V values are blended with
       // the previous values via the same dampT factor used for T.
@@ -2971,54 +2970,75 @@ public class NaphtaliSandholmSolver {
       x[i] = liq[j][i] / L[j];
     }
 
-    SystemInterface traySystem = referenceSystem.clone();
-    traySystem.setTemperature(T[j]);
-    traySystem.setPressure(P[j] / 1e5);
-    traySystem.setTotalNumberOfMoles(1.0);
-    traySystem.setMolarComposition(x);
-    traySystem.setNumberOfPhases(2);
-    traySystem.init(0);
+    double Pbar = P[j] / 1e5;
 
-    ThermodynamicOperations ops = new ThermodynamicOperations(traySystem);
-    try {
-      ops.TPflash();
-      traySystem.init(2);
-    } catch (Exception e) {
-      // Wilson K-values fallback
+    // Compute K-values using forced single-phase fugacity coefficients at the
+    // tray's actual liquid and vapor compositions:
+    // K_i = phi_L(T, P, x) / phi_V(T, P, y), y_i = K_i * x_i / sum(K*x)
+    //
+    // The previous implementation used TPflash(z = x) and read fugacities from
+    // the resulting 2-phase split. That is incorrect for the MESH residual:
+    // the flash moves composition from x to (x*, y*) (the two-phase split of
+    // an overall feed z = x), so the fugacities are evaluated at x* != x.
+    // Consequently the summation residual sum(K * x) - 1 enforces a
+    // bubble-point at the wrong composition x*, leaving a fixed-point
+    // residual floor (~1e-3 in mole fraction) even when the column is
+    // otherwise converged. Using forced single-phase roots at the tray's
+    // actual (x, y) removes this inconsistency. The same force-phase pattern
+    // is used by computeSinglePhaseEnthalpy() for enthalpies.
+    double[] phiL = new double[C];
+    double[] phiV = new double[C];
+    boolean phiOk = computeSinglePhaseFugacityCoefficients(x, T[j], Pbar, false, phiL);
+
+    // Initial y guess: use previous K (or Wilson if uninitialised), normalised.
+    double[] y = new double[C];
+    double sumKxGuess = 0;
+    for (int i = 0; i < C; i++) {
+      double Kguess = K[j][i];
+      if (!(Kguess > 1e-20 && Kguess < 1e15) || !phiOk) {
+        Kguess = wilsonK(i, T[j], Pbar);
+      }
+      y[i] = Kguess * x[i];
+      sumKxGuess += y[i];
+    }
+    for (int i = 0; i < C; i++) {
+      y[i] = (sumKxGuess > 1e-20) ? y[i] / sumKxGuess : x[i];
+    }
+
+    // Self-consistency loop: K = phi_L(x) / phi_V(y), then y = K x / sum(K x).
+    // Two inner sweeps are sufficient for HC mixtures at modest pressures since
+    // phi_V for a cubic EOS in the vapor root depends weakly on y.
+    boolean kOk = phiOk;
+    if (kOk) {
+      for (int sweep = 0; sweep < 2; sweep++) {
+        if (!computeSinglePhaseFugacityCoefficients(y, T[j], Pbar, true, phiV)) {
+          kOk = false;
+          break;
+        }
+        double sumKxLocal = 0;
+        for (int i = 0; i < C; i++) {
+          double Knew = phiL[i] / Math.max(phiV[i], 1e-30);
+          Knew = Math.max(Knew, 1e-15);
+          Knew = Math.min(Knew, 1e15);
+          K[j][i] = Knew;
+          y[i] = Knew * x[i];
+          sumKxLocal += y[i];
+        }
+        for (int i = 0; i < C; i++) {
+          y[i] = (sumKxLocal > 1e-20) ? y[i] / sumKxLocal : x[i];
+        }
+      }
+    }
+
+    if (!kOk) {
+      // Wilson K-values fallback (matches the previous flash-failure branch).
       for (int i = 0; i < C; i++) {
-        ComponentInterface comp = traySystem.getPhase(0).getComponent(i);
-        double Tc = comp.getTC();
-        double Pc = comp.getPC();
-        double omega = comp.getAcentricFactor();
-        K[j][i] = (Pc / (P[j] / 1e5)) * Math.exp(5.37 * (1.0 + omega) * (1.0 - Tc / T[j]));
+        K[j][i] = wilsonK(i, T[j], Pbar);
       }
       applyMurphreeEfficiencyToK(j);
       hL[j] = 0;
       hV[j] = 0;
       return;
-    }
-
-    // K-values — identify phases by density (lighter = vapor, heavier = liquid)
-    if (traySystem.getNumberOfPhases() >= 2) {
-      int vapIdx = 0;
-      int liqIdx = 1;
-      if (traySystem.getPhase(0).getDensity() > traySystem.getPhase(1).getDensity()) {
-        vapIdx = 1;
-        liqIdx = 0;
-      }
-      for (int i = 0; i < C; i++) {
-        double fugL = traySystem.getPhase(liqIdx).getComponent(i).getFugacityCoefficient();
-        double fugV = traySystem.getPhase(vapIdx).getComponent(i).getFugacityCoefficient();
-        K[j][i] = fugL / Math.max(fugV, 1e-30);
-      }
-    } else {
-      for (int i = 0; i < C; i++) {
-        ComponentInterface comp = traySystem.getPhase(0).getComponent(i);
-        double Tc = comp.getTC();
-        double Pc = comp.getPC();
-        double omega = comp.getAcentricFactor();
-        K[j][i] = (Pc / (P[j] / 1e5)) * Math.exp(5.37 * (1.0 + omega) * (1.0 - Tc / T[j]));
-      }
     }
 
     // Apply Murphree-efficiency correction (Edmister K^eta proxy). At eta=1 the
@@ -3028,8 +3048,8 @@ public class NaphtaliSandholmSolver {
     // initialize() so they remain unaffected.
     applyMurphreeEfficiencyToK(j);
 
-    // Compute actual vapor composition y[j] = K*x / sum(K*x)
-    double[] y = new double[C];
+    // Refresh y for downstream enthalpy / vapor-flow assignments using the
+    // efficiency-corrected K (Edmister proxy may have changed K).
     double sumKx = 0;
     for (int i = 0; i < C; i++) {
       sumKx += K[j][i] * x[i];
@@ -3039,8 +3059,8 @@ public class NaphtaliSandholmSolver {
     }
 
     // Enthalpies at actual stream compositions using single-phase EOS evaluation
-    hL[j] = computeSinglePhaseEnthalpy(x, T[j], P[j] / 1e5, false);
-    hV[j] = computeSinglePhaseEnthalpy(y, T[j], P[j] / 1e5, true);
+    hL[j] = computeSinglePhaseEnthalpy(x, T[j], Pbar, false);
+    hV[j] = computeSinglePhaseEnthalpy(y, T[j], Pbar, true);
 
     // Compute vapor component flows v_{i,j} = K_{i,j} * x_{i,j} * V_j
     // NOTE: V[j] is NOT updated here — it is a free variable
@@ -3380,9 +3400,9 @@ public class NaphtaliSandholmSolver {
       // For T-pin reboiler stripper: Q[0] (reboiler duty) is the IMPLICIT
       // free variable that holds T[0] at its pinned value. Compute it from
       // overall column energy balance at the current state:
-      //   Q_reb = L[0]*hL[0] + V[N-1]*hV[N-1]
-      //         - sum_j(F_L[j]*hF_L[j] + F_V[j]*hF_V[j])
-      //         - sum_j(Q[j] for j!=0)
+      // Q_reb = L[0]*hL[0] + V[N-1]*hV[N-1]
+      // - sum_j(F_L[j]*hF_L[j] + F_V[j]*hF_V[j])
+      // - sum_j(Q[j] for j!=0)
       // This gives the duty needed to close the overall EB given current
       // products and feeds, and unlocks the boilup so V[0] can grow.
       double qRebOverall = 0.0;
@@ -3403,8 +3423,8 @@ public class NaphtaliSandholmSolver {
           // T-pin reboiler: V[0] free, fixed by tray-0 EB with Q[0]
           // taken from overall column EB (not the input Q[0]=0).
           // Tray-0 EB:
-          //   L[1]*hL[1] + F_L[0]*hF_L[0] + F_V[0]*hF_V[0] + Q_reb
-          //   = V[0]*hV[0] + L[0]*hL[0]
+          // L[1]*hL[1] + F_L[0]*hF_L[0] + F_V[0]*hF_V[0] + Q_reb
+          // = V[0]*hV[0] + L[0]*hL[0]
           if (Math.abs(hV[0]) < 1e-3) {
             continue;
           }
@@ -3504,17 +3524,17 @@ public class NaphtaliSandholmSolver {
       double[] Fmol = FmolPre;
       // Top-down propagation: at top tray, L[N-1] is feed liquid minus what
       // can't go down (no condenser). Use overall MB closure:
-      //   L[0] = sum(Fmol) - V[N-1]
+      // L[0] = sum(Fmol) - V[N-1]
       // and propagate downward from j=N-1 to j=1 using tray MB:
-      //   L[j] = V[j] + L[j-1] - V[j-1] - F[j-1] + ...   (rearranged)
+      // L[j] = V[j] + L[j-1] - V[j-1] - F[j-1] + ... (rearranged)
       // Simpler: just enforce per-tray total MB top-down keeping V[] from E-step.
       // For top tray (no overhead liquid product when there's no condenser):
-      //   In stripper: top tray is an internal tray with no L-in from above.
-      //   L[N-1] = F_L[N-1] (top feed liquid is the only liquid entering)
-      //          + (V[N-2] - V[N-1])   [if V decreases up, excess condenses
-      //                                  but with no condenser this is energy-driven]
+      // In stripper: top tray is an internal tray with no L-in from above.
+      // L[N-1] = F_L[N-1] (top feed liquid is the only liquid entering)
+      // + (V[N-2] - V[N-1]) [if V decreases up, excess condenses
+      // but with no condenser this is energy-driven]
       // Cleanest: propagate L bottom-up using
-      //   L[j+1] = L[j] + V[j] - V[j-1] - Fmol[j]   (rearranged tray-j MB)
+      // L[j+1] = L[j] + V[j] - V[j-1] - Fmol[j] (rearranged tray-j MB)
       // starting from L[0] from overall MB closure.
       if (hasReboiler && useOverallMBClosure) {
         L[0] = Math.max(totalFeedMolesField - V[N - 1], totalFeedMolesField * 0.001);
@@ -3683,6 +3703,70 @@ public class NaphtaliSandholmSolver {
     return t;
   }
 
+  /**
+   * Compute fugacity coefficients for a single phase (liquid or vapor) at given
+   * composition, temperature and pressure using a forced single-phase EOS root.
+   *
+   * <p>
+   * Mirrors {@link #computeSinglePhaseEnthalpy} — sets one phase, forces the
+   * requested phase type (GAS or LIQUID), and reads the fugacity coefficients
+   * directly. This is the correct way to evaluate K-values inside a column
+   * MESH residual, because K_i = phi_L(x) / phi_V(y) must be evaluated at the
+   * tray's actual compositions x and y, NOT at a flash composition.
+   * </p>
+   *
+   * @param composition mole fractions (length C, normalised by caller)
+   * @param tempK       temperature in Kelvin
+   * @param pressBar    pressure in bara
+   * @param isVapor     true to force vapor root, false to force liquid root
+   * @param phiOut      output array of length C to be populated with phi_i
+   * @return true on success, false if the forced-phase calculation failed
+   */
+  private boolean computeSinglePhaseFugacityCoefficients(double[] composition, double tempK,
+      double pressBar, boolean isVapor, double[] phiOut) {
+    try {
+      SystemInterface sys = referenceSystem.clone();
+      sys.setTemperature(tempK);
+      sys.setPressure(pressBar);
+      sys.setTotalNumberOfMoles(1.0);
+      sys.setMolarComposition(composition);
+      sys.init(0);
+      sys.setNumberOfPhases(1);
+      sys.setPhaseType(0, isVapor ? PhaseType.GAS : PhaseType.LIQUID);
+      sys.setForcePhaseTypes(true);
+      sys.init(2);
+      for (int i = 0; i < C; i++) {
+        double phi = sys.getPhase(0).getComponent(i).getFugacityCoefficient();
+        if (!(phi > 0.0) || Double.isNaN(phi) || Double.isInfinite(phi)) {
+          return false;
+        }
+        phiOut[i] = phi;
+      }
+      return true;
+    } catch (Exception e) {
+      logger.debug("Single-phase fugacity failed for {} phase at T={}K P={}bar",
+          isVapor ? "vapor" : "liquid", tempK, pressBar);
+      return false;
+    }
+  }
+
+  /**
+   * Wilson correlation for K-values, used as a fallback / initialisation when
+   * an EOS evaluation fails.
+   *
+   * @param i        component index in the reference system
+   * @param tempK    temperature in Kelvin
+   * @param pressBar pressure in bara
+   * @return Wilson K_i estimate
+   */
+  private double wilsonK(int i, double tempK, double pressBar) {
+    ComponentInterface comp = referenceSystem.getPhase(0).getComponent(i);
+    double Tc = comp.getTC();
+    double Pc = comp.getPC();
+    double omega = comp.getAcentricFactor();
+    return (Pc / pressBar) * Math.exp(5.37 * (1.0 + omega) * (1.0 - Tc / tempK));
+  }
+
   private double computeSinglePhaseEnthalpy(double[] composition, double tempK, double pressBar,
       boolean isVapor) {
     try {
@@ -3766,6 +3850,50 @@ public class NaphtaliSandholmSolver {
     double topFlow = V[N - 1]; // vapor leaving top tray
     double botFlow = L[0]; // liquid leaving bottom tray
     return Math.abs(topFlow + botFlow - totalFeedFlow) / Math.max(totalFeedFlow, 1e-20);
+  }
+
+  /**
+   * Maximum per-tray, per-component molar imbalance, expressed relative to the
+   * total feed molar flow.
+   *
+   * <p>
+   * For each tray j and component i this evaluates the MESH M-residual
+   * {@code feed_{j,i} + liq_{j+1,i} + vap_{j-1,i} - liq_{j,i} - vap_{j,i}} (the
+   * same equation that {@link #computeResidual()} packs into the F vector), takes
+   * the absolute value, and divides by the total feed flow. Returning the worst
+   * value across all (j, i) pairs exposes leakage on individual species, which the
+   * scalar {@link #computeMassBalanceError()} (overall column closure) and the
+   * L2 norm {@code ||F||} can both mask.
+   * </p>
+   *
+   * @return maximum relative component imbalance (1.0e-3 = 0.1%)
+   */
+  private double computeMaxComponentImbalance() {
+    double totalFeedFlow = 0.0;
+    for (int j = 0; j < N; j++) {
+      for (int i = 0; i < C; i++) {
+        totalFeedFlow += feedLiq[j][i] + feedVap[j][i];
+      }
+    }
+    double denom = Math.max(totalFeedFlow, 1.0e-20);
+    double worst = 0.0;
+    for (int j = 0; j < N; j++) {
+      for (int i = 0; i < C; i++) {
+        double mij = liq[j][i] + vap[j][i];
+        if (j < N - 1) {
+          mij -= liq[j + 1][i];
+        }
+        if (j > 0) {
+          mij -= vap[j - 1][i];
+        }
+        mij -= feedLiq[j][i] + feedVap[j][i];
+        double rel = Math.abs(mij) / denom;
+        if (rel > worst) {
+          worst = rel;
+        }
+      }
+    }
+    return worst;
   }
 
   /**
