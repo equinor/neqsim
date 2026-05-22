@@ -94,7 +94,7 @@ public class NaphtaliSandholmSolver {
    * setMurphreeEfficiency(stage, value), defaulting to the global value when no per-stage override
    * is set.
    *
-  * The efficiency is embedded into the simultaneous MESH solution through the Edmister proxy
+   * The efficiency is embedded into the simultaneous MESH solution through the Edmister proxy
    * K_eff[j][i] = K[j][i]^trayEta[j]. At trayEta = 1.0 the stage is rigorous equilibrium; at
    * trayEta -&gt; 0 the K-values approach 1.0 and the tray becomes passive (vapor passes through ~
    * unchanged), matching the behaviour of a heavily de-rated tray
