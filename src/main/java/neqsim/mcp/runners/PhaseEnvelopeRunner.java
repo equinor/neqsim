@@ -8,6 +8,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.mcp.model.ApiEnvelope;
 import neqsim.mcp.model.ResultProvenance;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -15,9 +16,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 /**
  * Stateless phase envelope runner for MCP integration.
  *
- * <p> Calculates the PT phase envelope (bubble point and dew point curves) for a fluid mixture and
+ * <p>
+ * Calculates the PT phase envelope (bubble point and dew point curves) for a fluid mixture and
  * returns the data as a JSON array of points. This is one of the most commonly requested
- * single-purpose engineering calculations for agents. </p>
+ * single-purpose engineering calculations for agents.
+ * </p>
  *
  * <h2>Input JSON Format:</h2>
  *
@@ -135,6 +138,7 @@ public class PhaseEnvelopeRunner {
       ResultProvenance provenance = ResultProvenance.forPhaseEnvelope(model);
       provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
       provenance.setMixingRule(mixingRule);
+      provenance.setBenchmarkTrustLevel(BenchmarkTrust.getMaturityLevel("getPhaseEnvelope"));
       provenance.addValidationPassed("phase_envelope_converged");
       provenance.addValidationPassed("component_names_verified");
 
@@ -148,6 +152,22 @@ public class PhaseEnvelopeRunner {
         result.add("criticalPoints", criticalPoints);
       }
       result.add("provenance", GSON.toJsonTree(provenance));
+
+      JsonObject data = new JsonObject();
+      data.addProperty("model", model);
+      data.addProperty("numberOfPoints", envelopePoints.size());
+      data.add("envelope", envelopePoints.deepCopy());
+      if (criticalPoints.size() > 0) {
+        data.add("criticalPoints", criticalPoints.deepCopy());
+      }
+      result.add("data", data);
+
+      String gateVerdict = envelopePoints.size() > 0 ? "passed" : "warning";
+      String gateSummary = envelopePoints.size() > 0 ? "Phase envelope calculation completed"
+          : "Phase envelope calculation returned no data points";
+      ApiEnvelope.applyStandardFields(result, "getPhaseEnvelope", provenance,
+          ApiEnvelope.validationStatus(true, "calculation", gateSummary),
+          ApiEnvelope.qualityGate(gateVerdict, gateSummary, true));
 
       return GSON.toJson(result);
     } catch (Exception e) {
@@ -171,6 +191,16 @@ public class PhaseEnvelopeRunner {
     error.addProperty("code", code);
     error.addProperty("message", message);
     error.addProperty("remediation", remediation);
+    JsonArray errors = new JsonArray();
+    JsonObject issue = new JsonObject();
+    issue.addProperty("code", code);
+    issue.addProperty("message", message);
+    issue.addProperty("remediation", remediation);
+    errors.add(issue);
+    error.add("errors", errors);
+    ApiEnvelope.applyStandardFields(error, "getPhaseEnvelope", null,
+        ApiEnvelope.validationStatus(false, "input", message),
+        ApiEnvelope.qualityGate("failed", message, true));
     return GSON.toJson(error);
   }
 }

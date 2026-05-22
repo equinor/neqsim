@@ -108,6 +108,7 @@ class ExampleCatalogTest {
     assertTrue(categories.contains("root-cause"));
     assertTrue(categories.contains("open-drain-review"));
     assertTrue(categories.contains("process-safety-review"));
+    assertTrue(categories.contains("tool"));
   }
 
   @Test
@@ -120,8 +121,8 @@ class ExampleCatalogTest {
     assertEquals(2, processExamples.size());
     assertTrue(ExampleCatalog.getExampleNames("root-cause").contains("compressor-high-vibration"));
     assertTrue(ExampleCatalog.getExampleNames("open-drain-review").contains("norsok-s001-stid"));
-    assertTrue(ExampleCatalog.getExampleNames("process-safety-review")
-      .contains("norsok-s001-clause10"));
+    assertTrue(
+        ExampleCatalog.getExampleNames("process-safety-review").contains("norsok-s001-clause10"));
 
     List<String> unknown = ExampleCatalog.getExampleNames("unknown");
     assertTrue(unknown.isEmpty());
@@ -151,6 +152,19 @@ class ExampleCatalogTest {
     assertTrue(root.has("batch"));
     assertTrue(root.has("property-table"));
     assertTrue(root.has("phase-envelope"));
+    assertTrue(root.has("tool"));
+  }
+
+  @Test
+  void testToolExamplesCoverAllSchemaTools() {
+    List<String> toolExamples = ExampleCatalog.getExampleNames("tool");
+    assertEquals(SchemaCatalog.getToolNames().size(), toolExamples.size());
+
+    for (String toolName : SchemaCatalog.getToolNames()) {
+      String example = ExampleCatalog.getExample("tool", toolName);
+      assertNotNull(example, "Missing canonical tool example for " + toolName);
+      JsonParser.parseString(example).getAsJsonObject();
+    }
   }
 
   @Test

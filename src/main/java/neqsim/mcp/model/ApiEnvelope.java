@@ -10,13 +10,17 @@ import com.google.gson.JsonObject;
 /**
  * Standard API envelope for all MCP runner responses.
  *
- * <p> Wraps a typed result payload with status, warnings, and errors in a consistent format. This
- * provides a dual interface — call {@link #toJson()} for the string-based MCP protocol, or use
- * {@link #getData()} for typed Java access. </p>
+ * <p>
+ * Wraps a typed result payload with status, tool metadata, warnings, errors, provenance,
+ * validation, and quality-gate metadata in a consistent format. This provides a dual interface —
+ * call {@link #toJson()} for the string-based MCP protocol, or use {@link #getData()} for typed
+ * Java access.
+ * </p>
  *
  * <h2>Success envelope:</h2>
  *
- * <pre>{@code { "status": "success", "data": { ... }, "warnings": [] } }</pre>
+ * <pre>{@code { "apiVersion": "1.0", "status": "success", "tool": "runFlash", "data": { ... },
+ * "provenance": { ... }, "validation": { ... }, "qualityGate": { ... }, "warnings": [] } }</pre>
  *
  * <h2>Error envelope:</h2>
  *
@@ -27,6 +31,9 @@ import com.google.gson.JsonObject;
  */
 public class ApiEnvelope<T> {
 
+  /** Contract version emitted by MCP runners. */
+  public static final String API_VERSION = "1.0";
+
   private static final Gson GSON =
       new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
@@ -34,6 +41,10 @@ public class ApiEnvelope<T> {
   private final T data;
   private final List<DiagnosticIssue> errors;
   private final List<String> warnings;
+  private String tool;
+  private ResultProvenance provenance;
+  private JsonObject validation;
+  private JsonObject qualityGate;
 
   /**
    * Private constructor — use factory methods.
@@ -48,6 +59,90 @@ public class ApiEnvelope<T> {
     this.data = data;
     this.errors = errors != null ? errors : new ArrayList<DiagnosticIssue>();
     this.warnings = warnings != null ? warnings : new ArrayList<String>();
+  }
+
+  /**
+   * Adds standard contract fields to a JSON response object.
+   *
+   * @param response the response object to mutate
+   * @param toolName the MCP tool name that produced the response
+   * @param provenance optional calculation provenance
+   * @param validation optional validation block
+   * @param qualityGate optional quality-gate block
+   */
+  public static void applyStandardFields(JsonObject response, String toolName,
+      ResultProvenance provenance, JsonObject validation, JsonObject qualityGate) {
+    response.addProperty("apiVersion", API_VERSION);
+    if (toolName != null && !toolName.trim().isEmpty()) {
+      response.addProperty("tool", toolName);
+    }
+
+    if (provenance != null && !response.has("provenance")) {
+      response.add("provenance", GSON.toJsonTree(provenance));
+    }
+
+    if (!response.has("validation")) {
+      boolean success = isSuccessfulResponse(response);
+      response.add("validation",
+          validation != null ? validation
+              : validationStatus(success, "runner", success ? "Runner input checks completed"
+                  : "Runner returned an error before validation completed"));
+    }
+
+    if (!response.has("qualityGate")) {
+      boolean success = isSuccessfulResponse(response);
+      response.add("qualityGate",
+          qualityGate != null ? qualityGate
+              : qualityGate(success ? "passed" : "failed",
+                  success ? "Calculation completed" : "Calculation failed", true));
+    }
+
+    if (!response.has("warnings")) {
+      response.add("warnings", new JsonArray());
+    }
+  }
+
+  /**
+   * Builds a standard validation block.
+   *
+   * @param valid true when validation passed
+   * @param phase validation phase name
+   * @param message validation summary
+   * @return validation JSON object
+   */
+  public static JsonObject validationStatus(boolean valid, String phase, String message) {
+    JsonObject validation = new JsonObject();
+    validation.addProperty("valid", valid);
+    validation.addProperty("phase", phase);
+    validation.addProperty("message", message);
+    return validation;
+  }
+
+  /**
+   * Builds a standard quality-gate block.
+   *
+   * @param verdict gate verdict such as {@code passed}, {@code warning}, or {@code failed}
+   * @param summary short gate summary
+   * @param engineeringReviewRequired true if qualified engineering review is still required
+   * @return quality-gate JSON object
+   */
+  public static JsonObject qualityGate(String verdict, String summary,
+      boolean engineeringReviewRequired) {
+    JsonObject qualityGate = new JsonObject();
+    qualityGate.addProperty("verdict", verdict);
+    qualityGate.addProperty("summary", summary);
+    qualityGate.addProperty("engineeringReviewRequired", engineeringReviewRequired);
+    return qualityGate;
+  }
+
+  /**
+   * Determines if a response object carries a success status.
+   *
+   * @param response the response object to inspect
+   * @return true if {@code status} is {@code success}
+   */
+  private static boolean isSuccessfulResponse(JsonObject response) {
+    return response.has("status") && "success".equals(response.get("status").getAsString());
   }
 
   /**
@@ -146,6 +241,62 @@ public class ApiEnvelope<T> {
   }
 
   /**
+   * Gets the response contract version.
+   *
+   * @return the API version string
+   */
+  public String getApiVersion() {
+    return API_VERSION;
+  }
+
+  /**
+   * Gets the MCP tool name that produced this envelope.
+   *
+   * @return the tool name, or null if not attached
+   */
+  public String getTool() {
+    return tool;
+  }
+
+  /**
+   * Attaches the MCP tool name that produced this envelope.
+   *
+   * @param tool the tool name, such as {@code runFlash}
+   * @return this envelope for fluent use
+   */
+  public ApiEnvelope<T> withTool(String tool) {
+    this.tool = tool;
+    return this;
+  }
+
+  /**
+   * Gets the calculation provenance.
+   *
+   * @return the provenance, or null if not attached
+   */
+  public ResultProvenance getProvenance() {
+    return provenance;
+  }
+
+  /**
+   * Gets the validation block.
+   *
+   * @return the validation block, or null if not attached
+   */
+  public JsonObject getValidation() {
+    return validation;
+  }
+
+  /**
+   * Gets the quality-gate block.
+   *
+   * @return the quality-gate block, or null if not attached
+   */
+  public JsonObject getQualityGate() {
+    return qualityGate;
+  }
+
+  /**
    * Adds a warning to this envelope.
    *
    * @param warning the warning message
@@ -155,16 +306,65 @@ public class ApiEnvelope<T> {
   }
 
   /**
+   * Attaches provenance to this envelope.
+   *
+   * @param provenance the calculation provenance
+   * @return this envelope for fluent use
+   */
+  public ApiEnvelope<T> withProvenance(ResultProvenance provenance) {
+    this.provenance = provenance;
+    return this;
+  }
+
+  /**
+   * Attaches a validation block to this envelope.
+   *
+   * @param validation the validation block
+   * @return this envelope for fluent use
+   */
+  public ApiEnvelope<T> withValidation(JsonObject validation) {
+    this.validation = validation;
+    return this;
+  }
+
+  /**
+   * Attaches a quality-gate block to this envelope.
+   *
+   * @param qualityGate the quality-gate block
+   * @return this envelope for fluent use
+   */
+  public ApiEnvelope<T> withQualityGate(JsonObject qualityGate) {
+    this.qualityGate = qualityGate;
+    return this;
+  }
+
+  /**
    * Converts this envelope to a JSON string.
    *
    * @return JSON string
    */
   public String toJson() {
     JsonObject root = new JsonObject();
+    root.addProperty("apiVersion", API_VERSION);
     root.addProperty("status", status);
+    if (tool != null && !tool.trim().isEmpty()) {
+      root.addProperty("tool", tool);
+    }
 
     if (data != null) {
       root.add("data", GSON.toJsonTree(data));
+    }
+
+    if (provenance != null) {
+      root.add("provenance", GSON.toJsonTree(provenance));
+    }
+
+    if (validation != null) {
+      root.add("validation", validation);
+    }
+
+    if (qualityGate != null) {
+      root.add("qualityGate", qualityGate);
     }
 
     if (!errors.isEmpty()) {
@@ -175,13 +375,11 @@ public class ApiEnvelope<T> {
       root.add("errors", errArray);
     }
 
-    if (!warnings.isEmpty()) {
-      JsonArray warnArray = new JsonArray();
-      for (String w : warnings) {
-        warnArray.add(w);
-      }
-      root.add("warnings", warnArray);
+    JsonArray warnArray = new JsonArray();
+    for (String warning : warnings) {
+      warnArray.add(warning);
     }
+    root.add("warnings", warnArray);
 
     return GSON.toJson(root);
   }

@@ -29,6 +29,14 @@ class ProcessRunnerTest {
 
     assertEquals("success", root.get("status").getAsString());
     assertTrue(root.has("report"));
+    assertEquals("1.0", root.get("apiVersion").getAsString());
+    assertTrue(root.has("data"));
+    assertTrue(root.has("provenance"));
+    assertTrue(root.has("validation"));
+    assertTrue(root.has("qualityGate"));
+    assertTrue(root.getAsJsonObject("validation").get("valid").getAsBoolean());
+    assertEquals("VALIDATED",
+        root.getAsJsonObject("provenance").get("benchmarkTrustLevel").getAsString());
   }
 
   @Test
@@ -37,6 +45,9 @@ class ProcessRunnerTest {
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
 
     assertEquals("error", root.get("status").getAsString());
+    assertEquals("1.0", root.get("apiVersion").getAsString());
+    assertTrue(root.has("validation"));
+    assertTrue(root.has("qualityGate"));
     assertEquals("INPUT_ERROR",
         root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
@@ -74,7 +85,9 @@ class ProcessRunnerTest {
 
     assertEquals("error", root.get("status").getAsString());
     assertEquals("validation", root.get("phase").getAsString());
+    assertEquals("1.0", root.get("apiVersion").getAsString());
     assertTrue(root.has("validation"));
+    assertTrue(root.has("qualityGate"));
     assertFalse(root.getAsJsonObject("validation").get("valid").getAsBoolean());
   }
 

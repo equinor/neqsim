@@ -112,7 +112,6 @@ by default — no commercial OREDA license required.
 - `ReliabilityDataSource.getEntryCount()` returns total loaded records
 
 ---
-
 ## 2026-05-08 — MCP Server Quarkiverse Transport Refresh
 
 ### Summary

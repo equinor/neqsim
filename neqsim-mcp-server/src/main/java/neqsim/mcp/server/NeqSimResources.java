@@ -4,6 +4,7 @@ import io.quarkiverse.mcp.server.TextResourceContents;
 import jakarta.enterprise.context.ApplicationScoped;
 import neqsim.mcp.catalog.ExampleCatalog;
 import neqsim.mcp.catalog.SchemaCatalog;
+import neqsim.mcp.runners.CapabilitiesRunner;
 import neqsim.mcp.runners.DataCatalogRunner;
 
 /**
@@ -42,9 +43,20 @@ public class NeqSimResources {
   }
 
   /**
+   * Full catalog of major workflow setup templates.
+   *
+   * @return JSON listing setup templates for schema-backed MCP workflows
+   */
+  @io.quarkiverse.mcp.server.Resource(uri = "neqsim://setup-templates", name = "Setup Templates",
+      description = "Discoverable setup templates for NeqSim MCP workflows")
+  public String setupTemplates() {
+    return CapabilitiesRunner.getSetupTemplates();
+  }
+
+  /**
    * Get a specific example by category and name.
    *
-   * @param category the example category (flash, process, validation)
+   * @param category the example category (flash, process, validation, tool, and domain categories)
    * @param name the example name
    * @return resource contents with the example JSON
    */
@@ -70,6 +82,20 @@ public class NeqSimResources {
     String schema = SchemaCatalog.getSchema(tool, type);
     String content = schema != null ? schema : "{\"error\": \"Schema not found\"}";
     return TextResourceContents.create("neqsim://schemas/" + tool + "/" + type, content);
+  }
+
+  /**
+   * Get a specific setup template by id.
+   *
+   * @param id the setup template id
+   * @return resource contents with the setup template JSON
+   */
+  @io.quarkiverse.mcp.server.ResourceTemplate(uriTemplate = "neqsim://setup-templates/{id}",
+      name = "NeqSim Setup Template",
+      description = "Get a setup template for a major NeqSim MCP workflow")
+  public TextResourceContents setupTemplate(String id) {
+    String content = CapabilitiesRunner.getSetupTemplate(id);
+    return TextResourceContents.create("neqsim://setup-templates/" + id, content);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

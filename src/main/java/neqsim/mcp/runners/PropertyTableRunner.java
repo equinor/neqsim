@@ -12,6 +12,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.mcp.model.ApiEnvelope;
 import neqsim.mcp.model.ResultProvenance;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -19,9 +20,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 /**
  * Stateless property table runner for MCP integration.
  *
- * <p> Sweeps temperature or pressure over a range and returns a table of thermodynamic and
- * transport properties at each point. This is the "one-shot engineering answer" tool that external
- * agents need most often — no process flowsheet construction required. </p>
+ * <p>
+ * Sweeps temperature or pressure over a range and returns a table of thermodynamic and transport
+ * properties at each point. This is the "one-shot engineering answer" tool that external agents
+ * need most often — no process flowsheet construction required.
+ * </p>
  *
  * <h2>Input JSON Format:</h2>
  *
@@ -217,12 +220,19 @@ public class PropertyTableRunner {
       ResultProvenance provenance = ResultProvenance.forPropertyTable(model, sweep, convergedCount);
       provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
       provenance.setMixingRule(mixingRule);
+      provenance.setBenchmarkTrustLevel(BenchmarkTrust.getMaturityLevel("getPropertyTable"));
       provenance.addValidationPassed("component_names_verified");
       if (convergedCount == points) {
         provenance.addValidationPassed("all_points_converged");
       } else {
         provenance.addLimitation(
             (points - convergedCount) + " of " + points + " points failed to converge");
+      }
+
+      JsonArray warnings = new JsonArray();
+      if (convergedCount < points) {
+        warnings.add((points - convergedCount) + " of " + points
+            + " property-table points failed to converge");
       }
 
       JsonObject result = new JsonObject();
@@ -232,6 +242,21 @@ public class PropertyTableRunner {
       result.addProperty("pointsConverged", convergedCount);
       result.add("table", tableRows);
       result.add("provenance", GSON.toJsonTree(provenance));
+
+      JsonObject data = new JsonObject();
+      data.addProperty("sweep", sweep);
+      data.addProperty("pointsRequested", points);
+      data.addProperty("pointsConverged", convergedCount);
+      data.add("table", tableRows.deepCopy());
+      result.add("data", data);
+      result.add("warnings", warnings);
+
+      String gateVerdict = convergedCount == points ? "passed" : "warning";
+      String gateSummary = convergedCount == points ? "All property-table points converged"
+          : "Property table completed with non-converged points";
+      ApiEnvelope.applyStandardFields(result, "getPropertyTable", provenance,
+          ApiEnvelope.validationStatus(convergedCount > 0, "calculation", gateSummary),
+          ApiEnvelope.qualityGate(gateVerdict, gateSummary, true));
 
       return GSON.toJson(result);
     } catch (Exception e) {
@@ -344,6 +369,16 @@ public class PropertyTableRunner {
     error.addProperty("code", code);
     error.addProperty("message", message);
     error.addProperty("remediation", remediation);
+    JsonArray errors = new JsonArray();
+    JsonObject issue = new JsonObject();
+    issue.addProperty("code", code);
+    issue.addProperty("message", message);
+    issue.addProperty("remediation", remediation);
+    errors.add(issue);
+    error.add("errors", errors);
+    ApiEnvelope.applyStandardFields(error, "getPropertyTable", null,
+        ApiEnvelope.validationStatus(false, "input", message),
+        ApiEnvelope.qualityGate("failed", message, true));
     return GSON.toJson(error);
   }
 }

@@ -412,14 +412,24 @@ then modifies them based on the user's requirements.
 | `validation` | `error-flash` | A deliberately invalid flash input |
 | `safety` | `hazop-study` | Simulation-backed HAZOP from process scenarios and document evidence |
 | `safety` | `barrier-register` | Evidence-linked PSF/SCE barrier register |
+| `tool` | `<tool name>` | Canonical or contract-level example for any advertised MCP tool, such as `run_dynamic` or `run_relief` |
 
 ---
 
 ## `getSchema` — JSON Schemas
 
 Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
+The `type` path segment must be either `input` or `output`; invalid values return a
+schema-not-found response instead of defaulting to an output schema.
 
 **Available schemas:**
+
+`SchemaCatalog.getToolNames()` advertises all 63 MCP server tools. Every listed tool has an
+`input` and `output` schema URI under `neqsim://schemas/{tool}/{type}`. High-use calculation and
+workflow tools have detailed tool-specific schemas. The remaining server, lifecycle, governance,
+and orchestration tools have generic contract schemas that expose common fields such as `action`,
+`inputJson`, `processJson`, `arguments`, `options`, `unitSystem`, and the standard response
+envelope.
 
 | Tool Name | Types | Description |
 |---|---|---|
@@ -428,11 +438,14 @@ Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
 | `run_hazop` | `input`, `output` | Simulation-backed HAZOP study JSON format |
 | `run_barrier_register` | `input`, `output` | Barrier register JSON format |
 | `validate_input` | `input`, `output` | Validator JSON format |
-| `search_components` | `input`, `output` | Component search JSON format |
+| `list_components` | `input`, `output` | Component search JSON format |
+| `run_dynamic`, `run_pvt`, `run_flow_assurance`, and others | `input`, `output` | Domain workflow JSON formats |
+| `run_relief`, `run_lopa`, `run_sil`, `run_risk_matrix`, `run_flare_network` | `input`, `output` | Safety and risk workflow contracts |
+| `manage_state`, `manage_security`, `manage_validation_profile`, `check_tool_access`, and other platform tools | `input`, `output` | Generic MCP contract schemas with standard response envelopes |
 
 ---
 
-## Browsable MCP Resources (11 Endpoints)
+## Browsable MCP Resources (13 Endpoints)
 
 ### Catalog Resources (Static)
 
@@ -440,6 +453,7 @@ Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
 |---|---|
 | `neqsim://example-catalog` | Full catalog of all examples with descriptions |
 | `neqsim://schema-catalog` | Full catalog of all JSON schemas |
+| `neqsim://setup-templates` | Full catalog of major workflow setup templates |
 | `neqsim://components` | Component families: hydrocarbons, acid gases, glycols, olefins, etc. |
 | `neqsim://standards` | Design standards catalog: ASME, API, DNV, ISO, NORSOK |
 | `neqsim://models` | Equation of state models with usage recommendations |
@@ -451,6 +465,7 @@ Returns JSON Schema (Draft 2020-12) definitions for tool inputs and outputs.
 |---|---|
 | `neqsim://examples/{category}/{name}` | Specific example by category and name |
 | `neqsim://schemas/{tool}/{type}` | Specific schema by tool name and type |
+| `neqsim://setup-templates/{id}` | Specific workflow setup template by id |
 | `neqsim://components/{name}` | Full properties for a component (Tc, Pc, omega, MW, etc.) |
 | `neqsim://standards/{code}` | Parameters for a specific design standard |
 | `neqsim://materials/{type}` | Material grades by type: pipe, plate, casing, etc. |

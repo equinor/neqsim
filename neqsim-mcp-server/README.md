@@ -292,8 +292,14 @@ Verify: `java -version` should show 17 or higher.
 
 ## Capabilities Overview
 
-The server exposes 59 tools organized into three tiers plus platform tools,
-9 guided-workflow prompts, and 11 browsable resources.
+The server exposes 63 tools organized into three tiers plus platform tools,
+9 guided-workflow prompts, and 13 browsable resources.
+
+Discovery is intentionally machine-readable. `getCapabilities` describes all 63 tools with schema
+links, examples, setup templates, unit guidance, process JSON contracts, benchmark trust, lifecycle
+metadata, and safety-review policy. High-use tools have detailed schemas and runnable examples; the
+remaining tools have generic contract-level schemas and starter examples so agents can still detect
+and route every advertised capability.
 
 ## Complete Tool Inventory
 
@@ -333,14 +339,16 @@ Write operations (`setSimulationVariable`, `saveSimulationState`) are
 | `dynamic_simulation` | Dynamic simulation with controller setup |
 | `pipeline_sizing` | Multiphase pipeline sizing |
 
-### Browsable Resources (11)
+### Browsable Resources (13)
 
 | URI | Description |
 |-----|-------------|
 | `neqsim://example-catalog` | Full catalog of all examples |
 | `neqsim://schema-catalog` | Full catalog of all JSON schemas |
+| `neqsim://setup-templates` | Major workflow setup templates |
 | `neqsim://examples/{category}/{name}` | Specific example by category and name |
 | `neqsim://schemas/{tool}/{type}` | Specific schema by tool and input/output |
+| `neqsim://setup-templates/{id}` | Specific setup template by id |
 | `neqsim://components` | Component families (hydrocarbons, acid gases, glycols, etc.) |
 | `neqsim://components/{name}` | Full properties for a component (Tc, Pc, omega, MW) |
 | `neqsim://standards` | Design standards catalog (ASME, API, DNV, ISO, NORSOK) |
@@ -499,8 +507,9 @@ and **auto-validation** against engineering design rules.
 
 > "Simulate gas at 80 bara going through a separator then a compressor to 150 bara"
 
-The LLM discovers NeqSim's tools automatically via MCP, reads the embedded
-examples and schemas, then calls the tools to compute rigorous answers.
+The LLM discovers NeqSim's tools automatically via MCP, reads the capability
+manifest, embedded examples, schemas, and setup templates, then calls the tools
+to compute rigorous answers.
 
 ---
 
@@ -747,13 +756,14 @@ response schemas for all tools and browsable resources, see
 
 ## How the LLM Uses the Server (Typical Flow)
 
-1. **Discovery** — The LLM calls `tools/list` and finds the 59 available tools. It reads
+1. **Discovery** — The LLM calls `tools/list` and finds the 63 available tools. It reads
    the descriptions to understand what each tool does. Or it calls `getCapabilities`
    for a structured manifest of all NeqSim capabilities. It can also browse
-   `neqsim://components` and `neqsim://models` to discover available data.
+  `neqsim://components`, `neqsim://models`, and `neqsim://setup-templates` to
+  discover available data and setup patterns.
 
-2. **Learning the format** — The LLM calls `getExample` or `getSchema` to see
-   the expected JSON format for the tool it wants to use.
+2. **Learning the format** — The LLM calls `getExample` or `getSchema`, or fetches
+  `neqsim://setup-templates/{id}`, to see the expected JSON format and workflow setup.
 
 3. **Validation (optional)** — Before running an expensive calculation, the LLM
    calls `validateInput` to catch typos and missing fields.
@@ -799,8 +809,8 @@ neqsim-mcp-server/                        # Separate Maven project (Java 17+)
 ├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.12.0
 ├── test_mcp_server.py                     # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
-    ├── NeqSimTools.java                   # 59 @Tool-annotated MCP tools
-    ├── NeqSimResources.java               # 6 @Resource + 5 @ResourceTemplate (11 endpoints)
+  ├── NeqSimTools.java                   # 63 @Tool-annotated MCP tools
+    ├── NeqSimResources.java               # 7 @Resource + 6 @ResourceTemplate (13 endpoints)
     └── NeqSimPrompts.java                 # 9 @Prompt guided workflows
 
 Delegates to runner layer in neqsim core (src/main/java/neqsim/mcp/):
@@ -852,8 +862,8 @@ Delegates to runner layer in neqsim core (src/main/java/neqsim/mcp/):
 │   ├── DiagnosticIssue.java               # Validation issue (severity + code + fix hint)
 │   └── ResultProvenance.java              # Trust metadata (EOS, assumptions, limitations)
 └── catalog/
-    ├── ExampleCatalog.java                # Ready-to-use examples (flash + process)
-    └── SchemaCatalog.java                 # JSON Schema definitions (tools × in/out)
+    ├── ExampleCatalog.java                # Examples for base categories and all MCP tools
+    └── SchemaCatalog.java                 # JSON Schema definitions for all 56 MCP tools
 ```
 
 The MCP server is a **thin Quarkus wrapper** around the framework-agnostic
@@ -870,7 +880,9 @@ runner layer in neqsim core. This design means:
 
 ### Unit Tests (Runner Layer)
 
-The runner layer in neqsim core has 139+ JUnit 5 tests across 12 test classes:
+The runner layer in neqsim core has focused JUnit 5 coverage across runners,
+schemas, examples, capability descriptors, standard response contracts, capability-graph metadata,
+setup templates, and validation behavior:
 
 ```bash
 # Run all MCP runner tests
@@ -880,11 +892,11 @@ The runner layer in neqsim core has 139+ JUnit 5 tests across 12 test classes:
 ### Integration Tests (MCP Server)
 
 The `test_mcp_server.py` script launches the server, communicates over STDIO,
-and validates all 59 tools across all three tiers:
+and validates all 63 tools across all three tiers:
 
 | Category | Checks | Description |
 |---|---|---|
-| Protocol | 9 | Tool/resource/template registration (59 tools, 6 resources, 5 templates) |
+| Protocol | 9 | Tool/resource/template registration (63 tools, 7 resources, 6 templates) |
 | Component search | 9 | Exact, partial, empty, no-match |
 | Examples & schemas | 10 | Catalog retrieval |
 | Flash calculations | 30 | SRK, PR, CPA; single/two-phase; density, Z, viscosity |
