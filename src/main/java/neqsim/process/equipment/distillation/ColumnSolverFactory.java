@@ -744,6 +744,7 @@ final class ColumnSolverFactory {
    *
    * @param column live column
    * @param id calculation identifier
+   * @param summary automatic solver summary builder
    * @return solve result from the fallback solver
    */
   private static ColumnSolveResult runAutoFallbackOnLiveColumn(DistillationColumn column, UUID id,
