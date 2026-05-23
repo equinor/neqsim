@@ -539,7 +539,44 @@ double flow = auto.getVariableValue("HP Sep.gasOutStream.flowRate", "kg/hr");
 // Write inputs (only INPUT-type variables) and re-run
 auto.setVariableValue("Compressor.outletPressure", 150.0, "bara");
 process.run();  // propagate changes
+
+// Batch operations (one run after all writes)
+Map<String, Double> updates = new LinkedHashMap<String, Double>();
+updates.put("Compressor.outletPressure", 150.0);
+updates.put("Valve.outletPressure", 45.0);
+auto.setValues(updates, "bara", true);  // runAfter=true → single run() at end
+
+Map<String, Double> values = auto.getValues(
+    Arrays.asList("HP Sep.pressure", "Compressor.outletPressure"), "bara");
+
+// Dirty tracking — agents avoid redundant run() calls
+auto.setVariableValue("Compressor.outletPressure", 160.0, "bara");
+if (auto.isDirty()) auto.runIfDirty();   // runs once and clears flag
+auto.setVariableValueAndRun("Cooler.outletTemperature", 30.0, "C");  // set + run + clear
+
+// Discovery and introspection
+String manifest = auto.describe();           // JSON: schemaVersion, units, variables, types
+String snap = auto.snapshot("HP Sep");       // JSON snapshot of a unit / area / "*"
+String topo = auto.getTopology();            // JSON: equipment + connections
+String adj = auto.getNeighbors("Cooler");    // upstream / downstream units
+
+// Structured (non-scalar) reads — composition, components, phaseFractions, kvalues
+JsonElement comp = auto.getStructured("HP Sep.gasOutStream.composition");
+// → {"methane": 0.85, "ethane": 0.10, ...}
+
+// Non-throwing pre-flight validation
+AutomationDiagnostics.DiagnosticResult issue = auto.validateAddress("HP Sep.foo");
+if (issue != null) { /* handle without try/catch */ }
+
+// UOM hints
+List<String> uoms = auto.getAllowedUnits("HP Sep.pressure");  // ["bara","Pa","psia","barg"]
+
+// Stable JSON schema for all *Safe / describe / snapshot / topology outputs
+String SCHEMA = ProcessAutomation.SCHEMA_VERSION;  // "1.0"
 ```
+
+**Cached facade:** `process.getAutomation()` returns the same instance on every call so
+the diagnostics history, learned corrections, and dirty flag persist across agent turns.
 
 For multi-area `ProcessModel`:
 

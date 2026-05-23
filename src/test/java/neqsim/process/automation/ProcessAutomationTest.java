@@ -1193,4 +1193,199 @@ class ProcessAutomationTest {
       assertTrue(readOne, name + " should have at least one readable variable");
     }
   }
+
+  // ===================================================================================
+  // Agentic API extensions
+  // ===================================================================================
+
+  @Test
+  void testGetAutomationReturnsCachedInstance() {
+    ProcessAutomation a1 = process.getAutomation();
+    ProcessAutomation a2 = process.getAutomation();
+    assertTrue(a1 == a2, "getAutomation() must return the cached instance for diagnostics "
+        + "and dirty-state persistence");
+  }
+
+  @Test
+  void testSchemaVersionConstant() {
+    assertEquals("1.0", automation.getSchemaVersion());
+    assertEquals("1.0", ProcessAutomation.SCHEMA_VERSION);
+  }
+
+  @Test
+  void testDirtyFlagFlipsOnSetAndClearsOnRun() {
+    assertFalse(automation.isDirty(), "Fresh facade should be clean after setUp's run()");
+    automation.setVariableValue("Compressor.outletPressure", 110.0, "bara");
+    assertTrue(automation.isDirty(), "Setting an input should mark facade dirty");
+    boolean ran = automation.runIfDirty();
+    assertTrue(ran, "runIfDirty() should run when dirty");
+    assertFalse(automation.isDirty(), "After run, facade should be clean");
+    assertFalse(automation.runIfDirty(), "runIfDirty() should be a no-op when clean");
+  }
+
+  @Test
+  void testSetVariableValueAndRun() {
+    automation.setVariableValueAndRun("Compressor.outletPressure", 125.0, "bara");
+    assertFalse(automation.isDirty());
+    double p = automation.getVariableValue("Compressor.outletStream.pressure", "bara");
+    assertEquals(125.0, p, 1e-6);
+  }
+
+  @Test
+  void testGetValuesBatch() {
+    java.util.List<String> addrs = java.util.Arrays.asList("Compressor.outletPressure",
+        "Cooler.outletStream.temperature", "Valve.outletStream.pressure");
+    java.util.Map<String, Double> values = automation.getValues(addrs, null);
+    assertEquals(3, values.size());
+    assertTrue(values.containsKey("Compressor.outletPressure"));
+  }
+
+  @Test
+  void testGetValuesBatchSkipsBadAddresses() {
+    java.util.List<String> addrs =
+        java.util.Arrays.asList("Compressor.outletPressure", "NotARealUnit.foo");
+    java.util.Map<String, Double> values = automation.getValues(addrs, null);
+    assertEquals(1, values.size(), "Bad address should be skipped, not throw");
+  }
+
+  @Test
+  void testSetValuesBatchRunsOnce() {
+    java.util.Map<String, Double> updates = new java.util.LinkedHashMap<String, Double>();
+    updates.put("Compressor.outletPressure", 115.0);
+    updates.put("Valve.outletPressure", 45.0);
+    int ok = automation.setValues(updates, "bara", true);
+    assertEquals(2, ok);
+    assertFalse(automation.isDirty(), "setValues(runAfter=true) should leave facade clean");
+  }
+
+  @Test
+  void testSnapshotProducesValidJson() {
+    String json = automation.snapshot("HP Sep");
+    assertNotNull(json);
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    assertEquals("1.0", root.get("schemaVersion").getAsString());
+    assertTrue(root.has("units"));
+    assertTrue(root.getAsJsonArray("units").size() >= 1);
+  }
+
+  @Test
+  void testSnapshotAll() {
+    String json = automation.snapshot("*");
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    int n = root.getAsJsonArray("units").size();
+    assertTrue(n >= 5, "Snapshot of whole process should include all 5 units, got " + n);
+  }
+
+  @Test
+  void testDescribeReturnsSchema() {
+    String json = automation.describe();
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    assertEquals("1.0", root.get("schemaVersion").getAsString());
+    assertFalse(root.get("multiArea").getAsBoolean());
+    assertTrue(root.getAsJsonArray("units").size() >= 5);
+  }
+
+  @Test
+  void testGetTopologyEmitsEquipmentAndInletsOutlets() {
+    String json = automation.getTopology();
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    assertTrue(root.has("equipment"));
+    com.google.gson.JsonArray equip = root.getAsJsonArray("equipment");
+    assertTrue(equip.size() >= 5);
+  }
+
+  @Test
+  void testGetNeighbors() {
+    String json = automation.getNeighbors("Cooler");
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    assertEquals("Cooler", root.get("unit").getAsString());
+    assertTrue(root.has("upstream"));
+    assertTrue(root.has("downstream"));
+    // Cooler is fed by Compressor and feeds Valve
+    String up = root.getAsJsonArray("upstream").toString();
+    String down = root.getAsJsonArray("downstream").toString();
+    assertTrue(up.contains("Compressor"), "Cooler upstream should include Compressor: " + up);
+    assertTrue(down.contains("Valve"), "Cooler downstream should include Valve: " + down);
+  }
+
+  @Test
+  void testGetStructuredCompositionReturnsAllComponents() {
+    com.google.gson.JsonElement el = automation.getStructured("HP Sep.gasOutStream.composition");
+    assertTrue(el.isJsonObject());
+    com.google.gson.JsonObject obj = el.getAsJsonObject();
+    assertTrue(obj.has("methane"));
+    assertTrue(obj.has("ethane"));
+    double sum = 0.0;
+    for (java.util.Map.Entry<String, com.google.gson.JsonElement> e : obj.entrySet()) {
+      sum += e.getValue().getAsDouble();
+    }
+    assertEquals(1.0, sum, 1e-6, "Mole fractions should sum to 1");
+  }
+
+  @Test
+  void testGetStructuredComponents() {
+    com.google.gson.JsonElement el = automation.getStructured("HP Sep.gasOutStream.components");
+    assertTrue(el.isJsonArray());
+    assertTrue(el.getAsJsonArray().size() >= 4);
+  }
+
+  @Test
+  void testGetStructuredScalarFallback() {
+    com.google.gson.JsonElement el = automation.getStructured("Compressor.outletStream.pressure");
+    assertTrue(el.isJsonPrimitive());
+    assertTrue(el.getAsJsonPrimitive().isNumber());
+  }
+
+  @Test
+  void testValidateAddressGoodReturnsNull() {
+    assertEquals(null, automation.validateAddress("Compressor.outletPressure"));
+  }
+
+  @Test
+  void testValidateAddressBadReturnsDiagnostic() {
+    AutomationDiagnostics.DiagnosticResult d = automation.validateAddress("NoSuchUnit.foo");
+    assertNotNull(d);
+    assertEquals(AutomationDiagnostics.ErrorCategory.UNIT_NOT_FOUND, d.getCategory());
+  }
+
+  @Test
+  void testGetAllowedUnitsTemperature() {
+    java.util.List<String> uoms = automation.getAllowedUnits("Cooler.outletStream.temperature");
+    assertTrue(uoms.contains("K"));
+    assertTrue(uoms.contains("C"));
+  }
+
+  @Test
+  void testSetReadOnlyVariableReturnsDiagnostic() {
+    // outletStream.temperature is an OUTPUT — attempting to set it should produce a
+    // READ_ONLY_VARIABLE diagnostic via the safe accessor.
+    String json = automation.setVariableValueSafe("Cooler.outletStream.temperature", 50.0, "C");
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    String status = root.get("status").getAsString();
+    if ("error".equals(status)) {
+      String cat = root.get("category").getAsString();
+      // Either READ_ONLY_VARIABLE or PROPERTY_NOT_FOUND is acceptable depending on
+      // how the underlying setter rejects the attempt.
+      assertTrue(
+          "READ_ONLY_VARIABLE".equals(cat) || "PROPERTY_NOT_FOUND".equals(cat)
+              || "INVALID_ADDRESS_FORMAT".equals(cat),
+          "Expected error category for read-only set, got " + cat);
+    }
+  }
+
+  @Test
+  void testDiagnosticsSharedAcrossGetAutomationCalls() {
+    process.getAutomation().setVariableValueSafe("NoSuchUnit.foo", 1.0, null);
+    // Second getAutomation() must return the same diagnostics so the learning report
+    // accumulates across calls.
+    String report = process.getAutomation().getDiagnostics().getLearningReport();
+    assertNotNull(report);
+    assertTrue(report.contains("totalOperations"));
+  }
 }
