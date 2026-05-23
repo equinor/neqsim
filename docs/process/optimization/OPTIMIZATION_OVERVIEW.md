@@ -12,6 +12,7 @@ This document provides a high-level introduction to the process optimization cap
 - [Quick Navigation](#quick-navigation)
 - [Architecture Overview](#architecture-overview)
 - [The Two Main Optimizers](#the-two-main-optimizers)
+- [Full ProcessModel Optimization](#full-processmodel-optimization)
 - [When to Use Which Optimizer](#when-to-use-which-optimizer)
 - [Key Concepts](#key-concepts)
 - [Search Algorithms](#search-algorithms)
@@ -35,6 +36,7 @@ This document provides a high-level introduction to the process optimization cap
 | Generate Eclipse lift curves (VFP tables) | `EclipseVFPExporter` | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE#eclipsevfpexporter) |
 | Evaluate equipment constraints | `ProcessConstraintEvaluator` | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) |
 | Integrate with external optimizers (SciPy, NLopt) | `ProcessSimulationEvaluator` | [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) |
+| Optimize full multi-area process models | `ProcessModelSimulationEvaluator` | Use area-qualified `ProcessAutomation` addresses and installed `CapacityConstraint` limits |
 | Solve constrained NLP (equality + inequality) | `SQPoptimizer` | [SQP Optimizer](sqp_optimizer) |
 | Calibrate model parameters to data | `BatchParameterEstimator` | [Data Reconciliation and Steady-State Detection](data-reconciliation) |
 | Load optimization config from YAML/JSON | `ProductionOptimizationSpecLoader` | [YAML Spec Format](#yaml-specification-files) |
@@ -69,7 +71,7 @@ This sequence covers base-run requirements, optimizer selection, and safe variab
 | [Multi-Objective Optimization](multi-objective-optimization) | Pareto fronts, weighted-sum, epsilon-constraint methods |
 | [Batch Studies](batch-studies) | Parallel parameter sweeps and sensitivity analysis |
 | [Flow Rate Optimization](flow-rate-optimization) | FlowRateOptimizer and lift curve tables |
-| [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | ProcessSimulationEvaluator for Python/SciPy integration |
+| [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | ProcessSimulationEvaluator and ProcessModelSimulationEvaluator for Python/SciPy integration |
 | [Getting Started](getting-started) | Step-by-step first optimization workflow for process models/systems |
 | [Optimizer Guide](../../util/optimizer_guide) | Detailed API reference for all optimizer classes |
 | [SQP Optimizer](sqp_optimizer) | Sequential Quadratic Programming — constrained NLP with BFGS + active-set QP |
@@ -212,8 +214,61 @@ System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
 | "Minimize operating cost" | `ProductionOptimizer` | Custom objective function support |
 | "Optimize pressure AND flow rate together" | `ProductionOptimizer` | Multi-variable support |
 | "Trade off throughput vs power consumption" | `ProductionOptimizer.optimizePareto()` | Pareto multi-objective |
+| "Increase several producers until the full facility reaches a bottleneck" | `ProcessModelSimulationEvaluator` | Evaluates all named `ProcessModel` areas together |
 | "Evaluate 100 scenarios in parallel" | `ProductionOptimizer` | Has parallel evaluation |
 | "Calibrate model to match field data" | `BatchParameterEstimator` | Levenberg-Marquardt for data fitting |
+
+---
+
+## Full ProcessModel Optimization
+
+Use `ProcessModelSimulationEvaluator` when the optimization case spans several named process areas rather than one `ProcessSystem`. This is the recommended interface for large fixed-equipment studies such as increasing one or more producer feed rates until a separator, compressor, valve, heat exchanger, or export train reaches its installed capacity.
+
+The evaluator is deliberately a black-box bridge. It keeps the full plant model intact, lets external optimizers pass a vector of decision variables, runs `ProcessModel.run()`, and returns objective values, constraint margins, feasibility, and the active bottleneck.
+
+| Requirement | Pattern |
+|-------------|---------|
+| Decision variables | Use area-qualified `ProcessAutomation` addresses such as `wells::feed.flowRate` |
+| Scenario-level variables | Use `addParameterWithSetter(...)` for variables not exposed by automation |
+| Objectives | Add `ToDoubleFunction<ProcessModel>` functions and set `MINIMIZE` or `MAXIMIZE` direction |
+| Installed equipment limits | Attach `CapacityConstraint` objects to equipment, then call `addEquipmentCapacityConstraints()` |
+| Optimizer data | Use `getBounds()`, `getInitialValues()`, `evaluate(...)`, `estimateGradient(...)`, and `estimateConstraintJacobian(...)` |
+| Bottleneck reporting | Read `EvaluationResult.getActiveBottleneck()` after each evaluation |
+
+The typical workflow is:
+
+1. Build each process area as a separate `ProcessSystem` and compose them in a `ProcessModel`.
+2. Add installed capacity constraints to equipment whose sizes are fixed.
+3. Register feed rates, pressure setpoints, or scenario multipliers as evaluator parameters.
+4. Register the objective, for example export gas flow, oil export rate, power, or margin to a product specification.
+5. Add equipment capacity constraints and any additional product, pressure, or temperature constraints.
+6. Run a local or external optimizer against `evaluate(...)` or `evaluatePenalizedObjective(...)`.
+7. Inspect feasibility, constraint margins, and active bottleneck metadata for the recommended operating point.
+
+The API pattern below is covered by the focused unit test `ProcessModelSimulationEvaluatorTest`.
+
+```java
+ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(model);
+evaluator.addParameter("wells::feed.flowRate", 5000.0, 20000.0, "kg/hr");
+evaluator.addObjective("exportGas", new ToDoubleFunction<ProcessModel>() {
+    @Override
+    public double applyAsDouble(ProcessModel processModel) {
+        return processModel.getVariableValue("separation::separator.gasOutStream.flowRate", "kg/hr");
+    }
+}, ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+evaluator.addConstraintUpperBound("feedLimit", new ToDoubleFunction<ProcessModel>() {
+    @Override
+    public double applyAsDouble(ProcessModel processModel) {
+        return processModel.getVariableValue("wells::feed.flowRate", "kg/hr");
+    }
+}, 15000.0);
+evaluator.addEquipmentCapacityConstraints();
+
+ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] {12000.0});
+ProcessModelSimulationEvaluator.BottleneckStatus bottleneck = result.getActiveBottleneck();
+```
+
+`ProcessModelSimulationEvaluator` complements rather than replaces the other optimizers. Use `ProcessOptimizationEngine` for compact throughput cases on one process, `ProductionOptimizer` for existing single-system objective workflows, and `ProcessModelSimulationEvaluator` when the optimization boundary is the full plant model.
 
 ---
 
@@ -561,6 +616,7 @@ for (ScenarioRequest scenario : scenarios) {
 | `BatchStudy` | Parallel parameter sweeps | `run()` | [Batch Studies](batch-studies) |
 | `ProcessConstraintEvaluator` | Constraint evaluation | `evaluate()` | [Capacity Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) |
 | `ProcessSimulationEvaluator` | External optimizer interface | `evaluate()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) |
+| `ProcessModelSimulationEvaluator` | External optimizer interface for multi-area `ProcessModel` studies | `evaluate()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) |
 | `EclipseVFPExporter` | Eclipse VFP tables | `exportVFPPROD()` | [Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE#eclipsevfpexporter) |
 | `LiftCurveGenerator` | Lift curve tables | `generateLiftCurve()` | [Flow Rate Optimization](flow-rate-optimization) |
 | `BatchParameterEstimator` | Model calibration | `solve()` | [Data Reconciliation and Steady-State Detection](data-reconciliation) |
@@ -573,4 +629,5 @@ for (ScenarioRequest scenario : scenarios) {
 Choose based on your use case:
 - **Max throughput at pressures** → `ProcessOptimizationEngine`
 - **Custom objectives/multi-variable** → `ProductionOptimizer`
+- **Full `ProcessModel` with several process areas** → `ProcessModelSimulationEvaluator`
 - **Model calibration** → `BatchParameterEstimator`
