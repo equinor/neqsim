@@ -5,6 +5,8 @@ permissions:
 
 on:
   workflow_dispatch:
+  release:
+    types: [published]
   push:
     branches:
       - master
@@ -69,6 +71,10 @@ jobs:
   build_docker:
     name: Build & push Docker image
     needs: build_mcp_server
+    # Only build & push the container image on a published GitHub release
+    # (or manual workflow_dispatch). Push-to-branch runs build the jar but
+    # skip the Docker step.
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
