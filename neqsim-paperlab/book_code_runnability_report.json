@@ -1,0 +1,1178 @@
+{
+  "total": 203,
+  "passed": 16,
+  "failed": 0,
+  "skipped": 187,
+  "results": [
+    {
+      "file": "chapters/ch01_introduction/chapter.md",
+      "line": 88,
+      "status": "PASS",
+      "error": null,
+      "mode": "concat",
+      "block_count": 4
+    },
+    {
+      "file": "chapters/ch02_how_neqsim_is_built/chapter.md",
+      "line": 117,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch02_how_neqsim_is_built/chapter.md",
+      "line": 130,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch02_how_neqsim_is_built/chapter.md",
+      "line": 214,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch02_how_neqsim_is_built/chapter.md",
+      "line": 231,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch02_how_neqsim_is_built/chapter.md",
+      "line": 76,
+      "status": "PASS",
+      "error": null,
+      "mode": "concat",
+      "block_count": 1
+    },
+    {
+      "file": "chapters/ch03_neqsim_python_package/chapter.md",
+      "line": 52,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch03_neqsim_python_package/chapter.md",
+      "line": 79,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch03_neqsim_python_package/chapter.md",
+      "line": 120,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch03_neqsim_python_package/chapter.md",
+      "line": 139,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch03_neqsim_python_package/chapter.md",
+      "line": 180,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch03_neqsim_python_package/chapter.md",
+      "line": 217,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch03_neqsim_python_package/chapter.md",
+      "line": 267,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch03_neqsim_python_package/chapter.md",
+      "line": 294,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch03_neqsim_python_package/chapter.md",
+      "line": 305,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch03_neqsim_python_package/chapter.md",
+      "line": 52,
+      "status": "PASS",
+      "error": null,
+      "mode": "concat",
+      "block_count": 1
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 35,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 57,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 75,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 96,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 109,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 122,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 152,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 165,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 180,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 194,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 208,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 221,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 240,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 299,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 323,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 353,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch04_direct_java_access/chapter.md",
+      "line": 35,
+      "status": "PASS",
+      "error": null,
+      "mode": "concat",
+      "block_count": 2
+    },
+    {
+      "file": "chapters/ch05_fluid_creation/chapter.md",
+      "line": 97,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch05_fluid_creation/chapter.md",
+      "line": 110,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch05_fluid_creation/chapter.md",
+      "line": 172,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch05_fluid_creation/chapter.md",
+      "line": 237,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch05_fluid_creation/chapter.md",
+      "line": 246,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch05_fluid_creation/chapter.md",
+      "line": 253,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch05_fluid_creation/chapter.md",
+      "line": 268,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch05_fluid_creation/chapter.md",
+      "line": 289,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch05_fluid_creation/chapter.md",
+      "line": 302,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch05_fluid_creation/chapter.md",
+      "line": 28,
+      "status": "PASS",
+      "error": null,
+      "mode": "concat",
+      "block_count": 5
+    },
+    {
+      "file": "chapters/ch06_fluid_characterization/chapter.md",
+      "line": 37,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch06_fluid_characterization/chapter.md",
+      "line": 88,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch06_fluid_characterization/chapter.md",
+      "line": 107,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch06_fluid_characterization/chapter.md",
+      "line": 144,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch06_fluid_characterization/chapter.md",
+      "line": 184,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch06_fluid_characterization/chapter.md",
+      "line": 200,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch06_fluid_characterization/chapter.md",
+      "line": 210,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch06_fluid_characterization/chapter.md",
+      "line": 224,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch07_pvt_simulation/chapter.md",
+      "line": 41,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch07_pvt_simulation/chapter.md",
+      "line": 76,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch07_pvt_simulation/chapter.md",
+      "line": 103,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch07_pvt_simulation/chapter.md",
+      "line": 130,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch07_pvt_simulation/chapter.md",
+      "line": 156,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch07_pvt_simulation/chapter.md",
+      "line": 183,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch07_pvt_simulation/chapter.md",
+      "line": 206,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch07_pvt_simulation/chapter.md",
+      "line": 235,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch07_pvt_simulation/chapter.md",
+      "line": 255,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch07_pvt_simulation/chapter.md",
+      "line": 283,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 43,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 60,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 80,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 96,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 127,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 147,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 166,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 182,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 196,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 219,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 234,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 245,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 262,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 280,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 307,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 325,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 337,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 348,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 365,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch08_unit_operations/chapter.md",
+      "line": 376,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch09_process_simulation/chapter.md",
+      "line": 25,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch09_process_simulation/chapter.md",
+      "line": 46,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch09_process_simulation/chapter.md",
+      "line": 68,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch09_process_simulation/chapter.md",
+      "line": 119,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch09_process_simulation/chapter.md",
+      "line": 131,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch09_process_simulation/chapter.md",
+      "line": 165,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch09_process_simulation/chapter.md",
+      "line": 203,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch09_process_simulation/chapter.md",
+      "line": 245,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch09_process_simulation/chapter.md",
+      "line": 263,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch09_process_simulation/chapter.md",
+      "line": 280,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch10_distillation_and_columns/chapter.md",
+      "line": 43,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch10_distillation_and_columns/chapter.md",
+      "line": 76,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch10_distillation_and_columns/chapter.md",
+      "line": 93,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch10_distillation_and_columns/chapter.md",
+      "line": 130,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch10_distillation_and_columns/chapter.md",
+      "line": 146,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch10_distillation_and_columns/chapter.md",
+      "line": 160,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch10_distillation_and_columns/chapter.md",
+      "line": 170,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch10_distillation_and_columns/chapter.md",
+      "line": 189,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch10_distillation_and_columns/chapter.md",
+      "line": 224,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch10_distillation_and_columns/chapter.md",
+      "line": 236,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch10_distillation_and_columns/chapter.md",
+      "line": 250,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch10_distillation_and_columns/chapter.md",
+      "line": 261,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch11_dynamic_simulation/chapter.md",
+      "line": 28,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch11_dynamic_simulation/chapter.md",
+      "line": 51,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch11_dynamic_simulation/chapter.md",
+      "line": 74,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch11_dynamic_simulation/chapter.md",
+      "line": 100,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch11_dynamic_simulation/chapter.md",
+      "line": 136,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch11_dynamic_simulation/chapter.md",
+      "line": 158,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch11_dynamic_simulation/chapter.md",
+      "line": 194,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch11_dynamic_simulation/chapter.md",
+      "line": 218,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch11_dynamic_simulation/chapter.md",
+      "line": 244,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch12_automation_api/chapter.md",
+      "line": 42,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch12_automation_api/chapter.md",
+      "line": 66,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch12_automation_api/chapter.md",
+      "line": 86,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch12_automation_api/chapter.md",
+      "line": 104,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch12_automation_api/chapter.md",
+      "line": 133,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch12_automation_api/chapter.md",
+      "line": 147,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch12_automation_api/chapter.md",
+      "line": 168,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch12_automation_api/chapter.md",
+      "line": 202,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch12_automation_api/chapter.md",
+      "line": 229,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch12_automation_api/chapter.md",
+      "line": 240,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch12_automation_api/chapter.md",
+      "line": 264,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch12_automation_api/chapter.md",
+      "line": 284,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch12_automation_api/chapter.md",
+      "line": 332,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch13_reporting_and_visualization/chapter.md",
+      "line": 41,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch13_reporting_and_visualization/chapter.md",
+      "line": 82,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch13_reporting_and_visualization/chapter.md",
+      "line": 104,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch13_reporting_and_visualization/chapter.md",
+      "line": 122,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch13_reporting_and_visualization/chapter.md",
+      "line": 138,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch13_reporting_and_visualization/chapter.md",
+      "line": 170,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch13_reporting_and_visualization/chapter.md",
+      "line": 195,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch13_reporting_and_visualization/chapter.md",
+      "line": 269,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch13_reporting_and_visualization/chapter.md",
+      "line": 285,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch13_reporting_and_visualization/chapter.md",
+      "line": 302,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch14_apis_and_services/chapter.md",
+      "line": 39,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch14_apis_and_services/chapter.md",
+      "line": 106,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch14_apis_and_services/chapter.md",
+      "line": 126,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch14_apis_and_services/chapter.md",
+      "line": 155,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 179,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 337,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 349,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 361,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 373,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 385,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 644,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 724,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 899,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 966,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 990,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 1464,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 1524,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 1555,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 1772,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 1808,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 2442,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 2540,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 2578,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 2630,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 2888,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 2945,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 2965,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 3089,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 3311,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 3651,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 3903,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 4139,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 4164,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 4215,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 4233,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 4275,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 4456,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 4487,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 4641,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 4694,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 4987,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 5111,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 5143,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 5198,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 5234,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 5293,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 5765,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 5806,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 5857,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 5962,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 5997,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 6018,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 6041,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch15_worked_example_oseberg/chapter.md",
+      "line": 6071,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch17_process_optimization/chapter.md",
+      "line": 198,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch17_process_optimization/chapter.md",
+      "line": 249,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch17_process_optimization/chapter.md",
+      "line": 353,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch17_process_optimization/chapter.md",
+      "line": 69,
+      "status": "PASS",
+      "error": null,
+      "mode": "concat",
+      "block_count": 3
+    }
+  ]
+}

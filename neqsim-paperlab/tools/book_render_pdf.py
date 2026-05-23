@@ -694,6 +694,53 @@ def render_book_pdf(book_dir, chapter_filter=None):
 
     submission_dir = book_dir / "submission"
     submission_dir.mkdir(parents=True, exist_ok=True)
+
+    # ── Cover images ──
+    # If the book directory contains a front and/or back cover image, copy
+    # them into submission/ with normalised names and inject full-bleed
+    # pages around the manuscript body.
+    _COVER_FRONT_CANDIDATES = (
+        "cover_front.png", "cover_front.jpg", "cover_front.jpeg",
+        "front_cover.png", "front_cover.jpg", "front_cover.jpeg",
+        "front page.png", "front page.jpg", "front page.jpeg",
+        "frontpage.png", "frontpage.jpg",
+    )
+    _COVER_BACK_CANDIDATES = (
+        "cover_back.png", "cover_back.jpg", "cover_back.jpeg",
+        "back_cover.png", "back_cover.jpg", "back_cover.jpeg",
+        "back page.png", "back page.jpg",
+    )
+    front_cover_typst = ""
+    back_cover_typst = ""
+
+    def _find_cover(candidates):
+        for name in candidates:
+            p = book_dir / name
+            if p.is_file():
+                return p
+        return None
+
+    front_src = _find_cover(_COVER_FRONT_CANDIDATES)
+    if front_src is not None:
+        dest = submission_dir / ("cover_front" + front_src.suffix.lower())
+        shutil.copy2(front_src, dest)
+        front_cover_typst = (
+            '#page(margin: 0pt, header: none, footer: none, numbering: none)[\n'
+            '  #image("' + dest.name + '", width: 100%, height: 100%, fit: "cover")\n'
+            ']\n\n'
+        )
+
+    back_src = _find_cover(_COVER_BACK_CANDIDATES)
+    if back_src is not None:
+        dest = submission_dir / ("cover_back" + back_src.suffix.lower())
+        shutil.copy2(back_src, dest)
+        back_cover_typst = (
+            '\n\n#pagebreak()\n'
+            '#page(margin: 0pt, header: none, footer: none, numbering: none)[\n'
+            '  #image("' + dest.name + '", width: 100%, height: 100%, fit: "cover")\n'
+            ']\n'
+        )
+
     frontmatter_figures = book_dir / "frontmatter" / "figures"
     if frontmatter_figures.is_dir():
         figures_dir = submission_dir / "figures"
@@ -713,6 +760,15 @@ def render_book_pdf(book_dir, chapter_filter=None):
 
     # Build preamble
     preamble = build_book_typst_preamble(cfg, profile)
+
+    # Inject the front cover image (if any) immediately before the procedural
+    # title page so the printed PDF opens on the designed cover.
+    if front_cover_typst:
+        marker = "// ── Title Page ──"
+        if marker in preamble:
+            preamble = preamble.replace(marker, front_cover_typst + marker, 1)
+        else:
+            preamble = front_cover_typst + preamble
 
     # Append print-shop extras (bleed, crop marks, PDF/UA hint) when the
     # publisher profile requests them.
@@ -893,6 +949,8 @@ def render_book_pdf(book_dir, chapter_filter=None):
     if bib_fragment:
         all_fragments = all_fragments + [bib_fragment]
     full_typst = preamble + "\n\n".join(all_fragments)
+    if back_cover_typst:
+        full_typst = full_typst + back_cover_typst
 
     # Final postprocessing on the assembled document (catches bibliography
     # fragments and any cross-fragment issues missed by per-chapter passes).
