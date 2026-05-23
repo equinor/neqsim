@@ -125,9 +125,9 @@ public final class IndustrialProfile {
           "runFlowAssurance", "crossValidateModels", "runParametricStudy", "runBatch",
           "sizeEquipment", "compareProcesses", "generateReport", "generateVisualization",
           "queryDataCatalog", "setSimulationVariable", "saveSimulationState", "runMaterialsReview",
-          "runOpenDrainReview", "runNorsokS001Clause10Review", "runOperationalStudy",
-          "runRelief", "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork",
-          "runHAZOP", "runBarrierRegister", "runSafetySystemPerformance")));
+          "runOpenDrainReview", "runNorsokS001Clause10Review", "runOperationalStudy", "runRelief",
+          "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork", "runHAZOP", "runBarrierRegister",
+          "runSafetySystemPerformance", "runAgenticEngineering")));
 
   /**
    * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools that
@@ -185,6 +185,7 @@ public final class IndustrialProfile {
     map.put("runBioprocess", ToolCategory.CALCULATION);
     map.put("crossValidateModels", ToolCategory.CALCULATION);
     map.put("runParametricStudy", ToolCategory.CALCULATION);
+    map.put("runAgenticEngineering", ToolCategory.CALCULATION);
     map.put("sizeEquipment", ToolCategory.CALCULATION);
     map.put("compareProcesses", ToolCategory.CALCULATION);
     map.put("generateVisualization", ToolCategory.CALCULATION);
