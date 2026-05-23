@@ -2439,6 +2439,43 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Accept a residual-monitored warm-start state after rejecting a Naphtali-Sandholm candidate.
+   *
+   * <p>
+   * The accepted state comes from the warm-start solver, but the strategy reported to callers
+   * remains {@link SolverType#NAPHTALI_SANDHOLM}. Naphtali-Sandholm telemetry from the rejected
+   * candidate is preserved so diagnostics still show the attempted linearization work.
+   * </p>
+   *
+   * @param candidate solved warm-start candidate to keep
+   * @param reason reason the direct Naphtali-Sandholm candidate was rejected
+   */
+  void acceptNaphtaliWarmStartCandidate(DistillationColumn candidate, String reason) {
+    int analyticJacobianColumns = lastNaphtaliAnalyticJacobianColumns;
+    int finiteDifferenceJacobianColumns = lastNaphtaliFiniteDifferenceJacobianColumns;
+    int thermoEvaluationCount = lastNaphtaliThermoEvaluationCount;
+    int thermoCacheHitCount = lastNaphtaliThermoCacheHitCount;
+    double jacobianBuildTimeSeconds = lastNaphtaliJacobianBuildTimeSeconds;
+    int blockLinearSolveCount = lastNaphtaliBlockLinearSolveCount;
+    int denseLinearSolveCount = lastNaphtaliDenseLinearSolveCount;
+    double linearSolveTimeSeconds = lastNaphtaliLinearSolveTimeSeconds;
+
+    logger.warn("Naphtali-Sandholm candidate rejected for column {}: {}. Keeping "
+        + "residual-monitored warm-start state.", getName(), reason);
+    acceptSolvedStateCandidate(candidate);
+    lastSolverTypeUsed = SolverType.NAPHTALI_SANDHOLM;
+    lastSolveStatusReason = reason;
+    lastNaphtaliAnalyticJacobianColumns = analyticJacobianColumns;
+    lastNaphtaliFiniteDifferenceJacobianColumns = finiteDifferenceJacobianColumns;
+    lastNaphtaliThermoEvaluationCount = thermoEvaluationCount;
+    lastNaphtaliThermoCacheHitCount = thermoCacheHitCount;
+    lastNaphtaliJacobianBuildTimeSeconds = jacobianBuildTimeSeconds;
+    lastNaphtaliBlockLinearSolveCount = blockLinearSolveCount;
+    lastNaphtaliDenseLinearSolveCount = denseLinearSolveCount;
+    lastNaphtaliLinearSolveTimeSeconds = linearSolveTimeSeconds;
+  }
+
+  /**
    * Check whether the latest MESH residual still needs Newton polishing.
    *
    * @return {@code true} when no finite residual is available or the norm is above tolerance

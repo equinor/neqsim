@@ -445,6 +445,8 @@ final class ColumnSolverFactory {
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
       column.markSolverTypeUsed(getSolverType());
+      DistillationColumn warmStartCandidate =
+          isAutoCandidateProbeMode() ? null : createDampedFallbackCandidate(column);
       DistillationColumn fallbackCandidate =
           shouldPrepareAcceleratedFallback() ? createDampedFallbackCandidate(column) : null;
       boolean accepted = false;
@@ -466,6 +468,11 @@ final class ColumnSolverFactory {
       if (!fallbackApplied && !accepted && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "Naphtali-Sandholm did not satisfy convergence criteria", null);
+        fallbackApplied = true;
+      }
+      if (!fallbackApplied && accepted && !isAutoCandidateProbeMode()
+          && column.getLastIterationCount() <= 0
+          && validateNaphtaliWarmStartProductSplit(column, warmStartCandidate, id)) {
         fallbackApplied = true;
       }
       if (!fallbackApplied && verifyAcceleratedResults) {
@@ -876,6 +883,40 @@ final class ColumnSolverFactory {
       column.acceptDampedFallbackCandidate(fallbackCandidate,
           solverName + " product split differs from damped substitution validation candidate");
     }
+  }
+
+  /**
+   * Keep the residual-monitored warm start when an initializer-only Naphtali-Sandholm candidate
+   * produces a materially different product split.
+   *
+   * @param column live column containing the Naphtali-Sandholm candidate result
+   * @param warmStartCandidate clean candidate used to compute the guarded warm-start state
+   * @param id calculation identifier
+   * @return {@code true} when the warm-start candidate was accepted on the live column
+   */
+  private static boolean validateNaphtaliWarmStartProductSplit(DistillationColumn column,
+      DistillationColumn warmStartCandidate, UUID id) {
+    if (warmStartCandidate == null) {
+      return false;
+    }
+    try {
+      warmStartCandidate.setDoInitializion(true);
+      warmStartCandidate.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
+      warmStartCandidate.markSolverTypeUsed(DistillationColumn.SolverType.MESH_RESIDUAL);
+      warmStartCandidate.solveMeshResidual(id);
+    } catch (RuntimeException exception) {
+      return false;
+    }
+    if (!warmStartCandidate.solved() || warmStartCandidate.wasFeedFlashFallbackApplied()) {
+      return false;
+    }
+    if (!productSplitDiffers(column, warmStartCandidate)) {
+      return false;
+    }
+    column.acceptNaphtaliWarmStartCandidate(warmStartCandidate,
+        "Naphtali-Sandholm initializer-only candidate was rejected because its product split "
+            + "differs from the residual-monitored warm start");
+    return true;
   }
 
   /**

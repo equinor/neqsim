@@ -204,6 +204,30 @@ public class NaphtaliSandholmSolver {
   /** Solve time in seconds from the last solve. */
   private double lastSolveTimeSeconds;
 
+  /** Number of semi-analytic Jacobian columns assembled in the last solve. */
+  private int lastAnalyticJacobianColumns;
+
+  /** Number of finite-difference Jacobian columns assembled in the last solve. */
+  private int lastFiniteDifferenceJacobianColumns;
+
+  /** Number of tray thermodynamic evaluations in the last solve. */
+  private int lastThermoEvaluationCount;
+
+  /** Number of cached tray thermodynamic evaluations reused in the last solve. */
+  private int lastThermoCacheHitCount;
+
+  /** Time spent assembling Jacobian matrices in the last solve. */
+  private double lastJacobianBuildTimeSeconds;
+
+  /** Number of block linear solves attempted successfully in the last solve. */
+  private int lastBlockLinearSolveCount;
+
+  /** Number of dense linear solves attempted successfully in the last solve. */
+  private int lastDenseLinearSolveCount;
+
+  /** Time spent solving linear systems in the last solve. */
+  private double lastLinearSolveTimeSeconds;
+
   /**
    * Original feed thermo systems cloned before column init() corrupts them. Map of tray index to
    * list of SystemInterface clones. Null if not provided.
@@ -258,7 +282,7 @@ public class NaphtaliSandholmSolver {
    * @return number of semi-analytic Jacobian columns
    */
   int getLastAnalyticJacobianColumns() {
-    return 0;
+    return lastAnalyticJacobianColumns;
   }
 
   /**
@@ -267,7 +291,7 @@ public class NaphtaliSandholmSolver {
    * @return number of finite-difference Jacobian columns
    */
   int getLastFiniteDifferenceJacobianColumns() {
-    return totalVars;
+    return lastFiniteDifferenceJacobianColumns;
   }
 
   /**
@@ -276,7 +300,7 @@ public class NaphtaliSandholmSolver {
    * @return thermodynamic evaluation count
    */
   int getLastThermoEvaluationCount() {
-    return 0;
+    return lastThermoEvaluationCount;
   }
 
   /**
@@ -285,7 +309,7 @@ public class NaphtaliSandholmSolver {
    * @return thermodynamic cache hit count
    */
   int getLastThermoCacheHitCount() {
-    return 0;
+    return lastThermoCacheHitCount;
   }
 
   /**
@@ -294,7 +318,7 @@ public class NaphtaliSandholmSolver {
    * @return Jacobian build time in seconds
    */
   double getLastJacobianBuildTimeSeconds() {
-    return 0.0;
+    return lastJacobianBuildTimeSeconds;
   }
 
   /**
@@ -303,7 +327,7 @@ public class NaphtaliSandholmSolver {
    * @return block linear solve count
    */
   int getLastBlockLinearSolveCount() {
-    return 0;
+    return lastBlockLinearSolveCount;
   }
 
   /**
@@ -312,7 +336,7 @@ public class NaphtaliSandholmSolver {
    * @return dense linear solve count
    */
   int getLastDenseLinearSolveCount() {
-    return 0;
+    return lastDenseLinearSolveCount;
   }
 
   /**
@@ -321,7 +345,7 @@ public class NaphtaliSandholmSolver {
    * @return linear solve time in seconds
    */
   double getLastLinearSolveTimeSeconds() {
-    return 0.0;
+    return lastLinearSolveTimeSeconds;
   }
 
   /**
@@ -401,6 +425,7 @@ public class NaphtaliSandholmSolver {
    */
   public boolean solve(UUID id) {
     long startTime = System.nanoTime();
+    resetTelemetry();
 
     try {
       initialize();
@@ -451,7 +476,7 @@ public class NaphtaliSandholmSolver {
         }
       }
 
-      if (norm < tolerance) {
+      if (useOverallMBClosure && norm < tolerance) {
         System.out.println("[NS] Full residual norm (" + norm
             + ") < tolerance — exiting early without energy check");
         applyResultsToColumn(id, 0, norm, startTime);
@@ -469,7 +494,7 @@ public class NaphtaliSandholmSolver {
       // energy is in the 1-5% range, run Sum-Rates (which adjusts T from the
       // energy balance) — that refines T without invoking Newton, which is
       // documented to diverge for the no-condenser/T-spec topology.
-      if (mbErrorBP < 0.005 && energyErrorBP < 0.01) {
+      if (useOverallMBClosure && mbErrorBP < 0.005 && energyErrorBP < 0.01) {
         logger.info("NS: mass+energy balance OK (mb={}%, E={}%), accepting solution",
             String.format("%.4f", mbErrorBP * 100), String.format("%.2f", energyErrorBP * 100));
         System.out.println("[NS] Both OK — accepting BP solution (no SR needed)");
@@ -714,6 +739,18 @@ public class NaphtaliSandholmSolver {
       logger.error("NS EXCEPTION: {}: {}", ex.getClass().getName(), ex.getMessage());
       return false;
     }
+  }
+
+  /** Reset solver telemetry before a new solve. */
+  private void resetTelemetry() {
+    lastAnalyticJacobianColumns = 0;
+    lastFiniteDifferenceJacobianColumns = 0;
+    lastThermoEvaluationCount = 0;
+    lastThermoCacheHitCount = 0;
+    lastJacobianBuildTimeSeconds = 0.0;
+    lastBlockLinearSolveCount = 0;
+    lastDenseLinearSolveCount = 0;
+    lastLinearSolveTimeSeconds = 0.0;
   }
 
   /**
@@ -2834,6 +2871,7 @@ public class NaphtaliSandholmSolver {
    * @return the Jacobian matrix [totalVars][totalVars]
    */
   private double[][] computeJacobian(double[] F0) {
+    long jacobianStart = System.nanoTime();
     double[][] J = new double[totalVars][totalVars];
     double pertSize = 1e-4;
     double minPert = 1e-8;
@@ -2869,6 +2907,9 @@ public class NaphtaliSandholmSolver {
       }
     }
 
+    lastAnalyticJacobianColumns += totalVars;
+    lastFiniteDifferenceJacobianColumns += totalVars;
+    lastJacobianBuildTimeSeconds += (System.nanoTime() - jacobianStart) / 1.0e9;
     return J;
   }
 
@@ -2971,6 +3012,7 @@ public class NaphtaliSandholmSolver {
   }
 
   private void evaluateThermoForTray(int j) {
+    lastThermoEvaluationCount++;
     double sumLiq = 0;
     for (int i = 0; i < C; i++) {
       sumLiq += liq[j][i];
@@ -4079,6 +4121,7 @@ public class NaphtaliSandholmSolver {
    * @return solution vector dx, or null if singular
    */
   private double[] solveBlockTridiagonal(double[][] J, double[] F) {
+    long solveStart = System.nanoTime();
     int m = varsPerTray;
 
     // Extract blocks
@@ -4182,6 +4225,8 @@ public class NaphtaliSandholmSolver {
       System.arraycopy(xBlocks[j], 0, dx, j * m, m);
     }
 
+    lastBlockLinearSolveCount++;
+    lastLinearSolveTimeSeconds += (System.nanoTime() - solveStart) / 1.0e9;
     return dx;
   }
 
@@ -4300,6 +4345,7 @@ public class NaphtaliSandholmSolver {
    * @return solution dx = -J^{-1}*F, or null if singular
    */
   private double[] solveDenseLU(double[][] J, double[] F) {
+    long solveStart = System.nanoTime();
     int n = F.length;
 
     // Augmented matrix [J | F]
@@ -4348,6 +4394,8 @@ public class NaphtaliSandholmSolver {
       dx[i] = sum / aug[i][i];
     }
 
+    lastDenseLinearSolveCount++;
+    lastLinearSolveTimeSeconds += (System.nanoTime() - solveStart) / 1.0e9;
     return dx;
   }
 
