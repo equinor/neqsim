@@ -218,49 +218,49 @@
     },
     {
       "file": "chapters/ch05_fluid_creation/chapter.md",
-      "line": 110,
+      "line": 173,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch05_fluid_creation/chapter.md",
-      "line": 172,
+      "line": 235,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch05_fluid_creation/chapter.md",
-      "line": 237,
+      "line": 300,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch05_fluid_creation/chapter.md",
-      "line": 246,
+      "line": 309,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch05_fluid_creation/chapter.md",
-      "line": 253,
+      "line": 316,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch05_fluid_creation/chapter.md",
-      "line": 268,
+      "line": 331,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch05_fluid_creation/chapter.md",
-      "line": 289,
+      "line": 352,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch05_fluid_creation/chapter.md",
-      "line": 302,
+      "line": 365,
       "status": "SKIP",
       "error": "noexec marker"
     },
@@ -376,7 +376,7 @@
     },
     {
       "file": "chapters/ch07_pvt_simulation/chapter.md",
-      "line": 283,
+      "line": 299,
       "status": "SKIP",
       "error": "noexec marker"
     },
@@ -808,19 +808,19 @@
     },
     {
       "file": "chapters/ch13_reporting_and_visualization/chapter.md",
-      "line": 269,
+      "line": 288,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch13_reporting_and_visualization/chapter.md",
-      "line": 285,
+      "line": 304,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch13_reporting_and_visualization/chapter.md",
-      "line": 302,
+      "line": 321,
       "status": "SKIP",
       "error": "noexec marker"
     },
@@ -856,295 +856,295 @@
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 337,
+      "line": 365,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 349,
+      "line": 377,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 361,
+      "line": 389,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 373,
+      "line": 401,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 385,
+      "line": 413,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 644,
+      "line": 672,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 724,
+      "line": 752,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 899,
+      "line": 927,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 966,
+      "line": 994,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 990,
+      "line": 1018,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 1464,
+      "line": 1492,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 1524,
+      "line": 1552,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 1555,
+      "line": 1583,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 1772,
+      "line": 1800,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 1808,
+      "line": 1836,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 2442,
+      "line": 2470,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 2540,
+      "line": 2568,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 2578,
+      "line": 2606,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 2630,
+      "line": 2658,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 2888,
+      "line": 2916,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 2945,
+      "line": 2973,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 2965,
+      "line": 2993,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 3089,
+      "line": 3117,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 3311,
+      "line": 3339,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 3651,
+      "line": 3679,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 3903,
+      "line": 3931,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 4139,
+      "line": 4167,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 4164,
+      "line": 4192,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 4215,
+      "line": 4243,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 4233,
+      "line": 4261,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 4275,
+      "line": 4303,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 4456,
+      "line": 4484,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 4487,
+      "line": 4515,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 4641,
+      "line": 4669,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 4694,
+      "line": 4722,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 4987,
+      "line": 5015,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 5111,
+      "line": 5139,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 5143,
+      "line": 5171,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 5198,
+      "line": 5226,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 5234,
+      "line": 5262,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 5293,
+      "line": 5321,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 5765,
+      "line": 5793,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 5806,
+      "line": 5834,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 5857,
+      "line": 5885,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 5962,
+      "line": 5990,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 5997,
+      "line": 6025,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 6018,
+      "line": 6046,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 6041,
+      "line": 6069,
       "status": "SKIP",
       "error": "noexec marker"
     },
     {
       "file": "chapters/ch15_worked_example_oseberg/chapter.md",
-      "line": 6071,
+      "line": 6099,
       "status": "SKIP",
       "error": "noexec marker"
     },
