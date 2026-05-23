@@ -85,8 +85,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: neqsim-mcp-server
-          # Recreates neqsim-mcp-server/target/neqsim-mcp-server-*-runner.jar
-          path: .
+          # upload-artifact@v4 strips the common ancestor of the uploaded
+          # paths, so the artifact only contains the bare jar/sha256 files.
+          # Extract them straight into neqsim-mcp-server/target/ so the
+          # Dockerfile's `COPY target/neqsim-mcp-server-*-runner.jar` works.
+          path: neqsim-mcp-server/target
 
       - name: Use neqsim version from build job
         id: version
