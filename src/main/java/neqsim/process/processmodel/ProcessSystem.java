@@ -7565,14 +7565,29 @@ public class ProcessSystem extends SimulationBaseClass {
   // ========================== Automation API ==========================
 
   /**
+   * Cached automation facade for this process system. Lazily initialized on first call to
+   * {@link #getAutomation()} so that diagnostic state (learned corrections, operation history,
+   * dirty flag) accumulates across calls instead of being thrown away.
+   */
+  private transient neqsim.process.automation.ProcessAutomation cachedAutomation;
+
+  /**
    * Returns an automation facade for this process system. The facade provides a stable,
    * string-addressable API for scripts and AI agents to interact with the simulation without
    * navigating Java object hierarchies.
    *
+   * <p>
+   * The facade is cached and reused across calls so that diagnostics (learned corrections,
+   * operation history, dirty-state tracking) persist for the lifetime of the process system.
+   * </p>
+   *
    * @return a {@link neqsim.process.automation.ProcessAutomation} facade
    */
   public neqsim.process.automation.ProcessAutomation getAutomation() {
-    return new neqsim.process.automation.ProcessAutomation(this);
+    if (cachedAutomation == null) {
+      cachedAutomation = new neqsim.process.automation.ProcessAutomation(this);
+    }
+    return cachedAutomation;
   }
 
   /**
