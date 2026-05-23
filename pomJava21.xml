@@ -27,8 +27,9 @@
 		<checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
 		<skipFlattening>false</skipFlattening>
 		<argLine></argLine>
-		<!-- Exclude slow tests by default. Run with -DexcludedTestGroups= to include all tests -->
-		<excludedTestGroups>slow</excludedTestGroups>
+		<!-- Java 21 build runs the extended test suite, including slow-tagged tests.
+		     Override with -DexcludedTestGroups=slow to skip them locally. -->
+		<excludedTestGroups></excludedTestGroups>
 	</properties>
 	<licenses>
 		<license>
