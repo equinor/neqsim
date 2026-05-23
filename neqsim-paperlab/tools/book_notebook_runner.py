@@ -286,7 +286,8 @@ def discover_notebooks(book_dir, chapter_filter=None):
 
 
 def run_book_notebooks(book_dir, chapter_filter=None, compile_first=True,
-                       timeout=600, project_root=None, stop_on_error=False):
+                       timeout=600, project_root=None, stop_on_error=False,
+                       sync_script_notebooks=False):
     """Execute all notebooks in a book project.
 
     Parameters
@@ -303,6 +304,9 @@ def run_book_notebooks(book_dir, chapter_filter=None, compile_first=True,
         NeqSim project root (auto-detected if not specified).
     stop_on_error : bool
         Stop on first notebook error.
+    sync_script_notebooks : bool
+        Generate/update one companion notebook per chapter from fenced Python
+        code blocks before discovering notebooks.
 
     Returns
     -------
@@ -313,6 +317,17 @@ def run_book_notebooks(book_dir, chapter_filter=None, compile_first=True,
 
     if compile_first:
         compile_neqsim(root)
+
+    if sync_script_notebooks:
+        try:
+            from verify_book_code_blocks import write_chapter_notebooks_from_code_blocks
+            written = write_chapter_notebooks_from_code_blocks(
+                book_dir, chapter=chapter_filter, force=True,
+            )
+            if written:
+                print(f"Generated/updated {len(written)} chapter script notebook(s).")
+        except Exception as exc:
+            print(f"[book_notebook_runner] script notebook sync skipped: {exc}")
 
     notebooks = discover_notebooks(book_dir, chapter_filter)
     if not notebooks:
@@ -399,7 +414,10 @@ def collect_generated_figures(book_dir, chapter_filter=None):
         fig_dir = ch_dir / "figures"
         if not fig_dir.exists():
             continue
-        figs = sorted(f.name for f in fig_dir.glob("*.png"))
+        figs = sorted(
+            f.name for f in fig_dir.glob("*.png")
+            if not re.search(r"_cell\d+_output\d+\.png$", f.name)
+        )
         if figs:
             figures[ch_dir.name] = figs
 
@@ -486,7 +504,8 @@ def update_all_chapters_with_figures(book_dir, chapter_filter=None):
 
 def build_book(book_dir, output_format="html", compile_first=True,
                run_notebooks=True, update_chapters=True, check_quality=True,
-               project_root=None, timeout=600, stop_on_error=False):
+               project_root=None, timeout=600, stop_on_error=False,
+               sync_script_notebooks=True, include_notebook_results=True):
     """Full book build pipeline: compile -> run notebooks -> update chapters -> render.
 
     Parameters
@@ -509,6 +528,12 @@ def build_book(book_dir, output_format="html", compile_first=True,
         Per-notebook timeout in seconds.
     stop_on_error : bool
         Halt pipeline on first notebook error.
+    sync_script_notebooks : bool
+        Generate/update one companion notebook per chapter from fenced Python
+        code blocks before running notebooks.
+    include_notebook_results : bool
+        Inject captured outputs from generated companion notebooks into
+        chapter markdown after execution.
 
     Returns
     -------
@@ -543,6 +568,7 @@ def build_book(book_dir, output_format="html", compile_first=True,
         nb_results = run_book_notebooks(
             book_dir, compile_first=False,  # already compiled
             timeout=timeout, project_root=root, stop_on_error=stop_on_error,
+            sync_script_notebooks=sync_script_notebooks,
         )
         passed = sum(1 for r in nb_results if not r.get("errors") and not r.get("error"))
         warned = sum(1 for r in nb_results if r.get("errors") and not r.get("error"))
@@ -566,8 +592,22 @@ def build_book(book_dir, output_format="html", compile_first=True,
         print("\nStep 3: Update chapters with generated figures")
         injected = update_all_chapters_with_figures(book_dir)
         summary["steps"]["figure_injection"] = injected or "no new figures"
+        if include_notebook_results:
+            try:
+                from verify_book_code_blocks import inject_notebook_outputs_into_chapters
+                result_injected = inject_notebook_outputs_into_chapters(book_dir)
+                summary["steps"]["notebook_result_injection"] = (
+                    result_injected or "no notebook outputs"
+                )
+                if result_injected:
+                    for ch_name, count in result_injected.items():
+                        print(f"  {ch_name}: injected {count} notebook output block(s)")
+            except Exception as exc:
+                print(f"  Notebook result injection failed: {exc}")
+                summary["steps"]["notebook_result_injection"] = f"FAILED: {exc}"
     else:
         summary["steps"]["figure_injection"] = "skipped"
+        summary["steps"]["notebook_result_injection"] = "skipped"
 
     # Step 4: Quality checks
     if check_quality:
@@ -661,6 +701,14 @@ def main():
                         help="Stop on first notebook error")
     parser.add_argument("--update-chapters", action="store_true",
                         help="Inject generated figures into chapter.md files")
+    parser.add_argument("--sync-script-notebooks", action="store_true",
+                        help="Generate/update per-chapter notebooks from chapter code blocks")
+    parser.add_argument("--no-script-notebooks", dest="sync_script_notebooks",
+                        action="store_false", default=True,
+                        help="For --build, skip generated code-block notebooks")
+    parser.add_argument("--no-notebook-results", dest="include_notebook_results",
+                        action="store_false", default=True,
+                        help="For --build/update, do not inject captured notebook outputs")
     parser.add_argument("--build", action="store_true",
                         help="Full build pipeline: compile, run, inject, check, render")
     parser.add_argument("--format", dest="out_format", default="html",
@@ -679,6 +727,8 @@ def main():
             project_root=PROJECT_ROOT,
             timeout=args.timeout,
             stop_on_error=args.stop_on_error,
+            sync_script_notebooks=args.sync_script_notebooks,
+            include_notebook_results=args.include_notebook_results,
         )
         if args.json:
             print(json.dumps(summary, indent=2, default=str))
@@ -693,8 +743,12 @@ def main():
                 timeout=args.timeout,
                 project_root=PROJECT_ROOT,
                 stop_on_error=args.stop_on_error,
+                sync_script_notebooks=args.sync_script_notebooks,
             )
             update_all_chapters_with_figures(args.book_dir, args.chapter)
+            if args.include_notebook_results:
+                from verify_book_code_blocks import inject_notebook_outputs_into_chapters
+                inject_notebook_outputs_into_chapters(args.book_dir, chapter=args.chapter)
         else:
             results = run_book_notebooks(
                 args.book_dir,
@@ -703,6 +757,7 @@ def main():
                 timeout=args.timeout,
                 project_root=PROJECT_ROOT,
                 stop_on_error=args.stop_on_error,
+                sync_script_notebooks=args.sync_script_notebooks,
             )
 
         if args.json:

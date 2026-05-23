@@ -1,0 +1,195 @@
+{
+  "key_results": {
+    "book_script_notebook_generation_enabled": true,
+    "per_chapter_script_notebook_name": "chapter_scripts.ipynb",
+    "chapters_with_generated_notebooks": 16,
+    "chapters_without_code_fences": 1,
+    "executed_generated_notebooks": 16,
+    "notebook_execution_failures": 0,
+    "chapters_with_injected_notebook_results": 3,
+    "official_docs_referenced_in_book": true,
+    "process_optimization_chapter_added": true,
+    "generic_integrated_model_chapter_expanded": true,
+    "chapter15_full_source_code_cells_included": 49,
+    "chapter15_noexec_code_blocks": 50,
+    "chapter15_reporting_json_neqsim_xip_pattern_added": true,
+    "chapter15_anonymous_runnable_notebook_added": true,
+    "chapter15_anonymous_notebook_self_contained": true,
+    "chapter15_expected_cell_outputs_added": true,
+    "chapter15_anonymous_notebook_real_figures_added": true,
+    "chapter15_generated_figures_included_in_book": true,
+    "chapter15_prerequisite_topic_map_added": true,
+    "chapter12_serialization_packaging_documented": true,
+    "book_structure_reviewed_and_tightened": true,
+    "part_v_capstone_sequence_documented": true,
+    "named_field_references_removed_from_rendered_chapter": true,
+    "chapter17_processsimulationevaluator_api_fixed": true,
+    "chapter16_colab_paths_verified_against_github_tree": true,
+    "chapter15_full_listing_additional_anonymization_passed": true,
+    "chapter14_operations_interface_generalized": true,
+    "book_factual_review_completed": true,
+    "chapter16_comparesimulations_colab_reviewed": true,
+    "chapter17_parallel_batch_scenario_pattern_added": true,
+    "learning_roadmap_frontmatter_added": true,
+    "capstone_portfolio_backmatter_added": true,
+    "glossary_learning_terms_added": true,
+    "book_code_runnability_rechecked": true
+  },
+  "validation": {
+    "python_py_compile_passed": true,
+    "single_chapter_generation_smoke_test_passed": true,
+    "single_chapter_execution_and_injection_passed": true,
+    "full_book_generated_notebook_run_passed": true,
+    "chapter17_generated_notebook_run_passed": true,
+    "notebook_result_deduplication_passed": true,
+    "official_docs_alignment_reviewed": true,
+    "chapter_code_concat_smoke_test_passed": true,
+    "book_quality_check_passed": true,
+    "chapter15_notebook_workflow_passed": true,
+    "chapter15_anonymous_runnable_notebook_passed": true,
+    "chapter15_anonymous_notebook_figure_generation_passed": true,
+    "chapter15_anonymous_notebook_source_scan_passed": true,
+    "chapter15_anonymous_notebook_metadata_validated": true,
+    "chapter15_code_block_noexec_verification_passed": true,
+    "book_structure_check_passed_after_review": true,
+    "named_field_source_scan_passed": true,
+    "submission_artifacts_updated": true,
+    "processsimulationevaluator_api_scan_passed": true,
+    "chapter16_colab_path_check_passed": true,
+    "chapter15_old_identifier_scan_passed": true,
+    "python_helper_api_check_passed": true,
+    "parallel_process_simulation_docs_checked": true,
+    "state_of_art_learning_framework_check_passed": true,
+    "full_book_notebook_rerun_passed": true,
+    "book_code_block_concat_recheck_passed": true,
+    "acceptance_criteria_met": true
+  },
+  "approach": "Generated one companion Jupyter notebook per chapter from fenced Python code blocks. Blocks marked noexec are preserved as notebook markdown for readers but are not executed. Runnable blocks execute sequentially in the chapter notebook, capture stdout and generated image files, and inject captured outputs back into chapter.md under a reproducible-results section. The book now points readers to the official NeqSim documentation at https://equinor.github.io/neqsim/, includes a fully expanded generic integrated offshore process-model chapter with all 49 source notebook code cells, and adds a process optimization chapter grounded in the documented optimizer stack and repository examples. The learning architecture now includes a front-matter roadmap, a mastery loop, reader paths, a competency matrix, and a back-matter capstone portfolio rubric.",
+  "conclusions": "The process_modeling_with_neqsim_python_2026 book now has generated companion notebooks for every chapter that contains Python examples. Chapter 15 has been rewritten as a generic detailed walkthrough of the full advanced process-model notebook, including all source code cells, section-by-section explanations, and end-of-notebook reporting to results.json plus .neqsim and .xip packages. Chapter 15 also includes a separate anonymous runnable notebook with embedded synthetic inputs and a concise expected-main-output-by-cell table; it runs without external spreadsheets, private helper modules, absolute paths, or asset-specific names and writes results.json, .neqsim, lifecycle-state JSON, .xip artifacts, and two real figures generated from the simulated product flows and compressor powers. Those Chapter 15 figures are included directly in the book and recorded in results.json with captions and discussion metadata. Chapter 15 now maps its major operations and topics back to earlier book chapters and official NeqSim documentation, with Chapter 12 extended to document .neqsim archives and .xip review bundles before they are used in the worked example. The overall book structure has been reviewed and tightened so Part V reads as a deliberate capstone path: integrated model, reusable example library, then optimization and debottlenecking. The process optimization chapter executed successfully and includes the expected throughput table and plot. Captured notebook results are inserted before exercises to preserve chapter structure, and duplicate transient notebook image outputs are suppressed in favor of stable saved figure files.",
+  "evidence": [
+    {
+      "command": "python -m py_compile neqsim-paperlab\\tools\\verify_book_code_blocks.py neqsim-paperlab\\tools\\book_notebook_runner.py neqsim-paperlab\\paperflow.py",
+      "status": "PASS"
+    },
+    {
+      "command": "python paperflow.py book-run-notebooks books\\process_modeling_with_neqsim_python_2026 --no-compile --update-chapters --timeout 240",
+      "status": "PASS",
+      "summary": "16 generated notebooks passed, 0 warned, 0 failed"
+    },
+    {
+      "command": "python paperflow.py book-run-notebooks books\\process_modeling_with_neqsim_python_2026 --chapter ch17_process_optimization --no-compile --update-chapters --timeout 240",
+      "status": "PASS",
+      "summary": "ch17_process_optimization notebook passed: 7/7 cells, 0 warnings, 0 failures"
+    },
+    {
+      "command": "python tools\\verify_book_code_blocks.py books\\process_modeling_with_neqsim_python_2026 --inject-results",
+      "status": "PASS",
+      "summary": "Injected notebook results for ch01_introduction, ch05_fluid_creation, and ch17_process_optimization"
+    },
+    {
+      "command": "python tools\\verify_book_code_blocks.py books\\process_modeling_with_neqsim_python_2026 --chapter ch01_introduction --mode concat --timeout 120",
+      "status": "PASS",
+      "summary": "4 blocks concatenated, 4 passed"
+    },
+    {
+      "command": "python paperflow.py book-check books\\process_modeling_with_neqsim_python_2026 --check all",
+      "status": "PASS",
+      "summary": "0 errors, 0 warnings after resolving the Solbraa citation key and requirements code-fence language tag"
+    },
+    {
+      "command": "python paperflow.py book-build books\\process_modeling_with_neqsim_python_2026 --format all --no-compile --skip-notebooks --timeout 240",
+      "status": "PASS",
+      "summary": "Updated submission/book.html, submission/book.docx, submission/book.pdf, and submission/book.odt"
+    },
+    {
+      "command": "python paperflow.py book-run-notebooks books\\process_modeling_with_neqsim_python_2026 --chapter ch15_worked_example_oseberg --no-compile --update-chapters --timeout 240",
+      "status": "PASS",
+      "summary": "Chapter 15 generated notebook passed: 1/1 cells, with full source listings preserved as noexec markdown"
+    },
+    {
+      "command": "python paperflow.py book-run-notebooks books\\process_modeling_with_neqsim_python_2026 --chapter ch15_worked_example_oseberg --no-compile --update-chapters --timeout 300",
+      "status": "PASS",
+      "summary": "Chapter 15 notebooks passed: anonymous_integrated_process_model.ipynb and chapter_scripts.ipynb both executed with 0 warnings and 0 failures"
+    },
+    {
+      "command": "source scan of chapters\\ch15_worked_example_oseberg\\notebooks\\anonymous_integrated_process_model.ipynb",
+      "status": "PASS",
+      "summary": "No Excel/CSV reads, absolute paths, private helper imports, or field/operator-specific names found"
+    },
+    {
+      "command": "notebook metadata validation for anonymous_integrated_process_model.ipynb",
+      "status": "PASS",
+      "summary": "Every notebook cell has metadata.id and metadata.language"
+    },
+    {
+      "command": "manual structure review of book.yaml, preface, and Chapters 15-17",
+      "status": "PASS",
+      "summary": "Part V retitled and bridged as capstone, example library, and optimization without changing chapter numbering"
+    },
+    {
+      "command": "python tools\\verify_book_code_blocks.py books\\process_modeling_with_neqsim_python_2026 --chapter ch15_worked_example_oseberg --mode concat --timeout 120",
+      "status": "PASS",
+      "summary": "50 code blocks skipped by noexec marker: 49 source notebook cells plus one generic reporting/serialization pattern"
+    },
+    {
+      "command": "python paperflow.py book-build books\\process_modeling_with_neqsim_python_2026 --format all --no-compile --skip-notebooks --timeout 240",
+      "status": "PASS",
+      "summary": "Rebuilt submissions after full-code generic Chapter 15 expansion: book.html, book.docx, book.pdf, book.odt"
+    },
+    {
+      "command": "source/API scan for ProcessSimulationEvaluator in Chapter 17",
+      "status": "PASS",
+      "summary": "Replaced nonexistent addConstraint/getBoundsAsList calls with addConstraintUpperBound, getBounds, and getInitialValues"
+    },
+    {
+      "command": "GitHub tree check for Chapter 16 NeqSim-Colab notebook paths",
+      "status": "PASS",
+      "summary": "All backticked .ipynb paths in Chapter 16 exist in the EvenSol/NeqSim-Colab master tree"
+    },
+    {
+      "command": "case-sensitive Chapter 15 identifier scan",
+      "status": "PASS",
+      "summary": "No remaining old source labels or specific equipment tags from the anonymization review terms"
+    },
+    {
+      "command": "python -c import check for neqsim.save_neqsim, neqsim.save_xml, and neqsim.process.results_json",
+      "status": "PASS",
+      "summary": "The Python helper APIs used in the noexec Chapter 15 reporting listing are present in the local neqsim package"
+    },
+    {
+      "command": "python paperflow.py book-run-notebooks books\\process_modeling_with_neqsim_python_2026 --no-compile --update-chapters --timeout 300",
+      "status": "PASS",
+      "summary": "All 17 book notebooks passed. Chapter 15 anonymous_integrated_process_model.ipynb executed 7/7 code cells and generated product-flow and compression-power PNG figures from the real process results."
+    },
+    {
+      "command": "results.json figure metadata check for Chapter 15 anonymous notebook",
+      "status": "PASS",
+      "summary": "results.json contains two figure files, two captions, and two figure discussion records; validation.acceptance_criteria_met is true."
+    },
+    {
+      "command": "review of notebooks/process/comparesimulations.ipynb and docs/simulation/parallel_process_simulation.md",
+      "status": "PASS",
+      "summary": "Chapter 16 now identifies the comparison notebook's typed input/output, .neqsim, 100-case sweep, optimization, ML, and parallel-study patterns. Chapter 17 now documents managed runAsTask/Future-based parallel scenario studies instead of older unmanaged runAsThread polling."
+    },
+    {
+      "command": "python -m json.tool neqsim-paperlab\\results.json; python paperflow.py book-run-notebooks ... --chapter ch17_process_optimization; python paperflow.py book-check ... --check all; python paperflow.py book-build ... --format all --skip-notebooks",
+      "status": "PASS",
+      "summary": "Updated Chapter 17 generated notebook passed 7/7 cells with 0 warnings; book quality checks passed with 0 errors and 0 warnings; submission book.html, book.docx, book.pdf, and book.odt were rebuilt."
+    },
+    {
+      "command": "python paperflow.py book-check books\\process_modeling_with_neqsim_python_2026 --check all; python paperflow.py book-build books\\process_modeling_with_neqsim_python_2026 --format all --no-compile --skip-notebooks --timeout 300",
+      "status": "PASS",
+      "summary": "Added the Learning Roadmap front matter, Capstone Portfolio back matter, portfolio-linked exercises, and glossary anchors; PaperLab checks passed and all submission formats rebuilt."
+    },
+    {
+      "command": "python paperflow.py book-run-notebooks books\\process_modeling_with_neqsim_python_2026 --no-compile --update-chapters --timeout 300",
+      "status": "PASS",
+      "summary": "Fresh rerun passed 17/17 notebooks with 0 warnings and 0 failures. This includes 16 generated chapter notebooks plus the Chapter 15 anonymous integrated process model notebook."
+    },
+    {
+      "command": "python tools\\verify_book_code_blocks.py books\\process_modeling_with_neqsim_python_2026 --mode concat --report book_code_runnability_report.json --timeout 300",
+      "status": "PASS",
+      "summary": "Fresh code-block audit reported 203 Python blocks total: 16 executable blocks passed in chapter-concatenated mode, 0 failed, and 187 intentionally skipped by noexec markers."
+    }
+  ]
+}
