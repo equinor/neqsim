@@ -90,6 +90,30 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   private boolean useVega = false;
   private boolean limitSpeed = false;
   private boolean useEnergyEfficiencyChart = false;
+  private double lastInletTemperature = Double.NaN;
+  private double lastInletPressure = Double.NaN;
+  private double lastInletFlowRate = Double.NaN;
+  private double[] lastInletComposition = null;
+  private double lastOutletPressure = Double.NaN;
+  private double lastSpeed = Double.NaN;
+  private double lastCompressionRatio = Double.NaN;
+  private double lastOutTemperature = Double.NaN;
+  private double lastIsentropicEfficiency = Double.NaN;
+  private double lastPolytropicEfficiency = Double.NaN;
+  private double lastPower = Double.NaN;
+  private int lastNumberOfCompressorCalcSteps = -1;
+  private boolean lastUseOutTemperature = false;
+  private boolean lastUseCompressionRatio = false;
+  private boolean lastUsePolytropicCalc = false;
+  private boolean lastPowerSet = false;
+  private boolean lastCalcPressureOut = false;
+  private boolean lastSolveSpeed = false;
+  private boolean lastUseCompressorChart = false;
+  private boolean lastUseEnergyEfficiencyChart = false;
+  private boolean lastUseRigorousPolytropicMethod = false;
+  private boolean lastUseGERG2008 = false;
+  private boolean lastUseLeachman = false;
+  private boolean lastUseVega = false;
 
   // Dynamic simulation fields
   private CompressorState operatingState = CompressorState.STOPPED;
@@ -540,15 +564,82 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     if (thermoSystem == null || inStream == null || inStream.getThermoSystem() == null) {
       return true;
     }
-    if (inStream.getThermoSystem().getTemperature() == thermoSystem.getTemperature()
-        && inStream.getThermoSystem().getPressure() == thermoSystem.getPressure()
-        && inStream.getThermoSystem().getFlowRate("kg/hr") == thermoSystem.getFlowRate("kg/hr")
-        && Math.abs(pressure - outStream.getPressure(pressureUnit)) < 1e-6
-        && java.util.Arrays.equals(inStream.getThermoSystem().getMolarComposition(),
-            thermoSystem.getMolarComposition())) {
-      return false;
+    if (isSetEnergyStream() || lastInletComposition == null) {
+      return true;
     }
-    return true;
+    SystemInterface inletSystem = inStream.getThermoSystem();
+    if (inletSystem.getTemperature() != lastInletTemperature
+        || inletSystem.getPressure() != lastInletPressure || pressure != lastOutletPressure
+        || speed != lastSpeed || compressionRatio != lastCompressionRatio
+        || outTemperature != lastOutTemperature || isentropicEfficiency != lastIsentropicEfficiency
+        || polytropicEfficiency != lastPolytropicEfficiency || dH != lastPower
+        || numberOfCompressorCalcSteps != lastNumberOfCompressorCalcSteps
+        || useOutTemperature != lastUseOutTemperature || useCompressionRatio != lastUseCompressionRatio
+        || usePolytropicCalc != lastUsePolytropicCalc || powerSet != lastPowerSet
+        || calcPressureOut != lastCalcPressureOut || solveSpeed != lastSolveSpeed
+        || compressorChart.isUseCompressorChart() != lastUseCompressorChart
+        || useEnergyEfficiencyChart != lastUseEnergyEfficiencyChart
+        || useRigorousPolytropicMethod != lastUseRigorousPolytropicMethod
+        || useGERG2008 != lastUseGERG2008 || useLeachman != lastUseLeachman
+        || useVega != lastUseVega) {
+      return true;
+    }
+    double flow = inletSystem.getFlowRate("kg/hr");
+    if (flow <= 0.0 || lastInletFlowRate <= 0.0
+        || Math.abs(flow - lastInletFlowRate) / flow >= 1e-6) {
+      return true;
+    }
+    neqsim.thermo.phase.PhaseInterface phase = inletSystem.getPhase(0);
+    int numberOfComponents = phase.getNumberOfComponents();
+    if (numberOfComponents != lastInletComposition.length) {
+      return true;
+    }
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (phase.getComponent(i).getz() != lastInletComposition[i]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void updateRecalculationState() {
+    if (inStream == null || inStream.getThermoSystem() == null) {
+      lastInletComposition = null;
+      return;
+    }
+    SystemInterface inletSystem = inStream.getThermoSystem();
+    lastInletTemperature = inletSystem.getTemperature();
+    lastInletPressure = inletSystem.getPressure();
+    lastInletFlowRate = inletSystem.getFlowRate("kg/hr");
+    lastInletComposition = inletSystem.getMolarComposition();
+    lastOutletPressure = pressure;
+    lastSpeed = speed;
+    lastCompressionRatio = compressionRatio;
+    lastOutTemperature = outTemperature;
+    lastIsentropicEfficiency = isentropicEfficiency;
+    lastPolytropicEfficiency = polytropicEfficiency;
+    lastPower = dH;
+    lastNumberOfCompressorCalcSteps = numberOfCompressorCalcSteps;
+    lastUseOutTemperature = useOutTemperature;
+    lastUseCompressionRatio = useCompressionRatio;
+    lastUsePolytropicCalc = usePolytropicCalc;
+    lastPowerSet = powerSet;
+    lastCalcPressureOut = calcPressureOut;
+    lastSolveSpeed = solveSpeed;
+    lastUseCompressorChart = compressorChart.isUseCompressorChart();
+    lastUseEnergyEfficiencyChart = useEnergyEfficiencyChart;
+    lastUseRigorousPolytropicMethod = useRigorousPolytropicMethod;
+    lastUseGERG2008 = useGERG2008;
+    lastUseLeachman = useLeachman;
+    lastUseVega = useVega;
+  }
+
+  private void finishRun(UUID id) {
+    updateRecalculationState();
+    if (outStream != null) {
+      outStream.setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */
@@ -567,6 +658,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       isActive(false);
       thermoSystem.setPressure(pressure, pressureUnit);
       getOutletStream().setThermoSystem(thermoSystem);
+      finishRun(id);
       return;
     }
 
@@ -578,6 +670,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       dH = 0.0;
       polytropicFluidHead = 0.0;
       polytropicHeadMeter = 0.0;
+      finishRun(id);
       return;
     }
 
@@ -785,8 +878,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
         }
         getThermoSystem().setMultiPhaseCheck(originalMultiPhaseCheck);
         outStream.setThermoSystem(getThermoSystem());
-        outStream.setCalculationIdentifier(id);
-        setCalculationIdentifier(id);
+        finishRun(id);
         return;
       }
     }
@@ -1403,7 +1495,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
 
     thermoSystem.initProperties();
     outStream.setThermoSystem(getThermoSystem());
-    outStream.setCalculationIdentifier(id);
 
     polytropicFluidHead =
         getPower() / getThermoSystem().getFlowRate("kg/sec") / 1000.0 * getPolytropicEfficiency();
@@ -1429,7 +1520,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       }
     }
 
-    setCalculationIdentifier(id);
+    finishRun(id);
 
     // Evaluate capacity constraints after run and log warnings for violated constraints
     evaluateCapacityConstraints();
