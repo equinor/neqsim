@@ -14,19 +14,19 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.costestimation.column.ColumnCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
+import neqsim.process.equipment.distillation.internals.ColumnInternalsDesigner;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.process.equipment.distillation.internals.ColumnInternalsDesigner;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.distillation.DistillationColumnMechanicalDesign;
 import neqsim.process.util.monitor.DistillationColumnResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.unit.TemperatureUnit;
 import neqsim.util.validation.ValidationResult;
@@ -912,6 +912,33 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return Collections.emptyList();
     }
     return Collections.unmodifiableList(feeds);
+  }
+
+  /**
+   * Return all feed streams connected to the column, keyed by bottom-up tray index.
+   *
+   * @return immutable view of the feed stream map
+   */
+  public Map<Integer, List<StreamInterface>> getFeedStreams() {
+    return Collections.unmodifiableMap(feedStreams);
+  }
+
+  /**
+   * Check whether this column includes a reboiler stage.
+   *
+   * @return {@code true} if a reboiler is present
+   */
+  public boolean hasReboiler() {
+    return hasReboiler;
+  }
+
+  /**
+   * Check whether this column includes a condenser stage.
+   *
+   * @return {@code true} if a condenser is present
+   */
+  public boolean hasCondenser() {
+    return hasCondenser;
   }
 
   /**
@@ -2031,82 +2058,91 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * </p>
    *
    * @param id calculation identifier
+   * @return {@code true} when the Naphtali-Sandholm solver accepted its direct result
    */
-  void solveNaphtaliSandholm(UUID id) {
+  boolean solveNaphtaliSandholm(UUID id) {
     if (feedStreams.isEmpty()) {
       resetLastSolveMetrics();
-      return;
+      return false;
     }
 
     if (numberOfTrays == 1) {
       solveDirectSubstitution(id);
-      return;
+      return solved();
     }
 
     long startTime = System.nanoTime();
-    solveInsideOut(id);
-    updateMeshResiduals();
-    double baselineMeshResidual =
-        lastMeshResidual == null ? Double.NaN : lastMeshResidual.getInfinityNorm();
-    int warmStartIterations = lastIterationCount;
-    double warmStartTemperatureResidual = lastTemperatureResidual;
-    double warmStartMassResidual = lastMassResidual;
-    double warmStartEnergyResidual = lastEnergyResidual;
-    double baselineGasFlow = getProductFlowKgPerHour(gasOutStream);
-    double baselineLiquidFlow = getProductFlowKgPerHour(liquidOutStream);
 
-    DistillationColumn candidate;
-    try {
-      candidate = (DistillationColumn) this.copy();
-    } catch (RuntimeException exception) {
-      logger.debug("Naphtali-Sandholm skipped because candidate copy failed for column {}.",
-          getName(), exception);
-      return;
+    Map<Integer, List<SystemInterface>> originalFeedSystems = new java.util.HashMap<>();
+    Map<Integer, List<Double>> originalFeedFlowRates = new java.util.HashMap<>();
+    for (Map.Entry<Integer, List<StreamInterface>> entry : feedStreams.entrySet()) {
+      List<SystemInterface> clones = new java.util.ArrayList<>();
+      List<Double> flowRates = new java.util.ArrayList<>();
+      for (StreamInterface feed : entry.getValue()) {
+        clones.add(feed.getThermoSystem().clone());
+        flowRates.add(feed.getFlowRate("mol/hr"));
+      }
+      originalFeedSystems.put(entry.getKey(), clones);
+      originalFeedFlowRates.put(entry.getKey(), flowRates);
     }
 
-    NaphtaliSandholmSolver solver = new NaphtaliSandholmSolver(candidate);
-    solver.setMaxIterations(Math.max(2, Math.min(maxNumberOfIterations, getEffectiveStageCount())));
-    solver.setResidualTolerance(meshResidualTolerance);
+    if (isDoInitializion()) {
+      this.init();
+    }
+    prepareColumnForSolve();
+
+    NaphtaliSandholmSolver solver =
+        new NaphtaliSandholmSolver(this, originalFeedSystems, originalFeedFlowRates);
+    solver.setMaxIterations(maxNumberOfIterations);
+    solver.setTolerance(1.0e-8);
     boolean accepted = solver.solve(id);
     storeNaphtaliTelemetry(solver);
-    candidate.storeNaphtaliTelemetry(solver);
+    markSolverTypeUsed(SolverType.NAPHTALI_SANDHOLM);
+
+    double temperatureResidual = accepted ? solver.getLastTemperatureResidual() : 1.0e10;
+    finalizeNaphtaliSolve(id, solver.getLastIterations(), temperatureResidual,
+        solver.getLastMassBalanceError(), solver.getLastEnergyResidual(), startTime);
+    hasBeenSolvedBefore = true;
+    lastTotalFeedFlow = -1.0;
+
     if (!accepted) {
-      logger.debug("Naphtali-Sandholm kept warm-start state for column {}; residual={}", getName(),
-          Double.valueOf(baselineMeshResidual));
-      return;
+      logger.warn("Naphtali-Sandholm solver did not fully converge for column {}", getName());
     }
+    return accepted;
+  }
 
-    double temperatureResidual =
-        finiteMinimum(warmStartTemperatureResidual, solver.getLastTemperatureResidual());
-    double massResidual = finiteOr(solver.getLastMassBalanceError(), warmStartMassResidual);
-    double energyResidual = finiteOr(solver.getLastEnergyResidual(), warmStartEnergyResidual);
-    candidate.finalizeSolve(id, warmStartIterations + solver.getLastIterations(),
-        temperatureResidual, massResidual, energyResidual, startTime);
-    candidate.updateMeshResiduals();
-    double acceptedMeshResidual = candidate.lastMeshResidual == null ? Double.NaN
-        : candidate.lastMeshResidual.getInfinityNorm();
-    if (!candidate.solved()) {
-      logger
-          .debug(
-              "Naphtali-Sandholm rejected for column {}; candidate residual {} did not satisfy "
-                  + "the active convergence gates.",
-              getName(), Double.valueOf(acceptedMeshResidual));
-      return;
+  /**
+   * Finalize a direct Naphtali-Sandholm solve without invoking generic product reconciliation.
+   *
+   * @param id calculation identifier
+   * @param iterations number of solver iterations
+   * @param temperatureResidual final temperature residual
+   * @param massResidual final mass residual
+   * @param energyResidual final energy residual
+   * @param startTime nano time when the solve started
+   */
+  private void finalizeNaphtaliSolve(UUID id, int iterations, double temperatureResidual,
+      double massResidual, double energyResidual, long startTime) {
+    err = temperatureResidual;
+    lastIterationCount = iterations;
+    lastTemperatureResidual = temperatureResidual;
+    lastMassResidual = massResidual;
+    lastEnergyResidual = energyResidual;
+    lastSolveTimeSeconds = (System.nanoTime() - startTime) / 1.0e9;
+    lastUsedFeedFlashFallback = false;
+    lastInternalTrafficGuardReached = false;
+
+    gasOutStream.setThermoSystem(trays.get(numberOfTrays - 1).getGasOutStream().getThermoSystem());
+    gasOutStream.setCalculationIdentifier(id);
+    liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem());
+    liquidOutStream.setCalculationIdentifier(id);
+
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).setCalculationIdentifier(id);
     }
-
-    if (!meshPolishProductSplitMatches(candidate, baselineGasFlow, baselineLiquidFlow)) {
-      logger.debug(
-          "Naphtali-Sandholm rejected for column {}; product split changed from gas/liquid "
-              + "{}/{} kg/hr to {}/{} kg/hr.",
-          getName(), Double.valueOf(baselineGasFlow), Double.valueOf(baselineLiquidFlow),
-          Double.valueOf(getProductFlowKgPerHour(candidate.gasOutStream)),
-          Double.valueOf(getProductFlowKgPerHour(candidate.liquidOutStream)));
-      return;
-    }
-
-    acceptSolvedStateCandidate(candidate);
-    logger.debug("Naphtali-Sandholm accepted for column {}; residual {} -> {}", getName(),
-        Double.valueOf(baselineMeshResidual), Double.valueOf(acceptedMeshResidual));
+    lastSolveStatus = SolveStatus.RECONCILED_PRODUCTS;
+    lastSolveStatusReason = "Naphtali-Sandholm direct products were applied";
+    setCalculationIdentifier(id);
   }
 
   /**
@@ -2116,8 +2152,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private void storeNaphtaliTelemetry(NaphtaliSandholmSolver solver) {
     lastNaphtaliAnalyticJacobianColumns = solver.getLastAnalyticJacobianColumns();
-    lastNaphtaliFiniteDifferenceJacobianColumns =
-        solver.getLastFiniteDifferenceJacobianColumns();
+    lastNaphtaliFiniteDifferenceJacobianColumns = solver.getLastFiniteDifferenceJacobianColumns();
     lastNaphtaliThermoEvaluationCount = solver.getLastThermoEvaluationCount();
     lastNaphtaliThermoCacheHitCount = solver.getLastThermoCacheHitCount();
     lastNaphtaliJacobianBuildTimeSeconds = solver.getLastJacobianBuildTimeSeconds();
@@ -2315,7 +2350,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.lastMatrixInsideOutSolveTimeSeconds = candidate.lastMatrixInsideOutSolveTimeSeconds;
     this.lastNaphtaliAnalyticJacobianColumns = candidate.lastNaphtaliAnalyticJacobianColumns;
     this.lastNaphtaliFiniteDifferenceJacobianColumns =
-      candidate.lastNaphtaliFiniteDifferenceJacobianColumns;
+        candidate.lastNaphtaliFiniteDifferenceJacobianColumns;
     this.lastNaphtaliThermoEvaluationCount = candidate.lastNaphtaliThermoEvaluationCount;
     this.lastNaphtaliThermoCacheHitCount = candidate.lastNaphtaliThermoCacheHitCount;
     this.lastNaphtaliJacobianBuildTimeSeconds = candidate.lastNaphtaliJacobianBuildTimeSeconds;
@@ -2332,7 +2367,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.lastAutoFeasibilityReport = candidate.lastAutoFeasibilityReport;
     this.lastInitializationReport = candidate.lastInitializationReport;
     this.lastAutoSolverHistory = candidate.lastAutoSolverHistory == null ? new ArrayList<String>()
-      : new ArrayList<String>(candidate.lastAutoSolverHistory);
+        : new ArrayList<String>(candidate.lastAutoSolverHistory);
     this.specificationHomotopySteps = candidate.specificationHomotopySteps;
     this.lastSpecificationHomotopyStepCount = candidate.lastSpecificationHomotopyStepCount;
   }
@@ -2401,6 +2436,43 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     acceptSolvedStateCandidate(candidate);
     lastSolverTypeUsed = SolverType.DAMPED_SUBSTITUTION;
     lastSolveStatusReason = reason;
+  }
+
+  /**
+   * Accept a residual-monitored warm-start state after rejecting a Naphtali-Sandholm candidate.
+   *
+   * <p>
+   * The accepted state comes from the warm-start solver, but the strategy reported to callers
+   * remains {@link SolverType#NAPHTALI_SANDHOLM}. Naphtali-Sandholm telemetry from the rejected
+   * candidate is preserved so diagnostics still show the attempted linearization work.
+   * </p>
+   *
+   * @param candidate solved warm-start candidate to keep
+   * @param reason reason the direct Naphtali-Sandholm candidate was rejected
+   */
+  void acceptNaphtaliWarmStartCandidate(DistillationColumn candidate, String reason) {
+    int analyticJacobianColumns = lastNaphtaliAnalyticJacobianColumns;
+    int finiteDifferenceJacobianColumns = lastNaphtaliFiniteDifferenceJacobianColumns;
+    int thermoEvaluationCount = lastNaphtaliThermoEvaluationCount;
+    int thermoCacheHitCount = lastNaphtaliThermoCacheHitCount;
+    double jacobianBuildTimeSeconds = lastNaphtaliJacobianBuildTimeSeconds;
+    int blockLinearSolveCount = lastNaphtaliBlockLinearSolveCount;
+    int denseLinearSolveCount = lastNaphtaliDenseLinearSolveCount;
+    double linearSolveTimeSeconds = lastNaphtaliLinearSolveTimeSeconds;
+
+    logger.warn("Naphtali-Sandholm candidate rejected for column {}: {}. Keeping "
+        + "residual-monitored warm-start state.", getName(), reason);
+    acceptSolvedStateCandidate(candidate);
+    lastSolverTypeUsed = SolverType.NAPHTALI_SANDHOLM;
+    lastSolveStatusReason = reason;
+    lastNaphtaliAnalyticJacobianColumns = analyticJacobianColumns;
+    lastNaphtaliFiniteDifferenceJacobianColumns = finiteDifferenceJacobianColumns;
+    lastNaphtaliThermoEvaluationCount = thermoEvaluationCount;
+    lastNaphtaliThermoCacheHitCount = thermoCacheHitCount;
+    lastNaphtaliJacobianBuildTimeSeconds = jacobianBuildTimeSeconds;
+    lastNaphtaliBlockLinearSolveCount = blockLinearSolveCount;
+    lastNaphtaliDenseLinearSolveCount = denseLinearSolveCount;
+    lastNaphtaliLinearSolveTimeSeconds = linearSolveTimeSeconds;
   }
 
   /**
@@ -3732,8 +3804,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           "skipped because fewer than two non-water feed components were available");
     }
 
-    ShortcutInitializationResult result = initializeFromShortcut(feedStream, keys[0], keys[1], 0.95,
-        0.95, 1.4);
+    ShortcutInitializationResult result =
+        initializeFromShortcut(feedStream, keys[0], keys[1], 0.95, 0.95, 1.4);
     String message = result.getMessage() + " lightKey=" + keys[0] + " heavyKey=" + keys[1];
     return recordInitializationAttempt(summary, "shortcut initialization", result.isInitialized(),
         message);
@@ -3774,7 +3846,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private String[] selectAutomaticShortcutKeys(SystemInterface system) {
     String lightKey = null;
     String heavyKey = null;
-    for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
+    for (int componentIndex = 0; componentIndex < system
+        .getNumberOfComponents(); componentIndex++) {
       String componentName = system.getPhase(0).getComponent(componentIndex).getComponentName();
       if ("water".equalsIgnoreCase(componentName)) {
         continue;
@@ -3809,8 +3882,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param message detailed diagnostic message
    * @return {@code applied}
    */
-  private boolean recordInitializationAttempt(StringBuilder summary, String label,
-      boolean applied, String message) {
+  private boolean recordInitializationAttempt(StringBuilder summary, String label, boolean applied,
+      String message) {
     String report = label + " " + (applied ? "applied" : "skipped") + ": " + message;
     setLastInitializationReport(report);
     recordAutoSolverEvent(report);
@@ -7640,15 +7713,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (lastInsideOutOuterFlashSweeps > 0 || lastInsideOutInnerLoopIterations > 0) {
       diagnostics.append("  Inside-out model:\n");
       diagnostics.append("    outer flash sweeps: ").append(lastInsideOutOuterFlashSweeps)
-        .append("\n");
+          .append("\n");
       diagnostics.append("    inner loop iterations: ").append(lastInsideOutInnerLoopIterations)
-        .append("\n");
-      diagnostics.append("    k-value residual: ").append(lastInsideOutKValueResidual)
-        .append("\n");
+          .append("\n");
+      diagnostics.append("    k-value residual: ").append(lastInsideOutKValueResidual).append("\n");
       diagnostics.append("    surrogate residual: ").append(lastInsideOutSurrogateResidual)
-        .append("\n");
+          .append("\n");
       diagnostics.append("    surrogate resets: ").append(lastInsideOutSurrogateResetCount)
-        .append("\n");
+          .append("\n");
     }
     if (solverType == SolverType.MATRIX_INSIDE_OUT || lastMatrixInsideOutWarmStartUsed
         || lastMatrixInsideOutWarmStartBypassed) {
@@ -7664,27 +7736,26 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       diagnostics.append("    matrix time: ").append(lastMatrixInsideOutSolveTimeSeconds)
           .append(" s\n");
     }
-      if (lastNaphtaliAnalyticJacobianColumns > 0
-        || lastNaphtaliFiniteDifferenceJacobianColumns > 0
+    if (lastNaphtaliAnalyticJacobianColumns > 0 || lastNaphtaliFiniteDifferenceJacobianColumns > 0
         || lastNaphtaliThermoEvaluationCount > 0) {
-        diagnostics.append("  Naphtali-Sandholm Jacobian:\n");
-        diagnostics.append("    semi-analytic columns: ")
-          .append(lastNaphtaliAnalyticJacobianColumns).append("\n");
-        diagnostics.append("    finite-difference columns: ")
+      diagnostics.append("  Naphtali-Sandholm Jacobian:\n");
+      diagnostics.append("    semi-analytic columns: ").append(lastNaphtaliAnalyticJacobianColumns)
+          .append("\n");
+      diagnostics.append("    finite-difference columns: ")
           .append(lastNaphtaliFiniteDifferenceJacobianColumns).append("\n");
-        diagnostics.append("    thermodynamic evaluations: ")
+      diagnostics.append("    thermodynamic evaluations: ")
           .append(lastNaphtaliThermoEvaluationCount).append("\n");
-        diagnostics.append("    thermodynamic cache hits: ")
-          .append(lastNaphtaliThermoCacheHitCount).append("\n");
-        diagnostics.append("    jacobian build time: ")
-          .append(lastNaphtaliJacobianBuildTimeSeconds).append(" s\n");
-        diagnostics.append("    block linear solves: ")
-          .append(lastNaphtaliBlockLinearSolveCount).append("\n");
-        diagnostics.append("    dense linear solves: ")
-          .append(lastNaphtaliDenseLinearSolveCount).append("\n");
-        diagnostics.append("    linear solve time: ").append(lastNaphtaliLinearSolveTimeSeconds)
+      diagnostics.append("    thermodynamic cache hits: ").append(lastNaphtaliThermoCacheHitCount)
+          .append("\n");
+      diagnostics.append("    jacobian build time: ").append(lastNaphtaliJacobianBuildTimeSeconds)
           .append(" s\n");
-      }
+      diagnostics.append("    block linear solves: ").append(lastNaphtaliBlockLinearSolveCount)
+          .append("\n");
+      diagnostics.append("    dense linear solves: ").append(lastNaphtaliDenseLinearSolveCount)
+          .append("\n");
+      diagnostics.append("    linear solve time: ").append(lastNaphtaliLinearSolveTimeSeconds)
+          .append(" s\n");
+    }
     diagnostics.append("  Residuals:\n");
     diagnostics.append("    temperature: ").append(lastTemperatureResidual).append(" K (tolerance ")
         .append(getEffectiveTemperatureTolerance()).append(")\n");
@@ -11132,8 +11203,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * <p>
    * Stage numbering follows the column internal order: stage 0 is the reboiler when present and the
    * last stage is the condenser when present. Reboiler and condenser stages are still treated as
-   * equilibrium stages by the correction algorithm, but the value is stored so external
-   * UniSim-style scripts can round-trip stage efficiency data consistently.
+   * equilibrium stages by the correction algorithm, but the value is stored so external style
+   * scripts can round-trip stage efficiency data consistently.
    * </p>
    *
    * @param stage 0-based stage index in the range {@code [0, numberOfTrays)}

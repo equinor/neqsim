@@ -83,4 +83,26 @@ public class EosMixingRulesTest {
     assertEquals(0.1, kij, 1e-5);
     assertTrue(kij == kij2);
   }
+
+  @Test
+  void testCalculatedInteractionParametersUseCriticalVolumes() {
+    neqsim.thermo.system.SystemPrEos testSystem = new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
+    testSystem.addComponent("methane", 1.0);
+    testSystem.addComponent("n-heptane", 1.0);
+
+    try {
+      testSystem.calcKIJ(true);
+      testSystem.setMixingRule("classic");
+
+      double kij = ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule()
+          .getBinaryInteractionParameter(0, 1);
+      double expected = BIPEstimator.estimateChuehPrausnitz(testSystem.getComponent("methane"),
+          testSystem.getComponent("n-heptane"));
+
+      assertEquals(expected, kij, 1e-12);
+      assertTrue(kij > 0.0, "Calculated critical-volume kij should not collapse to zero");
+    } finally {
+      testSystem.calcKIJ(false);
+    }
+  }
 }

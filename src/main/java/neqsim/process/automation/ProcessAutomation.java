@@ -2,7 +2,9 @@ package neqsim.process.automation;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import neqsim.process.automation.SimulationVariable.VariableType;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
@@ -94,9 +96,22 @@ public class ProcessAutomation {
   /** Separator between area name and unit address in multi-area mode. */
   public static final String AREA_SEPARATOR = "::";
 
+  /**
+   * Stable schema version for JSON responses produced by this facade. Increment the minor for
+   * additive changes, the major for breaking changes. Agents and MCP clients should branch on this
+   * value when parsing responses.
+   */
+  public static final String SCHEMA_VERSION = "1.0";
+
   private final ProcessSystem processSystem;
   private final ProcessModel processModel;
   private final AutomationDiagnostics diagnostics;
+  /**
+   * Dirty flag: true when one or more inputs have been changed via {@link #setVariableValue} since
+   * the last successful run. Used by {@link #isDirty()}, {@link #runIfDirty()}, and the
+   * {@code stale} warning emitted by {@link #getVariableValueSafe}.
+   */
+  private boolean dirty = false;
 
   /**
    * Creates an automation facade for a single process system.
@@ -442,6 +457,7 @@ public class ProcessAutomation {
       throw new IllegalArgumentException("Invalid address format: " + address
           + ". Expected 'unitName.property' or 'unitName.port.property'");
     }
+    this.dirty = true;
   }
 
   // ========================== Private helpers ==========================
@@ -804,33 +820,32 @@ public class ProcessAutomation {
           "Pipe inner diameter"));
       vars.add(new SimulationVariable(unitName + ".pipeWallRoughness", "pipeWallRoughness",
           VariableType.INPUT, "m", "Pipe wall roughness"));
-        vars.add(new SimulationVariable(unitName + ".wallThickness", "wallThickness",
+      vars.add(new SimulationVariable(unitName + ".wallThickness", "wallThickness",
           VariableType.INPUT, "m", "Pipe wall thickness"));
-        vars.add(new SimulationVariable(unitName + ".elevation", "elevation", VariableType.INPUT,
-          "m", "Pipe elevation change from inlet to outlet"));
+      vars.add(new SimulationVariable(unitName + ".elevation", "elevation", VariableType.INPUT, "m",
+          "Pipe elevation change from inlet to outlet"));
       vars.add(new SimulationVariable(unitName + ".pressureDrop", "pressureDrop",
           VariableType.OUTPUT, "bara", "Pressure drop across pipe"));
-        if (unit instanceof WaterHammerPipe) {
+      if (unit instanceof WaterHammerPipe) {
         vars.add(new SimulationVariable(unitName + ".valveOpening", "valveOpening",
-          VariableType.INPUT, "", "Water-hammer valve opening fraction"));
-        vars.add(new SimulationVariable(unitName + ".valveOpeningPercent",
-          "valveOpeningPercent", VariableType.INPUT, "%",
-          "Water-hammer valve opening percentage"));
-        vars.add(new SimulationVariable(unitName + ".waveSpeed", "waveSpeed",
-          VariableType.INPUT, "m/s", "Acoustic wave speed override or calculated value"));
+            VariableType.INPUT, "", "Water-hammer valve opening fraction"));
+        vars.add(new SimulationVariable(unitName + ".valveOpeningPercent", "valveOpeningPercent",
+            VariableType.INPUT, "%", "Water-hammer valve opening percentage"));
+        vars.add(new SimulationVariable(unitName + ".waveSpeed", "waveSpeed", VariableType.INPUT,
+            "m/s", "Acoustic wave speed override or calculated value"));
         vars.add(new SimulationVariable(unitName + ".numberOfNodes", "numberOfNodes",
-          VariableType.INPUT, "", "Water-hammer computational node count"));
+            VariableType.INPUT, "", "Water-hammer computational node count"));
         vars.add(new SimulationVariable(unitName + ".courantNumber", "courantNumber",
-          VariableType.INPUT, "", "Courant number for stable transient time steps"));
+            VariableType.INPUT, "", "Courant number for stable transient time steps"));
         vars.add(new SimulationVariable(unitName + ".maxStableTimeStep", "maxStableTimeStep",
-          VariableType.OUTPUT, "s", "Maximum stable time step from the Courant limit"));
+            VariableType.OUTPUT, "s", "Maximum stable time step from the Courant limit"));
         vars.add(new SimulationVariable(unitName + ".waveRoundTripTime", "waveRoundTripTime",
-          VariableType.OUTPUT, "s", "Pipe acoustic wave round-trip time"));
+            VariableType.OUTPUT, "s", "Pipe acoustic wave round-trip time"));
         vars.add(new SimulationVariable(unitName + ".maxPressure", "maxPressure",
-          VariableType.OUTPUT, "bara", "Maximum pressure envelope during transient"));
+            VariableType.OUTPUT, "bara", "Maximum pressure envelope during transient"));
         vars.add(new SimulationVariable(unitName + ".minPressure", "minPressure",
-          VariableType.OUTPUT, "bara", "Minimum pressure envelope during transient"));
-        }
+            VariableType.OUTPUT, "bara", "Minimum pressure envelope during transient"));
+      }
       addOutletStreamVariables(vars, unitName, unit);
       handledOutlets = true;
     }
@@ -1702,9 +1717,8 @@ public class ProcessAutomation {
       return diagnostics.diagnosePortNotFound(address, unitName, portName, validPorts);
     }
 
-    // Property not found (Unknown property, Cannot set property, Unknown stream property)
-    if (msg.contains("Unknown property") || msg.contains("Cannot set property")
-        || msg.contains("Unknown stream property") || msg.contains("Cannot set stream")) {
+    // Property not found (Unknown property, Unknown stream property)
+    if (msg.contains("Unknown property") || msg.contains("Unknown stream property")) {
       try {
         List<SimulationVariable> vars = getVariableList(unitName);
         String propertyName = parts.length > 1 ? parts[parts.length - 1] : "";
@@ -1712,6 +1726,47 @@ public class ProcessAutomation {
       } catch (Exception e) {
         // Can't get variable list - fall through
       }
+    }
+
+    // Read-only variable (set attempted on an OUTPUT-type property)
+    if (msg.contains("Cannot set property") || msg.contains("Cannot set stream")
+        || msg.toLowerCase(java.util.Locale.ROOT).contains("read-only")
+        || msg.toLowerCase(java.util.Locale.ROOT).contains("read only")) {
+      java.util.Map<String, Object> ctx = new java.util.LinkedHashMap<String, Object>();
+      ctx.put("errorMessage", msg);
+      return new AutomationDiagnostics.DiagnosticResult(
+          AutomationDiagnostics.ErrorCategory.READ_ONLY_VARIABLE, address, msg,
+          new ArrayList<String>(), null,
+          "This variable is an OUTPUT (computed by the simulation) and cannot be set. "
+              + "Use getVariableList() to discover INPUT-type variables that can be modified.",
+          ctx);
+    }
+
+    // Unknown unit-of-measure
+    if (msg.toLowerCase(java.util.Locale.ROOT).contains("unknown unit")
+        || msg.toLowerCase(java.util.Locale.ROOT).contains("unit not supported")
+        || msg.toLowerCase(java.util.Locale.ROOT).contains("invalid unit")) {
+      java.util.Map<String, Object> ctx = new java.util.LinkedHashMap<String, Object>();
+      ctx.put("errorMessage", msg);
+      return new AutomationDiagnostics.DiagnosticResult(
+          AutomationDiagnostics.ErrorCategory.UNKNOWN_UNIT, address, msg, new ArrayList<String>(),
+          null, "Unsupported unit of measure. Call getAllowedUnits(address) for a list of "
+              + "valid UOM strings, or pass null to use the variable's default unit.",
+          ctx);
+    }
+
+    // Convergence failure during write+run
+    String lower = msg.toLowerCase(java.util.Locale.ROOT);
+    if (lower.contains("not converge") || lower.contains("did not converge")
+        || lower.contains("convergence") || lower.contains("solver failed")) {
+      java.util.Map<String, Object> ctx = new java.util.LinkedHashMap<String, Object>();
+      ctx.put("errorMessage", msg);
+      return new AutomationDiagnostics.DiagnosticResult(
+          AutomationDiagnostics.ErrorCategory.CONVERGENCE_FAILURE, address, msg,
+          new ArrayList<String>(), null,
+          "Solver did not converge after the change. Try a smaller step, relax recycle "
+              + "tolerance, or revert the change. Inspect the diagnostics log for residuals.",
+          ctx);
     }
 
     // Invalid address format or generic error
@@ -1836,5 +1891,699 @@ public class ProcessAutomation {
     result.addProperty("remediation", "Address was auto-corrected from '" + originalAddress
         + "' to '" + correctedAddress + "'. Use the corrected address in future calls.");
     return result.toString();
+  }
+
+  // ===================================================================================
+  // Agentic API extensions (P0–P2). All methods below are additive and non-breaking.
+  // ===================================================================================
+
+  /**
+   * Returns the stable schema version of JSON responses produced by this facade. Agents and MCP
+   * clients can branch on this value when parsing responses (see {@link #SCHEMA_VERSION}).
+   *
+   * @return the schema version string, e.g. "1.0"
+   */
+  public String getSchemaVersion() {
+    return SCHEMA_VERSION;
+  }
+
+  // ----------------------------- Dirty / run-policy tracking ------------------------------
+
+  /**
+   * Returns whether any input has been set via {@link #setVariableValue} since the last successful
+   * {@link #run()} or {@link #runIfDirty()}. When {@code true}, outputs returned by
+   * {@link #getVariableValue} may be stale and should be refreshed by calling {@link #run()}.
+   *
+   * @return {@code true} if the underlying process needs to be re-run, {@code false} otherwise
+   */
+  public boolean isDirty() {
+    return dirty;
+  }
+
+  /**
+   * Manually marks this facade as dirty, e.g. after modifying the underlying process system
+   * directly through other Java APIs.
+   */
+  public void markDirty() {
+    this.dirty = true;
+  }
+
+  /**
+   * Runs the underlying {@link ProcessSystem} or {@link ProcessModel} and clears the dirty flag on
+   * success.
+   *
+   * @throws RuntimeException if the underlying solver fails
+   */
+  public void run() {
+    if (processModel != null) {
+      processModel.run();
+    } else {
+      processSystem.run();
+    }
+    this.dirty = false;
+  }
+
+  /**
+   * Runs the underlying process only if {@link #isDirty()} is true. Returns whether a run was
+   * actually performed.
+   *
+   * @return {@code true} if a run was triggered, {@code false} if the process was already clean
+   */
+  public boolean runIfDirty() {
+    if (dirty) {
+      run();
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Sets an input variable then immediately runs the process. Equivalent to
+   * {@link #setVariableValue(String, double, String)} followed by {@link #run()} but provided as a
+   * single atomic call for agents that want the result of one specific change.
+   *
+   * @param address the dot-notation address
+   * @param value the value to set
+   * @param unitOfMeasure the unit of the provided value, or null for default units
+   * @throws IllegalArgumentException if the address cannot be resolved
+   * @throws RuntimeException if the subsequent run fails
+   */
+  public void setVariableValueAndRun(String address, double value, String unitOfMeasure) {
+    setVariableValue(address, value, unitOfMeasure);
+    run();
+  }
+
+  // ----------------------------- Batch get / set ------------------------------
+
+  /**
+   * Reads many variables in a single call. Reduces round-trip latency for MCP/HTTP agents that
+   * otherwise issue one call per variable.
+   *
+   * <p>
+   * Each value is read in the requested unit if {@code unitOfMeasure} is non-null, otherwise in the
+   * variable's default unit. Addresses that fail to resolve are skipped and recorded in the
+   * diagnostics; the returned map only contains successfully read entries. To detect failures,
+   * compare {@code addresses.size()} to the returned map size and consult
+   * {@link #getDiagnostics()}.
+   * </p>
+   *
+   * @param addresses dot-notation addresses to read
+   * @param unitOfMeasure unit applied to every address, or null for defaults
+   * @return ordered map from address to value (Linked) with only successfully read entries
+   * @throws IllegalArgumentException if {@code addresses} is null
+   */
+  public Map<String, Double> getValues(List<String> addresses, String unitOfMeasure) {
+    if (addresses == null) {
+      throw new IllegalArgumentException("addresses must not be null");
+    }
+    Map<String, Double> out = new LinkedHashMap<String, Double>();
+    for (String addr : addresses) {
+      try {
+        out.put(addr, getVariableValue(addr, unitOfMeasure));
+      } catch (Exception e) {
+        diagnostics.recordFailure("get", addr,
+            AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Sets many input variables in a single call.
+   *
+   * @param updates ordered map from address to value
+   * @param unitOfMeasure unit applied to every update, or null for defaults
+   * @param runAfter when {@code true}, calls {@link #run()} once after all writes succeed; when
+   *        {@code false}, leaves the facade dirty
+   * @return number of variables that were successfully set
+   * @throws IllegalArgumentException if {@code updates} is null
+   */
+  public int setValues(Map<String, Double> updates, String unitOfMeasure, boolean runAfter) {
+    if (updates == null) {
+      throw new IllegalArgumentException("updates must not be null");
+    }
+    int ok = 0;
+    for (Map.Entry<String, Double> e : updates.entrySet()) {
+      try {
+        setVariableValue(e.getKey(), e.getValue(), unitOfMeasure);
+        ok++;
+      } catch (Exception ex) {
+        diagnostics.recordFailure("set", e.getKey(),
+            AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
+      }
+    }
+    if (runAfter && ok > 0) {
+      run();
+    }
+    return ok;
+  }
+
+  // ----------------------------- Snapshot ------------------------------
+
+  /**
+   * Returns a JSON snapshot of all variables for a unit, an area, or the entire process. Useful for
+   * agent observation and for building model-vs-plant comparisons.
+   *
+   * @param scope unit name (e.g. {@code "HP Sep"}), area-qualified unit name (e.g.
+   *        {@code "Separation::HP Sep"}), area name (e.g. {@code "Separation"}), or {@code "*"} /
+   *        {@code null} for the whole process
+   * @return JSON string {@code {schemaVersion, scope, units:[{name, area, type, variables:{...}}]}}
+   */
+  public String snapshot(String scope) {
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+    root.addProperty("scope", scope == null ? "*" : scope);
+    root.addProperty("dirty", dirty);
+    com.google.gson.JsonArray unitsArr = new com.google.gson.JsonArray();
+
+    List<String> targetUnits = resolveScope(scope);
+    for (String unitAddr : targetUnits) {
+      com.google.gson.JsonObject u = new com.google.gson.JsonObject();
+      u.addProperty("name", unitAddr);
+      try {
+        u.addProperty("type", getEquipmentType(unitAddr));
+      } catch (Exception e) {
+        // skip type if unresolvable
+      }
+      com.google.gson.JsonObject vars = new com.google.gson.JsonObject();
+      try {
+        List<SimulationVariable> vlist = getVariableList(unitAddr);
+        for (SimulationVariable v : vlist) {
+          try {
+            double val = getVariableValue(v.getAddress(), v.getDefaultUnit());
+            com.google.gson.JsonObject vobj = new com.google.gson.JsonObject();
+            vobj.addProperty("value", val);
+            if (v.getDefaultUnit() != null) {
+              vobj.addProperty("unit", v.getDefaultUnit());
+            }
+            vobj.addProperty("type", v.getType().name());
+            vars.add(stripUnitPrefix(v.getAddress(), unitAddr), vobj);
+          } catch (Exception e) {
+            // skip individual variable read failures
+          }
+        }
+      } catch (Exception e) {
+        // skip unit
+      }
+      u.add("variables", vars);
+      unitsArr.add(u);
+    }
+    root.add("units", unitsArr);
+    return root.toString();
+  }
+
+  /**
+   * Resolves a snapshot scope string to a list of (possibly area-qualified) unit names.
+   *
+   * @param scope unit, area, area::unit, "*", or null
+   * @return list of unit addresses to include
+   */
+  private List<String> resolveScope(String scope) {
+    if (scope == null || "*".equals(scope) || scope.trim().isEmpty()) {
+      return getUnitList();
+    }
+    // Try as area name (multi-area only)
+    if (processModel != null && !scope.contains(AREA_SEPARATOR) && !scope.contains(".")) {
+      List<String> areas = processModel.getProcessSystemNames();
+      if (areas.contains(scope)) {
+        return getUnitList(scope);
+      }
+    }
+    // Treat as a single unit address
+    List<String> single = new ArrayList<String>(1);
+    single.add(scope);
+    return single;
+  }
+
+  /**
+   * Removes a unit-name prefix from a variable address, leaving the property path.
+   *
+   * @param address full variable address
+   * @param unitAddr unit prefix (possibly area-qualified)
+   * @return the property portion of the address
+   */
+  private String stripUnitPrefix(String address, String unitAddr) {
+    String localAddr = address;
+    if (localAddr.startsWith(unitAddr + ".")) {
+      return localAddr.substring(unitAddr.length() + 1);
+    }
+    return localAddr;
+  }
+
+  // ----------------------------- Describe / discovery ------------------------------
+
+  /**
+   * Returns a single JSON manifest describing the entire flowsheet schema: areas (if any), units
+   * with type and variables, and stable schema version. This is the recommended single-tool-call
+   * discovery endpoint for LLM agents.
+   *
+   * @return JSON string with schema, areas, units, and variable descriptors
+   */
+  public String describe() {
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+    root.addProperty("multiArea", isMultiArea());
+    root.addProperty("dirty", dirty);
+
+    if (isMultiArea()) {
+      com.google.gson.JsonArray areasArr = new com.google.gson.JsonArray();
+      for (String a : getAreaList()) {
+        areasArr.add(a);
+      }
+      root.add("areas", areasArr);
+    }
+
+    com.google.gson.JsonArray unitsArr = new com.google.gson.JsonArray();
+    for (String unitAddr : getUnitList()) {
+      com.google.gson.JsonObject u = new com.google.gson.JsonObject();
+      u.addProperty("name", unitAddr);
+      try {
+        u.addProperty("type", getEquipmentType(unitAddr));
+      } catch (Exception e) {
+        // ignore
+      }
+      com.google.gson.JsonArray varsArr = new com.google.gson.JsonArray();
+      try {
+        for (SimulationVariable v : getVariableList(unitAddr)) {
+          com.google.gson.JsonObject vo = new com.google.gson.JsonObject();
+          vo.addProperty("address", v.getAddress());
+          vo.addProperty("name", v.getName());
+          vo.addProperty("type", v.getType().name());
+          if (v.getDefaultUnit() != null) {
+            vo.addProperty("unit", v.getDefaultUnit());
+          }
+          if (v.getDescription() != null) {
+            vo.addProperty("description", v.getDescription());
+          }
+          if (v.getUnitFamily() != null) {
+            vo.addProperty("unitFamily", v.getUnitFamily());
+          }
+          if (v.getCategory() != null) {
+            vo.addProperty("category", v.getCategory());
+          }
+          varsArr.add(vo);
+        }
+      } catch (Exception e) {
+        // ignore unit
+      }
+      u.add("variables", varsArr);
+      unitsArr.add(u);
+    }
+    root.add("units", unitsArr);
+    return root.toString();
+  }
+
+  // ----------------------------- Topology / connections ------------------------------
+
+  /**
+   * Returns a JSON description of the flowsheet topology: equipment with their declared inlet and
+   * outlet streams, and explicit {@link neqsim.process.processmodel.ProcessConnection
+   * ProcessConnection} edges when available.
+   *
+   * @return JSON string {@code {schemaVersion, equipment:[{name, type, inlets, outlets}],
+   *         connections:[{source, target, type, label}]}}
+   */
+  public String getTopology() {
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+    com.google.gson.JsonArray equipArr = new com.google.gson.JsonArray();
+
+    List<ProcessSystem> systems = new ArrayList<ProcessSystem>();
+    if (processModel != null) {
+      for (String a : processModel.getProcessSystemNames()) {
+        systems.add(processModel.get(a));
+      }
+    } else {
+      systems.add(processSystem);
+    }
+
+    for (ProcessSystem sys : systems) {
+      for (ProcessEquipmentInterface unit : sys.getUnitOperations()) {
+        com.google.gson.JsonObject u = new com.google.gson.JsonObject();
+        u.addProperty("name", unit.getName());
+        u.addProperty("type", unit.getClass().getSimpleName());
+        com.google.gson.JsonArray inlets = new com.google.gson.JsonArray();
+        com.google.gson.JsonArray outlets = new com.google.gson.JsonArray();
+        try {
+          for (StreamInterface s : unit.getInletStreams()) {
+            if (s != null) {
+              inlets.add(s.getName());
+            }
+          }
+        } catch (Exception e) {
+          // ignore - not all equipment exposes inlets
+        }
+        try {
+          for (StreamInterface s : unit.getOutletStreams()) {
+            if (s != null) {
+              outlets.add(s.getName());
+            }
+          }
+        } catch (Exception e) {
+          // ignore
+        }
+        u.add("inlets", inlets);
+        u.add("outlets", outlets);
+        equipArr.add(u);
+      }
+    }
+    root.add("equipment", equipArr);
+
+    com.google.gson.JsonArray connsArr = new com.google.gson.JsonArray();
+    try {
+      List<neqsim.process.processmodel.ProcessConnection> conns =
+          (processSystem != null) ? processSystem.getConnections() : null;
+      if (conns != null) {
+        for (neqsim.process.processmodel.ProcessConnection c : conns) {
+          com.google.gson.JsonObject co = new com.google.gson.JsonObject();
+          co.addProperty("source", c.getSourceEquipment());
+          co.addProperty("target", c.getTargetEquipment());
+          if (c.getType() != null) {
+            co.addProperty("type", c.getType().name());
+          }
+          if (c.getSourcePort() != null) {
+            co.addProperty("sourcePort", c.getSourcePort());
+          }
+          if (c.getTargetPort() != null) {
+            co.addProperty("targetPort", c.getTargetPort());
+          }
+          connsArr.add(co);
+        }
+      }
+    } catch (Exception e) {
+      // ignore - connections are optional metadata
+    }
+    root.add("connections", connsArr);
+
+    return root.toString();
+  }
+
+  /**
+   * Returns the upstream and downstream neighbors of a unit, derived from its inlet and outlet
+   * streams. Useful for multi-hop agent reasoning ("what feeds the HP separator?").
+   *
+   * @param unitName unit name (or area-qualified unit name in multi-area mode)
+   * @return JSON string {@code {unit, upstream:[...], downstream:[...]}}
+   * @throws IllegalArgumentException if the unit cannot be resolved
+   */
+  public String getNeighbors(String unitName) {
+    String areaName = null;
+    String localName = unitName;
+    int areaSepIdx = unitName.indexOf(AREA_SEPARATOR);
+    if (areaSepIdx >= 0) {
+      areaName = unitName.substring(0, areaSepIdx);
+      localName = unitName.substring(areaSepIdx + AREA_SEPARATOR.length());
+    }
+    ProcessEquipmentInterface target = findUnit(areaName, localName);
+
+    java.util.Set<String> inletStreamNames = new java.util.LinkedHashSet<String>();
+    java.util.Set<String> outletStreamNames = new java.util.LinkedHashSet<String>();
+    try {
+      for (StreamInterface s : target.getInletStreams()) {
+        if (s != null) {
+          inletStreamNames.add(s.getName());
+        }
+      }
+    } catch (Exception e) {
+      // ignore
+    }
+    try {
+      for (StreamInterface s : target.getOutletStreams()) {
+        if (s != null) {
+          outletStreamNames.add(s.getName());
+        }
+      }
+    } catch (Exception e) {
+      // ignore
+    }
+
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+    root.addProperty("unit", unitName);
+    com.google.gson.JsonArray up = new com.google.gson.JsonArray();
+    com.google.gson.JsonArray down = new com.google.gson.JsonArray();
+
+    List<ProcessSystem> systems = new ArrayList<ProcessSystem>();
+    if (processModel != null) {
+      for (String a : processModel.getProcessSystemNames()) {
+        systems.add(processModel.get(a));
+      }
+    } else {
+      systems.add(processSystem);
+    }
+
+    for (ProcessSystem sys : systems) {
+      for (ProcessEquipmentInterface other : sys.getUnitOperations()) {
+        if (other == target) {
+          continue;
+        }
+        try {
+          for (StreamInterface s : other.getOutletStreams()) {
+            if (s != null && inletStreamNames.contains(s.getName())) {
+              up.add(other.getName());
+              break;
+            }
+          }
+        } catch (Exception e) {
+          // ignore
+        }
+        try {
+          for (StreamInterface s : other.getInletStreams()) {
+            if (s != null && outletStreamNames.contains(s.getName())) {
+              down.add(other.getName());
+              break;
+            }
+          }
+        } catch (Exception e) {
+          // ignore
+        }
+      }
+    }
+    root.add("upstream", up);
+    root.add("downstream", down);
+    return root.toString();
+  }
+
+  // ----------------------------- Structured / composition / vector access ------------------------
+
+  /**
+   * Returns a structured JSON element for a variable address. Unlike
+   * {@link #getVariableValue(String, String)} which is scalar-only, this method supports vector and
+   * object-valued variables such as stream compositions, per-phase properties, and K-values.
+   *
+   * <p>
+   * <strong>Supported address suffixes</strong> (case-insensitive):
+   * </p>
+   * <ul>
+   * <li>{@code <unit>.<stream>.composition} → object {component: moleFraction}</li>
+   * <li>{@code <unit>.<stream>.molarComposition} → same as composition</li>
+   * <li>{@code <unit>.<stream>.massComposition} → object {component: massFraction}</li>
+   * <li>{@code <unit>.<stream>.components} → array of component names</li>
+   * <li>{@code <unit>.<stream>.phaseFractions} → object {gas, oil, aqueous} mole fractions</li>
+   * <li>{@code <unit>.<stream>.kvalues} → object {component: K}</li>
+   * </ul>
+   *
+   * <p>
+   * Any address not matching one of these patterns is delegated to
+   * {@link #getVariableValue(String, String)} and wrapped as a JSON number.
+   * </p>
+   *
+   * @param address the dot-notation address
+   * @return Gson {@code JsonElement} (object, array, or primitive number)
+   * @throws IllegalArgumentException if the address cannot be resolved
+   */
+  public com.google.gson.JsonElement getStructured(String address) {
+    if (address == null || address.trim().isEmpty()) {
+      throw new IllegalArgumentException("Address must not be null or empty");
+    }
+    String localAddress = address;
+    String areaName = null;
+    int areaSepIdx = address.indexOf(AREA_SEPARATOR);
+    if (areaSepIdx >= 0) {
+      areaName = address.substring(0, areaSepIdx);
+      localAddress = address.substring(areaSepIdx + AREA_SEPARATOR.length());
+    }
+    String[] parts = localAddress.split("\\.", 3);
+    if (parts.length == 3) {
+      String last = parts[2].toLowerCase(java.util.Locale.ROOT);
+      ProcessEquipmentInterface unit = findUnit(areaName, parts[0]);
+      StreamInterface stream = resolveStreamPort(unit, parts[1]);
+      if (stream == null) {
+        throw new IllegalArgumentException(
+            "Stream port not found: " + parts[1] + " on unit " + parts[0]);
+      }
+      neqsim.thermo.system.SystemInterface fluid = stream.getFluid();
+      if ("composition".equals(last) || "molarcomposition".equals(last)) {
+        return compositionJson(fluid, false);
+      }
+      if ("masscomposition".equals(last)) {
+        return compositionJson(fluid, true);
+      }
+      if ("components".equals(last)) {
+        com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+        for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+          arr.add(fluid.getComponent(i).getComponentName());
+        }
+        return arr;
+      }
+      if ("phasefractions".equals(last)) {
+        com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
+        for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+          obj.addProperty(fluid.getPhase(i).getPhaseTypeName(), fluid.getBeta(i));
+        }
+        return obj;
+      }
+      if ("kvalues".equals(last)) {
+        com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
+        if (fluid.getNumberOfPhases() >= 2) {
+          for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+            double yi = fluid.getPhase(0).getComponent(i).getx();
+            double xi = fluid.getPhase(1).getComponent(i).getx();
+            obj.addProperty(fluid.getComponent(i).getComponentName(),
+                xi > 0.0 ? yi / xi : Double.NaN);
+          }
+        }
+        return obj;
+      }
+    }
+    // Fallback to scalar
+    double v = getVariableValue(address, null);
+    return new com.google.gson.JsonPrimitive(v);
+  }
+
+  /**
+   * Builds a {component → fraction} JSON object for a fluid.
+   *
+   * @param fluid the thermo system
+   * @param mass if {@code true} returns mass fractions, otherwise mole fractions (overall)
+   * @return JSON object
+   */
+  private com.google.gson.JsonObject compositionJson(neqsim.thermo.system.SystemInterface fluid,
+      boolean mass) {
+    com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
+    double totalMoles = fluid.getTotalNumberOfMoles();
+    double totalMass = 0.0;
+    if (mass) {
+      for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+        totalMass +=
+            fluid.getComponent(i).getNumberOfmoles() * fluid.getComponent(i).getMolarMass();
+      }
+    }
+    for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+      double frac;
+      if (mass) {
+        double m = fluid.getComponent(i).getNumberOfmoles() * fluid.getComponent(i).getMolarMass();
+        frac = totalMass > 0.0 ? m / totalMass : 0.0;
+      } else {
+        frac = totalMoles > 0.0 ? fluid.getComponent(i).getNumberOfmoles() / totalMoles : 0.0;
+      }
+      obj.addProperty(fluid.getComponent(i).getComponentName(), frac);
+    }
+    return obj;
+  }
+
+  // ----------------------------- Address validation ------------------------------
+
+  /**
+   * Validates an address without throwing. Returns {@code null} if the address resolves, or a
+   * diagnostic describing why it does not.
+   *
+   * @param address the dot-notation address
+   * @return diagnostic on failure, {@code null} on success
+   */
+  public AutomationDiagnostics.DiagnosticResult validateAddress(String address) {
+    if (address == null || address.trim().isEmpty()) {
+      return new AutomationDiagnostics.DiagnosticResult(
+          AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT,
+          address == null ? "" : address, "Address must not be null or empty",
+          new ArrayList<String>(), null,
+          "Pass a non-empty address of the form 'unit.property' or 'unit.port.property'.",
+          new LinkedHashMap<String, Object>());
+    }
+    try {
+      // Resolve unit (and stream port if present) without touching property
+      String localAddress = address;
+      String areaName = null;
+      int areaSepIdx = address.indexOf(AREA_SEPARATOR);
+      if (areaSepIdx >= 0) {
+        areaName = address.substring(0, areaSepIdx);
+        localAddress = address.substring(areaSepIdx + AREA_SEPARATOR.length());
+      }
+      String[] parts = localAddress.split("\\.", 3);
+      ProcessEquipmentInterface unit = findUnit(areaName, parts[0]);
+      if (parts.length == 3) {
+        StreamInterface s = resolveStreamPort(unit, parts[1]);
+        if (s == null) {
+          return diagnoseAndAttemptRecovery(address,
+              new IllegalArgumentException("Stream port not found: " + parts[1]));
+        }
+      }
+      return null;
+    } catch (IllegalArgumentException e) {
+      return diagnoseAndAttemptRecovery(address, e);
+    }
+  }
+
+  /**
+   * Returns a list of unit-of-measure strings that are valid for a given address. For now this uses
+   * the variable's {@link SimulationVariable#getUnitFamily() unit family} to suggest typical UOMs;
+   * agents can also pass {@code null} to use the variable's default unit.
+   *
+   * @param address dot-notation address
+   * @return ordered list of suggested UOM strings (may be empty if the unit family is unknown)
+   */
+  public List<String> getAllowedUnits(String address) {
+    List<String> out = new ArrayList<String>();
+    try {
+      String localAddress = address;
+      String areaName = null;
+      int areaSepIdx = address.indexOf(AREA_SEPARATOR);
+      if (areaSepIdx >= 0) {
+        areaName = address.substring(0, areaSepIdx);
+        localAddress = address.substring(areaSepIdx + AREA_SEPARATOR.length());
+      }
+      String unitName = localAddress.split("\\.", 2)[0];
+      String prefix = (areaName != null ? areaName + AREA_SEPARATOR : "") + unitName;
+      for (SimulationVariable v : getVariableList(prefix)) {
+        if (v.getAddress().equals(address)) {
+          String family = v.getUnitFamily();
+          if (family == null) {
+            return out;
+          }
+          if ("temperature".equalsIgnoreCase(family)) {
+            out.add("K");
+            out.add("C");
+            out.add("F");
+          } else if ("pressure".equalsIgnoreCase(family)) {
+            out.add("bara");
+            out.add("Pa");
+            out.add("psi");
+            out.add("barg");
+          } else if ("massFlow".equalsIgnoreCase(family)) {
+            out.add("kg/sec");
+            out.add("kg/hr");
+            out.add("tonnes/hr");
+          } else if ("molarFlow".equalsIgnoreCase(family)) {
+            out.add("mole/sec");
+          } else if ("density".equalsIgnoreCase(family)) {
+            out.add("kg/m3");
+          } else if ("power".equalsIgnoreCase(family)) {
+            out.add("W");
+            out.add("kW");
+            out.add("MW");
+          } else if ("length".equalsIgnoreCase(family)) {
+            out.add("m");
+          } else if ("volume".equalsIgnoreCase(family)) {
+            out.add("m3");
+          } else if ("rotationalSpeed".equalsIgnoreCase(family)) {
+            out.add("rpm");
+          }
+          return out;
+        }
+      }
+    } catch (Exception e) {
+      // fall through, return empty
+    }
+    return out;
   }
 }
