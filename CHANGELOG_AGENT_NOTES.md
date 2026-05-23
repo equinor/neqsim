@@ -9,6 +9,64 @@
 
 ---
 
+## 2026-05-21 — Agentic ProcessAutomation Extensions
+
+### Summary
+
+`ProcessAutomation` gains a batch / introspection / diagnostics surface designed for
+multi-turn agent workflows. `ProcessSystem.getAutomation()` and `ProcessModel.getAutomation()`
+now return a **cached singleton** so diagnostics history, learned corrections, and the new
+`dirty` flag persist across agent turns. All structured outputs include a stable
+`schemaVersion` field (`ProcessAutomation.SCHEMA_VERSION = "1.0"`).
+
+### New API
+
+| Method | Description |
+|--------|-------------|
+| `getSchemaVersion()` / `SCHEMA_VERSION` | Stable JSON-output schema version (`"1.0"`). |
+| `isDirty()` | `true` after any successful `setVariableValue` and until the next `run()`. |
+| `runIfDirty()` | Calls `run()` only when dirty; returns whether a run was performed. |
+| `setVariableValueAndRun(addr, val, uom)` | Atomic set + run + clear-dirty. |
+| `getValues(addresses, uom)` | Batch read → `Map<String, Double>` of successful entries. |
+| `setValues(updates, uom, runAfter)` | Batch write with optional single `run()`; returns count of successes. |
+| `describe()` | JSON manifest of units and variables (`{schemaVersion, multiArea, units:[...]}`). |
+| `snapshot(scope)` | JSON snapshot for a unit / area / `"*"`. |
+| `getTopology()` | JSON listing equipment and `ProcessConnection` edges. |
+| `getNeighbors(unitName)` | Immediate upstream / downstream units as JSON. |
+| `getStructured(address)` | Returns `JsonElement` — composition / components / phaseFractions / kvalues yield objects/arrays. |
+| `validateAddress(address)` | Non-throwing pre-flight: returns `null` if OK or a `DiagnosticResult` with the right `ErrorCategory`. |
+| `getAllowedUnits(address)` | List of valid UOM strings for the given variable. |
+
+### Diagnostic Taxonomy
+
+`AutomationDiagnostics.ErrorCategory` is wired through `diagnoseAndAttemptRecovery` for:
+`UNIT_NOT_FOUND`, `PROPERTY_NOT_FOUND`, `PORT_NOT_FOUND`, `READ_ONLY_VARIABLE`,
+`VALUE_OUT_OF_BOUNDS`, `UNKNOWN_UNIT`, `INVALID_ADDRESS_FORMAT`, `CONVERGENCE_FAILURE`.
+The category appears in the JSON payload returned by `*Safe` accessors and `validateAddress`.
+
+### Thread Safety
+
+`AutomationDiagnostics.history` is now a `Collections.synchronizedList` and
+`learnedCorrections` is a `ConcurrentHashMap`, allowing multiple agents to share a
+single `ProcessAutomation` facade.
+
+### Migration
+
+- No breaking changes. Existing `getVariableValue` / `setVariableValue` / `*Safe` calls keep
+  working unchanged.
+- Agents previously calling `process.run()` after every `setVariableValue` should switch to
+  `setVariableValueAndRun` or batch `setValues(..., runAfter=true)` for fewer redundant runs.
+- If code depended on `getAutomation()` returning a fresh instance each call, retain a local
+  reference instead. The new cached behaviour is required for diagnostics persistence.
+
+### Agents / Skills to Update
+
+- `neqsim-api-patterns` — add batch/introspection patterns.
+- `neqsim-pid-process-operations`, `neqsim-plant-data` — recommend `setVariableValueAndRun`.
+- `@process.simulation`, `@plant.data` — note cached facade and dirty tracking.
+
+---
+
 ## 2026-05-17 — Adaptive Matrix Inside-Out Distillation Solver
 
 ### Summary
