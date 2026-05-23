@@ -27,8 +27,9 @@
 		<checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
 		<skipFlattening>false</skipFlattening>
 		<argLine></argLine>
-		<!-- Exclude slow tests by default. Run with -DexcludedTestGroups= to include all tests -->
-		<excludedTestGroups>slow</excludedTestGroups>
+		<!-- Java 21 build runs the extended test suite, including slow-tagged tests.
+		     Override with -DexcludedTestGroups=slow to skip them locally. -->
+		<excludedTestGroups></excludedTestGroups>
 	</properties>
 	<licenses>
 		<license>
@@ -320,8 +321,11 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<!-- Preserve any Jacoco agent injection (${argLine}) and add required module
-					opens for XStream reflection when running tests on JDK >= 17 -->
-					<argLine>${argLine} -Xmx3g --add-opens=java.base/java.util=ALL-UNNAMED
+					opens for XStream reflection when running tests on JDK >= 17.
+					-Xmx6g is required because the extended (slow) test suite includes
+					distillation Newton-iteration tests that allocate large scalar-replaced
+					object arrays. -->
+					<argLine>${argLine} -Xmx6g --add-opens=java.base/java.util=ALL-UNNAMED
 						--add-opens=java.base/java.lang=ALL-UNNAMED
 						--add-opens=java.base/java.io=ALL-UNNAMED
 						--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
@@ -334,8 +338,10 @@
 				<version>3.5.4</version>
 				<configuration>
 					<!-- Preserve any Jacoco agent injection (${argLine}) and add required module
-					opens for XStream reflection when running integration tests on JDK >= 17 -->
-					<argLine>${argLine} -Xmx3g --add-opens=java.base/java.util=ALL-UNNAMED
+					opens for XStream reflection when running integration tests on JDK >= 17.
+					-Xmx6g matches surefire to give failsafe enough headroom for the same
+					extended slow-tagged tests. -->
+					<argLine>${argLine} -Xmx6g --add-opens=java.base/java.util=ALL-UNNAMED
 						--add-opens=java.base/java.lang=ALL-UNNAMED
 						--add-opens=java.base/java.io=ALL-UNNAMED
 						--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>

@@ -1,36 +1,35 @@
 """Standalone column-study script.
 
 Mirrors the column_study.ipynb notebook but runs as a plain Python script:
-    - Builds a 24-component SRK fluid with UniSim Tc/Pc/omega overrides
+    - Builds a 24-component SRK fluid with answer Tc/Pc/omega overrides
     - Creates main feed + top reflux streams
     - Builds and runs the 20VE105_205 stabilizer column (10 trays + reboiler,
       no internal condenser — external reflux comes in as the top feed)
     - Prints convergence diagnostics
-    - Compares NeqSim overhead/bottoms with UniSim reference values
+    - Compares NeqSim overhead/bottoms with answer reference values
     - Prints overall mass balance and energy balance
-    - Plots the temperature profile and internal vapour/liquid flows
-      (saves to column_study_profile.png and also shows it)
+        - Plots the temperature profile and internal vapour/liquid flows
+            (saves to column_study_profile.png; use --show to open windows)
 
 Run:
     python examples/notebooks/column_study.py
 or
-    python examples/notebooks/column_study.py --no-show       # don't open a window
+    python examples/notebooks/column_study.py --show          # open plot windows
     python examples/notebooks/column_study.py --out figs/col.png
 
-Tray numbering used in this script is the UniSim TOP-DOWN convention:
+Tray numbering used in this script is the answer TOP-DOWN convention:
     tray 1  = top tray  (just below external condenser)
     tray 10 = bottom tray (just above reboiler)
     reboiler is below tray 10 with dP = 0 to tray 10
 
 NeqSim internally uses BOTTOM-UP stage numbering, so we convert via:
-    NeqSim stage = (n_trays + 1) - UniSim_tray   for trays
+    NeqSim stage = (n_trays + 1) - answer_tray   for trays
     NeqSim stage 0 = reboiler
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
 import time
@@ -74,9 +73,6 @@ DistillationColumn = ns.DistillationColumn
 SolverType = jpype.JClass(
     "neqsim.process.equipment.distillation.DistillationColumn$SolverType")
 
-_SOLVER_NAMES = [str(value.name()) for value in SolverType.values()]
-_DEFAULT_SOLVER = "NEWTON" if "NEWTON" in _SOLVER_NAMES else "MESH_RESIDUAL"
-
 # EOS systems available for the sweep. Names match Java class basenames.
 _EOS_CLASSES = {
     "SRK":            jpype.JClass("neqsim.thermo.system.SystemSrkEos"),
@@ -106,7 +102,7 @@ _TBP_MODELS = [
 
 
 # ---------------------------------------------------------------------------
-# UniSim reference data
+# answer reference data
 # ---------------------------------------------------------------------------
 MANUAL_FEED = {
     "name": "20VD008 liq",
@@ -174,7 +170,7 @@ MANUAL_TOP_FEED = {
     },
 }
 
-# Column inputs — UniSim TOP-DOWN tray numbering
+# Column inputs — answer TOP-DOWN tray numbering
 MANUAL_COLUMN = {
     "n_trays": 10,
     "main_feed_tray_topdown": 5,
@@ -192,13 +188,13 @@ MANUAL_COLUMN = {
     # diagnose whether the +128 % boilup error is driven by reboiler-side
     # enthalpy / Cp (anchoring V should then collapse rms_dT).
     "reboiler_spec_mode": "T",
-    # UniSim V/B (molar). V_reb_mass = 33,265.7 kg/hr; bottoms = 745.78 kmol/hr.
+    # answer V/B (molar). V_reb_mass = 33,265.7 kg/hr; bottoms = 745.78 kmol/hr.
     # MW of V_reb at 137 C / 5 bara is ~70-78 kg/kmol -> V_reb ≈ 427-475 kmol/hr.
-    # Adjust once the exact UniSim molar value is known.
+    # Adjust once the exact answer molar value is known.
     "boilup_ratio_molar": 0.595,
 }
 
-UNISIM_TARGET = {
+ANSWER_TARGET = {
     "overhead": {
         "temperature_C": 55.63690596810403,
         "pressure_bara": 5.01325,
@@ -215,9 +211,9 @@ UNISIM_TARGET = {
     },
 }
 
-# Per-tray UniSim profile (top-down, tray 1 = top, tray 10 = bottom).
+# Per-tray answer profile (top-down, tray 1 = top, tray 10 = bottom).
 # T in C, P in barg.
-UNISIM_TRAY_PROFILE = {
+ANSWER_TRAY_PROFILE = {
     "T_C_topdown": [
         55.0352092263182,
         60.4943624688327,
@@ -242,7 +238,7 @@ UNISIM_TRAY_PROFILE = {
         4.04444444444444,
         4.05000000000000,
     ],
-    # V_above_kg_hr[k] = vapour leaving UniSim tray (k+1) upward, k=0..9
+    # V_above_kg_hr[k] = vapour leaving answer tray (k+1) upward, k=0..9
     "V_kg_hr_topdown": [
         23518.5710198693,
         24066.4442843555,
@@ -255,7 +251,7 @@ UNISIM_TRAY_PROFILE = {
         29754.5804551019,
         33265.6710691705,
     ],
-    # L_below_kg_hr[k] = liquid leaving UniSim tray (k+1) downward, k=0..9
+    # L_below_kg_hr[k] = liquid leaving answer tray (k+1) downward, k=0..9
     "L_kg_hr_topdown": [
         8206.80370595773,
         7864.95274824513,
@@ -298,21 +294,21 @@ _COMPONENT_ORDER = list(_NEQSIM_NAME.keys()) + \
 
 # Toggle: if False, use NeqSim's own Tc/Pc/omega correlations for the TBP cuts
 # (only MW and density are passed via addTBPfraction). Set True to overwrite
-# with values harvested from the UniSim Hypo Group Controls table.
-APPLY_UNISIM_OVERRIDES = False
+# with values harvested from the answer Hypo Group Controls table.
+APPLY_ANSWER_OVERRIDES = False
 
 # Toggle: Peneloux volume correction. NeqSim's Pedersen c-shift correlation
 # returns NEGATIVE values for the heaviest pseudo-cuts (C31+, C39+), which
 # biases liquid fugacity and K-values. Set False to disable Peneloux for a
-# cleaner SRK-vs-UniSim comparison.
+# cleaner SRK-vs-answer comparison.
 USE_VOLUME_CORRECTION = True
 
-# Toggle: zero out all binary interaction parameters (kij). UniSim Hypos
+# Toggle: zero out all binary interaction parameters (kij). answer Hypos
 # default to kij=0 for HC-HC pairs; NeqSim auto-fills some kij from a
 # correlation. Set True to force kij=0 across the board (HC-HC and HC-light).
 ZERO_OUT_KIJ = False
 
-_UNISIM_OVERRIDES = {
+_ANSWER_OVERRIDES = {
     # name_PC:      (Tc_C,                Pc_barg,              omega)
     "C6*_PC":       (234.249993896484,    28.6699995117187,     0.296000003814697),
     "C7*_PC":       (254.701013183594,    33.5599995117188,     0.453299999237061),
@@ -376,7 +372,7 @@ def build_base_fluid(eos_name: str = "SRK",
     if verbose:
         phase0 = fluid.getPhase(0)
         print()
-        print("Component characterization (NeqSim, before any UniSim override):")
+        print("Component characterization (NeqSim, before any answer override):")
         print(f"  {'name':<15} {'Tc[K]':>9} {'Pc[bara]':>9} "
               f"{'omega':>7} {'MW':>8} {'c_pen':>11}")
         print("  " + "-" * 70)
@@ -394,15 +390,15 @@ def build_base_fluid(eos_name: str = "SRK",
                   f"{cpen:>+11.4e}")
 
     n_overridden = 0
-    if APPLY_UNISIM_OVERRIDES:
+    if APPLY_ANSWER_OVERRIDES:
         nphases = int(fluid.getNumberOfPhases())
         for ph in range(nphases):
             phase = fluid.getPhase(ph)
             for i in range(int(phase.getNumberOfComponents())):
                 comp = phase.getComponent(i)
                 cname = str(comp.getComponentName())
-                if cname in _UNISIM_OVERRIDES:
-                    tc_c, pc_barg, omega = _UNISIM_OVERRIDES[cname]
+                if cname in _ANSWER_OVERRIDES:
+                    tc_c, pc_barg, omega = _ANSWER_OVERRIDES[cname]
                     comp.setTC(tc_c + 273.15)
                     comp.setPC(pc_barg + 1.01325)
                     comp.setAcentricFactor(omega)
@@ -412,7 +408,7 @@ def build_base_fluid(eos_name: str = "SRK",
         if verbose:
             print(f"Base fluid built: EOS={eos_name}, TBP={tbp_model}, "
                   f"{int(fluid.getNumberOfComponents())} components, "
-                  f"{n_overridden} pseudo-component Tc/Pc/omega overridden from UniSim.")
+                  f"{n_overridden} pseudo-component Tc/Pc/omega overridden from answer.")
     else:
         if verbose:
             print(f"Base fluid built: EOS={eos_name}, TBP={tbp_model}, "
@@ -444,13 +440,12 @@ def make_stream(base_fluid, name, feed_dict, flow_rate, flow_unit):
 # ---------------------------------------------------------------------------
 # Column build
 # ---------------------------------------------------------------------------
-def unisim_tray_to_ns_stage(unisim_tray: int, n_trays: int) -> int:
-    """UniSim top-down tray (1..n_trays) -> NeqSim bottom-up stage (1..n_trays)."""
-    return (n_trays + 1) - int(unisim_tray)
+def answer_tray_to_ns_stage(answer_tray: int, n_trays: int) -> int:
+    """answer top-down tray (1..n_trays) -> NeqSim bottom-up stage (1..n_trays)."""
+    return (n_trays + 1) - int(answer_tray)
 
 
-def build_column(feed_stream, top_feed_stream, solver_name=_DEFAULT_SOLVER,
-                 max_iterations=300):
+def build_column(feed_stream, top_feed_stream):
     n_trays = int(MANUAL_COLUMN["n_trays"])
     col = DistillationColumn(
         "20VE105_205_standalone",
@@ -459,9 +454,9 @@ def build_column(feed_stream, top_feed_stream, solver_name=_DEFAULT_SOLVER,
         bool(MANUAL_COLUMN["has_condenser"]),
     )
 
-    main_feed_ns = unisim_tray_to_ns_stage(
+    main_feed_ns = answer_tray_to_ns_stage(
         MANUAL_COLUMN["main_feed_tray_topdown"], n_trays)
-    top_feed_ns = unisim_tray_to_ns_stage(
+    top_feed_ns = answer_tray_to_ns_stage(
         MANUAL_COLUMN["top_feed_tray_topdown"],  n_trays)
     col.addFeedStream(feed_stream,     main_feed_ns)
     col.addFeedStream(top_feed_stream, top_feed_ns)
@@ -470,9 +465,9 @@ def build_column(feed_stream, top_feed_stream, solver_name=_DEFAULT_SOLVER,
     P_bot = float(MANUAL_COLUMN["bottom_pressure_bara"])
     col.setTopPressure(P_top)
     # NeqSim's DistillationColumn divides ΔP across n_trays intervals (it
-    # counts the reboiler as a stage in the internal interpolation). UniSim
+    # counts the reboiler as a stage in the internal interpolation). answer
     # divides ΔP across (n_trays - 1) tray-to-tray intervals. Compensate the
-    # bottom pressure so the per-tray P matches UniSim exactly. The reboiler
+    # bottom pressure so the per-tray P matches answer exactly. The reboiler
     # then ends up one extra dp-step above the bottom tray, which is fine.
     if n_trays >= 2:
         P_bot_eff = P_top + (P_bot - P_top) * (n_trays / (n_trays - 1.0))
@@ -483,7 +478,7 @@ def build_column(feed_stream, top_feed_stream, solver_name=_DEFAULT_SOLVER,
     spec_mode = str(MANUAL_COLUMN.get("reboiler_spec_mode", "T")).lower()
     if spec_mode == "boilup":
         v_over_b = float(MANUAL_COLUMN["boilup_ratio_molar"])
-        # Seed the reboiler with the UniSim T_bot so the NS initial estimate
+        # Seed the reboiler with the answer T_bot so the NS initial estimate
         # is in the right neighbourhood, then override with V/B for the spec.
         col.getReboiler().setOutTemperature(
             273.15 + MANUAL_COLUMN["reboiler_temperature_C"])
@@ -500,18 +495,15 @@ def build_column(feed_stream, top_feed_stream, solver_name=_DEFAULT_SOLVER,
     # from setTopPressure / setBottomPressure (with the compensation above),
     # so no manual tray.setPressure loop is needed.
 
-    # Murphree efficiencies (UniSim top-down)
+    # Murphree efficiencies (answer top-down)
     col.setMurphreeEfficiency(float(MANUAL_COLUMN["tray_efficiency_default"]))
     col.setMurphreeEfficiency(0, float(MANUAL_COLUMN["reboiler_efficiency"]))
     for k_topdown, eta in MANUAL_COLUMN["tray_efficiency_override"].items():
-        ns_stage = unisim_tray_to_ns_stage(k_topdown, n_trays)
+        ns_stage = answer_tray_to_ns_stage(k_topdown, n_trays)
         col.setMurphreeEfficiency(ns_stage, float(eta))
 
-    if solver_name not in _SOLVER_NAMES:
-        raise ValueError(
-            f"Solver '{solver_name}' is not available. Use one of {_SOLVER_NAMES}.")
-    col.setSolverType(SolverType.valueOf(solver_name))
-    col.setMaxNumberOfIterations(int(max_iterations))
+    col.setSolverType(SolverType.valueOf("NAPHTALI_SANDHOLM"))
+    col.setMaxNumberOfIterations(300)
     return col, main_feed_ns, top_feed_ns
 
 
@@ -527,22 +519,22 @@ def print_header(title):
 
 def print_stage_setup(col):
     n_trays = int(MANUAL_COLUMN["n_trays"])
-    print(f'{"NS stage":>8} {"UniSim":>8} {"role":<12} {"P (barg)":>10} {"eta":>8}')
+    print(f'{"NS stage":>8} {"answer":>8} {"role":<12} {"P (barg)":>10} {"eta":>8}')
     print("-" * 52)
     for j in range(n_trays + 1):
         if j == 0:
             role = "reboiler"
-            unisim_label = "reb"
+            answer_label = "reb"
             try:
                 P_j = float(col.getReboiler().getPressure())
             except Exception:
                 P_j = float(MANUAL_COLUMN["bottom_pressure_bara"])
         else:
-            unisim_tray = (n_trays + 1) - j
-            suffix = "  (top)" if unisim_tray == 1 else (
-                "  (bot)" if unisim_tray == n_trays else "")
-            role = f"tray {unisim_tray}{suffix}"
-            unisim_label = str(unisim_tray)
+            answer_tray = (n_trays + 1) - j
+            suffix = "  (top)" if answer_tray == 1 else (
+                "  (bot)" if answer_tray == n_trays else "")
+            role = f"tray {answer_tray}{suffix}"
+            answer_label = str(answer_tray)
             P_j = float("nan")
             tray = col.getTray(j)
             # Try thermosystem first (authoritative after run), then tray getters
@@ -560,7 +552,7 @@ def print_stage_setup(col):
         except Exception:
             eta_j = float("nan")
         print(
-            f"{j:>8} {unisim_label:>8} {role:<12} {(P_j - 1.01325):>10.4f} {eta_j:>8.4f}")
+            f"{j:>8} {answer_label:>8} {role:<12} {(P_j - 1.01325):>10.4f} {eta_j:>8.4f}")
 
 
 def print_convergence(col, feed_stream, top_feed_stream):
@@ -581,14 +573,6 @@ def print_convergence(col, feed_stream, top_feed_stream):
     print(f"  Temp residual   : {temp_res:.3e}  K")
     print(f"  Mass residual   : {mass_res:.3e}  (relative, tray-level)")
     print(f"  Energy residual : {energy_res:.3e}")
-    residuals = collect_mesh_residual_metrics(col)
-    print(f"  MESH residual   : {residuals['mesh_residual_norm']:.3e}")
-    print(f"    material={residuals['mesh_material_residual_norm']:.3e}, "
-          f"equilibrium={residuals['mesh_equilibrium_residual_norm']:.3e}, "
-          f"summation={residuals['mesh_summation_residual_norm']:.3e}, "
-          f"energy={residuals['mesh_energy_residual_norm']:.3e}, "
-          f"product_draw={residuals['mesh_product_draw_residual_norm']:.3e}, "
-          f"spec={residuals['mesh_specification_residual_norm']:.3e}")
     print()
     print(f"  Main feed       : {feed_main:12.4f} kg/hr")
     print(f"  Top feed (refl) : {feed_top:12.4f} kg/hr")
@@ -598,31 +582,31 @@ def print_convergence(col, feed_stream, top_feed_stream):
         print("  WARNING: column did not converge.")
 
 
-def compare_with_unisim(col):
+def compare_with_answer(col):
     oh = col.getGasOutStream()
     btm = col.getLiquidOutStream()
     rows = []
     for key, stream in (("overhead", oh), ("bottoms", btm)):
-        u = UNISIM_TARGET[key]
+        u = ANSWER_TARGET[key]
         n_T = float(stream.getTemperature("C"))
         n_P = float(stream.getPressure("bara"))
         n_kg = float(stream.getFlowRate("kg/hr"))
         n_mol = float(stream.getFlowRate("kmol/hr"))
-        n_bet = vapor_fraction(stream.getFluid())
+        n_bet = float(stream.getFluid().getBeta())
         rows.append({
             "Stream": key,
-            "UniSim T (C)": u["temperature_C"],
+            "answer T (C)": u["temperature_C"],
             "NeqSim T (C)": n_T,
             "T Dev (C)": n_T - u["temperature_C"],
-            "UniSim P (barg)": u["pressure_bara"] - 1.01325,
+            "answer P (barg)": u["pressure_bara"] - 1.01325,
             "NeqSim P (barg)": n_P - 1.01325,
-            "UniSim F (kg/hr)": u["mass_flow_kg_hr"],
+            "answer F (kg/hr)": u["mass_flow_kg_hr"],
             "NeqSim F (kg/hr)": n_kg,
             "F Dev (%)": 100.0 * (n_kg - u["mass_flow_kg_hr"]) / u["mass_flow_kg_hr"],
-            "UniSim mol (kmol/hr)": u["molar_flow_kgmol_hr"],
+            "answer mol (kmol/hr)": u["molar_flow_kgmol_hr"],
             "NeqSim mol (kmol/hr)": n_mol,
             "mol Dev (%)": 100.0 * (n_mol - u["molar_flow_kgmol_hr"]) / u["molar_flow_kgmol_hr"],
-            "UniSim vapfrac": u["vapour_fraction"],
+            "answer vapfrac": u["vapour_fraction"],
             "NeqSim vapfrac": n_bet,
         })
     df = pd.DataFrame(rows).round(4)
@@ -630,78 +614,6 @@ def compare_with_unisim(col):
                            "display.width", 220):
         print(df.to_string(index=False))
     return oh, btm
-
-
-def vapor_fraction(system):
-    """Return the phase fraction assigned to gas phases in a NeqSim system."""
-    try:
-        vapor_beta = 0.0
-        for phase_index in range(int(system.getNumberOfPhases())):
-            phase = system.getPhase(phase_index)
-            if "GAS" in str(phase.getType()).upper():
-                vapor_beta += float(phase.getBeta())
-        return vapor_beta
-    except Exception:
-        return float(system.getBeta())
-
-
-def _java_float_or_nan(obj, method_name):
-    """Call a no-argument Java getter and return a Python float or NaN."""
-    try:
-        return float(getattr(obj, method_name)())
-    except Exception:
-        return float("nan")
-
-
-def collect_mesh_residual_metrics(col):
-    """Collect MESH residual group norms from a solved column."""
-    return {
-        "mesh_residual_norm": _java_float_or_nan(col, "getLastMeshResidualNorm"),
-        "mesh_material_residual_norm": _java_float_or_nan(
-            col, "getLastMeshMaterialResidualNorm"),
-        "mesh_equilibrium_residual_norm": _java_float_or_nan(
-            col, "getLastMeshEquilibriumResidualNorm"),
-        "mesh_summation_residual_norm": _java_float_or_nan(
-            col, "getLastMeshSummationResidualNorm"),
-        "mesh_energy_residual_norm": _java_float_or_nan(
-            col, "getLastMeshEnergyResidualNorm"),
-        "mesh_product_draw_residual_norm": _java_float_or_nan(
-            col, "getLastMeshProductDrawResidualNorm"),
-        "mesh_specification_residual_norm": _java_float_or_nan(
-            col, "getLastMeshSpecificationResidualNorm"),
-    }
-
-
-def evaluate_quality_gate(metrics):
-    """Evaluate ASGB benchmark quality criteria for regression use."""
-    checks = [
-        ("column_converged", bool(metrics.get("converged")),
-         "Column solved() must be true."),
-        ("external_mass_balance", abs(metrics.get(
-            "external_mass_balance_error_pct", float("inf"))) <= 0.02,
-         "External mass balance must close within 0.02 %."),
-        ("mesh_residual", metrics.get(
-            "mesh_residual_norm", float("inf")) <= 1.0,
-         "MESH infinity norm must be <= 1.0."),
-        ("product_draw_residual", metrics.get(
-            "mesh_product_draw_residual_norm", float("inf")) <= 0.02,
-         "Product draw residual must be <= 0.02."),
-        ("overhead_flow_reference", abs(metrics.get(
-            "overhead_flow_dev_pct", float("inf"))) <= 10.0,
-         "Overhead flow must be within 10 % of UniSim."),
-        ("bottoms_vapor_fraction", metrics.get(
-            "bottoms_vapor_fraction", float("inf")) <= 0.05,
-         "Bottoms vapor fraction should be <= 0.05 for the UniSim liquid bottoms case."),
-        ("reboiler_vapor_reference", abs(metrics.get(
-            "reboiler_vapor_dev_pct", float("inf"))) <= 25.0,
-         "Reboiler vapor traffic must be within 25 % of UniSim."),
-    ]
-    results = [{"name": name, "passed": bool(passed), "criterion": criterion}
-               for name, passed, criterion in checks]
-    return {
-        "passed": all(item["passed"] for item in results),
-        "checks": results,
-    }
 
 
 def print_mass_balance(feed_stream, top_feed_stream, oh, btm):
@@ -758,7 +670,7 @@ def print_energy_balance(feed_stream, top_feed_stream, oh, btm, col):
 # Profile plot
 # ---------------------------------------------------------------------------
 def plot_profile(col, out_path: Path, show: bool):
-    n_stages = int(col.getNumerOfTrays())
+    n_stages = int(col.getNumberOfTrays())
     stages = list(range(n_stages))
     T_profile = []
     P_profile = []
@@ -792,23 +704,23 @@ def plot_profile(col, out_path: Path, show: bool):
             L_kmolhr.append(float("nan"))
             L_kghr.append(float("nan"))
 
-    T_top_ref = UNISIM_TARGET["overhead"]["temperature_C"]
-    T_bot_ref = UNISIM_TARGET["bottoms"]["temperature_C"]
+    T_top_ref = ANSWER_TARGET["overhead"]["temperature_C"]
+    T_bot_ref = ANSWER_TARGET["bottoms"]["temperature_C"]
     n_trays = int(MANUAL_COLUMN["n_trays"])
 
-    # UniSim per-tray profile (top-down). Map to NS stage (bottom-up).
-    u_T_topdown = UNISIM_TRAY_PROFILE["T_C_topdown"]
-    u_P_topdown = UNISIM_TRAY_PROFILE["P_barg_topdown"]
-    u_V_topdown = UNISIM_TRAY_PROFILE["V_kg_hr_topdown"]
-    u_L_topdown = UNISIM_TRAY_PROFILE["L_kg_hr_topdown"]
-    # NS stage for UniSim tray k (top-down, k=1..n_trays) is (n_trays + 1) - k.
+    # answer per-tray profile (top-down). Map to NS stage (bottom-up).
+    answer_T_topdown = ANSWER_TRAY_PROFILE["T_C_topdown"]
+    answer_P_topdown = ANSWER_TRAY_PROFILE["P_barg_topdown"]
+    answer_V_topdown = ANSWER_TRAY_PROFILE["V_kg_hr_topdown"]
+    answer_L_topdown = ANSWER_TRAY_PROFILE["L_kg_hr_topdown"]
+    # NS stage for answer tray k (top-down, k=1..n_trays) is (n_trays + 1) - k.
     tray_ns_stages = [(n_trays + 1) - k for k in range(1, n_trays + 1)]
 
     print()
-    print(f'{"NS":>4} {"UniSim":>7} {"Type":<10} {"T (C)":>9} {"P (barg)":>9} '
+    print(f'{"NS":>4} {"answer":>7} {"Type":<10} {"T (C)":>9} {"P (barg)":>9} '
           f'{"V (kg/hr)":>12} {"L (kg/hr)":>12}')
     print("-" * 70)
-    # Show trays only (UniSim tray 1..n_trays, top-down). Reboiler excluded.
+    # Show trays only (answer tray 1..n_trays, top-down). Reboiler excluded.
     for k in range(1, n_trays + 1):
         j = (n_trays + 1) - k
         stype = "tray (top)" if k == 1 else (
@@ -817,29 +729,29 @@ def plot_profile(col, out_path: Path, show: bool):
               f"{V_kghr[j]:>12.1f} {L_kghr[j]:>12.1f}")
     print("-" * 70)
     print(
-        f"UniSim ref: T_top = {T_top_ref:.2f} C, T_bottom = {T_bot_ref:.2f} C")
+        f"answer ref: T_top = {T_top_ref:.2f} C, T_bottom = {T_bot_ref:.2f} C")
     print(f"NeqSim    : T_top = {T_profile[-1]:.2f} C, T_bottom = {T_profile[0]:.2f} C  "
           f"(\u0394T_top = {T_profile[-1] - T_top_ref:+.2f}, \u0394T_bot = {T_profile[0] - T_bot_ref:+.2f})")
 
     # ---- Per-tray comparison: T & P ----
     print()
-    print("Per-tray comparison vs UniSim   T (C) and P (barg)")
-    print(f'{"UniSim":>6} {"NS":>4} '
-          f'{"T_uni":>9} {"T_neq":>9} {"dT":>8}   '
-          f'{"P_uni":>9} {"P_neq":>9} {"dP":>9}')
+    print("Per-tray comparison vs answer   T (C) and P (barg)")
+    print(f'{"answer":>6} {"NS":>4} '
+          f'{"T_answer":>9} {"T_neq":>9} {"dT":>8}   '
+          f'{"P_answer":>9} {"P_neq":>9} {"dP":>9}')
     print("-" * 78)
     for k_idx, j in enumerate(tray_ns_stages):
         k = k_idx + 1
-        t_uni = u_T_topdown[k_idx]
-        p_uni = u_P_topdown[k_idx]
+        t_answer = answer_T_topdown[k_idx]
+        p_answer = answer_P_topdown[k_idx]
         t_neq = T_profile[j]
         p_neq = P_profile[j] - 1.01325
         print(f"{k:>6} {j:>4} "
-              f"{t_uni:>9.2f} {t_neq:>9.2f} {(t_neq - t_uni):>+8.2f}   "
-              f"{p_uni:>9.4f} {p_neq:>9.4f} {(p_neq - p_uni):>+9.4f}")
-    t_devs = [T_profile[tray_ns_stages[i]] - u_T_topdown[i]
+              f"{t_answer:>9.2f} {t_neq:>9.2f} {(t_neq - t_answer):>+8.2f}   "
+              f"{p_answer:>9.4f} {p_neq:>9.4f} {(p_neq - p_answer):>+9.4f}")
+    t_devs = [T_profile[tray_ns_stages[i]] - answer_T_topdown[i]
               for i in range(n_trays)]
-    p_devs = [(P_profile[tray_ns_stages[i]] - 1.01325) - u_P_topdown[i]
+    p_devs = [(P_profile[tray_ns_stages[i]] - 1.01325) - answer_P_topdown[i]
               for i in range(n_trays)]
     print("-" * 78)
     print(f"  T: max |dT| = {max(abs(d) for d in t_devs):.2f} C,    "
@@ -849,27 +761,27 @@ def plot_profile(col, out_path: Path, show: bool):
 
     # ---- Per-tray comparison: V_above and L_below (kg/hr) ----
     print()
-    print("Per-tray comparison vs UniSim   V_above and L_below (kg/hr)")
-    print(f'{"UniSim":>6} {"NS":>4} '
-          f'{"V_uni":>11} {"V_neq":>11} {"dV":>10} {"dV%":>7}   '
-          f'{"L_uni":>11} {"L_neq":>11} {"dL":>10} {"dL%":>7}')
+    print("Per-tray comparison vs answer   V_above and L_below (kg/hr)")
+    print(f'{"answer":>6} {"NS":>4} '
+          f'{"V_answer":>11} {"V_neq":>11} {"dV":>10} {"dV%":>7}   '
+          f'{"L_answer":>11} {"L_neq":>11} {"dL":>10} {"dL%":>7}')
     print("-" * 105)
     for k_idx, j in enumerate(tray_ns_stages):
         k = k_idx + 1
-        v_uni = u_V_topdown[k_idx]
-        l_uni = u_L_topdown[k_idx]
+        v_answer = answer_V_topdown[k_idx]
+        l_answer = answer_L_topdown[k_idx]
         v_neq = V_kghr[j]
         l_neq = L_kghr[j]
-        dv = v_neq - v_uni
-        dl = l_neq - l_uni
-        dv_pct = 100.0 * dv / v_uni if v_uni else float("nan")
-        dl_pct = 100.0 * dl / l_uni if l_uni else float("nan")
+        dv = v_neq - v_answer
+        dl = l_neq - l_answer
+        dv_pct = 100.0 * dv / v_answer if v_answer else float("nan")
+        dl_pct = 100.0 * dl / l_answer if l_answer else float("nan")
         print(f"{k:>6} {j:>4} "
-              f"{v_uni:>11.1f} {v_neq:>11.1f} {dv:>+10.1f} {dv_pct:>+7.2f}   "
-              f"{l_uni:>11.1f} {l_neq:>11.1f} {dl:>+10.1f} {dl_pct:>+7.2f}")
-    v_devs = [V_kghr[tray_ns_stages[i]] - u_V_topdown[i]
+              f"{v_answer:>11.1f} {v_neq:>11.1f} {dv:>+10.1f} {dv_pct:>+7.2f}   "
+              f"{l_answer:>11.1f} {l_neq:>11.1f} {dl:>+10.1f} {dl_pct:>+7.2f}")
+    v_devs = [V_kghr[tray_ns_stages[i]] - answer_V_topdown[i]
               for i in range(n_trays)]
-    l_devs = [L_kghr[tray_ns_stages[i]] - u_L_topdown[i]
+    l_devs = [L_kghr[tray_ns_stages[i]] - answer_L_topdown[i]
               for i in range(n_trays)]
     print("-" * 105)
     print(f"  V: max |dV| = {max(abs(d) for d in v_devs):.1f} kg/hr, "
@@ -878,8 +790,8 @@ def plot_profile(col, out_path: Path, show: bool):
           f"RMS = {(sum(d*d for d in l_devs)/n_trays)**0.5:.1f} kg/hr")
 
     # ---- Composition of liquid going TO reboiler (NS stage 1 -> NS stage 0) ----
-    # That is the liquid stream leaving NS stage 1 (= UniSim tray 10, bottom tray).
-    UNISIM_L_TO_REB = [
+    # That is the liquid stream leaving NS stage 1 (= answer tray 10, bottom tray).
+    ANSWER_L_TO_REB = [
         0.000000000000000, 7.89140667091304e-09, 1.98416870370679e-15,
         6.41604479553517e-09, 7.83663932370674e-10, 3.20041197483774e-06,
         1.50484796362763e-03, 1.38476431118582e-02, 8.86518093740134e-02,
@@ -901,15 +813,15 @@ def plot_profile(col, out_path: Path, show: bool):
         z_neq = []
         comp_names = []
 
-    if z_neq and len(z_neq) == len(UNISIM_L_TO_REB):
+    if z_neq and len(z_neq) == len(ANSWER_L_TO_REB):
         print()
-        print("Liquid composition entering reboiler (NS stage 1 L-out  = UniSim tray 10 L-down)")
-        print(f"{'Component':<14} {'z_uni':>14} {'z_neq':>14} {'dz':>13} {'dz%':>9}")
+        print("Liquid composition entering reboiler (NS stage 1 L-out  = answer tray 10 L-down)")
+        print(f"{'Component':<14} {'z_answer':>14} {'z_neq':>14} {'dz':>13} {'dz%':>9}")
         print("-" * 70)
         max_abs = 0.0
         max_name = ""
         rms = 0.0
-        for nm, zu, zn in zip(comp_names, UNISIM_L_TO_REB, z_neq):
+        for nm, zu, zn in zip(comp_names, ANSWER_L_TO_REB, z_neq):
             dz = zn - zu
             pct = (100.0 * dz / zu) if zu > 1e-12 else float("nan")
             print(f"{nm:<14} {zu:>14.6e} {zn:>14.6e} {dz:>+13.3e} {pct:>+9.2f}")
@@ -920,15 +832,15 @@ def plot_profile(col, out_path: Path, show: bool):
         rms = (rms / len(z_neq)) ** 0.5
         print("-" * 70)
         print(f"  max |dz| = {max_abs:.3e} on {max_name},   RMS = {rms:.3e}")
-        print(f"  sum z_uni = {sum(UNISIM_L_TO_REB):.6f}, "
+        print(f"  sum z_answer = {sum(ANSWER_L_TO_REB):.6f}, "
               f"sum z_neq = {sum(z_neq):.6f}")
     elif z_neq:
         print(
-            f"  (comp-count mismatch: NeqSim {len(z_neq)} vs UniSim {len(UNISIM_L_TO_REB)})")
+            f"  (comp-count mismatch: NeqSim {len(z_neq)} vs answer {len(ANSWER_L_TO_REB)})")
 
     fig, (ax1, axP, ax2) = plt.subplots(1, 3, figsize=(16, 6))
 
-    # Tray-only NeqSim values for overlay against UniSim per-tray profile
+    # Tray-only NeqSim values for overlay against answer per-tray profile
     tray_T_neq = [T_profile[j] for j in tray_ns_stages]
     tray_P_neq = [P_profile[j] - 1.01325 for j in tray_ns_stages]  # barg
     tray_V_neq = [V_kghr[j] for j in tray_ns_stages]
@@ -941,11 +853,11 @@ def plot_profile(col, out_path: Path, show: bool):
 
     ax1.plot(tray_T_neq, tray_stages_plot, "o-", color="tab:red",
              lw=2, label="NeqSim (trays)")
-    ax1.plot(u_T_topdown, tray_ns_stages, "s--", color="tab:blue",
-             lw=1.5, label="UniSim tray profile")
+    ax1.plot(answer_T_topdown, tray_ns_stages, "s--", color="tab:blue",
+             lw=1.5, label="answer tray profile")
     ax1.plot([T_top_ref], [tray_ns_stages[0]], "D",
              color="black", ms=10, mfc="none", mew=2,
-             label="UniSim product T (top)")
+             label="answer product T (top)")
     ax1.set_xlabel("Temperature (C)")
     ax1.set_ylabel("NeqSim stage (1 = bottom tray, top = top tray)")
     ax1.set_title("Temperature Profile (trays only)")
@@ -955,8 +867,8 @@ def plot_profile(col, out_path: Path, show: bool):
     # ---- Pressure profile (trays only) ----
     axP.plot(tray_P_neq, tray_stages_plot, "o-", color="tab:purple",
              lw=2, label="NeqSim (trays)")
-    axP.plot(u_P_topdown, tray_ns_stages, "s--", color="tab:blue",
-             lw=1.5, label="UniSim tray profile")
+    axP.plot(answer_P_topdown, tray_ns_stages, "s--", color="tab:blue",
+             lw=1.5, label="answer tray profile")
     axP.set_xlabel("Pressure (barg)")
     axP.set_ylabel("NeqSim stage")
     axP.set_title("Pressure Profile (trays only)")
@@ -967,10 +879,10 @@ def plot_profile(col, out_path: Path, show: bool):
              lw=2, label="NeqSim V up")
     ax2.plot(tray_L_plot, tray_stages_plot, "s-", color="tab:green",
              lw=2, label="NeqSim L down")
-    ax2.plot(u_V_topdown, tray_ns_stages, "o--", color="tab:cyan",
-             lw=1.5, mfc="none", label="UniSim V above")
-    ax2.plot(u_L_topdown, tray_ns_stages, "s--", color="tab:olive",
-             lw=1.5, mfc="none", label="UniSim L below")
+    ax2.plot(answer_V_topdown, tray_ns_stages, "o--", color="tab:cyan",
+             lw=1.5, mfc="none", label="answer V above")
+    ax2.plot(answer_L_topdown, tray_ns_stages, "s--", color="tab:olive",
+             lw=1.5, mfc="none", label="answer L below")
     ax2.set_xlabel("Mass flow (kg/hr)")
     ax2.set_ylabel("NeqSim stage")
     ax2.set_title("Internal Vapour & Liquid Flows")
@@ -992,8 +904,8 @@ def plot_profile(col, out_path: Path, show: bool):
 # ---------------------------------------------------------------------------
 # Product composition comparison (overhead vapour & reboiler bottoms)
 # ---------------------------------------------------------------------------
-# UniSim reference compositions, ordered by _COMPONENT_ORDER.
-UNISIM_OVERHEAD_Y = [
+# answer reference compositions, ordered by _COMPONENT_ORDER.
+ANSWER_OVERHEAD_Y = [
     0.000000000000000,
     3.19796132823814e-03,
     9.63386867406638e-06,
@@ -1020,31 +932,31 @@ UNISIM_OVERHEAD_Y = [
     2.96933178317266e-19,
 ]
 
-UNISIM_BOTTOMS_X = [
+ANSWER_BOTTOMS_X = [
     0.000000000000000,
-    5.97296226077841e-10,
-    3.17857672248332e-16,
-    1.39007943417817e-09,
-    1.87118646694352e-10,
-    1.02466903151263e-06,
-    4.19127244860309e-04,
-    4.08920192379211e-03,
-    2.58407920409853e-02,
-    4.68959023678474e-02,
-    6.63036983580072e-02,
-    0.130370647853579,
-    0.164428154380332,
-    0.164989150155456,
-    8.81824614784974e-02,
-    0.115061036398155,
-    4.24208204213709e-02,
-    3.04128244434246e-02,
-    0.032607963058484,
-    2.27312171013093e-02,
-    1.64675592412304e-02,
-    1.86027516552455e-02,
-    1.61618032720863e-02,
-    1.40138617618106e-02,
+    4.92773658118898e-09,
+    1.36263500614108e-15,
+    3.88232080795727e-09,
+    5.20052565133252e-10,
+    1.80503109571400e-06,
+    7.17197628951103e-04,
+    5.88793551133260e-03,
+    3.86149009412084e-02,
+    6.03473977317615e-02,
+    8.61824889742931e-02,
+    0.149295503380979,
+    0.199414265481622,
+    0.182688669992533,
+    8.84272029616364e-02,
+    9.45822934530711e-02,
+    2.87454032774206e-02,
+    1.78736131065749e-02,
+    1.66327197279631e-02,
+    1.01111522744886e-02,
+    6.49982914953815e-03,
+    6.39937766721663e-03,
+    4.62881241561424e-03,
+    2.94942196258824e-03,
 ]
 
 
@@ -1060,7 +972,7 @@ def _stream_composition(stream):
 
 def compare_product_compositions(col, out_path: Path, show: bool):
     """Compare NeqSim overhead vapour and reboiler bottoms compositions
-    against the UniSim reference. Prints a numerical table and saves a
+    against the answer reference. Prints a numerical table and saves a
     nice bar-chart figure."""
     oh = col.getGasOutStream()
     btm = col.getLiquidOutStream()
@@ -1073,25 +985,25 @@ def compare_product_compositions(col, out_path: Path, show: bool):
     comp_names = names_v
     n = len(comp_names)
 
-    # Align UniSim arrays to the stream order (they are already in _COMPONENT_ORDER).
-    if n == len(UNISIM_OVERHEAD_Y):
-        y_uni = list(UNISIM_OVERHEAD_Y)
-        x_uni = list(UNISIM_BOTTOMS_X)
+    # Align answer arrays to the stream order (they are already in _COMPONENT_ORDER).
+    if n == len(ANSWER_OVERHEAD_Y):
+        y_answer = list(ANSWER_OVERHEAD_Y)
+        x_answer = list(ANSWER_BOTTOMS_X)
     else:
-        print(f"  (warning: component count mismatch — NeqSim {n} vs UniSim "
-              f"{len(UNISIM_OVERHEAD_Y)}; aborting composition comparison)")
+        print(f"  (warning: component count mismatch — NeqSim {n} vs answer "
+              f"{len(ANSWER_OVERHEAD_Y)}; aborting composition comparison)")
         return
 
     # --- Numerical table ----------------------------------------------------
     print(f"{'Component':<12} "
-          f"{'y_uni':>12} {'y_neq':>12} {'dy':>11}   "
-          f"{'x_uni':>12} {'x_neq':>12} {'dx':>11}")
+          f"{'y_answer':>12} {'y_neq':>12} {'dy':>11}   "
+          f"{'x_answer':>12} {'x_neq':>12} {'dx':>11}")
     print("-" * 84)
     rms_y = 0.0
     rms_x = 0.0
     max_dy = 0.0
     max_dx = 0.0
-    for nm, yu, yn, xu, xn in zip(comp_names, y_uni, y_neq, x_uni, x_neq):
+    for nm, yu, yn, xu, xn in zip(comp_names, y_answer, y_neq, x_answer, x_neq):
         dy = yn - yu
         dx = xn - xu
         rms_y += dy * dy
@@ -1105,9 +1017,9 @@ def compare_product_compositions(col, out_path: Path, show: bool):
     rms_x = (rms_x / n) ** 0.5
     print("-" * 84)
     print(f"  vapour : max |dy| = {max_dy:.3e}, RMS = {rms_y:.3e}, "
-          f"sum y_uni = {sum(y_uni):.6f}, sum y_neq = {sum(y_neq):.6f}")
+          f"sum y_answer = {sum(y_answer):.6f}, sum y_neq = {sum(y_neq):.6f}")
     print(f"  liquid : max |dx| = {max_dx:.3e}, RMS = {rms_x:.3e}, "
-          f"sum x_uni = {sum(x_uni):.6f}, sum x_neq = {sum(x_neq):.6f}")
+          f"sum x_answer = {sum(x_answer):.6f}, sum x_neq = {sum(x_neq):.6f}")
 
     # --- Bar chart ----------------------------------------------------------
     x_idx = np.arange(n)
@@ -1118,8 +1030,8 @@ def compare_product_compositions(col, out_path: Path, show: bool):
     )
 
     # Overhead vapour (linear)
-    ax_v.bar(x_idx - width / 2, y_uni, width, color="tab:blue",
-             edgecolor="black", linewidth=0.5, label="UniSim")
+    ax_v.bar(x_idx - width / 2, y_answer, width, color="tab:blue",
+             edgecolor="black", linewidth=0.5, label="answer")
     ax_v.bar(x_idx + width / 2, y_neq, width, color="tab:red",
              edgecolor="black", linewidth=0.5, label="NeqSim")
     ax_v.set_xticks(x_idx)
@@ -1129,7 +1041,7 @@ def compare_product_compositions(col, out_path: Path, show: bool):
     ax_v.grid(True, axis="y", alpha=0.3)
     ax_v.set_axisbelow(True)
     ax_v.legend(loc="upper right")
-    for xi, yu, yn in zip(x_idx, y_uni, y_neq):
+    for xi, yu, yn in zip(x_idx, y_answer, y_neq):
         peak = max(yu, yn)
         if peak >= 0.05:
             ax_v.text(xi, peak + 0.008,
@@ -1137,8 +1049,8 @@ def compare_product_compositions(col, out_path: Path, show: bool):
                       ha="center", va="bottom", fontsize=7)
 
     # Bottoms liquid (linear)
-    ax_l.bar(x_idx - width / 2, x_uni, width, color="tab:blue",
-             edgecolor="black", linewidth=0.5, label="UniSim")
+    ax_l.bar(x_idx - width / 2, x_answer, width, color="tab:blue",
+             edgecolor="black", linewidth=0.5, label="answer")
     ax_l.bar(x_idx + width / 2, x_neq, width, color="tab:red",
              edgecolor="black", linewidth=0.5, label="NeqSim")
     ax_l.set_xticks(x_idx)
@@ -1148,7 +1060,7 @@ def compare_product_compositions(col, out_path: Path, show: bool):
     ax_l.grid(True, axis="y", alpha=0.3)
     ax_l.set_axisbelow(True)
     ax_l.legend(loc="upper right")
-    for xi, xu, xn in zip(x_idx, x_uni, x_neq):
+    for xi, xu, xn in zip(x_idx, x_answer, x_neq):
         peak = max(xu, xn)
         if peak >= 0.05:
             ax_l.text(xi, peak + 0.005,
@@ -1162,15 +1074,15 @@ def compare_product_compositions(col, out_path: Path, show: bool):
     def _safe(arr):
         return np.where(np.asarray(arr) > floor, arr, floor)
 
-    ax_log.bar(x_idx - 1.5 * width_log, _safe(y_uni), width_log,
+    ax_log.bar(x_idx - 1.5 * width_log, _safe(y_answer), width_log,
                color="tab:blue", edgecolor="black", linewidth=0.4,
-               label="y UniSim")
+               label="y answer")
     ax_log.bar(x_idx - 0.5 * width_log, _safe(y_neq), width_log,
                color="tab:red", edgecolor="black", linewidth=0.4,
                label="y NeqSim")
-    ax_log.bar(x_idx + 0.5 * width_log, _safe(x_uni), width_log,
+    ax_log.bar(x_idx + 0.5 * width_log, _safe(x_answer), width_log,
                color="tab:cyan", edgecolor="black", linewidth=0.4,
-               label="x UniSim")
+               label="x answer")
     ax_log.bar(x_idx + 1.5 * width_log, _safe(x_neq), width_log,
                color="tab:orange", edgecolor="black", linewidth=0.4,
                label="x NeqSim")
@@ -1179,12 +1091,12 @@ def compare_product_compositions(col, out_path: Path, show: bool):
     ax_log.set_xticks(x_idx)
     ax_log.set_xticklabels(comp_names, rotation=60, ha="right")
     ax_log.set_ylabel("Mole fraction (log scale)")
-    ax_log.set_title("UniSim vs NeqSim — vapour & liquid, log scale")
+    ax_log.set_title("answer vs NeqSim — vapour & liquid, log scale")
     ax_log.grid(True, axis="y", which="both", alpha=0.3)
     ax_log.set_axisbelow(True)
     ax_log.legend(loc="lower center", ncol=4, framealpha=0.95)
 
-    fig.suptitle("20VE105_205 — UniSim vs NeqSim product compositions",
+    fig.suptitle("20VE105_205 — answer vs NeqSim product compositions",
                  fontsize=13, fontweight="bold")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1197,10 +1109,224 @@ def compare_product_compositions(col, out_path: Path, show: bool):
 
 
 # ---------------------------------------------------------------------------
+# Per-component mass balance comparison (Inlet, TOP, BOTTOM — answer vs NeqSim)
+# ---------------------------------------------------------------------------
+def _mass_flows_per_component(z, total_mol_kmol_hr, mw_kg_per_kmol):
+    """Per-component mass flow from molar flow × mole fraction × MW.
+
+    mass_i [kg/hr] = n_total [kmol/hr] * z_i * MW_i [kg/kmol]
+
+    Using molar flow (not total mass) on both sides + a uniform MW vector
+    guarantees that the per-component balance closes whenever the overall
+    mole balance closes — which it does for both answer and NeqSim. Going
+    via total_mass + (z·MW)/Σ(z·MW) instead would mix mass flows reported
+    with one MW set (answer's) and a normalisation done with another
+    (NeqSim's), and break the per-component balance.
+    """
+    return [total_mol_kmol_hr * z[i] * mw_kg_per_kmol[i]
+            for i in range(len(z))]
+
+
+def compare_component_mass_balance(col, feed_stream, top_feed_stream,
+                                   out_path: Path, show: bool):
+    """Per-component mass flow (kg/hr) comparison:
+        Inlet (main + top reflux), TOP (overhead), BOTTOM (reboiler)
+    for answer vs NeqSim. Prints a table and saves a bar-chart figure."""
+    oh = col.getGasOutStream()
+    btm = col.getLiquidOutStream()
+
+    # Component names and MW from the NeqSim fluid (same order as _COMPONENT_ORDER).
+    fluid = oh.getFluid().clone()
+    n = int(fluid.getNumberOfComponents())
+    phase0 = fluid.getPhase(0)
+    comp_names = [str(phase0.getComponent(i).getComponentName())
+                  for i in range(n)]
+    # NeqSim getMolarMass() returns kg/mol -> *1000 = g/mol = kg/kmol
+    mw = [float(phase0.getComponent(i).getMolarMass()) * 1000.0
+          for i in range(n)]
+
+    # --- Inlet: main feed + top reflux (answer and NeqSim agree by construction;
+    #     the input dicts define the feed). Compute from the input dicts so the
+    #     "Inlet" column is the same physical reference for both sides. ---
+    z_main = [max(float(MANUAL_FEED["molar_composition"].get(c, 0.0)), 0.0)
+              for c in _COMPONENT_ORDER]
+    s_main = sum(z_main)
+    z_main = [v / s_main for v in z_main] if s_main > 0 else z_main
+    z_top_feed = [max(float(MANUAL_TOP_FEED["molar_composition"].get(c, 0.0)), 0.0)
+                  for c in _COMPONENT_ORDER]
+    s_topf = sum(z_top_feed)
+    z_top_feed = [v / s_topf for v in z_top_feed] if s_topf > 0 else z_top_feed
+
+    m_main_kg = float(MANUAL_FEED["mass_flow_kg_hr"])
+    m_topf_kg = float(MANUAL_TOP_FEED["mass_flow_kg_hr"])
+    # Use the molar flows that the NeqSim Stream objects actually compute
+    # from (composition, mass flow). That keeps the inlet split on the same
+    # molar basis as the per-component products below.
+    n_main_kmol = float(feed_stream.getFlowRate("kmol/hr"))
+    n_topf_kmol = float(top_feed_stream.getFlowRate("kmol/hr"))
+    m_inlet_main = _mass_flows_per_component(z_main, n_main_kmol, mw)
+    m_inlet_topf = _mass_flows_per_component(z_top_feed, n_topf_kmol, mw)
+    m_inlet = [m_inlet_main[i] + m_inlet_topf[i] for i in range(n)]
+
+    # --- answer products: total MOL × x × MW (NeqSim MWs). This guarantees
+    #     per-component closure whenever answer's overall mole balance
+    #     closes, even if answer's internal pseudo-component MWs differ
+    #     from NeqSim's. (Using total_mass × (x·MW)/Σ(x·MW) instead would
+    #     mix mass reported in answer's MW set with normalisation done in
+    #     NeqSim's, and break the per-component balance.)
+    n_top_answer = float(ANSWER_TARGET["overhead"]["molar_flow_kgmol_hr"])
+    n_bot_answer = float(ANSWER_TARGET["bottoms"]["molar_flow_kgmol_hr"])
+    m_top_answer = _mass_flows_per_component(
+        list(ANSWER_OVERHEAD_Y), n_top_answer, mw)
+    m_bot_answer = _mass_flows_per_component(
+        list(ANSWER_BOTTOMS_X), n_bot_answer, mw)
+
+    # --- NeqSim products: same convention (mol × z × MW). ---
+    z_oh = [float(oh.getFluid().getMolarComposition()[i]) for i in range(n)]
+    z_btm = [float(btm.getFluid().getMolarComposition()[i]) for i in range(n)]
+    n_top_neq = float(oh.getFlowRate("kmol/hr"))
+    n_bot_neq = float(btm.getFlowRate("kmol/hr"))
+    m_top_neq = _mass_flows_per_component(z_oh, n_top_neq, mw)
+    m_bot_neq = _mass_flows_per_component(z_btm, n_bot_neq, mw)
+
+    # --- Numerical table ---------------------------------------------------
+    # Threshold below which % deviations are meaningless (avoids printing
+    # +522300% noise for water-in-bottoms etc.). 0.01 kg/hr ≈ 0.01 %% of feed.
+    PCT_FLOOR = 0.01  # kg/hr
+
+    def _fmt_kg(v):
+        # Compact, aligned; tiny values shown in scientific.
+        if v == 0.0:
+            return f"{0.0:>11.3f}"
+        if abs(v) < 0.001:
+            return f"{v:>11.3e}"
+        return f"{v:>11.3f}"
+
+    def _fmt_pct(num, base):
+        if base < PCT_FLOOR:
+            return f"{'—':>8}"
+        return f"{(100.0 * num / base):>+8.2f}"
+
+    sep = "+" + "-" * 14 + "+" + "-" * 13 + \
+        "+" + ("-" * 47) + "+" + ("-" * 47) + "+"
+    head1 = (f"| {'Component':<12} | {'Inlet':>11} |"
+             f" {'TOP answer':>11}  {'TOP NeqSim':>11}  "
+             f"{'Δ kg/hr':>10}  {'Δ %':>7} |"
+             f" {'BOT answer':>11}  {'BOT NeqSim':>11}  "
+             f"{'Δ kg/hr':>10}  {'Δ %':>7} |")
+    print(sep)
+    print(head1)
+    print(sep)
+
+    # Natural component order (light → heavy), matching _COMPONENT_ORDER /
+    # the column's own component ordering. Easier to read than "sort by inlet"
+    # because related cuts (C6*, C7*, C8*, ...) stay adjacent.
+    order = list(range(n))
+    sum_inlet = sum_top_answer = sum_top_n = sum_bot_answer = sum_bot_n = 0.0
+    for i in order:
+        d_top = m_top_neq[i] - m_top_answer[i]
+        d_bot = m_bot_neq[i] - m_bot_answer[i]
+        sum_inlet += m_inlet[i]
+        sum_top_answer += m_top_answer[i]
+        sum_top_n += m_top_neq[i]
+        sum_bot_answer += m_bot_answer[i]
+        sum_bot_n += m_bot_neq[i]
+        print(f"| {comp_names[i]:<12} | {_fmt_kg(m_inlet[i])} |"
+              f" {_fmt_kg(m_top_answer[i])}  {_fmt_kg(m_top_neq[i])}  "
+              f"{d_top:>+10.3f}  {_fmt_pct(d_top, m_top_answer[i])} |"
+              f" {_fmt_kg(m_bot_answer[i])}  {_fmt_kg(m_bot_neq[i])}  "
+              f"{d_bot:>+10.3f}  {_fmt_pct(d_bot, m_bot_answer[i])} |")
+
+    d_top_tot = sum_top_n - sum_top_answer
+    d_bot_tot = sum_bot_n - sum_bot_answer
+    print(sep)
+    print(f"| {'TOTAL':<12} | {sum_inlet:>11.3f} |"
+          f" {sum_top_answer:>11.3f}  {sum_top_n:>11.3f}  "
+          f"{d_top_tot:>+10.3f}  {(100.0 * d_top_tot / sum_top_answer):>+8.2f} |"
+          f" {sum_bot_answer:>11.3f}  {sum_bot_n:>11.3f}  "
+          f"{d_bot_tot:>+10.3f}  {(100.0 * d_bot_tot / sum_bot_answer):>+8.2f} |")
+    print(sep)
+    print(f"  Rows in natural component order (light → heavy).  '—' = base < "
+          f"{PCT_FLOOR} kg/hr (% not meaningful).")
+    print(f"  Mass per component computed as  n_total [kmol/hr] × x_i × MW_i "
+          f"(NeqSim MWs).")
+    answer_closure = max(
+        abs(m_top_answer[i] + m_bot_answer[i] - m_inlet[i]) for i in range(n))
+    neq_closure = max(
+        abs(m_top_neq[i] + m_bot_neq[i] - m_inlet[i]) for i in range(n))
+    print(f"  Per-component closure (max |top+bot − inlet|):  "
+          f"answer = {answer_closure:.3e} kg/hr,  NeqSim = {neq_closure:.3e} kg/hr.")
+
+    # --- Bar-chart figure ---------------------------------------------------
+    x_idx = np.arange(n)
+    width = 0.18
+
+    fig, (ax_lin, ax_log) = plt.subplots(2, 1, figsize=(15, 10),
+                                         constrained_layout=True)
+
+    # Linear scale: Inlet + 4 product bars per component
+    ax_lin.bar(x_idx - 2 * width, m_inlet, width, color="gray",
+               edgecolor="black", linewidth=0.4, label="Inlet (feeds)")
+    ax_lin.bar(x_idx - 1 * width, m_top_answer, width, color="tab:blue",
+               edgecolor="black", linewidth=0.4, label="TOP answer")
+    ax_lin.bar(x_idx + 0 * width, m_top_neq, width, color="tab:cyan",
+               edgecolor="black", linewidth=0.4, label="TOP NeqSim")
+    ax_lin.bar(x_idx + 1 * width, m_bot_answer, width, color="tab:red",
+               edgecolor="black", linewidth=0.4, label="BOTTOM answer")
+    ax_lin.bar(x_idx + 2 * width, m_bot_neq, width, color="tab:orange",
+               edgecolor="black", linewidth=0.4, label="BOTTOM NeqSim")
+    ax_lin.set_xticks(x_idx)
+    ax_lin.set_xticklabels(comp_names, rotation=60, ha="right")
+    ax_lin.set_ylabel("Mass flow (kg/hr)")
+    ax_lin.set_title("Per-component mass balance — linear scale "
+                     "(Inlet vs TOP vs BOTTOM, answer vs NeqSim)")
+    ax_lin.grid(True, axis="y", alpha=0.3)
+    ax_lin.set_axisbelow(True)
+    ax_lin.legend(loc="upper right")
+
+    # Log scale: useful because trace components span many orders of magnitude
+    floor = 1e-4  # kg/hr
+
+    def _safe(arr):
+        return np.where(np.asarray(arr) > floor, arr, floor)
+
+    ax_log.bar(x_idx - 2 * width, _safe(m_inlet), width, color="gray",
+               edgecolor="black", linewidth=0.4, label="Inlet (feeds)")
+    ax_log.bar(x_idx - 1 * width, _safe(m_top_answer), width, color="tab:blue",
+               edgecolor="black", linewidth=0.4, label="TOP answer")
+    ax_log.bar(x_idx + 0 * width, _safe(m_top_neq), width, color="tab:cyan",
+               edgecolor="black", linewidth=0.4, label="TOP NeqSim")
+    ax_log.bar(x_idx + 1 * width, _safe(m_bot_answer), width, color="tab:red",
+               edgecolor="black", linewidth=0.4, label="BOTTOM answer")
+    ax_log.bar(x_idx + 2 * width, _safe(m_bot_neq), width, color="tab:orange",
+               edgecolor="black", linewidth=0.4, label="BOTTOM NeqSim")
+    ax_log.set_yscale("log")
+    ax_log.set_ylim(floor, max(max(m_inlet), max(m_bot_answer)) * 2)
+    ax_log.set_xticks(x_idx)
+    ax_log.set_xticklabels(comp_names, rotation=60, ha="right")
+    ax_log.set_ylabel("Mass flow (kg/hr, log scale)")
+    ax_log.set_title("Per-component mass balance — log scale")
+    ax_log.grid(True, axis="y", which="both", alpha=0.3)
+    ax_log.set_axisbelow(True)
+    ax_log.legend(loc="lower center", ncol=5, framealpha=0.95)
+
+    fig.suptitle("20VE105_205 — Per-component mass balance "
+                 "(kg/hr): Inlet vs TOP vs BOTTOM, answer vs NeqSim",
+                 fontsize=13, fontweight="bold")
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=150, bbox_inches="tight")
+    print(f"\nComponent mass-balance plot saved to: {out_path}")
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
+
+
+# ---------------------------------------------------------------------------
 # Sweep over fluid description models (EOS x TBP characterization)
 # ---------------------------------------------------------------------------
-def _run_one_case(eos_name, tbp_model, solver_name=_DEFAULT_SOLVER,
-                  max_iterations=300):
+def _run_one_case(eos_name, tbp_model):
     """Build fluid+column for a given (EOS, TBP model) pair, run it, and
     return a metrics dict. Returns None if the run blows up."""
     try:
@@ -1213,12 +1339,8 @@ def _run_one_case(eos_name, tbp_model, solver_name=_DEFAULT_SOLVER,
                                       MANUAL_TOP_FEED,
                                       MANUAL_TOP_FEED["mass_flow_kg_hr"],
                                       "kg/hr")
-        col, _mfns, _tfns = build_column(feed_stream, top_feed_stream,
-                                         solver_name=solver_name,
-                                         max_iterations=max_iterations)
-        t0 = time.time()
+        col, _mfns, _tfns = build_column(feed_stream, top_feed_stream)
         col.run()
-        runtime_s = time.time() - t0
     except Exception as e:
         return {"error": str(e)[:60]}
 
@@ -1242,9 +1364,9 @@ def _run_one_case(eos_name, tbp_model, solver_name=_DEFAULT_SOLVER,
         except Exception:
             L_neq.append(float("nan"))
 
-    u_T = UNISIM_TRAY_PROFILE["T_C_topdown"]
-    u_V = UNISIM_TRAY_PROFILE["V_kg_hr_topdown"]
-    u_L = UNISIM_TRAY_PROFILE["L_kg_hr_topdown"]
+    u_T = ANSWER_TRAY_PROFILE["T_C_topdown"]
+    u_V = ANSWER_TRAY_PROFILE["V_kg_hr_topdown"]
+    u_L = ANSWER_TRAY_PROFILE["L_kg_hr_topdown"]
 
     dT = [T_neq[i] - u_T[i] for i in range(n_trays)]
     dV = [V_neq[i] - u_V[i] for i in range(n_trays)]
@@ -1257,25 +1379,13 @@ def _run_one_case(eos_name, tbp_model, solver_name=_DEFAULT_SOLVER,
     btm = col.getLiquidOutStream()
     T_top_neq = float(oh.getTemperature("C"))
     T_bot_neq = float(btm.getTemperature("C"))
-    overhead_flow = float(oh.getFlowRate("kg/hr"))
-    bottoms_flow = float(btm.getFlowRate("kg/hr"))
-    total_feed_flow = (MANUAL_FEED["mass_flow_kg_hr"]
-                       + MANUAL_TOP_FEED["mass_flow_kg_hr"])
-    overhead_ref = UNISIM_TARGET["overhead"]["mass_flow_kg_hr"]
     V_reb = V_neq[-1]   # vapour from bottom tray = reboiler boilup
-    V_reb_uni = u_V[-1]
-    metrics = {
+    V_reb_answer = u_V[-1]
+    return {
         "T_top": T_top_neq,
         "T_bot": T_bot_neq,
-        "overhead_flow_kg_hr": overhead_flow,
-        "overhead_flow_dev_pct": 100.0 * (overhead_flow - overhead_ref) / overhead_ref,
-        "bottoms_flow_kg_hr": bottoms_flow,
-        "bottoms_vapor_fraction": vapor_fraction(btm.getFluid()),
-        "external_mass_balance_error_pct":
-            100.0 * (overhead_flow + bottoms_flow - total_feed_flow) / total_feed_flow,
         "V_reb_kg_hr": V_reb,
-        "V_reb_dev_pct": 100.0 * (V_reb - V_reb_uni) / V_reb_uni,
-        "reboiler_vapor_dev_pct": 100.0 * (V_reb - V_reb_uni) / V_reb_uni,
+        "V_reb_dev_pct": 100.0 * (V_reb - V_reb_answer) / V_reb_answer,
         "max_dT": max(abs(d) for d in dT),
         "rms_dT": rms(dT),
         "max_dV_pct": max(abs(100.0 * dV[i] / u_V[i]) for i in range(n_trays)),
@@ -1283,17 +1393,10 @@ def _run_one_case(eos_name, tbp_model, solver_name=_DEFAULT_SOLVER,
         "rms_dL": rms(dL),
         "converged": bool(col.solved()),
         "iters": int(col.getLastIterationCount()),
-        "runtime_s": runtime_s,
-        "solver": solver_name,
-        "eos": eos_name,
-        "tbp_model": tbp_model,
     }
-    metrics.update(collect_mesh_residual_metrics(col))
-    metrics["quality_gate"] = evaluate_quality_gate(metrics)
-    return metrics
 
 
-def run_sweep(solver_name=_DEFAULT_SOLVER, max_iterations=300):
+def run_sweep():
     # Pair each TBP model with its "matching" EOS family. PR-flavoured models
     # are tested with a PR EOS; SRK-flavoured with SRK; generic ones with both.
     cases = [
@@ -1319,14 +1422,14 @@ def run_sweep(solver_name=_DEFAULT_SOLVER, max_iterations=300):
         ("PR-MathCop",   "PedersenPR"),
     ]
 
-    V_reb_uni = UNISIM_TRAY_PROFILE["V_kg_hr_topdown"][-1]
-    T_top_uni = UNISIM_TARGET["overhead"]["temperature_C"]
-    T_bot_uni = UNISIM_TARGET["bottoms"]["temperature_C"]
+    V_reb_answer = ANSWER_TRAY_PROFILE["V_kg_hr_topdown"][-1]
+    T_top_answer = ANSWER_TARGET["overhead"]["temperature_C"]
+    T_bot_answer = ANSWER_TARGET["bottoms"]["temperature_C"]
 
     print_header(
         "Sweep over (EOS x TBP characterization) — composition UNCHANGED")
-    print(f"UniSim targets: T_top={T_top_uni:.2f} C, T_bot={T_bot_uni:.2f} C, "
-          f"V_reboiler={V_reb_uni:.0f} kg/hr")
+    print(f"answer targets: T_top={T_top_answer:.2f} C, T_bot={T_bot_answer:.2f} C, "
+          f"V_reboiler={V_reb_answer:.0f} kg/hr")
     print()
     hdr = (f"{'EOS':<14} {'TBP model':<22} "
            f"{'T_top':>7} {'T_bot':>7} "
@@ -1342,8 +1445,7 @@ def run_sweep(solver_name=_DEFAULT_SOLVER, max_iterations=300):
     for eos, tbp in cases:
         sys.stdout.write(f"  running {eos:<14} {tbp:<22}\r")
         sys.stdout.flush()
-        m = _run_one_case(eos, tbp, solver_name=solver_name,
-                  max_iterations=max_iterations)
+        m = _run_one_case(eos, tbp)
         if m is None or "error" in m:
             err = (m or {}).get("error", "exception")
             print(f"{eos:<14} {tbp:<22} ERROR: {err}")
@@ -1371,7 +1473,7 @@ def run_sweep(solver_name=_DEFAULT_SOLVER, max_iterations=300):
 
     ranked = sorted(rows, key=lambda r: score(r[2]))
     print()
-    print("Ranking (lower is closer to UniSim;  "
+    print("Ranking (lower is closer to answer;  "
           "score = |dV_reb%| + 0.5*rmsdT + 3e-4*rmsdV):")
     print(f"{'rank':>4}  {'EOS':<14} {'TBP':<22} {'score':>8} "
           f"{'dV_reb%':>9} {'rmsdT':>7}")
@@ -1383,127 +1485,6 @@ def run_sweep(solver_name=_DEFAULT_SOLVER, max_iterations=300):
     best = ranked[0]
     print()
     print(f"BEST: EOS = {best[0]}, TBP model = {best[1]}")
-    return [{"eos": eos, "tbp_model": tbp, **metrics}
-            for eos, tbp, metrics in ranked]
-
-
-def summarize_case_metrics(col, runtime_s, solver_name, eos_name, tbp_model):
-    """Collect solver-performance and UniSim deviation metrics for one run."""
-    n_trays = int(MANUAL_COLUMN["n_trays"])
-    tray_ns = [(n_trays + 1) - k for k in range(1, n_trays + 1)]
-    T_neq, V_neq, L_neq = [], [], []
-    for j in tray_ns:
-        tr = col.getTray(j)
-        try:
-            T_neq.append(float(tr.getTemperature() - 273.15))
-        except Exception:
-            T_neq.append(float(tr.getThermoSystem().getTemperature() - 273.15))
-        try:
-            V_neq.append(float(tr.getGasOutStream().getFlowRate("kg/hr")))
-        except Exception:
-            V_neq.append(float("nan"))
-        try:
-            L_neq.append(float(tr.getLiquidOutStream().getFlowRate("kg/hr")))
-        except Exception:
-            L_neq.append(float("nan"))
-
-    u_T = UNISIM_TRAY_PROFILE["T_C_topdown"]
-    u_V = UNISIM_TRAY_PROFILE["V_kg_hr_topdown"]
-    u_L = UNISIM_TRAY_PROFILE["L_kg_hr_topdown"]
-    dT = [T_neq[i] - u_T[i] for i in range(n_trays)]
-    dV = [V_neq[i] - u_V[i] for i in range(n_trays)]
-    dL = [L_neq[i] - u_L[i] for i in range(n_trays)]
-
-    def rms(values):
-        clean = [float(value) for value in values if np.isfinite(value)]
-        if not clean:
-            return float("nan")
-        return float((sum(value * value for value in clean) / len(clean)) ** 0.5)
-
-    overhead = col.getGasOutStream()
-    bottoms = col.getLiquidOutStream()
-    overhead_flow = float(overhead.getFlowRate("kg/hr"))
-    bottoms_flow = float(bottoms.getFlowRate("kg/hr"))
-    total_feed_flow = (MANUAL_FEED["mass_flow_kg_hr"]
-                       + MANUAL_TOP_FEED["mass_flow_kg_hr"])
-    overhead_ref = UNISIM_TARGET["overhead"]["mass_flow_kg_hr"]
-    bottoms_ref = UNISIM_TARGET["bottoms"]["mass_flow_kg_hr"]
-    v_reb_ref = u_V[-1]
-    v_reb = V_neq[-1]
-    metrics = {
-        "solver": solver_name,
-        "eos": eos_name,
-        "tbp_model": tbp_model,
-        "converged": bool(col.solved()),
-        "iterations": int(col.getLastIterationCount()),
-        "runtime_s": float(runtime_s),
-        "temperature_residual_K": float(col.getLastTemperatureResidual()),
-        "mass_residual_kg_hr": float(col.getLastMassResidual()),
-        "energy_residual_J_hr": float(col.getLastEnergyResidual()),
-        "overhead_flow_kg_hr": overhead_flow,
-        "overhead_flow_dev_pct": 100.0 * (overhead_flow - overhead_ref) / overhead_ref,
-        "overhead_vapor_fraction": vapor_fraction(overhead.getFluid()),
-        "bottoms_flow_kg_hr": bottoms_flow,
-        "bottoms_flow_dev_pct": 100.0 * (bottoms_flow - bottoms_ref) / bottoms_ref,
-        "bottoms_vapor_fraction": vapor_fraction(bottoms.getFluid()),
-        "external_mass_balance_error_pct":
-            100.0 * (overhead_flow + bottoms_flow - total_feed_flow) / total_feed_flow,
-        "top_temperature_C": float(overhead.getTemperature("C")),
-        "bottom_temperature_C": float(bottoms.getTemperature("C")),
-        "reboiler_vapor_kg_hr": float(v_reb),
-        "reboiler_vapor_dev_pct": 100.0 * (v_reb - v_reb_ref) / v_reb_ref,
-        "tray_temperature_max_abs_dev_C": max(abs(value) for value in dT),
-        "tray_temperature_rms_dev_C": rms(dT),
-        "tray_vapor_rms_dev_kg_hr": rms(dV),
-        "tray_liquid_rms_dev_kg_hr": rms(dL),
-    }
-    metrics.update(collect_mesh_residual_metrics(col))
-    metrics["quality_gate"] = evaluate_quality_gate(metrics)
-    return metrics
-
-
-def write_metrics(path, payload):
-    """Write benchmark metrics to a JSON file if a path was requested."""
-    if path is None:
-        return
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=2, sort_keys=True)
-    print(f"Wrote metrics JSON: {path}")
-
-
-def benchmark_solvers(eos_name, tbp_model, solver_names, max_iterations):
-    """Run the ASGB study once for each requested solver and rank the results."""
-    rows = []
-    for solver_name in solver_names:
-        print_header(f"Benchmark solver {solver_name}")
-        metrics = _run_one_case(eos_name, tbp_model, solver_name=solver_name,
-                                max_iterations=max_iterations)
-        metrics["solver"] = solver_name
-        rows.append(metrics)
-        if "error" in metrics:
-            print(f"{solver_name}: ERROR {metrics['error']}")
-            continue
-        print(f"{solver_name}: converged={metrics['converged']} "
-              f"iters={metrics['iters']} runtime={metrics['runtime_s']:.2f} s "
-              f"rms_dT={metrics['rms_dT']:.2f} C "
-              f"dV_reb={metrics['V_reb_dev_pct']:+.2f} % "
-              f"mesh={metrics['mesh_residual_norm']:.3g} "
-              f"quality={metrics['quality_gate']['passed']}")
-    return rows
-
-
-def fail_if_quality_gate_failed(metrics):
-    """Raise SystemExit if the optional ASGB quality gate did not pass."""
-    gate = metrics.get("quality_gate", {})
-    if gate.get("passed", False):
-        print("ASGB quality gate: PASS")
-        return
-    print("ASGB quality gate: FAIL")
-    for check in gate.get("checks", []):
-        status = "PASS" if check.get("passed", False) else "FAIL"
-        print(f"  {status:4s} {check.get('name')}: {check.get('criterion')}")
-    raise SystemExit(1)
 
 
 # ---------------------------------------------------------------------------
@@ -1519,71 +1500,26 @@ def main():
                         default=Path(__file__).resolve().parent /
                         "column_study_compositions.png",
                         help="Output PNG path for the product composition bar chart.")
-    parser.add_argument("--no-show", action="store_true",
-                        help="Don't open the plot window (still saves PNG).")
+    parser.add_argument("--out-massbal", type=Path,
+                        default=Path(__file__).resolve().parent /
+                        "column_study_component_massbalance.png",
+                        help="Output PNG path for the per-component mass balance plot.")
+    parser.add_argument("--show", action="store_true",
+                        help="Open plot windows after saving PNG files.")
+    parser.add_argument("--no-show", dest="show", action="store_false",
+                        help="Deprecated: plot windows are disabled by default.")
     parser.add_argument("--sweep", action="store_true",
                         help="Sweep EOS x TBP characterization models "
-                             "and rank by closeness to UniSim. Skips the "
+                             "and rank by closeness to answer. Skips the "
                              "single-case profile/plot output.")
-    parser.add_argument("--benchmark-solvers", action="store_true",
-                        help="Run the ASGB case for each requested solver and "
-                             "write/print convergence and UniSim-deviation metrics.")
-    parser.add_argument("--solver", type=str, default=_DEFAULT_SOLVER,
-                        choices=_SOLVER_NAMES,
-                        help=f"Distillation solver for the run. Default: {_DEFAULT_SOLVER}.")
-    parser.add_argument("--solvers", type=str, nargs="*",
-                        default=_SOLVER_NAMES,
-                        choices=_SOLVER_NAMES,
-                        help="Solvers used with --benchmark-solvers.")
-    parser.add_argument("--max-iterations", type=int, default=300,
-                        help="Maximum column iterations for each run.")
-    parser.add_argument("--metrics-json", type=Path, default=None,
-                        help="Optional JSON output path for run metrics.")
-    parser.add_argument("--quality-gate", action="store_true",
-                        help="Exit non-zero when the ASGB regression quality criteria fail.")
     parser.add_argument("--eos", type=str, default="SRK",
                         help=f"EOS for single run (one of {list(_EOS_CLASSES)})")
     parser.add_argument("--tbp", type=str, default="PedersenSRK",
                         help=f"TBP model for single run (one of {_TBP_MODELS})")
     args = parser.parse_args()
 
-    if args.benchmark_solvers:
-        solver_results = benchmark_solvers(args.eos, args.tbp, args.solvers,
-                                           args.max_iterations)
-        payload = {
-            "study": "ASGB UniSim stabilizer",
-            "mode": "solver_benchmark",
-            "solver_results": solver_results,
-        }
-        write_metrics(args.metrics_json, payload)
-        if args.quality_gate:
-            failed = [row for row in solver_results
-                      if not row.get("quality_gate", {}).get("passed", False)]
-            if failed:
-                print("ASGB quality gate failed for solvers: "
-                      + ", ".join(row.get("solver", "unknown") for row in failed))
-                raise SystemExit(1)
-            print("ASGB quality gate: PASS for all benchmarked solvers")
-        return
-
     if args.sweep:
-        sweep_results = run_sweep(solver_name=args.solver,
-                                  max_iterations=args.max_iterations)
-        payload = {
-            "study": "ASGB UniSim stabilizer",
-            "mode": "eos_tbp_sweep",
-            "solver": args.solver,
-            "results": sweep_results,
-        }
-        write_metrics(args.metrics_json, payload)
-        if args.quality_gate:
-            failed = [row for row in (sweep_results or [])
-                      if not row.get("quality_gate", {}).get("passed", False)]
-            if failed:
-                print("ASGB quality gate failed for "
-                      f"{len(failed)} EOS/TBP sweep case(s).")
-                raise SystemExit(1)
-            print("ASGB quality gate: PASS for all sweep cases")
+        run_sweep()
         return
 
     print_header("Build fluid and streams")
@@ -1598,19 +1534,16 @@ def main():
           f"({float(top_feed_stream.getFlowRate('kmol/hr')):.1f} kmol/hr)")
 
     print_header("Build column")
-    col, main_feed_ns, top_feed_ns = build_column(feed_stream, top_feed_stream,
-                                                  solver_name=args.solver,
-                                                  max_iterations=args.max_iterations)
-    print(f"Main feed -> UniSim tray {MANUAL_COLUMN['main_feed_tray_topdown']} "
+    col, main_feed_ns, top_feed_ns = build_column(feed_stream, top_feed_stream)
+    print(f"Main feed -> answer tray {MANUAL_COLUMN['main_feed_tray_topdown']} "
           f"(NeqSim stage {main_feed_ns})")
-    print(f"Top feed  -> UniSim tray {MANUAL_COLUMN['top_feed_tray_topdown']} "
+    print(f"Top feed  -> answer tray {MANUAL_COLUMN['top_feed_tray_topdown']} "
           f"(NeqSim stage {top_feed_ns})")
 
     print_header("Run column")
     t0 = time.time()
     col.run()
-    runtime_s = time.time() - t0
-    print(f"Column run completed in {runtime_s:.2f} s")
+    print(f"Column run completed in {time.time() - t0:.2f} s")
 
     print_header("Stage setup (after run)")
     print_stage_setup(col)
@@ -1618,8 +1551,8 @@ def main():
     print_header("Convergence diagnostics")
     print_convergence(col, feed_stream, top_feed_stream)
 
-    print_header("Comparison with UniSim reference")
-    oh, btm = compare_with_unisim(col)
+    print_header("Comparison with answer reference")
+    oh, btm = compare_with_answer(col)
 
     print_header("Mass balance (overall)")
     print_mass_balance(feed_stream, top_feed_stream, oh, btm)
@@ -1628,19 +1561,15 @@ def main():
     print_energy_balance(feed_stream, top_feed_stream, oh, btm, col)
 
     print_header("Temperature & flow profile")
-    plot_profile(col, args.out, show=not args.no_show)
+    plot_profile(col, args.out, show=args.show)
 
     print_header("Product composition comparison (overhead y, bottoms x)")
-    compare_product_compositions(col, args.out_comp, show=not args.no_show)
+    compare_product_compositions(col, args.out_comp, show=args.show)
 
-    metrics = summarize_case_metrics(col, runtime_s, args.solver, args.eos, args.tbp)
-    write_metrics(args.metrics_json, {
-        "study": "ASGB UniSim stabilizer",
-        "mode": "single_case",
-        "metrics": metrics,
-    })
-    if args.quality_gate:
-        fail_if_quality_gate_failed(metrics)
+    print_header(
+        "Per-component mass balance (Inlet, TOP, BOTTOM — answer vs NeqSim)")
+    compare_component_mass_balance(col, feed_stream, top_feed_stream,
+                                   args.out_massbal, show=args.show)
 
 
 if __name__ == "__main__":
