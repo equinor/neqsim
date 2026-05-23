@@ -3625,14 +3625,28 @@ public class ProcessModel implements Runnable, Serializable {
   // ========================== Automation API ==========================
 
   /**
+   * Cached automation facade for this process model. Lazily initialized on first call so that
+   * diagnostic state persists across calls.
+   */
+  private transient neqsim.process.automation.ProcessAutomation cachedAutomation;
+
+  /**
    * Returns an automation facade for this process model. The facade provides a stable,
    * string-addressable API for scripts and AI agents to interact with all process areas using
    * area-qualified addresses like {@code "AreaName::UnitName.property"}.
    *
+   * <p>
+   * The facade is cached and reused across calls so that diagnostics (learned corrections,
+   * operation history, dirty-state tracking) persist for the lifetime of the process model.
+   * </p>
+   *
    * @return a {@link neqsim.process.automation.ProcessAutomation} facade
    */
   public neqsim.process.automation.ProcessAutomation getAutomation() {
-    return new neqsim.process.automation.ProcessAutomation(this);
+    if (cachedAutomation == null) {
+      cachedAutomation = new neqsim.process.automation.ProcessAutomation(this);
+    }
+    return cachedAutomation;
   }
 
   /**
