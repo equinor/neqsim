@@ -66,6 +66,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /** Whether finite-difference steps are relative to the decision variable magnitude. */
   private boolean useRelativeStep = true;
 
+  /** Whether strategy-generated equipment capacity constraints are included. */
+  private boolean includeStrategyCapacityConstraints = true;
+
   /** Number of completed evaluation attempts. */
   private int evaluationCount = 0;
 
@@ -1597,9 +1600,11 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     Map<String, CapacityConstraint> equipmentConstraints =
         new LinkedHashMap<String, CapacityConstraint>();
 
-    EquipmentCapacityStrategy strategy = registry.findStrategy(equipment);
-    if (strategy != null) {
-      equipmentConstraints.putAll(strategy.getConstraints(equipment));
+    if (includeStrategyCapacityConstraints) {
+      EquipmentCapacityStrategy strategy = registry.findStrategy(equipment);
+      if (strategy != null) {
+        equipmentConstraints.putAll(strategy.getConstraints(equipment));
+      }
     }
 
     Map<String, CapacityConstraint> directConstraints = equipment.getCapacityConstraints();
@@ -2013,6 +2018,30 @@ public class ProcessModelSimulationEvaluator implements Serializable {
    */
   public void setUseRelativeStep(boolean useRelativeStep) {
     this.useRelativeStep = useRelativeStep;
+  }
+
+  /**
+   * Checks whether strategy-generated equipment capacity constraints are included.
+   *
+   * @return true when strategy-generated constraints are included with direct equipment constraints
+   */
+  public boolean isIncludeStrategyCapacityConstraints() {
+    return includeStrategyCapacityConstraints;
+  }
+
+  /**
+   * Sets whether strategy-generated equipment capacity constraints are included.
+   *
+   * <p>
+   * Direct constraints attached to equipment are always included. Disable this option for installed
+   * capacity studies where only explicit fixed-equipment limits from design data should determine
+   * feasibility and active bottleneck reporting.
+   * </p>
+   *
+   * @param includeStrategyCapacityConstraints true to include strategy-generated constraints
+   */
+  public void setIncludeStrategyCapacityConstraints(boolean includeStrategyCapacityConstraints) {
+    this.includeStrategyCapacityConstraints = includeStrategyCapacityConstraints;
   }
 
   /**

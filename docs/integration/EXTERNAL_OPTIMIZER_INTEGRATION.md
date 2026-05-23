@@ -20,21 +20,22 @@ This guide explains how to use NeqSim's simulation evaluators to integrate proce
 
 ## Overview
 
-NeqSim provides two black-box evaluator classes for external optimizers:
+NeqSim provides two black-box evaluator classes for external optimizers and one convenience helper for the common full-facility producer-ramp workflow:
 
-| Evaluator | Model boundary | Decision variable addressing | Best use |
-|-----------|----------------|------------------------------|----------|
+| Class | Model boundary | Decision variable addressing | Best use |
+|-------|----------------|------------------------------|----------|
 | `ProcessSimulationEvaluator` | One `ProcessSystem` | Unit name plus property name | Compact flowsheets, equipment tuning, single-process optimization |
 | `ProcessModelSimulationEvaluator` | Full `ProcessModel` with named areas | Area-qualified `ProcessAutomation` addresses such as `wells::feed.flowRate` | Large facilities, multi-producer throughput studies, fixed-equipment bottleneck workflows |
+| `ProcessModelThroughputOptimizer` | Full `ProcessModel` with named areas | Producer mappings plus installed capacity CSV tables | Increase producers until the full facility reaches its first fixed-equipment bottleneck |
 
-Both evaluator classes provide a black-box interface that:
+The evaluator classes provide a black-box interface that:
 - Accepts a vector of decision variables
 - Runs the process simulation
 - Returns objective values, constraint margins, and feasibility status
 - Supports gradient estimation via finite differences
 - Exports problem definitions in JSON format
 
-Use `ProcessSimulationEvaluator` when all manipulated variables and outputs belong to one process system. Use `ProcessModelSimulationEvaluator` when the optimization must run the complete plant model and evaluate constraints across several process areas.
+Use `ProcessSimulationEvaluator` when all manipulated variables and outputs belong to one process system. Use `ProcessModelSimulationEvaluator` when the optimization must run the complete plant model and evaluate constraints across several process areas. Use `ProcessModelThroughputOptimizer` when the practical question is a scalar producer ramp: find the maximum feasible throughput and report the active bottleneck case table.
 
 ### Full ProcessModel Evaluations
 
@@ -53,6 +54,36 @@ The practical workflow is:
 For full-model studies, area-qualified addresses keep optimizer scripts independent of Java object wiring. Examples include `wells::feed.flowRate`, `separation::separator.gasOutStream.flowRate`, and `compression::export compressor.outletPressure`.
 
 Capacity constraints remain explicit engineering data. Strategy-generated defaults can identify candidate bottlenecks, while installed equipment limits should be attached directly to equipment when the study assumes equipment sizes are fixed.
+
+### Full-Facility Throughput-to-Bottleneck Helper
+
+`ProcessModelThroughputOptimizer` wraps the evaluator for Chapter-15-style facility studies. It maps producers, optionally loads installed equipment limits from a CSV table, performs a robust scalar throughput search, and returns a `ProcessModelThroughputResult` containing the best feasible case, first infeasible case, and all evaluated case rows.
+
+```java
+ProcessModelThroughputOptimizer optimizer = new ProcessModelThroughputOptimizer(model);
+optimizer.addProducer("feed", "wells::feed.flowRate", 1.0, 2.0, "kg/hr");
+optimizer.setObjective("exportGas", new ToDoubleFunction<ProcessModel>() {
+    @Override
+    public double applyAsDouble(ProcessModel processModel) {
+        return processModel.getVariableValue("separation::separator.gasOutStream.flowRate", "kg/hr");
+    }
+}, "kg/hr");
+optimizer.loadInstalledCapacities("installed_capacity.csv");
+
+ProcessModelThroughputResult result = optimizer.findMaximumThroughput(1.0, 2.0, 0.01);
+ThroughputCaseRow best = result.getBestFeasibleCase();
+ThroughputCaseRow firstLimit = result.getFirstInfeasibleCase();
+result.exportToCSV("throughput_trace.csv");
+```
+
+The installed-capacity CSV format is intentionally small and auditable:
+
+```text
+area,equipment,constraint,currentValueAddress,designValue,maxValue,unit,severity,enabled
+separation,separator,installedGasCapacity,wells::feed.flowRate,15000,16500,kg/hr,HARD,true
+```
+
+By default, the helper uses explicit installed capacity limits attached directly to equipment. Enable strategy-generated constraints with `setIncludeStrategyCapacityConstraints(true)` when you want generic screening limits to participate in addition to installed design data.
 
 ## Key Concepts
 
