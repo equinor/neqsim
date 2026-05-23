@@ -34,6 +34,7 @@ import neqsim.process.util.monitor.CompressorResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -52,6 +53,15 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Compressor.class);
+
+  /** Minimum total entropy residual accepted by compressor PS fallback calculations. */
+  private static final double MIN_ENTROPY_FLASH_TOLERANCE = 1.0e-4;
+
+  /** Relative total entropy residual accepted by compressor PS fallback calculations. */
+  private static final double RELATIVE_ENTROPY_FLASH_TOLERANCE = 1.0e-10;
+
+  /** Maximum number of TP-flash Newton iterations in the compressor entropy fallback. */
+  private static final int MAX_ENTROPY_FLASH_ITERATIONS = 30;
 
   public SystemInterface thermoSystem;
   private double outTemperature = 298.15;
@@ -526,7 +536,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
 
     // System.out.println("entropy inn.." + entropy);
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
-    thermoOps.PSflash(entropy);
+    runRegularPsFlash(thermoOps, entropy);
 
     double houtGuess = hinn + dH / polytropicEfficiency;
     thermoOps.PHflash(houtGuess, 0);
@@ -549,6 +559,118 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       return false;
     }
     return true;
+  }
+
+  /**
+   * Run a pressure-entropy flash with a robust CPA multiphase shortcut.
+   *
+   * @param thermoOps thermodynamic operations bound to the compressor thermo system
+   * @param targetEntropy target total entropy in J/K
+   */
+  private void runRegularPsFlash(ThermodynamicOperations thermoOps, double targetEntropy) {
+    double initialTemperature = getThermoSystem().getTemperature();
+    if (shouldUseTemperatureEntropyFlash()) {
+      solveEntropyAtCurrentPressureWithTpFlash(thermoOps, targetEntropy, initialTemperature);
+      return;
+    }
+
+    thermoOps.PSflash(targetEntropy);
+    double entropyError = Math.abs(getThermoSystem().getEntropy() - targetEntropy);
+    double fallbackTolerance = Math.max(1.0e-3, getEntropyFlashTolerance(targetEntropy) * 10.0);
+    if (entropyError > fallbackTolerance) {
+      solveEntropyAtCurrentPressureWithTpFlash(thermoOps, targetEntropy, initialTemperature);
+    }
+  }
+
+  /**
+   * Check whether the generic PS flash should be bypassed for the current compressor system.
+   *
+   * @return true when the system is multiphase CPA and the TP-based entropy solve is safer
+   */
+  private boolean shouldUseTemperatureEntropyFlash() {
+    return getThermoSystem().getNumberOfPhases() > 1 && isCpaThermoSystem();
+  }
+
+  /**
+   * Check whether any phase in the compressor thermo system uses a CPA phase model.
+   *
+   * @return true if at least one phase implements the CPA phase interface
+   */
+  private boolean isCpaThermoSystem() {
+    for (int phaseIndex = 0; phaseIndex < getThermoSystem().getNumberOfPhases(); phaseIndex++) {
+      if (getThermoSystem().getPhase(phaseIndex) instanceof PhaseCPAInterface) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Solve {@code S(T, Pcurrent) = targetEntropy} by Newton updates around robust TP flashes.
+   *
+   * @param thermoOps thermodynamic operations bound to the compressor thermo system
+   * @param targetEntropy target total entropy in J/K
+   * @param initialTemperature starting temperature in K
+   */
+  private void solveEntropyAtCurrentPressureWithTpFlash(ThermodynamicOperations thermoOps,
+      double targetEntropy, double initialTemperature) {
+    double temperatureGuess = Math.max(initialTemperature, 50.0);
+    double bestTemperature = temperatureGuess;
+    double bestResidual = Double.MAX_VALUE;
+    double entropyTolerance = getEntropyFlashTolerance(targetEntropy);
+
+    getThermoSystem().setTemperature(temperatureGuess);
+    thermoOps.TPflash();
+
+    for (int iteration = 0; iteration < MAX_ENTROPY_FLASH_ITERATIONS; iteration++) {
+      getThermoSystem().init(2);
+      double residual = getThermoSystem().getEntropy() - targetEntropy;
+      if (Math.abs(residual) < Math.abs(bestResidual)) {
+        bestResidual = residual;
+        bestTemperature = temperatureGuess;
+      }
+      if (Math.abs(residual) <= entropyTolerance) {
+        break;
+      }
+
+      double heatCapacity = getThermoSystem().getCp();
+      double entropyTemperatureDerivative = heatCapacity / temperatureGuess;
+      if (heatCapacity <= 0.0 || Math.abs(entropyTemperatureDerivative) < 1.0e-20
+          || !Double.isFinite(heatCapacity) || !Double.isFinite(entropyTemperatureDerivative)) {
+        break;
+      }
+
+      double temperatureStep = -residual / entropyTemperatureDerivative;
+      if (temperatureStep > 50.0) {
+        temperatureStep = 50.0;
+      } else if (temperatureStep < -50.0) {
+        temperatureStep = -50.0;
+      }
+
+      if (Math.abs(temperatureStep) < 1.0e-3) {
+        break;
+      }
+      temperatureGuess = Math.max(temperatureGuess + temperatureStep, 50.0);
+      getThermoSystem().setTemperature(temperatureGuess);
+      thermoOps.TPflash();
+    }
+
+    if (Math.abs(getThermoSystem().getEntropy() - targetEntropy) > Math.abs(bestResidual)) {
+      getThermoSystem().setTemperature(bestTemperature);
+      thermoOps.TPflash();
+    }
+    getThermoSystem().init(2);
+  }
+
+  /**
+   * Calculate the entropy residual tolerance for compressor entropy flashes.
+   *
+   * @param targetEntropy target total entropy in J/K
+   * @return accepted absolute entropy residual in J/K
+   */
+  private double getEntropyFlashTolerance(double targetEntropy) {
+    return Math.max(MIN_ENTROPY_FLASH_TOLERANCE,
+        Math.abs(targetEntropy) * RELATIVE_ENTROPY_FLASH_TOLERANCE);
   }
 
   /** {@inheritDoc} */
@@ -687,7 +809,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       } else {
         double MW = thermoSystem.getMolarMass();
         thermoSystem.setPressure(getOutletPressure(), pressureUnit);
-        thermoOps.PSflash(entropy);
+        runRegularPsFlash(thermoOps, entropy);
         if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           thermoOps.PSflashGERG2008(entropy);
         }
@@ -1130,63 +1252,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
             } else if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
               thermoOps.PSflashVega(entropy);
             } else {
-              double oleTemp = getThermoSystem().getTemperature();
-              thermoOps.PSflash(entropy);
-              if (Math.abs(getThermoSystem().getEntropy() - entropy) > 1e-3) {
-                // PSflash diverged (common with associating fluids such as water/MEG/TEG
-                // on cubic EOS, or near phase boundaries — the PS Newton becomes
-                // ill-conditioned because dS/dT|_P is large and the Jacobian gets stiff).
-                // Recover by solving S(T, P_new) = entropy_target via 1D Newton on T at
-                // fixed pressure. TPflash is much more robust than PSflash for these
-                // fluids, so this yields correct isentropic compression for any EOS
-                // rather than degrading the step to isothermal.
-                // We do NOT 'continue' — skipping the step would leave the property
-                // profile shorter than numberOfCompressorCalcSteps and drop the
-                // polytropic enthalpy increment for that pressure interval.
-                double tGuess = oleTemp;
-                double bestT = oleTemp;
-                double bestErr = Double.MAX_VALUE;
-                getThermoSystem().setTemperature(tGuess);
-                thermoOps.TPflash();
-                for (int psIter = 0; psIter < 30; psIter++) {
-                  getThermoSystem().init(2);
-                  double sCur = getThermoSystem().getEntropy();
-                  double residual = sCur - entropy;
-                  if (Math.abs(residual) < Math.abs(bestErr)) {
-                    bestErr = residual;
-                    bestT = tGuess;
-                  }
-                  if (Math.abs(residual) < 1e-4) {
-                    break;
-                  }
-                  double cp = getThermoSystem().getCp();
-                  if (cp <= 0.0 || !Double.isFinite(cp)) {
-                    break;
-                  }
-                  // dS/dT|_P = Cp / T (total, J/K^2)
-                  double dT = -residual / (cp / tGuess);
-                  // Limit step to ±50 K for stability
-                  if (dT > 50.0) {
-                    dT = 50.0;
-                  } else if (dT < -50.0) {
-                    dT = -50.0;
-                  }
-                  tGuess += dT;
-                  if (tGuess < 50.0) {
-                    tGuess = 50.0;
-                  }
-                  getThermoSystem().setTemperature(tGuess);
-                  thermoOps.TPflash();
-                  if (Math.abs(dT) < 1e-3) {
-                    break;
-                  }
-                }
-                if (Math.abs(getThermoSystem().getEntropy() - entropy) > Math.abs(bestErr)) {
-                  getThermoSystem().setTemperature(bestT);
-                  thermoOps.TPflash();
-                }
-                getThermoSystem().init(2);
-              }
+              runRegularPsFlash(thermoOps, entropy);
             }
             double newEnt = getThermoSystem().getEnthalpy();
             if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
@@ -1226,7 +1292,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           double schultzY =
               -thermoSystem.getPressure() / thermoSystem.getVolume() * thermoSystem.getdVdPtn();
           thermoSystem.setPressure(getOutletPressure(), pressureUnit);
-          thermoOps.PSflash(entropy);
+          runRegularPsFlash(thermoOps, entropy);
           thermoSystem.initProperties();
           double densOutIsentropic = thermoSystem.getDensity("kg/m3");
           double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
@@ -1280,7 +1346,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           }
         } else {
           thermoSystem.setPressure(getOutletPressure(), pressureUnit);
-          thermoOps.PSflash(entropy);
+          runRegularPsFlash(thermoOps, entropy);
           thermoSystem.initProperties();
           double densOutIsentropic = thermoSystem.getDensity("kg/m3");
           double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
@@ -1339,7 +1405,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       getThermoSystem().setPressure(pressure, pressureUnit);
       // System.out.println("entropy inn.." + entropy);
       thermoOps = new ThermodynamicOperations(getThermoSystem());
-      thermoOps.PSflash(entropy);
+      runRegularPsFlash(thermoOps, entropy);
       if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
         thermoOps.PSflashGERG2008(entropy);
       }
