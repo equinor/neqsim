@@ -210,12 +210,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
               classicOrHV[l][k] = classicOrHV[k][l];
 
               if (isCalcEOSInteractionParameters()) {
-                intparam[k][l] = 1.0 - Math.pow((2.0
-                    * Math.sqrt(Math.pow(phase.getComponent(l).getCriticalVolume(), 1.0 / 3.0)
-                        * Math.pow(phase.getComponent(k).getCriticalVolume(), 1 / 3))
-                    / (Math.pow(phase.getComponent(l).getCriticalVolume(), 1 / 3)
-                        + Math.pow(phase.getComponent(k).getCriticalVolume(), 1 / 3))),
-                    nEOSkij);
+                intparam[k][l] = BIPEstimator.estimateChuehPrausnitz(phase.getComponent(k),
+                    phase.getComponent(l), nEOSkij);
                 intparamT[k][l] = 0.0;
                 // System.out.println("kij " + intparam[k][l]);
               } else {
