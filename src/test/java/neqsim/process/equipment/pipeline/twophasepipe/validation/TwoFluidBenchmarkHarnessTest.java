@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,8 @@ class TwoFluidBenchmarkHarnessTest {
 
     double inletPressure = pipe.getPressureProfile()[0] * 1e-5;
     double outletPressure = pipe.getPressureProfile()[pipe.getPressureProfile().length - 1] * 1e-5;
-    double averageHoldup = Arrays.stream(pipe.getLiquidHoldupProfile()).average().orElseThrow();
+    double averageHoldup = Arrays.stream(pipe.getLiquidHoldupProfile()).average()
+        .orElseThrow(() -> new IllegalStateException("No liquid holdup values"));
     List<BenchmarkPoint> reference = Arrays.asList(
         new BenchmarkPoint("fixture", 0.0, pipe.getPositionProfile()[0], "pressure_bara",
             inletPressure, 0.05, 0.001, "generated"),
@@ -56,9 +58,9 @@ class TwoFluidBenchmarkHarnessTest {
   @Test
   void testInterpolatesTransientSnapshotsInTimeAndPosition() {
     Snapshot t0 = new Snapshot(0.0, new double[] {0.0, 100.0},
-        java.util.Map.of("pressure_bara", new double[] {50.0, 49.0}));
+        java.util.Collections.singletonMap("pressure_bara", new double[] {50.0, 49.0}));
     Snapshot t10 = new Snapshot(10.0, new double[] {0.0, 100.0},
-        java.util.Map.of("pressure_bara", new double[] {48.0, 47.0}));
+        java.util.Collections.singletonMap("pressure_bara", new double[] {48.0, 47.0}));
     BenchmarkPoint point =
         new BenchmarkPoint("transient", 5.0, 50.0, "pressure_bara", 48.5, 1e-12, 0.0, "unit");
 
@@ -96,6 +98,6 @@ class TwoFluidBenchmarkHarnessTest {
   }
 
   private Path resourcePath(String resource) throws URISyntaxException {
-    return Path.of(Thread.currentThread().getContextClassLoader().getResource(resource).toURI());
+    return Paths.get(Thread.currentThread().getContextClassLoader().getResource(resource).toURI());
   }
 }

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.JsonParser;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -22,8 +23,8 @@ class TwoFluidPipeReportTest {
 
   @Test
   void testReportExportsProfilesSummariesAndComparisonTable() throws Exception {
-    TwoFluidPipe pipe = runTwoFluidPipe("report-gas", methaneFluid(50.0, 298.15), 25000.0, 1000.0,
-        0.2, 10);
+    TwoFluidPipe pipe =
+        runTwoFluidPipe("report-gas", methaneFluid(50.0, 298.15), 25000.0, 1000.0, 0.2, 10);
 
     String steadyCsv = TwoFluidPipeReport.toSteadyStateProfileCsv(pipe);
     assertTrue(steadyCsv.startsWith("position_m,pressure_bara,temperature_C"));
@@ -49,11 +50,11 @@ class TwoFluidPipeReportTest {
     assertTrue(events.startsWith("event_type,position_m,value,unit,description"));
     assertTrue(events.contains("erosion_margin"));
 
-    BenchmarkPoint point = new BenchmarkPoint("report", pipe.getSimulationTime(),
-        pipe.getPositionProfile()[0], "pressure_bara", pipe.getPressureProfile()[0] * 1e-5, 0.01,
-        0.001, "unit");
-    TwoFluidBenchmarkHarness.Comparison comparison = TwoFluidBenchmarkHarness
-        .compare(TwoFluidBenchmarkHarness.capture(pipe), java.util.Collections.singletonList(point));
+    BenchmarkPoint point =
+        new BenchmarkPoint("report", pipe.getSimulationTime(), pipe.getPositionProfile()[0],
+            "pressure_bara", pipe.getPressureProfile()[0] * 1e-5, 0.01, 0.001, "unit");
+    TwoFluidBenchmarkHarness.Comparison comparison = TwoFluidBenchmarkHarness.compare(
+        TwoFluidBenchmarkHarness.capture(pipe), java.util.Collections.singletonList(point));
     String comparisonCsv = TwoFluidPipeReport.toComparisonCsv(comparison);
     assertTrue(comparisonCsv.startsWith("case,time_s,position_m,variable"));
     assertTrue(comparisonCsv.contains(",true,"));
@@ -63,9 +64,9 @@ class TwoFluidPipeReportTest {
     Path summaryPath = tempDir.resolve("summary.json");
     TwoFluidPipeReport.writeSteadyStateProfileCsv(pipe, profilePath);
     TwoFluidPipeReport.writeSummaryJson(pipe, summaryPath);
-    assertTrue(Files.readString(profilePath).startsWith("position_m,pressure_bara"));
-    assertTrue(JsonParser.parseString(Files.readString(summaryPath)).getAsJsonObject()
-        .has("averageLiquidHoldup"));
+    assertTrue(readUtf8(profilePath).startsWith("position_m,pressure_bara"));
+    assertTrue(
+        JsonParser.parseString(readUtf8(summaryPath)).getAsJsonObject().has("averageLiquidHoldup"));
   }
 
   @Test
@@ -76,7 +77,8 @@ class TwoFluidPipeReportTest {
     PipeBeggsAndBrills bb = runBeggsAndBrill("bb-gas", fluid, flowKgHr, 5000.0, 0.2, 25);
 
     double dpTf = tf.getInletPressure() - tf.getOutletPressure();
-    double dpBb = bb.getInletStream().getPressure("bara") - bb.getOutletStream().getPressure("bara");
+    double dpBb =
+        bb.getInletStream().getPressure("bara") - bb.getOutletStream().getPressure("bara");
     double ratio = dpTf / dpBb;
 
     assertTrue(dpTf > 0.0);
@@ -94,7 +96,8 @@ class TwoFluidPipeReportTest {
     PipeBeggsAndBrills bb = runBeggsAndBrill("bb-wet-gas", fluid, flowKgHr, length, 0.254, 30);
 
     double dpTf = tf.getInletPressure() - tf.getOutletPressure();
-    double dpBb = bb.getInletStream().getPressure("bara") - bb.getOutletStream().getPressure("bara");
+    double dpBb =
+        bb.getInletStream().getPressure("bara") - bb.getOutletStream().getPressure("bara");
     double dpPerKm = dpTf / (length / 1000.0);
     double ratio = dpTf / dpBb;
     double avgHoldup = Arrays.stream(tf.getLiquidHoldupProfile()).average().orElse(0.0);
@@ -117,7 +120,8 @@ class TwoFluidPipeReportTest {
     PipeBeggsAndBrills bb = runBeggsAndBrill("bb-three-phase", fluid, flowKgHr, length, 0.203, 25);
 
     double dpTf = tf.getInletPressure() - tf.getOutletPressure();
-    double dpBb = bb.getInletStream().getPressure("bara") - bb.getOutletStream().getPressure("bara");
+    double dpBb =
+        bb.getInletStream().getPressure("bara") - bb.getOutletStream().getPressure("bara");
     double avgHoldup = Arrays.stream(tf.getLiquidHoldupProfile()).average().orElse(0.0);
     double avgWaterCut = Arrays.stream(tf.getWaterCutProfile()).average().orElse(0.0);
     double outletFlow = tf.getOutletStream().getFlowRate("kg/hr");
@@ -129,7 +133,11 @@ class TwoFluidPipeReportTest {
     assertTrue(avgHoldup >= 0.0 && avgHoldup <= 1.0);
     assertTrue(avgWaterCut >= 0.0 && avgWaterCut <= 1.0);
     assertTrue(Math.abs(outletFlow - flowKgHr) / flowKgHr < 0.05);
-    assertFalse(tf.getDominantFlowRegime().isBlank());
+    assertFalse(tf.getDominantFlowRegime().trim().isEmpty());
+  }
+
+  private String readUtf8(Path path) throws java.io.IOException {
+    return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }
 
   private TwoFluidPipe runTwoFluidPipe(String name, SystemInterface fluid, double flowKgHr,
