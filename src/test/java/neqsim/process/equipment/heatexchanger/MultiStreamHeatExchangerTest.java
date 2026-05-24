@@ -150,14 +150,23 @@ public class MultiStreamHeatExchangerTest {
     // separator2.getFluid().prettyPrint();
     // heatEx.getOutStream(0).getFluid().prettyPrint();
 
-    assertEquals(-25.480593058789623, separator2.getFluid().getTemperature("C"), 1e-3);
+    assertEquals(-24.803982841906702, separator2.getFluid().getTemperature("C"), 1e-3);
     assertEquals(25.0, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
 
     heatEx.setUAvalue(5000);
     operations.run();
 
-    assertEquals(-26.926518349391273, separator2.getFluid().getTemperature("C"), 1e-3);
-    assertEquals(17.374460772310044, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
+    assertEquals(-29.927013822102793, separator2.getFluid().getTemperature("C"), 1e-3);
+    assertEquals(14.153533595069575, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
+
+    double heatBalance = 0.0;
+    double maxAbsDuty = 0.0;
+    for (int i = 0; i < 3; i++) {
+      double streamDuty = heatEx.getDuty(i);
+      heatBalance += streamDuty;
+      maxAbsDuty = Math.max(maxAbsDuty, Math.abs(streamDuty));
+    }
+    assertEquals(0.0, heatBalance / maxAbsDuty, 1e-3);
 
     heatEx.toJson();
   }

@@ -533,17 +533,18 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
         logger.debug("Limiting side: Cooling");
       }
 
-      // Calculate scaling factors for each side
-      double scalingFactor = 1.0;
+      // Calculate scaling factors for each side.
+      double cooledStreamScalingFactor = 1.0;
+      double heatedStreamScalingFactor = 1.0;
 
-      if (heatingIsLimiting) {
+      if (heatingIsLimiting && totalHeatLost > 0.0) {
         // Scale down the heat lost by cooled streams
-        scalingFactor = limitingHeat / totalHeatLost;
-        logger.debug("Scaling factor for cooled streams: " + scalingFactor);
-      } else {
+        cooledStreamScalingFactor = limitingHeat / totalHeatLost;
+        logger.debug("Scaling factor for cooled streams: " + cooledStreamScalingFactor);
+      } else if (!heatingIsLimiting && totalHeatGained > 0.0) {
         // Scale down the heat gained by heated streams
-        scalingFactor = limitingHeat / totalHeatGained;
-        logger.debug("Scaling factor for heated streams: " + scalingFactor);
+        heatedStreamScalingFactor = limitingHeat / totalHeatGained;
+        logger.debug("Scaling factor for heated streams: " + heatedStreamScalingFactor);
       }
 
       // Apply scaling factors to adjust outlet enthalpies
@@ -555,7 +556,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
 
         double enthalpyIn = inStream.getThermoSystem().getEnthalpy();
         double targetDeltaH =
-            -(outStream.getThermoSystem().getEnthalpy() - enthalpyIn) * scalingFactor;
+            -(outStream.getThermoSystem().getEnthalpy() - enthalpyIn) * cooledStreamScalingFactor;
 
         // Adjust the outlet enthalpy
         double adjustedEnthalpyOut = enthalpyIn - (Math.abs(targetDeltaH));
@@ -574,14 +575,13 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
         logger.debug("Adjusted cooled stream " + i + ": ΔH = " + targetDeltaH);
       }
 
-      scalingFactor = 1.0;
       for (int i : heatedStreamIndices) {
         StreamInterface inStream = inStreams.get(i);
         StreamInterface outStream = outStreams.get(i);
 
         double enthalpyIn = inStream.getThermoSystem().getEnthalpy();
         double targetDeltaH =
-            (outStream.getThermoSystem().getEnthalpy() - enthalpyIn) * scalingFactor;
+            (outStream.getThermoSystem().getEnthalpy() - enthalpyIn) * heatedStreamScalingFactor;
 
         // Adjust the outlet enthalpy
         double adjustedEnthalpyOut = enthalpyIn + (Math.abs(targetDeltaH));
