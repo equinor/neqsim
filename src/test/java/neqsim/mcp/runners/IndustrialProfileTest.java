@@ -41,8 +41,8 @@ class IndustrialProfileTest {
   void tierSizes_matchContract() {
     assertEquals(21, IndustrialProfile.getIndustrialCore().size(),
         "Tier 1 (TRUSTED_CORE) should have 21 tools");
-    assertEquals(27, IndustrialProfile.getEngineeringAdvanced().size(),
-        "Tier 2 (ENGINEERING_ADVANCED) should have 27 tools");
+    assertEquals(28, IndustrialProfile.getEngineeringAdvanced().size(),
+        "Tier 2 (ENGINEERING_ADVANCED) should have 28 tools");
     assertEquals(14, IndustrialProfile.getExperimentalTools().size(),
         "Tier 3 (EXPERIMENTAL) should have 14 tools");
   }
@@ -95,6 +95,8 @@ class IndustrialProfileTest {
     assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runHAZOP"));
     assertEquals(ToolTier.ENGINEERING_ADVANCED,
         IndustrialProfile.getToolTier("runBarrierRegister"));
+    assertEquals(ToolTier.ENGINEERING_ADVANCED,
+        IndustrialProfile.getToolTier("runAgenticEngineering"));
   }
 
   @Test
@@ -403,7 +405,7 @@ class IndustrialProfileTest {
     assertTrue(root.has("tier3_experimental"), "Must include tier3_experimental");
 
     assertEquals(21, root.getAsJsonArray("tier1_trustedCore").size());
-    assertEquals(27, root.getAsJsonArray("tier2_engineeringAdvanced").size());
+    assertEquals(28, root.getAsJsonArray("tier2_engineeringAdvanced").size());
     assertEquals(14, root.getAsJsonArray("tier3_experimental").size());
   }
 

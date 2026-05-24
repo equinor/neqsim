@@ -759,6 +759,9 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     neqsim.process.equipment.distillation.DistillationColumn deethanizer =
         new neqsim.process.equipment.distillation.DistillationColumn("de ethanizer column", 5, true,
             false);
+    // Preserve this E300 regression against the stricter pre-speedup column solution.
+    deethanizer.setTemperatureTolerance(9.0e-3);
+    deethanizer.setEnforceEnergyBalanceTolerance(true);
     deethanizer.addFeedStream(feedHeater.getOutletStream(), 3);
     deethanizer.addFeedStream(lqiuidrefluc, 5);
     deethanizer.getReboiler().setOutTemperature(273.15 + 78.0);
@@ -817,6 +820,9 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     neqsim.process.equipment.distillation.DistillationColumn debutanizer =
         new neqsim.process.equipment.distillation.DistillationColumn("de butanizer column", 4, true,
             true);
+    // Preserve this E300 regression against the stricter pre-speedup column solution.
+    debutanizer.setTemperatureTolerance(9.0e-3);
+    debutanizer.setEnforceEnergyBalanceTolerance(true);
     debutanizer.addFeedStream(valveDebutanizer.getOutletStream(), 1);
     debutanizer.getReboiler().setOutTemperature(273.15 + 120.0);
     debutanizer.getCondenser().setRefluxRatio(0.1);
