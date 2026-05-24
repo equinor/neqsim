@@ -8,7 +8,7 @@ import java.util.List;
  * Multi-layer radial heat transfer calculator for pipeline thermal analysis.
  *
  * <p>
- * Implements OLGA-style thermal model with these features:
+ * Implements an OLGA-inspired thermal model with these features:
  * </p>
  * <ul>
  * <li>Multiple concentric layers with different materials</li>

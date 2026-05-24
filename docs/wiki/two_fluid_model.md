@@ -210,7 +210,7 @@ double[] tempF = pipe.getTemperatureProfile("F");   // Fahrenheit
 
 ### Minimum Holdup Constraints
 
-The model applies a minimum liquid holdup constraint to prevent unrealistically low values in gas-dominant systems. This is based on OLGA's observation that even at high velocities, a thin liquid film remains on the pipe wall.
+The model applies a minimum liquid holdup constraint to prevent unrealistically low values in gas-dominant systems. This is inspired by the observation used in commercial transient multiphase tools that even at high velocities, a thin liquid film remains on the pipe wall.
 
 **Default behavior (adaptive minimum):**
 
@@ -223,7 +223,7 @@ pipe.setUseAdaptiveMinimumOnly(true);   // Default
 pipe.setMinimumSlipFactor(2.0);         // Default multiplier
 ```
 
-**For more conservative OLGA-style behavior:**
+**For more conservative commercial-tool-like behavior:**
 
 ```java
 // Apply absolute floor in addition to correlation
@@ -341,7 +341,7 @@ Positive interfacial shear acts to accelerate the liquid and decelerate the gas 
 | **Stratified Smooth** | Taitel-Dukler | (1976) | Treats interface as smooth wall; Blasius for turbulent: `f = 0.079/Re^0.25` |
 | **Stratified Wavy** | Andritsos-Hanratty | (1987) | Wave roughness enhancement: `f_i = f_smooth × (1 + 15√(h_L/D) × (v_G/v_G,t - 1))` |
 | **Stratified Wavy** | Hart et al. | (1989) | Oil-gas systems: `f_i = 0.0142 + 22 × (h_L/D)^1.5 × ((v_G - v_L)/v_G)^0.9` |
-| **Stratified** | Andreussi-Persen | (1987) | OLGA-style with inclination effects and Froude number correction |
+| **Stratified** | Andreussi-Persen | (1987) | OLGA-inspired with inclination effects and Froude number correction |
 | **Annular** | Wallis | (1969) | Film-core interaction: `f_i = f_G × (1 + 300δ/D)` where δ is film thickness |
 | **Slug** | Oliemans | (1986) | Bubble swarm approach with Ishii-Zuber drag coefficient |
 | **Bubble/Dispersed** | Schiller-Naumann | - | Drag on individual bubbles: `C_D = (24/Re_b) × (1 + 0.15 × Re_b^0.687)` for Re < 1000 |
@@ -442,7 +442,7 @@ Where:
 - `v_G - v_L` = slip velocity
 - Valid for stratified wavy flow with significant liquid holdup
 
-#### Andreussi-Persen (1987) OLGA-Style Correlation
+#### Andreussi-Persen (1987) OLGA-Inspired Correlation
 
 Includes inclination effects and Froude number-based wave transition:
 
@@ -916,17 +916,91 @@ With 64/Re for laminar flow (Re < 2300) and linear interpolation through the tra
 
 ### Transient Boundary Conditions
 
-During transient simulation (`runTransient()`), the inlet pressure is **not** overridden from the inlet stream. Instead, the pressure profile is reconstructed by backward-marching from the fixed outlet boundary condition using the local pressure gradient:
+During transient simulation (`runTransient()`), `TwoFluidPipe` supports two pressure-reference modes. The boundary-condition types still define what is connected or fixed at each end, while the transient pressure-reference mode defines where pressure reconstruction is anchored.
+
+| Mode | Helper method | Typical use | Behavior |
+|------|---------------|-------------|----------|
+| `FIXED_OUTLET_PRESSURE` | `useFixedOutletPressureTransient()` | Receiving-facility backpressure, fixed arrival pressure, legacy behavior | Pressure is reconstructed by backward-marching from the outlet pressure boundary |
+| `INLET_PRESSURE` | `useInletPressureDrivenTransient()` | Comparisons against inlet-pressure-driven correlations such as Beggs-Brill | Pressure is reconstructed by forward-marching from the inlet stream or explicit inlet pressure |
+
+The default fixed-outlet mode uses:
 
 $$
 P_{i-1} = P_i + \frac{dP}{dx}\bigg|_i \cdot \Delta x
 $$
 
-This allows the inlet pressure to evolve naturally in response to changing flow conditions.
+This allows the inlet pressure to evolve naturally in response to changing flow conditions while preserving the fixed downstream backpressure.
+
+The inlet-pressure-driven mode uses:
+
+$$
+P_i = P_{i-1} - \frac{dP}{dx}\bigg|_{i-1} \cdot \Delta x
+$$
+
+This keeps the inlet section aligned with the inlet stream pressure and calculates the outlet pressure. Use this mode before comparing dynamic pressure drops to correlations that propagate from the inlet.
+
+```java
+java.util.UUID runId = java.util.UUID.randomUUID();
+
+pipe.useInletPressureDrivenTransient();
+pipe.run();
+pipe.runTransient(300.0, runId);
+
+double dpBar = pipe.getSignedPressureDrop("bar");
+double inletResidualBar = pipe.getInletPressureResidual("bar");
+boolean mismatch = pipe.hasBoundaryConditionPressureMismatch();
+String message = pipe.getBoundaryConditionDiagnosticMessage();
+```
+
+`getSignedPressureDrop(unit)` returns inlet pressure minus outlet pressure. If `hasPressureRiseAcrossPipe()` is true, the pressure-drop comparison is inverted and should be treated as a boundary-condition or model-form diagnostic rather than a normal pressure-drop value. `hasBoundaryConditionPressureMismatch()` is mainly intended to catch fixed-outlet transient cases whose reconstructed inlet pressure differs materially from the connected inlet stream.
+
+### Transient Warm-Up from Steady State
+
+The steady-state profile is a good initial estimate, but the first dynamic step can contain a
+numerical relaxation as conservative variables, holdup, velocities, and pressure reconstruction
+become mutually consistent. For reported dynamic comparisons, warm the transient model before
+recording the first time point:
+
+```java
+pipe.useInletPressureDrivenTransient();
+pipe.run();
+
+// Advance internal transient state, then reset reported simulation time to zero.
+pipe.initializeTransientFromSteadyState(300.0, 5.0, java.util.UUID.randomUUID());
+
+// Start reported dynamic history after warm-up.
+pipe.runTransient(300.0, runId);
+```
+
+`initializeTransientFromSteadyState(duration, step, id)` keeps the warmed pressure, holdup,
+velocity, thermal, and slug-tracking state, but resets the public reporting clock and outlet slug
+counters. This avoids treating the first steady-to-transient relaxation as a physical flow-step
+response.
+
+## Commercial Tool Comparison
+
+`TwoFluidPipe` should be described as a mechanistic two-fluid model with OLGA-inspired closure
+sets, not as OLGA itself. The implementation is transparent and extensible, and it includes
+terrain, heat transfer, thermodynamic flashes, water-oil slip, slug tracking, adaptive timestepping,
+and benchmark export support. Commercial simulators such as OLGA and LedaFlow still have much
+larger proprietary validation bases, mature dynamic initialization, and extensive field-tuned
+closure packages.
+
+Use this practical positioning:
+
+| Use | Recommended reference |
+|-----|-----------------------|
+| Quick steady pressure-drop screening | `PipeBeggsAndBrills` and other steady correlations |
+| Dynamic model development and transparent sensitivity studies | `TwoFluidPipe` with warm-up and benchmark harness |
+| Project-grade transient slugging, severe slugging, and operability validation | OLGA/LedaFlow export or field data benchmark |
+
+`PipeBeggsAndBrills` remains the steady correlation benchmark. It should not be treated as the main
+dynamic truth source because it does not represent the same distributed transient inventory,
+pressure-wave, and slug-propagation physics as a dynamic two-fluid simulator.
 
 ## Benchmark Validation
 
-The `TwoFluidPipeBenchmarkTest` provides 19 tests validating `TwoFluidPipe` against `PipeBeggsAndBrills` and analytical results. Key benchmark numbers:
+The `TwoFluidPipeBenchmarkTest` provides tests comparing `TwoFluidPipe` against `PipeBeggsAndBrills` and analytical results. These are regression and screening benchmarks, not a replacement for commercial-tool or field validation. Key benchmark numbers:
 
 | Test Case | TwoFluidPipe / Beggs&Brill Ratio | Notes |
 |-----------|----------------------------------|-------|

@@ -6,7 +6,7 @@ import java.io.Serializable;
  * Represents a radial thermal layer for multi-layer heat transfer calculations in pipelines.
  *
  * <p>
- * This class supports OLGA-style multi-layer thermal modeling with typical layers including:
+ * This class supports OLGA-inspired multi-layer thermal modeling with typical layers including:
  * </p>
  * <ul>
  * <li>Steel pipe wall - high conductivity, high thermal mass</li>

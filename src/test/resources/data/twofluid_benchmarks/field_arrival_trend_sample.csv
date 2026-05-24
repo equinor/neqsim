@@ -1,0 +1,7 @@
+case,time_s,position_m,variable,value,abs_tolerance,rel_tolerance,source
+field_arrival_pressure_sample,0.0,0.0,pressure_bara,92.0,0.5,0.02,field_historian_sample_replace_with_measured_trend
+field_arrival_pressure_sample,0.0,12000.0,pressure_bara,88.3,0.7,0.03,field_historian_sample_replace_with_measured_trend
+field_arrival_pressure_sample,600.0,12000.0,pressure_bara,87.6,0.7,0.03,field_historian_sample_replace_with_measured_trend
+field_arrival_pressure_sample,1200.0,12000.0,pressure_bara,86.9,0.8,0.03,field_historian_sample_replace_with_measured_trend
+field_arrival_pressure_sample,1200.0,12000.0,temperature_k,288.15,2.0,0.01,field_historian_sample_replace_with_measured_trend
+field_arrival_pressure_sample,1200.0,6000.0,liquid_holdup,0.18,0.05,0.20,field_historian_sample_replace_with_measured_trend

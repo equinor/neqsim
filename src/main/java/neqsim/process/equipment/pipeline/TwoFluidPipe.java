@@ -163,7 +163,7 @@ public class TwoFluidPipe extends Pipeline {
   /** Slug tracker (simplified model). */
   private SlugTracker slugTracker;
 
-  /** Lagrangian slug tracker (OLGA-style full tracking). */
+  /** Lagrangian slug tracker (OLGA-inspired tracking). */
   private LagrangianSlugTracker lagrangianSlugTracker;
 
   /**
@@ -172,7 +172,7 @@ public class TwoFluidPipe extends Pipeline {
   public enum SlugTrackingMode {
     /** Simplified slug unit model. */
     SIMPLIFIED,
-    /** Full Lagrangian tracking (OLGA-style). */
+    /** Lagrangian tracking with OLGA-inspired closures. */
     LAGRANGIAN,
     /** No slug tracking. */
     DISABLED
@@ -201,11 +201,23 @@ public class TwoFluidPipe extends Pipeline {
     CHARACTERISTIC
   }
 
+  /** Pressure reference used when reconstructing the transient pressure profile. */
+  public enum TransientPressureReference {
+    /** March pressure backward from a fixed outlet pressure. */
+    FIXED_OUTLET_PRESSURE,
+    /** March pressure forward from the inlet stream or explicit inlet pressure. */
+    INLET_PRESSURE
+  }
+
   /** Inlet boundary condition type. */
   private BoundaryCondition inletBCType = BoundaryCondition.STREAM_CONNECTED;
 
   /** Outlet boundary condition type. */
   private BoundaryCondition outletBCType = BoundaryCondition.CONSTANT_PRESSURE;
+
+  /** Transient pressure reference used for pressure-profile reconstruction. */
+  private TransientPressureReference transientPressureReference =
+      TransientPressureReference.FIXED_OUTLET_PRESSURE;
 
   /** Outlet pressure (Pa). */
   private double outletPressure;
@@ -224,6 +236,24 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Flag indicating if inlet mass flow was explicitly set. */
   private boolean inletMassFlowSet = false;
+
+  /** Last signed inlet pressure residual relative to the connected inlet stream (Pa). */
+  private double inletPressureResidual = Double.NaN;
+
+  /** Last absolute boundary pressure residual used for diagnostics (Pa). */
+  private double boundaryConditionResidual = Double.NaN;
+
+  /** Threshold for boundary-condition residual warnings (Pa). */
+  private double boundaryConditionResidualWarningThreshold = 1.0e5;
+
+  /** True when the latest transient pressure profile is inconsistent with the inlet stream. */
+  private boolean boundaryConditionPressureMismatch = false;
+
+  /** Last boundary-condition diagnostic message. */
+  private String boundaryConditionDiagnosticMessage = "";
+
+  /** Avoids logging the same boundary-condition warning every substep. */
+  private boolean boundaryConditionResidualWarningLogged = false;
 
   // ============ Settings ============
 
@@ -263,7 +293,7 @@ public class TwoFluidPipe extends Pipeline {
   /** Soil/burial thermal resistance (m²·K/W). */
   private double soilThermalResistance = 0.0;
 
-  /** Multi-layer thermal calculator for OLGA-style radial heat transfer. */
+  /** Multi-layer thermal calculator for OLGA-inspired radial heat transfer. */
   private MultilayerThermalCalculator thermalCalculator = null;
 
   /** Enable multi-layer thermal model (vs simple U-value). */
@@ -372,10 +402,10 @@ public class TwoFluidPipe extends Pipeline {
   /** Track which slugs have already been counted at outlet (by slug ID). */
   private java.util.Set<Integer> countedOutletSlugs = new java.util.HashSet<>();
 
-  // ============ OLGA-style model parameters ============
+  // ============ OLGA-inspired closure parameters ============
 
   /**
-   * OLGA model type for holdup and flow regime calculations.
+   * OLGA-inspired closure mode for holdup and flow regime calculations.
    *
    * <p>
    * Reference: Bendiksen et al. (1991) "The Dynamic Two-Fluid Model OLGA" SPE Production
@@ -384,13 +414,13 @@ public class TwoFluidPipe extends Pipeline {
    */
   public enum OLGAModelType {
     /**
-     * Full OLGA model with momentum balance for all flow regimes. Most accurate but computationally
-     * intensive.
+     * OLGA-inspired mechanistic closure set with momentum-balance closures for the main flow
+     * regimes. Most detailed but computationally intensive.
      */
     FULL,
     /**
-     * Simplified OLGA model with empirical correlations. Faster but less accurate for complex
-     * terrain.
+     * Simplified OLGA-inspired closure set with empirical correlations. Faster but less accurate
+     * for complex terrain.
      */
     SIMPLIFIED,
     /**
@@ -399,16 +429,16 @@ public class TwoFluidPipe extends Pipeline {
     DRIFT_FLUX
   }
 
-  /** Current OLGA model type. Default is FULL for best accuracy. */
+  /** Current OLGA-inspired closure mode. Default is FULL for the most detailed closures. */
   private OLGAModelType olgaModelType = OLGAModelType.FULL;
 
   /**
-   * Base minimum liquid holdup for stratified flow (OLGA-style constraint).
+   * Base minimum liquid holdup for stratified flow (OLGA-inspired constraint).
    *
    * <p>
-   * OLGA enforces a minimum holdup to prevent unrealistically low values at high gas velocities.
-   * This is based on the observation that even at high velocities, a thin liquid film remains on
-   * the pipe wall in stratified/annular flow.
+   * The OLGA-inspired closure enforces a minimum holdup to prevent unrealistically low values at
+   * high gas velocities. This is based on the observation that even at high velocities, a thin
+   * liquid film remains on the pipe wall in stratified/annular flow.
    * </p>
    *
    * <p>
@@ -457,12 +487,12 @@ public class TwoFluidPipe extends Pipeline {
   private boolean useAdaptiveMinimumOnly = true;
 
   /**
-   * Enable OLGA-style minimum slip constraint.
+   * Enable OLGA-inspired minimum slip constraint.
    *
    * <p>
-   * When enabled (default), enforces a minimum liquid holdup in gas-dominant stratified flow,
-   * matching OLGA behavior. When disabled, holdup can approach no-slip values at high velocities
-   * (Beggs-Brill style).
+   * When enabled (default), enforces a minimum liquid holdup in gas-dominant stratified flow using
+   * an OLGA-inspired film constraint. When disabled, holdup can approach no-slip values at high
+   * velocities (Beggs-Brill style).
    * </p>
    */
   private boolean enforceMinimumSlip = true;
@@ -473,8 +503,9 @@ public class TwoFluidPipe extends Pipeline {
    * Minimum film thickness for annular flow (m).
    *
    * <p>
-   * In high gas velocity annular flow, OLGA maintains a minimum liquid film on the pipe wall. This
-   * prevents unrealistically low holdup predictions. Default 0.1mm based on typical measurements.
+   * In high gas velocity annular flow, the OLGA-inspired closure maintains a minimum liquid film on
+   * the pipe wall. This prevents unrealistically low holdup predictions. Default 0.1mm based on
+   * typical measurements.
    * </p>
    */
   private double minimumFilmThickness = 0.0001; // 0.1 mm
@@ -484,30 +515,31 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * Fraction of liquid entrained as droplets in the gas core. Affects the distribution between film
-   * flow and droplet flow in annular regime. OLGA uses Ishii-Mishima correlation.
+   * flow and droplet flow in annular regime. The implementation uses an Ishii-Mishima-based
+   * entrainment correlation.
    * </p>
    */
   private double annularEntrainmentFraction = 0.0;
 
   /**
-   * Enable OLGA-style annular film model.
+   * Enable OLGA-inspired annular film model.
    *
    * <p>
-   * When enabled, uses OLGA's annular film model which accounts for: - Minimum film thickness on
-   * pipe wall - Liquid entrainment in gas core - Wave formation and droplet deposition
+   * When enabled, uses an OLGA-inspired annular film model which accounts for: - Minimum film
+   * thickness on pipe wall - Liquid entrainment in gas core - Wave formation and droplet deposition
    * </p>
    */
   private boolean enableAnnularFilmModel = true;
 
-  // ============ OLGA Terrain Tracking Parameters ============
+  // ============ OLGA-Inspired Terrain Tracking Parameters ============
 
   /**
-   * Enable full OLGA-style terrain tracking.
+   * Enable OLGA-inspired terrain tracking.
    *
    * <p>
-   * When enabled, uses OLGA's terrain tracking algorithm which: - Identifies all low points and
-   * high points - Tracks liquid accumulation in valleys - Models terrain-induced slugging - Handles
-   * severe slugging in risers
+   * When enabled, uses an OLGA-inspired terrain tracking algorithm which: - Identifies all low
+   * points and high points - Tracks liquid accumulation in valleys - Models terrain-induced
+   * slugging - Handles severe slugging in risers
    * </p>
    */
   private boolean enableTerrainTracking = true;
@@ -517,7 +549,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * When liquid holdup in a low point exceeds this value, a terrain-induced slug is initiated.
-   * Default 0.6 based on OLGA recommendations.
+   * Default 0.6 based on published dynamic two-fluid model recommendations.
    * </p>
    */
   private double terrainSlugCriticalHoldup = 0.6;
@@ -527,7 +559,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * Controls how much liquid falls back in uphill sections when gas velocity is insufficient to
-   * carry liquid upward. Higher values mean more liquid accumulation. OLGA default ~0.3.
+   * carry liquid upward. Higher values mean more liquid accumulation. Default is 0.3.
    * </p>
    */
   private double liquidFallbackCoefficient = 0.3;
@@ -542,15 +574,15 @@ public class TwoFluidPipe extends Pipeline {
    */
   private boolean enableSevereSlugModel = true;
 
-  // ============ OLGA Flow Regime Map Parameters ============
+  // ============ OLGA-Inspired Flow Regime Map Parameters ============
 
   /**
-   * Use OLGA flow regime map instead of Taitel-Dukler.
+   * Use OLGA-inspired flow regime map instead of Taitel-Dukler.
    *
    * <p>
-   * OLGA's flow regime map differs from Taitel-Dukler in several ways: - Different transition
-   * criteria for stratified wavy to slug - Accounts for pipe roughness effects - Better handling of
-   * inclined flow - Hysteresis in regime transitions
+   * The OLGA-inspired flow regime map differs from Taitel-Dukler in several ways: - Different
+   * transition criteria for stratified wavy to slug - Accounts for pipe roughness effects - Better
+   * handling of inclined flow - Hysteresis in regime transitions
    * </p>
    */
   private boolean useOLGAFlowRegimeMap = true;
@@ -604,6 +636,15 @@ public class TwoFluidPipe extends Pipeline {
   /** Current step count. */
   private int currentStep = 0;
 
+  /** True when a transient warm-up has been run from the current steady-state profile. */
+  private boolean transientInitializedFromSteadyState = false;
+
+  /** Duration of the latest transient warm-up run in seconds. */
+  private double lastTransientWarmupDuration = 0.0;
+
+  /** Number of reporting-level warm-up calls used by the latest transient warm-up. */
+  private int lastTransientWarmupSteps = 0;
+
   /**
    * Enable adaptive timestepping that detects instability and reduces dt automatically.
    *
@@ -641,6 +682,18 @@ public class TwoFluidPipe extends Pipeline {
    * the timestep recovers after a reduction.
    */
   private static final double ADAPTIVE_DT_GROWTH = 1.05;
+
+  /** Gas velocity limiter used by boundary/state corrections (m/s). */
+  private static final double GAS_VELOCITY_LIMIT = 100.0;
+
+  /** Liquid velocity limiter used by boundary/state corrections (m/s). */
+  private static final double LIQUID_VELOCITY_LIMIT = 50.0;
+
+  /** Tolerance for detecting limiter saturation. */
+  private static final double VELOCITY_LIMIT_TOLERANCE = 1.0e-9;
+
+  /** Fraction of a velocity limiter treated as an adaptive rejection threshold. */
+  private static final double VELOCITY_LIMIT_REJECTION_FRACTION = 0.95;
 
   /** Flag indicating transient mode (inlet P is free, not fixed from stream). */
   private boolean isTransientMode = false;
@@ -701,7 +754,13 @@ public class TwoFluidPipe extends Pipeline {
 
     timeIntegrator.setCflNumber(cflNumber);
 
-    // Reset outlet slug statistics
+    resetOutletSlugStatistics();
+  }
+
+  /**
+   * Reset outlet slug counters used for reporting.
+   */
+  private void resetOutletSlugStatistics() {
     outletSlugCount = 0;
     totalSlugVolumeAtOutlet = 0;
     lastSlugArrivalTime = 0;
@@ -728,13 +787,11 @@ public class TwoFluidPipe extends Pipeline {
     sections = new TwoFluidSection[numberOfSections];
 
     // Reset slug tracking state on re-initialization
-    outletSlugCount = 0;
-    totalSlugVolumeAtOutlet = 0;
-    lastSlugArrivalTime = 0;
-    maxSlugLengthAtOutlet = 0;
-    maxSlugVolumeAtOutlet = 0;
-    countedOutletSlugs.clear();
+    resetOutletSlugStatistics();
     simulationTime = 0;
+    transientInitializedFromSteadyState = false;
+    lastTransientWarmupDuration = 0.0;
+    lastTransientWarmupSteps = 0;
 
     // Get inlet properties
     SystemInterface inletFluid = getInletStream().getFluid();
@@ -1378,6 +1435,9 @@ public class TwoFluidPipe extends Pipeline {
       accumulationTracker.identifyAccumulationZones(sections);
     }
 
+    applyFixedOutletPressureSteadyStateBoundary();
+    applyOpenBoundaryPressureEnvelopeLimit();
+
     // Update outlet pressure from converged profile (if not user-specified)
     if (!outletPressureSet) {
       outletPressure = sections[numberOfSections - 1].getPressure();
@@ -1385,6 +1445,32 @@ public class TwoFluidPipe extends Pipeline {
 
     // Store initial profiles
     updateResultArrays();
+  }
+
+  /**
+   * Applies the fixed outlet pressure boundary to the steady-state section profile.
+   *
+   * <p>
+   * The steady solver marches from the inlet to obtain a robust holdup and friction profile. When a
+   * user has explicitly set a constant outlet pressure, the final pressure field must use the same
+   * downstream boundary as the transient solver. Reconstructing once from the outlet avoids an
+   * artificial pressure jump on the first transient step.
+   * </p>
+   */
+  private void applyFixedOutletPressureSteadyStateBoundary() {
+    if (sections == null || numberOfSections < 2 || !outletPressureSet
+        || !usesFixedOutletPressureReference()) {
+      return;
+    }
+
+    sections[numberOfSections - 1].setPressure(outletPressure);
+    for (int i = numberOfSections - 2; i >= 0; i--) {
+      TwoFluidSection sec = sections[i];
+      TwoFluidSection downstream = sections[i + 1];
+      double dPdx = estimatePressureGradient(sec);
+      double pNew = downstream.getPressure() + dPdx * sec.getLength();
+      sec.setPressure(Math.max(1e5, pNew));
+    }
   }
 
   /**
@@ -1809,8 +1895,8 @@ public class TwoFluidPipe extends Pipeline {
    * Update temperature using multi-layer thermal model.
    *
    * <p>
-   * This method implements OLGA-style radial heat transfer through multiple concentric layers. The
-   * heat transfer calculation uses:
+   * This method implements OLGA-inspired radial heat transfer through multiple concentric layers.
+   * The heat transfer calculation uses:
    * </p>
    * <ul>
    * <li>Inner convective resistance from fluid to pipe wall</li>
@@ -1932,14 +2018,15 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Calculate local liquid holdup using OLGA-style models with terrain effects.
+   * Calculate local liquid holdup using OLGA-inspired models with terrain effects.
    *
    * <p>
    * Supports multiple model types:
    * </p>
    * <ul>
-   * <li>FULL OLGA: Momentum balance for stratified, film model for annular, Dukler for slug</li>
-   * <li>SIMPLIFIED OLGA: Empirical correlations with minimum slip constraint</li>
+   * <li>OLGA-inspired mechanistic closure set: momentum balance for stratified, film model for
+   * annular, Dukler for slug</li>
+   * <li>SIMPLIFIED: empirical correlations with minimum slip constraint</li>
    * <li>DRIFT_FLUX: Original NeqSim drift-flux model</li>
    * </ul>
    *
@@ -1983,10 +2070,10 @@ public class TwoFluidPipe extends Pipeline {
 
     double alphaL;
 
-    // Use OLGA model type to determine calculation method
+    // Use the OLGA-inspired closure mode to determine calculation method
     if (olgaModelType == OLGAModelType.FULL) {
-      // ========== FULL OLGA MODEL ==========
-      // Use flow-regime-specific OLGA correlations
+      // ========== OLGA-INSPIRED MECHANISTIC CLOSURE SET ==========
+      // Use flow-regime-specific mechanistic and literature correlations
 
       if (regime == FlowRegime.ANNULAR) {
         // OLGA annular film model
@@ -2106,7 +2193,7 @@ public class TwoFluidPipe extends Pipeline {
       }
 
     } else if (olgaModelType == OLGAModelType.SIMPLIFIED) {
-      // ========== SIMPLIFIED OLGA MODEL ==========
+      // ========== SIMPLIFIED OLGA-INSPIRED CLOSURE SET ==========
       // Use empirical correlations with minimum slip
 
       // For gas-dominant systems, use stratified momentum balance
@@ -2259,7 +2346,7 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Calculate stratified flow liquid holdup using OLGA-style momentum balance.
+   * Calculate stratified flow liquid holdup using OLGA-inspired momentum balance.
    *
    * <p>
    * This method implements the OLGA approach for stratified flow, where the liquid level is
@@ -2479,7 +2566,7 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Calculate liquid holdup for annular flow using OLGA-style film model.
+   * Calculate liquid holdup for annular flow using OLGA-inspired film model.
    *
    * <p>
    * In annular flow, liquid exists as a thin film on the pipe wall and as entrained droplets in the
@@ -2701,7 +2788,7 @@ public class TwoFluidPipe extends Pipeline {
    * Calculate terrain-induced liquid accumulation enhancement using OLGA methodology.
    *
    * <p>
-   * This implements the full OLGA terrain tracking algorithm which accounts for:
+   * This implements an OLGA-inspired terrain tracking algorithm which accounts for:
    * </p>
    * <ul>
    * <li><b>Low Point Accumulation:</b> Liquid pools in valleys due to gravity. The volume of
@@ -2951,6 +3038,35 @@ public class TwoFluidPipe extends Pipeline {
    * @return Pressure gradient estimate (Pa/m)
    */
   private double estimatePressureGradient(TwoFluidSection sec) {
+    return estimatePressureGradient(sec, false);
+  }
+
+  /**
+   * Estimate pressure gradient for nominal inlet-to-outlet pressure reconstruction.
+   *
+   * <p>
+   * In inlet-pressure-driven comparison mode, pressure is reconstructed along the nominal pipeline
+   * flow direction. Local phase velocity reversals from the transient momentum state should not
+   * make wall friction act as a pressure source along that reconstruction path; only gravity can
+   * create a physical pressure recovery in the nominal direction.
+   * </p>
+   *
+   * @param sec current pipe section
+   * @return pressure gradient estimate in Pa/m for nominal forward flow
+   */
+  private double estimateNominalForwardPressureGradient(TwoFluidSection sec) {
+    return estimatePressureGradient(sec, true);
+  }
+
+  /**
+   * Estimate pressure gradient with optional nominal-forward friction direction.
+   *
+   * @param sec current pipe section
+   * @param nominalForwardFlow true to make friction oppose nominal inlet-to-outlet flow, false to
+   *        preserve the local signed mixture-velocity convention
+   * @return pressure gradient estimate in Pa/m
+   */
+  private double estimatePressureGradient(TwoFluidSection sec, boolean nominalForwardFlow) {
     double alphaG = sec.getGasHoldup();
     double alphaL = sec.getLiquidHoldup();
     double rhoG = sec.getGasDensity();
@@ -2986,7 +3102,8 @@ public class TwoFluidPipe extends Pipeline {
     double fTP = calcDarcyFrictionFactor(rhoMix, Math.abs(vMix), diameter, muTP);
 
     // Darcy-Weisbach: dP/dx = f * rho * v^2 / (2 * D)
-    double dPdx_fric = fTP * rhoMix * vMix * Math.abs(vMix) / (2.0 * diameter);
+    double directionalVelocity = nominalForwardFlow ? Math.abs(vMix) : vMix;
+    double dPdx_fric = fTP * rhoMix * directionalVelocity * Math.abs(vMix) / (2.0 * diameter);
 
     // Gravity gradient
     double dPdx_grav = rhoMix * 9.81 * Math.sin(sec.getInclination());
@@ -3212,7 +3329,9 @@ public class TwoFluidPipe extends Pipeline {
     isTransientMode = true;
     boolean isIMEX = (timeIntegrator.getMethod() == TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION);
 
-    // Calculate initial stable time step (OLGA-style: CFL from current velocities)
+    refreshBoundaryStateBeforeTransientSubstep();
+
+    // Calculate initial stable time step from the current CFL-limited velocities.
     double dtCFL = isIMEX ? calcConvectiveTimeStep() : calcStableTimeStep();
     if (enableAdaptiveTimestepping) {
       dtCFL *= adaptiveDtFactor;
@@ -3247,6 +3366,8 @@ public class TwoFluidPipe extends Pipeline {
         dtActual = Math.min(dtActual, timeRemaining);
       }
 
+      refreshBoundaryStateBeforeTransientSubstep();
+
       // 1. Update thermodynamic properties (periodically)
       currentStep++;
       if (currentStep % thermodynamicUpdateInterval == 0) {
@@ -3255,6 +3376,10 @@ public class TwoFluidPipe extends Pipeline {
 
       // 2. Store previous state for rollback capability
       double[][] U_prev = equations.extractState(sections);
+      double[] pressurePrev = new double[numberOfSections];
+      for (int i = 0; i < numberOfSections; i++) {
+        pressurePrev[i] = sections[i].getPressure();
+      }
 
       // 3. Calculate RHS and advance solution
       final double dtFinal = dtActual;
@@ -3293,8 +3418,8 @@ public class TwoFluidPipe extends Pipeline {
           soundSpeeds[i] = (invC2 > 0) ? Math.sqrt(1.0 / (rhoMix * invC2)) : cG;
           soundSpeeds[i] = Math.max(soundSpeeds[i], 1.0);
         }
-        boolean outletFixed = (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
-            || outletBCType == BoundaryCondition.CHARACTERISTIC);
+        boolean outletFixed =
+            usesFixedOutletPressureReference() || outletBCType == BoundaryCondition.CHARACTERISTIC;
         timeIntegrator.setIMEXProperties(soundSpeeds, densities, areas, gasDensities, oilDensities,
             waterDensities, dx, outletPressure, outletFixed);
       }
@@ -3348,6 +3473,7 @@ public class TwoFluidPipe extends Pipeline {
 
       // 7. Apply boundary conditions
       applyBoundaryConditions();
+      applyOpenBoundaryPressureEnvelopeLimit();
 
       // 8. Validate section states and fix any issues
       validateSectionStates();
@@ -3369,11 +3495,33 @@ public class TwoFluidPipe extends Pipeline {
             postRejected = true;
             break;
           }
+          if (hitsTransientVelocityLimiter(sec)) {
+            postRejected = true;
+            break;
+          }
+        }
+
+        if (!postRejected && exceedsAdaptivePressureChangeLimit(pressurePrev)) {
+          postRejected = true;
         }
 
         if (postRejected) {
           equations.applyState(sections, U_prev);
-          reconstructPressureProfile();
+          restoreSectionPressures(pressurePrev);
+          if (adaptiveDtFactor <= MIN_ADAPTIVE_DT_FACTOR + 1.0e-12) {
+            double heldTime = timeRemaining;
+            if (usesFixedOutletPressureReference() && numberOfSections > 0) {
+              sections[numberOfSections - 1].setPressure(outletPressure);
+            }
+            applyOpenBoundaryPressureEnvelopeLimit();
+            simulationTime += heldTime;
+            timeRemaining = 0.0;
+            timeIntegrator.advanceTime(heldTime);
+            logger
+                .warn("TwoFluidPipe {} held previous stable state for {} s after adaptive timestep "
+                    + "rejection reached the minimum timestep factor.", getName(), heldTime);
+            break;
+          }
           applyBoundaryConditions();
           adaptiveDtFactor = Math.max(adaptiveDtFactor * 0.25, MIN_ADAPTIVE_DT_FACTOR);
           currentStep--;
@@ -3394,7 +3542,7 @@ public class TwoFluidPipe extends Pipeline {
         double inletMixtureVelocity = sections[0].getMixtureVelocity();
 
         if (slugTrackingMode == SlugTrackingMode.LAGRANGIAN) {
-          // OLGA-style full Lagrangian tracking
+          // OLGA-inspired Lagrangian tracking
           lagrangianSlugTracker.setReferenceVelocity(inletMixtureVelocity);
 
           // Check for terrain-induced slug initiation from accumulation zones
@@ -3407,7 +3555,7 @@ public class TwoFluidPipe extends Pipeline {
             }
           }
 
-          // Advance slugs with full Lagrangian tracking
+          // Advance slugs with Lagrangian tracking
           lagrangianSlugTracker.advanceTimeStep(sections, dtActual);
 
           // Track slugs arriving at outlet
@@ -3448,11 +3596,121 @@ public class TwoFluidPipe extends Pipeline {
       timeIntegrator.advanceTime(dtActual);
     }
 
+    if (timeRemaining > 1e-12) {
+      double heldTime = timeRemaining;
+      if (usesFixedOutletPressureReference() && numberOfSections > 0) {
+        sections[numberOfSections - 1].setPressure(outletPressure);
+      }
+      applyOpenBoundaryPressureEnvelopeLimit();
+      validateSectionStates();
+      simulationTime += heldTime;
+      timeIntegrator.advanceTime(heldTime);
+      logger.warn(
+          "TwoFluidPipe {} held previous stable state for {} s after reaching {} adaptive "
+              + "substeps without completing the requested transient step.",
+          getName(), heldTime, maxSubSteps);
+    }
+
     // Update outlet stream and result arrays
     updateOutletStream();
     updateResultArrays();
 
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Refreshes connected-stream boundary states before a transient substep.
+   *
+   * <p>
+   * Feed streams may be changed between calls to {@link #runTransient(double, UUID)}. Applying the
+   * boundary condition before CFL estimation, state extraction, and pressure reconstruction makes
+   * the next substep use the new inlet flow instead of the previous accepted state.
+   * </p>
+   */
+  private void refreshBoundaryStateBeforeTransientSubstep() {
+    applyBoundaryConditions();
+    reconstructPressureProfile();
+    applyOpenBoundaryPressureEnvelopeLimit();
+    validateSectionStates();
+  }
+
+  /**
+   * Checks whether section pressures changed too much during one accepted transient substep.
+   *
+   * @param previousPressures pressure profile before the substep in Pa
+   * @return true if any section exceeds the configured pressure change ratio
+   */
+  private boolean exceedsAdaptivePressureChangeLimit(double[] previousPressures) {
+    if (previousPressures == null || previousPressures.length != numberOfSections
+        || adaptiveMaxPressureChangeRatio <= 1.0) {
+      return false;
+    }
+    for (int i = 0; i < numberOfSections; i++) {
+      double previousPressure = Math.max(previousPressures[i], 1e5);
+      double currentPressure = Math.max(sections[i].getPressure(), 1e5);
+      double ratio = Math.max(previousPressure, currentPressure)
+          / Math.max(1e5, Math.min(previousPressure, currentPressure));
+      if (ratio > adaptiveMaxPressureChangeRatio) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Checks whether a section is close to saturating the transient velocity correction limiter.
+   *
+   * @param section pipe section to inspect
+   * @return true if gas or liquid velocity is close to the numerical limiter
+   */
+  private boolean hitsTransientVelocityLimiter(TwoFluidSection section) {
+    return Math.abs(section.getGasVelocity()) >= GAS_VELOCITY_LIMIT
+        * VELOCITY_LIMIT_REJECTION_FRACTION - VELOCITY_LIMIT_TOLERANCE
+        || Math.abs(section.getLiquidVelocity()) >= LIQUID_VELOCITY_LIMIT
+            * VELOCITY_LIMIT_REJECTION_FRACTION - VELOCITY_LIMIT_TOLERANCE;
+  }
+
+  /**
+   * Limits pressure reconstruction to the open-boundary pressure envelope.
+   *
+   * <p>
+   * For stream-connected inlet / fixed-pressure outlet cases, pressure reconstruction should remain
+   * tied to the two external pressure references. When the transient momentum state becomes stiff,
+   * a local velocity reversal can otherwise create an internal pressure hump that is inconsistent
+   * with both boundaries. The limiter is only applied to this open-boundary configuration and uses
+   * a 10 percent guard band to avoid clipping normal small transients.
+   * </p>
+   */
+  private void applyOpenBoundaryPressureEnvelopeLimit() {
+    if (sections == null || numberOfSections == 0
+        || inletBCType != BoundaryCondition.STREAM_CONNECTED || !usesFixedOutletPressureReference()
+        || getInletStream() == null) {
+      return;
+    }
+    double inletReferencePressure = Math.max(getInletStream().getFluid().getPressure("Pa"), 1.0e5);
+    double lowerBound = Math.max(1.0e5, Math.min(inletReferencePressure, outletPressure) * 0.90);
+    double upperBound = Math.max(inletReferencePressure, outletPressure) * 1.10;
+    for (int i = 0; i < numberOfSections; i++) {
+      double boundedPressure =
+          Math.min(upperBound, Math.max(lowerBound, sections[i].getPressure()));
+      sections[i].setPressure(boundedPressure);
+    }
+    sections[numberOfSections - 1].setPressure(outletPressure);
+  }
+
+  /**
+   * Restores section pressures after a rejected transient substep.
+   *
+   * @param pressures pressure profile to restore in Pa
+   */
+  private void restoreSectionPressures(double[] pressures) {
+    if (pressures == null) {
+      return;
+    }
+    int limit = Math.min(numberOfSections, pressures.length);
+    for (int i = 0; i < limit; i++) {
+      sections[i].setPressure(Math.max(1e5, pressures[i]));
+    }
   }
 
   /**
@@ -3754,6 +4012,8 @@ public class TwoFluidPipe extends Pipeline {
         P_new = Math.max(1e5, P_new);
         sec.setPressure(P_new);
       }
+    } else if (usesInletPressureReference()) {
+      reconstructPressureFromInletReference();
     } else {
       // OUTLET OPEN (constant pressure): Standard backward march
       // Start from outlet with known pressure (Dirichlet BC)
@@ -3811,6 +4071,66 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Reconstructs pressure by marching forward from the inlet pressure reference.
+   *
+   * <p>
+   * This mode is useful for comparison against inlet-pressure-driven correlations such as
+   * Beggs-Brill. The connected inlet stream can still prescribe flow, temperature, and composition,
+   * while its pressure anchors the pressure profile.
+   * </p>
+   */
+  private void reconstructPressureFromInletReference() {
+    double inletReferencePressure = getTransientInletPressureReference();
+    sections[0].setPressure(inletReferencePressure);
+
+    for (int i = 1; i < numberOfSections; i++) {
+      TwoFluidSection upstream = sections[i - 1];
+      TwoFluidSection sec = sections[i];
+      double dPdx = estimateNominalForwardPressureGradient(upstream);
+      double pNew = upstream.getPressure() - dPdx * upstream.getLength();
+      sec.setPressure(Math.max(1e5, pNew));
+    }
+  }
+
+  /**
+   * Returns the inlet pressure reference used for inlet-pressure-driven transients.
+   *
+   * @return inlet pressure reference in Pa
+   */
+  private double getTransientInletPressureReference() {
+    if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet) {
+      return inletPressure;
+    }
+    if (getInletStream() != null) {
+      return getInletStream().getFluid().getPressure("Pa");
+    }
+    if (sections != null && numberOfSections > 0) {
+      return sections[0].getPressure();
+    }
+    return Math.max(1.0e5, inletPressure);
+  }
+
+  /**
+   * Checks if the current transient pressure reconstruction uses a fixed outlet pressure reference.
+   *
+   * @return true if transient pressure is anchored at a fixed outlet pressure
+   */
+  private boolean usesFixedOutletPressureReference() {
+    return transientPressureReference == TransientPressureReference.FIXED_OUTLET_PRESSURE
+        && outletBCType == BoundaryCondition.CONSTANT_PRESSURE;
+  }
+
+  /**
+   * Checks if the current transient pressure reconstruction uses the inlet pressure reference.
+   *
+   * @return true if transient pressure is anchored at the inlet
+   */
+  private boolean usesInletPressureReference() {
+    return transientPressureReference == TransientPressureReference.INLET_PRESSURE
+        && outletBCType == BoundaryCondition.STREAM_CONNECTED;
+  }
+
+  /**
    * Reconstruct pressure when outlet is CLOSED (Neumann BC at outlet).
    *
    * <p>
@@ -3860,11 +4180,11 @@ public class TwoFluidPipe extends Pipeline {
     TwoFluidSection inlet = sections[0];
     if (inletBCType == BoundaryCondition.STREAM_CONNECTED) {
       // Use inlet stream properties for flow rate and composition
-      // NOTE: Inlet PRESSURE is NOT set from stream during transient.
-      // It comes from reconstructPressureProfile (backward march from outlet BC).
-      // Only the steady-state solver sets inlet P from stream.
+      // In fixed-outlet transient mode, inlet pressure comes from reconstructPressureProfile
+      // (backward march from outlet BC). In inlet-pressure-driven mode, the inlet stream pressure
+      // anchors the transient pressure profile for correlation-style comparisons.
       SystemInterface inFluid = getInletStream().getFluid();
-      if (!isTransientMode) {
+      if (!isTransientMode || usesInletPressureReference()) {
         inlet.setPressure(inFluid.getPressure("Pa"));
       }
       inlet.setTemperature(inFluid.getTemperature("K"));
@@ -4104,6 +4424,8 @@ public class TwoFluidPipe extends Pipeline {
       // Riemann-invariant-based outlet boundary
       // At the outlet: J- is prescribed (typically from back-pressure), J+ from interior.
       applyCharacteristicOutletBC(outlet);
+    } else if (outletBCType == BoundaryCondition.STREAM_CONNECTED) {
+      outletPressure = outlet.getPressure();
     }
   }
 
@@ -4345,6 +4667,73 @@ public class TwoFluidPipe extends Pipeline {
       gasVelocityProfile[i] = sec.getGasVelocity();
       liquidVelocityProfile[i] = sec.getLiquidVelocity();
     }
+
+    updateBoundaryConditionDiagnostics();
+  }
+
+  /**
+   * Updates boundary-condition diagnostics from the latest section pressure profile.
+   */
+  private void updateBoundaryConditionDiagnostics() {
+    if (sections == null || numberOfSections == 0 || getInletStream() == null) {
+      inletPressureResidual = Double.NaN;
+      boundaryConditionResidual = Double.NaN;
+      boundaryConditionPressureMismatch = false;
+      boundaryConditionDiagnosticMessage = "";
+      boundaryConditionResidualWarningLogged = false;
+      return;
+    }
+
+    double inletStreamPressure = getInletStream().getFluid().getPressure("Pa");
+    inletPressureResidual = sections[0].getPressure() - inletStreamPressure;
+    boundaryConditionResidual = Math.abs(inletPressureResidual);
+
+    boolean mismatchApplies = isTransientMode
+        && transientPressureReference == TransientPressureReference.FIXED_OUTLET_PRESSURE
+        && inletBCType == BoundaryCondition.STREAM_CONNECTED
+        && outletBCType == BoundaryCondition.CONSTANT_PRESSURE;
+    boundaryConditionPressureMismatch =
+        mismatchApplies && boundaryConditionResidual > boundaryConditionResidualWarningThreshold;
+
+    if (boundaryConditionPressureMismatch) {
+      boundaryConditionDiagnosticMessage = String.format(
+          "Fixed-outlet transient reconstructed inlet pressure differs from the connected inlet "
+              + "stream by %.3f bar. Use useInletPressureDrivenTransient() when comparing against "
+              + "inlet-pressure-driven correlations, or compare fixed-outlet response variables "
+              + "directly.",
+          inletPressureResidual / 1.0e5);
+      if (!boundaryConditionResidualWarningLogged) {
+        logger.warn("TwoFluidPipe {}: {}", getName(), boundaryConditionDiagnosticMessage);
+        boundaryConditionResidualWarningLogged = true;
+      }
+    } else {
+      boundaryConditionDiagnosticMessage = "";
+      boundaryConditionResidualWarningLogged = false;
+    }
+  }
+
+  /**
+   * Converts a pressure difference in Pa to the requested unit.
+   *
+   * @param pressureDifference pressure difference in Pa
+   * @param unit requested pressure unit
+   * @return converted pressure difference
+   */
+  private double convertPressureDifferenceFromPa(double pressureDifference, String unit) {
+    if (Double.isNaN(pressureDifference)) {
+      return Double.NaN;
+    }
+    String unitName = unit == null ? "Pa" : unit.toLowerCase();
+    if (unitName.equals("bara") || unitName.equals("bar")) {
+      return pressureDifference / 1.0e5;
+    } else if (unitName.equals("kpa")) {
+      return pressureDifference / 1.0e3;
+    } else if (unitName.equals("mpa")) {
+      return pressureDifference / 1.0e6;
+    } else if (unitName.equals("psi") || unitName.equals("psia")) {
+      return pressureDifference / 6894.76;
+    }
+    return pressureDifference;
   }
 
   // ============ Result access methods ============
@@ -4639,6 +5028,107 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Initialize the transient state from the current steady-state profile using a short warm-up.
+   *
+   * <p>
+   * The default warm-up advances the model for 60 seconds using 1 second reporting-level calls,
+   * then resets the reported simulation clock to zero while retaining the warmed conservative
+   * state. This removes the first reported dynamic point from carrying the steady-to-transient
+   * relaxation jump.
+   * </p>
+   */
+  public void initializeTransientFromSteadyState() {
+    initializeTransientFromSteadyState(60.0, 1.0, UUID.randomUUID());
+  }
+
+  /**
+   * Initialize the transient state from the current steady-state profile using a configurable
+   * warm-up period.
+   *
+   * <p>
+   * The method preserves the final warmed pressure, holdup, velocity, thermal, and slug-tracking
+   * state, but resets the public reporting clock and outlet slug counters. Use it after
+   * {@link #run()} and before storing transient histories when the first dynamic step should not be
+   * interpreted as a physical process response. Boundary conditions and the selected
+   * {@link TransientPressureReference} are unchanged.
+   * </p>
+   *
+   * @param warmupDuration duration to advance the transient state before resetting the reporting
+   *        clock, in seconds. Must be finite and non-negative
+   * @param warmupTimeStep maximum time increment per warm-up call to
+   *        {@link #runTransient(double, UUID)}, in seconds. Must be finite and strictly positive
+   * @param id calculation identifier for the internal warm-up calls. If null, a new identifier is
+   *        generated
+   * @throws IllegalArgumentException if warmupDuration or warmupTimeStep is outside its valid range
+   */
+  public void initializeTransientFromSteadyState(double warmupDuration, double warmupTimeStep,
+      UUID id) {
+    if (!Double.isFinite(warmupDuration) || warmupDuration < 0.0) {
+      throw new IllegalArgumentException("Warm-up duration must be finite and non-negative");
+    }
+    if (!Double.isFinite(warmupTimeStep) || warmupTimeStep <= 0.0) {
+      throw new IllegalArgumentException("Warm-up time step must be finite and positive");
+    }
+    if (sections == null || sections.length == 0) {
+      run();
+    }
+
+    UUID warmupId = id == null ? UUID.randomUUID() : id;
+    double elapsed = 0.0;
+    int warmupSteps = 0;
+    while (elapsed < warmupDuration - 1.0e-12) {
+      double step = Math.min(warmupTimeStep, warmupDuration - elapsed);
+      runTransient(step, warmupId);
+      elapsed += step;
+      warmupSteps++;
+    }
+
+    transientInitializedFromSteadyState = true;
+    lastTransientWarmupDuration = elapsed;
+    lastTransientWarmupSteps = warmupSteps;
+    resetTransientReportingClock();
+  }
+
+  /**
+   * Reset public transient reporting counters after a warm-up while preserving warmed state.
+   */
+  private void resetTransientReportingClock() {
+    simulationTime = 0.0;
+    timeIntegrator.reset();
+    resetOutletSlugStatistics();
+    updateOutletStream();
+    updateResultArrays();
+  }
+
+  /**
+   * Check whether the current transient state has been warmed from steady state.
+   *
+   * @return true if {@link #initializeTransientFromSteadyState()} or its configurable overload has
+   *         been called since the last section initialization
+   */
+  public boolean isTransientInitializedFromSteadyState() {
+    return transientInitializedFromSteadyState;
+  }
+
+  /**
+   * Get the duration used by the latest transient warm-up.
+   *
+   * @return latest warm-up duration in seconds
+   */
+  public double getLastTransientWarmupDuration() {
+    return lastTransientWarmupDuration;
+  }
+
+  /**
+   * Get the number of reporting-level calls used by the latest transient warm-up.
+   *
+   * @return number of warm-up calls used by the latest transient warm-up
+   */
+  public int getLastTransientWarmupSteps() {
+    return lastTransientWarmupSteps;
+  }
+
+  /**
    * Get accumulation tracker for detailed analysis.
    *
    * @return Accumulation tracker
@@ -4657,7 +5147,7 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Get Lagrangian slug tracker for OLGA-style slug tracking.
+   * Get Lagrangian slug tracker for OLGA-inspired slug tracking.
    *
    * @return Lagrangian slug tracker
    */
@@ -4682,7 +5172,7 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    * <ul>
    * <li><b>SIMPLIFIED:</b> Simple slug unit model with basic tracking</li>
-   * <li><b>LAGRANGIAN:</b> Full OLGA-style Lagrangian tracking with wake effects, frequency-based
+   * <li><b>LAGRANGIAN:</b> OLGA-inspired Lagrangian tracking with wake effects, frequency-based
    * initiation, and detailed statistics</li>
    * <li><b>DISABLED:</b> No slug tracking</li>
    * </ul>
@@ -4698,7 +5188,7 @@ public class TwoFluidPipe extends Pipeline {
    * Configure Lagrangian slug tracker parameters.
    *
    * <p>
-   * This method provides access to advanced slug tracking configuration for the OLGA-style
+   * This method provides access to advanced slug tracking configuration for the OLGA-inspired
    * Lagrangian model.
    * </p>
    *
@@ -5164,6 +5654,72 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Set transient pressure-reference mode.
+   *
+   * <p>
+   * {@link TransientPressureReference#FIXED_OUTLET_PRESSURE} reproduces the legacy
+   * fixed-backpressure transient behavior. {@link TransientPressureReference#INLET_PRESSURE}
+   * reconstructs pressure from the inlet pressure and leaves the outlet pressure calculated, which
+   * is useful for comparisons against inlet-pressure-driven pipeline correlations.
+   * </p>
+   *
+   * @param pressureReference pressure-reference mode to use during transient reconstruction
+   * @throws IllegalArgumentException if pressureReference is null
+   */
+  public void setTransientPressureReference(TransientPressureReference pressureReference) {
+    if (pressureReference == null) {
+      throw new IllegalArgumentException("Transient pressure reference cannot be null");
+    }
+    this.transientPressureReference = pressureReference;
+    if (pressureReference == TransientPressureReference.INLET_PRESSURE) {
+      if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
+        outletBCType = BoundaryCondition.STREAM_CONNECTED;
+      }
+    } else if (outletBCType == BoundaryCondition.STREAM_CONNECTED) {
+      outletBCType = BoundaryCondition.CONSTANT_PRESSURE;
+      if (!outletPressureSet && sections != null && numberOfSections > 0) {
+        outletPressure = sections[numberOfSections - 1].getPressure();
+        outletPressureSet = true;
+      }
+    }
+  }
+
+  /**
+   * Get transient pressure-reference mode.
+   *
+   * @return active transient pressure-reference mode
+   */
+  public TransientPressureReference getTransientPressureReference() {
+    return transientPressureReference;
+  }
+
+  /**
+   * Configure fixed-outlet-pressure transient behavior.
+   *
+   * <p>
+   * This is the legacy transient mode and is appropriate for backpressure-controlled outlets,
+   * receiving facilities with fixed arrival pressure, and cases where the outlet pressure is the
+   * true boundary condition.
+   * </p>
+   */
+  public void useFixedOutletPressureTransient() {
+    setTransientPressureReference(TransientPressureReference.FIXED_OUTLET_PRESSURE);
+  }
+
+  /**
+   * Configure inlet-pressure-driven transient behavior.
+   *
+   * <p>
+   * The inlet stream pressure anchors pressure reconstruction and the outlet pressure is
+   * calculated. Flow rate, temperature, and composition remain connected to the inlet stream unless
+   * another inlet boundary condition has been selected explicitly.
+   * </p>
+   */
+  public void useInletPressureDrivenTransient() {
+    setTransientPressureReference(TransientPressureReference.INLET_PRESSURE);
+  }
+
+  /**
    * Set inlet mass flow for CONSTANT_FLOW boundary condition.
    *
    * @param massFlow Mass flow rate (kg/s)
@@ -5599,6 +6155,30 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Sets the maximum allowed pressure-change ratio for one adaptive substep.
+   *
+   * <p>
+   * Values close to 1.0 make the adaptive controller more conservative. Values below or equal to
+   * 1.0 disable this pressure-ratio rejection check.
+   * </p>
+   *
+   * @param maxPressureChangeRatio maximum ratio between old and new section pressure during one
+   *        adaptive substep
+   */
+  public void setAdaptiveMaxPressureChangeRatio(double maxPressureChangeRatio) {
+    this.adaptiveMaxPressureChangeRatio = maxPressureChangeRatio;
+  }
+
+  /**
+   * Gets the maximum allowed pressure-change ratio for one adaptive substep.
+   *
+   * @return adaptive pressure-change ratio limit
+   */
+  public double getAdaptiveMaxPressureChangeRatio() {
+    return adaptiveMaxPressureChangeRatio;
+  }
+
+  /**
    * Enable water-oil velocity slip modeling.
    *
    * <p>
@@ -5671,10 +6251,10 @@ public class TwoFluidPipe extends Pipeline {
     this.ssMaxWallClockTime = Math.max(1.0, seconds);
   }
 
-  // ============ OLGA-style Minimum Slip Methods ============
+  // ============ OLGA-Inspired Minimum Slip Methods ============
 
   /**
-   * Set minimum liquid holdup for stratified flow (OLGA-style constraint).
+   * Set minimum liquid holdup for stratified flow (OLGA-inspired constraint).
    *
    * <p>
    * This parameter enforces a minimum liquid holdup in gas-dominant stratified flow, preventing
@@ -5739,7 +6319,7 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Enable or disable OLGA-style minimum slip constraint.
+   * Enable or disable OLGA-inspired minimum slip constraint.
    *
    * <p>
    * When enabled (default), enforces a minimum liquid holdup in gas-dominant stratified flow. This
@@ -5751,16 +6331,17 @@ public class TwoFluidPipe extends Pipeline {
    * original Beggs-Brill correlation behavior.
    * </p>
    *
-   * @param enforce true to enforce minimum slip (OLGA-style, default), false for Beggs-Brill style
+   * @param enforce true to enforce minimum slip (OLGA-inspired, default), false for Beggs-Brill
+   *        style
    */
   public void setEnforceMinimumSlip(boolean enforce) {
     this.enforceMinimumSlip = enforce;
   }
 
   /**
-   * Check if OLGA-style minimum slip constraint is enabled.
+   * Check if OLGA-inspired minimum slip constraint is enabled.
    *
-   * @return true if minimum slip is enforced (OLGA-style)
+   * @return true if minimum slip is enforced using the OLGA-inspired constraint
    */
   public boolean isEnforceMinimumSlip() {
     return enforceMinimumSlip;
@@ -5798,21 +6379,21 @@ public class TwoFluidPipe extends Pipeline {
     return useAdaptiveMinimumOnly;
   }
 
-  // ============ OLGA Model Configuration Methods ============
+  // ============ OLGA-Inspired Closure Configuration Methods ============
 
   /**
-   * Set the OLGA model type for holdup and flow regime calculations.
+   * Set the OLGA-inspired closure mode for holdup and flow regime calculations.
    *
    * <p>
    * Available model types:
    * </p>
    * <ul>
-   * <li>FULL - Full OLGA model with momentum balance for all flow regimes (most accurate)</li>
-   * <li>SIMPLIFIED - Simplified OLGA model with empirical correlations (faster)</li>
+   * <li>FULL - OLGA-inspired mechanistic closure set with momentum-balance closures</li>
+   * <li>SIMPLIFIED - Simplified OLGA-inspired closure set with empirical correlations</li>
    * <li>DRIFT_FLUX - Original NeqSim drift-flux model (for backward compatibility)</li>
    * </ul>
    *
-   * @param modelType the OLGA model type to use
+   * @param modelType the OLGA-inspired closure mode to use
    */
   public void setOLGAModelType(OLGAModelType modelType) {
     this.olgaModelType = modelType;
@@ -5837,9 +6418,9 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Get the current OLGA model type.
+   * Get the current OLGA-inspired closure mode.
    *
-   * @return the current OLGA model type
+   * @return the current OLGA-inspired closure mode
    */
   public OLGAModelType getOLGAModelType() {
     return olgaModelType;
@@ -5864,7 +6445,7 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Enable or disable OLGA-style annular film model.
+   * Enable or disable OLGA-inspired annular film model.
    *
    * @param enable true to enable annular film model
    */
@@ -5964,14 +6545,14 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Enable or disable OLGA flow regime map.
+   * Enable or disable the OLGA-inspired flow regime map.
    *
    * <p>
-   * When enabled, uses OLGA's flow regime transition criteria instead of Taitel-Dukler. OLGA's
+   * When enabled, uses OLGA-inspired flow regime transition criteria instead of Taitel-Dukler. The
    * criteria include roughness effects and better inclined flow handling.
    * </p>
    *
-   * @param enable true to use OLGA flow regime map (default true)
+   * @param enable true to use the OLGA-inspired flow regime map (default true)
    */
   public void setUseOLGAFlowRegimeMap(boolean enable) {
     this.useOLGAFlowRegimeMap = enable;
@@ -6205,7 +6786,7 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Enable multi-layer thermal model for OLGA-style radial heat transfer.
+   * Enable multi-layer thermal model for OLGA-inspired radial heat transfer.
    *
    * <p>
    * When enabled, uses the MultilayerThermalCalculator for accurate heat transfer with proper
@@ -6712,6 +7293,78 @@ public class TwoFluidPipe extends Pipeline {
       return getInletStream().getPressure("bara");
     }
     return sections[sections.length - 1].getPressure() / 1e5; // Pa to bara
+  }
+
+  /**
+   * Get the signed pipe pressure difference.
+   *
+   * <p>
+   * Positive values mean pressure decreases from inlet to outlet. Negative values indicate a
+   * pressure rise across the reported profile, which is often a boundary-condition diagnostic
+   * rather than a valid pressure-drop comparison metric.
+   * </p>
+   *
+   * @param unit pressure-difference unit ("Pa", "bar", "bara", "kPa", "MPa", or "psi")
+   * @return signed inlet-minus-outlet pressure difference in the requested unit
+   */
+  public double getSignedPressureDrop(String unit) {
+    if (sections == null || sections.length == 0) {
+      return Double.NaN;
+    }
+    double pressureDifference =
+        sections[0].getPressure() - sections[sections.length - 1].getPressure();
+    return convertPressureDifferenceFromPa(pressureDifference, unit);
+  }
+
+  /**
+   * Check whether the reported profile has pressure rise from inlet to outlet.
+   *
+   * @return true if outlet pressure is higher than inlet pressure
+   */
+  public boolean hasPressureRiseAcrossPipe() {
+    if (sections == null || sections.length == 0) {
+      return false;
+    }
+    return sections[sections.length - 1].getPressure() > sections[0].getPressure();
+  }
+
+  /**
+   * Get the signed inlet pressure residual relative to the connected inlet stream.
+   *
+   * @param unit pressure-difference unit ("Pa", "bar", "bara", "kPa", "MPa", or "psi")
+   * @return section-inlet minus stream-inlet pressure residual
+   */
+  public double getInletPressureResidual(String unit) {
+    return convertPressureDifferenceFromPa(inletPressureResidual, unit);
+  }
+
+  /**
+   * Get the absolute boundary-condition pressure residual.
+   *
+   * @param unit pressure-difference unit ("Pa", "bar", "bara", "kPa", "MPa", or "psi")
+   * @return absolute boundary-condition pressure residual
+   */
+  public double getBoundaryConditionResidual(String unit) {
+    return convertPressureDifferenceFromPa(boundaryConditionResidual, unit);
+  }
+
+  /**
+   * Check if the latest pressure profile has a boundary-condition pressure mismatch.
+   *
+   * @return true when the latest fixed-outlet transient profile differs materially from inlet
+   *         stream pressure
+   */
+  public boolean hasBoundaryConditionPressureMismatch() {
+    return boundaryConditionPressureMismatch;
+  }
+
+  /**
+   * Get the latest boundary-condition diagnostic message.
+   *
+   * @return diagnostic message, or an empty string when no mismatch is active
+   */
+  public String getBoundaryConditionDiagnosticMessage() {
+    return boundaryConditionDiagnosticMessage;
   }
 
   // ============ API 14E Erosional Velocity Methods ============

@@ -15,7 +15,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * Unit tests for LagrangianSlugTracker.
  *
  * <p>
- * Tests the OLGA-style Lagrangian slug tracking model including:
+ * Tests the OLGA-inspired Lagrangian slug tracking model including:
  * <ul>
  * <li>Slug initiation (inlet, terrain, instability)</li>
  * <li>Slug propagation and velocity</li>

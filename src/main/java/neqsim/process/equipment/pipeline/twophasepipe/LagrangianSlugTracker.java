@@ -10,10 +10,10 @@ import java.util.Random;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 
 /**
- * OLGA-style Lagrangian slug tracking model.
+ * OLGA-inspired Lagrangian slug tracking model.
  *
  * <p>
- * Implements full Lagrangian tracking of individual slugs through the pipeline, modeling:
+ * Implements Lagrangian tracking of individual slugs through the pipeline, modeling:
  * </p>
  * <ul>
  * <li>Hydrodynamic slug initiation from flow instabilities</li>

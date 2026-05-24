@@ -437,7 +437,7 @@ System.out.println(pipe.getLocalLossSummary());
 double fi = InterfacialFriction.calcHartCorrelation(
     liquidHoldup, diameter, gasVelocity, liquidVelocity);
 
-// Use Andreussi-Persen (OLGA-style) with inclination
+// Use Andreussi-Persen (OLGA-inspired) with inclination
 double fi = InterfacialFriction.calcAndreussiPersenCorrelation(
     liquidHoldup, diameter, gasVelocity, liquidVelocity,
     gasDensity, liquidDensity, surfaceTension, inclinationRadians);
@@ -469,6 +469,14 @@ pipe.setOutletPressure(30.0, "bara");
 TwoFluidPipe.BoundaryCondition inletBC = pipe.getInletBoundaryCondition();
 TwoFluidPipe.BoundaryCondition outletBC = pipe.getOutletBoundaryCondition();
 
+// Pressure-reference mode for transient reconstruction
+// Default: fixed outlet pressure (legacy behavior)
+pipe.useFixedOutletPressureTransient();
+
+// Use inlet-pressure-driven reconstruction when comparing against correlations
+// such as PipeBeggsAndBrills, which propagate pressure from the inlet.
+pipe.useInletPressureDrivenTransient();
+
 // Initialize and run transient
 pipe.run();
 for (int t = 0; t < 120; t++) {
@@ -477,6 +485,12 @@ for (int t = 0; t < 120; t++) {
         pipe.setInletMassFlow(75.0);  // Step increase at 60s
     }
     pipe.runTransient(1.0);
+}
+
+double signedDpBar = pipe.getSignedPressureDrop("bar");
+double inletResidualBar = pipe.getInletPressureResidual("bar");
+if (pipe.hasBoundaryConditionPressureMismatch()) {
+    System.out.println(pipe.getBoundaryConditionDiagnosticMessage());
 }
 ```
 

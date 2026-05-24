@@ -176,7 +176,7 @@ water_velocity_m_s
 Example use:
 
 ```java
-Path reference = Path.of("olga_export.csv");
+Path reference = Paths.get("olga_export.csv");
 List<TwoFluidBenchmarkHarness.BenchmarkPoint> points =
     TwoFluidBenchmarkHarness.readCsv(reference);
 
@@ -196,6 +196,31 @@ time and position. Comparison results can be exported as CSV:
 String comparisonCsv = TwoFluidPipeReport.toComparisonCsv(comparison);
 ```
 
+Sample corpus files are provided under
+`src/test/resources/data/twofluid_benchmarks/` for OLGA export samples, LedaFlow export samples, and
+field-arrival trends. These files are schema examples; replace the sample values with
+project-approved exported data before using them as validation evidence.
+
+`PipeBeggsAndBrills` should remain the steady pressure-drop correlation benchmark. For dynamic
+validation, prefer OLGA/LedaFlow exports, field trends, or laboratory transient measurements because
+Beggs-Brill is not a distributed transient truth model.
+
+## Acceptance metrics by use case
+
+Declare the comparison metric and tolerance before running a benchmark. Recommended defaults are:
+
+| Use case | Primary metric | Typical acceptance basis |
+|----------|----------------|--------------------------|
+| Steady pressure-drop screening | Inlet-to-outlet pressure drop | Within agreed percent or absolute bar tolerance against `PipeBeggsAndBrills`, OLGA, LedaFlow, or field steady data |
+| Arrival pressure validation | Outlet or receiving-facility pressure | Absolute bar tolerance at defined times or rates |
+| Holdup profile validation | Liquid holdup versus position | Absolute holdup-fraction tolerance and trend agreement at low points/riser base |
+| Slugging validation | Slug frequency, slug length, or outlet liquid-rate oscillation | Frequency/arrival-time tolerance against OLGA/LedaFlow or measured slug events |
+| Liquid inventory validation | Total line liquid inventory | Percent tolerance and monotonic response during rate changes/shutdown/restart |
+| Arrival time validation | Time to pressure front, thermal front, or liquid-rate response | Absolute time tolerance based on sampling interval and operational requirement |
+
+For dynamic studies, run `initializeTransientFromSteadyState(...)` before storing the reported time
+history unless the initial relaxation itself is the subject of the study.
+
 ## Reporting recommendations for long flowlines
 
 For long oil and gas flowlines, report at least:
@@ -210,6 +235,8 @@ For long oil and gas flowlines, report at least:
 - Hydrate/wax/thermal risk sections if thresholds are configured.
 - Erosional velocity margin and maximum mixture velocity.
 - Benchmark comparison table when OLGA, LedaFlow, or field measurements are available.
+- Acceptance metric table covering pressure drop, arrival pressure, holdup profile, slug frequency,
+  liquid inventory, and arrival time where relevant.
 
 ## Gaps and planned improvements
 

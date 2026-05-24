@@ -1,0 +1,7 @@
+case,time_s,position_m,variable,value,abs_tolerance,rel_tolerance,source
+olga_80km_flow_step_sample,0.0,0.0,pressure_bara,120.0,1.0,0.03,OLGA_export_sample_replace_with_project_export
+olga_80km_flow_step_sample,0.0,80000.0,pressure_bara,116.9,1.0,0.03,OLGA_export_sample_replace_with_project_export
+olga_80km_flow_step_sample,0.0,40000.0,liquid_holdup,0.61,0.05,0.10,OLGA_export_sample_replace_with_project_export
+olga_80km_flow_step_sample,900.0,80000.0,pressure_bara,116.5,1.5,0.04,OLGA_export_sample_replace_with_project_export
+olga_80km_flow_step_sample,1800.0,80000.0,pressure_bara,115.8,1.5,0.04,OLGA_export_sample_replace_with_project_export
+olga_80km_flow_step_sample,1800.0,40000.0,liquid_holdup,0.58,0.05,0.10,OLGA_export_sample_replace_with_project_export

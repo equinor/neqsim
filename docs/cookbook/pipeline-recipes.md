@@ -676,7 +676,7 @@ per macro timestep.
 
 ### Adaptive Timestepping (TwoFluidPipe)
 
-OLGA-style adaptive timestepping provides robustness for challenging geometries (risers, S-bends):
+OLGA-inspired adaptive timestepping provides robustness for challenging geometries (risers, S-bends):
 
 ```python
 pipe = TwoFluidPipe("Subsea Line", feed)
@@ -826,6 +826,33 @@ print(f"Computed outlet mass flow: {outlet.getFlowRate('kg/sec'):.2f} kg/s")
 
 > **Note:** The most common setup for production pipelines is `STREAM_CONNECTED` inlet with `CONSTANT_PRESSURE` outlet, where the inlet stream defines the flow rate and the outlet represents the receiving facility pressure.
 
+### Transient Pressure Reference Modes
+
+`TwoFluidPipe` separates physical boundary conditions from the pressure reference used to reconstruct the transient pressure profile. This matters when comparing against correlations or simulators that anchor pressure at a different end of the pipe.
+
+| Mode | Configuration | When to use | Pressure-drop interpretation |
+|------|---------------|-------------|------------------------------|
+| Fixed outlet pressure | `pipe.useFixedOutletPressureTransient()` or default `FIXED_OUTLET_PRESSURE` | Receiving-facility backpressure, fixed arrival pressure, legacy `TwoFluidPipe` behavior | Outlet pressure is fixed; inlet pressure can move away from the connected inlet stream during transients |
+| Inlet pressure driven | `pipe.useInletPressureDrivenTransient()` or `INLET_PRESSURE` | Comparisons with inlet-pressure-driven correlations such as `PipeBeggsAndBrills`, or cases where the upstream pressure is the reference | Inlet pressure is anchored; outlet pressure is calculated |
+
+```python
+# Default: fixed outlet pressure transient behavior
+pipe.setOutletPressure(30.0, "bara")
+pipe.useFixedOutletPressureTransient()
+
+# Alternative: match inlet-pressure-driven correlation references
+pipe.useInletPressureDrivenTransient()
+pipe.run()
+for t in range(60):
+    pipe.runTransient(1.0)
+
+dp_bar = pipe.getSignedPressureDrop("bar")
+if pipe.hasBoundaryConditionPressureMismatch():
+    print(pipe.getBoundaryConditionDiagnosticMessage())
+```
+
+Use `getSignedPressureDrop(unit)` rather than subtracting profile endpoints manually when comparing models. Negative values mean the reported profile has a pressure rise from inlet to outlet and should be treated as a diagnostic condition before using a pressure-drop deviation metric.
+
 ### Shut-In and Surge Scenarios
 
 Use the `CLOSED` boundary condition or convenience methods for shut-in and pressure surge analysis:
@@ -908,6 +935,10 @@ for t in range(300):  # 5 minutes
 | `openInlet()` | Restore inlet to STREAM_CONNECTED |
 | `isOutletClosed()` | Returns true if outlet BC is CLOSED |
 | `isInletClosed()` | Returns true if inlet BC is CLOSED |
+| `useFixedOutletPressureTransient()` | Use fixed-outlet pressure reconstruction during transients |
+| `useInletPressureDrivenTransient()` | Use inlet-pressure-driven reconstruction during transients |
+| `getInletPressureResidual(unit)` | Difference between reconstructed inlet pressure and inlet-stream pressure |
+| `getBoundaryConditionDiagnosticMessage()` | Human-readable boundary/reference mismatch hint |
 
 ---
 
@@ -1010,7 +1041,7 @@ pipe.setLength(5000)
 pipe.setDiameter(0.15)
 pipe.setNumberOfSections(200)
 
-# Enable slug tracking (Lagrangian OLGA-style)
+# Enable slug tracking (OLGA-inspired Lagrangian mode)
 pipe.setEnableSlugTracking(True)
 pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.LAGRANGIAN)
 
@@ -1048,11 +1079,18 @@ A comprehensive reference for the TwoFluidPipe model covering all flow types, bo
 | `CLOSED` | No flow — blocked/shut-in; pressure floats |
 | `CHARACTERISTIC` | Riemann invariant-based, reduces spurious wave reflections |
 
+#### TransientPressureReference
+
+| Value | Description |
+|-------|-------------|
+| `FIXED_OUTLET_PRESSURE` | March pressure backward from fixed outlet pressure. This is the default and preserves legacy transient behavior. |
+| `INLET_PRESSURE` | March pressure forward from the inlet stream or explicit inlet pressure. Use this for inlet-pressure-driven comparisons and diagnostics. |
+
 #### SlugTrackingMode
 
 | Value | Description |
 |-------|-------------|
-| `LAGRANGIAN` | Full Lagrangian tracking (OLGA-style) — **default** |
+| `LAGRANGIAN` | OLGA-inspired Lagrangian tracking — **default** |
 | `SIMPLIFIED` | Simplified slug unit model |
 | `DISABLED` | No slug tracking |
 
@@ -1111,7 +1149,7 @@ A comprehensive reference for the TwoFluidPipe model covering all flow types, bo
 
 | Method | Description |
 |--------|-------------|
-| `setEnableAdaptiveTimestepping(boolean)` | Enable/disable OLGA-style adaptive dt |
+| `setEnableAdaptiveTimestepping(boolean)` | Enable/disable OLGA-inspired adaptive dt |
 | `setAdaptiveMaxPressure(double)` | Pressure ceiling (bar) — reject step if exceeded |
 | `getAdaptiveDtFactor()` | Current dt multiplier (1.0 = full CFL) |
 | `isAdaptiveTimesteppingEnabled()` | Query state |

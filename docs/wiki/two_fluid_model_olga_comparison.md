@@ -1,13 +1,13 @@
 ---
-title: "TwoFluidPipe Model: Detailed Review and OLGA Comparison"
-description: "The `TwoFluidPipe` class in NeqSim implements a transient two-fluid model for 1D multiphase pipeline flow. This document provides a detailed review of the model, identifies bugs found and fixed, and c..."
+title: "TwoFluidPipe Model: Detailed Review and Commercial Tool Comparison"
+description: "The `TwoFluidPipe` class in NeqSim implements a transient two-fluid model for 1D multiphase pipeline flow. This document reviews the model and compares it with commercial multiphase-flow simulators."
 ---
 
-# TwoFluidPipe Model: Detailed Review and OLGA Comparison
+# TwoFluidPipe Model: Detailed Review and Commercial Tool Comparison
 
 ## Overview
 
-The `TwoFluidPipe` class in NeqSim implements a transient two-fluid model for 1D multiphase pipeline flow. This document provides a detailed review of the model, identifies bugs found and fixed, and compares the implementation to the commercial OLGA simulator.
+The `TwoFluidPipe` class in NeqSim implements a transient two-fluid model for 1D multiphase pipeline flow. This document reviews the model and compares the implementation with commercial multiphase-flow simulators such as OLGA and LedaFlow. `TwoFluidPipe` uses OLGA-inspired mechanistic closure sets where relevant; it is not a commercial OLGA implementation and should be validated against exported simulator or field data for project-grade transient use.
 
 ## Table of Contents
 
@@ -199,7 +199,7 @@ A slug unit consists of:
     │                        │                                │
     └────────────────────────┴────────────────────────────────┘
          ← L_bubble →          ←────── L_slug ──────→
-         
+
     ◄──────────────── L_unit = L_slug + L_bubble ─────────────►
 ```
 
@@ -367,7 +367,7 @@ The slugs merge:
 ### Slug Tracking Modes
 
 ```java
-// Full OLGA-style Lagrangian tracking (default)
+// OLGA-inspired Lagrangian slug tracking (default)
 pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.LAGRANGIAN);
 
 // Simplified slug unit model
@@ -458,9 +458,9 @@ pipe.setOutletPressure(45.0, "bara");
 pipe.run();
 
 // Print results
-System.out.println("Pressure drop: " + 
+System.out.println("Pressure drop: " +
     (pipe.getInletPressure() - pipe.getOutletPressure()) + " bar");
-System.out.println("Outlet temperature: " + 
+System.out.println("Outlet temperature: " +
     pipe.getOutletStream().getTemperature("C") + " °C");
 ```
 
@@ -496,7 +496,7 @@ System.out.println(pipe.getSlugStatisticsSummary());
 System.out.println("\nActive slugs:");
 for (LagrangianSlugTracker.SlugBubbleUnit slug : tracker.getSlugs()) {
     System.out.printf("  Slug #%d: pos=%.1fm, L=%.1fm, v=%.2fm/s, H=%.2f%n",
-        slug.id, slug.frontPosition, slug.slugLength, 
+        slug.id, slug.frontPosition, slug.slugLength,
         slug.frontVelocity, slug.slugHoldup);
 }
 
@@ -572,9 +572,9 @@ System.out.printf("Temperature: %.1f°C (inlet) → %.1f°C (outlet)%n",
     temps[0] - 273.15, temps[temps.length-1] - 273.15);
 
 // Check hydrate risk
-System.out.printf("Hydrate formation temperature: %.1f°C%n", 
+System.out.printf("Hydrate formation temperature: %.1f°C%n",
     thermal.getHydrateFormationTemperature() - 273.15);
-System.out.printf("Cooldown time to hydrate: %.1f hours%n", 
+System.out.printf("Cooldown time to hydrate: %.1f hours%n",
     thermal.getCooldownTimeToHydrate());
 ```
 

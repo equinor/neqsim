@@ -267,6 +267,8 @@ System.out.println("Riser pressure drop: " + deltaP/1e5 + " bar");
 
 ### Boundary Conditions
 
+This section describes the older drift-flux `TransientPipe` boundary enum. `TwoFluidPipe` has a separate enum with `STREAM_CONNECTED`, `CONSTANT_FLOW`, `CONSTANT_PRESSURE`, `CLOSED`, and `CHARACTERISTIC`, plus transient pressure-reference modes described in the [Two-Fluid Model documentation](two_fluid_model#transient-boundary-conditions).
+
 ```java
 // Available boundary condition types
 pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
@@ -283,6 +285,8 @@ pipe.setOutletPressure(30.0);         // bara
 | `CONSTANT_FLOW` | Fixed mass flow rate |
 | `CONSTANT_VELOCITY` | Fixed velocity |
 | `CLOSED` | No-flow wall |
+| `TRANSIENT_PRESSURE` | Time-varying pressure boundary |
+| `TRANSIENT_FLOW` | Time-varying flow boundary |
 
 ## Output Results
 
@@ -345,7 +349,7 @@ FlowRegimeDetector detector = new FlowRegimeDetector();
 
 for (PipeSection section : sections) {
     FlowRegime regime = detector.detectFlowRegime(section);
-    System.out.println("Position " + section.getPosition() + 
+    System.out.println("Position " + section.getPosition() +
                        ": " + regime);
 }
 ```
@@ -357,7 +361,7 @@ DriftFluxModel model = new DriftFluxModel();
 
 for (PipeSection section : sections) {
     DriftFluxParameters params = model.calculateDriftFlux(section);
-    
+
     System.out.println("C0 = " + params.C0);
     System.out.println("Drift velocity = " + params.driftVelocity + " m/s");
     System.out.println("Void fraction = " + params.voidFraction);
@@ -372,7 +376,7 @@ PipeSection[] sections = pipe.getSections();
 
 for (int i = 0; i < sections.length; i++) {
     PipeSection s = sections[i];
-    
+
     System.out.printf("Section %d (x=%.1f m):%n", i, s.getPosition());
     System.out.printf("  Pressure: %.2f bar%n", s.getPressure()/1e5);
     System.out.printf("  Temperature: %.1f K%n", s.getTemperature());
