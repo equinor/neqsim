@@ -8,8 +8,10 @@ import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker;
+import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.ConservativeStateLimiter;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -741,6 +743,7 @@ public class TwoFluidPipe extends Pipeline {
 
     // Store reference fluid for flash calculations
     referenceFluid = inletFluid.clone();
+    equations.setThermodynamicCoupling(new ThermodynamicCoupling(referenceFluid));
 
     // Calculate inlet phase properties - initialize with defaults
     double rhoG = 1.0, rhoL = 800.0, muG = 1e-5, muL = 1e-3;
@@ -3265,13 +3268,23 @@ public class TwoFluidPipe extends Pipeline {
       if (isIMEX) {
         double[] soundSpeeds = new double[numberOfSections];
         double[] densities = new double[numberOfSections];
+        double[] areas = new double[numberOfSections];
+        double[] gasDensities = new double[numberOfSections];
+        double[] oilDensities = new double[numberOfSections];
+        double[] waterDensities = new double[numberOfSections];
         for (int i = 0; i < numberOfSections; i++) {
           TwoFluidSection sec = sections[i];
           double alphaG = sec.getGasHoldup();
           double alphaL = sec.getLiquidHoldup();
           double rhoG = Math.max(sec.getGasDensity(), 0.1);
           double rhoL = Math.max(sec.getLiquidDensity(), 100.0);
+          double rhoO = Math.max(sec.getOilDensity(), rhoL);
+          double rhoW = Math.max(sec.getWaterDensity(), rhoL);
           densities[i] = alphaG * rhoG + alphaL * rhoL;
+          areas[i] = sec.getArea();
+          gasDensities[i] = rhoG;
+          oilDensities[i] = rhoO;
+          waterDensities[i] = rhoW;
           // Mixture sound speed (Wood's equation for two-phase)
           double rhoMix = densities[i];
           double cG = Math.max(sec.getGasSoundSpeed(), 100.0);
@@ -3282,7 +3295,8 @@ public class TwoFluidPipe extends Pipeline {
         }
         boolean outletFixed = (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
             || outletBCType == BoundaryCondition.CHARACTERISTIC);
-        timeIntegrator.setIMEXProperties(soundSpeeds, densities, dx, outletPressure, outletFixed);
+        timeIntegrator.setIMEXProperties(soundSpeeds, densities, areas, gasDensities, oilDensities,
+            waterDensities, dx, outletPressure, outletFixed);
       }
 
       double[][] U_new = timeIntegrator.step(U_prev, rhs, dtFinal);
@@ -3449,40 +3463,8 @@ public class TwoFluidPipe extends Pipeline {
    */
   private void validateAndCorrectState(double[][] U_new, double[][] U_prev) {
     for (int i = 0; i < U_new.length; i++) {
-      for (int j = 0; j < U_new[i].length; j++) {
-        // Check for NaN or Inf
-        if (Double.isNaN(U_new[i][j]) || Double.isInfinite(U_new[i][j])) {
-          U_new[i][j] = U_prev[i][j]; // Revert to previous value
-        }
-      }
-
-      // Ensure mass variables are non-negative (indices 0, 1, 2 for gas, oil, water)
-      U_new[i][0] = Math.max(0, U_new[i][0]); // Gas mass
-      U_new[i][1] = Math.max(0, U_new[i][1]); // Oil mass
-      if (U_new[i].length > 2) {
-        U_new[i][2] = Math.max(0, U_new[i][2]); // Water mass
-      }
-
-      // Limit extreme rate of change to prevent blow-up (50% per sub-step max)
-      // This is a safety limit, not for physics - allows transient dynamics
-      double maxChangeRatio = 0.5;
-      // Apply to all mass variables: gas (0), oil (1), water (2)
-      int numMassVars = Math.min(3, U_new[i].length);
-      for (int j = 0; j < numMassVars; j++) {
-        // Check for valid non-zero previous value before computing ratio
-        if (U_prev[i][j] > 1e-10 && !Double.isNaN(U_prev[i][j])
-            && !Double.isInfinite(U_prev[i][j])) {
-          double ratio = U_new[i][j] / U_prev[i][j];
-          if (Double.isNaN(ratio) || Double.isInfinite(ratio)) {
-            // Invalid ratio - revert to previous value
-            U_new[i][j] = U_prev[i][j];
-          } else if (ratio > 1 + maxChangeRatio) {
-            U_new[i][j] = U_prev[i][j] * (1 + maxChangeRatio);
-          } else if (ratio < 1 - maxChangeRatio && ratio > 0) {
-            U_new[i][j] = U_prev[i][j] * (1 - maxChangeRatio);
-          }
-        }
-      }
+      double[] previous = U_prev != null && i < U_prev.length ? U_prev[i] : null;
+      ConservativeStateLimiter.enforceThreePhaseMassPositivity(U_new[i], previous);
     }
   }
 
@@ -5536,6 +5518,17 @@ public class TwoFluidPipe extends Pipeline {
     this.includeMassTransfer = include;
     if (equations != null) {
       equations.setIncludeMassTransfer(include);
+    }
+  }
+
+  /**
+   * Set relaxation time for flash-driven evaporation/condensation source terms.
+   *
+   * @param relaxationTime relaxation time in seconds
+   */
+  public void setMassTransferRelaxationTime(double relaxationTime) {
+    if (equations != null) {
+      equations.setMassTransferRelaxationTime(relaxationTime);
     }
   }
 
