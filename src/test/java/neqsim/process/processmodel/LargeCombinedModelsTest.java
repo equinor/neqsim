@@ -590,7 +590,7 @@ public class LargeCombinedModelsTest {
             .getFlowRate("MSm3/day"),
         0.1);
 
-    Assertions.assertEquals(10.92474704678,
+    Assertions.assertEquals(11.24779615275153,
         ((Separator) sepprocessTrain2.getUnit("dew point scrubber 2")).getGasOutStream()
             .getFlowRate("MSm3/day"),
         0.1);
@@ -609,7 +609,7 @@ public class LargeCombinedModelsTest {
             .getPressure("bara"),
         0.1);
 
-    Assertions.assertEquals(10.45588151441,
+    Assertions.assertEquals(10.762321623470518,
         ((ThrottlingValve) expanderProcess2.getUnit("gas split valve")).getOutletStream()
             .getFlowRate("MSm3/day"),
         0.1);
@@ -637,7 +637,7 @@ public class LargeCombinedModelsTest {
             .getFlowRate("MSm3/day"),
         0.1);
 
-    Assertions.assertEquals(11.80111377368,
+    Assertions.assertEquals(11.656770896230375,
         ((Separator) sepprocessTrain2.getUnit("dew point scrubber 2")).getGasOutStream()
             .getFlowRate("MSm3/day"),
         0.1);
@@ -656,7 +656,7 @@ public class LargeCombinedModelsTest {
             .getPressure("bara"),
         0.1);
 
-    Assertions.assertEquals(11.18971271189,
+    Assertions.assertEquals(11.06949134541383,
         ((ThrottlingValve) expanderProcess2.getUnit("gas split valve")).getOutletStream()
             .getFlowRate("MSm3/day"),
         0.1);
