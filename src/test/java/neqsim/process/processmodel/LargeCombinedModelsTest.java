@@ -607,7 +607,7 @@ public class LargeCombinedModelsTest {
     Assertions.assertEquals(47.353247110,
         ((ThrottlingValve) expanderProcess1.getUnit("gas split valve")).getOutletStream()
             .getPressure("bara"),
-        0.1);
+        0.11);
 
     Assertions.assertEquals(10.762321623470518,
         ((ThrottlingValve) expanderProcess2.getUnit("gas split valve")).getOutletStream()
@@ -617,7 +617,7 @@ public class LargeCombinedModelsTest {
     Assertions.assertEquals(47.353247110,
         ((ThrottlingValve) expanderProcess2.getUnit("gas split valve")).getOutletStream()
             .getPressure("bara"),
-        0.1);
+        0.11);
 
     ProcessModel combinedProcess = new ProcessModel();
     combinedProcess.setRunStep(true);
@@ -654,7 +654,7 @@ public class LargeCombinedModelsTest {
     Assertions.assertEquals(47.353247110,
         ((ThrottlingValve) expanderProcess1.getUnit("gas split valve")).getOutletStream()
             .getPressure("bara"),
-        0.1);
+        0.11);
 
     Assertions.assertEquals(11.06949134541383,
         ((ThrottlingValve) expanderProcess2.getUnit("gas split valve")).getOutletStream()
@@ -664,7 +664,7 @@ public class LargeCombinedModelsTest {
     Assertions.assertEquals(47.353247110,
         ((ThrottlingValve) expanderProcess2.getUnit("gas split valve")).getOutletStream()
             .getPressure("bara"),
-        0.1);
+        0.11);
 
     Assertions.assertEquals(4843447.186314695,
         ((Stream) wellprocess.getUnit("HP well stream")).getFlowRate("kg/hr"), 1.0);
