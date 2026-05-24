@@ -1012,6 +1012,7 @@ public class ProcessModel implements Runnable, Serializable {
     }
 
     if (runStep) {
+      AreaExecutionPlan areaPlan = getAreaExecutionPlan();
       lastIterationCount = 1;
       modelConverged = true;
       lastMaxFlowError = 0.0;
@@ -1019,7 +1020,7 @@ public class ProcessModel implements Runnable, Serializable {
       lastMaxPressureError = 0.0;
       lastAllProcessesSolved = true;
       lastBoundaryValuesConverged = true;
-      lastBoundaryStreamCount = collectBoundaryStreams().size();
+      lastBoundaryStreamCount = areaPlan.boundaryStreams.size();
       runAllProcessStepsWithHooks(1);
       notifyModelComplete(1, true);
       publishModelEvent(ProcessEvent.EventType.SIMULATION_COMPLETE,
@@ -1039,7 +1040,8 @@ public class ProcessModel implements Runnable, Serializable {
       // streams that cross area boundaries - these are the only streams whose
       // values change between outer iterations. For a 500-stream plant with
       // 10 boundary streams this cuts capture cost by ~50x.
-      java.util.Set<Object> boundaryStreams = collectBoundaryStreams();
+      AreaExecutionPlan areaPlan = getAreaExecutionPlan();
+      java.util.Set<Object> boundaryStreams = areaPlan.boundaryStreams;
       lastBoundaryStreamCount = boundaryStreams.size();
       Map<Object, double[]> previousBoundaryStreamStates =
           captureBoundaryStreamStates(boundaryStreams);
@@ -1051,7 +1053,7 @@ public class ProcessModel implements Runnable, Serializable {
         notifyBeforeIteration(iterations + 1);
 
         // Run all processes - use parallel execution for independent systems
-        runAllProcessesWithHooks(iterations + 1, dirtyAreas);
+        runAllProcessesWithHooks(iterations + 1, dirtyAreas, areaPlan);
         iterations++;
 
         // Capture current stream states and calculate errors
@@ -1097,7 +1099,7 @@ public class ProcessModel implements Runnable, Serializable {
 
         // Update previous states for next iteration
         previousBoundaryStreamStates = currentBoundaryStreamStates;
-        dirtyAreas = getDirtyAreasForNextIteration(changedBoundaryStreams);
+        dirtyAreas = getDirtyAreasForNextIteration(areaPlan, changedBoundaryStreams);
       }
       lastIterationCount = iterations;
 
@@ -1138,6 +1140,17 @@ public class ProcessModel implements Runnable, Serializable {
    * @param runnableAreas process areas to run, or {@code null} to run every area
    */
   private void runAllProcesses(java.util.Set<ProcessSystem> runnableAreas) {
+    runAllProcesses(runnableAreas, getAreaExecutionPlan());
+  }
+
+  /**
+   * Runs runnable ProcessSystems using a caller-supplied area execution plan.
+   *
+   * @param runnableAreas process areas to run, or {@code null} to run every area
+   * @param areaPlan cached inter-area execution plan
+   */
+  private void runAllProcesses(java.util.Set<ProcessSystem> runnableAreas,
+      AreaExecutionPlan areaPlan) {
     if (processes.size() <= 1) {
       // Single process - run directly, no parallelism overhead
       for (ProcessSystem process : processes.values()) {
@@ -1154,7 +1167,7 @@ public class ProcessModel implements Runnable, Serializable {
     // previous all-or-nothing logic: a 6-area plant with 4 independent areas
     // and one producer→consumer pair now parallelises the 4 (plus the pair
     // serialised) instead of falling back to fully sequential.
-    List<List<ProcessSystem>> levels = getAreaExecutionLevels();
+    List<List<ProcessSystem>> levels = areaPlan.levels;
     for (List<ProcessSystem> level : levels) {
       if (Thread.currentThread().isInterrupted()) {
         return;
@@ -1324,18 +1337,30 @@ public class ProcessModel implements Runnable, Serializable {
    */
   private void runAllProcessesWithHooks(int iterationNumber,
       java.util.Set<ProcessSystem> runnableAreas) {
+    runAllProcessesWithHooks(iterationNumber, runnableAreas, getAreaExecutionPlan());
+  }
+
+  /**
+   * Runs all ProcessSystems with listener hooks using a caller-supplied area plan.
+   *
+   * @param iterationNumber current outer iteration number (starts at 1)
+   * @param runnableAreas process areas to run, or {@code null} to run every area
+   * @param areaPlan cached inter-area execution plan
+   */
+  private void runAllProcessesWithHooks(int iterationNumber,
+      java.util.Set<ProcessSystem> runnableAreas, AreaExecutionPlan areaPlan) {
     int totalAreas = processes.size();
 
     // If no listener is attached and events disabled, delegate to the
     // parallel-aware method
     if (progressListener == null && !publishEvents) {
-      runAllProcesses(runnableAreas);
+      runAllProcesses(runnableAreas, areaPlan);
       return;
     }
 
     // Build area execution levels. Areas on the same level run in parallel;
     // consecutive levels run sequentially. Hooks fire before/after each area.
-    List<List<ProcessSystem>> levels = getAreaExecutionLevels();
+    List<List<ProcessSystem>> levels = areaPlan.levels;
     // Map each ProcessSystem to its insertion-order index for hook indexing.
     Map<ProcessSystem, Integer> areaIndex = new java.util.IdentityHashMap<>();
     Map<ProcessSystem, String> areaName = new java.util.IdentityHashMap<>();
@@ -1860,11 +1885,22 @@ public class ProcessModel implements Runnable, Serializable {
    */
   private java.util.Set<ProcessSystem> getDirtyAreasForNextIteration(
       java.util.Set<Object> changedBoundaryStreams) {
+    return getDirtyAreasForNextIteration(getAreaExecutionPlan(), changedBoundaryStreams);
+  }
+
+  /**
+   * Selects areas to rerun using an already resolved area execution plan.
+   *
+   * @param plan cached area execution plan
+   * @param changedBoundaryStreams streams that changed beyond convergence tolerance
+   * @return areas to run on the next iteration, or {@code null} to run every area
+   */
+  private java.util.Set<ProcessSystem> getDirtyAreasForNextIteration(AreaExecutionPlan plan,
+      java.util.Set<Object> changedBoundaryStreams) {
     if (!useIncrementalAreaExecution || progressListener != null || publishEvents
         || changedBoundaryStreams == null || changedBoundaryStreams.isEmpty()) {
       return null;
     }
-    AreaExecutionPlan plan = getAreaExecutionPlan();
     java.util.Set<ProcessSystem> dirtyAreas =
         java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     java.util.ArrayDeque<ProcessSystem> queue = new java.util.ArrayDeque<>();

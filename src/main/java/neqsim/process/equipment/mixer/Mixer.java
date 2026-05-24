@@ -69,6 +69,15 @@ public class Mixer extends ProcessEquipmentBaseClass
   double lowestPressure = Double.NEGATIVE_INFINITY;
 
   private boolean doMultiPhaseCheck = true;
+  private double[] lastInletTemperatures = null;
+  private double[] lastInletPressures = null;
+  private double[] lastInletFlowRates = null;
+  private double[][] lastInletCompositions = null;
+  private String[] lastInletSpecifications = null;
+  private int lastNumberOfInputStreams = -1;
+  private boolean lastIsSetOutTemperature = false;
+  private boolean lastDoMultiPhaseCheck = true;
+  private double lastOutTemperature = Double.NaN;
 
   /**
    * <p>
@@ -282,6 +291,78 @@ public class Mixer extends ProcessEquipmentBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public boolean needRecalculation() {
+    if (streams.isEmpty() || mixedStream == null || lastInletCompositions == null
+        || streams.size() != lastNumberOfInputStreams || streams.size() != lastInletFlowRates.length
+        || isSetOutTemperature != lastIsSetOutTemperature
+        || doMultiPhaseCheck != lastDoMultiPhaseCheck || outTemperature != lastOutTemperature) {
+      return true;
+    }
+    for (int streamIndex = 0; streamIndex < streams.size(); streamIndex++) {
+      StreamInterface stream = streams.get(streamIndex);
+      if (stream == null || stream.getThermoSystem() == null) {
+        return true;
+      }
+      SystemInterface inletSystem = stream.getThermoSystem();
+      if (inletSystem.getTemperature() != lastInletTemperatures[streamIndex]
+          || inletSystem.getPressure() != lastInletPressures[streamIndex]
+          || !java.util.Objects.equals(stream.getSpecification(),
+              lastInletSpecifications[streamIndex])) {
+        return true;
+      }
+      double flow = inletSystem.getFlowRate("kg/hr");
+      double lastFlow = lastInletFlowRates[streamIndex];
+      if ((flow <= getMinimumFlow()) != (lastFlow <= getMinimumFlow())) {
+        return true;
+      }
+      if (flow > getMinimumFlow() && Math.abs(flow - lastFlow) / flow >= 1e-6) {
+        return true;
+      }
+      neqsim.thermo.phase.PhaseInterface phase = inletSystem.getPhase(0);
+      double[] lastComposition = lastInletCompositions[streamIndex];
+      int numberOfComponents = phase.getNumberOfComponents();
+      if (lastComposition == null || numberOfComponents != lastComposition.length) {
+        return true;
+      }
+      for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+        if (phase.getComponent(componentIndex).getz() != lastComposition[componentIndex]) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private void updateRecalculationState() {
+    int streamCount = streams.size();
+    lastNumberOfInputStreams = streamCount;
+    lastInletTemperatures = new double[streamCount];
+    lastInletPressures = new double[streamCount];
+    lastInletFlowRates = new double[streamCount];
+    lastInletCompositions = new double[streamCount][];
+    lastInletSpecifications = new String[streamCount];
+    for (int streamIndex = 0; streamIndex < streamCount; streamIndex++) {
+      StreamInterface stream = streams.get(streamIndex);
+      SystemInterface inletSystem = stream.getThermoSystem();
+      lastInletTemperatures[streamIndex] = inletSystem.getTemperature();
+      lastInletPressures[streamIndex] = inletSystem.getPressure();
+      lastInletFlowRates[streamIndex] = inletSystem.getFlowRate("kg/hr");
+      lastInletCompositions[streamIndex] = inletSystem.getMolarComposition();
+      lastInletSpecifications[streamIndex] = stream.getSpecification();
+    }
+    lastIsSetOutTemperature = isSetOutTemperature;
+    lastDoMultiPhaseCheck = doMultiPhaseCheck;
+    lastOutTemperature = outTemperature;
+  }
+
+  private void finishRun(UUID id) {
+    updateRecalculationState();
+    mixedStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     double enthalpy = 0.0;
     // ((Stream) streams.get(0)).getThermoSystem().display();
@@ -304,7 +385,7 @@ public class Mixer extends ProcessEquipmentBaseClass
       }
       mixedStream.setThermoSystem(thermoSystem2);
       isActive(false);
-      setCalculationIdentifier(id);
+      finishRun(id);
       return;
     }
 
@@ -374,7 +455,7 @@ public class Mixer extends ProcessEquipmentBaseClass
       mixedStream.getThermoSystem().setMultiPhaseCheck(true);
     }
 
-    setCalculationIdentifier(id);
+    finishRun(id);
   }
 
   /** {@inheritDoc} */
