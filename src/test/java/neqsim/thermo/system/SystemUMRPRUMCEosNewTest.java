@@ -303,4 +303,23 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     testSystem.initPhysicalProperties("density");
     assertEquals(6.84959007, testSystem.getDensity("kg/m3"), 0.00001);
   }
+
+
+    @Test
+  void testWithTBPfraction() {
+    neqsim.util.database.NeqSimDataBase.setCreateTemporaryTables(true);
+
+    neqsim.thermo.system.SystemInterface fluid0_HC = new neqsim.thermo.system.SystemUMRPRUMCEos(288, 50);
+    fluid0_HC.addComponent("nitrogen", 2.5);
+    fluid0_HC.addComponent("CO2", 4.5);
+    fluid0_HC.addComponent("methane", 79.45);
+    fluid0_HC.addComponent("ethane", 10);
+    fluid0_HC.addTBPfraction4("C10", 0.05, 0.25, 0.6, 600);
+    fluid0_HC.createDatabase(true);
+    fluid0_HC.setMixingRule("HV", "UNIFAC_UMRPRU");
+    neqsim.thermodynamicoperations.ThermodynamicOperations testOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid0_HC);
+    testOps.TPflash();
+    fluid0_HC.prettyPrint();
+  }
+
 }
