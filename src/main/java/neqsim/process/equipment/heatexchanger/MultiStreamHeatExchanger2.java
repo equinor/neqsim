@@ -76,7 +76,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   private List<String> streamTypes = new ArrayList<>();
   private List<Double> inletTemps = new ArrayList<>();
   private List<Double> outletTemps = new ArrayList<>();
-  private List<Object> unknownOutlets = new ArrayList<>();
+  private List<Boolean> unknownOutlets = new ArrayList<>();
   private List<Double> pressures = new ArrayList<>();
   private List<Double> massFlows = new ArrayList<>();
   private List<Double> streamLoads = new ArrayList<>();
@@ -138,17 +138,25 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    // Calculate hin for all streams and
+    hInlet.clear();
+    fluidInlet.clear();
+    prevOutletTemps = null;
+    stallCounter = 0;
+
+    // Calculate inlet state caches from the current connected streams.
     for (int i = 0; i < inStreams.size(); i++) {
       SystemInterface fluid = inStreams.get(i).getFluid().clone();
       fluid.initThermoProperties();
+      inletTemps.set(i, fluid.getTemperature("C"));
+      pressures.set(i, fluid.getPressure("bara"));
+      massFlows.set(i, inStreams.get(i).getFlowRate("kg/sec"));
       hInlet.add(fluid.getEnthalpy("kJ/kg"));
       fluidInlet.add(fluid);
     }
 
     int undefinedCount = 0;
-    for (Double temp : outletTemps) {
-      if (temp == null) {
+    for (Boolean unknownOutlet : unknownOutlets) {
+      if (unknownOutlet) {
         undefinedCount++;
       }
     }
@@ -528,7 +536,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
       if (Math.abs(deltaT1 - deltaT2) < 1e-4) {
         LMTD = (deltaT1 + deltaT2) / 2.0;
-        UAinterval = deltaQ / LMTD;
+        UAinterval = 1000.0 * deltaQ / LMTD; // 1000 * kW/K -> W/K
       } else {
         LMTD = (deltaT1 - deltaT2) / Math.log(deltaT1 / deltaT2);
         if (LMTD < 0.01) {

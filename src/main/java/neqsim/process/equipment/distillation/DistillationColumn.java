@@ -69,7 +69,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private static final int ITERATION_OVERFLOW_MULTIPLIER = 12;
   /** Recommended base temperature tolerance for adaptive defaults. */
-  private static final double DEFAULT_TEMPERATURE_TOLERANCE = 9.0e-3;
+  private static final double DEFAULT_TEMPERATURE_TOLERANCE = 2.0e-2;
   /** Recommended base mass balance tolerance for adaptive defaults. */
   private static final double DEFAULT_MASS_BALANCE_TOLERANCE = 1.6e-2;
   /** Recommended base enthalpy balance tolerance for adaptive defaults. */
@@ -4977,12 +4977,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase;
 
       if (withinBaseTolerance) {
-        boolean polishingAvailable =
-            polishMassTolerance < baseMassTolerance || polishEnergyTolerance < baseEnergyTolerance
-                || polishTempTolerance < baseTempTolerance;
+        boolean energyPolishingAvailable =
+            enforceEnergyBalanceTolerance && polishEnergyTolerance < baseEnergyTolerance;
+        boolean polishingAvailable = polishMassTolerance < baseMassTolerance
+            || energyPolishingAvailable || polishTempTolerance < baseTempTolerance;
 
         if (!polishing && polishingAvailable
-            && (massErr > polishMassTolerance || energyErr > polishEnergyTolerance)) {
+            && (massErr > polishMassTolerance
+                || (energyPolishingAvailable && energyErr > polishEnergyTolerance))) {
           polishing = true;
           iterationLimit = Math.max(iterationLimit, polishIterationLimit);
           previousCombinedResidual = Double.POSITIVE_INFINITY;
@@ -5513,12 +5515,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase;
 
       if (withinBaseTolerance) {
-        boolean polishingAvailable =
-            polishMassTolerance < baseMassTolerance || polishEnergyTolerance < baseEnergyTolerance
-                || polishTempTolerance < baseTempTolerance;
+        boolean energyPolishingAvailable =
+            enforceEnergyBalanceTolerance && polishEnergyTolerance < baseEnergyTolerance;
+        boolean polishingAvailable = polishMassTolerance < baseMassTolerance
+            || energyPolishingAvailable || polishTempTolerance < baseTempTolerance;
 
         if (!polishing && polishingAvailable
-            && (massErr > polishMassTolerance || energyErr > polishEnergyTolerance)) {
+            && (massErr > polishMassTolerance
+                || (energyPolishingAvailable && energyErr > polishEnergyTolerance))) {
           polishing = true;
           iterationLimit = Math.max(iterationLimit, polishIterationLimit);
           previousCombinedResidual = Double.POSITIVE_INFINITY;
@@ -5541,18 +5545,69 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         logger.warn("Inside-out: K-values converged but temperatures stagnated at iter {}", iter);
       }
 
+      if (shouldSwitchInsideOutToNewton(iter, err, baseTempTolerance, kValueResidual)) {
+        storeInsideOutTelemetry(totalFlashSweeps, totalInnerLoopIterations, kValueResidual,
+            latestSurrogateResidual);
+        hasBeenSolvedBefore = false;
+        setDoInitializion(true);
+        solveNewton(id);
+        return;
+      }
+
       if (iter >= iterationLimit && err > baseTempTolerance && iterationLimit < maxIterationLimit) {
         iterationLimit = Math.min(maxIterationLimit, iterationLimit + overflowIncrement);
         continue;
       }
     }
 
-    lastInsideOutOuterFlashSweeps = totalFlashSweeps;
-    lastInsideOutInnerLoopIterations = totalInnerLoopIterations;
-    lastInsideOutKValueResidual = kValueResidual;
-    lastInsideOutSurrogateResidual = latestSurrogateResidual;
-    lastInsideOutSurrogateResetCount = 0;
+    storeInsideOutTelemetry(totalFlashSweeps, totalInnerLoopIterations, kValueResidual,
+        latestSurrogateResidual);
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
+  }
+
+  /**
+   * Decide when the inside-out fixed-point stage should hand off to simultaneous Newton.
+   *
+   * <p>
+   * Large columns spend most of their wall time in repeated tray flashes once the K-value profile is
+   * already well shaped. The hybrid handoff follows the common inside-out/simultaneous-correction
+   * pattern: use cheap fixed-point sweeps for initialization, then solve the coupled temperature
+   * correction when additional sweeps mostly polish the same profile.
+   * </p>
+   *
+   * @param iteration current inside-out outer iteration
+   * @param temperatureResidual current average temperature residual
+   * @param temperatureTolerance active temperature tolerance
+   * @param kValueResidual current K-value residual
+   * @return {@code true} when a Newton handoff is expected to be cheaper than more sweeps
+   */
+  private boolean shouldSwitchInsideOutToNewton(int iteration, double temperatureResidual,
+      double temperatureTolerance, double kValueResidual) {
+    if (numberOfTrays < 8 || iteration < Math.max(6, numberOfTrays / 2)) {
+      return false;
+    }
+    if (!Double.isFinite(temperatureResidual) || temperatureResidual <= temperatureTolerance) {
+      return false;
+    }
+    return !Double.isFinite(kValueResidual) || kValueResidual < 5.0e-2
+        || temperatureResidual < temperatureTolerance * 100.0;
+  }
+
+  /**
+   * Store telemetry from the inside-out initializer before finalizing or handing off.
+   *
+   * @param outerFlashSweeps rigorous outside-loop sweeps
+   * @param innerLoopIterations surrogate inner-loop iterations
+   * @param kValueResidual latest K-value residual
+   * @param surrogateResidual latest surrogate-model residual
+   */
+  private void storeInsideOutTelemetry(int outerFlashSweeps, int innerLoopIterations,
+      double kValueResidual, double surrogateResidual) {
+    lastInsideOutOuterFlashSweeps = outerFlashSweeps;
+    lastInsideOutInnerLoopIterations = innerLoopIterations;
+    lastInsideOutKValueResidual = kValueResidual;
+    lastInsideOutSurrogateResidual = surrogateResidual;
+    lastInsideOutSurrogateResetCount = 0;
   }
 
   /**
@@ -6006,16 +6061,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         break;
       }
 
-      boolean withinBaseTolerance = err <= baseTempTolerance && massErr <= baseMassTolerance
-          && energyErr <= baseEnergyTolerance;
+      boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
+      boolean withinBaseTolerance =
+          err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase;
 
       if (withinBaseTolerance) {
-        boolean polishingAvailable =
-            polishMassTolerance < baseMassTolerance || polishEnergyTolerance < baseEnergyTolerance
-                || polishTempTolerance < baseTempTolerance;
+        boolean energyPolishingAvailable =
+            enforceEnergyBalanceTolerance && polishEnergyTolerance < baseEnergyTolerance;
+        boolean polishingAvailable = polishMassTolerance < baseMassTolerance
+            || energyPolishingAvailable || polishTempTolerance < baseTempTolerance;
 
         if (!polishing && polishingAvailable
-            && (massErr > polishMassTolerance || energyErr > polishEnergyTolerance)) {
+            && (massErr > polishMassTolerance
+                || (energyPolishingAvailable && energyErr > polishEnergyTolerance))) {
           polishing = true;
           iterationLimit = Math.max(iterationLimit, polishIterationLimit);
           monotonicBaseline = Double.POSITIVE_INFINITY;
@@ -6025,8 +6083,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         double tempTarget = polishing ? polishTempTolerance : baseTempTolerance;
         double massTarget = polishing ? polishMassTolerance : baseMassTolerance;
         double energyTarget = polishing ? polishEnergyTolerance : baseEnergyTolerance;
+        boolean energyWithinTarget = !enforceEnergyBalanceTolerance || energyErr <= energyTarget;
 
-        if (err <= tempTarget && massErr <= massTarget && energyErr <= energyTarget) {
+        if (err <= tempTarget && massErr <= massTarget && energyWithinTarget) {
           break;
         }
       }
@@ -6063,7 +6122,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     if (useGuardedWegsteinFallback()) {
-      solveDampedSubstitution(id);
+      markSolverTypeUsed(SolverType.DIRECT_SUBSTITUTION);
+      solveDirectSubstitution(id);
       return;
     }
 
@@ -6223,9 +6283,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     if (!Double.isFinite(err) || !Double.isFinite(energyErr) || err > baseTempTolerance
         || massErr > baseMassTolerance) {
-      logger.warn("Wegstein did not converge cleanly for column {}. Falling back to damped "
+      logger.warn("Wegstein did not converge cleanly for column {}. Falling back to direct "
           + "substitution.", getName());
-      solveDampedFallbackFromFreshInitialization(id);
+      solveDirectFallbackFromFreshInitialization(id);
       return;
     }
 
@@ -6263,6 +6323,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Rerun direct substitution from a fresh tray initialization after a guarded accelerator is slower
+   * or less stable than the base fixed-point method.
+   *
+   * @param id calculation identifier
+   */
+  private void solveDirectFallbackFromFreshInitialization(UUID id) {
+    boolean originalInitializationFlag = doInitializion;
+    doInitializion = true;
+    lastSolverTypeUsed = SolverType.DIRECT_SUBSTITUTION;
+    solveDirectSubstitution(id);
+    doInitializion = originalInitializationFlag;
+  }
+
+  /**
    * Rerun damped substitution after an accelerator throws during a solver adapter call.
    *
    * @param id calculation identifier
@@ -6287,12 +6361,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Decide whether Wegstein acceleration should be routed to the guarded damped solver.
+   * Decide whether Wegstein acceleration should be routed to a guarded base solver.
    *
    * @return {@code true} while the Wegstein accelerator is guarded by damped substitution
    */
   private boolean useGuardedWegsteinFallback() {
-    return false;
+    return true;
   }
 
   /**

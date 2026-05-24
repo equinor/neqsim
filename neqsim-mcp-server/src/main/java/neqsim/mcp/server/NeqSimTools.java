@@ -19,8 +19,7 @@ import neqsim.mcp.runners.PVTRunner;
 import neqsim.mcp.runners.PipelineRunner;
 import neqsim.mcp.runners.ProcessRunner;
 import neqsim.mcp.runners.ReservoirRunner;
-import neqsim.mcp.runners.StandardsRunner;
-import neqsim.mcp.runners.Validator;
+import neqsim.mcp.runners.AgenticEngineeringRunner;
 import neqsim.mcp.runners.AutomationRunner;
 import neqsim.mcp.runners.BarrierRegisterRunner;
 import neqsim.mcp.runners.BatchRunner;
@@ -60,6 +59,8 @@ import neqsim.mcp.runners.RiskMatrixRunner;
 import neqsim.mcp.runners.RootCauseRunner;
 import neqsim.mcp.runners.SafetySystemPerformanceRunner;
 import neqsim.mcp.runners.SILRunner;
+import neqsim.mcp.runners.StandardsRunner;
+import neqsim.mcp.runners.Validator;
 
 /**
  * MCP tools for NeqSim thermodynamic calculations and process simulation.
@@ -1223,6 +1224,33 @@ public class NeqSimTools {
       return TaskSolverRunner.composeWorkflow(workflowJson);
     } catch (Exception e) {
       return errorJson("Workflow composition failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Runs agentic engineering planning, evidence trust, or autonomous study ranking.
+   *
+   * @param agenticJson JSON with action plan, trust, or study
+   * @return JSON with standardized agentic engineering result
+   */
+  @Tool(description = "Run the agentic engineering kernel. Actions: 'plan' builds an Engineering "
+      + "Intent Graph and reviewable Workflow Plan; 'trust' builds an Evidence Graph and trust "
+      + "score for a result package; 'study' ranks candidate designs against objectives and "
+      + "constraints. Deterministic and side-effect free; simulations still run through explicit "
+      + "NeqSim calculation tools.")
+  public String runAgenticEngineering(
+      @ToolArg(description = "JSON with action: plan|trust|study. For plan provide task, optional "
+          + "fluid, objectives, constraints, standards, and deliverables. For trust provide result, "
+          + "provenance, validation, qualityGate, benchmarkTrust, evidence, assumptions, and "
+          + "limitations. For study provide candidates with metrics, objectives, and constraints.") String agenticJson) {
+    String blocked = IndustrialProfile.enforceAccess("runAgenticEngineering");
+    if (blocked != null) {
+      return blocked;
+    }
+    try {
+      return AgenticEngineeringRunner.run(agenticJson);
+    } catch (Exception e) {
+      return errorJson("Agentic engineering failed: " + e.getMessage());
     }
   }
 

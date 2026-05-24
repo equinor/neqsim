@@ -63,6 +63,7 @@ class CapabilitiesRunnerTest {
     assertTrue(toolCapabilities.has("runDynamic"));
     assertTrue(toolCapabilities.has("runSafetySystemPerformance"));
     assertTrue(toolCapabilities.has("solveTask"));
+    assertTrue(toolCapabilities.has("runAgenticEngineering"));
     assertTrue(toolCapabilities.has("runRelief"));
     assertTrue(toolCapabilities.has("getBenchmarkTrust"));
     assertTrue(toolCapabilities.has("checkToolAccess"));

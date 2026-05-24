@@ -147,6 +147,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * Cached parallel execution plan: grouped nodes per level for runParallel().
    */
   private transient List<List<List<ProcessNode>>> cachedParallelPlan = null;
+  /** Cached dataflow execution plan derived from {@link #cachedParallelPlan}. */
+  private transient DataflowExecutionPlan cachedDataflowPlan = null;
+  /** Cached hybrid execution plan for recycle-containing optimized runs. */
+  private transient HybridExecutionPlan cachedHybridPlan = null;
   /** Cached result of hasAdjusters() - null means not yet computed. */
   private transient Boolean cachedHasAdjusters = null;
   /** Cached result of hasRecycles() - null means not yet computed. */
@@ -173,6 +177,30 @@ public class ProcessSystem extends SimulationBaseClass {
    * balance.
    */
   private boolean useOptimizedExecution = true;
+
+  /** Cached task graph used by dataflow execution. */
+  private static final class DataflowExecutionPlan {
+    private final List<List<ProcessNode>> tasks;
+    private final List<java.util.Set<Integer>> taskPredecessors;
+
+    private DataflowExecutionPlan(List<List<ProcessNode>> tasks,
+        List<java.util.Set<Integer>> taskPredecessors) {
+      this.tasks = tasks;
+      this.taskPredecessors = taskPredecessors;
+    }
+  }
+
+  /** Cached partitioning used by hybrid recycle execution. */
+  private static final class HybridExecutionPlan {
+    private final List<List<List<ProcessNode>>> feedForwardLevelGroups;
+    private final List<ProcessEquipmentInterface> iterativeSection;
+
+    private HybridExecutionPlan(List<List<List<ProcessNode>>> feedForwardLevelGroups,
+        List<ProcessEquipmentInterface> iterativeSection) {
+      this.feedForwardLevelGroups = feedForwardLevelGroups;
+      this.iterativeSection = iterativeSection;
+    }
+  }
 
   /**
    * Transient listener for simulation progress callbacks. Used for real-time visualization in
@@ -1390,44 +1418,90 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Runs the process using hybrid execution strategy.
+   * Returns the cached grouped level plan used by parallel and dataflow execution.
    *
-   * <p>
-   * This method partitions the process into:
-   * </p>
-   * <ul>
-   * <li>Feed-forward section: Units at the beginning with no recycle dependencies - run in
-   * parallel</li>
-   * <li>Recycle section: Units that are part of or depend on recycle loops - run with graph-based
-   * iteration</li>
-   * </ul>
-   *
-   * @param id calculation identifier for tracking
-   * @throws InterruptedException if thread is interrupted during parallel execution
+   * @return grouped process-node levels
    */
-  public synchronized void runHybrid(UUID id) throws InterruptedException {
-    ProcessGraph graph = buildGraph();
-    ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
-    java.util.Set<ProcessNode> recycleNodes = graph.getNodesInRecycleLoops();
+  private List<List<List<ProcessNode>>> getCachedParallelPlan() {
+    if (cachedParallelPlan == null) {
+      ProcessGraph graph = buildGraph();
+      ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
+      List<List<List<ProcessNode>>> plan = new ArrayList<>();
+      for (List<ProcessNode> level : partition.getLevels()) {
+        if (level.size() <= 1) {
+          List<List<ProcessNode>> singleGroup = new ArrayList<>();
+          singleGroup.add(level);
+          plan.add(singleGroup);
+        } else {
+          plan.add(groupNodesBySharedInputStreams(level));
+        }
+      }
+      cachedParallelPlan = plan;
+    }
+    return cachedParallelPlan;
+  }
 
-    // Build set of units in recycle loops for fast lookup
-    java.util.Set<ProcessEquipmentInterface> recycleUnits = new java.util.HashSet<>();
-    for (ProcessNode node : recycleNodes) {
-      recycleUnits.add(node.getEquipment());
+  /**
+   * Returns the cached dataflow task graph for topology-stable repeated runs.
+   *
+   * @return dataflow execution plan
+   */
+  private DataflowExecutionPlan getCachedDataflowPlan() {
+    if (cachedDataflowPlan != null) {
+      return cachedDataflowPlan;
     }
 
-    // Run setters first (sequential, they set conditions)
-    for (ProcessEquipmentInterface unit : unitOperations) {
-      if (unit instanceof Setter) {
-        unit.run(id);
+    List<List<ProcessNode>> tasks = new ArrayList<>();
+    for (List<List<ProcessNode>> level : getCachedParallelPlan()) {
+      tasks.addAll(level);
+    }
+
+    Map<ProcessNode, Integer> nodeToTaskIndex = new IdentityHashMap<>();
+    for (int i = 0; i < tasks.size(); i++) {
+      for (ProcessNode node : tasks.get(i)) {
+        nodeToTaskIndex.put(node, i);
       }
     }
 
-    // Phase 1: Run feed-forward levels in parallel (before any recycle units or
-    // adjusters)
+    List<java.util.Set<Integer>> taskPredecessors = new ArrayList<>(tasks.size());
+    for (int i = 0; i < tasks.size(); i++) {
+      java.util.Set<Integer> predSet = new java.util.HashSet<>();
+      for (ProcessNode node : tasks.get(i)) {
+        for (ProcessEdge edge : node.getIncomingEdges()) {
+          if (edge.isBackEdge()) {
+            continue;
+          }
+          Integer srcTask = nodeToTaskIndex.get(edge.getSource());
+          if (srcTask != null && srcTask != i) {
+            predSet.add(srcTask);
+          }
+        }
+      }
+      taskPredecessors.add(predSet);
+    }
+
+    cachedDataflowPlan = new DataflowExecutionPlan(tasks, taskPredecessors);
+    return cachedDataflowPlan;
+  }
+
+  /**
+   * Returns the cached split between feed-forward and iterative recycle execution.
+   *
+   * @return hybrid execution plan
+   */
+  private HybridExecutionPlan getCachedHybridPlan() {
+    if (cachedHybridPlan != null) {
+      return cachedHybridPlan;
+    }
+
+    ProcessGraph graph = buildGraph();
+    ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
+    java.util.Set<ProcessNode> recycleNodes = graph.getNodesInRecycleLoops();
+    List<List<ProcessNode>> levels = partition.getLevels();
+
     int firstRecycleLevel = -1;
     int firstAdjusterLevel = -1;
-    List<List<ProcessNode>> levels = partition.getLevels();
+    List<List<List<ProcessNode>>> feedForwardLevelGroups = new ArrayList<>();
 
     for (int levelIdx = 0; levelIdx < levels.size(); levelIdx++) {
       List<ProcessNode> level = levels.get(levelIdx);
@@ -1447,58 +1521,16 @@ public class ProcessSystem extends SimulationBaseClass {
       if (hasAdjusterUnit && firstAdjusterLevel < 0) {
         firstAdjusterLevel = levelIdx;
       }
-      // Stop at first level with either recycle or adjuster
       if (hasRecycleUnit || hasAdjusterUnit) {
         break;
       }
-
-      // This level is feed-forward - run in parallel
-      // Group nodes that share input streams to run them sequentially
-      List<List<ProcessNode>> groups = groupNodesBySharedInputStreams(level);
-
-      if (groups.size() == 1) {
-        // Single group - run sequentially to avoid race conditions
-        for (ProcessNode node : groups.get(0)) {
-          ProcessEquipmentInterface unit = node.getEquipment();
-          if (!(unit instanceof Setter)) {
-            try {
-              runUnitProfiled(unit, id);
-            } catch (Exception ex) {
-              throw createUnitRunException(unit, ex);
-            }
-          }
-        }
+      if (level.size() <= 1) {
+        feedForwardLevelGroups.add(Collections.singletonList(level));
       } else {
-        // Multiple independent groups - run groups in parallel
-        List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
-        for (List<ProcessNode> group : groups) {
-          final List<ProcessNode> groupToRun = group;
-          final UUID calcId = id;
-          futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
-            for (ProcessNode node : groupToRun) {
-              ProcessEquipmentInterface unit = node.getEquipment();
-              if (!(unit instanceof Setter)) {
-                try {
-                  runUnitProfiled(unit, calcId);
-                } catch (Exception ex) {
-                  throw createUnitRunException(unit, ex);
-                }
-              }
-            }
-          }));
-        }
-        for (java.util.concurrent.Future<?> future : futures) {
-          try {
-            future.get();
-          } catch (java.util.concurrent.ExecutionException ex) {
-            throw createWorkerExecutionException("Parallel", ex);
-          }
-        }
+        feedForwardLevelGroups.add(groupNodesBySharedInputStreams(level));
       }
     }
 
-    // Phase 2: Run recycle/adjuster section with graph-based iteration
-    // Take the minimum of both (earlier level starts iteration)
     int firstIterativeLevel = -1;
     if (firstRecycleLevel >= 0 && firstAdjusterLevel >= 0) {
       firstIterativeLevel = Math.min(firstRecycleLevel, firstAdjusterLevel);
@@ -1507,44 +1539,138 @@ public class ProcessSystem extends SimulationBaseClass {
     } else if (firstAdjusterLevel >= 0) {
       firstIterativeLevel = firstAdjusterLevel;
     }
+
+    List<ProcessEquipmentInterface> iterativeSection = new ArrayList<>();
     if (firstIterativeLevel >= 0) {
-      // Collect all equipment at or after the first iterative level as a set
-      // for quick membership checks.
       java.util.Set<ProcessEquipmentInterface> iterativeSet = new java.util.HashSet<>();
       for (int levelIdx = firstIterativeLevel; levelIdx < levels.size(); levelIdx++) {
         for (ProcessNode node : levels.get(levelIdx)) {
           iterativeSet.add(node.getEquipment());
         }
       }
-
-      // Build the iterative section in INSERTION order (not topological order).
-      // Successive-substitution convergence of recycle loops depends on the
-      // execution order of units; using insertion order matches the sequential
-      // run path and the order the user designed the flowsheet. Topological
-      // level order can produce a different fixed point or fail to converge,
-      // especially when Calculator / Recycle / adjuster signal couplings place
-      // the absorber or tear stream at a non-intuitive level.
-      List<ProcessEquipmentInterface> iterativeSection = new ArrayList<>();
       for (ProcessEquipmentInterface unit : unitOperations) {
         if (iterativeSet.contains(unit)) {
           iterativeSection.add(unit);
         }
       }
-
-      // Tear-stream ordering refinement: within each non-trivial SCC (size>1)
-      // move Recycle units (the "closers" of the tear stream) to the END of
-      // their SCC block while preserving insertion order of all other units.
-      // Rationale: successive substitution converges when the tear closer
-      // reads the freshest upstream values produced earlier in the same pass.
-      // This is a stable refinement of insertion order - it only re-positions
-      // Recycle units relative to their SCC peers, never across SCC boundaries,
-      // so it preserves the user-designed flow of the flowsheet. No-op for
-      // flowsheets where Recycles are already added last.
       iterativeSection = reorderRecyclesWithinSCCs(iterativeSection);
+    }
 
+    cachedHybridPlan = new HybridExecutionPlan(feedForwardLevelGroups, iterativeSection);
+    return cachedHybridPlan;
+  }
+
+  /**
+   * Executes grouped process nodes in one feed-forward level.
+   *
+   * @param levelGroups independent groups in a level
+   * @param id calculation identifier
+   */
+  private void runLevelGroups(List<List<ProcessNode>> levelGroups, UUID id)
+      throws InterruptedException {
+    if (levelGroups.size() == 1) {
+      for (ProcessNode node : levelGroups.get(0)) {
+        ProcessEquipmentInterface unit = node.getEquipment();
+        if (!(unit instanceof Setter)) {
+          try {
+            runUnitProfiled(unit, id);
+          } catch (Exception ex) {
+            throw createUnitRunException(unit, ex);
+          }
+        }
+      }
+      return;
+    }
+
+    List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
+    for (List<ProcessNode> group : levelGroups) {
+      final List<ProcessNode> groupToRun = group;
+      final UUID calcId = id;
+      futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
+        for (ProcessNode node : groupToRun) {
+          ProcessEquipmentInterface unit = node.getEquipment();
+          if (!(unit instanceof Setter)) {
+            try {
+              runUnitProfiled(unit, calcId);
+            } catch (Exception ex) {
+              throw createUnitRunException(unit, ex);
+            }
+          }
+        }
+      }));
+    }
+    for (java.util.concurrent.Future<?> future : futures) {
+      try {
+        future.get();
+      } catch (java.util.concurrent.ExecutionException ex) {
+        throw createWorkerExecutionException("Parallel", ex);
+      } catch (InterruptedException ex) {
+        Thread.currentThread().interrupt();
+        throw ex;
+      }
+    }
+  }
+
+  /**
+   * Checks whether any non-setter unit needs recalculation after setters have been applied.
+   *
+   * @return true if any regular unit reports dirty state
+   */
+  private boolean hasUnitsNeedingRecalculation() {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (!(unit instanceof Setter) && unit.needRecalculation()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Marks every unit and this process system with the current calculation id.
+   *
+   * @param id calculation identifier
+   */
+  private void updateCalculationIdentifiers(UUID id) {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      unit.setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+  }
+
+  /**
+   * Runs the process using hybrid execution strategy.
+   *
+   * <p>
+   * This method partitions the process into:
+   * </p>
+   * <ul>
+   * <li>Feed-forward section: Units at the beginning with no recycle dependencies - run in
+   * parallel</li>
+   * <li>Recycle section: Units that are part of or depend on recycle loops - run with graph-based
+   * iteration</li>
+   * </ul>
+   *
+   * @param id calculation identifier for tracking
+   * @throws InterruptedException if thread is interrupted during parallel execution
+   */
+  public synchronized void runHybrid(UUID id) throws InterruptedException {
+    HybridExecutionPlan plan = getCachedHybridPlan();
+
+    // Run setters first (sequential, they set conditions)
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof Setter) {
+        unit.run(id);
+      }
+    }
+
+    for (List<List<ProcessNode>> levelGroups : plan.feedForwardLevelGroups) {
+      runLevelGroups(levelGroups, id);
+    }
+
+    if (!plan.iterativeSection.isEmpty()) {
       // Initialize recycle controller for these units
       recycleController.clear();
-      for (ProcessEquipmentInterface unit : iterativeSection) {
+      for (ProcessEquipmentInterface unit : plan.iterativeSection) {
         if (unit instanceof Recycle) {
           recycleController.addRecycle((Recycle) unit);
         }
@@ -1558,7 +1684,7 @@ public class ProcessSystem extends SimulationBaseClass {
         iter++;
         isConverged = true;
 
-        for (ProcessEquipmentInterface unit : iterativeSection) {
+        for (ProcessEquipmentInterface unit : plan.iterativeSection) {
           if (Thread.currentThread().isInterrupted()) {
             logger.debug("Process simulation was interrupted, exiting runHybrid()..." + getName());
             break;
@@ -1596,7 +1722,7 @@ public class ProcessSystem extends SimulationBaseClass {
           recycleController.resetPriorityLevel();
         }
 
-        for (ProcessEquipmentInterface unit : iterativeSection) {
+        for (ProcessEquipmentInterface unit : plan.iterativeSection) {
           if (unit instanceof Adjuster) {
             if (!((Adjuster) unit).solved()) {
               isConverged = false;
@@ -1893,33 +2019,23 @@ public class ProcessSystem extends SimulationBaseClass {
       runAutoValidation(unitOperations);
     }
 
-    // Build and cache the parallel execution plan (grouped nodes per level)
-    if (cachedParallelPlan == null) {
-      ProcessGraph graph = buildGraph();
-      ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
-      List<List<List<ProcessNode>>> plan = new ArrayList<>();
-      for (List<ProcessNode> level : partition.getLevels()) {
-        if (level.size() <= 1) {
-          // Single node level - wrap as single group
-          List<List<ProcessNode>> singleGroup = new ArrayList<>();
-          singleGroup.add(level);
-          plan.add(singleGroup);
-        } else {
-          plan.add(groupNodesBySharedInputStreams(level));
-        }
-      }
-      cachedParallelPlan = plan;
-    }
-
     // Run setters first (sequential, they set conditions)
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Setter) {
         unit.run(id);
       }
     }
+    if (!hasUnitsNeedingRecalculation()) {
+      updateCalculationIdentifiers(id);
+      publishEvent(
+          new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE,
+              getName(), "Parallel simulation completed with no dirty units",
+              ProcessEvent.Severity.INFO));
+      return;
+    }
 
     // Execute each level using the cached plan
-    for (List<List<ProcessNode>> levelGroups : cachedParallelPlan) {
+    for (List<List<ProcessNode>> levelGroups : getCachedParallelPlan()) {
       if (levelGroups.size() == 1 && levelGroups.get(0).size() == 1) {
         // Single unit at this level - run directly (no thread pool overhead)
         ProcessEquipmentInterface unit = levelGroups.get(0).get(0).getEquipment();
@@ -2030,58 +2146,7 @@ public class ProcessSystem extends SimulationBaseClass {
       runAutoValidation(unitOperations);
     }
 
-    // Reuse the cached level-based plan for grouping. Dataflow treats each
-    // group as an atomic task; predecessors are computed at the task level.
-    if (cachedParallelPlan == null) {
-      ProcessGraph graph = buildGraph();
-      ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
-      List<List<List<ProcessNode>>> plan = new ArrayList<>();
-      for (List<ProcessNode> level : partition.getLevels()) {
-        if (level.size() <= 1) {
-          List<List<ProcessNode>> singleGroup = new ArrayList<>();
-          singleGroup.add(level);
-          plan.add(singleGroup);
-        } else {
-          plan.add(groupNodesBySharedInputStreams(level));
-        }
-      }
-      cachedParallelPlan = plan;
-    }
-
-    // Flatten the plan into an ordered list of tasks (each task = one group).
-    List<List<ProcessNode>> tasks = new ArrayList<>();
-    for (List<List<ProcessNode>> level : cachedParallelPlan) {
-      tasks.addAll(level);
-    }
-
-    // Map each node to the index of the task containing it. Used to resolve
-    // task-level predecessor relationships.
-    Map<ProcessNode, Integer> nodeToTaskIndex = new IdentityHashMap<>();
-    for (int i = 0; i < tasks.size(); i++) {
-      for (ProcessNode node : tasks.get(i)) {
-        nodeToTaskIndex.put(node, i);
-      }
-    }
-
-    // For each task, compute the set of predecessor task indices (external
-    // graph edges into any node in this task, excluding back-edges and
-    // intra-task edges).
-    List<java.util.Set<Integer>> taskPredecessors = new ArrayList<>(tasks.size());
-    for (int i = 0; i < tasks.size(); i++) {
-      java.util.Set<Integer> predSet = new java.util.HashSet<>();
-      for (ProcessNode node : tasks.get(i)) {
-        for (neqsim.process.processmodel.graph.ProcessEdge edge : node.getIncomingEdges()) {
-          if (edge.isBackEdge()) {
-            continue; // Dataflow ignores back-edges (no recycles in this path).
-          }
-          Integer srcTask = nodeToTaskIndex.get(edge.getSource());
-          if (srcTask != null && srcTask != i) {
-            predSet.add(srcTask);
-          }
-        }
-      }
-      taskPredecessors.add(predSet);
-    }
+    DataflowExecutionPlan plan = getCachedDataflowPlan();
 
     // Run setters first (sequential, they set boundary conditions).
     for (ProcessEquipmentInterface unit : unitOperations) {
@@ -2089,13 +2154,22 @@ public class ProcessSystem extends SimulationBaseClass {
         unit.run(id);
       }
     }
+    if (!hasUnitsNeedingRecalculation()) {
+      updateCalculationIdentifiers(id);
+      publishEvent(
+          new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE,
+              getName(), "Dataflow simulation completed with no dirty units",
+              ProcessEvent.Severity.INFO));
+      return;
+    }
 
     // Build CompletableFutures: each task waits for its predecessors, then
     // runs its contained nodes sequentially on the NeqSim thread pool.
     java.util.concurrent.ExecutorService executor = neqsim.util.NeqSimThreadPool.getPool();
-    List<java.util.concurrent.CompletableFuture<Void>> taskFutures = new ArrayList<>(tasks.size());
-    for (int i = 0; i < tasks.size(); i++) {
-      final List<ProcessNode> taskNodes = tasks.get(i);
+    List<java.util.concurrent.CompletableFuture<Void>> taskFutures =
+        new ArrayList<>(plan.tasks.size());
+    for (int i = 0; i < plan.tasks.size(); i++) {
+      final List<ProcessNode> taskNodes = plan.tasks.get(i);
       final UUID calcId = id;
       Runnable body = () -> {
         for (ProcessNode node : taskNodes) {
@@ -2110,7 +2184,7 @@ public class ProcessSystem extends SimulationBaseClass {
         }
       };
 
-      java.util.Set<Integer> preds = taskPredecessors.get(i);
+      java.util.Set<Integer> preds = plan.taskPredecessors.get(i);
       java.util.concurrent.CompletableFuture<Void> future;
       if (preds.isEmpty()) {
         future = java.util.concurrent.CompletableFuture.runAsync(body, executor);
@@ -5557,6 +5631,8 @@ public class ProcessSystem extends SimulationBaseClass {
     graphDirty = true;
     cachedGraph = null;
     cachedParallelPlan = null;
+    cachedDataflowPlan = null;
+    cachedHybridPlan = null;
     cachedHasAdjusters = null;
     cachedHasRecycles = null;
     cachedHasCalculators = null;

@@ -1,8 +1,8 @@
 {
-  "total": 203,
+  "total": 204,
   "passed": 16,
   "failed": 0,
-  "skipped": 187,
+  "skipped": 188,
   "results": [
     {
       "file": "chapters/ch01_introduction/chapter.md",
@@ -1163,6 +1163,12 @@
     {
       "file": "chapters/ch17_process_optimization/chapter.md",
       "line": 353,
+      "status": "SKIP",
+      "error": "noexec marker"
+    },
+    {
+      "file": "chapters/ch17_process_optimization/chapter.md",
+      "line": 422,
       "status": "SKIP",
       "error": "noexec marker"
     },
