@@ -80,6 +80,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Default product draw residual tolerance when MESH residual gating is enabled.
    */
   private static final double DEFAULT_MESH_PRODUCT_DRAW_RESIDUAL_TOLERANCE = 2.0e-2;
+  /** Fractional distance from 0 or 1 treated as an active commercial specification bound. */
+  private static final double ACTIVE_BOUND_FRACTION_TOLERANCE = 1.0e-5;
   /** Maximum product-flow drift allowed when accepting a MESH Newton polish candidate. */
   private static final double MESH_POLISH_PRODUCT_FLOW_TOLERANCE = 2.0e-2;
   /** Product reconciliation drift above this level is reported as a non-rigorous solve status. */
@@ -2205,6 +2207,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (!Double.isFinite(baselineResidualNorm)) {
       return false;
     }
+    double baselineProductDrawResidual = getLastMeshProductDrawResidualNorm();
     double baselineGasFlow = getProductFlowKgPerHour(gasOutStream);
     double baselineLiquidFlow = getProductFlowKgPerHour(liquidOutStream);
     DistillationColumn candidate;
@@ -2225,14 +2228,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     double candidateResidualNorm = candidate.lastMeshResidual == null ? Double.NaN
         : candidate.lastMeshResidual.getInfinityNorm();
-    if (!Double.isFinite(candidateResidualNorm)
-        || candidateResidualNorm >= baselineResidualNorm * 0.999) {
+    double candidateProductDrawResidual = candidate.getLastMeshProductDrawResidualNorm();
+    boolean residualImproved = Double.isFinite(candidateResidualNorm)
+        && candidateResidualNorm < baselineResidualNorm * 0.999;
+    boolean productDrawGateRecovered = productDrawGateRecovered(candidateResidualNorm,
+        candidateProductDrawResidual, baselineResidualNorm, baselineProductDrawResidual);
+    if (!residualImproved && !productDrawGateRecovered) {
       logger.debug("MESH Newton polish rejected: residual {} did not improve baseline {}.",
           Double.valueOf(candidateResidualNorm), Double.valueOf(baselineResidualNorm));
       return false;
     }
 
-    if (!meshPolishProductSplitMatches(candidate, baselineGasFlow, baselineLiquidFlow)) {
+    if (!productDrawGateRecovered
+        && !meshPolishProductSplitMatches(candidate, baselineGasFlow, baselineLiquidFlow)) {
       logger.debug(
           "MESH Newton polish rejected: product split changed from gas/liquid "
               + "{}/{} kg/hr to {}/{} kg/hr.",
@@ -2246,6 +2254,26 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     logger.debug("MESH Newton polish accepted: residual {} improved baseline {}.",
         Double.valueOf(candidateResidualNorm), Double.valueOf(baselineResidualNorm));
     return true;
+  }
+
+  /**
+   * Check whether a Newton polish recovered the MESH product-draw convergence gate.
+   *
+   * @param candidateResidualNorm candidate MESH infinity norm
+   * @param candidateProductDrawResidual candidate product-draw residual norm
+   * @param baselineResidualNorm baseline MESH infinity norm
+   * @param baselineProductDrawResidual baseline product-draw residual norm
+   * @return {@code true} when product-draw residuals satisfy their gate without worsening the
+   *         overall residual norm
+   */
+  private boolean productDrawGateRecovered(double candidateResidualNorm,
+      double candidateProductDrawResidual, double baselineResidualNorm,
+      double baselineProductDrawResidual) {
+    return Double.isFinite(candidateResidualNorm) && Double.isFinite(candidateProductDrawResidual)
+        && Double.isFinite(baselineProductDrawResidual)
+        && candidateResidualNorm <= Math.max(baselineResidualNorm, meshResidualTolerance)
+        && candidateProductDrawResidual <= meshProductDrawResidualTolerance
+        && candidateProductDrawResidual < baselineProductDrawResidual;
   }
 
   /**
@@ -3804,8 +3832,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           "skipped because fewer than two non-water feed components were available");
     }
 
+    ColumnSpecification originalTopSpecification = topSpecification;
+    ColumnSpecification originalBottomSpecification = bottomSpecification;
     ShortcutInitializationResult result =
         initializeFromShortcut(feedStream, keys[0], keys[1], 0.95, 0.95, 1.4);
+    topSpecification = originalTopSpecification;
+    bottomSpecification = originalBottomSpecification;
     String message = result.getMessage() + " lightKey=" + keys[0] + " heavyKey=" + keys[1];
     return recordInitializationAttempt(summary, "shortcut initialization", result.isInitialized(),
         message);
@@ -3884,13 +3916,48 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private boolean recordInitializationAttempt(StringBuilder summary, String label, boolean applied,
       String message) {
-    String report = label + " " + (applied ? "applied" : "skipped") + ": " + message;
+    String token = getInitializationReportToken(label);
+    String displayLabel = getInitializationReportLabel(label);
+    String report =
+        token + " " + displayLabel + " " + (applied ? "applied" : "skipped") + ": " + message;
     setLastInitializationReport(report);
     recordAutoSolverEvent(report);
     if (summary != null) {
       summary.append("AUTO ").append(report).append('\n');
     }
     return applied;
+  }
+
+  /**
+   * Return the stable diagnostic token for an AUTO initialization label.
+   *
+   * @param label human-readable initialization label
+   * @return stable uppercase diagnostic token
+   */
+  private String getInitializationReportToken(String label) {
+    if ("shortcut initialization".equals(label)) {
+      return "SHORTCUT_INITIALIZATION";
+    }
+    if ("thermodynamic profile initialization".equals(label)) {
+      return "THERMODYNAMIC_PROFILE";
+    }
+    return "INITIALIZATION";
+  }
+
+  /**
+   * Return the display label for an AUTO initialization report.
+   *
+   * @param label internal initialization label
+   * @return human-readable report label
+   */
+  private String getInitializationReportLabel(String label) {
+    if ("shortcut initialization".equals(label)) {
+      return "Shortcut initialization";
+    }
+    if ("thermodynamic profile initialization".equals(label)) {
+      return "Thermodynamic profile seed";
+    }
+    return label == null ? "Initialization" : label;
   }
 
   /**
@@ -4982,9 +5049,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         boolean polishingAvailable = polishMassTolerance < baseMassTolerance
             || energyPolishingAvailable || polishTempTolerance < baseTempTolerance;
 
-        if (!polishing && polishingAvailable
-            && (massErr > polishMassTolerance
-                || (energyPolishingAvailable && energyErr > polishEnergyTolerance))) {
+        if (!polishing && polishingAvailable && (massErr > polishMassTolerance
+            || (energyPolishingAvailable && energyErr > polishEnergyTolerance))) {
           polishing = true;
           iterationLimit = Math.max(iterationLimit, polishIterationLimit);
           previousCombinedResidual = Double.POSITIVE_INFINITY;
@@ -5520,9 +5586,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         boolean polishingAvailable = polishMassTolerance < baseMassTolerance
             || energyPolishingAvailable || polishTempTolerance < baseTempTolerance;
 
-        if (!polishing && polishingAvailable
-            && (massErr > polishMassTolerance
-                || (energyPolishingAvailable && energyErr > polishEnergyTolerance))) {
+        if (!polishing && polishingAvailable && (massErr > polishMassTolerance
+            || (energyPolishingAvailable && energyErr > polishEnergyTolerance))) {
           polishing = true;
           iterationLimit = Math.max(iterationLimit, polishIterationLimit);
           previousCombinedResidual = Double.POSITIVE_INFINITY;
@@ -5569,10 +5634,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Decide when the inside-out fixed-point stage should hand off to simultaneous Newton.
    *
    * <p>
-   * Large columns spend most of their wall time in repeated tray flashes once the K-value profile is
-   * already well shaped. The hybrid handoff follows the common inside-out/simultaneous-correction
-   * pattern: use cheap fixed-point sweeps for initialization, then solve the coupled temperature
-   * correction when additional sweeps mostly polish the same profile.
+   * Large columns spend most of their wall time in repeated tray flashes once the K-value profile
+   * is already well shaped. The hybrid handoff follows the common
+   * inside-out/simultaneous-correction pattern: use cheap fixed-point sweeps for initialization,
+   * then solve the coupled temperature correction when additional sweeps mostly polish the same
+   * profile.
    * </p>
    *
    * @param iteration current inside-out outer iteration
@@ -6071,9 +6137,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         boolean polishingAvailable = polishMassTolerance < baseMassTolerance
             || energyPolishingAvailable || polishTempTolerance < baseTempTolerance;
 
-        if (!polishing && polishingAvailable
-            && (massErr > polishMassTolerance
-                || (energyPolishingAvailable && energyErr > polishEnergyTolerance))) {
+        if (!polishing && polishingAvailable && (massErr > polishMassTolerance
+            || (energyPolishingAvailable && energyErr > polishEnergyTolerance))) {
           polishing = true;
           iterationLimit = Math.max(iterationLimit, polishIterationLimit);
           monotonicBaseline = Double.POSITIVE_INFINITY;
@@ -6323,8 +6388,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Rerun direct substitution from a fresh tray initialization after a guarded accelerator is slower
-   * or less stable than the base fixed-point method.
+   * Rerun direct substitution from a fresh tray initialization after a guarded accelerator is
+   * slower or less stable than the base fixed-point method.
    *
    * @param id calculation identifier
    */
@@ -9606,6 +9671,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         || bottomProductPhaseInvalid()) && updateProductsFromOverallFeedFlash(id)) {
       fallbackProductsApplied = true;
     }
+    synchronizeColumnEndProductStreams(id);
+    synchronizeTerminalProductDrawStreams(id);
     lastUsedFeedFlashFallback = fallbackProductsApplied;
     lastMassResidual = Math.max(lastMassResidual, getExternalMassBalanceError());
     if (lastInternalTrafficGuardReached) {
@@ -9641,6 +9708,57 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Synchronize condenser and reboiler product streams with the exposed column products.
+   *
+   * <p>
+   * Product reconciliation updates {@link #gasOutStream} and {@link #liquidOutStream}. Legacy
+   * callers may also read the condenser product or reboiler liquid stream directly, so those
+   * equipment-level product streams must be kept on the same balanced basis.
+   * </p>
+   *
+   * @param id calculation identifier to assign to synchronized product streams
+   */
+  private void synchronizeColumnEndProductStreams(UUID id) {
+    if (hasCondenser && gasOutStream != null && getCondenser() != null) {
+      synchronizeProductStream(getCondenser().getProductOutStream(), gasOutStream, id);
+    }
+    if (hasReboiler && liquidOutStream != null && getReboiler() != null) {
+      synchronizeProductStream(getReboiler().getLiquidOutStream(), liquidOutStream, id);
+    }
+  }
+
+  /**
+   * Copy a source product basis into a target product stream.
+   *
+   * @param target target product stream to synchronize
+   * @param source source product stream containing the balanced thermodynamic system
+   * @param id calculation identifier to assign to the target
+   */
+  private void synchronizeProductStream(StreamInterface target, StreamInterface source, UUID id) {
+    if (target == null || source == null || source.getThermoSystem() == null) {
+      return;
+    }
+    target.setThermoSystem(source.getThermoSystem().clone());
+    target.setCalculationIdentifier(id);
+  }
+
+  /**
+   * Synchronize product-draw residual diagnostics with the final exposed column products.
+   *
+   * @param id calculation identifier to assign to synchronized diagnostic streams
+   */
+  private void synchronizeTerminalProductDrawStreams(UUID id) {
+    if (gasOutStream != null && gasOutStream.getThermoSystem() != null) {
+      terminalGasProductDrawStream = gasOutStream.clone();
+      terminalGasProductDrawStream.setCalculationIdentifier(id);
+    }
+    if (liquidOutStream != null && liquidOutStream.getThermoSystem() != null) {
+      terminalLiquidProductDrawStream = liquidOutStream.clone();
+      terminalLiquidProductDrawStream.setCalculationIdentifier(id);
+    }
+  }
+
+  /**
    * Update the strict solve status after product handling and residual diagnostics are current.
    *
    * @param productReconciled {@code true} if public products were materially reconciled
@@ -9662,9 +9780,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return;
     }
     if (productReconciled) {
-      setLastSolveStatus(SolveStatus.RECONCILED_PRODUCTS,
-          "Public products were materially reconciled after the tray solve");
-      return;
+      if (!isEffectiveMeshResidualToleranceEnforced()) {
+        setLastSolveStatus(SolveStatus.RECONCILED_PRODUCTS,
+            "Public products were materially reconciled after the tray solve");
+        return;
+      }
     }
     setLastSolveStatus(SolveStatus.RIGOROUS_CONVERGED,
         "Tray solution satisfies active rigorous convergence gates");
@@ -10745,7 +10865,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return {@code true} when the value lies close to either hard bound
    */
   private boolean isNearFractionBound(double value) {
-    return value <= 1.0e-6 || value >= 1.0 - 1.0e-6;
+    return value <= ACTIVE_BOUND_FRACTION_TOLERANCE
+        || value >= 1.0 - ACTIVE_BOUND_FRACTION_TOLERANCE;
   }
 
   /**
@@ -10896,6 +11017,84 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     validateColumnSpecification(result, topSpecification, ColumnSpecification.ProductLocation.TOP);
     validateColumnSpecification(result, bottomSpecification,
         ColumnSpecification.ProductLocation.BOTTOM);
+    validateProductFlowSpecificationsAgainstFeed(result);
+  }
+
+  /**
+   * Validate product-flow specifications against available external feed flow.
+   *
+   * @param result validation result receiving product-flow feasibility errors
+   */
+  private void validateProductFlowSpecificationsAgainstFeed(ValidationResult result) {
+    double totalFeedFlow = getTotalExternalFeedFlowMolPerHour();
+    if (!Double.isFinite(totalFeedFlow) || totalFeedFlow <= 0.0) {
+      return;
+    }
+
+    double topProductFlowTarget = getProductFlowSpecificationTarget(topSpecification);
+    double bottomProductFlowTarget = getProductFlowSpecificationTarget(bottomSpecification);
+    if (topProductFlowTarget > totalFeedFlow * (1.0 + 1.0e-12)) {
+      result.addError("specification.productFlow",
+          "Product-flow target for the top product exceeds total feed flow",
+          "Use a top product-flow target below the total feed flow or check the mol/hr units");
+    }
+    if (bottomProductFlowTarget > totalFeedFlow * (1.0 + 1.0e-12)) {
+      result.addError("specification.productFlow",
+          "Product-flow target for the bottom product exceeds total feed flow",
+          "Use a bottom product-flow target below the total feed flow or check the mol/hr units");
+    }
+    double productFlowSum =
+        positiveFiniteOrZero(topProductFlowTarget) + positiveFiniteOrZero(bottomProductFlowTarget);
+    if (productFlowSum > totalFeedFlow * (1.0 + 1.0e-12)) {
+      result.addError("specification.productFlow.sum",
+          "Top and bottom product-flow targets exceed total feed flow",
+          "Reduce one product-flow target or replace one flow target with purity, "
+              + "recovery, duty, or reflux specification");
+    }
+  }
+
+  /**
+   * Get the target value for a product-flow specification.
+   *
+   * @param specification column specification to inspect
+   * @return product-flow target in mol/hr, or {@link Double#NaN} when the specification is not a
+   *         product-flow target
+   */
+  private double getProductFlowSpecificationTarget(ColumnSpecification specification) {
+    if (specification == null
+        || specification.getType() != ColumnSpecification.SpecificationType.PRODUCT_FLOW_RATE) {
+      return Double.NaN;
+    }
+    return specification.getTargetValue();
+  }
+
+  /**
+   * Return a finite positive value, otherwise zero.
+   *
+   * @param value value to screen
+   * @return {@code value} when finite and positive, otherwise zero
+   */
+  private double positiveFiniteOrZero(double value) {
+    return Double.isFinite(value) && value > 0.0 ? value : 0.0;
+  }
+
+  /**
+   * Calculate total external feed flow in mol/hr.
+   *
+   * @return total molar feed flow in mol/hr
+   */
+  private double getTotalExternalFeedFlowMolPerHour() {
+    double totalFeedFlow = 0.0;
+    for (StreamInterface feed : getAllExternalFeedStreams()) {
+      if (feed == null) {
+        continue;
+      }
+      double flow = feed.getFlowRate("mol/hr");
+      if (Double.isFinite(flow)) {
+        totalFeedFlow += Math.abs(flow);
+      }
+    }
+    return totalFeedFlow;
   }
 
   /**

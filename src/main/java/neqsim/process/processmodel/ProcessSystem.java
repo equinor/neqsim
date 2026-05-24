@@ -2027,10 +2027,9 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     if (!hasUnitsNeedingRecalculation()) {
       updateCalculationIdentifiers(id);
-      publishEvent(
-          new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE,
-              getName(), "Parallel simulation completed with no dirty units",
-              ProcessEvent.Severity.INFO));
+      publishEvent(new ProcessEvent(ProcessEvent.generateId(),
+          ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
+          "Parallel simulation completed with no dirty units", ProcessEvent.Severity.INFO));
       return;
     }
 
@@ -2156,10 +2155,9 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     if (!hasUnitsNeedingRecalculation()) {
       updateCalculationIdentifiers(id);
-      publishEvent(
-          new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.SIMULATION_COMPLETE,
-              getName(), "Dataflow simulation completed with no dirty units",
-              ProcessEvent.Severity.INFO));
+      publishEvent(new ProcessEvent(ProcessEvent.generateId(),
+          ProcessEvent.EventType.SIMULATION_COMPLETE, getName(),
+          "Dataflow simulation completed with no dirty units", ProcessEvent.Severity.INFO));
       return;
     }
 
