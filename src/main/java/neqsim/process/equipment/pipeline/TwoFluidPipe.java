@@ -1161,11 +1161,18 @@ public class TwoFluidPipe extends Pipeline {
     long startWallClock = System.currentTimeMillis();
 
     // Get total mass flow rate (conserved)
-    double massFlow = getInletStream().getFlowRate("kg/sec");
+    double massFlow = getInletBoundaryMassFlow();
+    if (usesPressureDrivenFixedPressureBoundaries()) {
+      double pressureDrop = inletPressure - outletPressure;
+      double pressureDrivenMassFlow = estimatePressureDrivenMassFlow(pressureDrop);
+      if (Double.isFinite(pressureDrivenMassFlow) && pressureDrivenMassFlow >= 0.0) {
+        massFlow = pressureDrivenMassFlow;
+      }
+    }
     double area = Math.PI * diameter * diameter / 4.0;
 
     // Get inlet pressure - this is a boundary condition
-    double P_inlet = getInletStream().getFluid().getPressure("Pa");
+    double P_inlet = getTransientInletPressureReference();
 
     // Fix inlet section pressure to boundary condition
     sections[0].setPressure(P_inlet);
@@ -1435,7 +1442,9 @@ public class TwoFluidPipe extends Pipeline {
       accumulationTracker.identifyAccumulationZones(sections);
     }
 
-    applyFixedOutletPressureSteadyStateBoundary();
+    if (!applyFixedOutletPressureDrivenFlowConsistency()) {
+      applyFixedOutletPressureSteadyStateBoundary();
+    }
     applyOpenBoundaryPressureEnvelopeLimit();
 
     // Update outlet pressure from converged profile (if not user-specified)
@@ -1443,7 +1452,8 @@ public class TwoFluidPipe extends Pipeline {
       outletPressure = sections[numberOfSections - 1].getPressure();
     }
 
-    if (!applyInletPressureDrivenFlowConsistency()) {
+    if (!applyInletPressureDrivenFlowConsistency() && !applyFixedOutletFeedFlowConsistency()
+        && !applyFixedOutletPressureDrivenFlowConsistency()) {
       syncConservativeStateFromPrimitiveSections();
     }
 
@@ -1465,7 +1475,8 @@ public class TwoFluidPipe extends Pipeline {
     if (sections == null) {
       return;
     }
-    for (TwoFluidSection section : sections) {
+    for (int sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
+      TwoFluidSection section = sections[sectionIndex];
       if (section != null) {
         section.updateConservativeVariables();
       }
@@ -1553,12 +1564,111 @@ public class TwoFluidPipe extends Pipeline {
       return applySinglePhaseGasFlowConsistency();
     }
 
+    return applyConnectedFeedFlowConsistency(true);
+  }
+
+  /**
+   * Applies a prescribed-flow primitive state for fixed-outlet-pressure reporting.
+   *
+   * <p>
+   * In this boundary mode the inlet stream or explicit constant-flow boundary prescribes the mass
+   * flow and the outlet pressure prescribes the downstream pressure. The final reported section
+   * state should therefore keep phase velocities consistent with the prescribed flow and
+   * reconstruct pressure from the fixed outlet reference.
+   * </p>
+   *
+   * @return true if the fixed-outlet feed-flow consistency correction was applied
+   */
+  private boolean applyFixedOutletFeedFlowConsistency() {
+    if (!usesFixedOutletPressureReference() || !isInletFlowPrescribed() || sections == null
+        || numberOfSections == 0 || getInletStream() == null) {
+      return false;
+    }
+
+    return applyConnectedFeedFlowConsistency(false, getInletBoundaryMassFlow());
+  }
+
+  /**
+   * Applies a pressure-drop-driven primitive state for fixed inlet/outlet pressure reporting.
+   *
+   * <p>
+   * When both ends are pressure boundaries, no stream or constant-flow inlet fixes the flow rate.
+   * This method estimates a forward mass flow from the available pressure drop using the same
+   * section friction closure as the pressure reconstruction, then imposes phase velocities that are
+   * consistent with that mass flow before final reporting.
+   * </p>
+   *
+   * @return true if a pressure-driven consistency correction was applied
+   */
+  private boolean applyFixedOutletPressureDrivenFlowConsistency() {
+    if (!usesPressureDrivenFixedPressureBoundaries() || sections == null || numberOfSections == 0
+        || getInletStream() == null) {
+      return false;
+    }
+
+    double pressureDrop = inletPressure - outletPressure;
+    if (!Double.isFinite(pressureDrop) || pressureDrop <= 0.0) {
+      return applyConnectedFeedFlowConsistency(false, 0.0);
+    }
+
+    double massFlow = estimatePressureDrivenMassFlow(pressureDrop);
+    if (!Double.isFinite(massFlow) || massFlow < 0.0) {
+      return false;
+    }
+
+    boolean applied = applyConnectedFeedFlowConsistency(false, massFlow);
+    if (applied) {
+      double refinedMassFlow = estimatePressureDrivenMassFlow(pressureDrop);
+      if (Double.isFinite(refinedMassFlow) && refinedMassFlow >= 0.0) {
+        applied = applyConnectedFeedFlowConsistency(false, refinedMassFlow);
+      }
+      enforceFixedPressureEndpointProfile();
+    }
+    return applied;
+  }
+
+  /**
+   * Applies connected-feed phase mass flows to all pipe sections.
+   *
+   * @param reconstructFromInlet true to reconstruct pressure from the inlet reference, false to
+   *        reconstruct pressure from the fixed outlet reference
+   * @return true if the connected-feed flow consistency correction was applied
+   */
+  private boolean applyConnectedFeedFlowConsistency(boolean reconstructFromInlet) {
+    double massFlow = getInletStream().getFlowRate("kg/sec");
+    return applyConnectedFeedFlowConsistency(reconstructFromInlet, massFlow);
+  }
+
+  /**
+   * Applies an explicit total mass flow with the connected feed composition to all pipe sections.
+   *
+   * @param reconstructFromInlet true to reconstruct pressure from the inlet reference, false to
+   *        reconstruct pressure from the fixed outlet reference
+   * @param massFlow total mass flow to impose in kg/sec
+   * @return true if the flow consistency correction was applied
+   */
+  private boolean applyConnectedFeedFlowConsistency(boolean reconstructFromInlet, double massFlow) {
+    return applyConnectedFeedFlowConsistency(reconstructFromInlet, massFlow, true);
+  }
+
+  /**
+   * Applies an explicit total mass flow with optional thermodynamic synchronization.
+   *
+   * @param reconstructFromInlet true to reconstruct pressure from the inlet reference, false to
+   *        reconstruct pressure from the fixed outlet reference
+   * @param massFlow total mass flow to impose in kg/sec
+   * @param updateThermodynamics true to refresh section thermodynamic properties after pressure
+   *        reconstruction
+   * @return true if the flow consistency correction was applied
+   */
+  private boolean applyConnectedFeedFlowConsistency(boolean reconstructFromInlet, double massFlow,
+      boolean updateThermodynamics) {
+
     SystemInterface inletFluid = getInletStream().getFluid();
     if (inletFluid == null) {
       return false;
     }
 
-    double massFlow = getInletStream().getFlowRate("kg/sec");
     double area = Math.PI * diameter * diameter / 4.0;
     if (!Double.isFinite(massFlow) || massFlow < 0.0 || area <= 0.0) {
       return false;
@@ -1571,9 +1681,13 @@ public class TwoFluidPipe extends Pipeline {
     double liquidMassFlow = oilMassFlow + waterMassFlow;
     double inletWaterCut = getInletWaterCut(inletFluid, massFractions);
 
-    for (TwoFluidSection section : sections) {
-      double gasHoldup = clamp(section.getGasHoldup(), 0.0, 1.0);
-      double liquidHoldup = clamp(section.getLiquidHoldup(), 0.0, 1.0 - gasHoldup);
+    for (int sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
+      TwoFluidSection section = sections[sectionIndex];
+      TwoFluidSection upstreamSection = sectionIndex > 0 ? sections[sectionIndex - 1] : null;
+      double[] localHoldups =
+          calculateLocalHoldup(section, upstreamSection, gasMassFlow, liquidMassFlow, area);
+      double liquidHoldup = clamp(localHoldups[0], 0.0, 1.0);
+      double gasHoldup = 1.0 - liquidHoldup;
       if (liquidHoldup > 1.0e-10) {
         section.setWaterCut(inletWaterCut);
         section.setOilFractionInLiquid(1.0 - inletWaterCut);
@@ -1605,12 +1719,185 @@ public class TwoFluidPipe extends Pipeline {
       section.updateWaterOilConservativeVariables();
     }
 
-    reconstructPressureFromInletReference();
+    if (reconstructFromInlet) {
+      reconstructPressureFromInletReference();
+    } else {
+      reconstructPressureProfile();
+    }
+
+    if (updateThermodynamics && referenceFluid != null) {
+      double[] localMDotGas = new double[sections.length];
+      double[] localMDotLiq = new double[sections.length];
+      for (int sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
+        localMDotGas[sectionIndex] = gasMassFlow;
+        localMDotLiq[sectionIndex] = liquidMassFlow;
+      }
+      updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq);
+      return applyConnectedFeedFlowConsistency(reconstructFromInlet, massFlow, false);
+    }
+
     for (TwoFluidSection section : sections) {
       section.updateConservativeVariables();
       section.updateWaterOilConservativeVariables();
     }
     return true;
+  }
+
+  /**
+   * Estimates the mass flow that matches a pressure-driven fixed-outlet pressure drop.
+   *
+   * @param targetPressureDrop target inlet-to-outlet pressure drop in Pa
+   * @return estimated positive mass flow in kg/sec
+   */
+  private double estimatePressureDrivenMassFlow(double targetPressureDrop) {
+    double nominalFlow = getInletStream().getFlowRate("kg/sec");
+    if (!Double.isFinite(nominalFlow) || nominalFlow <= 0.0) {
+      nominalFlow = 1.0;
+    }
+
+    double lowerFlow = 0.0;
+    double upperFlow = Math.max(nominalFlow, 1.0);
+    double upperDrop = estimatePressureDropForMassFlow(upperFlow);
+    double maximumFlow = Math.max(upperFlow * 50.0, 1000.0);
+    while (Double.isFinite(upperDrop) && upperDrop < targetPressureDrop
+        && upperFlow < maximumFlow) {
+      lowerFlow = upperFlow;
+      upperFlow *= 2.0;
+      upperDrop = estimatePressureDropForMassFlow(upperFlow);
+    }
+
+    if (!Double.isFinite(upperDrop)) {
+      return Math.max(lowerFlow, nominalFlow);
+    }
+    if (upperDrop < targetPressureDrop) {
+      return upperFlow;
+    }
+
+    for (int iteration = 0; iteration < 35; iteration++) {
+      double trialFlow = 0.5 * (lowerFlow + upperFlow);
+      double trialDrop = estimatePressureDropForMassFlow(trialFlow);
+      if (!Double.isFinite(trialDrop)) {
+        upperFlow = trialFlow;
+      } else if (trialDrop < targetPressureDrop) {
+        lowerFlow = trialFlow;
+      } else {
+        upperFlow = trialFlow;
+      }
+    }
+    return 0.5 * (lowerFlow + upperFlow);
+  }
+
+  /**
+   * Enforces exact fixed-pressure endpoints after pressure-driven flow estimation.
+   *
+   * <p>
+   * The pressure-driven flow estimate uses the current section holdup and friction closure to find
+   * a mass flow. Small closure differences after the primitive state is updated can leave the
+   * reconstructed inlet pressure slightly away from the requested source pressure. This final
+   * normalization preserves the reconstructed pressure-profile shape while making the inlet and
+   * outlet Dirichlet boundaries exact.
+   * </p>
+   */
+  private void enforceFixedPressureEndpointProfile() {
+    if (sections == null || numberOfSections == 0 || !usesPressureDrivenFixedPressureBoundaries()) {
+      return;
+    }
+
+    double currentOutletPressure = sections[numberOfSections - 1].getPressure();
+    double currentPressureDrop = sections[0].getPressure() - currentOutletPressure;
+    double targetPressureDrop = inletPressure - outletPressure;
+
+    for (int sectionIndex = 0; sectionIndex < numberOfSections; sectionIndex++) {
+      double fractionFromOutlet;
+      if (Math.abs(currentPressureDrop) > 1.0e-9) {
+        fractionFromOutlet =
+            (sections[sectionIndex].getPressure() - currentOutletPressure) / currentPressureDrop;
+      } else if (numberOfSections > 1) {
+        fractionFromOutlet =
+            (double) (numberOfSections - 1 - sectionIndex) / (double) (numberOfSections - 1);
+      } else {
+        fractionFromOutlet = 1.0;
+      }
+      fractionFromOutlet = clamp(fractionFromOutlet, 0.0, 1.0);
+      sections[sectionIndex].setPressure(outletPressure + fractionFromOutlet * targetPressureDrop);
+    }
+
+    sections[0].setPressure(inletPressure);
+    sections[numberOfSections - 1].setPressure(outletPressure);
+  }
+
+  /**
+   * Estimates pressure drop for a trial mass flow using current section holdup and densities.
+   *
+   * @param trialMassFlow trial total mass flow in kg/sec
+   * @return estimated pressure drop in Pa
+   */
+  private double estimatePressureDropForMassFlow(double trialMassFlow) {
+    SystemInterface inletFluid = getInletStream().getFluid();
+    if (inletFluid == null || sections == null || sections.length == 0) {
+      return Double.NaN;
+    }
+
+    double area = Math.PI * diameter * diameter / 4.0;
+    if (area <= 0.0 || !Double.isFinite(trialMassFlow) || trialMassFlow < 0.0) {
+      return Double.NaN;
+    }
+
+    double[] massFractions = getInletPhaseMassFractions(inletFluid);
+    double gasMassFlow = trialMassFlow * massFractions[0];
+    double liquidMassFlow = trialMassFlow * (massFractions[1] + massFractions[2]);
+    double drop = 0.0;
+    for (int sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
+      TwoFluidSection section = sections[sectionIndex];
+      double gasHoldup = clamp(section.getGasHoldup(), 0.0, 1.0);
+      double liquidHoldup = clamp(section.getLiquidHoldup(), 0.0, 1.0 - gasHoldup);
+      double gasVelocity = calcPhaseVelocity(gasMassFlow, gasHoldup, section.getGasDensity(), area,
+          GAS_VELOCITY_LIMIT);
+      double liquidVelocity = calcPhaseVelocity(liquidMassFlow, liquidHoldup,
+          section.getLiquidDensity(), area, LIQUID_VELOCITY_LIMIT);
+      double gradient = estimatePressureGradientForTrialFlow(section, gasHoldup, liquidHoldup,
+          gasVelocity, liquidVelocity);
+      if (!Double.isFinite(gradient)) {
+        return Double.NaN;
+      }
+      drop += gradient * section.getLength();
+    }
+    return Math.max(drop, 0.0);
+  }
+
+  /**
+   * Estimates a section pressure gradient for a trial phase velocity pair.
+   *
+   * @param section pipe section providing densities, viscosities, and inclination
+   * @param gasHoldup gas holdup fraction
+   * @param liquidHoldup liquid holdup fraction
+   * @param gasVelocity trial gas velocity in m/s
+   * @param liquidVelocity trial liquid velocity in m/s
+   * @return pressure gradient in Pa/m
+   */
+  private double estimatePressureGradientForTrialFlow(TwoFluidSection section, double gasHoldup,
+      double liquidHoldup, double gasVelocity, double liquidVelocity) {
+    double gasDensity = section.getGasDensity();
+    double liquidDensity = section.getLiquidDensity();
+    double rhoMix = gasHoldup * gasDensity + liquidHoldup * liquidDensity;
+    double velocityMix = gasHoldup * gasVelocity + liquidHoldup * liquidVelocity;
+    double gasMassFlux = gasHoldup * gasDensity * Math.abs(gasVelocity);
+    double liquidMassFlux = liquidHoldup * liquidDensity * Math.abs(liquidVelocity);
+    double totalMassFlux = gasMassFlux + liquidMassFlux;
+    double quality = totalMassFlux > 1.0e-10 ? gasMassFlux / totalMassFlux : 1.0;
+    double gasViscosity = section.getGasViscosity();
+    double liquidViscosity = section.getLiquidViscosity();
+    double mixtureViscosity;
+    if (gasViscosity > 1.0e-20 && liquidViscosity > 1.0e-20 && quality > 0.001 && quality < 0.999) {
+      mixtureViscosity = 1.0 / (quality / gasViscosity + (1.0 - quality) / liquidViscosity);
+    } else {
+      mixtureViscosity = gasHoldup * gasViscosity + liquidHoldup * liquidViscosity;
+    }
+    double frictionFactor =
+        calcDarcyFrictionFactor(rhoMix, Math.abs(velocityMix), diameter, mixtureViscosity);
+    double frictionDrop = frictionFactor * rhoMix * velocityMix * velocityMix / (2.0 * diameter);
+    double gravityDrop = rhoMix * 9.81 * Math.sin(section.getInclination());
+    return frictionDrop + gravityDrop;
   }
 
   /**
@@ -1770,7 +2057,7 @@ public class TwoFluidPipe extends Pipeline {
     for (int i = numberOfSections - 2; i >= 0; i--) {
       TwoFluidSection sec = sections[i];
       TwoFluidSection downstream = sections[i + 1];
-      double dPdx = estimatePressureGradient(sec);
+      double dPdx = estimateNominalForwardPressureGradient(sec);
       double pNew = downstream.getPressure() + dPdx * sec.getLength();
       sec.setPressure(Math.max(1e5, pNew));
     }
@@ -3816,7 +4103,8 @@ public class TwoFluidPipe extends Pipeline {
           if (adaptiveDtFactor <= MIN_ADAPTIVE_DT_FACTOR + 1.0e-12) {
             double heldTime = timeRemaining;
             if (usesFixedOutletPressureReference() && numberOfSections > 0) {
-              sections[numberOfSections - 1].setPressure(outletPressure);
+              reconstructPressureProfile();
+              applyBoundaryConditions();
             }
             applyOpenBoundaryPressureEnvelopeLimit();
             simulationTime += heldTime;
@@ -3890,7 +4178,7 @@ public class TwoFluidPipe extends Pipeline {
 
       // 9. Update temperature profile if heat transfer is enabled
       if (enableHeatTransfer && heatTransferCoefficient > 0) {
-        double massFlow = getInletStream().getFlowRate("kg/sec");
+        double massFlow = getInletBoundaryMassFlow();
         double area = Math.PI * diameter * diameter / 4.0;
         updateTransientTemperature(massFlow, area, dtActual);
       }
@@ -3916,7 +4204,12 @@ public class TwoFluidPipe extends Pipeline {
           getName(), heldTime, maxSubSteps);
     }
 
-    if (!applyInletPressureDrivenFlowConsistency()) {
+    if (!applyInletPressureDrivenFlowConsistency() && !applyFixedOutletFeedFlowConsistency()
+        && !applyFixedOutletPressureDrivenFlowConsistency()) {
+      if (usesFixedOutletPressureReference()) {
+        reconstructPressureProfile();
+        applyBoundaryConditions();
+      }
       applyOpenBoundaryPressureEnvelopeLimit();
       validateSectionStates();
     }
@@ -4339,7 +4632,7 @@ public class TwoFluidPipe extends Pipeline {
         TwoFluidSection downstream = sections[i + 1];
 
         // Local pressure gradient from current section properties
-        double dPdx = estimatePressureGradient(sec);
+        double dPdx = estimateNominalForwardPressureGradient(sec);
 
         // P_upstream = P_downstream + dPdx * dx_i (pressure increases going upstream)
         double P_new = downstream.getPressure() + dPdx * sec.getLength();
@@ -4928,17 +5221,24 @@ public class TwoFluidPipe extends Pipeline {
     double vG = outlet.getGasVelocity();
     double vL = outlet.getLiquidVelocity();
 
-    // Mass flow from section state (for diagnostics)
-    double massFlowFromState = (alphaG * rhoG * vG + alphaL * rhoL * vL) * area;
+    // Mass flow from section state (for diagnostics and pressure-driven boundaries)
+    double massFlowFromState = calcSectionMixtureMassFlow(outlet);
 
     // In steady state, mass conservation requires inlet flow = outlet flow.
     // The section-level velocities come from momentum balance correlations that
     // may not be perfectly consistent with the total mass flux. Use the inlet
     // mass flow rate as the definitive value to enforce global mass balance.
-    double massFlowIn = getInletStream().getFlowRate("kg/sec");
+    double massFlowIn = getInletBoundaryMassFlow();
     double massFlowOut = massFlowIn;
+    if (!isInletFlowPrescribed()) {
+      massFlowOut = Math.max(0.0, massFlowFromState);
+    }
+    if (outletBCType == BoundaryCondition.CLOSED) {
+      massFlowOut = 0.0;
+    }
 
-    if (massFlowFromState > 0 && Math.abs(massFlowFromState - massFlowIn) / massFlowIn > 0.1) {
+    if (massFlowFromState > 0 && massFlowIn > 1.0e-12
+        && Math.abs(massFlowFromState - massFlowIn) / massFlowIn > 0.1) {
       logger.debug(
           "Outlet section state mass flow ({:.2f} kg/s) differs from inlet ({:.2f} kg/s) by {:.1f}%",
           massFlowFromState, massFlowIn,
@@ -4951,6 +5251,92 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     getOutletStream().setFluid(outFluid);
+  }
+
+  /**
+   * Checks whether the inlet boundary directly prescribes mass flow.
+   *
+   * @return true if the inlet stream or explicit inlet mass-flow setting defines flow
+   */
+  private boolean isInletFlowPrescribed() {
+    return inletBCType == BoundaryCondition.STREAM_CONNECTED
+        || (inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet);
+  }
+
+  /**
+   * Returns the inlet mass flow imposed by the configured boundary condition.
+   *
+   * @return inlet boundary mass flow in kg/sec
+   */
+  private double getInletBoundaryMassFlow() {
+    if (inletBCType == BoundaryCondition.CLOSED) {
+      return 0.0;
+    }
+    if (inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet) {
+      return inletMassFlow;
+    }
+    if (getInletStream() != null) {
+      double streamMassFlow = getInletStream().getFlowRate("kg/sec");
+      return Double.isFinite(streamMassFlow) ? streamMassFlow : 0.0;
+    }
+    return 0.0;
+  }
+
+  /**
+   * Checks whether fixed inlet and outlet pressures should define the pipeline flow.
+   *
+   * @return true when inlet and outlet pressure boundaries are both explicitly fixed
+   */
+  private boolean usesPressureDrivenFixedPressureBoundaries() {
+    return usesFixedOutletPressureReference() && inletBCType == BoundaryCondition.CONSTANT_PRESSURE
+        && inletPressureSet && outletPressureSet;
+  }
+
+  /**
+   * Calculates the mixture mass flow represented by a section primitive state.
+   *
+   * @param section section to evaluate
+   * @return signed mixture mass flow in kg/sec
+   */
+  private double calcSectionMixtureMassFlow(TwoFluidSection section) {
+    if (section == null) {
+      return 0.0;
+    }
+    double area = Math.PI * diameter * diameter / 4.0;
+    double gasMassFlow =
+        section.getGasHoldup() * section.getGasDensity() * section.getGasVelocity() * area;
+    double oilWaterHoldup = section.getOilHoldup() + section.getWaterHoldup();
+    double liquidMassFlow;
+    if (oilWaterHoldup > 1.0e-8) {
+      liquidMassFlow =
+          section.getOilHoldup() * section.getOilDensity() * section.getOilVelocity() * area
+              + section.getWaterHoldup() * section.getWaterDensity() * section.getWaterVelocity()
+                  * area;
+    } else {
+      liquidMassFlow = section.getLiquidHoldup() * section.getLiquidDensity()
+          * section.getLiquidVelocity() * area;
+    }
+    double massFlow = gasMassFlow + liquidMassFlow;
+    if (!Double.isFinite(massFlow)) {
+      return 0.0;
+    }
+    return massFlow;
+  }
+
+  /**
+   * Gets the signed mixture mass-flow profile represented by the section primitive states.
+   *
+   * @return mixture mass flow in kg/sec at each pipe section
+   */
+  public double[] getMixtureMassFlowProfile() {
+    if (sections == null) {
+      return new double[0];
+    }
+    double[] massFlowProfile = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      massFlowProfile[i] = calcSectionMixtureMassFlow(sections[i]);
+    }
+    return massFlowProfile;
   }
 
   /**

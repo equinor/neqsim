@@ -914,9 +914,21 @@ $$
 
 With 64/Re for laminar flow (Re < 2300) and linear interpolation through the transitional regime (Re 2300–4000).
 
-### Transient Boundary Conditions
+### Steady And Transient Boundary Conditions
 
-During transient simulation (`runTransient()`), `TwoFluidPipe` supports two pressure-reference modes. The boundary-condition types still define what is connected or fixed at each end, while the transient pressure-reference mode defines where pressure reconstruction is anchored.
+`TwoFluidPipe` uses the same physical boundary-condition settings during steady initialization (`run()`) and transient simulation (`runTransient()`). This supports the common OLGA/LedaFlow-style patterns: prescribed flow into fixed receiving pressure, explicit inlet mass flow into fixed pressure, fixed inlet and outlet pressure with computed flow, shut-in ends, and characteristic boundaries for wave-dominated transients.
+
+Boundary changes are picked up on the next transient call. When a changed stream boundary, explicit inlet mass-flow boundary, or fixed-pressure source/sink boundary is held constant, the long-time transient state is expected to relax toward the steady solution that `run()` computes for those same boundary values. This convergence contract is regression-tested for one-phase gas, two-phase gas/oil, and three-phase gas/oil/water hydraulic diagnostics; thermal transients should be checked separately if heat transfer is enabled.
+
+During transient simulation, `TwoFluidPipe` also supports two pressure-reference modes. The boundary-condition types still define what is connected or fixed at each end, while the transient pressure-reference mode defines where pressure reconstruction is anchored.
+
+| Physical setup | Inlet BC | Outlet BC | Flow treatment |
+|----------------|----------|-----------|----------------|
+| Flow source to pressure sink | `STREAM_CONNECTED` | `CONSTANT_PRESSURE` | Flow from inlet stream; outlet pressure fixed |
+| Explicit flow source to pressure sink | `CONSTANT_FLOW` | `CONSTANT_PRESSURE` | Flow from `setInletMassFlow(...)`; outlet pressure fixed |
+| Pressure source to pressure sink | `CONSTANT_PRESSURE` | `CONSTANT_PRESSURE` | Flow computed from the fixed pressure difference |
+| Shut-in or blocked-in pipe | `CLOSED` as needed | `CLOSED` as needed | Closed end velocity set to zero |
+| Wave-transmitting outlet | Any supported inlet BC | `CHARACTERISTIC` | Characteristic state blend for transient wave studies |
 
 | Mode | Helper method | Typical use | Behavior |
 |------|---------------|-------------|----------|
@@ -938,6 +950,8 @@ P_i = P_{i-1} - \frac{dP}{dx}\bigg|_{i-1} \cdot \Delta x
 $$
 
 This keeps the inlet section aligned with the inlet stream pressure and calculates the outlet pressure. Use this mode before comparing dynamic pressure drops to correlations that propagate from the inlet.
+
+`TwoFluidPipe` uses OLGA-inspired mechanistic closure sets and similar boundary-condition patterns; it is not a commercial OLGA or LedaFlow solver. For project-grade transient use, compare against exported simulator or field data with the benchmark CSV harness.
 
 ```java
 java.util.UUID runId = java.util.UUID.randomUUID();

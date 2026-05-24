@@ -711,7 +711,7 @@ detection with state rollback, (3) pressure/velocity ceiling checks, (4) gradual
 
 ## Boundary Conditions
 
-For transient `TwoFluidPipe` simulations, you can configure inlet and outlet boundary conditions to control how the solver handles flow rate and pressure.
+For steady-state `pipe.run()` initialization and transient `pipe.runTransient(...)` simulations, `TwoFluidPipe` uses the same inlet and outlet boundary-condition settings. The intent is to support OLGA/LedaFlow-style source and sink setups: prescribed inlet flow with fixed receiving pressure, fixed inlet and outlet pressures with computed flow, shut-in ends, and characteristic boundaries for wave-dominated transients.
 
 ### Boundary Condition Types
 
@@ -721,6 +721,7 @@ For transient `TwoFluidPipe` simulations, you can configure inlet and outlet bou
 | `CONSTANT_FLOW` | Fixed mass flow rate (set via `setInletMassFlow()`) |
 | `CONSTANT_PRESSURE` | Fixed pressure (default for outlet) |
 | `CLOSED` | Zero flow velocity (blocked/shut-in) — pressure floats |
+| `CHARACTERISTIC` | Riemann-invariant boundary for reduced wave reflection during fast transients |
 
 ### Default Behavior
 
@@ -728,7 +729,7 @@ By default, `TwoFluidPipe` uses:
 - **Inlet**: `STREAM_CONNECTED` — flow rate, temperature, and composition from the inlet stream
 - **Outlet**: `CONSTANT_PRESSURE` — fixed outlet pressure
 
-During transient simulation, the inlet pressure is computed from momentum balance (backward marching from the outlet boundary), while the inlet flow rate is fixed.
+During steady-state and transient simulation, the inlet flow rate is fixed by the connected stream. In fixed-outlet-pressure mode, inlet pressure is reconstructed from the downstream pressure boundary and can differ from the inlet stream pressure. Use the boundary mismatch diagnostics when both a stream pressure and fixed outlet pressure are important for comparison.
 
 ### Setting Boundary Conditions
 
@@ -763,6 +764,8 @@ outlet_bc = pipe.getOutletBoundaryCondition()
 
 ### Transient Simulation with Changing Flow Rate
 
+Boundary changes are sampled on the next `runTransient(...)` call. If the changed boundary is then held constant and the model remains numerically stable, the transient state should relax toward the `pipe.run()` steady-state solution for that new boundary condition. This is regression-tested for one-phase gas, two-phase gas/oil, and three-phase gas/oil/water diagnostics with stream-connected flow changes, explicit `CONSTANT_FLOW` changes, and fixed-pressure source/sink changes. Thermal transients may settle on a different time scale, so isolate heat transfer when checking hydraulic boundary convergence.
+
 ```python
 import uuid
 
@@ -796,9 +799,11 @@ for t in range(120):  # 2 minutes
     print(f"t={t}s, flow={new_flow:.1f} kg/s, inlet P={inlet_P:.2f} bara")
 ```
 
+For a direct steady-target comparison, run a second pipe with the same new boundary values and compare `getSignedPressureDrop("bar")`, `getOutletStream().getFlowRate("kg/sec")`, and `getMixtureMassFlowProfile()` after the transient has settled.
+
 ### Fixed Pressure at Both Ends
 
-For scenarios where both inlet and outlet pressures are known (e.g., connecting to a reservoir and topside), set both as constant pressure:
+For scenarios where both inlet and outlet pressures are known (for example, source pressure to receiving pressure in OLGA/LedaFlow-style cases), set both as constant pressure. `pipe.run()` computes a steady flow from the pressure difference, and `pipe.runTransient(...)` keeps the same pressure boundaries while updating the reported outlet flow and section mass-flow profile:
 
 ```python
 pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE)
@@ -807,6 +812,8 @@ pipe.setOutletPressure(30.0, "bara")  # Receiving pressure
 
 # Flow rate is computed from the pressure differential
 pipe.run()
+for _ in range(10):
+    pipe.runTransient(1.0)
 
 # Check computed flow rate from outlet stream
 outlet = pipe.getOutletStream()
@@ -815,16 +822,19 @@ print(f"Computed outlet mass flow: {outlet.getFlowRate('kg/sec'):.2f} kg/s")
 
 ### Boundary Condition Summary Table
 
-| Configuration | Inlet BC | Outlet BC | Flow | Inlet P | Outlet P |
-|--------------|----------|-----------|------|---------|----------|
-| Default | STREAM_CONNECTED | CONSTANT_PRESSURE | From stream | Computed | Fixed |
-| Explicit flow | CONSTANT_FLOW | CONSTANT_PRESSURE | Fixed | Computed | Fixed |
-| Both P fixed | CONSTANT_PRESSURE | CONSTANT_PRESSURE | Computed | Fixed | Fixed |
-| Shut-in outlet | STREAM_CONNECTED | CLOSED | From stream | Computed | Floats |
-| Blowdown | CLOSED | CONSTANT_PRESSURE | Zero | Floats | Fixed |
-| Blocked pipe | CLOSED | CLOSED | Zero | Floats | Floats |
+| Configuration | Inlet BC | Outlet BC | Flow | Inlet P | Outlet P | Steady | Dynamic |
+|--------------|----------|-----------|------|---------|----------|--------|---------|
+| Flow source to pressure sink | `STREAM_CONNECTED` | `CONSTANT_PRESSURE` | From stream | Computed | Fixed | Supported | Supported |
+| Explicit flow source to pressure sink | `CONSTANT_FLOW` | `CONSTANT_PRESSURE` | Fixed | Computed | Fixed | Supported | Supported |
+| Pressure source to pressure sink | `CONSTANT_PRESSURE` | `CONSTANT_PRESSURE` | Computed | Fixed | Fixed | Supported | Supported |
+| Shut-in outlet | `STREAM_CONNECTED` | `CLOSED` | From stream until closure | Computed | Floats | Supported | Supported |
+| Blowdown / blocked inlet | `CLOSED` | `CONSTANT_PRESSURE` | Zero at inlet | Floats | Fixed | Supported | Supported |
+| Blocked pipe | `CLOSED` | `CLOSED` | Zero at both ends | Floats | Floats | Supported | Supported |
+| Wave-transmitting end | `STREAM_CONNECTED` or `CONSTANT_PRESSURE` | `CHARACTERISTIC` | Boundary/interior characteristic blend | Boundary/interior characteristic blend | Boundary/interior characteristic blend | Initialization only | Supported |
 
 > **Note:** The most common setup for production pipelines is `STREAM_CONNECTED` inlet with `CONSTANT_PRESSURE` outlet, where the inlet stream defines the flow rate and the outlet represents the receiving facility pressure.
+>
+> **Note:** `TwoFluidPipe` uses OLGA-inspired mechanistic closure sets and compatible boundary-condition patterns; it is not a commercial OLGA or LedaFlow solver. Use exported OLGA/LedaFlow or field data in the CSV benchmark harness for project-grade validation.
 
 ### Transient Pressure Reference Modes
 

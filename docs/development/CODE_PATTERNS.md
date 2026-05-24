@@ -443,10 +443,11 @@ double fi = InterfacialFriction.calcAndreussiPersenCorrelation(
     gasDensity, liquidDensity, surfaceTension, inclinationRadians);
 ```
 
-### Transient Boundary Conditions
+### TwoFluidPipe Boundary Conditions
 
 ```java
-// Configure boundary conditions for transient two-fluid simulation
+// Configure OLGA/LedaFlow-style boundary conditions for steady and transient two-fluid simulation.
+// The same boundary-condition settings are used by pipe.run() and pipe.runTransient(...).
 TwoFluidPipe pipe = new TwoFluidPipe("Pipeline", feedStream);
 pipe.setLength(10000);
 pipe.setDiameter(0.25);
@@ -464,6 +465,11 @@ pipe.setInletMassFlow(50.0);  // kg/s
 pipe.setInletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CONSTANT_PRESSURE);
 pipe.setInletPressure(60.0, "bara");
 pipe.setOutletPressure(30.0, "bara");
+
+// Option 3: Shut-in or wave-transmitting ends for transient studies
+pipe.setOutletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CLOSED);
+pipe.openOutlet();
+pipe.setOutletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CHARACTERISTIC);
 
 // Query current BC types
 TwoFluidPipe.BoundaryCondition inletBC = pipe.getInletBoundaryCondition();
@@ -488,11 +494,16 @@ for (int t = 0; t < 120; t++) {
 }
 
 double signedDpBar = pipe.getSignedPressureDrop("bar");
+double[] mixtureMassFlowProfile = pipe.getMixtureMassFlowProfile();
 double inletResidualBar = pipe.getInletPressureResidual("bar");
 if (pipe.hasBoundaryConditionPressureMismatch()) {
     System.out.println(pipe.getBoundaryConditionDiagnosticMessage());
 }
 ```
+
+After a boundary stream or explicit boundary value is changed, the next transient step samples that new boundary. If the boundary is held constant, the long-time transient result should approach a fresh `pipe.run()` steady solution with the same boundary values; compare pressure drop, outlet flow, and mass-flow profile when checking this behavior. The regression suite covers one-phase gas, two-phase gas/oil, and three-phase gas/oil/water diagnostics for stream-connected flow, explicit constant-flow, and fixed pressure-source/sink boundary changes. Keep hydraulic boundary checks adiabatic unless the thermal settling time is part of the acceptance criterion.
+
+Use `STREAM_CONNECTED`/`CONSTANT_FLOW` to `CONSTANT_PRESSURE` for flow-source-to-pressure-sink cases, and `CONSTANT_PRESSURE` to `CONSTANT_PRESSURE` when source and receiving pressures are both fixed and flow should be computed. `CHARACTERISTIC` is a transient wave boundary; use it after steady initialization when reducing outlet reflections matters. These are OLGA/LedaFlow-style boundary patterns, not a guarantee of identical commercial-simulator physics.
 
 ### Shut-In and Surge Scenarios
 

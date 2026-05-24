@@ -42,6 +42,9 @@ class TwoFluidPipeBoundaryConditionTest {
   private static final int NUM_SECTIONS = 10;
   private static final double PIPE_LENGTH = 1000.0; // 1 km
   private static final double PIPE_DIAMETER = 0.2; // 200 mm
+  private static final int PHASE_CASE_GAS_ONLY = 0;
+  private static final int PHASE_CASE_GAS_OIL = 1;
+  private static final int PHASE_CASE_GAS_OIL_WATER = 2;
 
   private TwoFluidPipe pipe;
   private static Stream sharedInletStream;
@@ -320,6 +323,30 @@ class TwoFluidPipeBoundaryConditionTest {
     return maximum;
   }
 
+  /**
+   * Asserts that the mixture mass-flow profile is finite, positive, and near the expected flow.
+   *
+   * @param pipeToCheck pipe containing the reported mass-flow profile
+   * @param expectedMassFlow expected mass flow in kg/sec
+   * @param toleranceFraction relative tolerance on each section mass flow
+   */
+  private static void assertMassFlowProfileNear(TwoFluidPipe pipeToCheck, double expectedMassFlow,
+      double toleranceFraction) {
+    double[] massFlowProfile = pipeToCheck.getMixtureMassFlowProfile();
+    assertEquals(pipeToCheck.getNumberOfSections(), massFlowProfile.length,
+        "Mass-flow profile should include every pipe section");
+    for (int sectionIndex = 0; sectionIndex < massFlowProfile.length; sectionIndex++) {
+      assertTrue(Double.isFinite(massFlowProfile[sectionIndex]),
+          "Mass flow should be finite at section " + sectionIndex);
+      assertTrue(massFlowProfile[sectionIndex] > 0.0,
+          "Mass flow should remain forward at section " + sectionIndex);
+      assertTrue(
+          Math.abs(massFlowProfile[sectionIndex] - expectedMassFlow)
+              / Math.max(expectedMassFlow, 1.0e-12) < toleranceFraction,
+          "Mass flow should remain close to the feed flow at section " + sectionIndex);
+    }
+  }
+
   // =====================================================================
   // Boundary Condition Type Setting Tests
   // =====================================================================
@@ -477,6 +504,418 @@ class TwoFluidPipeBoundaryConditionTest {
         "Inlet gas velocity should increase when the connected feed flow is increased");
     assertTrue(Math.abs(finalPressureDrop - initialPressureDrop) > 1.0e-3,
         "Pressure-drop reconstruction should respond to the updated inlet flow");
+  }
+
+  /**
+   * Verifies that changing fixed outlet pressure updates the pressure profile while preserving the
+   * connected-feed mass flow through the reported pipeline state.
+   */
+  @Test
+  @DisplayName("Fixed outlet pressure step keeps feed-flow mass profile balanced")
+  void testFixedOutletPressureStepKeepsFeedFlowMassProfileBalanced() {
+    double feedFlow = 12.0;
+
+    Stream feed =
+        createFastMultiphaseDiagnosticFeed("fixed-outlet-pressure-step-feed", false, feedFlow);
+    TwoFluidPipe outletPressurePipe =
+        createFastMultiphaseDiagnosticPipe("fixed-outlet-pressure-step-pipe", feed);
+    outletPressurePipe.useFixedOutletPressureTransient();
+    outletPressurePipe.setOutletPressure(60.0, "bara");
+    outletPressurePipe.run();
+
+    double initialOutletPressure = outletPressurePipe.getOutletPressure();
+    double initialOutletFlow = outletPressurePipe.getOutletStream().getFlowRate("kg/sec");
+
+    outletPressurePipe.setOutletPressure(55.0, "bara");
+    for (int step = 0; step < 5; step++) {
+      outletPressurePipe.runTransient(120.0, UUID.randomUUID());
+    }
+
+    assertEquals(55.0, outletPressurePipe.getOutletPressure(), 1.0e-6,
+        "Outlet pressure should follow the changed fixed-pressure boundary");
+    assertTrue(outletPressurePipe.getOutletPressure() < initialOutletPressure,
+        "Outlet pressure should decrease after lowering the backpressure set point");
+    assertFalse(outletPressurePipe.hasPressureRiseAcrossPipe(),
+        "Fixed-outlet pressure step should keep a forward pressure drop");
+    assertEquals(feedFlow, initialOutletFlow, 1.0e-6,
+        "Initial outlet flow should match the connected feed flow");
+    assertEquals(feedFlow, outletPressurePipe.getOutletStream().getFlowRate("kg/sec"), 1.0e-6,
+        "Outlet flow should remain mass-balanced with the prescribed feed flow");
+    assertMassFlowProfileNear(outletPressurePipe, feedFlow, 0.05);
+    assertTrue(maxAbs(outletPressurePipe.getGasVelocityProfile()) < 20.0,
+        "Gas velocity should remain below the numerical limiter");
+    assertTrue(maxAbs(outletPressurePipe.getLiquidVelocityProfile()) < 10.0,
+        "Liquid velocity should remain below the numerical limiter");
+  }
+
+  /**
+   * Verifies stream-connected boundary changes for one-, two-, and three-phase fixed-outlet cases.
+   */
+  @Test
+  @DisplayName("Stream boundary changes track new steady state for all phase cases")
+  void testStreamBoundaryFlowChangeTracksNewSteadyFixedOutletSolutionForAllPhaseCases() {
+    int[] phaseCases = {PHASE_CASE_GAS_ONLY, PHASE_CASE_GAS_OIL, PHASE_CASE_GAS_OIL_WATER};
+    for (int phaseCase : phaseCases) {
+      assertStreamBoundaryFlowChangeTracksNewSteadyFixedOutletSolution(phaseCase);
+    }
+  }
+
+  /**
+   * Verifies explicit constant-flow boundary changes for one-, two-, and three-phase fixed-outlet
+   * cases.
+   */
+  @Test
+  @DisplayName("Constant-flow boundary changes track new steady state for all phase cases")
+  void testConstantFlowBoundaryChangeTracksNewSteadyFixedOutletSolutionForAllPhaseCases() {
+    int[] phaseCases = {PHASE_CASE_GAS_ONLY, PHASE_CASE_GAS_OIL, PHASE_CASE_GAS_OIL_WATER};
+    for (int phaseCase : phaseCases) {
+      assertConstantFlowBoundaryChangeTracksNewSteadyFixedOutletSolution(phaseCase);
+    }
+  }
+
+  /**
+   * Verifies fixed pressure boundaries, matching common OLGA/LedaFlow source/sink pressure cases.
+   */
+  @Test
+  @DisplayName("Fixed inlet/outlet pressure boundaries compute monotonic flow in steady and transient")
+  void testFixedPressureBoundariesComputeFlowInSteadyAndTransient() {
+    int[] phaseCases = {PHASE_CASE_GAS_ONLY, PHASE_CASE_GAS_OIL, PHASE_CASE_GAS_OIL_WATER};
+    for (int phaseCase : phaseCases) {
+      double lowBackpressureFlow = runFixedPressureBoundaryCase(phaseCase, 55.0);
+      double baseBackpressureFlow = runFixedPressureBoundaryCase(phaseCase, 60.0);
+      double highBackpressureFlow = runFixedPressureBoundaryCase(phaseCase, 65.0);
+
+      assertTrue(lowBackpressureFlow > baseBackpressureFlow,
+          phaseCaseName(phaseCase) + " lower outlet pressure should increase computed outlet flow");
+      assertTrue(baseBackpressureFlow > highBackpressureFlow,
+          phaseCaseName(phaseCase) + " higher outlet pressure should reduce computed outlet flow");
+    }
+  }
+
+  /**
+   * Verifies fixed pressure source/sink boundary changes for one-, two-, and three-phase cases.
+   */
+  @Test
+  @DisplayName("Fixed pressure boundary changes track new steady state for all phase cases")
+  void testFixedPressureBoundaryChangeTracksNewSteadySolutionForAllPhaseCases() {
+    int[] phaseCases = {PHASE_CASE_GAS_ONLY, PHASE_CASE_GAS_OIL, PHASE_CASE_GAS_OIL_WATER};
+    for (int phaseCase : phaseCases) {
+      assertFixedPressureBoundaryChangeTracksNewSteadySolution(phaseCase);
+    }
+  }
+
+  /**
+   * Runs a fixed inlet/outlet pressure case through steady and transient calculations.
+   *
+   * @param phaseCase phase case identifier
+   * @param outletPressureBara fixed outlet pressure in bara
+   * @return final outlet flow rate in kg/sec
+   */
+  private static double runFixedPressureBoundaryCase(int phaseCase, double outletPressureBara) {
+    Stream feed = createBoundaryConvergenceFeed(
+        "fixed-pressure-boundary-feed-" + phaseCaseName(phaseCase) + "-" + outletPressureBara,
+        phaseCase, 12.0);
+    TwoFluidPipe pressureBoundaryPipe = createBoundaryConvergencePipe(
+        "fixed-pressure-boundary-pipe-" + phaseCaseName(phaseCase) + "-" + outletPressureBara,
+        feed);
+    pressureBoundaryPipe.useFixedOutletPressureTransient();
+    pressureBoundaryPipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
+    pressureBoundaryPipe.setInletPressure(80.0, "bara");
+    pressureBoundaryPipe.setOutletPressure(outletPressureBara, "bara");
+
+    pressureBoundaryPipe.run();
+    double steadyFlow = pressureBoundaryPipe.getOutletStream().getFlowRate("kg/sec");
+    assertEquals(80.0, pressureBoundaryPipe.getInletPressure(), 0.5, phaseCaseName(phaseCase)
+        + " steady fixed-pressure case should keep the inlet pressure near its boundary value");
+    assertEquals(outletPressureBara, pressureBoundaryPipe.getOutletPressure(), 1.0e-6,
+        phaseCaseName(phaseCase) + " steady fixed-pressure case should keep the outlet fixed");
+    assertTrue(steadyFlow > 0.0,
+        phaseCaseName(phaseCase) + " steady fixed-pressure case should compute forward flow");
+    assertMassFlowProfileNear(pressureBoundaryPipe, steadyFlow, 0.05);
+
+    for (int step = 0; step < 5; step++) {
+      pressureBoundaryPipe.runTransient(120.0, UUID.randomUUID());
+    }
+
+    double transientFlow = pressureBoundaryPipe.getOutletStream().getFlowRate("kg/sec");
+    assertEquals(80.0, pressureBoundaryPipe.getInletPressure(), 0.5, phaseCaseName(phaseCase)
+        + " transient fixed-pressure case should keep the inlet near its boundary value");
+    assertEquals(outletPressureBara, pressureBoundaryPipe.getOutletPressure(), 1.0e-6,
+        phaseCaseName(phaseCase) + " transient fixed-pressure case should keep the outlet fixed");
+    assertFalse(pressureBoundaryPipe.hasPressureRiseAcrossPipe(),
+        phaseCaseName(phaseCase) + " fixed-pressure case should keep a forward pressure drop");
+    assertTrue(transientFlow > 0.0,
+        phaseCaseName(phaseCase) + " transient fixed-pressure case should compute forward flow");
+    assertMassFlowProfileNear(pressureBoundaryPipe, transientFlow, 0.05);
+    return transientFlow;
+  }
+
+  /**
+   * Asserts that a changed stream-connected inlet flow tracks the new steady solution.
+   *
+   * @param phaseCase phase case identifier
+   */
+  private static void assertStreamBoundaryFlowChangeTracksNewSteadyFixedOutletSolution(
+      int phaseCase) {
+    double baseFlow = 8.0;
+    double stepFlow = 14.0;
+    double outletPressure = 60.0;
+
+    Stream feed = createBoundaryConvergenceFeed(
+        "stream-boundary-step-feed-" + phaseCaseName(phaseCase), phaseCase, baseFlow);
+    TwoFluidPipe dynamicPipe = createBoundaryConvergencePipe(
+        "stream-boundary-step-pipe-" + phaseCaseName(phaseCase), feed);
+    dynamicPipe.useFixedOutletPressureTransient();
+    dynamicPipe.setOutletPressure(outletPressure, "bara");
+    dynamicPipe.run();
+
+    feed.setFlowRate(stepFlow, "kg/sec");
+    feed.run();
+    runBoundaryConvergenceTransient(dynamicPipe);
+
+    Stream steadyFeed = createBoundaryConvergenceFeed(
+        "stream-boundary-steady-feed-" + phaseCaseName(phaseCase), phaseCase, stepFlow);
+    TwoFluidPipe steadyPipe = createBoundaryConvergencePipe(
+        "stream-boundary-steady-pipe-" + phaseCaseName(phaseCase), steadyFeed);
+    steadyPipe.useFixedOutletPressureTransient();
+    steadyPipe.setOutletPressure(outletPressure, "bara");
+    steadyPipe.run();
+
+    assertEquals(stepFlow, dynamicPipe.getOutletStream().getFlowRate("kg/sec"), 1.0e-6,
+        phaseCaseName(phaseCase) + " dynamic outlet flow should follow stream boundary");
+    assertEquals(outletPressure, dynamicPipe.getOutletPressure(), 1.0e-6,
+        phaseCaseName(phaseCase) + " dynamic outlet pressure should remain fixed");
+    assertFalse(dynamicPipe.hasPressureRiseAcrossPipe(),
+        phaseCaseName(phaseCase) + " stream-boundary step should keep forward pressure drop");
+    assertMassFlowProfileNear(dynamicPipe, stepFlow, 0.05);
+    assertCloseToSteadyTarget(dynamicPipe.getSignedPressureDrop("bar"),
+        steadyPipe.getSignedPressureDrop("bar"),
+        boundaryConvergencePressureDropTolerance(phaseCase), 0.05,
+        phaseCaseName(phaseCase) + " stream boundary pressure drop");
+  }
+
+  /**
+   * Asserts that a changed explicit constant-flow inlet tracks the new steady solution.
+   *
+   * @param phaseCase phase case identifier
+   */
+  private static void assertConstantFlowBoundaryChangeTracksNewSteadyFixedOutletSolution(
+      int phaseCase) {
+    double baseFlow = 8.0;
+    double stepFlow = 14.0;
+    double outletPressure = 60.0;
+
+    Stream feed = createBoundaryConvergenceFeed(
+        "constant-flow-step-feed-" + phaseCaseName(phaseCase), phaseCase, baseFlow);
+    TwoFluidPipe dynamicPipe =
+        createBoundaryConvergencePipe("constant-flow-step-pipe-" + phaseCaseName(phaseCase), feed);
+    dynamicPipe.useFixedOutletPressureTransient();
+    dynamicPipe.setOutletPressure(outletPressure, "bara");
+    dynamicPipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
+    dynamicPipe.setInletMassFlow(baseFlow, "kg/sec");
+    dynamicPipe.run();
+
+    dynamicPipe.setInletMassFlow(stepFlow, "kg/sec");
+    runBoundaryConvergenceTransient(dynamicPipe);
+
+    Stream steadyFeed = createBoundaryConvergenceFeed(
+        "constant-flow-steady-feed-" + phaseCaseName(phaseCase), phaseCase, baseFlow);
+    TwoFluidPipe steadyPipe = createBoundaryConvergencePipe(
+        "constant-flow-steady-pipe-" + phaseCaseName(phaseCase), steadyFeed);
+    steadyPipe.useFixedOutletPressureTransient();
+    steadyPipe.setOutletPressure(outletPressure, "bara");
+    steadyPipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
+    steadyPipe.setInletMassFlow(stepFlow, "kg/sec");
+    steadyPipe.run();
+
+    assertEquals(stepFlow, dynamicPipe.getOutletStream().getFlowRate("kg/sec"), 1.0e-6,
+        phaseCaseName(phaseCase) + " dynamic outlet flow should follow constant-flow boundary");
+    assertEquals(outletPressure, dynamicPipe.getOutletPressure(), 1.0e-6,
+        phaseCaseName(phaseCase) + " dynamic outlet pressure should remain fixed");
+    assertFalse(dynamicPipe.hasPressureRiseAcrossPipe(),
+        phaseCaseName(phaseCase) + " constant-flow step should keep forward pressure drop");
+    assertMassFlowProfileNear(dynamicPipe, stepFlow, 0.05);
+    assertCloseToSteadyTarget(dynamicPipe.getSignedPressureDrop("bar"),
+        steadyPipe.getSignedPressureDrop("bar"),
+        boundaryConvergencePressureDropTolerance(phaseCase), 0.05,
+        phaseCaseName(phaseCase) + " constant-flow pressure drop");
+  }
+
+  /**
+   * Asserts that a changed fixed-pressure source/sink boundary tracks the new steady solution.
+   *
+   * @param phaseCase phase case identifier
+   */
+  private static void assertFixedPressureBoundaryChangeTracksNewSteadySolution(int phaseCase) {
+    double baseOutletPressure = 65.0;
+    double stepOutletPressure = 55.0;
+    double inletPressure = 80.0;
+
+    Stream feed = createBoundaryConvergenceFeed("pressure-step-feed-" + phaseCaseName(phaseCase),
+        phaseCase, 12.0);
+    TwoFluidPipe dynamicPipe =
+        createBoundaryConvergencePipe("pressure-step-pipe-" + phaseCaseName(phaseCase), feed);
+    dynamicPipe.useFixedOutletPressureTransient();
+    dynamicPipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
+    dynamicPipe.setInletPressure(inletPressure, "bara");
+    dynamicPipe.setOutletPressure(baseOutletPressure, "bara");
+    dynamicPipe.run();
+
+    double initialOutletFlow = dynamicPipe.getOutletStream().getFlowRate("kg/sec");
+    dynamicPipe.setOutletPressure(stepOutletPressure, "bara");
+    runBoundaryConvergenceTransient(dynamicPipe);
+
+    Stream steadyFeed = createBoundaryConvergenceFeed(
+        "pressure-step-steady-feed-" + phaseCaseName(phaseCase), phaseCase, 12.0);
+    TwoFluidPipe steadyPipe = createBoundaryConvergencePipe(
+        "pressure-step-steady-pipe-" + phaseCaseName(phaseCase), steadyFeed);
+    steadyPipe.useFixedOutletPressureTransient();
+    steadyPipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
+    steadyPipe.setInletPressure(inletPressure, "bara");
+    steadyPipe.setOutletPressure(stepOutletPressure, "bara");
+    steadyPipe.run();
+
+    double finalOutletFlow = dynamicPipe.getOutletStream().getFlowRate("kg/sec");
+    double steadyOutletFlow = steadyPipe.getOutletStream().getFlowRate("kg/sec");
+
+    assertTrue(finalOutletFlow > initialOutletFlow,
+        phaseCaseName(phaseCase) + " lower outlet pressure should increase dynamic outlet flow");
+    assertEquals(inletPressure, dynamicPipe.getInletPressure(), 0.5,
+        phaseCaseName(phaseCase) + " dynamic inlet pressure should remain fixed");
+    assertEquals(stepOutletPressure, dynamicPipe.getOutletPressure(), 1.0e-6,
+        phaseCaseName(phaseCase) + " dynamic outlet pressure should follow changed boundary");
+    assertFalse(dynamicPipe.hasPressureRiseAcrossPipe(),
+        phaseCaseName(phaseCase) + " pressure-boundary step should keep forward pressure drop");
+    assertMassFlowProfileNear(dynamicPipe, finalOutletFlow, 0.05);
+    assertCloseToSteadyTarget(finalOutletFlow, steadyOutletFlow,
+        boundaryConvergenceFlowTolerance(phaseCase), 0.05,
+        phaseCaseName(phaseCase) + " pressure-boundary outlet flow");
+  }
+
+  /**
+   * Runs a fixed number of transient settling steps for boundary-convergence checks.
+   *
+   * @param pipe the pipe to advance
+   */
+  private static void runBoundaryConvergenceTransient(TwoFluidPipe pipe) {
+    for (int step = 0; step < 30; step++) {
+      pipe.runTransient(120.0, UUID.randomUUID());
+    }
+  }
+
+  /**
+   * Creates a feed stream for boundary-convergence checks.
+   *
+   * @param name stream name
+   * @param phaseCase phase case identifier
+   * @param flowRate feed flow rate in kg/sec
+   * @return configured stream
+   */
+  private static Stream createBoundaryConvergenceFeed(String name, int phaseCase, double flowRate) {
+    if (phaseCase == PHASE_CASE_GAS_ONLY) {
+      SystemInterface fluid = new SystemSrkEos(273.15 + 45.0, 80.0);
+      fluid.addComponent("methane", 94.0);
+      fluid.addComponent("ethane", 4.0);
+      fluid.addComponent("nitrogen", 2.0);
+      fluid.setMixingRule("classic");
+      fluid.setMultiPhaseCheck(true);
+
+      Stream feed = new Stream(name, fluid);
+      feed.setFlowRate(flowRate, "kg/sec");
+      feed.setTemperature(45.0, "C");
+      feed.setPressure(80.0, "bara");
+      feed.run();
+      return feed;
+    }
+
+    if (phaseCase == PHASE_CASE_GAS_OIL) {
+      return createFastMultiphaseDiagnosticFeed(name, false, flowRate);
+    }
+
+    if (phaseCase == PHASE_CASE_GAS_OIL_WATER) {
+      return createFastMultiphaseDiagnosticFeed(name, true, flowRate);
+    }
+
+    throw new IllegalArgumentException("Unknown phase case: " + phaseCase);
+  }
+
+  /**
+   * Creates an adiabatic fast diagnostic pipe for boundary-convergence checks.
+   *
+   * @param name pipe name
+   * @param feed connected feed stream
+   * @return configured pipe
+   */
+  private static TwoFluidPipe createBoundaryConvergencePipe(String name, Stream feed) {
+    TwoFluidPipe pipe = createFastMultiphaseDiagnosticPipe(name, feed);
+    pipe.setHeatTransferCoefficient(0.0);
+    return pipe;
+  }
+
+  /**
+   * Gets a readable phase-case name for diagnostics.
+   *
+   * @param phaseCase phase case identifier
+   * @return phase-case name
+   */
+  private static String phaseCaseName(int phaseCase) {
+    if (phaseCase == PHASE_CASE_GAS_ONLY) {
+      return "gas-only";
+    }
+    if (phaseCase == PHASE_CASE_GAS_OIL) {
+      return "gas-oil";
+    }
+    if (phaseCase == PHASE_CASE_GAS_OIL_WATER) {
+      return "gas-oil-water";
+    }
+    return "unknown-" + phaseCase;
+  }
+
+  /**
+   * Returns the pressure-drop tolerance for a boundary convergence phase case.
+   *
+   * @param phaseCase phase case identifier
+   * @return relative tolerance fraction
+   */
+  private static double boundaryConvergencePressureDropTolerance(int phaseCase) {
+    if (phaseCase == PHASE_CASE_GAS_ONLY) {
+      return 0.10;
+    }
+    if (phaseCase == PHASE_CASE_GAS_OIL_WATER) {
+      return 0.20;
+    }
+    return 0.20;
+  }
+
+  /**
+   * Returns the outlet-flow tolerance for a boundary convergence phase case.
+   *
+   * @param phaseCase phase case identifier
+   * @return relative tolerance fraction
+   */
+  private static double boundaryConvergenceFlowTolerance(int phaseCase) {
+    if (phaseCase == PHASE_CASE_GAS_OIL_WATER) {
+      return 0.10;
+    }
+    return 0.08;
+  }
+
+  /**
+   * Asserts that a transient result is close to the corresponding steady-state target.
+   *
+   * @param actual actual transient value
+   * @param expected expected steady-state value
+   * @param relativeTolerance relative tolerance fraction
+   * @param absoluteTolerance absolute tolerance in the same unit as the compared value
+   * @param message assertion message prefix
+   */
+  private static void assertCloseToSteadyTarget(double actual, double expected,
+      double relativeTolerance, double absoluteTolerance, String message) {
+    double deviation = Math.abs(actual - expected);
+    double relativeDeviation = deviation / Math.max(Math.abs(expected), 1.0e-12);
+    assertTrue(deviation <= absoluteTolerance || relativeDeviation <= relativeTolerance,
+        message + " should match steady target. expected=" + expected + ", actual=" + actual
+            + ", relativeDeviation=" + relativeDeviation);
   }
 
   @Test
@@ -1027,12 +1466,20 @@ class TwoFluidPipeBoundaryConditionTest {
     // Set constant flow at inlet
     pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
     pipe.setInletMassFlow(2.0, "kg/sec"); // Lower than stream flow rate
+    pipe.useFixedOutletPressureTransient();
 
     pipe.run();
 
-    // Pipe should work with the specified inlet mass flow
-    // (actual verification depends on internal implementation details)
     assertEquals(BoundaryCondition.CONSTANT_FLOW, pipe.getInletBoundaryCondition());
+    assertEquals(2.0, pipe.getOutletStream().getFlowRate("kg/sec"), 1.0e-6,
+        "Steady outlet flow should follow explicit inlet mass flow");
+    assertMassFlowProfileNear(pipe, 2.0, 0.05);
+
+    pipe.runTransient(1.0, UUID.randomUUID());
+
+    assertEquals(2.0, pipe.getOutletStream().getFlowRate("kg/sec"), 1.0e-6,
+        "Transient outlet flow should follow explicit inlet mass flow");
+    assertMassFlowProfileNear(pipe, 2.0, 0.05);
   }
 
   // =====================================================================
