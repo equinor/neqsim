@@ -7,6 +7,9 @@ description: "This document describes the two-fluid model implementation in NeqS
 
 This document describes the two-fluid model implementation in NeqSim for transient multiphase pipeline simulation.
 
+For practical result extraction, long-flowline reporting, and comparison with OLGA/LedaFlow or
+field data, see [TwoFluidPipe Reporting and Validation](two_fluid_reporting_and_validation).
+
 ## Overview
 
 The two-fluid model solves separate conservation equations for each phase (gas and liquid), providing more accurate predictions than drift-flux models for:

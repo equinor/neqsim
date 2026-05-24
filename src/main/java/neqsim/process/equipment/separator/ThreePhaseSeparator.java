@@ -822,10 +822,9 @@ public class ThreePhaseSeparator extends Separator {
       }
 
       // Determine whether any entrainment correction is non-negligible
-      boolean applyEntrainment =
-          (oilInGas > 1e-10 || aqueousInGas > 1e-10 || gasInOil > 1e-10 || gasInAqueous > 1e-10
-              || oilInAqueous > 1e-10 || aqueousInOil > 1e-10)
-              && thermoSystem.getNumberOfPhases() >= 2;
+      boolean applyEntrainment = (oilInGas > 1e-10 || aqueousInGas > 1e-10 || gasInOil > 1e-10
+          || gasInAqueous > 1e-10 || oilInAqueous > 1e-10 || aqueousInOil > 1e-10)
+          && thermoSystem.getNumberOfPhases() >= 2;
 
       if (thermoSystem.getNumberOfComponents() > 1) {
         if (applyEntrainment) {

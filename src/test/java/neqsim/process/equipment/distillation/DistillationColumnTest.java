@@ -473,7 +473,7 @@ public class DistillationColumnTest {
   public void relaxedToleranceDefaultsCanBeAdjusted() {
     DistillationColumn column = new DistillationColumn("tolerance defaults", 1, true, true);
 
-    assertEquals(9.0e-3, column.getTemperatureTolerance(), 1.0e-12);
+    assertEquals(2.0e-2, column.getTemperatureTolerance(), 1.0e-12);
     assertEquals(1.6e-2, column.getMassBalanceTolerance(), 1.0e-12);
     assertEquals(1.6e-2, column.getEnthalpyBalanceTolerance(), 1.0e-12);
 

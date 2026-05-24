@@ -439,6 +439,14 @@ public class TimeIntegrator implements Serializable {
   /** Cell-averaged mixture densities for IMEX pressure solve. Set by caller before step. */
   private double[] cellDensities;
 
+  /** Cell cross-sectional areas for IMEX pressure/mass corrections. */
+  private double[] cellAreas;
+
+  /** Phase densities for IMEX phase-area momentum correction. */
+  private double[] cellGasDensities;
+  private double[] cellOilDensities;
+  private double[] cellWaterDensities;
+
   /** Cell size for IMEX pressure solve (m). Set by caller before step. */
   private double imexDx = 1.0;
 
@@ -462,9 +470,36 @@ public class TimeIntegrator implements Serializable {
       double outletPressure, boolean outletFixed) {
     this.cellSoundSpeeds = soundSpeeds;
     this.cellDensities = densities;
+    this.cellAreas = null;
+    this.cellGasDensities = null;
+    this.cellOilDensities = null;
+    this.cellWaterDensities = null;
     this.imexDx = dx;
     this.imexOutletPressure = outletPressure;
     this.imexOutletPressureFixed = outletFixed;
+  }
+
+  /**
+   * Set cell and phase properties required for a dimensionally consistent IMEX pressure correction.
+   *
+   * @param soundSpeeds mixture sound speed per cell (m/s)
+   * @param densities mixture density per cell (kg/m3)
+   * @param areas pipe cross-sectional area per cell (m2)
+   * @param gasDensities gas density per cell (kg/m3)
+   * @param oilDensities oil density per cell (kg/m3)
+   * @param waterDensities water density per cell (kg/m3)
+   * @param dx cell size (m)
+   * @param outletPressure outlet boundary pressure (Pa)
+   * @param outletFixed true if outlet pressure is a Dirichlet BC
+   */
+  public void setIMEXProperties(double[] soundSpeeds, double[] densities, double[] areas,
+      double[] gasDensities, double[] oilDensities, double[] waterDensities, double dx,
+      double outletPressure, boolean outletFixed) {
+    setIMEXProperties(soundSpeeds, densities, dx, outletPressure, outletFixed);
+    this.cellAreas = areas;
+    this.cellGasDensities = gasDensities;
+    this.cellOilDensities = oilDensities;
+    this.cellWaterDensities = waterDensities;
   }
 
   /**
@@ -548,16 +583,16 @@ public class TimeIntegrator implements Serializable {
 
     for (int i = 0; i < nCells; i++) {
       double sig = sigma[i];
-      double rho = Math.max(cellDensities[i], 0.1);
       double c = Math.max(cellSoundSpeeds[i], 1.0);
+      double area = getCellArea(i);
 
       diag[i] = 1.0 + 2.0 * sig;
       lower[i] = -sig;
       upper[i] = -sig;
 
       // RHS: pressure correction to absorb the mass residual
-      // dp ~ -c^2 * (mass_residual / rho) to restore proper density-pressure coupling
-      b[i] = -c * c * massResidual[i] / (rho * imexDx);
+      // mass per length = area * density, and density correction is dp / c^2.
+      b[i] = -c * c * massResidual[i] / area;
     }
 
     // Boundary conditions for pressure correction
@@ -600,11 +635,10 @@ public class TimeIntegrator implements Serializable {
         dpdx = (dp[i + 1] - dp[i - 1]) / (2.0 * imexDx);
       }
 
-      // Correct mass equations with implicit pressure contribution
-      // The pressure correction modifies the mass flux divergence
-      double rho = Math.max(cellDensities[i], 0.1);
+      // Correct mass equations with implicit pressure contribution.
       double c = Math.max(cellSoundSpeeds[i], 1.0);
-      double massCorrectionTotal = dp[i] * rho / (c * c) * imexDx;
+      double area = getCellArea(i);
+      double massCorrectionTotal = area * dp[i] / (c * c);
 
       // Distribute mass correction proportionally to existing phase masses
       double totalMass = 0;
@@ -619,26 +653,78 @@ public class TimeIntegrator implements Serializable {
         }
       }
 
-      // Correct momentum equations: subtract pressure gradient
+      // Correct momentum equations using the two-fluid pressure source:
+      // d(alpha_k * rho_k * v_k * A)/dt = -alpha_k * A * dp/dx.
       // Gas momentum (index 3), Oil momentum (index 4), Water momentum (index 5)
+      double gasAreaFallback =
+          (totalMass > 1e-12 && nMassEq > 0) ? Math.max(Ustar[i][0], 0) / totalMass * area : 0.0;
+      double oilAreaFallback =
+          (totalMass > 1e-12 && nMassEq > 1) ? Math.max(Ustar[i][1], 0) / totalMass * area : 0.0;
+      double waterAreaFallback =
+          (totalMass > 1e-12 && nMassEq > 2) ? Math.max(Ustar[i][2], 0) / totalMass * area : 0.0;
+
+      double gasArea = (nVars > 3) ? getPhaseArea(i, Ustar[i][0], cellGasDensities,
+          gasAreaFallback) : 0.0;
+      double oilArea = (nVars > 4) ? getPhaseArea(i, Ustar[i][1], cellOilDensities,
+          oilAreaFallback) : 0.0;
+      double waterArea = (nVars > 5) ? getPhaseArea(i, Ustar[i][2], cellWaterDensities,
+          waterAreaFallback) : 0.0;
+
+      double totalPhaseArea = gasArea + oilArea + waterArea;
+      if (totalPhaseArea > area && totalPhaseArea > 1e-12) {
+        double areaScale = area / totalPhaseArea;
+        gasArea *= areaScale;
+        oilArea *= areaScale;
+        waterArea *= areaScale;
+      }
+
       if (nVars > 3) {
-        // Gas momentum correction
-        double gasAlpha = (totalMass > 1e-12) ? Math.max(Ustar[i][0], 0) / totalMass : 0.33;
-        Unew[i][3] = Ustar[i][3] - dt * gasAlpha * dpdx;
+        Unew[i][3] = Ustar[i][3] - dt * gasArea * dpdx;
       }
       if (nVars > 4) {
-        // Oil momentum correction
-        double oilAlpha = (totalMass > 1e-12) ? Math.max(Ustar[i][1], 0) / totalMass : 0.33;
-        Unew[i][4] = Ustar[i][4] - dt * oilAlpha * dpdx;
+        Unew[i][4] = Ustar[i][4] - dt * oilArea * dpdx;
       }
       if (nVars > 5) {
-        // Water momentum correction
-        double waterAlpha = (totalMass > 1e-12) ? Math.max(Ustar[i][2], 0) / totalMass : 0.33;
-        Unew[i][5] = Ustar[i][5] - dt * waterAlpha * dpdx;
+        Unew[i][5] = Ustar[i][5] - dt * waterArea * dpdx;
       }
     }
 
     return Unew;
+  }
+
+  /**
+   * Get cross-sectional area for a cell, falling back to unit area for legacy API users.
+   *
+   * @param cellIndex cell index
+   * @return cross-sectional area (m2)
+   */
+  private double getCellArea(int cellIndex) {
+    if (cellAreas != null && cellIndex < cellAreas.length && cellAreas[cellIndex] > 1e-12) {
+      return cellAreas[cellIndex];
+    }
+    return 1.0;
+  }
+
+  /**
+   * Convert phase mass per length to phase area alpha*A using the phase density.
+   *
+   * @param cellIndex cell index
+   * @param massPerLength phase mass per length (kg/m)
+   * @param phaseDensities phase densities (kg/m3)
+   * @param fallbackArea fallback phase area (m2)
+   * @return phase area (m2)
+   */
+  private double getPhaseArea(int cellIndex, double massPerLength, double[] phaseDensities,
+      double fallbackArea) {
+    if (massPerLength <= 0.0) {
+      return 0.0;
+    }
+    if (phaseDensities != null && cellIndex < phaseDensities.length
+        && phaseDensities[cellIndex] > 1e-12) {
+      double phaseArea = massPerLength / phaseDensities[cellIndex];
+      return Math.max(0.0, Math.min(getCellArea(cellIndex), phaseArea));
+    }
+    return Math.max(0.0, Math.min(getCellArea(cellIndex), fallbackArea));
   }
 
   /**

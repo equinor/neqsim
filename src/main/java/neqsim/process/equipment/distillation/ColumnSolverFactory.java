@@ -506,24 +506,30 @@ final class ColumnSolverFactory {
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
       column.markSolverTypeUsed(getSolverType());
+      boolean explicitMeshResidual =
+          column.getSolverType() == getSolverType() && !isAutoCandidateProbeMode();
       DistillationColumn fallbackCandidate =
-          shouldPrepareAcceleratedFallback() ? createDampedFallbackCandidate(column) : null;
+          shouldPrepareAcceleratedFallback() && !explicitMeshResidual
+              ? createDampedFallbackCandidate(column)
+              : null;
       boolean fallbackApplied = false;
       try {
         column.solveMeshResidual(id);
       } catch (RuntimeException exception) {
-        if (isAutoCandidateProbeMode()) {
+        if (isAutoCandidateProbeMode() || explicitMeshResidual) {
           throw exception;
         }
         applyDampedFallback(column, fallbackCandidate, id, "MESH residual solve failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !explicitMeshResidual
+          && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "MESH residual solve required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !explicitMeshResidual
+          && !column.solved()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "MESH residual solve did not satisfy convergence criteria", null);
         fallbackApplied = true;
@@ -639,9 +645,9 @@ final class ColumnSolverFactory {
    * Check whether AUTO should pay for a shortcut-column rebuild before probing candidates.
    *
    * <p>
-   * Fenske-Underwood-Gilliland seeding is valuable for product-specification continuation and larger
-   * full fractionators, but small fixed-specification regression columns are usually solved faster
-   * from a temperature-profile seed.
+   * Fenske-Underwood-Gilliland seeding is valuable for product-specification continuation and
+   * larger full fractionators, but small fixed-specification regression columns are usually solved
+   * faster from a temperature-profile seed.
    * </p>
    *
    * @param column column being solved
