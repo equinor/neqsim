@@ -1443,8 +1443,311 @@ public class TwoFluidPipe extends Pipeline {
       outletPressure = sections[numberOfSections - 1].getPressure();
     }
 
+    if (!applyInletPressureDrivenFlowConsistency()) {
+      syncConservativeStateFromPrimitiveSections();
+    }
+
     // Store initial profiles
     updateResultArrays();
+  }
+
+  /**
+   * Synchronizes conservative mass and momentum variables with the current primitive section state.
+   *
+   * <p>
+   * The steady-state solver updates pressure, holdup, phase densities, and velocities directly.
+   * Before transient integration starts, the conservative state vector must represent that same
+   * steady profile; otherwise the first transient step relaxes stale mass and momentum values
+   * rather than the displayed steady-state result.
+   * </p>
+   */
+  private void syncConservativeStateFromPrimitiveSections() {
+    if (sections == null) {
+      return;
+    }
+    for (TwoFluidSection section : sections) {
+      if (section != null) {
+        section.updateConservativeVariables();
+      }
+    }
+  }
+
+  /**
+   * Applies a steady-preserving single-phase gas consistency correction for inlet-driven flow.
+   *
+   * <p>
+   * For a gas-only stream with no liquid inventory, the multiphase transient solver should reduce
+   * to a single gas mass-flow relation. The general two-fluid pressure-correction path can
+   * otherwise introduce artificial liquid-free momentum relaxation because there is no downstream
+   * pressure boundary in inlet-pressure-driven mode. This correction keeps gas velocity, holdup,
+   * conservative mass, and momentum consistent with the connected feed flow, then reconstructs
+   * pressure from the inlet reference.
+   * </p>
+   *
+   * @return true if the single-phase gas correction was applied
+   */
+  private boolean applySinglePhaseGasFlowConsistency() {
+    if (!isSinglePhaseGasInletDrivenState()) {
+      return false;
+    }
+
+    double massFlow = getInletStream().getFlowRate("kg/sec");
+    double area = Math.PI * diameter * diameter / 4.0;
+    if (!Double.isFinite(massFlow) || area <= 0.0) {
+      return false;
+    }
+
+    for (TwoFluidSection section : sections) {
+      double gasDensity = Math.max(section.getGasDensity(), 0.1);
+      double gasVelocity = massFlow / (area * gasDensity);
+      if (!Double.isFinite(gasVelocity)) {
+        gasVelocity = 0.0;
+      }
+      gasVelocity = Math.max(-GAS_VELOCITY_LIMIT * VELOCITY_LIMIT_REJECTION_FRACTION,
+          Math.min(GAS_VELOCITY_LIMIT * VELOCITY_LIMIT_REJECTION_FRACTION, gasVelocity));
+
+      section.setGasHoldup(1.0);
+      section.setLiquidHoldup(0.0);
+      section.setOilHoldup(0.0);
+      section.setWaterHoldup(0.0);
+      section.setWaterCut(0.0);
+      section.setOilFractionInLiquid(1.0);
+      section.setGasVelocity(gasVelocity);
+      section.setLiquidVelocity(0.0);
+      section.setOilVelocity(0.0);
+      section.setWaterVelocity(0.0);
+      section.updateDerivedQuantities();
+      section.updateStratifiedGeometry();
+      section.updateConservativeVariables();
+    }
+
+    reconstructPressureFromInletReference();
+    applyOpenBoundaryPressureEnvelopeLimit();
+
+    for (TwoFluidSection section : sections) {
+      section.updateConservativeVariables();
+    }
+    return true;
+  }
+
+  /**
+   * Applies a mass-flow-consistent primitive state for inlet-pressure-driven open transients.
+   *
+   * <p>
+   * The steady multiphase initializer is correlation based and does not necessarily leave a zero
+   * residual for the conservative transient equations. For stream-connected inlet-pressure-driven
+   * comparisons, the external feed pressure and total mass flow define the boundary state. This
+   * correction preserves the current holdup inventory, imposes phase velocities consistent with the
+   * connected feed flow, and reconstructs pressure from the inlet reference before the conservative
+   * state is used by the transient integrator.
+   * </p>
+   *
+   * @return true if an inlet-pressure-driven consistency correction was applied
+   */
+  private boolean applyInletPressureDrivenFlowConsistency() {
+    if (!usesInletPressureReference() || sections == null || numberOfSections == 0
+        || getInletStream() == null) {
+      return false;
+    }
+    if (isSinglePhaseGasInletDrivenState()) {
+      return applySinglePhaseGasFlowConsistency();
+    }
+
+    SystemInterface inletFluid = getInletStream().getFluid();
+    if (inletFluid == null) {
+      return false;
+    }
+
+    double massFlow = getInletStream().getFlowRate("kg/sec");
+    double area = Math.PI * diameter * diameter / 4.0;
+    if (!Double.isFinite(massFlow) || massFlow < 0.0 || area <= 0.0) {
+      return false;
+    }
+
+    double[] massFractions = getInletPhaseMassFractions(inletFluid);
+    double gasMassFlow = massFlow * massFractions[0];
+    double oilMassFlow = massFlow * massFractions[1];
+    double waterMassFlow = massFlow * massFractions[2];
+    double liquidMassFlow = oilMassFlow + waterMassFlow;
+    double inletWaterCut = getInletWaterCut(inletFluid, massFractions);
+
+    for (TwoFluidSection section : sections) {
+      double gasHoldup = clamp(section.getGasHoldup(), 0.0, 1.0);
+      double liquidHoldup = clamp(section.getLiquidHoldup(), 0.0, 1.0 - gasHoldup);
+      if (liquidHoldup > 1.0e-10) {
+        section.setWaterCut(inletWaterCut);
+        section.setOilFractionInLiquid(1.0 - inletWaterCut);
+        section.setWaterHoldup(liquidHoldup * inletWaterCut);
+        section.setOilHoldup(liquidHoldup * (1.0 - inletWaterCut));
+      } else {
+        section.setWaterHoldup(0.0);
+        section.setOilHoldup(0.0);
+      }
+      section.setGasHoldup(gasHoldup);
+      section.setLiquidHoldup(liquidHoldup);
+
+      double gasVelocity = calcPhaseVelocity(gasMassFlow, gasHoldup, section.getGasDensity(), area,
+          GAS_VELOCITY_LIMIT);
+      double liquidVelocity = calcPhaseVelocity(liquidMassFlow, liquidHoldup,
+          section.getLiquidDensity(), area, LIQUID_VELOCITY_LIMIT);
+      double oilVelocity = calcPhaseVelocity(oilMassFlow, section.getOilHoldup(),
+          section.getOilDensity(), area, LIQUID_VELOCITY_LIMIT);
+      double waterVelocity = calcPhaseVelocity(waterMassFlow, section.getWaterHoldup(),
+          section.getWaterDensity(), area, LIQUID_VELOCITY_LIMIT);
+
+      section.setGasVelocity(gasVelocity);
+      section.setLiquidVelocity(liquidVelocity);
+      section.setOilVelocity(oilVelocity);
+      section.setWaterVelocity(waterVelocity);
+      section.updateDerivedQuantities();
+      section.updateStratifiedGeometry();
+      section.updateConservativeVariables();
+      section.updateWaterOilConservativeVariables();
+    }
+
+    reconstructPressureFromInletReference();
+    for (TwoFluidSection section : sections) {
+      section.updateConservativeVariables();
+      section.updateWaterOilConservativeVariables();
+    }
+    return true;
+  }
+
+  /**
+   * Calculates phase mass fractions for the connected inlet stream.
+   *
+   * @param inletFluid thermodynamic state of the inlet stream
+   * @return array containing gas, oil, and water mass fractions, respectively
+   */
+  private double[] getInletPhaseMassFractions(SystemInterface inletFluid) {
+    double gasMassFraction = 0.0;
+    double oilMassFraction = 0.0;
+    double waterMassFraction = 0.0;
+    double massTotal = inletFluid.getFlowRate("kg/sec");
+    if (massTotal > 0.0 && inletFluid.getNumberOfPhases() > 0) {
+      if (inletFluid.hasPhaseType("gas")) {
+        gasMassFraction =
+            Math.max(0.0, inletFluid.getPhase("gas").getFlowRate("kg/sec")) / massTotal;
+      }
+      if (inletFluid.hasPhaseType("oil")) {
+        oilMassFraction =
+            Math.max(0.0, inletFluid.getPhase("oil").getFlowRate("kg/sec")) / massTotal;
+      }
+      if (inletFluid.hasPhaseType("aqueous")) {
+        waterMassFraction =
+            Math.max(0.0, inletFluid.getPhase("aqueous").getFlowRate("kg/sec")) / massTotal;
+      }
+    }
+
+    double sum = gasMassFraction + oilMassFraction + waterMassFraction;
+    if (sum <= 1.0e-12) {
+      gasMassFraction = inletFluid.hasPhaseType("gas") ? 1.0 : 0.0;
+      oilMassFraction = inletFluid.hasPhaseType("oil") ? 1.0 - gasMassFraction : 0.0;
+      waterMassFraction = inletFluid.hasPhaseType("aqueous")
+          ? Math.max(0.0, 1.0 - gasMassFraction - oilMassFraction)
+          : 0.0;
+      sum = gasMassFraction + oilMassFraction + waterMassFraction;
+    }
+    if (sum > 1.0e-12) {
+      gasMassFraction /= sum;
+      oilMassFraction /= sum;
+      waterMassFraction /= sum;
+    }
+    return new double[] {gasMassFraction, oilMassFraction, waterMassFraction};
+  }
+
+  /**
+   * Calculates inlet water cut as a liquid-volume fraction.
+   *
+   * @param inletFluid thermodynamic state of the inlet stream
+   * @param massFractions inlet gas, oil, and water mass fractions
+   * @return water cut between zero and one
+   */
+  private double getInletWaterCut(SystemInterface inletFluid, double[] massFractions) {
+    if (!inletFluid.hasPhaseType("aqueous")) {
+      return 0.0;
+    }
+    if (!inletFluid.hasPhaseType("oil")) {
+      return 1.0;
+    }
+    double oilVolume = inletFluid.getPhase("oil").getVolume("m3");
+    double waterVolume = inletFluid.getPhase("aqueous").getVolume("m3");
+    if (oilVolume + waterVolume > 1.0e-12) {
+      return clamp(waterVolume / (oilVolume + waterVolume), 0.0, 1.0);
+    }
+    double liquidMassFraction = massFractions[1] + massFractions[2];
+    if (liquidMassFraction > 1.0e-12) {
+      return clamp(massFractions[2] / liquidMassFraction, 0.0, 1.0);
+    }
+    return 0.0;
+  }
+
+  /**
+   * Calculates a phase velocity from mass flow, holdup, density, and area.
+   *
+   * @param phaseMassFlow phase mass flow in kg/s
+   * @param phaseHoldup phase area fraction
+   * @param phaseDensity phase density in kg/m3
+   * @param area pipe cross-sectional area in m2
+   * @param velocityLimit absolute velocity limiter in m/s
+   * @return bounded phase velocity in m/s
+   */
+  private double calcPhaseVelocity(double phaseMassFlow, double phaseHoldup, double phaseDensity,
+      double area, double velocityLimit) {
+    if (phaseMassFlow <= 0.0 || phaseHoldup <= 1.0e-10 || phaseDensity <= 1.0e-10 || area <= 0.0) {
+      return 0.0;
+    }
+    double velocity = phaseMassFlow / (phaseHoldup * phaseDensity * area);
+    if (!Double.isFinite(velocity)) {
+      return 0.0;
+    }
+    double boundedLimit = velocityLimit * VELOCITY_LIMIT_REJECTION_FRACTION;
+    return clamp(velocity, -boundedLimit, boundedLimit);
+  }
+
+  /**
+   * Clamps a value to a closed interval.
+   *
+   * @param value value to clamp
+   * @param lower lower bound
+   * @param upper upper bound
+   * @return value limited to the provided interval
+   */
+  private double clamp(double value, double lower, double upper) {
+    if (!Double.isFinite(value)) {
+      return lower;
+    }
+    return Math.max(lower, Math.min(upper, value));
+  }
+
+  /**
+   * Checks whether the current state is gas-only and uses an inlet pressure reference.
+   *
+   * @return true for inlet-driven gas-only states with no meaningful liquid inventory
+   */
+  private boolean isSinglePhaseGasInletDrivenState() {
+    if (sections == null || numberOfSections == 0 || !usesInletPressureReference()
+        || getInletStream() == null) {
+      return false;
+    }
+    SystemInterface inletFluid = getInletStream().getFluid();
+    if (inletFluid != null
+        && (inletFluid.hasPhaseType("oil") || inletFluid.hasPhaseType("aqueous"))) {
+      return false;
+    }
+    for (TwoFluidSection section : sections) {
+      if (section == null) {
+        return false;
+      }
+      boolean hasLiquidHoldup = section.getLiquidHoldup() > 1.0e-8
+          || section.getOilHoldup() > 1.0e-8 || section.getWaterHoldup() > 1.0e-8;
+      boolean hasLiquidMass = section.getLiquidMassPerLength() > 1.0e-8
+          || section.getOilMassPerLength() > 1.0e-8 || section.getWaterMassPerLength() > 1.0e-8;
+      if (hasLiquidHoldup || hasLiquidMass || section.getGasHoldup() < 0.999) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -3473,10 +3776,12 @@ public class TwoFluidPipe extends Pipeline {
 
       // 7. Apply boundary conditions
       applyBoundaryConditions();
-      applyOpenBoundaryPressureEnvelopeLimit();
+      if (!applyInletPressureDrivenFlowConsistency()) {
+        applyOpenBoundaryPressureEnvelopeLimit();
 
-      // 8. Validate section states and fix any issues
-      validateSectionStates();
+        // 8. Validate section states and fix any issues
+        validateSectionStates();
+      }
 
       // 8b. Adaptive: post-correction sanity check (catch remaining issues)
       if (enableAdaptiveTimestepping) {
@@ -3611,6 +3916,11 @@ public class TwoFluidPipe extends Pipeline {
           getName(), heldTime, maxSubSteps);
     }
 
+    if (!applyInletPressureDrivenFlowConsistency()) {
+      applyOpenBoundaryPressureEnvelopeLimit();
+      validateSectionStates();
+    }
+
     // Update outlet stream and result arrays
     updateOutletStream();
     updateResultArrays();
@@ -3629,6 +3939,10 @@ public class TwoFluidPipe extends Pipeline {
    */
   private void refreshBoundaryStateBeforeTransientSubstep() {
     applyBoundaryConditions();
+    if (applyInletPressureDrivenFlowConsistency()) {
+      validateSectionStates();
+      return;
+    }
     reconstructPressureProfile();
     applyOpenBoundaryPressureEnvelopeLimit();
     validateSectionStates();

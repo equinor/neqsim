@@ -306,6 +306,20 @@ class TwoFluidPipeBoundaryConditionTest {
     }
   }
 
+  /**
+   * Returns the largest absolute value in an array.
+   *
+   * @param values values to inspect
+   * @return largest absolute value, or zero for an empty array
+   */
+  private static double maxAbs(double[] values) {
+    double maximum = 0.0;
+    for (double value : values) {
+      maximum = Math.max(maximum, Math.abs(value));
+    }
+    return maximum;
+  }
+
   // =====================================================================
   // Boundary Condition Type Setting Tests
   // =====================================================================
@@ -463,6 +477,212 @@ class TwoFluidPipeBoundaryConditionTest {
         "Inlet gas velocity should increase when the connected feed flow is increased");
     assertTrue(Math.abs(finalPressureDrop - initialPressureDrop) > 1.0e-3,
         "Pressure-drop reconstruction should respond to the updated inlet flow");
+  }
+
+  @Test
+  @DisplayName("Single-phase gas transient starts from the steady conservative state")
+  void testSinglePhaseGasTransientStartsFromSteadyConservativeState() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 45.0, 80.0);
+    fluid.addComponent("methane", 94.0);
+    fluid.addComponent("ethane", 4.0);
+    fluid.addComponent("nitrogen", 2.0);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    Stream feed = new Stream("single-phase-gas-feed", fluid);
+    feed.setFlowRate(12.0, "kg/sec");
+    feed.setTemperature(45.0, "C");
+    feed.setPressure(80.0, "bara");
+    feed.run();
+
+    int sections = 12;
+    double[] flatElevation = new double[sections];
+
+    TwoFluidPipe gasPipe = new TwoFluidPipe("single-phase-gas-transient-pipe", feed);
+    gasPipe.setLength(5000.0);
+    gasPipe.setDiameter(0.30);
+    gasPipe.setNumberOfSections(sections);
+    gasPipe.setRoughness(4.5e-5);
+    gasPipe.setElevationProfile(flatElevation);
+    gasPipe.setSurfaceTemperature(10.0, "C");
+    gasPipe.setHeatTransferCoefficient(4.0);
+    gasPipe.setThermodynamicUpdateInterval(25);
+    gasPipe.setOLGAModelType(TwoFluidPipe.OLGAModelType.SIMPLIFIED);
+    gasPipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.SIMPLIFIED);
+    gasPipe.setEnableAdaptiveTimestepping(true);
+    gasPipe.setAdaptiveMaxPressureChangeRatio(1.5);
+    gasPipe.setTimeIntegrationMethod(Method.IMEX_PRESSURE_CORRECTION);
+    gasPipe.useInletPressureDrivenTransient();
+
+    gasPipe.run();
+
+    double steadyPressureDrop = gasPipe.getSignedPressureDrop("bar");
+    double steadyMaxGasVelocity = maxAbs(gasPipe.getGasVelocityProfile());
+
+    gasPipe.runTransient(120.0, UUID.randomUUID());
+
+    double transientPressureDrop = gasPipe.getSignedPressureDrop("bar");
+    double transientMaxGasVelocity = maxAbs(gasPipe.getGasVelocityProfile());
+
+    assertEquals(0.0, gasPipe.getInletPressureResidual("bar"), 1.0e-6,
+        "Single-phase inlet-driven transient should keep the inlet pressure anchored");
+    assertTrue(Math.abs(transientPressureDrop - steadyPressureDrop) / steadyPressureDrop < 0.50,
+        "First dynamic step without a flow change should remain near the steady pressure drop");
+    assertTrue(transientMaxGasVelocity < steadyMaxGasVelocity * 2.0,
+        "First dynamic step should not accelerate single-phase gas toward the velocity limiter");
+  }
+
+  /**
+   * Verifies that a two-phase gas-oil inlet-driven transient starts near steady state and responds
+   * to a feed-flow ramp.
+   */
+  @Test
+  @DisplayName("Two-phase gas-oil transient tracks the steady ramp target")
+  void testTwoPhaseGasOilTransientTracksSteadyRampTarget() {
+    assertMultiphaseTransientTracksSteadyRampTarget(false, 0.05, 0.20);
+  }
+
+  /**
+   * Verifies that a three-phase gas-oil-water inlet-driven transient starts near steady state and
+   * responds to a feed-flow ramp.
+   */
+  @Test
+  @DisplayName("Three-phase gas-oil-water transient tracks the steady ramp target")
+  void testThreePhaseGasOilWaterTransientTracksSteadyRampTarget() {
+    assertMultiphaseTransientTracksSteadyRampTarget(true, 0.10, 0.20);
+  }
+
+  /**
+   * Asserts transient behavior for the fast 5 km inlet-pressure-driven multiphase diagnostic.
+   *
+   * @param includeWater true to include an aqueous phase in the diagnostic fluid
+   * @param unchangedToleranceFraction maximum allowed no-flow-change pressure-drop deviation
+   * @param rampToleranceFraction maximum allowed dynamic-final versus steady-ramp deviation
+   */
+  private static void assertMultiphaseTransientTracksSteadyRampTarget(boolean includeWater,
+      double unchangedToleranceFraction, double rampToleranceFraction) {
+    double baseFlow = 12.0;
+    double rampFlow = 18.0;
+
+    Stream feed =
+        createFastMultiphaseDiagnosticFeed("multiphase-dynamic-feed", includeWater, baseFlow);
+    TwoFluidPipe dynamicPipe = createFastMultiphaseDiagnosticPipe("multiphase-dynamic-pipe", feed);
+    dynamicPipe.run();
+
+    double initialPressureDrop = dynamicPipe.getSignedPressureDrop("bar");
+    dynamicPipe.runTransient(120.0, UUID.randomUUID());
+    double unchangedPressureDrop = dynamicPipe.getSignedPressureDrop("bar");
+
+    feed.setFlowRate(rampFlow, "kg/sec");
+    feed.run();
+    for (int step = 0; step < 15; step++) {
+      dynamicPipe.runTransient(120.0, UUID.randomUUID());
+    }
+    double finalDynamicPressureDrop = dynamicPipe.getSignedPressureDrop("bar");
+    double steadyRampPressureDrop = runFastMultiphaseSteadyPressureDrop(includeWater, rampFlow);
+
+    assertEquals(0.0, dynamicPipe.getInletPressureResidual("bar"), 1.0e-6,
+        "Inlet-pressure-driven multiphase transient should keep the inlet pressure anchored");
+    assertFalse(dynamicPipe.hasBoundaryConditionPressureMismatch(),
+        "Inlet-pressure-driven multiphase transient should not report boundary mismatch");
+    assertFalse(dynamicPipe.hasPressureRiseAcrossPipe(),
+        "Inlet-pressure-driven multiphase transient should keep a forward pressure drop");
+    assertTrue(
+        Math.abs(unchangedPressureDrop - initialPressureDrop)
+            / Math.max(initialPressureDrop, 1.0e-12) < unchangedToleranceFraction,
+        "First dynamic step without a flow change should remain near the steady pressure drop");
+    assertTrue(finalDynamicPressureDrop > unchangedPressureDrop * 1.20,
+        "Dynamic pressure drop should respond to the increased connected-feed flow");
+    assertTrue(
+        Math.abs(finalDynamicPressureDrop - steadyRampPressureDrop)
+            / Math.max(steadyRampPressureDrop, 1.0e-12) < rampToleranceFraction,
+        "Dynamic final pressure drop should remain close to the TwoFluid steady ramp target");
+    assertTrue(maxAbs(dynamicPipe.getGasVelocityProfile()) < 20.0,
+        "Multiphase gas velocity should remain below the numerical limiter");
+    assertTrue(maxAbs(dynamicPipe.getLiquidVelocityProfile()) < 10.0,
+        "Multiphase liquid velocity should remain below the numerical limiter");
+  }
+
+  /**
+   * Runs a fast steady TwoFluid pressure-drop target for the multiphase diagnostic.
+   *
+   * @param includeWater true to include an aqueous phase in the diagnostic fluid
+   * @param flowRate feed flow rate in kg/sec
+   * @return steady signed pressure drop in bar
+   */
+  private static double runFastMultiphaseSteadyPressureDrop(boolean includeWater, double flowRate) {
+    Stream feed =
+        createFastMultiphaseDiagnosticFeed("multiphase-steady-feed", includeWater, flowRate);
+    TwoFluidPipe steadyPipe = createFastMultiphaseDiagnosticPipe("multiphase-steady-pipe", feed);
+    steadyPipe.run();
+    return steadyPipe.getSignedPressureDrop("bar");
+  }
+
+  /**
+   * Creates the feed stream used by the fast multiphase transient diagnostic.
+   *
+   * @param name stream name
+   * @param includeWater true to include an aqueous phase in the diagnostic fluid
+   * @param flowRate feed flow rate in kg/sec
+   * @return configured and initialized feed stream
+   */
+  private static Stream createFastMultiphaseDiagnosticFeed(String name, boolean includeWater,
+      double flowRate) {
+    SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 45.0, 80.0);
+    if (includeWater) {
+      fluid.addComponent("methane", 65.0);
+      fluid.addComponent("ethane", 7.0);
+      fluid.addComponent("propane", 5.0);
+      fluid.addComponent("n-butane", 4.0);
+      fluid.addComponent("n-pentane", 3.0);
+      fluid.addComponent("n-heptane", 13.0);
+      fluid.addComponent("water", 3.0);
+    } else {
+      fluid.addComponent("methane", 70.0);
+      fluid.addComponent("ethane", 7.0);
+      fluid.addComponent("propane", 5.0);
+      fluid.addComponent("n-butane", 4.0);
+      fluid.addComponent("n-pentane", 4.0);
+      fluid.addComponent("n-heptane", 10.0);
+    }
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+
+    Stream feed = new Stream(name, fluid);
+    feed.setFlowRate(flowRate, "kg/sec");
+    feed.setTemperature(45.0, "C");
+    feed.setPressure(80.0, "bara");
+    feed.run();
+    return feed;
+  }
+
+  /**
+   * Creates the configured TwoFluidPipe used by the fast multiphase diagnostic.
+   *
+   * @param name pipe name
+   * @param feed connected feed stream
+   * @return configured pipe
+   */
+  private static TwoFluidPipe createFastMultiphaseDiagnosticPipe(String name, Stream feed) {
+    int sections = 12;
+    double[] flatElevation = new double[sections];
+
+    TwoFluidPipe diagnosticPipe = new TwoFluidPipe(name, feed);
+    diagnosticPipe.setLength(5000.0);
+    diagnosticPipe.setDiameter(0.30);
+    diagnosticPipe.setNumberOfSections(sections);
+    diagnosticPipe.setRoughness(4.5e-5);
+    diagnosticPipe.setElevationProfile(flatElevation);
+    diagnosticPipe.setSurfaceTemperature(10.0, "C");
+    diagnosticPipe.setHeatTransferCoefficient(4.0);
+    diagnosticPipe.setThermodynamicUpdateInterval(25);
+    diagnosticPipe.setOLGAModelType(TwoFluidPipe.OLGAModelType.SIMPLIFIED);
+    diagnosticPipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.SIMPLIFIED);
+    diagnosticPipe.setEnableAdaptiveTimestepping(true);
+    diagnosticPipe.setAdaptiveMaxPressureChangeRatio(1.5);
+    diagnosticPipe.setTimeIntegrationMethod(Method.IMEX_PRESSURE_CORRECTION);
+    diagnosticPipe.useInletPressureDrivenTransient();
+    return diagnosticPipe;
   }
 
   @Test
