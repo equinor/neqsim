@@ -81,5 +81,10 @@ class PressureUnitTest extends neqsim.NeqSimTest {
     assertEquals(expectedPsi, psi, 1e-6);
     assertEquals(1.0, converter.getValue(psi, "psi", "atm"), 1e-6);
   }
-}
 
+  @Test
+  public void testSIValue() {
+    assertEquals(101325.0, new PressureUnit(0.0, "barg").getSIvalue(), 1e-6);
+    assertEquals(1100000.0, new PressureUnit(11.0, "bara").getSIvalue(), 1e-6);
+  }
+}
