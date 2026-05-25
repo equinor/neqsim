@@ -49,6 +49,12 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit {
 
   /** {@inheritDoc} */
   @Override
+  public double getSIvalue() {
+    return getValue("W");
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getValue(double val, String fromunit, String tounit) {
     invalue = val;
     return getConversionFactor(fromunit) / getConversionFactor(tounit) * invalue;
