@@ -71,6 +71,15 @@ class IndustrialProfileTest {
     assertEquals(ToolTier.TRUSTED_CORE, IndustrialProfile.getToolTier("validateInput"));
     assertEquals(ToolTier.TRUSTED_CORE, IndustrialProfile.getToolTier("getPhaseEnvelope"));
     assertEquals(ToolTier.TRUSTED_CORE, IndustrialProfile.getToolTier("getBenchmarkTrust"));
+    assertEquals(ToolTier.TRUSTED_CORE, IndustrialProfile.getToolTier("checkToolAccess"));
+    assertEquals(ToolTier.TRUSTED_CORE, IndustrialProfile.getToolTier("manageIndustrialProfile"));
+  }
+
+  @Test
+  void getToolCategory_governanceTools_returnAdvisory() {
+    assertEquals(ToolCategory.ADVISORY, IndustrialProfile.getToolCategory("checkToolAccess"));
+    assertEquals(ToolCategory.ADVISORY,
+        IndustrialProfile.getToolCategory("manageIndustrialProfile"));
   }
 
   @Test
@@ -209,6 +218,15 @@ class IndustrialProfileTest {
   }
 
   @Test
+  void digitalTwinMode_allowsGovernanceInspectionTools() {
+    IndustrialProfile.setActiveMode(DeploymentMode.DIGITAL_TWIN);
+    assertTrue(IndustrialProfile.isToolAllowed("checkToolAccess"));
+    assertTrue(IndustrialProfile.isToolAllowed("manageIndustrialProfile"));
+    assertNull(IndustrialProfile.enforceAccess("checkToolAccess"));
+    assertNull(IndustrialProfile.enforceAccess("manageIndustrialProfile"));
+  }
+
+  @Test
   void digitalTwinMode_allowsTier1Calculation() {
     IndustrialProfile.setActiveMode(DeploymentMode.DIGITAL_TWIN);
     // Calculation tools in Tier 1
@@ -271,6 +289,7 @@ class IndustrialProfileTest {
     assertTrue(IndustrialProfile.isToolAllowed("validateInput"));
     assertTrue(IndustrialProfile.isToolAllowed("getBenchmarkTrust"));
     assertTrue(IndustrialProfile.isToolAllowed("checkToolAccess"));
+    assertTrue(IndustrialProfile.isToolAllowed("manageIndustrialProfile"));
   }
 
   @Test

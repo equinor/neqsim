@@ -4,11 +4,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.Properties;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -51,6 +53,16 @@ public final class StatePersistenceRunner {
 
   /** Environment variable allowing storage directories outside the NeqSim state root. */
   private static final String ALLOW_EXTERNAL_DIR_ENV = "NEQSIM_MCP_ALLOW_EXTERNAL_STATE_DIR";
+
+  /** System property override for the NeqSim version written to saved state metadata. */
+  private static final String VERSION_PROPERTY = "neqsim.version";
+
+  /** Maven metadata resource packaged with released NeqSim artifacts. */
+  private static final String MAVEN_PROPERTIES_RESOURCE =
+      "META-INF/maven/com.equinor.neqsim/neqsim/pom.properties";
+
+  /** Fallback version used from an unpackaged development classpath. */
+  private static final String DEVELOPMENT_VERSION = "development";
 
   /** Default directory for saved simulations. */
   private static volatile String storageDir =
@@ -133,7 +145,7 @@ public final class StatePersistenceRunner {
     saveEnvelope.addProperty("version", version);
     saveEnvelope.addProperty("sessionId", sessionId);
     saveEnvelope.addProperty("savedAt", Instant.now().toString());
-    saveEnvelope.addProperty("neqsimVersion", "3.10.0");
+    saveEnvelope.addProperty("neqsimVersion", getNeqSimVersion());
     saveEnvelope.add("sessionState", stateObj);
 
     // If input has processDefinition (raw JSON that built the process), include it
@@ -449,7 +461,7 @@ public final class StatePersistenceRunner {
     exportDoc.addProperty("format", "neqsim-exported-session");
     exportDoc.addProperty("formatVersion", "1.0.0");
     exportDoc.addProperty("exportedAt", Instant.now().toString());
-    exportDoc.addProperty("neqsimVersion", "3.10.0");
+    exportDoc.addProperty("neqsimVersion", getNeqSimVersion());
     exportDoc.addProperty("sessionId", sessionId);
     exportDoc.add("sessionState", stateObj);
 
@@ -657,6 +669,42 @@ public final class StatePersistenceRunner {
     String property = System.getProperty(ALLOW_EXTERNAL_DIR_PROPERTY, "false");
     String env = System.getenv(ALLOW_EXTERNAL_DIR_ENV);
     return "true".equalsIgnoreCase(property) || "true".equalsIgnoreCase(env);
+  }
+
+  /**
+   * Resolves the NeqSim version for saved-state metadata.
+   *
+   * @return the configured, packaged, Maven, or development version identifier
+   */
+  static String getNeqSimVersion() {
+    String configured = System.getProperty(VERSION_PROPERTY);
+    if (configured != null && !configured.trim().isEmpty()) {
+      return configured.trim();
+    }
+
+    Package packageInfo = StatePersistenceRunner.class.getPackage();
+    if (packageInfo != null) {
+      String implementationVersion = packageInfo.getImplementationVersion();
+      if (implementationVersion != null && !implementationVersion.trim().isEmpty()) {
+        return implementationVersion.trim();
+      }
+    }
+
+    Properties properties = new Properties();
+    ClassLoader classLoader = StatePersistenceRunner.class.getClassLoader();
+    try (InputStream stream = classLoader.getResourceAsStream(MAVEN_PROPERTIES_RESOURCE)) {
+      if (stream != null) {
+        properties.load(stream);
+        String version = properties.getProperty("version");
+        if (version != null && !version.trim().isEmpty()) {
+          return version.trim();
+        }
+      }
+    } catch (IOException e) {
+      // Fall through to the development marker when packaged metadata cannot be read.
+    }
+
+    return DEVELOPMENT_VERSION;
   }
 
   /**

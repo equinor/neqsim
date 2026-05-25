@@ -74,4 +74,19 @@ class StatePersistenceRunnerTest {
     assertEquals("DIR_OUTSIDE_SANDBOX",
         obj.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
+
+  @Test
+  void getNeqSimVersionUsesSystemPropertyOverride() {
+    String previousVersion = System.getProperty("neqsim.version");
+    System.setProperty("neqsim.version", "9.9.9-test");
+    try {
+      assertEquals("9.9.9-test", StatePersistenceRunner.getNeqSimVersion());
+    } finally {
+      if (previousVersion == null) {
+        System.clearProperty("neqsim.version");
+      } else {
+        System.setProperty("neqsim.version", previousVersion);
+      }
+    }
+  }
 }

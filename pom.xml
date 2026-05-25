@@ -385,7 +385,7 @@
 					<execution>
 						<phase>verify</phase>
 						<goals>
-							<goal>check</goal>
+							<goal>spotbugs</goal>
 						</goals>
 					</execution>
 				</executions>
@@ -401,7 +401,7 @@
 					<execution>
 						<phase>verify</phase>
 						<goals>
-							<goal>check</goal>
+							<goal>pmd</goal>
 						</goals>
 					</execution>
 				</executions>
