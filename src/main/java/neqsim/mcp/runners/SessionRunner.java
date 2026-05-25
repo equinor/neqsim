@@ -1,9 +1,10 @@
 package neqsim.mcp.runners;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -33,6 +34,12 @@ public final class SessionRunner {
 
   /** Max sessions to prevent unbounded memory growth. */
   private static final int MAX_SESSIONS = 50;
+
+  /** Cryptographically strong random source for session identifiers. */
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+  /** Default owner used for backwards-compatible anonymous sessions. */
+  private static final String ANONYMOUS_OWNER = "anonymous";
 
   /** Session TTL in milliseconds (30 minutes). */
   private static final long SESSION_TTL_MS = 30L * 60L * 1000L;
@@ -74,7 +81,7 @@ public final class SessionRunner {
         case "getState":
           return getSessionState(input);
         case "list":
-          return listSessions();
+          return listSessions(input);
         case "close":
           return closeSession(input);
         default:
@@ -100,11 +107,12 @@ public final class SessionRunner {
           "Close existing sessions with action: 'close'");
     }
 
-    String sessionId = UUID.randomUUID().toString().substring(0, 8);
+    String sessionId = generateSessionId();
     String name = input.has("name") ? input.get("name").getAsString() : "Session-" + sessionId;
+    String ownerId = getOwnerId(input);
 
     // Build process from fluid definition or from full process JSON
-    SessionState state = new SessionState(sessionId, name);
+    SessionState state = new SessionState(sessionId, name, ownerId);
 
     if (input.has("processJson")) {
       // Create from full process JSON (like run_process)
@@ -132,6 +140,7 @@ public final class SessionRunner {
     response.addProperty("status", "success");
     response.addProperty("sessionId", sessionId);
     response.addProperty("name", name);
+    response.addProperty("ownerId", ownerId);
     response.addProperty("message",
         "Session created. Use 'addEquipment' to build flowsheet, " + "then 'run' to simulate.");
     response.addProperty("equipmentCount", state.process != null ? state.process.size() : 0);
@@ -179,6 +188,7 @@ public final class SessionRunner {
     JsonObject response = new JsonObject();
     response.addProperty("status", "success");
     response.addProperty("sessionId", state.sessionId);
+    response.addProperty("ownerId", state.ownerId);
     response.addProperty("equipmentCount", state.process.size());
     response.addProperty("added",
         equipment.has("name") ? equipment.get("name").getAsString() : "unnamed");
@@ -226,6 +236,7 @@ public final class SessionRunner {
     JsonObject response = new JsonObject();
     response.addProperty("status", "success");
     response.addProperty("sessionId", state.sessionId);
+    response.addProperty("ownerId", state.ownerId);
     response.addProperty("runCount", state.runCount);
     response.addProperty("computationTimeMs", System.currentTimeMillis() - startTime);
     response.addProperty("equipmentCount", state.process.size());
@@ -309,6 +320,7 @@ public final class SessionRunner {
     JsonObject response = new JsonObject();
     response.addProperty("status", "success");
     response.addProperty("sessionId", state.sessionId);
+    response.addProperty("ownerId", state.ownerId);
     response.addProperty("modified", address);
     response.addProperty("newValue", value);
     if (!unit.isEmpty()) {
@@ -345,6 +357,7 @@ public final class SessionRunner {
     response.addProperty("status", "success");
     response.addProperty("sessionId", state.sessionId);
     response.addProperty("name", state.name);
+    response.addProperty("ownerId", state.ownerId);
     response.addProperty("hasRun", state.hasRun);
     response.addProperty("runCount", state.runCount);
     response.addProperty("equipmentCount", state.process != null ? state.process.size() : 0);
@@ -379,8 +392,9 @@ public final class SessionRunner {
    *
    * @return JSON with session summaries
    */
-  private static String listSessions() {
+  private static String listSessions(JsonObject input) {
     evictExpiredSessions();
+    String ownerId = input.has("ownerId") ? input.get("ownerId").getAsString() : "";
 
     JsonObject response = new JsonObject();
     response.addProperty("status", "success");
@@ -390,9 +404,13 @@ public final class SessionRunner {
     JsonArray sessions = new JsonArray();
     for (Map.Entry<String, SessionState> entry : SESSIONS.entrySet()) {
       SessionState s = entry.getValue();
+      if (!ownerId.isEmpty() && !ownerId.equals(s.ownerId)) {
+        continue;
+      }
       JsonObject info = new JsonObject();
       info.addProperty("sessionId", s.sessionId);
       info.addProperty("name", s.name);
+      info.addProperty("ownerId", s.ownerId);
       info.addProperty("equipmentCount", s.process != null ? s.process.size() : 0);
       info.addProperty("runCount", s.runCount);
       info.addProperty("ageSeconds", (System.currentTimeMillis() - s.createdAt) / 1000);
@@ -410,7 +428,8 @@ public final class SessionRunner {
    */
   private static String closeSession(JsonObject input) {
     String sessionId = input.has("sessionId") ? input.get("sessionId").getAsString() : "";
-    SessionState removed = SESSIONS.remove(sessionId);
+    SessionState state = getValidSession(input);
+    SessionState removed = state != null ? SESSIONS.remove(sessionId) : null;
 
     JsonObject response = new JsonObject();
     if (removed != null) {
@@ -488,7 +507,36 @@ public final class SessionRunner {
       SESSIONS.remove(sessionId);
       return null;
     }
+    String requestedOwner = input.has("ownerId") ? input.get("ownerId").getAsString() : "";
+    if (!ANONYMOUS_OWNER.equals(state.ownerId) && !state.ownerId.equals(requestedOwner)) {
+      return null;
+    }
     return state;
+  }
+
+  /**
+   * Generates a cryptographically strong URL-safe session ID.
+   *
+   * @return random session identifier
+   */
+  private static String generateSessionId() {
+    byte[] bytes = new byte[24];
+    SECURE_RANDOM.nextBytes(bytes);
+    return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+  }
+
+  /**
+   * Reads the optional owner ID from an input request.
+   *
+   * @param input JSON request
+   * @return normalized owner ID, or anonymous for backwards compatibility
+   */
+  private static String getOwnerId(JsonObject input) {
+    if (!input.has("ownerId")) {
+      return ANONYMOUS_OWNER;
+    }
+    String ownerId = input.get("ownerId").getAsString().trim();
+    return ownerId.isEmpty() ? ANONYMOUS_OWNER : ownerId;
   }
 
   /**
@@ -542,6 +590,9 @@ public final class SessionRunner {
     /** Human-readable session name. */
     final String name;
 
+    /** Optional owner identifier for client-side session isolation. */
+    final String ownerId;
+
     /** The live process system. */
     ProcessSystem process;
 
@@ -568,10 +619,12 @@ public final class SessionRunner {
      *
      * @param sessionId the session ID
      * @param name the session name
+     * @param ownerId the owner identifier
      */
-    SessionState(String sessionId, String name) {
+    SessionState(String sessionId, String name, String ownerId) {
       this.sessionId = sessionId;
       this.name = name;
+      this.ownerId = ownerId;
     }
   }
 }

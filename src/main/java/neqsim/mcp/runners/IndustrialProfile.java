@@ -6,10 +6,12 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import neqsim.mcp.model.ApiEnvelope;
 
 /**
  * Industrial deployment profiles for the NeqSim MCP server.
@@ -85,8 +87,24 @@ public final class IndustrialProfile {
     EXPERIMENTAL
   }
 
+  /** System property for the initial MCP deployment profile. */
+  private static final String MODE_PROPERTY = "neqsim.mcp.profile";
+
+  /** Environment variable for the initial MCP deployment profile. */
+  private static final String MODE_ENV = "NEQSIM_MCP_PROFILE";
+
+  /** System property containing the admin token for governed runtime changes. */
+  private static final String ADMIN_TOKEN_PROPERTY = "neqsim.mcp.adminToken";
+
+  /** Environment variable containing the admin token for governed runtime changes. */
+  private static final String ADMIN_TOKEN_ENV = "NEQSIM_MCP_ADMIN_TOKEN";
+
+  /** One-shot approvals keyed by MCP tool name. */
+  private static final Set<String> APPROVED_ONCE =
+      Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+
   /** Active deployment mode. */
-  private static volatile DeploymentMode activeMode = DeploymentMode.DESKTOP_ENGINEER;
+  private static volatile DeploymentMode activeMode = initialDeploymentMode();
 
   /** Whether auto-validation is enforced on all calculation/execution tools. */
   private static volatile boolean autoValidationEnabled = true;
@@ -98,6 +116,26 @@ public final class IndustrialProfile {
    * Private constructor — utility class.
    */
   private IndustrialProfile() {}
+
+  /**
+   * Determines the initial deployment mode from system property or environment.
+   *
+   * @return configured deployment mode, or {@link DeploymentMode#DESKTOP_ENGINEER} by default
+   */
+  private static DeploymentMode initialDeploymentMode() {
+    String configured = System.getProperty(MODE_PROPERTY);
+    if (configured == null || configured.trim().isEmpty()) {
+      configured = System.getenv(MODE_ENV);
+    }
+    if (configured == null || configured.trim().isEmpty()) {
+      return DeploymentMode.DESKTOP_ENGINEER;
+    }
+    try {
+      return DeploymentMode.valueOf(configured.trim().toUpperCase());
+    } catch (IllegalArgumentException e) {
+      return DeploymentMode.DESKTOP_ENGINEER;
+    }
+  }
 
   /**
    * Tool-to-category classification for all MCP tools.
@@ -120,11 +158,12 @@ public final class IndustrialProfile {
    * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for screening
    * studies and engineering workflows. Available in DESKTOP_ENGINEER and STUDY_TEAM.
    */
-  private static final Set<String> ENGINEERING_ADVANCED = Collections.unmodifiableSet(
-      new HashSet<>(Arrays.asList("runPVT", "runPipeline", "runWaterHammer", "runRootCauseAnalysis",
-          "runFlowAssurance", "crossValidateModels", "runParametricStudy", "runBatch",
-          "sizeEquipment", "compareProcesses", "generateReport", "generateVisualization",
-          "queryDataCatalog", "setSimulationVariable", "saveSimulationState", "runMaterialsReview",
+  private static final Set<String> ENGINEERING_ADVANCED =
+      Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runPVT", "runPipeline",
+          "runWaterHammer", "runRootCauseAnalysis", "runFlowAssurance", "runChemistry",
+          "crossValidateModels", "runParametricStudy", "runBatch", "sizeEquipment",
+          "compareProcesses", "generateReport", "generateVisualization", "queryDataCatalog",
+          "setSimulationVariable", "saveSimulationState", "runMaterialsReview",
           "runOpenDrainReview", "runNorsokS001Clause10Review", "runOperationalStudy", "runRelief",
           "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork", "runHAZOP", "runBarrierRegister",
           "runSafetySystemPerformance", "runAgenticEngineering")));
@@ -172,6 +211,7 @@ public final class IndustrialProfile {
     map.put("runProcess", ToolCategory.CALCULATION);
     map.put("runPVT", ToolCategory.CALCULATION);
     map.put("runFlowAssurance", ToolCategory.CALCULATION);
+    map.put("runChemistry", ToolCategory.CALCULATION);
     map.put("calculateStandard", ToolCategory.CALCULATION);
     map.put("runPipeline", ToolCategory.CALCULATION);
     map.put("runWaterHammer", ToolCategory.CALCULATION);
@@ -263,7 +303,18 @@ public final class IndustrialProfile {
    * @return true if the tool is allowed
    */
   public static boolean isToolAllowed(String toolName) {
-    switch (activeMode) {
+    return isToolAllowedInMode(toolName, activeMode);
+  }
+
+  /**
+   * Checks whether a tool is accessible in a specific deployment mode.
+   *
+   * @param toolName the MCP tool name
+   * @param mode the deployment mode to evaluate
+   * @return true if the tool is allowed in the supplied mode
+   */
+  private static boolean isToolAllowedInMode(String toolName, DeploymentMode mode) {
+    switch (mode) {
       case DESKTOP_ENGINEER:
         return true; // all tiers available — engineer chooses risk
       case STUDY_TEAM:
@@ -291,24 +342,136 @@ public final class IndustrialProfile {
    * @return null if allowed, or a JSON error string if blocked
    */
   public static String enforceAccess(String toolName) {
+    String securityBlocked = SecurityRunner.checkAccess(null, toolName);
+    if (securityBlocked != null) {
+      return policyErrorJson("blocked", toolName, "SECURITY", "Security policy denied access",
+          "Inspect manageSecurity/getStatus and provide valid credentials when security is enabled.");
+    }
     if (isToolAllowed(toolName)) {
+      if (requiresApproval(toolName) && !consumeApproval(toolName)) {
+        return policyErrorJson("approval_required", toolName, "APPROVAL_REQUIRED",
+            "Tool '" + toolName + "' requires explicit approval in " + activeMode.name() + " mode.",
+            "Call manageIndustrialProfile with action approveTool using an admin token, then retry once.");
+      }
       return null;
     }
-    JsonObject error = new JsonObject();
-    error.addProperty("status", "blocked");
-    error.addProperty("tool", toolName);
-    error.addProperty("mode", activeMode.name());
     ToolTier tier = getToolTier(toolName);
-    error.addProperty("tier", tier != null ? tier.name() : "UNKNOWN");
-    error.addProperty("reason",
+    String tierName = tier != null ? tier.name() : "UNKNOWN";
+    return policyErrorJson("blocked", toolName, tierName,
         "Tool '" + toolName + "' is not available in " + activeMode.name()
             + " mode. This mode allows "
             + (activeMode == DeploymentMode.ENTERPRISE ? "Tier 1 (TRUSTED_CORE) only."
                 : activeMode == DeploymentMode.STUDY_TEAM
                     ? "Tier 1 (TRUSTED_CORE) and Tier 2 (ENGINEERING_ADVANCED) only."
-                    : "a restricted subset of tools."));
-    error.addProperty("remediation",
-        "Switch to DESKTOP_ENGINEER mode or request approval for this tool.");
+                    : "a restricted subset of tools."),
+        "Switch the startup profile to DESKTOP_ENGINEER for local engineering, or request an "
+            + "approved profile from the MCP administrator.");
+  }
+
+  /**
+   * Approves the next invocation of a governed tool.
+   *
+   * @param toolName the MCP tool name to approve
+   * @param adminToken the administrator token
+   * @return null if approval was recorded, or an error JSON string if denied
+   */
+  public static String approveNextInvocation(String toolName, String adminToken) {
+    if (!isAdminAuthorized(adminToken)) {
+      return policyErrorJson("blocked", toolName, "ADMIN_REQUIRED",
+          "Admin authorization is required to approve governed tool execution.",
+          "Set NEQSIM_MCP_ADMIN_TOKEN and pass it as adminToken.");
+    }
+    if (getToolCategory(toolName) == null) {
+      return policyErrorJson("blocked", toolName, "UNKNOWN_TOOL",
+          "Cannot approve unknown MCP tool '" + toolName + "'.",
+          "Use checkToolAccess or getCapabilities to choose a valid tool name.");
+    }
+    APPROVED_ONCE.add(toolName);
+    JsonObject response = new JsonObject();
+    response.addProperty("status", "success");
+    response.addProperty("tool", toolName);
+    response.addProperty("approval", "next_invocation");
+    response.addProperty("message", "Next invocation of " + toolName + " is approved once.");
+    ApiEnvelope.applyStandardFields(response, "manageIndustrialProfile", null,
+        ApiEnvelope.validationStatus(true, "policy", "Approval recorded"),
+        ApiEnvelope.qualityGate("approved", "One-shot approval recorded", false));
+    return GSON.toJson(response);
+  }
+
+  /**
+   * Checks whether a supplied token authorizes runtime administration.
+   *
+   * @param adminToken token supplied by the caller
+   * @return true when the token matches the configured admin token
+   */
+  public static boolean isAdminAuthorized(String adminToken) {
+    String configured = getConfiguredAdminToken();
+    return configured != null && !configured.isEmpty() && adminToken != null
+        && configured.equals(adminToken);
+  }
+
+  /**
+   * Returns whether runtime administration has been configured.
+   *
+   * @return true if an admin token is configured
+   */
+  public static boolean isAdminConfigured() {
+    String configured = getConfiguredAdminToken();
+    return configured != null && !configured.isEmpty();
+  }
+
+  /**
+   * Reads the configured administrator token.
+   *
+   * @return admin token from system property or environment, or null if absent
+   */
+  private static String getConfiguredAdminToken() {
+    String token = System.getProperty(ADMIN_TOKEN_PROPERTY);
+    if (token == null || token.isEmpty()) {
+      token = System.getenv(ADMIN_TOKEN_ENV);
+    }
+    return token;
+  }
+
+  /**
+   * Consumes a pending one-shot approval.
+   *
+   * @param toolName the tool being invoked
+   * @return true if an approval was available and consumed
+   */
+  private static boolean consumeApproval(String toolName) {
+    return APPROVED_ONCE.remove(toolName);
+  }
+
+  /**
+   * Builds a standardized policy error response.
+   *
+   * @param status policy status string
+   * @param toolName the MCP tool name
+   * @param code policy reason code or tier name
+   * @param reason human-readable reason
+   * @param remediation recommended remediation
+   * @return JSON policy response
+   */
+  private static String policyErrorJson(String status, String toolName, String code, String reason,
+      String remediation) {
+    JsonObject error = new JsonObject();
+    error.addProperty("apiVersion", ApiEnvelope.API_VERSION);
+    error.addProperty("status", status);
+    error.addProperty("tool", toolName);
+    error.addProperty("mode", activeMode.name());
+    ToolTier tier = getToolTier(toolName);
+    error.addProperty("tier", tier != null ? tier.name() : code);
+    error.addProperty("reason", reason);
+    error.addProperty("remediation", remediation);
+    JsonObject data = new JsonObject();
+    data.addProperty("mode", activeMode.name());
+    data.addProperty("policyCode", code);
+    data.addProperty("approvalRequired", "approval_required".equals(status));
+    error.add("data", data);
+    error.add("validation", ApiEnvelope.validationStatus(false, "policy", reason));
+    error.add("qualityGate", ApiEnvelope.qualityGate("blocked", reason, true));
+    error.add("warnings", new JsonArray());
     return GSON.toJson(error);
   }
 
@@ -488,15 +651,12 @@ public final class IndustrialProfile {
    * @return count of allowed tools
    */
   private static int countAllowedTools(DeploymentMode mode) {
-    DeploymentMode saved = activeMode;
-    activeMode = mode;
     int count = 0;
     for (String tool : TOOL_CATEGORIES.keySet()) {
-      if (isToolAllowed(tool)) {
+      if (isToolAllowedInMode(tool, mode)) {
         count++;
       }
     }
-    activeMode = saved;
     return count;
   }
 }

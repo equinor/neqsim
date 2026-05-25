@@ -1,7 +1,7 @@
 """
 Comprehensive MCP Server Tests for NeqSim
 ==========================================
-Tests all 63 MCP tools through the real JSON-RPC protocol, verifying
+Tests all 64 MCP tools through the real JSON-RPC protocol, verifying
 correctness against known values from the NeqSim JUnit test suite.
 
 Tier 1 — Trusted Core (21 tools):
@@ -16,7 +16,7 @@ Tier 1 — Trusted Core (21 tools):
   - Automation API (units, variables, state save/compare, diagnostics)
   - Industrial profile, benchmark trust, tool access
 
-Tier 2 — Engineering Advanced (28 tools):
+Tier 2 — Engineering Advanced (29 tools):
   - PVT laboratory experiments
   - Flow assurance (hydrate, corrosion, wax)
   - Standards calculations (ISO 6976, AGA)
@@ -55,6 +55,37 @@ JAR = "target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"
 # ---------------------------------------------------------------------------
 proc = None
 msg_id = 0
+
+JSON_TOOL_ARGS = {
+    "runPVT": "pvtJson",
+    "runFlowAssurance": "flowAssuranceJson",
+    "calculateStandard": "standardJson",
+    "runPipeline": "pipelineJson",
+    "runReservoir": "reservoirJson",
+    "runFieldEconomics": "economicsJson",
+    "runDynamic": "dynamicJson",
+    "runBioprocess": "bioprocessJson",
+    "sizeEquipment": "sizingJson",
+    "compareProcesses": "comparisonJson",
+    "crossValidateModels": "crossValidationJson",
+    "runParametricStudy": "studyJson",
+    "manageSession": "sessionJson",
+    "solveTask": "taskJson",
+    "composeWorkflow": "workflowJson",
+    "generateReport": "reportJson",
+    "bridgeTaskWorkflow": "bridgeJson",
+    "runPlugin": "pluginJson",
+    "getProgress": "progressJson",
+    "streamSimulation": "streamJson",
+    "generateVisualization": "vizJson",
+    "composeMultiServerWorkflow": "compositionJson",
+    "manageSecurity": "securityJson",
+    "manageState": "persistJson",
+    "manageValidationProfile": "profileJson",
+    "queryDataCatalog": "catalogJson",
+    "manageIndustrialProfile": "profileJson",
+    "getBenchmarkTrust": "trustJson",
+}
 
 
 def start_server():
@@ -109,6 +140,7 @@ def recv():
 
 
 def call_tool(name, arguments):
+    arguments = normalize_tool_arguments(name, arguments)
     send(
         {
             "jsonrpc": "2.0",
@@ -120,8 +152,28 @@ def call_tool(name, arguments):
     r = recv()
     content = r.get("result", {}).get("content", [])
     if content:
-        return json.loads(content[0].get("text", "{}"))
+        text = content[0].get("text", "{}")
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            return {"status": "error", "message": text}
     return {}
+
+
+def normalize_tool_arguments(name, arguments):
+    json_arg = JSON_TOOL_ARGS.get(name)
+    if not json_arg or json_arg in arguments:
+        return arguments
+    normalized = {}
+    for key, value in arguments.items():
+        if isinstance(value, str) and value[:1] in ("{", "["):
+            try:
+                normalized[key] = json.loads(value)
+                continue
+            except json.JSONDecodeError:
+                pass
+        normalized[key] = value
+    return {json_arg: json.dumps(normalized)}
 
 
 def run_flash(components, temp_c, press_bara, eos="SRK", flash_type="TP"):
@@ -204,7 +256,7 @@ def test_protocol():
     r = recv()
     tools = r.get("result", {}).get("tools", [])
     tool_names = sorted([t["name"] for t in tools])
-    check("63 tools registered", len(tools) == 63, f"got {len(tools)}: {tool_names}")
+    check("64 tools registered", len(tools) == 64, f"got {len(tools)}: {tool_names}")
 
     # Tier 1 — Trusted Core (21 tools)
     tier1 = ["runFlash", "runProcess", "validateInput", "searchComponents",
@@ -217,11 +269,12 @@ def test_protocol():
     for name in tier1:
         check(f"tier1 tool '{name}'", name in tool_names)
 
-    # Tier 2 — Engineering Advanced (28 tools)
+    # Tier 2 — Engineering Advanced (29 tools)
     tier2 = ["crossValidateModels", "runParametricStudy", "runPVT",
              "runFlowAssurance", "calculateStandard", "runPipeline",
              "runChemistry", "runMaterialsReview", "runOpenDrainReview",
              "runNorsokS001Clause10Review", "runWaterHammer",
+             "runAgenticEngineering",
              "runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess",
              "sizeEquipment", "compareProcesses", "validateResults",
              "runRelief", "runLOPA", "runSIL", "runRiskMatrix",
@@ -1405,7 +1458,7 @@ def test_dynamic_separator():
     print("\n=== Dynamic: Separator Transient ===")
     process_json = {
         "fluid": {
-            "components": {"methane": 0.7, "propane": 0.2, "n-decane": 0.1},
+            "components": {"methane": 0.7, "propane": 0.2, "nC10": 0.1},
             "model": "SRK",
             "temperature_C": 25.0,
             "pressure_bara": 50.0,
@@ -1450,7 +1503,7 @@ def test_size_separator():
         "model": "SRK",
         "temperature_C": 25.0,
         "pressure_bara": 50.0,
-        "components": json.dumps({"methane": 0.7, "propane": 0.2, "n-decane": 0.1}),
+        "components": json.dumps({"methane": 0.7, "propane": 0.2, "nC10": 0.1}),
         "flowRate": json.dumps({"value": 10000.0, "unit": "kg/hr"}),
         "orientation": "horizontal",
         "liquidRetentionTime_min": 5.0,

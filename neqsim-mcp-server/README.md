@@ -26,6 +26,9 @@ The system is designed to support controlled engineering use through:
   EXPERIMENTAL), reference cases, accuracy bounds, and known limitations.
 - **Four deployment profiles** — each profile defines enforced constraints on
   tool availability, validation behavior, and execution permissions.
+- **Standard response envelope** — every tool returns `apiVersion`, `tool`,
+  `status`, `data`, `validation`, `qualityGate`, and `warnings`, while preserving
+  legacy top-level fields for older clients.
 - **Traceability** — every response includes provenance metadata (EOS model,
   convergence status, assumptions, limitations, warnings).
 
@@ -48,10 +51,20 @@ and execution permissions.
 | `DIGITAL_TWIN` | ✅ (ADVISORY+CALC) | ❌ | ❌ | On |
 | `ENTERPRISE` | ✅ | ❌ | ❌ | On |
 
-Set the profile on startup or at runtime via the `manageIndustrialProfile` tool:
+Set the profile on startup with `NEQSIM_MCP_PROFILE` or the Java system property
+`neqsim.mcp.profile`. Runtime profile changes use `manageIndustrialProfile` and
+require an admin token configured with `NEQSIM_MCP_ADMIN_TOKEN` or
+`neqsim.mcp.adminToken`:
 
 ```json
-{"action": "setActive", "mode": "STUDY_TEAM"}
+{"action": "setActive", "mode": "STUDY_TEAM", "adminToken": "..."}
+```
+
+For governed profiles, use `approveTool` to grant one execution of an approval-gated
+tool:
+
+```json
+{"action": "approveTool", "toolName": "compareSimulationStates", "adminToken": "..."}
 ```
 
 **ENTERPRISE** constraints:
@@ -77,7 +90,7 @@ and monitoring dashboards without introducing control risk.
 
 ---
 
-## Tier 1 — Trusted Core (14 tools)
+## Tier 1 — Trusted Core (21 tools)
 
 Validated against NIST/experimental data. Available in all deployment modes.
 Each tool has documented accuracy bounds and clear error behavior.
@@ -101,6 +114,13 @@ Each tool has documented accuracy bounds and clear error behavior.
 | `getBenchmarkTrust` | ADVISORY | Per-tool validation status and accuracy bounds |
 | `checkToolAccess` | ADVISORY | Pre-flight tool access check |
 | `manageIndustrialProfile` | ADVISORY | Deployment profile management |
+| `listSimulationUnits` | ADVISORY | List addressable units in a process |
+| `listUnitVariables` | ADVISORY | List INPUT/OUTPUT variables for a unit |
+| `getSimulationVariable` | ADVISORY | Read a variable by string address |
+| `compareSimulationStates` | ADVISORY | Diff two process state snapshots |
+| `diagnoseAutomation` | ADVISORY | Self-healing diagnostics for automation addresses |
+| `getAutomationLearningReport` | ADVISORY | Automation correction and failure history |
+| `getProgress` | ADVISORY | Progress query for tracked long-running work |
 
 ### Auto-Validation
 
@@ -129,7 +149,7 @@ limitations, and unsupported conditions.
 
 ---
 
-## Tier 2 — Engineering Advanced (23 tools)
+## Tier 2 — Engineering Advanced (29 tools)
 
 Tested against literature and industry cases. Available in `DESKTOP_ENGINEER`
 and `STUDY_TEAM` modes. Blocked in `DIGITAL_TWIN` and `ENTERPRISE` by
@@ -140,9 +160,15 @@ code-level `enforceAccess()` — returns structured error JSON, not a silent ski
 | `runPVT` | PVT lab experiments (CME, CVD, DL, separator, swelling, GOR) |
 | `runPipeline` | Multiphase pipeline flow (Beggs & Brill) |
 | `runFlowAssurance` | Hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion |
+| `runChemistry` | Open chemistry and integrity calculations for scale, corrosion, inhibitors, and scavengers |
+| `runWaterHammer` | Water/liquid-hammer screening for valve closure, pump trip, and check-valve scenarios |
+| `runRootCauseAnalysis` | Ranked equipment root-cause hypotheses from reliability, historian, STID, and simulation evidence |
 | `runMaterialsReview` | Process-wide material selection, degradation, CUI, and remaining-life review from process/STID data |
+| `runOpenDrainReview` | NORSOK S-001 open-drain review from normalized STID/P&ID and tag evidence |
+| `runNorsokS001Clause10Review` | NORSOK S-001 process safety system review from C&E, SRS, PSV, and instrument evidence |
 | `crossValidateModels` | Cross-validate process under multiple EOS models |
 | `runParametricStudy` | Multi-variable parametric sweep |
+| `runAgenticEngineering` | Plan engineering workflows, score result evidence, and rank candidate studies |
 | `runBatch` | Multi-point sensitivity sweep |
 | `sizeEquipment` | Quick equipment sizing (separator, compressor) |
 | `compareProcesses` | Compare process configurations side by side |
@@ -292,10 +318,10 @@ Verify: `java -version` should show 17 or higher.
 
 ## Capabilities Overview
 
-The server exposes 63 tools organized into three tiers plus platform tools,
-9 guided-workflow prompts, and 13 browsable resources.
+The server exposes 64 tools organized as 21 trusted-core, 29 engineering-advanced,
+and 14 experimental tools, plus 9 guided-workflow prompts and 13 browsable resources.
 
-Discovery is intentionally machine-readable. `getCapabilities` describes all 63 tools with schema
+Discovery is intentionally machine-readable. `getCapabilities` describes all 64 tools with schema
 links, examples, setup templates, unit guidance, process JSON contracts, benchmark trust, lifecycle
 metadata, and safety-review policy. High-use tools have detailed schemas and runnable examples; the
 remaining tools have generic contract-level schemas and starter examples so agents can still detect
@@ -303,8 +329,8 @@ and route every advertised capability.
 
 ## Complete Tool Inventory
 
-See the tier sections above for the governance model. Additional platform
-tools not listed in the three tiers:
+See the tier sections above for the governance model. Platform and automation
+tools are summarized here for operational use:
 
 ### Process Automation (String-Addressable)
 
@@ -571,12 +597,12 @@ The `streamSimulation` tool runs long simulations in the background with increme
 
 | Operation | Description |
 |-----------|-------------|
-| `parametricSweep` | Sweep a variable range and poll for results as they complete |
-| `dynamicSimulation` | Run a transient sim and poll for time-step results |
-| `monteCarlo` | Run N iterations with random inputs (uncertainty analysis) |
-| `poll` | Get new results since last check |
-| `cancel` | Cancel a running operation |
-| `list` | List all active operations |
+| `startSweep` / `startParametricSweep` | Sweep a variable range and poll for results as they complete |
+| `startDynamic` / `startDynamicStreaming` | Run a transient sim and poll for time-step results |
+| `startMonteCarlo` | Run N iterations with random inputs (uncertainty analysis) |
+| `poll` / `pollResults` | Get new results since last check |
+| `cancel` / `cancelOperation` | Cancel a running operation |
+| `list` / `listOperations` | List all active operations |
 
 ---
 
@@ -625,7 +651,11 @@ The `manageState` tool saves and restores simulation states across server restar
 | `delete` | Remove a saved state file |
 | `export` | Export state in a portable format |
 
-States are stored in `~/.neqsim/saved_simulations/` by default.
+States are stored in `~/.neqsim/saved_simulations/` by default. File names are
+validated and legacy `filePath` loads are accepted only when the target remains
+inside the configured storage directory. External storage directories are blocked
+unless `NEQSIM_MCP_ALLOW_EXTERNAL_STATE_DIR=true` or
+`neqsim.mcp.allowExternalStateDir=true` is set explicitly.
 
 ---
 
@@ -657,6 +687,10 @@ The `manageSecurity` tool provides API key management and audit logging:
 | `getAuditLog` | Query the audit trail |
 | `getRateLimits` | View current rate limit status |
 | `setConfig` | Update security configuration |
+
+Profile administration is separate from API-key authentication. Configure
+`NEQSIM_MCP_ADMIN_TOKEN` or `neqsim.mcp.adminToken` before using
+`manageIndustrialProfile.setActive` or `manageIndustrialProfile.approveTool`.
 
 ---
 
@@ -756,7 +790,7 @@ response schemas for all tools and browsable resources, see
 
 ## How the LLM Uses the Server (Typical Flow)
 
-1. **Discovery** — The LLM calls `tools/list` and finds the 63 available tools. It reads
+1. **Discovery** — The LLM calls `tools/list` and finds the 64 available tools. It reads
    the descriptions to understand what each tool does. Or it calls `getCapabilities`
    for a structured manifest of all NeqSim capabilities. It can also browse
   `neqsim://components`, `neqsim://models`, and `neqsim://setup-templates` to
@@ -809,7 +843,7 @@ neqsim-mcp-server/                        # Separate Maven project (Java 17+)
 ├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.12.0
 ├── test_mcp_server.py                     # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
-  ├── NeqSimTools.java                   # 63 @Tool-annotated MCP tools
+  ├── NeqSimTools.java                   # 64 @Tool-annotated MCP tools
     ├── NeqSimResources.java               # 7 @Resource + 6 @ResourceTemplate (13 endpoints)
     └── NeqSimPrompts.java                 # 9 @Prompt guided workflows
 
@@ -863,7 +897,7 @@ Delegates to runner layer in neqsim core (src/main/java/neqsim/mcp/):
 │   └── ResultProvenance.java              # Trust metadata (EOS, assumptions, limitations)
 └── catalog/
     ├── ExampleCatalog.java                # Examples for base categories and all MCP tools
-    └── SchemaCatalog.java                 # JSON Schema definitions for all 56 MCP tools
+    └── SchemaCatalog.java                 # JSON Schema definitions for all 64 MCP tools
 ```
 
 The MCP server is a **thin Quarkus wrapper** around the framework-agnostic
@@ -892,11 +926,11 @@ setup templates, and validation behavior:
 ### Integration Tests (MCP Server)
 
 The `test_mcp_server.py` script launches the server, communicates over STDIO,
-and validates all 63 tools across all three tiers:
+and validates all 64 tools across all three tiers:
 
 | Category | Checks | Description |
 |---|---|---|
-| Protocol | 9 | Tool/resource/template registration (63 tools, 7 resources, 6 templates) |
+| Protocol | 9 | Tool/resource/template registration (64 tools, 7 resources, 6 templates) |
 | Component search | 9 | Exact, partial, empty, no-match |
 | Examples & schemas | 10 | Catalog retrieval |
 | Flash calculations | 30 | SRK, PR, CPA; single/two-phase; density, Z, viscosity |
