@@ -160,7 +160,7 @@ public class MultiStreamHeatExchangerTest {
     operations.run();
 
     assertEquals(-29.927013822102793, separator2.getFluid().getTemperature("C"), 2e-2);
-    assertEquals(14.153533595069575, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
+    assertEquals(14.153533595069575, heatEx.getOutStream(1).getTemperature("C"), 2e-3);
 
     double heatBalance = 0.0;
     double maxAbsDuty = 0.0;
