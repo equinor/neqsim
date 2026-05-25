@@ -92,7 +92,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
   /** {@inheritDoc} */
   @Override
-  public void addInStream(StreamInterface inStream) {}
+  public void addInStream(StreamInterface inStream) {
+    addInStreamMSHE(inStream, inStreams.isEmpty() ? "hot" : "cold", null);
+  }
 
   /**
    * Adds an inlet stream to the multi-stream heat exchanger.
@@ -102,6 +104,10 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
    * @param outletTemp a {@link java.lang.Double} object
    */
   public void addInStreamMSHE(StreamInterface inStream, String streamType, Double outletTemp) {
+    addStreamState(inStream, streamType, outletTemp);
+  }
+
+  private void addStreamState(StreamInterface inStream, String streamType, Double outletTemp) {
     this.inStreams.add(inStream);
     StreamInterface outStream = inStream.clone();
     outStreams.add(outStream);
@@ -112,6 +118,19 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     pressures.add(inStream.getFluid().getPressure("bara"));
     massFlows.add(inStream.getFlowRate("kg/sec"));
     streamLoads.add(0.0);
+  }
+
+  private void updateStreamState(int index, StreamInterface inStream) {
+    if (index < 0 || index >= inStreams.size()) {
+      throw new IndexOutOfBoundsException("Stream index out of bounds.");
+    }
+    this.inStreams.set(index, inStream);
+    StreamInterface outStream = inStream.clone();
+    outStreams.set(index, outStream);
+    inletTemps.set(index, inStream.getFluid().getTemperature("C"));
+    pressures.set(index, inStream.getFluid().getPressure("bara"));
+    massFlows.set(index, inStream.getFlowRate("kg/sec"));
+    streamLoads.set(index, 0.0);
   }
 
   /**
@@ -997,7 +1016,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
   /** {@inheritDoc} */
   @Override
-  public void setFeedStream(int index, StreamInterface stream) {}
+  public void setFeedStream(int index, StreamInterface stream) {
+    updateStreamState(index, stream);
+  }
 
   /** {@inheritDoc} */
   @Override
