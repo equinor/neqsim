@@ -61,7 +61,7 @@ jobs:
           cat "neqsim-mcp-server-${NEQSIM_VERSION}-runner.jar.sha256"
 
       - name: Upload MCP server jar
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: neqsim-mcp-server
           path: |
