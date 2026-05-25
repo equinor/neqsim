@@ -522,7 +522,7 @@ public class ProcessRunner {
    * @param json raw process JSON
    * @return canonical JSON string (or original input if not parseable)
    */
-  private static String normalizeProcessJson(String json) {
+  static String normalizeProcessJson(String json) {
     try {
       JsonObject root = JsonParser.parseString(json).getAsJsonObject();
 

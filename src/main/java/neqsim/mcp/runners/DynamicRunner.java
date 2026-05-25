@@ -74,8 +74,9 @@ public class DynamicRunner {
       String processJsonStr = input.get("processJson").isJsonObject()
           ? GSON.toJson(input.getAsJsonObject("processJson"))
           : input.get("processJson").getAsString();
+      String normalizedProcessJson = ProcessRunner.normalizeProcessJson(processJsonStr);
 
-      String ssResult = ProcessRunner.run(processJsonStr);
+      String ssResult = ProcessRunner.run(normalizedProcessJson);
       JsonObject ssResponse = JsonParser.parseString(ssResult).getAsJsonObject();
       if (!"success".equals(ssResponse.get("status").getAsString())) {
         ssResponse.addProperty("tool", "runDynamic");
@@ -89,7 +90,8 @@ public class DynamicRunner {
       }
 
       // Rebuild process for dynamic simulation
-      ProcessSystem process = ProcessSystem.fromJsonAndRun(processJsonStr).getProcessSystem();
+      ProcessSystem process =
+          ProcessSystem.fromJsonAndRun(normalizedProcessJson).getProcessSystem();
 
       // --- Instrument with controllers ---
       double timeStep =

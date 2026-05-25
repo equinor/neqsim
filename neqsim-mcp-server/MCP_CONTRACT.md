@@ -33,8 +33,6 @@ benchmark trust metadata.
 |------|----------|-------|-------------|
 | `runFlash` | CALCULATION | v1.0 | Flash calculation (TP, PH, PS, dew, bubble, hydrate) |
 | `runProcess` | CALCULATION | v1.0 | ProcessSystem or ProcessModel simulation from JSON definition |
-| `runPVT` | CALCULATION | v1.1 | PVT lab experiments (CME, CVD, DL, saturation, separator, swelling, GOR, viscosity) |
-| `runPipeline` | CALCULATION | v1.1 | Multiphase pipeline flow (Beggs & Brill) |
 | `calculateStandard` | CALCULATION | v1.1 | Gas/oil quality per 22 standards (ISO, AGA, GPA, EN, ASTM) |
 | `getPropertyTable` | CALCULATION | v1.0 | Property table across T or P range |
 | `getPhaseEnvelope` | CALCULATION | v1.0 | Phase envelope (PT curve) |
@@ -47,25 +45,25 @@ benchmark trust metadata.
 | `getBenchmarkTrust` | ADVISORY | v1.2 | Per-tool validation status, accuracy bounds, limitations |
 | `checkToolAccess` | ADVISORY | v1.2 | Pre-flight tool access check for governed deployments |
 | `manageIndustrialProfile` | ADVISORY | v1.2 | Deployment profiles, tool access, validation enforcement |
-
-## Stable Platform
-
-Automation and process-inspection tools. "Stable" indicates API stability and
-availability, not necessarily full industrial validation. Interfaces are stable
-within v1.
-
-| Tool | Category | Since | Description |
-|------|----------|-------|-------------|
 | `listSimulationUnits` | ADVISORY | v1.0 | List addressable equipment in a process |
 | `listUnitVariables` | ADVISORY | v1.0 | List variables for a specific unit |
 | `getSimulationVariable` | ADVISORY | v1.0 | Read a variable by dot-notation address |
-| `setSimulationVariable` | EXECUTION | v1.0 | Set an INPUT variable and re-run |
-| `saveSimulationState` | EXECUTION | v1.0 | Save process state as JSON snapshot |
 | `compareSimulationStates` | ADVISORY | v1.0 | Diff two state snapshots |
 | `diagnoseAutomation` | ADVISORY | v1.0 | Self-healing diagnostics for failed operations |
 | `getAutomationLearningReport` | ADVISORY | v1.0 | Automation operation history and insights |
 | `getProgress` | ADVISORY | v1.1 | Check progress of long-running simulations |
-| `runPlugin` | PLATFORM | v1.1 | Run or list registered MCP runner plugins |
+
+## Stable Platform
+
+Automation and process-inspection tools. Advisory automation tools are also part
+of the Stable Industrial Core because they are allowed in `ENTERPRISE`; execution
+tools are governed as Advanced tools. "Stable" indicates API stability and
+availability, not necessarily full industrial validation.
+
+| Tool | Category | Since | Description |
+|------|----------|-------|-------------|
+| `setSimulationVariable` | EXECUTION | v1.0 | Set an INPUT variable and re-run |
+| `saveSimulationState` | EXECUTION | v1.0 | Save process state as JSON snapshot |
 
 ## Advanced Tools
 
@@ -78,9 +76,14 @@ industrial validation.
 
 | Tool | Category | Since | Description |
 |------|----------|-------|-------------|
+| `runPVT` | CALCULATION | v1.1 | PVT lab experiments (CME, CVD, DL, saturation, separator, swelling, GOR, viscosity) |
+| `runPipeline` | CALCULATION | v1.1 | Multiphase pipeline flow (Beggs & Brill) |
 | `runFlowAssurance` | CALCULATION | v1.1 | Flow assurance (hydrate, wax, asphaltene, corrosion, erosion, cooldown, emulsion) |
+| `runChemistry` | CALCULATION | v1.6 | Open chemistry and integrity calculations for scale, corrosion, inhibitors, and scavengers |
 | `runWaterHammer` | CALCULATION | v1.5 | Water/liquid hammer screening for fast valve closures, pump trips, STID routes, tagreader event windows, and pressure envelopes |
 | `runMaterialsReview` | CALCULATION | v1.5 | Process-wide material selection, degradation, CUI, remaining-life, and STID-backed integrity review |
+| `runOpenDrainReview` | CALCULATION | v1.6 | NORSOK S-001 open-drain review from normalized STID/P&ID and tag evidence |
+| `runNorsokS001Clause10Review` | CALCULATION | v1.6 | NORSOK S-001 process safety system review from C&E, SRS, PSV, and instrument evidence |
 | `crossValidateModels` | CALCULATION | v1.1 | Cross-validate process under multiple EOS models |
 | `runParametricStudy` | CALCULATION | v1.1 | Multi-variable parametric sweep |
 | `runBatch` | CALCULATION | v1.0 | Multi-point sensitivity sweep |
@@ -123,6 +126,7 @@ domain-specific runners with limited qualification evidence.
 | `manageSecurity` | PLATFORM | v1.2 | API key management, rate limiting, audit logging |
 | `manageState` | PLATFORM | v1.2 | Persist/restore simulation states across server restarts |
 | `manageValidationProfile` | PLATFORM | v1.2 | Jurisdiction-specific validation profiles (NCS, UKCS, GoM, Brazil) |
+| `runPlugin` | PLATFORM | v1.1 | Run or list registered MCP runner plugins |
 | `bridgeTaskWorkflow` | ADVISORY | v1.2 | Convert MCP tool output to task_solve results.json format |
 
 Execution tools (`solveTask`, `composeWorkflow`, `manageSession`) perform
@@ -167,7 +171,7 @@ Every tool response follows this envelope structure:
 ```json
 {
   "apiVersion": "1.0",
-  "status": "success | error",
+  "status": "success | error | blocked | approval_required",
   "tool": "runFlash",
   "data": { "canonicalPayload": "..." },
   "provenance": {
@@ -200,7 +204,7 @@ payload from `data` and use `tool` to identify the MCP operation that produced t
 | Field | Type | Guaranteed |
 |-------|------|------------|
 | `apiVersion` | string | Always present |
-| `status` | `"success"` or `"error"` | Always present |
+| `status` | `"success"`, `"error"`, `"blocked"`, or `"approval_required"` | Always present |
 | `tool` | string | Present for tool runner responses |
 | `data` | object | Present for successful responses and standardized automation/lifecycle responses |
 | `provenance` | object | Present on standardized runner responses |
@@ -256,6 +260,7 @@ of the server version.
 | 1.1 | 1.1.0+ | Extended domain, session, workflow tools |
 | 1.2 | 1.2.0+ | Platform tools, industrial governance, benchmark trust |
 | 1.5 | 1.5.0+ | Operational evidence packages, materials review, and water-hammer screening |
+| 1.6 | 1.6.0+ | Admin-gated profile changes, one-shot approvals, state sandboxing, SQL hardening |
 
 ---
 
@@ -283,6 +288,12 @@ on tool availability, validation behavior, and execution permissions.
 
 Default mode: `DESKTOP_ENGINEER`.
 
+Startup mode can be set with `NEQSIM_MCP_PROFILE` or `neqsim.mcp.profile`.
+Runtime `setActive` profile changes require `NEQSIM_MCP_ADMIN_TOKEN` or
+`neqsim.mcp.adminToken` and an `adminToken` field in the tool call. The same
+admin token is required for `approveTool`, which grants one execution of an
+approval-gated tool.
+
 ### Code-Level Enforcement
 
 Governance is not just documented — it is enforced in code. Every Advanced and
@@ -304,6 +315,11 @@ The enforcement method returns null (allowed) or a structured error JSON (blocke
 This ensures no Advanced/Experimental tool can execute in a restricted mode
 regardless of how it is called.
 
+Approval-gated tools return `status: "approval_required"` until an administrator
+calls `manageIndustrialProfile` with `action: "approveTool"`, the target
+`toolName`, and a valid `adminToken`. Approvals are consumed on the next matching
+tool invocation.
+
 **DIGITAL_TWIN advisory:** This mode supports operator decision support and
 what-if analysis. It does not provide plant control, write-back to operational
 systems, or autonomous action execution. A separate approval architecture
@@ -322,6 +338,15 @@ requirements.
 | `EXECUTION` | State-modifying operations; may require approval | `setSimulationVariable`, `runOperationalStudy`, `manageSession`, `solveTask` |
 | `PLATFORM` | Security, persistence, multi-server; restricted in production | `manageSecurity`, `manageState`, `composeMultiServerWorkflow` |
 
+### State Storage Sandbox
+
+`manageState` stores files under `~/.neqsim/saved_simulations/` by default.
+File names are validated, path traversal is rejected, and legacy `filePath`
+loads are allowed only when the target remains inside the configured storage
+directory. External storage directories require explicit opt-in with
+`NEQSIM_MCP_ALLOW_EXTERNAL_STATE_DIR=true` or
+`neqsim.mcp.allowExternalStateDir=true`.
+
 ### Industrial Core Toolset
 
 These 21 tools form the approved industrial subset for governed deployments.
@@ -333,7 +358,7 @@ Each has documented validation basis, known accuracy bounds, and clear
 error/warning behavior:
 
 ```
-runFlash, runProcess, runPVT, runPipeline, calculateStandard,
+runFlash, runProcess, calculateStandard,
 getPropertyTable, getPhaseEnvelope, validateInput, validateResults,
 searchComponents, getCapabilities, getExample, getSchema,
 getBenchmarkTrust, checkToolAccess, manageIndustrialProfile,

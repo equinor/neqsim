@@ -111,6 +111,7 @@ public class CapabilitiesRunner {
             "Electrolyte systems (produced water, brine, scale prediction)",
             "CO2-rich systems (CCS transport and injection)", "Hydrogen blending and H2 systems")));
     root.add("thermodynamics", thermo);
+    root.add("thermodynamicModels", thermo.deepCopy());
 
     // --- Process Equipment ---
     JsonObject process = new JsonObject();
@@ -143,6 +144,7 @@ public class CapabilitiesRunner {
             "State save/restore/compare for version tracking",
             "Simulation quality gate (mass/energy balance validation)")));
     root.add("processSimulation", process);
+    root.add("processEquipment", process.deepCopy());
 
     // --- Calculation Modes ---
     JsonObject modes = new JsonObject();

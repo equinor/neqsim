@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,9 +42,19 @@ public final class StatePersistenceRunner {
   private static final Gson GSON =
       new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
+  /** Default root directory for NeqSim MCP state files. */
+  private static final String DEFAULT_ROOT_DIR =
+      System.getProperty("user.home") + File.separator + ".neqsim";
+
+  /** System property allowing storage directories outside the NeqSim state root. */
+  private static final String ALLOW_EXTERNAL_DIR_PROPERTY = "neqsim.mcp.allowExternalStateDir";
+
+  /** Environment variable allowing storage directories outside the NeqSim state root. */
+  private static final String ALLOW_EXTERNAL_DIR_ENV = "NEQSIM_MCP_ALLOW_EXTERNAL_STATE_DIR";
+
   /** Default directory for saved simulations. */
-  private static volatile String storageDir = System.getProperty("user.home") + File.separator
-      + ".neqsim" + File.separator + "saved_simulations";
+  private static volatile String storageDir =
+      DEFAULT_ROOT_DIR + File.separator + "saved_simulations";
 
   /**
    * Private constructor — all methods are static.
@@ -137,13 +148,13 @@ public final class StatePersistenceRunner {
       // Use sanitized name for filename
       String safeName = sanitizeFilename(name);
       String filename = safeName + "_v" + version + ".json";
-      Path filePath = Paths.get(storageDir, filename);
+      Path filePath = resolveStorageFile(filename);
 
       // Don't overwrite — append incrementing suffix
       int suffix = 1;
       while (Files.exists(filePath)) {
         filename = safeName + "_v" + version + "_" + suffix + ".json";
-        filePath = Paths.get(storageDir, filename);
+        filePath = resolveStorageFile(filename);
         suffix++;
       }
 
@@ -177,13 +188,16 @@ public final class StatePersistenceRunner {
     String filePath = input.has("filePath") ? input.get("filePath").getAsString() : "";
 
     Path path;
-    if (!filePath.isEmpty()) {
-      path = Paths.get(filePath);
-    } else if (!filename.isEmpty()) {
-      path = Paths.get(storageDir, filename);
-    } else {
+    if (filePath.isEmpty() && filename.isEmpty()) {
       return errorJson("MISSING_FILE", "filename or filePath is required",
           "Use 'list' action to see available saved states");
+    }
+
+    try {
+      path = resolveReadableStoragePath(filename, filePath);
+    } catch (IOException e) {
+      return errorJson("INVALID_PATH", e.getMessage(),
+          "Use a saved-state filename from the configured storage directory");
     }
 
     if (!Files.exists(path)) {
@@ -250,7 +264,7 @@ public final class StatePersistenceRunner {
   private static String listSaved(JsonObject input) {
     try {
       ensureStorageDir();
-      File dir = new File(storageDir);
+      File dir = storageDirectoryPath().toFile();
       File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
 
       JsonObject response = new JsonObject();
@@ -324,13 +338,12 @@ public final class StatePersistenceRunner {
           "Use 'list' action to see available saved states");
     }
 
-    // Security: prevent path traversal
-    if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
-      return errorJson("INVALID_FILENAME", "Filename contains invalid characters",
-          "Use only the filename, not a path");
+    Path path;
+    try {
+      path = resolveStorageFile(filename);
+    } catch (IOException e) {
+      return errorJson("INVALID_FILENAME", e.getMessage(), "Use only the saved-state filename");
     }
-
-    Path path = Paths.get(storageDir, filename);
     if (!Files.exists(path)) {
       return errorJson("FILE_NOT_FOUND", "File not found: " + filename,
           "Use 'list' to see available files");
@@ -364,8 +377,10 @@ public final class StatePersistenceRunner {
     }
 
     try {
-      String content1 = new String(Files.readAllBytes(Paths.get(storageDir, file1)));
-      String content2 = new String(Files.readAllBytes(Paths.get(storageDir, file2)));
+      Path path1 = resolveStorageFile(file1);
+      Path path2 = resolveStorageFile(file2);
+      String content1 = new String(Files.readAllBytes(path1), StandardCharsets.UTF_8);
+      String content2 = new String(Files.readAllBytes(path2), StandardCharsets.UTF_8);
 
       JsonObject obj1 = JsonParser.parseString(content1).getAsJsonObject();
       JsonObject obj2 = JsonParser.parseString(content2).getAsJsonObject();
@@ -462,7 +477,20 @@ public final class StatePersistenceRunner {
       return errorJson("MISSING_DIR", "directory is required",
           "Provide the directory path for saving simulations");
     }
-    storageDir = dir;
+    Path requestedDir;
+    try {
+      requestedDir = Paths.get(dir).toAbsolutePath().normalize();
+      if (!isStoragePathAllowed(requestedDir)) {
+        return errorJson("DIR_OUTSIDE_SANDBOX",
+            "Storage directory is outside the NeqSim MCP state sandbox: " + requestedDir,
+            "Use a path below " + storageRootPath()
+                + " or set NEQSIM_MCP_ALLOW_EXTERNAL_STATE_DIR=true explicitly.");
+      }
+      storageDir = requestedDir.toString();
+    } catch (RuntimeException e) {
+      return errorJson("INVALID_DIR", "Invalid storage directory: " + e.getMessage(),
+          "Provide a valid directory path");
+    }
 
     try {
       ensureStorageDir();
@@ -486,11 +514,11 @@ public final class StatePersistenceRunner {
     JsonObject response = new JsonObject();
     response.addProperty("status", "success");
     response.addProperty("storageDir", storageDir);
-    response.addProperty("dirExists", Files.exists(Paths.get(storageDir)));
+    response.addProperty("dirExists", Files.exists(storageDirectoryPathUnchecked()));
 
     try {
       ensureStorageDir();
-      File dir = new File(storageDir);
+      File dir = storageDirectoryPath().toFile();
       File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
       response.addProperty("savedCount", files != null ? files.length : 0);
       if (files != null) {
@@ -517,10 +545,118 @@ public final class StatePersistenceRunner {
    * @throws IOException if directory cannot be created
    */
   private static void ensureStorageDir() throws IOException {
-    Path dir = Paths.get(storageDir);
+    Path dir = storageDirectoryPath();
     if (!Files.exists(dir)) {
       Files.createDirectories(dir);
     }
+  }
+
+  /**
+   * Resolves the configured storage directory and verifies the sandbox boundary.
+   *
+   * @return normalized storage directory path
+   * @throws IOException if the directory is outside the allowed sandbox
+   */
+  private static Path storageDirectoryPath() throws IOException {
+    Path dir = storageDirectoryPathUnchecked();
+    if (!isStoragePathAllowed(dir)) {
+      throw new IOException(
+          "Storage directory is outside the allowed NeqSim MCP state sandbox: " + dir);
+    }
+    return dir;
+  }
+
+  /**
+   * Resolves the configured storage directory without throwing checked exceptions.
+   *
+   * @return normalized storage directory path
+   */
+  private static Path storageDirectoryPathUnchecked() {
+    return Paths.get(storageDir).toAbsolutePath().normalize();
+  }
+
+  /**
+   * Resolves a saved-state filename below the configured storage directory.
+   *
+   * @param filename filename without path separators
+   * @return normalized file path inside the storage directory
+   * @throws IOException if the filename escapes the storage directory
+   */
+  private static Path resolveStorageFile(String filename) throws IOException {
+    validateFilename(filename);
+    Path base = storageDirectoryPath();
+    Path resolved = base.resolve(filename).normalize();
+    if (!resolved.startsWith(base)) {
+      throw new IOException("Resolved path escapes the storage directory: " + filename);
+    }
+    return resolved;
+  }
+
+  /**
+   * Resolves a load path, accepting legacy filePath values only when they remain inside storage.
+   *
+   * @param filename saved-state filename
+   * @param filePath legacy file path value
+   * @return normalized readable path inside the storage directory
+   * @throws IOException if the path is invalid or outside the storage directory
+   */
+  private static Path resolveReadableStoragePath(String filename, String filePath)
+      throws IOException {
+    Path base = storageDirectoryPath();
+    if (filePath != null && !filePath.isEmpty()) {
+      Path requested = Paths.get(filePath).toAbsolutePath().normalize();
+      if (!requested.startsWith(base)) {
+        throw new IOException(
+            "filePath must remain inside the configured storage directory: " + base);
+      }
+      return requested;
+    }
+    return resolveStorageFile(filename);
+  }
+
+  /**
+   * Validates saved-state filenames.
+   *
+   * @param filename filename to validate
+   * @throws IOException if the filename is empty or contains path traversal characters
+   */
+  private static void validateFilename(String filename) throws IOException {
+    if (filename == null || filename.isEmpty()) {
+      throw new IOException("Filename is required");
+    }
+    if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+      throw new IOException("Filename contains invalid path traversal characters: " + filename);
+    }
+  }
+
+  /**
+   * Returns the NeqSim MCP state sandbox root path.
+   *
+   * @return normalized root path
+   */
+  private static Path storageRootPath() {
+    return Paths.get(DEFAULT_ROOT_DIR).toAbsolutePath().normalize();
+  }
+
+  /**
+   * Checks whether a storage path is allowed by sandbox policy.
+   *
+   * @param path normalized path to check
+   * @return true if the path is under the sandbox or explicit external storage is enabled
+   */
+  private static boolean isStoragePathAllowed(Path path) {
+    return path.startsWith(storageRootPath()) || isExternalStorageAllowed();
+  }
+
+  /**
+   * Checks whether external storage directories are explicitly enabled.
+   *
+   * @return true if external storage is enabled by property or environment
+   */
+  private static boolean isExternalStorageAllowed() {
+    String property = System.getProperty(ALLOW_EXTERNAL_DIR_PROPERTY, "false");
+    String env = System.getenv(ALLOW_EXTERNAL_DIR_ENV);
+    return "true".equalsIgnoreCase(property) || "true".equalsIgnoreCase(env);
   }
 
   /**

@@ -41,8 +41,8 @@ class IndustrialProfileTest {
   void tierSizes_matchContract() {
     assertEquals(21, IndustrialProfile.getIndustrialCore().size(),
         "Tier 1 (TRUSTED_CORE) should have 21 tools");
-    assertEquals(27, IndustrialProfile.getEngineeringAdvanced().size(),
-        "Tier 2 (ENGINEERING_ADVANCED) should have 27 tools");
+    assertEquals(28, IndustrialProfile.getEngineeringAdvanced().size(),
+        "Tier 2 (ENGINEERING_ADVANCED) should have 28 tools");
     assertEquals(14, IndustrialProfile.getExperimentalTools().size(),
         "Tier 3 (EXPERIMENTAL) should have 14 tools");
   }
@@ -81,6 +81,7 @@ class IndustrialProfileTest {
     assertEquals(ToolTier.ENGINEERING_ADVANCED,
         IndustrialProfile.getToolTier("runRootCauseAnalysis"));
     assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runFlowAssurance"));
+    assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("runChemistry"));
     assertEquals(ToolTier.ENGINEERING_ADVANCED,
         IndustrialProfile.getToolTier("runMaterialsReview"));
     assertEquals(ToolTier.ENGINEERING_ADVANCED, IndustrialProfile.getToolTier("sizeEquipment"));
@@ -324,6 +325,34 @@ class IndustrialProfileTest {
   }
 
   @Test
+  void enterpriseMode_tier1ExecutionRequiresOneShotApproval() {
+    IndustrialProfile.setActiveMode(DeploymentMode.ENTERPRISE);
+    String blocked = IndustrialProfile.enforceAccess("compareSimulationStates");
+    assertNotNull(blocked, "Tier 1 execution tool should require approval in enterprise mode");
+    JsonObject blockedJson = JsonParser.parseString(blocked).getAsJsonObject();
+    assertEquals("approval_required", blockedJson.get("status").getAsString());
+
+    String previousToken = System.getProperty("neqsim.mcp.adminToken");
+    System.setProperty("neqsim.mcp.adminToken", "unit-test-admin");
+    try {
+      String approved =
+          IndustrialProfile.approveNextInvocation("compareSimulationStates", "unit-test-admin");
+      JsonObject approvedJson = JsonParser.parseString(approved).getAsJsonObject();
+      assertEquals("success", approvedJson.get("status").getAsString());
+      assertNull(IndustrialProfile.enforceAccess("compareSimulationStates"),
+          "One-shot approval should permit the next invocation");
+      assertNotNull(IndustrialProfile.enforceAccess("compareSimulationStates"),
+          "One-shot approval should be consumed after one invocation");
+    } finally {
+      if (previousToken == null) {
+        System.clearProperty("neqsim.mcp.adminToken");
+      } else {
+        System.setProperty("neqsim.mcp.adminToken", previousToken);
+      }
+    }
+  }
+
+  @Test
   void enterpriseMode_requiresApproval_executionTools() {
     IndustrialProfile.setActiveMode(DeploymentMode.ENTERPRISE);
     assertTrue(IndustrialProfile.requiresApproval("solveTask"));
@@ -403,7 +432,7 @@ class IndustrialProfileTest {
     assertTrue(root.has("tier3_experimental"), "Must include tier3_experimental");
 
     assertEquals(21, root.getAsJsonArray("tier1_trustedCore").size());
-    assertEquals(27, root.getAsJsonArray("tier2_engineeringAdvanced").size());
+    assertEquals(28, root.getAsJsonArray("tier2_engineeringAdvanced").size());
     assertEquals(14, root.getAsJsonArray("tier3_experimental").size());
   }
 

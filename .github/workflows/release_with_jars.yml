@@ -137,6 +137,8 @@ jobs:
         run: |
           NEQSIM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           cd neqsim-mcp-server && mvn -B package -Dneqsim.version="$NEQSIM_VERSION" -DskipTests -Dmaven.javadoc.skip=true
+      - name: Run MCP JSON-RPC integration tests
+        run: cd neqsim-mcp-server && python test_mcp_server.py
       - name: Rename and checksum MCP jar
         run: |
           VERSION=${{ needs.get_versions.outputs.version }}
