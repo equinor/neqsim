@@ -850,7 +850,7 @@ _ROUTES: List[Tuple[str, str]] = [
      r"tubing.*performance|nodal.*analysis",
      _IPR_VLP),
     (r"subsea.*(layout|template|map|field)|plem|"
-     r"(snohvit|sn\u00f8hvit).*layout|tieback.*layout",
+     r"gas[-\s]?field.*layout|tieback.*layout",
      _SUBSEA_LAYOUT),
     (r"(density|specific\s+gravity).*(pressure|bar|bara)",
      _NEQSIM_DENSITY),

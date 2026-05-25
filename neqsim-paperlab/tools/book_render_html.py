@@ -19,6 +19,28 @@ from citation_utils import (parse_bibtex, collect_all_cited_keys_from_chapters,
                             resolve_citations_numbered_html, collect_cited_keys)
 
 
+_COVER_FRONT_CANDIDATES = (
+    "cover_front.png", "cover_front.jpg", "cover_front.jpeg",
+    "cover_front.webp", "cover_front.svg",
+    "front_cover.png", "front_cover.jpg", "front_cover.jpeg",
+    "front_cover.webp", "front_cover.svg",
+    "front page.png", "front page.jpg", "front page.jpeg",
+    "front page.webp", "front page.svg",
+    "frontpage.png", "frontpage.jpg", "frontpage.jpeg",
+    "cover.png", "cover.jpg", "cover.jpeg", "cover.webp", "cover.svg",
+)
+
+_COVER_BACK_CANDIDATES = (
+    "cover_back.png", "cover_back.jpg", "cover_back.jpeg",
+    "cover_back.webp", "cover_back.svg",
+    "back_cover.png", "back_cover.jpg", "back_cover.jpeg",
+    "back_cover.webp", "back_cover.svg",
+    "back page.png", "back page.jpg", "back page.jpeg",
+    "back page.webp", "back page.svg",
+    "backpage.png", "backpage.jpg", "backpage.jpeg",
+)
+
+
 # ---------------------------------------------------------------------------
 # HTML building blocks
 # ---------------------------------------------------------------------------
@@ -340,6 +362,37 @@ main ul, main ol {{
   text-shadow: 0 1px 3px rgba(0,0,0,0.6);
 }}
 
+.book-cover-page {{
+    min-height: 100vh;
+    padding: 0;
+    margin: 0 -2.5rem;
+    width: calc(100% + 5rem);
+    background: #0d3b66;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    page-break-after: always;
+    break-after: page;
+}}
+.book-cover-page.back-cover {{
+    page-break-before: always;
+    break-before: page;
+}}
+main > .book-cover-page:first-child {{
+    margin-top: -2rem;
+}}
+main > .book-cover-page:last-child {{
+    margin-bottom: -2rem;
+}}
+.book-cover-page img.cover-art {{
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 100vh;
+    object-fit: contain;
+    background: #0d3b66;
+}}
+
 .half-title-page {{
   min-height: 60vh;
   display: flex;
@@ -603,6 +656,7 @@ p.figure-discussion em {{
     nav.sidebar {{ display: none; }}
     main {{ padding: 1rem; }}
     main figure.numbered-figure {{ max-width: 100%; }}
+    .book-cover-page {{ margin-left: -1rem; margin-right: -1rem; width: calc(100% + 2rem); }}
     .title-page .tp-title {{ font-size: 1.6rem; }}
     .title-page .tp-decoration {{ width: 100px; height: 100px; }}
 }}
@@ -613,6 +667,8 @@ p.figure-discussion em {{
   main {{ max-width: 100%; padding: 0; }}
   .title-page {{ min-height: auto; padding: 8rem 2rem; }}
   .title-page::before, .title-page::after {{ display: none; }}
+    .book-cover-page {{ min-height: 100vh; }}
+    .book-cover-page img.cover-art {{ max-height: 100vh; }}
 }}
 </style>
 </head>
@@ -625,6 +681,41 @@ def _esc(text):
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace('"', "&quot;"))
+
+
+def _find_cover_image(book_dir, candidates):
+    """Return the first cover image matching *candidates*.
+
+    The renderer checks the book root first because the PDF renderer already
+    supports root-level files such as ``front page.png`` and ``back_cover.png``.
+    It then checks ``figures/`` for older HTML-only cover conventions.
+    """
+    if book_dir is None:
+        return None
+    for base in (book_dir, book_dir / "figures"):
+        for name in candidates:
+            path = base / name
+            if path.is_file():
+                return path
+    return None
+
+
+def _cover_output_name(prefix, source):
+    """Return normalized submission filename for a cover image."""
+    return prefix + source.suffix.lower()
+
+
+def _generate_cover_page(image_name, title, is_back=False):
+    """Generate a full-page HTML cover image section."""
+    page_id = "back_cover" if is_back else "front_cover"
+    page_class = "back-cover" if is_back else "front-cover"
+    label = "back cover" if is_back else "front cover"
+    return (
+        f'<section id="{page_id}" class="book-cover-page {page_class}">'
+        f'<img class="cover-art" src="{_esc(image_name)}" '
+        f'alt="{_esc(title)} — {label}"/>'
+        '</section>'
+    )
 
 
 def _number_headings(md_text, chapter_num):
@@ -1275,11 +1366,11 @@ def _generate_title_page(cfg, book_dir=None):
     year = cfg.get("year", "")
     publisher = cfg.get("publisher", "")
 
-    # Locate a cover image if available.
+    # Locate a legacy figures/ cover image if available. Full root-level
+    # front/back covers are emitted separately by render_book_html().
     cover_rel = None
     if book_dir is not None:
-        for name in ("front_cover.png", "front_cover.jpg",
-                     "front_cover.jpeg", "cover.png", "cover.jpg"):
+        for name in _COVER_FRONT_CANDIDATES:
             p = book_dir / "figures" / name
             if p.is_file():
                 # The rendered HTML lives in <book_dir>/submission/, so the
@@ -1362,30 +1453,23 @@ def _generate_copyright_page(cfg, book_dir):
     if subtitle:
         full_title += f": {subtitle}"
     parts.append(f'<p class="cp-title">{_esc(full_title)}</p>')
-    if author_names:
-        parts.append(f'<p>Copyright &copy; {_esc(str(year))} Equinor ASA and the '
-                      'Norwegian University of Science and Technology (NTNU). '
+    if custom_text:
+        custom_html = _md_to_html(custom_text)
+        parts.append(f'<div class="cp-custom">{custom_html}</div>')
+    elif author_names:
+        parts.append(f'<p>Copyright &copy; {_esc(str(year))} {_esc(author_names)}. '
                       'All rights reserved.</p>')
-    parts.append(
-        '<p>This work is the intellectual property of Equinor ASA and NTNU. '
-        'No part of this publication may be reproduced, stored in a '
-        'retrieval system, or transmitted, in any form or by any means, '
-        'electronic, mechanical, photocopying, recording, or otherwise, '
-        'without the prior written permission of Equinor ASA and NTNU.</p>'
-    )
     if isbn:
         parts.append(f'<p class="cp-isbn">ISBN {_esc(isbn)}</p>')
     if publisher:
         pub_display = publisher.title() if publisher.islower() else publisher
         parts.append(f'<p>Published by {_esc(pub_display)}</p>')
-    parts.append(
-        '<p>The NeqSim library is open-source software released under the '
-        'Apache License 2.0. All code examples in this book are available at '
-        '<a href="https://github.com/equinor/neqsim">'
-        'https://github.com/equinor/neqsim</a> '
-        'and may be freely used and modified under the terms of that '
-        'license.</p>'
-    )
+    if not custom_text:
+        parts.append(
+            '<p>The NeqSim library is open-source software released under the '
+            'Apache License 2.0. Code examples in this book may be freely used '
+            'and modified under their stated license.</p>'
+        )
     parts.append(
         '<p style="margin-top: 1.5rem; font-size: 0.8rem; color: #999;">'
         'Typeset using NeqSim PaperLab</p>'
@@ -1633,14 +1717,63 @@ def _md_to_html(md_text):
 
 
 def _inline_fmt(text):
-    """Apply inline formatting: bold, italic, code. Leave math intact."""
-    # Code
-    text = re.sub(r"`([^`]+)`", r'<code>\1</code>', text)
-    # Bold
+    """Apply inline formatting and escape prose safely.
+
+    The renderer accepts normal manuscript text, inline code, inline math,
+    Markdown links, and Markdown autolinks. Raw angle brackets in prose must be
+    escaped so expressions such as ``<5%`` do not become malformed HTML.
+    """
+    placeholders = []
+
+    def stash(html):
+        token = "\uE000{}\uE001".format(len(placeholders))
+        placeholders.append(html)
+        return token
+
+    def restore(value):
+        for idx, html in enumerate(placeholders):
+            value = value.replace("\uE000{}\uE001".format(idx), html)
+        return value
+
+    # Preserve code spans with escaped code content.
+    text = re.sub(
+        r"`([^`]+)`",
+        lambda m: stash("<code>{}</code>".format(_esc(m.group(1)))),
+        text,
+    )
+
+    # Preserve inline math delimiters for KaTeX auto-render.
+    text = re.sub(
+        r"(?<!\$)\$([^$]+)\$(?!\$)",
+        lambda m: stash(_esc("${}$".format(m.group(1)))),
+        text,
+    )
+
+    # Preserve the small amount of inline HTML generated by pre-processing.
+    text = re.sub(
+        r"<(sub|sup)>(.*?)</\1>",
+        lambda m: stash("<{}>{}</{}>".format(m.group(1), _esc(m.group(2)), m.group(1))),
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    # Markdown links and autolinks.
+    text = re.sub(
+        r"\[([^\]]+)\]\((https?://[^)\s]+)\)",
+        lambda m: stash('<a href="{0}">{1}</a>'.format(_esc(m.group(2)), _esc(m.group(1)))),
+        text,
+    )
+    text = re.sub(
+        r"<((?:https?://)[^>\s]+)>",
+        lambda m: stash('<a href="{0}">{0}</a>'.format(_esc(m.group(1)))),
+        text,
+    )
+
+    # Escape remaining prose before applying lightweight emphasis markup.
+    text = _esc(text)
     text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
-    # Italic (but not ** and not math $)
     text = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"<em>\1</em>", text)
-    return text
+    return restore(text)
 
 
 def _deduplicate_heading_ids(html_text):
@@ -1789,6 +1922,15 @@ def render_book_html(book_dir, chapter_filter=None):
     parts.append(_html_head(title))
     parts.append("<body>")
 
+    front_cover_src = None if chapter_filter else _find_cover_image(
+        book_dir, _COVER_FRONT_CANDIDATES)
+    back_cover_src = None if chapter_filter else _find_cover_image(
+        book_dir, _COVER_BACK_CANDIDATES)
+    front_cover_name = (_cover_output_name("cover_front", front_cover_src)
+                        if front_cover_src is not None else None)
+    back_cover_name = (_cover_output_name("cover_back", back_cover_src)
+                       if back_cover_src is not None else None)
+
     # Sidebar
     if not chapter_filter:
         parts.append('<nav class="sidebar">')
@@ -1797,22 +1939,22 @@ def render_book_html(book_dir, chapter_filter=None):
 
     parts.append("<main>")
 
+    if front_cover_name:
+        parts.append(_generate_cover_page(front_cover_name, title))
+
     # Frontmatter — professional pages from config, then remaining .md files
     if not chapter_filter:
         # Half-title page — suppressed when a full-bleed cover image is used,
         # since the cover artwork already carries the title prominently.
-        _has_cover_image = False
-        if book_dir is not None:
-            for _name in ("front_cover.png", "front_cover.jpg",
-                          "front_cover.jpeg", "cover.png", "cover.jpg"):
-                if (book_dir / "figures" / _name).is_file():
-                    _has_cover_image = True
-                    break
-        if not _has_cover_image:
+        if not front_cover_name:
             parts.append(_generate_half_title(cfg))
 
         # Full title page with graphical decoration
-        parts.append(_generate_title_page(cfg, book_dir))
+        # When a dedicated front cover has already been emitted, force the
+        # generated title page to use the non-cover layout to avoid duplicate
+        # full-bleed cover pages.
+        parts.append(_generate_title_page(
+            cfg, None if front_cover_name else book_dir))
 
         # Copyright page
         parts.append(_generate_copyright_page(cfg, book_dir))
@@ -1851,12 +1993,12 @@ def render_book_html(book_dir, chapter_filter=None):
 
         if not chapter_filter and part_title and part_title != prev_part:
             # Split "Part I — Foundations of Field Development" into eyebrow + title.
-            eyebrow, sep, title = part_title.partition(" — ")
+            eyebrow, sep, part_heading = part_title.partition(" — ")
             if not sep:
-                eyebrow, sep, title = part_title.partition(" - ")
+                eyebrow, sep, part_heading = part_title.partition(" - ")
             if sep:
                 pe_html = f'<div class="part-eyebrow">{_esc(eyebrow.strip())}</div>'
-                pt_html = f'<h1>{_esc(title.strip())}</h1>'
+                pt_html = f'<h1>{_esc(part_heading.strip())}</h1>'
             else:
                 pe_html = ''
                 pt_html = f'<h1>{_esc(part_title)}</h1>'
@@ -1955,6 +2097,9 @@ def render_book_html(book_dir, chapter_filter=None):
         parts.append(ref_html)
         parts.append("</section>")
 
+    if back_cover_name:
+        parts.append(_generate_cover_page(back_cover_name, title, is_back=True))
+
     parts.append("</main>")
     parts.append("</body>")
     parts.append("</html>")
@@ -1962,6 +2107,11 @@ def render_book_html(book_dir, chapter_filter=None):
     # Write output
     submission_dir = book_dir / "submission"
     submission_dir.mkdir(parents=True, exist_ok=True)
+
+    if front_cover_src is not None and front_cover_name:
+        shutil.copy2(str(front_cover_src), str(submission_dir / front_cover_name))
+    if back_cover_src is not None and back_cover_name:
+        shutil.copy2(str(back_cover_src), str(submission_dir / back_cover_name))
 
     # Copy chapter figures into submission/figures/ so relative src paths work
     figures_out = submission_dir / "figures"
