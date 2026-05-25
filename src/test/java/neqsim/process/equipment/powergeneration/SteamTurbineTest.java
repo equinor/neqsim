@@ -45,6 +45,7 @@ class SteamTurbineTest {
     // Power should be positive (turbine produces power)
     double power = turbine.getPower();
     assertTrue(power > 0, "Steam turbine should produce positive power, got: " + power);
+    assertEquals(-power, turbine.getEnergyStream().getDuty(), 1e-6);
   }
 
   @Test
