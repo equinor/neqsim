@@ -438,6 +438,9 @@ public class CapabilitiesRunner {
         "automation", "Summarize automation corrections and operation history", "model-lifecycle");
     addGenericToolCapability(tools, "runOperationalStudy", "run_operational_study", "process",
         "Run P&ID/tag-driven operating scenarios and trip-margin screening", "process-system");
+    addGenericToolCapability(tools, "runAgenticEngineering", "run_agentic_engineering", "workflow",
+        "Plan engineering workflows, evaluate evidence trust, and rank studies",
+        "flowsheet-builder");
     addGenericToolCapability(tools, "crossValidateModels", "cross_validate_models", "uncertainty",
         "Run one process under multiple EOS models", "optimization-uncertainty");
     addGenericToolCapability(tools, "runParametricStudy", "run_parametric_study", "uncertainty",

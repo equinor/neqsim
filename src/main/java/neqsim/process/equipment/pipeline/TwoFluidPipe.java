@@ -8,8 +8,10 @@ import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker;
+import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.ConservativeStateLimiter;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -741,6 +743,7 @@ public class TwoFluidPipe extends Pipeline {
 
     // Store reference fluid for flash calculations
     referenceFluid = inletFluid.clone();
+    equations.setThermodynamicCoupling(new ThermodynamicCoupling(referenceFluid));
 
     // Calculate inlet phase properties - initialize with defaults
     double rhoG = 1.0, rhoL = 800.0, muG = 1e-5, muL = 1e-3;
@@ -1150,7 +1153,7 @@ public class TwoFluidPipe extends Pipeline {
         inletSec.setLiquidVelocity(mDotLiq / (area * h0[0] * inletSec.getLiquidDensity()));
       }
       if (inletSec.getWaterDensity() > 0 && inletSec.getOilDensity() > 0 && h0[0] > 0.001) {
-        updateWaterOilHoldups(inletSec, null, h0[0], area);
+        updateLiquidPhaseSplit(inletSec, null, h0[0], area);
       }
       inletSec.updateDerivedQuantities();
       inletSec.updateStratifiedGeometry();
@@ -1179,7 +1182,7 @@ public class TwoFluidPipe extends Pipeline {
 
         // Water/oil holdups for three-phase
         if (sec.getWaterDensity() > 0 && sec.getOilDensity() > 0 && hi[0] > 0.001) {
-          updateWaterOilHoldups(sec, prev, hi[0], area);
+          updateLiquidPhaseSplit(sec, prev, hi[0], area);
         }
 
         sec.setFlowRegime(flowRegimeDetector.detectFlowRegime(sec));
@@ -1240,7 +1243,7 @@ public class TwoFluidPipe extends Pipeline {
         // Update water/oil holdups for inlet if three-phase
         if (inletSec.getWaterDensity() > 0 && inletSec.getOilDensity() > 0
             && alphaL_inlet > 0.001) {
-          updateWaterOilHoldups(inletSec, null, alphaL_inlet, area);
+          updateLiquidPhaseSplit(inletSec, null, alphaL_inlet, area);
         }
 
         inletSec.updateDerivedQuantities();
@@ -1299,7 +1302,7 @@ public class TwoFluidPipe extends Pipeline {
         if (sec.getWaterDensity() > 0 && sec.getOilDensity() > 0) {
           // Always update water/oil holdups when we have liquid and three-phase properties
           if (alphaL_new > 0.001) {
-            updateWaterOilHoldups(sec, prev, alphaL_new, area);
+            updateLiquidPhaseSplit(sec, prev, alphaL_new, area);
           } else {
             // No liquid: set water and oil holdups to zero
             sec.setWaterHoldup(0);
@@ -1363,7 +1366,7 @@ public class TwoFluidPipe extends Pipeline {
           sec.setLiquidVelocity(localMDotL / (area * hi[0] * sec.getLiquidDensity()));
         }
         if (sec.getWaterDensity() > 0 && sec.getOilDensity() > 0 && hi[0] > 0.001) {
-          updateWaterOilHoldups(sec, prev, hi[0], area);
+          updateLiquidPhaseSplit(sec, prev, hi[0], area);
         }
         sec.updateDerivedQuantities();
         sec.updateStratifiedGeometry();
@@ -1375,6 +1378,8 @@ public class TwoFluidPipe extends Pipeline {
       accumulationTracker.identifyAccumulationZones(sections);
     }
 
+    applySteadyStatePressureBoundary();
+
     // Update outlet pressure from converged profile (if not user-specified)
     if (!outletPressureSet) {
       outletPressure = sections[numberOfSections - 1].getPressure();
@@ -1382,6 +1387,36 @@ public class TwoFluidPipe extends Pipeline {
 
     // Store initial profiles
     updateResultArrays();
+  }
+
+  /**
+   * Align the converged steady-state pressure profile with explicit pressure boundaries.
+   *
+   * <p>
+   * The steady-state solver computes friction and gravity pressure differences from the specified
+   * flow. For a flow-specified inlet with fixed outlet pressure, the absolute pressure level is set
+   * by the outlet boundary, so the whole profile can be shifted without changing the calculated
+   * pressure gradients.
+   * </p>
+   */
+  private void applySteadyStatePressureBoundary() {
+    if (sections == null || sections.length == 0) {
+      return;
+    }
+
+    if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE && outletPressureSet) {
+      double pressureShift = outletPressure - sections[numberOfSections - 1].getPressure();
+      for (TwoFluidSection sec : sections) {
+        sec.setPressure(Math.max(1.0e5, sec.getPressure() + pressureShift));
+      }
+      sections[numberOfSections - 1].setPressure(Math.max(1.0e5, outletPressure));
+    } else if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet) {
+      double pressureShift = inletPressure - sections[0].getPressure();
+      for (TwoFluidSection sec : sections) {
+        sec.setPressure(Math.max(1.0e5, sec.getPressure() + pressureShift));
+      }
+      sections[0].setPressure(Math.max(1.0e5, inletPressure));
+    }
   }
 
   /**
@@ -1548,11 +1583,19 @@ public class TwoFluidPipe extends Pipeline {
           sec.setLiquidViscosity(flash.getPhase("oil").getViscosity("kg/msec"));
           sec.setLiquidSoundSpeed(flash.getPhase("oil").getSoundSpeed());
           sec.setLiquidEnthalpy(flash.getPhase("oil").getEnthalpy("J/kg"));
+          sec.setWaterCut(0.0);
+          sec.setOilFractionInLiquid(1.0);
+          sec.setWaterHoldup(0.0);
+          sec.setOilHoldup(sec.getLiquidHoldup());
         } else if (hasWater) {
           sec.setLiquidDensity(flash.getPhase("aqueous").getDensity("kg/m3"));
           sec.setLiquidViscosity(flash.getPhase("aqueous").getViscosity("kg/msec"));
           sec.setLiquidSoundSpeed(flash.getPhase("aqueous").getSoundSpeed());
           sec.setLiquidEnthalpy(flash.getPhase("aqueous").getEnthalpy("J/kg"));
+          sec.setWaterCut(1.0);
+          sec.setOilFractionInLiquid(0.0);
+          sec.setWaterHoldup(sec.getLiquidHoldup());
+          sec.setOilHoldup(0.0);
         }
       } catch (Exception e) {
         logger.warn("Flash calculation failed for section {} at position {}", i, sec.getPosition());
@@ -2983,7 +3026,7 @@ public class TwoFluidPipe extends Pipeline {
     double fTP = calcDarcyFrictionFactor(rhoMix, Math.abs(vMix), diameter, muTP);
 
     // Darcy-Weisbach: dP/dx = f * rho * v^2 / (2 * D)
-    double dPdx_fric = fTP * rhoMix * vMix * Math.abs(vMix) / (2.0 * diameter);
+    double dPdx_fric = fTP * rhoMix * vMix * vMix / (2.0 * diameter);
 
     // Gravity gradient
     double dPdx_grav = rhoMix * 9.81 * Math.sin(sec.getInclination());
@@ -3020,6 +3063,34 @@ public class TwoFluidPipe extends Pipeline {
       return Math.pow(1.0 / (-1.8 * Math.log10(6.9 / Re + Math.pow(relativeRoughness / 3.7, 1.11))),
           2.0);
     }
+  }
+
+  /**
+   * Update oil/water holdups without inventing an absent liquid phase.
+   *
+   * @param sec current pipe section
+   * @param prev previous pipe section
+   * @param alphaL total liquid holdup
+   * @param area pipe cross-sectional area
+   */
+  private void updateLiquidPhaseSplit(TwoFluidSection sec, TwoFluidSection prev, double alphaL,
+      double area) {
+    double waterCut = sec.getWaterCut();
+    if (Double.isNaN(waterCut)) {
+      waterCut = prev != null ? prev.getWaterCut() : 0.0;
+    }
+
+    if (waterCut <= 1.0e-8 || waterCut >= 1.0 - 1.0e-8) {
+      waterCut = Math.max(0.0, Math.min(1.0, waterCut));
+      sec.setWaterCut(waterCut);
+      sec.setOilFractionInLiquid(1.0 - waterCut);
+      sec.setWaterHoldup(alphaL * waterCut);
+      sec.setOilHoldup(alphaL * (1.0 - waterCut));
+      sec.updateWaterOilConservativeVariables();
+      return;
+    }
+
+    updateWaterOilHoldups(sec, prev, alphaL, area);
   }
 
   /**
@@ -3265,13 +3336,23 @@ public class TwoFluidPipe extends Pipeline {
       if (isIMEX) {
         double[] soundSpeeds = new double[numberOfSections];
         double[] densities = new double[numberOfSections];
+        double[] areas = new double[numberOfSections];
+        double[] gasDensities = new double[numberOfSections];
+        double[] oilDensities = new double[numberOfSections];
+        double[] waterDensities = new double[numberOfSections];
         for (int i = 0; i < numberOfSections; i++) {
           TwoFluidSection sec = sections[i];
           double alphaG = sec.getGasHoldup();
           double alphaL = sec.getLiquidHoldup();
           double rhoG = Math.max(sec.getGasDensity(), 0.1);
           double rhoL = Math.max(sec.getLiquidDensity(), 100.0);
+          double rhoO = Math.max(sec.getOilDensity(), rhoL);
+          double rhoW = Math.max(sec.getWaterDensity(), rhoL);
           densities[i] = alphaG * rhoG + alphaL * rhoL;
+          areas[i] = sec.getArea();
+          gasDensities[i] = rhoG;
+          oilDensities[i] = rhoO;
+          waterDensities[i] = rhoW;
           // Mixture sound speed (Wood's equation for two-phase)
           double rhoMix = densities[i];
           double cG = Math.max(sec.getGasSoundSpeed(), 100.0);
@@ -3282,7 +3363,8 @@ public class TwoFluidPipe extends Pipeline {
         }
         boolean outletFixed = (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
             || outletBCType == BoundaryCondition.CHARACTERISTIC);
-        timeIntegrator.setIMEXProperties(soundSpeeds, densities, dx, outletPressure, outletFixed);
+        timeIntegrator.setIMEXProperties(soundSpeeds, densities, areas, gasDensities, oilDensities,
+            waterDensities, dx, outletPressure, outletFixed);
       }
 
       double[][] U_new = timeIntegrator.step(U_prev, rhs, dtFinal);
@@ -3434,11 +3516,73 @@ public class TwoFluidPipe extends Pipeline {
       timeIntegrator.advanceTime(dtActual);
     }
 
+    relaxHoldupTowardSteadyClosure(dt);
+
     // Update outlet stream and result arrays
     updateOutletStream();
     updateResultArrays();
 
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Relax transient phase holdups toward the same local closure used by the steady solver.
+   *
+   * <p>
+   * The transient conservative update carries inventory and momentum, while the two-fluid closure
+   * supplies the slip/holdup relation. Applying a mild relaxation for open-flow boundary
+   * conditions keeps long transients consistent with the stationary solution after a changed
+   * pressure boundary.
+   * </p>
+   *
+   * @param dt elapsed transient step in seconds
+   */
+  private void relaxHoldupTowardSteadyClosure(double dt) {
+    if (sections == null || sections.length == 0 || dt <= 0.0) {
+      return;
+    }
+    if (outletBCType == BoundaryCondition.CLOSED || inletBCType == BoundaryCondition.CLOSED) {
+      return;
+    }
+
+    double massFlow = inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet
+        ? inletMassFlow
+        : getInletStream().getFlowRate("kg/sec");
+    if (massFlow <= 0.0) {
+      return;
+    }
+
+    double[] phaseMassFractions = calculateInletPhaseMassFractions(getInletStream().getFluid());
+    double mDotGas = massFlow * phaseMassFractions[0];
+    double mDotLiq = massFlow * (phaseMassFractions[1] + phaseMassFractions[2]);
+    double area = Math.PI * diameter * diameter / 4.0;
+    double relaxation = 1.0 - Math.exp(-dt / 4.0);
+
+    for (int i = 0; i < numberOfSections; i++) {
+      TwoFluidSection sec = sections[i];
+      TwoFluidSection prev = i > 0 ? sections[i - 1] : null;
+      double[] targetHoldups = calculateLocalHoldup(sec, prev, mDotGas, mDotLiq, area);
+      double alphaL = sec.getLiquidHoldup()
+          + relaxation * (targetHoldups[0] - sec.getLiquidHoldup());
+      alphaL = Math.max(0.0, Math.min(1.0, alphaL));
+      double alphaG = 1.0 - alphaL;
+
+      sec.setLiquidHoldup(alphaL);
+      sec.setGasHoldup(alphaG);
+      if (alphaG > 0.001 && sec.getGasDensity() > 0.0) {
+        sec.setGasVelocity(mDotGas / (area * alphaG * sec.getGasDensity()));
+      }
+      if (alphaL > 0.001 && sec.getLiquidDensity() > 0.0) {
+        sec.setLiquidVelocity(mDotLiq / (area * alphaL * sec.getLiquidDensity()));
+        updateLiquidPhaseSplit(sec, prev, alphaL, area);
+      } else {
+        sec.setLiquidVelocity(0.0);
+        sec.setWaterHoldup(0.0);
+        sec.setOilHoldup(0.0);
+      }
+      sec.updateDerivedQuantities();
+      sec.updateStratifiedGeometry();
+    }
   }
 
   /**
@@ -3449,40 +3593,8 @@ public class TwoFluidPipe extends Pipeline {
    */
   private void validateAndCorrectState(double[][] U_new, double[][] U_prev) {
     for (int i = 0; i < U_new.length; i++) {
-      for (int j = 0; j < U_new[i].length; j++) {
-        // Check for NaN or Inf
-        if (Double.isNaN(U_new[i][j]) || Double.isInfinite(U_new[i][j])) {
-          U_new[i][j] = U_prev[i][j]; // Revert to previous value
-        }
-      }
-
-      // Ensure mass variables are non-negative (indices 0, 1, 2 for gas, oil, water)
-      U_new[i][0] = Math.max(0, U_new[i][0]); // Gas mass
-      U_new[i][1] = Math.max(0, U_new[i][1]); // Oil mass
-      if (U_new[i].length > 2) {
-        U_new[i][2] = Math.max(0, U_new[i][2]); // Water mass
-      }
-
-      // Limit extreme rate of change to prevent blow-up (50% per sub-step max)
-      // This is a safety limit, not for physics - allows transient dynamics
-      double maxChangeRatio = 0.5;
-      // Apply to all mass variables: gas (0), oil (1), water (2)
-      int numMassVars = Math.min(3, U_new[i].length);
-      for (int j = 0; j < numMassVars; j++) {
-        // Check for valid non-zero previous value before computing ratio
-        if (U_prev[i][j] > 1e-10 && !Double.isNaN(U_prev[i][j])
-            && !Double.isInfinite(U_prev[i][j])) {
-          double ratio = U_new[i][j] / U_prev[i][j];
-          if (Double.isNaN(ratio) || Double.isInfinite(ratio)) {
-            // Invalid ratio - revert to previous value
-            U_new[i][j] = U_prev[i][j];
-          } else if (ratio > 1 + maxChangeRatio) {
-            U_new[i][j] = U_prev[i][j] * (1 + maxChangeRatio);
-          } else if (ratio < 1 - maxChangeRatio && ratio > 0) {
-            U_new[i][j] = U_prev[i][j] * (1 - maxChangeRatio);
-          }
-        }
-      }
+      double[] previous = U_prev != null && i < U_prev.length ? U_prev[i] : null;
+      ConservativeStateLimiter.enforceThreePhaseMassPositivity(U_new[i], previous);
     }
   }
 
@@ -3548,9 +3660,10 @@ public class TwoFluidPipe extends Pipeline {
         } else if (sec.getLiquidHoldup() > 0.001) {
           // We have liquid holdup but no oil/water - distribute based on water cut
           double waterCut = sec.getWaterCut();
-          if (waterCut <= 0 || waterCut >= 1) {
-            waterCut = 0.5; // Default to 50/50 if no valid water cut
+          if (Double.isNaN(waterCut)) {
+            waterCut = 0.5; // Default to 50/50 only if no valid water cut exists
           }
+          waterCut = Math.max(0.0, Math.min(1.0, waterCut));
           double newAlphaW = sec.getLiquidHoldup() * waterCut;
           double newAlphaO = sec.getLiquidHoldup() * (1.0 - waterCut);
           sec.setWaterHoldup(newAlphaW);
@@ -3708,6 +3821,10 @@ public class TwoFluidPipe extends Pipeline {
           sec.setLiquidViscosity(flash.getPhase("oil").getViscosity("kg/msec"));
           sec.setLiquidSoundSpeed(flash.getPhase("oil").getSoundSpeed());
           sec.setLiquidEnthalpy(flash.getPhase("oil").getEnthalpy("J/kg"));
+          sec.setWaterCut(0.0);
+          sec.setOilFractionInLiquid(1.0);
+          sec.setWaterHoldup(0.0);
+          sec.setOilHoldup(sec.getLiquidHoldup());
         } else if (hasWater) {
           double rhoWater = flash.getPhase("aqueous").getDensity("kg/m3");
           sec.setLiquidDensity(rhoWater);
@@ -3716,6 +3833,10 @@ public class TwoFluidPipe extends Pipeline {
           sec.setLiquidViscosity(flash.getPhase("aqueous").getViscosity("kg/msec"));
           sec.setLiquidSoundSpeed(flash.getPhase("aqueous").getSoundSpeed());
           sec.setLiquidEnthalpy(flash.getPhase("aqueous").getEnthalpy("J/kg"));
+          sec.setWaterCut(1.0);
+          sec.setOilFractionInLiquid(0.0);
+          sec.setWaterHoldup(sec.getLiquidHoldup());
+          sec.setOilHoldup(0.0);
         }
       } catch (Exception e) {
         logger.warn("Flash calculation failed for section at position {}", sec.getPosition());
@@ -3891,30 +4012,11 @@ public class TwoFluidPipe extends Pipeline {
       double massFlow = getInletStream().getFlowRate("kg/sec");
       double area = Math.PI * diameter * diameter / 4.0;
 
-      // Get phase mass fractions from inlet stream (these define the BC)
-      double gasMassFraction = 0.5;
-      double oilMassFraction = 0.3;
-      double waterMassFraction = 0.2;
-
-      int numPhases = inFluid.getNumberOfPhases();
-      if (numPhases >= 2) {
-        double massTotal = inFluid.getFlowRate("kg/sec");
-        if (massTotal > 0) {
-          if (inFluid.hasPhaseType("gas")) {
-            gasMassFraction = inFluid.getPhase("gas").getFlowRate("kg/sec") / massTotal;
-          }
-          if (inFluid.hasPhaseType("oil")) {
-            oilMassFraction = inFluid.getPhase("oil").getFlowRate("kg/sec") / massTotal;
-          } else {
-            oilMassFraction = 0;
-          }
-          if (inFluid.hasPhaseType("aqueous")) {
-            waterMassFraction = inFluid.getPhase("aqueous").getFlowRate("kg/sec") / massTotal;
-          } else {
-            waterMassFraction = 0;
-          }
-        }
-      }
+      // Get phase mass fractions from inlet stream (these define the BC).
+      double[] phaseMassFractions = calculateInletPhaseMassFractions(inFluid);
+      double gasMassFraction = phaseMassFractions[0];
+      double oilMassFraction = phaseMassFractions[1];
+      double waterMassFraction = phaseMassFractions[2];
 
       double mDotGas = massFlow * gasMassFraction;
       double mDotOil = massFlow * oilMassFraction;
@@ -4014,30 +4116,11 @@ public class TwoFluidPipe extends Pipeline {
       double massFlow = inletMassFlow; // Explicit mass flow BC
       double area = Math.PI * diameter * diameter / 4.0;
 
-      // Get phase mass fractions from inlet stream
-      double gasMassFraction = 0.8;
-      double oilMassFraction = 0.1;
-      double waterMassFraction = 0.1;
-
-      int numPhases = inFluid.getNumberOfPhases();
-      if (numPhases >= 2) {
-        double massTotal = inFluid.getFlowRate("kg/sec");
-        if (massTotal > 0) {
-          if (inFluid.hasPhaseType("gas")) {
-            gasMassFraction = inFluid.getPhase("gas").getFlowRate("kg/sec") / massTotal;
-          }
-          if (inFluid.hasPhaseType("oil")) {
-            oilMassFraction = inFluid.getPhase("oil").getFlowRate("kg/sec") / massTotal;
-          } else {
-            oilMassFraction = 0;
-          }
-          if (inFluid.hasPhaseType("aqueous")) {
-            waterMassFraction = inFluid.getPhase("aqueous").getFlowRate("kg/sec") / massTotal;
-          } else {
-            waterMassFraction = 0;
-          }
-        }
-      }
+      // Get phase mass fractions from inlet stream.
+      double[] phaseMassFractions = calculateInletPhaseMassFractions(inFluid);
+      double gasMassFraction = phaseMassFractions[0];
+      double oilMassFraction = phaseMassFractions[1];
+      double waterMassFraction = phaseMassFractions[2];
 
       double mDotGas = massFlow * gasMassFraction;
       double mDotLiq = massFlow * (oilMassFraction + waterMassFraction);
@@ -4123,6 +4206,60 @@ public class TwoFluidPipe extends Pipeline {
       // At the outlet: J- is prescribed (typically from back-pressure), J+ from interior.
       applyCharacteristicOutletBC(outlet);
     }
+  }
+
+  /**
+   * Calculate gas, oil, and water mass fractions from the inlet stream.
+   *
+   * @param inFluid inlet fluid
+   * @return array containing gas, oil, and water mass fractions
+   */
+  private double[] calculateInletPhaseMassFractions(SystemInterface inFluid) {
+    double[] fractions = new double[3];
+    double massTotal = inFluid.getFlowRate("kg/sec");
+
+    if (massTotal > 0.0) {
+      if (inFluid.hasPhaseType("gas")) {
+        fractions[0] = inFluid.getPhase("gas").getFlowRate("kg/sec") / massTotal;
+      }
+      if (inFluid.hasPhaseType("oil")) {
+        fractions[1] = inFluid.getPhase("oil").getFlowRate("kg/sec") / massTotal;
+      }
+      if (inFluid.hasPhaseType("aqueous")) {
+        fractions[2] = inFluid.getPhase("aqueous").getFlowRate("kg/sec") / massTotal;
+      }
+    }
+
+    double sum = fractions[0] + fractions[1] + fractions[2];
+    if (sum <= 0.0) {
+      boolean hasGas = inFluid.hasPhaseType("gas");
+      boolean hasOil = inFluid.hasPhaseType("oil");
+      boolean hasWater = inFluid.hasPhaseType("aqueous");
+      int phaseCount = 0;
+      if (hasGas) {
+        phaseCount++;
+      }
+      if (hasOil) {
+        phaseCount++;
+      }
+      if (hasWater) {
+        phaseCount++;
+      }
+      if (phaseCount == 0) {
+        fractions[0] = 1.0;
+      } else {
+        double equalFraction = 1.0 / phaseCount;
+        fractions[0] = hasGas ? equalFraction : 0.0;
+        fractions[1] = hasOil ? equalFraction : 0.0;
+        fractions[2] = hasWater ? equalFraction : 0.0;
+      }
+      return fractions;
+    }
+
+    fractions[0] /= sum;
+    fractions[1] /= sum;
+    fractions[2] /= sum;
+    return fractions;
   }
 
   /**
@@ -5536,6 +5673,17 @@ public class TwoFluidPipe extends Pipeline {
     this.includeMassTransfer = include;
     if (equations != null) {
       equations.setIncludeMassTransfer(include);
+    }
+  }
+
+  /**
+   * Set relaxation time for flash-driven evaporation/condensation source terms.
+   *
+   * @param relaxationTime relaxation time in seconds
+   */
+  public void setMassTransferRelaxationTime(double relaxationTime) {
+    if (equations != null) {
+      equations.setMassTransferRelaxationTime(relaxationTime);
     }
   }
 

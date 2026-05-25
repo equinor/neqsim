@@ -76,7 +76,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   private List<String> streamTypes = new ArrayList<>();
   private List<Double> inletTemps = new ArrayList<>();
   private List<Double> outletTemps = new ArrayList<>();
-  private List<Object> unknownOutlets = new ArrayList<>();
+  private List<Boolean> unknownOutlets = new ArrayList<>();
   private List<Double> pressures = new ArrayList<>();
   private List<Double> massFlows = new ArrayList<>();
   private List<Double> streamLoads = new ArrayList<>();
@@ -92,7 +92,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
   /** {@inheritDoc} */
   @Override
-  public void addInStream(StreamInterface inStream) {}
+  public void addInStream(StreamInterface inStream) {
+    addInStreamMSHE(inStream, inStreams.isEmpty() ? "hot" : "cold", null);
+  }
 
   /**
    * Adds an inlet stream to the multi-stream heat exchanger.
@@ -102,6 +104,10 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
    * @param outletTemp a {@link java.lang.Double} object
    */
   public void addInStreamMSHE(StreamInterface inStream, String streamType, Double outletTemp) {
+    addStreamState(inStream, streamType, outletTemp);
+  }
+
+  private void addStreamState(StreamInterface inStream, String streamType, Double outletTemp) {
     this.inStreams.add(inStream);
     StreamInterface outStream = inStream.clone();
     outStreams.add(outStream);
@@ -112,6 +118,19 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     pressures.add(inStream.getFluid().getPressure("bara"));
     massFlows.add(inStream.getFlowRate("kg/sec"));
     streamLoads.add(0.0);
+  }
+
+  private void updateStreamState(int index, StreamInterface inStream) {
+    if (index < 0 || index >= inStreams.size()) {
+      throw new IndexOutOfBoundsException("Stream index out of bounds.");
+    }
+    this.inStreams.set(index, inStream);
+    StreamInterface outStream = inStream.clone();
+    outStreams.set(index, outStream);
+    inletTemps.set(index, inStream.getFluid().getTemperature("C"));
+    pressures.set(index, inStream.getFluid().getPressure("bara"));
+    massFlows.set(index, inStream.getFlowRate("kg/sec"));
+    streamLoads.set(index, 0.0);
   }
 
   /**
@@ -138,17 +157,25 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    // Calculate hin for all streams and
+    hInlet.clear();
+    fluidInlet.clear();
+    prevOutletTemps = null;
+    stallCounter = 0;
+
+    // Calculate inlet state caches from the current connected streams.
     for (int i = 0; i < inStreams.size(); i++) {
       SystemInterface fluid = inStreams.get(i).getFluid().clone();
       fluid.initThermoProperties();
+      inletTemps.set(i, fluid.getTemperature("C"));
+      pressures.set(i, fluid.getPressure("bara"));
+      massFlows.set(i, inStreams.get(i).getFlowRate("kg/sec"));
       hInlet.add(fluid.getEnthalpy("kJ/kg"));
       fluidInlet.add(fluid);
     }
 
     int undefinedCount = 0;
-    for (Double temp : outletTemps) {
-      if (temp == null) {
+    for (Boolean unknownOutlet : unknownOutlets) {
+      if (unknownOutlet) {
         undefinedCount++;
       }
     }
@@ -528,7 +555,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
       if (Math.abs(deltaT1 - deltaT2) < 1e-4) {
         LMTD = (deltaT1 + deltaT2) / 2.0;
-        UAinterval = deltaQ / LMTD;
+        UAinterval = 1000.0 * deltaQ / LMTD; // 1000 * kW/K -> W/K
       } else {
         LMTD = (deltaT1 - deltaT2) / Math.log(deltaT1 / deltaT2);
         if (LMTD < 0.01) {
@@ -989,7 +1016,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
   /** {@inheritDoc} */
   @Override
-  public void setFeedStream(int index, StreamInterface stream) {}
+  public void setFeedStream(int index, StreamInterface stream) {
+    updateStreamState(index, stream);
+  }
 
   /** {@inheritDoc} */
   @Override

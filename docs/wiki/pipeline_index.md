@@ -22,6 +22,7 @@ This documentation covers pipeline pressure drop, flow, and heat transfer calcul
 |----------|-------------|
 | [Beggs & Brill Correlation](beggs_and_brill_correlation) | Multiphase flow correlation theory and usage |
 | [Two-Fluid Transient Model](two_fluid_model) | 7-equation two-fluid model with slug tracking, virtual mass, and local losses |
+| [TwoFluidPipe Reporting and Validation](two_fluid_reporting_and_validation) | Profile extraction, transient reporting, closure diagnostics, and OLGA/LedaFlow benchmark CSV comparison |
 | [Friction Factor Models](friction_factor_models) | Haaland, Colebrook-White, laminar/turbulent |
 | [Heat Transfer](pipeline_heat_transfer) | Non-adiabatic operation, cooling, Gnielinski |
 | [Transient Simulation](pipeline_transient_simulation) | Dynamic simulation, slow wave propagation |

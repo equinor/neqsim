@@ -329,7 +329,7 @@
 				<configuration>
 					<!-- Add test heap and required module opens for XStream reflection when running tests on JDK
 					>= 17 -->
-					<argLine>${argLine} -Xmx3g${jvm.module.opens.argLine}</argLine>
+					<argLine>${argLine} -Xmx3g ${jvm.module.opens.argLine}</argLine>
 					<excludedGroups>${excludedTestGroups}</excludedGroups>
 				</configuration>
 			</plugin>
@@ -339,7 +339,7 @@
 				<configuration>
 					<!-- Add test heap and required module opens for XStream reflection when running tests on JDK
 					>= 17 -->
-					<argLine>${argLine} -Xmx3g${jvm.module.opens.argLine}</argLine>
+					<argLine>${argLine} -Xmx3g ${jvm.module.opens.argLine}</argLine>
 				</configuration>
 			</plugin>
 			<plugin>

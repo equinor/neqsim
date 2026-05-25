@@ -1,0 +1,13 @@
+{
+  "key_results": {
+    "liquid_knockout_kg_per_hr": 77.0795546279269,
+    "cooler_duty_kW": -560.0982150820292,
+    "compressor_power_kW": 1390.9081937656956,
+    "discharge_T_C": 82.97608132296278
+  },
+  "validation": {
+    "mass_balance_error_pct": 0.0,
+    "acceptance_criteria_met": true
+  },
+  "approach": "SRK EOS, classic mixing, wet rich-gas case, no recycle."
+}

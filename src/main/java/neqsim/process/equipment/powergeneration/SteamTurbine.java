@@ -124,6 +124,7 @@ public class SteamTurbine extends TwoPortEquipment
     }
 
     this.power = actualWork; // Watts (positive = power produced)
+    getEnergyStream().setDuty(-power);
 
     outStream.setThermoSystem(outletFluid);
     outStream.setCalculationIdentifier(id);

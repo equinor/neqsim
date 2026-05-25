@@ -460,6 +460,7 @@ public class ThreePhaseSeparator extends Separator {
     if (Math.abs((lastEnthalpy - enthalpy) / enthalpy) < 1e-6
         && Math.abs((lastFlowRate - flow) / flow) < 1e-6
         && Math.abs((lastPressure - pres) / pres) < 1e-6) {
+      setCalculationIdentifier(id);
       return;
     }
     lastEnthalpy = inletStreamMixer.getOutletStream().getFluid().getEnthalpy();
@@ -550,28 +551,21 @@ public class ThreePhaseSeparator extends Separator {
       emptyAqueousSystem.init(0);
       waterOutStream.setThermoSystem(emptyAqueousSystem);
     }
-    if (thermoSystem2.hasPhaseType("gas") && thermoSystem2.getNumberOfComponents() > 1) {
+    if (thermoSystem2.hasPhaseType("gas") && thermoSystem2.getNumberOfComponents() > 1
+        && (oilInGas != 0.0 || aqueousInGas != 0.0)) {
       gasOutStream.run(id);
-    } else if (thermoSystem2.hasPhaseType("gas")) {
-      gasOutStream.getFluid().init(3);
+    } else {
+      finalizePhaseOutlet(gasOutStream, id);
     }
     if (thermoSystem2.hasPhaseType("oil") && thermoSystem2.getNumberOfComponents() > 1) {
       liquidOutStream.run(id);
-    } else if (thermoSystem2.hasPhaseType("oil")) {
-      try {
-        liquidOutStream.getFluid().init(3);
-      } catch (Exception e) {
-        logger.error(e.getMessage());
-      }
+    } else {
+      finalizePhaseOutlet(liquidOutStream, id);
     }
     if (thermoSystem2.hasPhaseType("aqueous") && thermoSystem2.getNumberOfComponents() > 1) {
       waterOutStream.run(id);
-    } else if (thermoSystem2.hasPhaseType("aqueous")) {
-      try {
-        waterOutStream.getFluid().init(3);
-      } catch (Exception e) {
-        logger.error(e.getMessage());
-      }
+    } else {
+      finalizePhaseOutlet(waterOutStream, id);
     }
     if (getCalculateSteadyState()) {
       thermoSystem = thermoSystem2;
@@ -828,10 +822,9 @@ public class ThreePhaseSeparator extends Separator {
       }
 
       // Determine whether any entrainment correction is non-negligible
-      boolean applyEntrainment =
-          (oilInGas > 1e-10 || aqueousInGas > 1e-10 || gasInOil > 1e-10 || gasInAqueous > 1e-10
-              || oilInAqueous > 1e-10 || aqueousInOil > 1e-10)
-              && thermoSystem.getNumberOfPhases() >= 2;
+      boolean applyEntrainment = (oilInGas > 1e-10 || aqueousInGas > 1e-10 || gasInOil > 1e-10
+          || gasInAqueous > 1e-10 || oilInAqueous > 1e-10 || aqueousInOil > 1e-10)
+          && thermoSystem.getNumberOfPhases() >= 2;
 
       if (thermoSystem.getNumberOfComponents() > 1) {
         if (applyEntrainment) {

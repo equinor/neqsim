@@ -1,6 +1,7 @@
 package neqsim.process.equipment.powergeneration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
@@ -34,6 +35,14 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     gasturb.setInletStream(gasStream);
 
     Assertions.assertEquals(new GasTurbine("turbine", gasStream), gasturb);
+  }
+
+  @Test
+  void testStreamConstructorInitializesAirSide() {
+    GasTurbine gasturb = new GasTurbine("turbine", gasStream);
+
+    assertNotNull(gasturb.airStream);
+    assertNotNull(gasturb.airCompressor);
   }
 
   @Test

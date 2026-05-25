@@ -79,6 +79,8 @@ public class TwoFluidConservationEquations implements Serializable {
   private InterfacialFriction interfacialFriction;
   private FlowRegimeDetector flowRegimeDetector;
   private GeometryCalculator geometryCalc;
+  private EntrainmentDeposition entrainmentDeposition;
+  private ThermodynamicCoupling thermodynamicCoupling;
 
   // Numerical methods
   private AUSMPlusFluxCalculator fluxCalculator;
@@ -87,6 +89,7 @@ public class TwoFluidConservationEquations implements Serializable {
   // Settings
   private boolean includeEnergyEquation = true;
   private boolean includeMassTransfer = false;
+  private double massTransferRelaxationTime = 30.0;
   private double massTransferCoefficient = 0.01; // kg/(m³·s·Pa)
 
   /** Enable heat transfer to surroundings. */
@@ -135,6 +138,7 @@ public class TwoFluidConservationEquations implements Serializable {
     this.interfacialFriction = new InterfacialFriction();
     this.flowRegimeDetector = new FlowRegimeDetector();
     this.geometryCalc = new GeometryCalculator();
+    this.entrainmentDeposition = new EntrainmentDeposition();
     this.fluxCalculator = new AUSMPlusFluxCalculator();
     this.reconstructor = new MUSCLReconstructor();
   }
@@ -322,6 +326,8 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   private void updateClosureRelations(TwoFluidSection[] sections) {
     for (TwoFluidSection sec : sections) {
+      sec.updateThreePhaseProperties();
+
       // Update flow regime
       sec.setFlowRegime(flowRegimeDetector.detectFlowRegime(sec));
 
@@ -349,7 +355,32 @@ public class TwoFluidConservationEquations implements Serializable {
 
       sec.setInterfacialShear(ifResult.interfacialShear);
       sec.setInterfacialWidth(ifResult.interfacialAreaPerLength);
+
+      EntrainmentDeposition.EntrainmentResult entrainment = entrainmentDeposition.calculate(regime,
+          sec.getGasVelocity(), sec.getLiquidVelocity(), sec.getGasDensity(),
+          sec.getLiquidDensity(), sec.getGasViscosity(), sec.getLiquidViscosity(),
+          sec.getSurfaceTension(), sec.getDiameter(), sec.getLiquidHoldup());
+      sec.setEntrainmentFraction(entrainment.entrainmentFraction);
+      sec.setEntrainedDropletDiameter(entrainment.dropletDiameter);
+
+      double severeSluggingNumber = calcSevereSluggingNumber(sec);
+      sec.setSevereSluggingNumber(severeSluggingNumber);
+      sec.setSevereSlugPotential(severeSluggingNumber < 1.0);
     }
+  }
+
+  private double calcSevereSluggingNumber(TwoFluidSection sec) {
+    if (sec.getInclination() <= Math.toRadians(5.0)) {
+      return Double.POSITIVE_INFINITY;
+    }
+
+    double alphaL = Math.max(sec.getLiquidHoldup(), 1e-6);
+    double rhoG = Math.max(sec.getGasDensity(), 0.1);
+    double rhoL = Math.max(sec.getLiquidDensity(), 100.0);
+    double densityContrast = Math.max(rhoL - rhoG, 1.0);
+    double gasFroude = Math.abs(sec.getSuperficialGasVelocity())
+        / Math.sqrt(GRAVITY * sec.getDiameter() * densityContrast / rhoL);
+    return gasFroude / alphaL;
   }
 
   /**
@@ -833,21 +864,46 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
-   * Calculate mass transfer between phases (simplified model).
+   * Calculate conservative mass transfer between gas and liquid phases.
    *
    * @param sec Pipe section
    * @return [gasSource, liquidSource] in kg/(m·s)
    */
-  private double[] calcMassTransfer(TwoFluidSection sec) {
-    // Simple relaxation to equilibrium
-    // Would need flash calculation for accurate implementation
-    double Gamma = 0;
+  double[] calcMassTransfer(TwoFluidSection sec) {
+    if (thermodynamicCoupling != null) {
+      double gamma =
+          thermodynamicCoupling.calcMassTransferRatePerLength(sec, massTransferRelaxationTime);
+      return conservedMassTransferPair(gamma);
+    }
 
-    // Placeholder: could use departure from bubble point pressure
-    // Gamma = k * (P - P_bubble)
-    // Positive = evaporation (liquid to gas)
+    double prescribedRate = sec.getMassTransferRate();
+    if (!Double.isFinite(prescribedRate)) {
+      throw new IllegalStateException("Mass transfer rate must be finite");
+    }
 
-    return new double[] {Gamma, -Gamma}; // Mass conserved
+    double gamma = 0.0;
+    if (Math.abs(prescribedRate) > 0.0) {
+      double sectionLength = sec.getLength();
+      if (!Double.isFinite(sectionLength) || sectionLength <= 0.0) {
+        throw new IllegalStateException("Section length must be positive for mass transfer");
+      }
+      gamma = prescribedRate / sectionLength;
+    }
+
+    return conservedMassTransferPair(gamma);
+  }
+
+  private double[] conservedMassTransferPair(double gasSource) {
+    if (!Double.isFinite(gasSource)) {
+      throw new IllegalStateException("Mass transfer source must be finite");
+    }
+
+    double liquidSource = -gasSource;
+    if (Math.abs(gasSource + liquidSource) > 1e-12) {
+      throw new IllegalStateException("Mass transfer source terms must sum to zero");
+    }
+
+    return new double[] {gasSource, liquidSource};
   }
 
   /**
@@ -1008,6 +1064,17 @@ public class TwoFluidConservationEquations implements Serializable {
     this.includeMassTransfer = includeMassTransfer;
   }
 
+  public void setThermodynamicCoupling(ThermodynamicCoupling thermodynamicCoupling) {
+    this.thermodynamicCoupling = thermodynamicCoupling;
+  }
+
+  public void setMassTransferRelaxationTime(double massTransferRelaxationTime) {
+    if (!Double.isFinite(massTransferRelaxationTime) || massTransferRelaxationTime <= 0.0) {
+      throw new IllegalArgumentException("Mass transfer relaxation time must be finite and positive");
+    }
+    this.massTransferRelaxationTime = massTransferRelaxationTime;
+  }
+
   /**
    * Check if water-oil velocity slip modeling is enabled.
    *
@@ -1036,6 +1103,9 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   public void setMassTransferCoefficient(double massTransferCoefficient) {
+    if (!Double.isFinite(massTransferCoefficient) || massTransferCoefficient < 0.0) {
+      throw new IllegalArgumentException("Mass transfer coefficient must be finite and non-negative");
+    }
     this.massTransferCoefficient = massTransferCoefficient;
   }
 

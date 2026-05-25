@@ -2250,6 +2250,8 @@ def cmd_book_run_notebooks(args):
     timeout = getattr(args, "timeout", 600)
     stop_on_error = getattr(args, "stop_on_error", False)
     update_chapters = getattr(args, "update_chapters", False)
+    sync_script_notebooks = getattr(args, "sync_script_notebooks", True)
+    include_notebook_results = getattr(args, "include_notebook_results", True)
 
     results = run_book_notebooks(
         args.book_dir,
@@ -2257,6 +2259,7 @@ def cmd_book_run_notebooks(args):
         compile_first=compile_first,
         timeout=timeout,
         stop_on_error=stop_on_error,
+        sync_script_notebooks=sync_script_notebooks,
     )
 
     if update_chapters:
@@ -2265,6 +2268,15 @@ def cmd_book_run_notebooks(args):
         injected = update_all_chapters_with_figures(args.book_dir, chapter)
         if not injected:
             print("  No new figures to inject.")
+        if include_notebook_results:
+            from verify_book_code_blocks import inject_notebook_outputs_into_chapters
+            result_injected = inject_notebook_outputs_into_chapters(args.book_dir, chapter=chapter)
+            if result_injected:
+                print("\nUpdating chapters with notebook outputs...")
+                for chapter_name, count in result_injected.items():
+                    print(f"  {chapter_name}: injected {count} output block(s)")
+            else:
+                print("  No notebook outputs to inject.")
 
     failed = sum(1 for r in results if r.get("errors") or r.get("error"))
     if failed > 0:
@@ -2285,6 +2297,8 @@ def cmd_book_build(args):
         check_quality=True,
         timeout=getattr(args, "timeout", 600),
         stop_on_error=getattr(args, "stop_on_error", False),
+        sync_script_notebooks=getattr(args, "sync_script_notebooks", True),
+        include_notebook_results=getattr(args, "include_notebook_results", True),
     )
 
     nb_info = summary.get("steps", {}).get("notebooks", {})
@@ -2875,6 +2889,15 @@ Examples:
                         help="Stop on first notebook error")
     p_bnb.add_argument("--update-chapters", action="store_true",
                         help="Inject generated figures into chapter.md files")
+    p_bnb.add_argument("--sync-script-notebooks", dest="sync_script_notebooks",
+                        action="store_true", default=True,
+                        help="Generate/update per-chapter notebooks from chapter code blocks")
+    p_bnb.add_argument("--no-script-notebooks", dest="sync_script_notebooks",
+                        action="store_false",
+                        help="Do not generate/update code-block companion notebooks")
+    p_bnb.add_argument("--no-notebook-results", dest="include_notebook_results",
+                        action="store_false", default=True,
+                        help="Do not inject captured generated-notebook outputs when updating chapters")
 
     # book-build — full build pipeline (compile -> notebooks -> render)
     p_bbuild = subparsers.add_parser("book-build",
@@ -2891,6 +2914,15 @@ Examples:
                            help="Per-notebook timeout in seconds (default: 600)")
     p_bbuild.add_argument("--stop-on-error", action="store_true",
                            help="Stop on first notebook error")
+    p_bbuild.add_argument("--sync-script-notebooks", dest="sync_script_notebooks",
+                           action="store_true", default=True,
+                           help="Generate/update per-chapter notebooks from chapter code blocks")
+    p_bbuild.add_argument("--no-script-notebooks", dest="sync_script_notebooks",
+                           action="store_false",
+                           help="Do not generate/update code-block companion notebooks")
+    p_bbuild.add_argument("--no-notebook-results", dest="include_notebook_results",
+                           action="store_false", default=True,
+                           help="Do not inject captured generated-notebook outputs into chapters")
 
     # book-inject-citations — convert author-year prose refs to \cite{key}
     p_binject = subparsers.add_parser("book-inject-citations",

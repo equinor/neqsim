@@ -72,6 +72,7 @@ public final class BenchmarkTrust {
     tools.add("runPipeline", buildPipelineTrust());
     tools.add("runWaterHammer", buildWaterHammerTrust());
     tools.add("runRootCauseAnalysis", buildRootCauseTrust());
+    tools.add("runAgenticEngineering", buildAgenticEngineeringTrust());
     tools.add("runMaterialsReview", buildMaterialsReviewTrust());
     tools.add("runReservoir", buildReservoirTrust());
     tools.add("runFieldEconomics", buildEconomicsTrust());
@@ -125,6 +126,9 @@ public final class BenchmarkTrust {
         break;
       case "runRootCauseAnalysis":
         root.add("trust", buildRootCauseTrust());
+        break;
+      case "runAgenticEngineering":
+        root.add("trust", buildAgenticEngineeringTrust());
         break;
       case "runMaterialsReview":
         root.add("trust", buildMaterialsReviewTrust());
@@ -216,6 +220,9 @@ public final class BenchmarkTrust {
         break;
       case "runParametricStudy":
         trust = buildParametricTrust();
+        break;
+      case "runAgenticEngineering":
+        trust = buildAgenticEngineeringTrust();
         break;
       case "getPhaseEnvelope":
         trust = buildPhaseEnvelopeTrust();
@@ -313,6 +320,48 @@ public final class BenchmarkTrust {
     limitations.add("Dynamic simulation timestep must be small enough for controller stability");
     trust.add("knownLimitations", limitations);
 
+    return trust;
+  }
+
+  /**
+   * Builds trust metadata for the agentic engineering kernel.
+   *
+   * @return trust metadata for workflow planning, evidence scoring, and autonomous study ranking
+   */
+  private static JsonObject buildAgenticEngineeringTrust() {
+    JsonObject trust = new JsonObject();
+    trust.addProperty("maturityLevel", "TESTED");
+    trust.addProperty("description",
+        "Agentic planning, evidence trust scoring, and autonomous candidate ranking. "
+            + "The tool structures engineering reasoning but does not approve designs.");
+
+    JsonArray cases = new JsonArray();
+    cases.add(validationCase("Workflow compiler selects domain-specific tool chains", "kernel",
+        "Plan includes validation, simulation, trust, and reporting gates", "NeqSim JUnit tests"));
+    cases.add(validationCase("Evidence graph scores validated results higher", "kernel",
+        "Trust increases with provenance, validation, qualityGate, and evidenceRefs",
+        "NeqSim JUnit tests"));
+    cases.add(validationCase("Autonomous study ranks constrained candidates", "kernel",
+        "Candidate with best weighted objective score is ranked first", "NeqSim JUnit tests"));
+    trust.add("validationCases", cases);
+
+    JsonArray limitations = new JsonArray();
+    limitations.add("Does not replace qualified engineering review");
+    limitations.add("Does not automatically execute generated workflow steps");
+    limitations.add("Candidate ranking depends on supplied metrics and objective weights");
+    trust.add("knownLimitations", limitations);
+
+    JsonArray bounds = new JsonArray();
+    bounds.add("Planning classification is deterministic and rule based");
+    bounds.add("Trust scoring is transparent screening, not statistical certification");
+    bounds.add("Study ranking is exact for the supplied metrics and constraints");
+    trust.add("accuracyBounds", bounds);
+
+    JsonArray references = new JsonArray();
+    references.add("AgenticEngineeringKernelTest");
+    references.add("AgenticEngineeringRunnerTest");
+    references.add("MCP response-envelope contract");
+    trust.add("referenceData", references);
     return trust;
   }
 

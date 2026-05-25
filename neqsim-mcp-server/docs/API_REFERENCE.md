@@ -424,7 +424,7 @@ schema-not-found response instead of defaulting to an output schema.
 
 **Available schemas:**
 
-`SchemaCatalog.getToolNames()` advertises all 63 MCP server tools. Every listed tool has an
+`SchemaCatalog.getToolNames()` advertises all 64 MCP server tools. Every listed tool has an
 `input` and `output` schema URI under `neqsim://schemas/{tool}/{type}`. High-use calculation and
 workflow tools have detailed tool-specific schemas. The remaining server, lifecycle, governance,
 and orchestration tools have generic contract schemas that expose common fields such as `action`,

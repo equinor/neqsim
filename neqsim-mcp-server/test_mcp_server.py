@@ -1,7 +1,7 @@
 """
 Comprehensive MCP Server Tests for NeqSim
 ==========================================
-Tests all 63 MCP tools through the real JSON-RPC protocol, verifying
+Tests all 64 MCP tools through the real JSON-RPC protocol, verifying
 correctness against known values from the NeqSim JUnit test suite.
 
 Tier 1 — Trusted Core (21 tools):
@@ -16,7 +16,7 @@ Tier 1 — Trusted Core (21 tools):
   - Automation API (units, variables, state save/compare, diagnostics)
   - Industrial profile, benchmark trust, tool access
 
-Tier 2 — Engineering Advanced (28 tools):
+Tier 2 — Engineering Advanced (29 tools):
   - PVT laboratory experiments
   - Flow assurance (hydrate, corrosion, wax)
   - Standards calculations (ISO 6976, AGA)
@@ -256,7 +256,7 @@ def test_protocol():
     r = recv()
     tools = r.get("result", {}).get("tools", [])
     tool_names = sorted([t["name"] for t in tools])
-    check("63 tools registered", len(tools) == 63, f"got {len(tools)}: {tool_names}")
+    check("64 tools registered", len(tools) == 64, f"got {len(tools)}: {tool_names}")
 
     # Tier 1 — Trusted Core (21 tools)
     tier1 = ["runFlash", "runProcess", "validateInput", "searchComponents",
@@ -269,11 +269,12 @@ def test_protocol():
     for name in tier1:
         check(f"tier1 tool '{name}'", name in tool_names)
 
-    # Tier 2 — Engineering Advanced (28 tools)
+    # Tier 2 — Engineering Advanced (29 tools)
     tier2 = ["crossValidateModels", "runParametricStudy", "runPVT",
              "runFlowAssurance", "calculateStandard", "runPipeline",
              "runChemistry", "runMaterialsReview", "runOpenDrainReview",
              "runNorsokS001Clause10Review", "runWaterHammer",
+             "runAgenticEngineering",
              "runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess",
              "sizeEquipment", "compareProcesses", "validateResults",
              "runRelief", "runLOPA", "runSIL", "runRiskMatrix",

@@ -52,14 +52,13 @@ final class ColumnSolverFactory {
    * their own state without spending another full damped-substitution run inside each rejected
    * candidate; AUTO applies the robust fallback once after ranking the probes.
    */
-  private static final ThreadLocal<Boolean> autoCandidateProbeMode =
-      new ThreadLocal<Boolean>() {
-        /** {@inheritDoc} */
-        @Override
-        protected Boolean initialValue() {
-          return Boolean.FALSE;
-        }
-      };
+  private static final ThreadLocal<Boolean> autoCandidateProbeMode = new ThreadLocal<Boolean>() {
+    /** {@inheritDoc} */
+    @Override
+    protected Boolean initialValue() {
+      return Boolean.FALSE;
+    }
+  };
 
   /** Utility class constructor. */
   private ColumnSolverFactory() {}
@@ -131,18 +130,21 @@ final class ColumnSolverFactory {
       StringBuilder summary = new StringBuilder();
 
       ValidationResult feasibility = column.screenSpecificationFeasibility();
-      column.setLastAutoFeasibilityReport(feasibility.getReport());
+      String feasibilityReport = feasibility.getReport();
+      column.setLastAutoFeasibilityReport(feasibilityReport);
       column.recordAutoSolverEvent("feasibility pre-screen valid=" + feasibility.isValid()
           + ", warnings=" + feasibility.hasWarnings());
       appendAutoFeasibilitySummary(summary, feasibility);
 
       DistillationColumn candidateSource = createAutoCandidate(column);
       if (candidateSource == null) {
-        appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
-            null, "pipeline seed copy failed; live damped fallback used");
+        appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION, null,
+            "pipeline seed copy failed; live damped fallback used");
         return runAutoFallbackOnLiveColumn(column, id, summary);
       }
-      boolean shortcutApplied = candidateSource.tryAutomaticShortcutInitialization(summary);
+      candidateSource.setLastAutoFeasibilityReport(feasibilityReport);
+      boolean shortcutApplied = shouldUseAutomaticShortcutSeed(column)
+          && candidateSource.tryAutomaticShortcutInitialization(summary);
       if (shortcutApplied) {
         column.recordAutoSolverEvent("shortcut seed applied");
         column.setLastInitializationReport(candidateSource.getLastInitializationReport());
@@ -162,6 +164,13 @@ final class ColumnSolverFactory {
         bestResult = warmBaseResult;
         bestSolver = warmBaseResult.getSolverType();
       }
+      if (shouldAcceptWarmBaseResult(column, candidateSource, warmBaseResult)) {
+        column.acceptAutoSolverCandidate(candidateSource, warmBaseResult.getSolverType());
+        column.setLastAutoFeasibilityReport(feasibilityReport);
+        column.setLastAutoSolverSummary(summary.toString());
+        column.recordAutoSolverEvent("selected relaxed base " + warmBaseResult.getSolverType());
+        return ColumnSolveResult.from(column, warmBaseResult.getSolverType());
+      }
 
       for (int index = 0; index < candidates.length; index++) {
         DistillationColumn.SolverType candidateSolver = candidates[index];
@@ -180,7 +189,7 @@ final class ColumnSolverFactory {
         try {
           ColumnSolveResult result = runAutoProbeCandidate(candidate, candidateSolver, id);
           appendAutoCandidateSummary(summary, candidateSolver, result,
-              autoProbeNote(candidate, result));
+              autoProbeNote(candidateSolver, candidate, result));
           double score = scoreResult(result, candidate);
           if (score < bestScore) {
             bestScore = score;
@@ -190,6 +199,7 @@ final class ColumnSolverFactory {
           }
           if (isAcceptableAutoCandidate(candidate, result)) {
             column.acceptAutoSolverCandidate(candidate, result.getSolverType());
+            column.setLastAutoFeasibilityReport(feasibilityReport);
             column.setLastAutoSolverSummary(summary.toString());
             column.recordAutoSolverEvent("selected " + result.getSolverType());
             return ColumnSolveResult.from(column, result.getSolverType());
@@ -205,6 +215,7 @@ final class ColumnSolverFactory {
       if (bestCandidate != null && bestResult != null && bestSolver != null
           && isAcceptableAutoCandidate(bestCandidate, bestResult)) {
         column.acceptAutoSolverCandidate(bestCandidate, bestSolver);
+        column.setLastAutoFeasibilityReport(feasibilityReport);
         column.setLastAutoSolverSummary(summary.toString());
         column.recordAutoSolverEvent("selected best available " + bestSolver);
         return ColumnSolveResult.from(column, bestResult.getSolverType());
@@ -446,11 +457,14 @@ final class ColumnSolverFactory {
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
       column.markSolverTypeUsed(getSolverType());
+      DistillationColumn warmStartCandidate =
+          isAutoCandidateProbeMode() ? null : createDampedFallbackCandidate(column);
       DistillationColumn fallbackCandidate =
           shouldPrepareAcceleratedFallback() ? createDampedFallbackCandidate(column) : null;
+      boolean accepted = false;
       boolean fallbackApplied = false;
       try {
-        column.solveNaphtaliSandholm(id);
+        accepted = column.solveNaphtaliSandholm(id);
       } catch (RuntimeException exception) {
         if (isAutoCandidateProbeMode()) {
           throw exception;
@@ -463,9 +477,14 @@ final class ColumnSolverFactory {
             "Naphtali-Sandholm required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
+      if (!fallbackApplied && !accepted && !isAutoCandidateProbeMode() && !column.solved()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "Naphtali-Sandholm did not satisfy convergence criteria", null);
+        fallbackApplied = true;
+      }
+      if (!fallbackApplied && accepted && !isAutoCandidateProbeMode()
+          && column.getLastIterationCount() <= 0
+          && validateNaphtaliWarmStartProductSplit(column, warmStartCandidate, id)) {
         fallbackApplied = true;
       }
       if (!fallbackApplied && verifyAcceleratedResults) {
@@ -487,24 +506,30 @@ final class ColumnSolverFactory {
     @Override
     public ColumnSolveResult solve(DistillationColumn column, UUID id) {
       column.markSolverTypeUsed(getSolverType());
+      boolean explicitMeshResidual =
+          column.getSolverType() == getSolverType() && !isAutoCandidateProbeMode();
       DistillationColumn fallbackCandidate =
-          shouldPrepareAcceleratedFallback() ? createDampedFallbackCandidate(column) : null;
+          shouldPrepareAcceleratedFallback() && !explicitMeshResidual
+              ? createDampedFallbackCandidate(column)
+              : null;
       boolean fallbackApplied = false;
       try {
         column.solveMeshResidual(id);
       } catch (RuntimeException exception) {
-        if (isAutoCandidateProbeMode()) {
+        if (isAutoCandidateProbeMode() || explicitMeshResidual) {
           throw exception;
         }
         applyDampedFallback(column, fallbackCandidate, id, "MESH residual solve failed", exception);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !isAutoCandidateProbeMode() && column.wasFeedFlashFallbackApplied()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !explicitMeshResidual
+          && column.wasFeedFlashFallbackApplied()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "MESH residual solve required guarded feed-flash product fallback", null);
         fallbackApplied = true;
       }
-      if (!fallbackApplied && !isAutoCandidateProbeMode() && !column.solved()) {
+      if (!fallbackApplied && !isAutoCandidateProbeMode() && !explicitMeshResidual
+          && !column.solved()) {
         applyDampedFallback(column, fallbackCandidate, id,
             "MESH residual solve did not satisfy convergence criteria", null);
         fallbackApplied = true;
@@ -587,8 +612,7 @@ final class ColumnSolverFactory {
     if (column.hasCondenser && column.hasReboiler) {
       if (column.numberOfTrays >= 12) {
         return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
-            DistillationColumn.SolverType.INSIDE_OUT,
-            DistillationColumn.SolverType.MESH_RESIDUAL,
+            DistillationColumn.SolverType.INSIDE_OUT, DistillationColumn.SolverType.MESH_RESIDUAL,
             DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
       }
       if (column.numberOfTrays >= 6) {
@@ -598,8 +622,8 @@ final class ColumnSolverFactory {
       }
     }
     if (!column.hasCondenser || !column.hasReboiler) {
-      return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.SUM_RATES,
-          DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+      return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+          DistillationColumn.SolverType.SUM_RATES,
           DistillationColumn.SolverType.DIRECT_SUBSTITUTION};
     }
     return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
@@ -615,6 +639,25 @@ final class ColumnSolverFactory {
   private static boolean hasAdjustableProductSpecification(DistillationColumn column) {
     return isAdjustableProductSpecification(column.getTopSpecification())
         || isAdjustableProductSpecification(column.getBottomSpecification());
+  }
+
+  /**
+   * Check whether AUTO should pay for a shortcut-column rebuild before probing candidates.
+   *
+   * <p>
+   * Fenske-Underwood-Gilliland seeding is valuable for product-specification continuation and
+   * larger full fractionators, but small fixed-specification regression columns are usually solved
+   * faster from a temperature-profile seed.
+   * </p>
+   *
+   * @param column column being solved
+   * @return {@code true} when shortcut initialization is expected to help
+   */
+  private static boolean shouldUseAutomaticShortcutSeed(DistillationColumn column) {
+    if (hasAdjustableProductSpecification(column)) {
+      return true;
+    }
+    return column.hasCondenser && column.hasReboiler && column.numberOfTrays > 8;
   }
 
   /**
@@ -644,8 +687,8 @@ final class ColumnSolverFactory {
     prepareAutoCandidate(candidateSource, DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
     try {
       ColumnSolveResult result = DAMPED.solve(candidateSource, id);
-      appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
-          result, "relaxed base solve");
+      appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION, result,
+          "relaxed base solve");
       return result;
     } catch (RuntimeException exception) {
       appendAutoCandidateSummary(summary, DistillationColumn.SolverType.DAMPED_SUBSTITUTION, null,
@@ -702,12 +745,17 @@ final class ColumnSolverFactory {
    * @param result probe result
    * @return note for the AUTO summary, or {@code null} when no note is needed
    */
-  private static String autoProbeNote(DistillationColumn candidate, ColumnSolveResult result) {
+  private static String autoProbeNote(DistillationColumn.SolverType candidateSolver,
+      DistillationColumn candidate, ColumnSolveResult result) {
     if (candidate.wasFeedFlashFallbackApplied()) {
       return "damped fallback deferred; candidate used guarded feed-flash products";
     }
     if (!result.isSolved()) {
       return "damped fallback deferred; candidate did not satisfy convergence criteria";
+    }
+    if (result.getSolverType() != candidateSolver
+        && result.getSolverType() == DistillationColumn.SolverType.DAMPED_SUBSTITUTION) {
+      return "damped fallback deferred; candidate reported guarded damped result";
     }
     return null;
   }
@@ -722,6 +770,29 @@ final class ColumnSolverFactory {
   private static boolean isAcceptableAutoCandidate(DistillationColumn candidate,
       ColumnSolveResult result) {
     return result != null && result.isSolved() && !candidate.wasFeedFlashFallbackApplied();
+  }
+
+  /**
+   * Check whether AUTO can stop after the relaxed base solve.
+   *
+   * <p>
+   * Fixed-specification, small condenser/reboiler columns usually do not benefit from extra
+   * simultaneous-correction probes once the warmed damped solve already satisfies the active
+   * tolerances. Accepting the base result avoids copying and flashing the same column for every
+   * candidate while preserving the full homotopy/probe ladder for product specifications and larger
+   * columns.
+   * </p>
+   *
+   * @param column live AUTO column
+   * @param candidate warmed candidate source
+   * @param result warmed base result
+   * @return {@code true} when the warmed base solve is a sufficient AUTO result
+   */
+  private static boolean shouldAcceptWarmBaseResult(DistillationColumn column,
+      DistillationColumn candidate, ColumnSolveResult result) {
+    return column.hasCondenser && column.hasReboiler && column.numberOfTrays <= 8
+        && !hasAdjustableProductSpecification(column)
+        && isAcceptableAutoCandidate(candidate, result);
   }
 
   /**
@@ -745,6 +816,7 @@ final class ColumnSolverFactory {
    *
    * @param column live column
    * @param id calculation identifier
+   * @param summary automatic solver summary builder
    * @return solve result from the fallback solver
    */
   private static ColumnSolveResult runAutoFallbackOnLiveColumn(DistillationColumn column, UUID id,
@@ -876,6 +948,40 @@ final class ColumnSolverFactory {
       column.acceptDampedFallbackCandidate(fallbackCandidate,
           solverName + " product split differs from damped substitution validation candidate");
     }
+  }
+
+  /**
+   * Keep the residual-monitored warm start when an initializer-only Naphtali-Sandholm candidate
+   * produces a materially different product split.
+   *
+   * @param column live column containing the Naphtali-Sandholm candidate result
+   * @param warmStartCandidate clean candidate used to compute the guarded warm-start state
+   * @param id calculation identifier
+   * @return {@code true} when the warm-start candidate was accepted on the live column
+   */
+  private static boolean validateNaphtaliWarmStartProductSplit(DistillationColumn column,
+      DistillationColumn warmStartCandidate, UUID id) {
+    if (warmStartCandidate == null) {
+      return false;
+    }
+    try {
+      warmStartCandidate.setDoInitializion(true);
+      warmStartCandidate.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
+      warmStartCandidate.markSolverTypeUsed(DistillationColumn.SolverType.MESH_RESIDUAL);
+      warmStartCandidate.solveMeshResidual(id);
+    } catch (RuntimeException exception) {
+      return false;
+    }
+    if (!warmStartCandidate.solved() || warmStartCandidate.wasFeedFlashFallbackApplied()) {
+      return false;
+    }
+    if (!productSplitDiffers(column, warmStartCandidate)) {
+      return false;
+    }
+    column.acceptNaphtaliWarmStartCandidate(warmStartCandidate,
+        "Naphtali-Sandholm initializer-only candidate was rejected because its product split "
+            + "differs from the residual-monitored warm start");
+    return true;
   }
 
   /**

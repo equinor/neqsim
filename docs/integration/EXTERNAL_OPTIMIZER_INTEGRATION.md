@@ -1,13 +1,13 @@
 ---
 title: External Optimizer Integration Guide
-description: This guide explains how to use NeqSim's `ProcessSimulationEvaluator` to integrate process simulation with external optimization frameworks like Python's SciPy, NLopt, or other optimization libraries.
+description: This guide explains how to use NeqSim's simulation evaluators to integrate process simulations and multi-area process models with external optimization frameworks like Python's SciPy, NLopt, or other optimization libraries.
 ---
 
 # External Optimizer Integration Guide
 
 > **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW) to understand when to use which optimizer.
 
-This guide explains how to use NeqSim's `ProcessSimulationEvaluator` to integrate process simulation with external optimization frameworks like Python's SciPy, NLopt, or other optimization libraries.
+This guide explains how to use NeqSim's simulation evaluators to integrate process simulation with external optimization frameworks like Python's SciPy, NLopt, or other optimization libraries.
 
 ## Related Documentation
 
@@ -16,15 +16,74 @@ This guide explains how to use NeqSim's `ProcessSimulationEvaluator` to integrat
 | [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW) | When to use which optimizer |
 | [Production Optimization Guide](../examples/PRODUCTION_OPTIMIZATION_GUIDE) | ProductionOptimizer examples |
 | [Practical Examples](../process/optimization/PRACTICAL_EXAMPLES) | Code samples |
+| [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK) | Installed equipment limits and bottleneck detection |
 
 ## Overview
 
-The `ProcessSimulationEvaluator` class provides a "black box" interface that:
+NeqSim provides two black-box evaluator classes for external optimizers and one convenience helper for the common full-facility producer-ramp workflow:
+
+| Class | Model boundary | Decision variable addressing | Best use |
+|-------|----------------|------------------------------|----------|
+| `ProcessSimulationEvaluator` | One `ProcessSystem` | Unit name plus property name | Compact flowsheets, equipment tuning, single-process optimization |
+| `ProcessModelSimulationEvaluator` | Full `ProcessModel` with named areas | Area-qualified `ProcessAutomation` addresses such as `wells::feed.flowRate` | Large facilities, multi-producer throughput studies, fixed-equipment bottleneck workflows |
+| `ProcessModelThroughputOptimizer` | Full `ProcessModel` with named areas | Producer mappings plus installed capacity CSV tables | Increase producers until the full facility reaches its first fixed-equipment bottleneck |
+
+The evaluator classes provide a black-box interface that:
 - Accepts a vector of decision variables
 - Runs the process simulation
 - Returns objective values, constraint margins, and feasibility status
 - Supports gradient estimation via finite differences
 - Exports problem definitions in JSON format
+
+Use `ProcessSimulationEvaluator` when all manipulated variables and outputs belong to one process system. Use `ProcessModelSimulationEvaluator` when the optimization must run the complete plant model and evaluate constraints across several process areas. Use `ProcessModelThroughputOptimizer` when the practical question is a scalar producer ramp: find the maximum feasible throughput and report the active bottleneck case table.
+
+### Full ProcessModel Evaluations
+
+`ProcessModelSimulationEvaluator` is intended for optimization studies where the process has already been split into named `ProcessSystem` areas and composed into a `ProcessModel`. This matches large offshore or gas-plant models where wells, separation, compression, export, utility, and recycle areas are solved together.
+
+The practical workflow is:
+
+1. Build and validate the full `ProcessModel` at the base case.
+2. Attach installed `CapacityConstraint` objects to equipment with fixed design sizes.
+3. Register producer/feed rates, pressure setpoints, or scenario multipliers as decision variables.
+4. Add model-level objective functions, for example export gas flow or total compressor power.
+5. Call `addEquipmentCapacityConstraints()` to include enabled equipment limits as hard constraints.
+6. Pass `getBounds()`, `getInitialValues()`, `evaluate(...)`, `evaluatePenalizedObjective(...)`, or `estimateGradient(...)` to the external optimizer.
+7. Inspect `EvaluationResult.getConstraintMargins()` and `EvaluationResult.getActiveBottleneck()` for engineering interpretation.
+
+For full-model studies, area-qualified addresses keep optimizer scripts independent of Java object wiring. Examples include `wells::feed.flowRate`, `separation::separator.gasOutStream.flowRate`, and `compression::export compressor.outletPressure`.
+
+Capacity constraints remain explicit engineering data. Strategy-generated defaults can identify candidate bottlenecks, while installed equipment limits should be attached directly to equipment when the study assumes equipment sizes are fixed.
+
+### Full-Facility Throughput-to-Bottleneck Helper
+
+`ProcessModelThroughputOptimizer` wraps the evaluator for Chapter-15-style facility studies. It maps producers, optionally loads installed equipment limits from a CSV table, performs a robust scalar throughput search, and returns a `ProcessModelThroughputResult` containing the best feasible case, first infeasible case, and all evaluated case rows.
+
+```java
+ProcessModelThroughputOptimizer optimizer = new ProcessModelThroughputOptimizer(model);
+optimizer.addProducer("feed", "wells::feed.flowRate", 1.0, 2.0, "kg/hr");
+optimizer.setObjective("exportGas", new ToDoubleFunction<ProcessModel>() {
+    @Override
+    public double applyAsDouble(ProcessModel processModel) {
+        return processModel.getVariableValue("separation::separator.gasOutStream.flowRate", "kg/hr");
+    }
+}, "kg/hr");
+optimizer.loadInstalledCapacities("installed_capacity.csv");
+
+ProcessModelThroughputResult result = optimizer.findMaximumThroughput(1.0, 2.0, 0.01);
+ThroughputCaseRow best = result.getBestFeasibleCase();
+ThroughputCaseRow firstLimit = result.getFirstInfeasibleCase();
+result.exportToCSV("throughput_trace.csv");
+```
+
+The installed-capacity CSV format is intentionally small and auditable:
+
+```text
+area,equipment,constraint,currentValueAddress,designValue,maxValue,unit,severity,enabled
+separation,separator,installedGasCapacity,wells::feed.flowRate,15000,16500,kg/hr,HARD,true
+```
+
+By default, the helper uses explicit installed capacity limits attached directly to equipment. Enable strategy-generated constraints with `setIncludeStrategyCapacityConstraints(true)` when you want generic screening limits to participate in addition to installed design data.
 
 ## Key Concepts
 
@@ -41,7 +100,7 @@ Functions to minimize or maximize. By default, objectives are minimized. For max
 ### Constraints
 Process restrictions that must be satisfied:
 - **Lower bound**: g(x) ≥ bound
-- **Upper bound**: g(x) ≤ bound  
+- **Upper bound**: g(x) ≤ bound
 - **Range**: lower ≤ g(x) ≤ upper
 - **Equality**: g(x) = target ± tolerance
 
@@ -59,7 +118,7 @@ evaluator.addParameter("feed", "flowRate", 1000.0, 100000.0, "kg/hr");
 evaluator.addParameter("valve", "pressure", 10.0, 50.0, "bara");
 
 // Add objective (minimize compressor power)
-evaluator.addObjective("power", 
+evaluator.addObjective("power",
     process -> process.getUnit("compressor").getEnergy("kW"));
 
 // Add constraints
@@ -224,7 +283,7 @@ from scipy.optimize import minimize
 
 # Setup with multiple objectives
 evaluator.addObjective("power", lambda p: p.getUnit("compressor").getEnergy("kW"))
-evaluator.addObjective("throughput", 
+evaluator.addObjective("throughput",
     lambda p: p.getUnit("product").getFlowRate("kg/hr"),
     ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE)
 
@@ -303,36 +362,36 @@ from pyomo.environ import *
 def create_pyomo_model():
     """Create a Pyomo model that calls NeqSim evaluator"""
     model = ConcreteModel()
-    
+
     # Get bounds from evaluator
     n = evaluator.getParameterCount()
     bounds_array = evaluator.getBounds()
-    
+
     # Decision variables
-    model.x = Var(range(n), 
+    model.x = Var(range(n),
                   bounds=lambda m, i: (bounds_array[i][0], bounds_array[i][1]))
-    
+
     # Initialize
     x0 = evaluator.getInitialValues()
     for i in range(n):
         model.x[i] = x0[i]
-    
+
     # External function for objective
     def obj_rule(m):
         x = [m.x[i].value for i in range(n)]
         return evaluator.evaluateObjective(x)
-    
+
     model.obj = Objective(rule=obj_rule, sense=minimize)
-    
+
     # External constraints (simplified approach)
     def constraint_rule(m, j):
         x = [m.x[i].value for i in range(n)]
         margins = evaluator.getConstraintMargins(x)
         return margins[j] >= 0
-    
-    model.constraints = Constraint(range(evaluator.getConstraintCount()), 
+
+    model.constraints = Constraint(range(evaluator.getConstraintCount()),
                                     rule=constraint_rule)
-    
+
     return model
 ```
 
@@ -443,7 +502,7 @@ evaluator.addParameter("feed", "flowRate", 10000.0, 100000.0, "kg/hr")
 evaluator.addParameter("compressor", "outletPressure", 50.0, 120.0, "bara")
 
 # Minimize compressor power
-evaluator.addObjective("power", 
+evaluator.addObjective("power",
     lambda p: p.getUnit("compressor").getEnergy("kW"))
 
 # Constraints

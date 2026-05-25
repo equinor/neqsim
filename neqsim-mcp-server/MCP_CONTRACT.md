@@ -86,6 +86,7 @@ industrial validation.
 | `runNorsokS001Clause10Review` | CALCULATION | v1.6 | NORSOK S-001 process safety system review from C&E, SRS, PSV, and instrument evidence |
 | `crossValidateModels` | CALCULATION | v1.1 | Cross-validate process under multiple EOS models |
 | `runParametricStudy` | CALCULATION | v1.1 | Multi-variable parametric sweep |
+| `runAgenticEngineering` | CALCULATION | v1.6 | Plan engineering workflows, score result evidence, and rank candidate studies without executing them |
 | `runBatch` | CALCULATION | v1.0 | Multi-point sensitivity sweep |
 | `sizeEquipment` | CALCULATION | v1.2 | Quick equipment sizing (separator, compressor) |
 | `compareProcesses` | CALCULATION | v1.2 | Compare process configurations side by side |
