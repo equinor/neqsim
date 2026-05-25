@@ -510,15 +510,15 @@ def build_book_typst_preamble(cfg, profile=None):
   #set text(size: 8.5pt, fill: luma(80))
   #set par(justify: false, leading: 0.8em)
 
-  Copyright \u00a9 {year} Equinor ASA and the Norwegian University of Science and Technology (NTNU). All rights reserved.
+  Copyright \u00a9 {year} Even Solbraa and the NeqSim Project. All rights reserved.
 
   #v(0.3cm)
 
-  This work is the intellectual property of Equinor ASA and NTNU. No part of this publication may be reproduced, stored in a retrieval system, or transmitted, in any form or by any means, electronic, mechanical, photocopying, recording, or otherwise, without the prior written permission of Equinor ASA and NTNU.
+  This book is distributed under the Creative Commons Attribution 4.0 International License (CC BY 4.0). You are free to share and adapt the material, including commercially, provided you give appropriate credit to the authors and the NeqSim Project.
 
   #v(0.3cm)
 
-  The NeqSim library is open-source software released under the Apache License 2.0. All code examples in this book are available at #link("https://github.com/equinor/neqsim")[github.com/equinor/neqsim] and may be freely used and modified under the terms of that license.{isbn_typst}
+  The NeqSim library is open-source software released under the Apache License 2.0. Code examples in this book are released under the MIT License and may be copied, modified, and embedded into proprietary or open-source projects without restriction.{isbn_typst}
 
   #v(0.5cm)
 

@@ -1,17 +1,18 @@
 """Extract text from TPG4230 course PDFs into a single notes file."""
 from __future__ import annotations
+import os
 import sys
 from pathlib import Path
 
 import fitz  # PyMuPDF
 
-ROOT = Path(r"C:\Users\ESOL\OneDrive - Equinor\NTNU-LT-112664\TPG4230\2026")
+ROOT = Path(os.environ.get("TPG4230_COURSE_DIR", "course_materials"))
 
 TARGETS = [
     ROOT / "exercises" / "ex1" / "Exercise set 01_v2.pdf",
     ROOT / "exercises" / "p2" / "Exercise set 02_v1.pdf",
-    ROOT / "exercises" / "p2" / "Snøhvit_Field_Development_Strategy_solution.pdf",
-    ROOT / "exercises" / "p2" / "Snøhvit_Production_Strategy.pdf",
+    ROOT / "exercises" / "p2" / "Generic_Gas_Field_Development_Strategy_solution.pdf",
+    ROOT / "exercises" / "p2" / "Generic_Gas_Field_Production_Strategy.pdf",
     ROOT / "exercises" / "p2" / "solution.pdf",
     ROOT / "exercises" / "p3" / "Exercise_set_03_v1.pdf",
     ROOT / "exercises" / "p3" / "Report.docx",  # will skip if not pdf

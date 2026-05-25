@@ -671,7 +671,12 @@ def main() -> int:
                 parts.append(f"# --- block at line {start_line} ---\n{code}")
             if runnable_count == 0:
                 continue
-            big = "\n\n".join(parts)
+            # Prepend the book root to sys.path so chapter scripts can
+            # `import running_case` (or any other shared book-root module).
+            preamble = (
+                f"import sys as _s\n_s.path.insert(0, r{str(args.book_dir.resolve())!r})\n"
+            )
+            big = preamble + "\n\n".join(parts)
             ok, err = run_block(big, args.timeout)
             entry = {"file": str(rel).replace("\\", "/"),
                      "line": blocks[0][0],
