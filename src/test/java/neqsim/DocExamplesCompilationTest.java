@@ -1124,6 +1124,51 @@ public class DocExamplesCompilationTest {
   }
 
   /**
+   * TwoFluidPipe steady-state and dynamic boundary examples from docs/process/TWOFLUIDPIPE_MODEL.md.
+   */
+  @Test
+  public void testTwoFluidPipeSteadyAndDynamicBoundaryDocExamples() {
+    SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(293.15, 70.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.06);
+    fluid.addComponent("propane", 0.04);
+    fluid.setMixingRule("classic");
+
+    Stream inlet = new Stream("inlet", fluid);
+    inlet.setFlowRate(4.0, "kg/sec");
+    inlet.setTemperature(20.0, "C");
+    inlet.setPressure(70.0, "bara");
+    inlet.run();
+
+    neqsim.process.equipment.pipeline.TwoFluidPipe pipe =
+        new neqsim.process.equipment.pipeline.TwoFluidPipe("export line", inlet);
+    pipe.setLength(300.0);
+    pipe.setDiameter(0.20);
+    pipe.setRoughness(1.0e-5);
+    pipe.setNumberOfSections(4);
+    pipe.run();
+    assertTrue(pipe.getPressureProfile().length > 0);
+
+    pipe.setOutletPressure(55.0, "bara");
+    pipe.run();
+    double outletPressure = pipe.getPressureProfile()[pipe.getPressureProfile().length - 1] / 1.0e5;
+    assertEquals(55.0, outletPressure, 0.05);
+
+    pipe.setInletBoundaryCondition(
+        neqsim.process.equipment.pipeline.TwoFluidPipe.BoundaryCondition.CONSTANT_FLOW);
+    pipe.setInletMassFlow(4.0, "kg/sec");
+    pipe.setOutletBoundaryCondition(
+        neqsim.process.equipment.pipeline.TwoFluidPipe.BoundaryCondition.CONSTANT_PRESSURE);
+    pipe.setOutletPressure(55.0, "bara");
+    pipe.run();
+
+    pipe.openOutlet(52.0, "bara");
+    pipe.runTransient(2.0, java.util.UUID.randomUUID());
+    assertEquals(52.0, pipe.getPressureProfile()[pipe.getPressureProfile().length - 1] / 1.0e5,
+        0.05);
+  }
+
+  /**
    * Full mechanical design integration from documentation.
    */
   @Test
