@@ -1,6 +1,8 @@
 package neqsim.process.equipment.heatexchanger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,6 +16,33 @@ public class MultiStreamHeatExchanger2Test {
 
   static neqsim.thermo.system.SystemInterface testSystem;
   Stream gasStream;
+
+  @Test
+  void testPublicStreamApiRegistersAndUpdatesStreams() {
+    testSystem = new neqsim.thermo.Fluid().create("dry gas");
+    testSystem.setPressure(10.0, "bara");
+    testSystem.setTemperature(273.15 + 60.0, "K");
+    testSystem.setMixingRule(2);
+
+    Stream firstStream = new Stream("first stream", testSystem.clone());
+    firstStream.setTemperature(100.0, "C");
+    firstStream.setFlowRate(20000.0, "kg/hr");
+
+    Stream secondStream = new Stream("second stream", testSystem.clone());
+    secondStream.setTemperature(20.0, "C");
+    secondStream.setFlowRate(8000.0, "kg/hr");
+
+    MultiStreamHeatExchanger2 heatEx = new MultiStreamHeatExchanger2("stream api heatEx");
+    heatEx.addInStream(firstStream);
+
+    assertSame(firstStream, heatEx.getInStream(0));
+    assertNotNull(heatEx.getOutStream(0));
+
+    heatEx.setFeedStream(0, secondStream);
+
+    assertSame(secondStream, heatEx.getInStream(0));
+    assertNotNull(heatEx.getOutStream(0));
+  }
 
   @Test
   void testRunRefreshesInletStateOnRepeatedRuns() {
