@@ -199,6 +199,7 @@ public final class IndustrialProfile {
     map.put("getAutomationLearningReport", ToolCategory.ADVISORY);
     map.put("diagnoseAutomation", ToolCategory.ADVISORY);
     map.put("getProgress", ToolCategory.ADVISORY);
+    map.put("getBenchmarkTrust", ToolCategory.ADVISORY);
     map.put("checkToolAccess", ToolCategory.ADVISORY);
     map.put("manageIndustrialProfile", ToolCategory.ADVISORY);
     map.put("queryDataCatalog", ToolCategory.ADVISORY);

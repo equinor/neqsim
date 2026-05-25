@@ -77,6 +77,7 @@ class IndustrialProfileTest {
 
   @Test
   void getToolCategory_governanceTools_returnAdvisory() {
+    assertEquals(ToolCategory.ADVISORY, IndustrialProfile.getToolCategory("getBenchmarkTrust"));
     assertEquals(ToolCategory.ADVISORY, IndustrialProfile.getToolCategory("checkToolAccess"));
     assertEquals(ToolCategory.ADVISORY,
         IndustrialProfile.getToolCategory("manageIndustrialProfile"));
@@ -220,8 +221,10 @@ class IndustrialProfileTest {
   @Test
   void digitalTwinMode_allowsGovernanceInspectionTools() {
     IndustrialProfile.setActiveMode(DeploymentMode.DIGITAL_TWIN);
+    assertTrue(IndustrialProfile.isToolAllowed("getBenchmarkTrust"));
     assertTrue(IndustrialProfile.isToolAllowed("checkToolAccess"));
     assertTrue(IndustrialProfile.isToolAllowed("manageIndustrialProfile"));
+    assertNull(IndustrialProfile.enforceAccess("getBenchmarkTrust"));
     assertNull(IndustrialProfile.enforceAccess("checkToolAccess"));
     assertNull(IndustrialProfile.enforceAccess("manageIndustrialProfile"));
   }
