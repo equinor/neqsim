@@ -249,9 +249,10 @@ public class TwoPhasePipeFlowSystemBuilder {
         this.roughness = roughness * 1e-6;
         break;
       case "m":
-      default:
         this.roughness = roughness;
         break;
+      default:
+        throw new IllegalArgumentException("Unsupported roughness unit: " + unit);
     }
     return this;
   }
@@ -276,9 +277,10 @@ public class TwoPhasePipeFlowSystemBuilder {
         break;
       case "rad":
       case "radians":
-      default:
         this.inclination = angle;
         break;
+      default:
+        throw new IllegalArgumentException("Unsupported inclination unit: " + unit);
     }
     return this;
   }
@@ -515,8 +517,9 @@ public class TwoPhasePipeFlowSystemBuilder {
       case "mi":
         return value * 1609.34;
       case "m":
-      default:
         return value;
+      default:
+        throw new IllegalArgumentException("Unsupported length unit: " + unit);
     }
   }
 
@@ -534,8 +537,9 @@ public class TwoPhasePipeFlowSystemBuilder {
       case "F":
         return (value - 32) * 5.0 / 9.0 + 273.15;
       case "K":
-      default:
         return value;
+      default:
+        throw new IllegalArgumentException("Unsupported temperature unit: " + unit);
     }
   }
 }
