@@ -17,7 +17,7 @@ jobs:
     name: Assert tests and javadoc with Java 11 on Ubuntu
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ github.token }}
           fetch-depth: 1
@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: test_java_11
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ github.token }}
           fetch-depth: 1
@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: test_java_11
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ github.token }}
           fetch-depth: 1
@@ -93,7 +93,7 @@ jobs:
     name: Assert tests with Java 11 on Windows
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ github.token }}
           fetch-depth: 1
@@ -111,7 +111,7 @@ jobs:
     runs-on: windows-latest
     needs: test_java_11_windows
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ github.token }}
           fetch-depth: 1
@@ -129,7 +129,7 @@ jobs:
     runs-on: windows-latest
     needs: test_java_11_windows
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ github.token }}
           fetch-depth: 1
@@ -146,7 +146,7 @@ jobs:
     name: Verify agent-skill cross-references
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           token: ${{ github.token }}
           fetch-depth: 1
