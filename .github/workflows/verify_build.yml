@@ -22,7 +22,7 @@ jobs:
           token: ${{ github.token }}
           fetch-depth: 1
       - name: Set up JDK 11
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '11'
@@ -63,7 +63,7 @@ jobs:
           token: ${{ github.token }}
           fetch-depth: 1
       - name: Set up JDK 8
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '8'
@@ -81,7 +81,7 @@ jobs:
           token: ${{ github.token }}
           fetch-depth: 1
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -98,7 +98,7 @@ jobs:
           token: ${{ github.token }}
           fetch-depth: 1
       - name: Set up JDK 11
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '11'
@@ -116,7 +116,7 @@ jobs:
           token: ${{ github.token }}
           fetch-depth: 1
       - name: Set up JDK 8
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '8'
@@ -134,7 +134,7 @@ jobs:
           token: ${{ github.token }}
           fetch-depth: 1
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'

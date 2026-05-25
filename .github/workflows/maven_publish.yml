@@ -16,7 +16,7 @@ jobs:
           TAG="${{ github.event.release.tag_name }}"
           echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
       - name: Set up Maven Central Repository
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
