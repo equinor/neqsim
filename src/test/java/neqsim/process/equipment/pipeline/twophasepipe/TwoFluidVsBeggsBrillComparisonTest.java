@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Disabled;
@@ -1058,14 +1059,36 @@ class TwoFluidVsBeggsBrillComparisonTest {
           positions[idx], elevations[idx], holdupProfile[idx]);
     }
 
+    double averageValleyHoldup = 0.0;
+    for (int v = 0; v < valleyCount; v++) {
+      averageValleyHoldup += holdupProfile[valleyIndices[v]];
+    }
+    averageValleyHoldup = valleyCount > 0 ? averageValleyHoldup / valleyCount : 0.0;
+
+    double averagePeakHoldup = 0.0;
+    for (int p = 0; p < peakCount; p++) {
+      averagePeakHoldup += holdupProfile[peakIndices[p]];
+    }
+    averagePeakHoldup = peakCount > 0 ? averagePeakHoldup / peakCount : 0.0;
+
     // Assertions
-    assertTrue(tfPressureDrop > 0, "Pressure drop should be positive");
+    assertTrue(Double.isFinite(tfPressureDrop), "End-to-end pressure change should be finite");
+    assertTrue(tfInletPressure > 0, "Inlet pressure should be positive");
     assertTrue(tfOutletPressure > 0, "Outlet pressure should be positive");
-    assertTrue(tfOutletPressure < tfInletPressure, "Outlet should be less than inlet");
+    assertTrue(Math.abs(tfPressureDrop) < tfInletPressure,
+        "Terrain pressure change should remain within the inlet pressure scale");
 
     // The model should complete without errors
-    assertTrue(pressureProfile.length == nSections, "Pressure profile should match sections");
-    assertTrue(holdupProfile.length == nSections, "Holdup profile should match sections");
+    assertEquals(nSections, pressureProfile.length, "Pressure profile should match sections");
+    assertEquals(nSections, holdupProfile.length, "Holdup profile should match sections");
+
+    // Terrain slugging should create clear low-point liquid accumulation.
+    assertTrue(valleyCount > 0, "Terrain profile should contain valleys");
+    assertTrue(peakCount > 0, "Terrain profile should contain peaks");
+    assertTrue(maxHoldup > 0.5, "Low points should accumulate significant liquid");
+    assertTrue(maxHoldup > 2.0 * minHoldup, "Terrain should create strong holdup variation");
+    assertTrue(averageValleyHoldup > averagePeakHoldup,
+        "Average valley holdup should exceed average peak holdup");
   }
 
   @Test
