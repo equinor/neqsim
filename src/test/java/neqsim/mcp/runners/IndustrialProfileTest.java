@@ -42,7 +42,7 @@ class IndustrialProfileTest {
     assertEquals(21, IndustrialProfile.getIndustrialCore().size(),
         "Tier 1 (TRUSTED_CORE) should have 21 tools");
     assertEquals(29, IndustrialProfile.getEngineeringAdvanced().size(),
-      "Tier 2 (ENGINEERING_ADVANCED) should have 29 tools");
+        "Tier 2 (ENGINEERING_ADVANCED) should have 29 tools");
     assertEquals(14, IndustrialProfile.getExperimentalTools().size(),
         "Tier 3 (EXPERIMENTAL) should have 14 tools");
   }
