@@ -85,7 +85,7 @@ print(f"Z-factor:       {fluid.getPhase('gas').getZ():.4f}")
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.10.0</version>
+  <version>3.11.0</version>
 </dependency>
 ```
 
@@ -284,7 +284,7 @@ The agent creates a task folder, runs NeqSim simulations, validates results, and
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.10.0</version>
+  <version>3.11.0</version>
 </dependency>
 ```
 

@@ -58,7 +58,7 @@ runner layer in neqsim core. This means:
 |---|---|---|
 | JDK | 17+ | Quarkus requires Java 17. NeqSim core compiles with Java 8. |
 | Maven | 3.9+ | Or use the Maven wrapper (`mvnw`/`mvnw.cmd`) from the parent project |
-| NeqSim core | 3.10.0+ | Must be installed to local Maven repo first |
+| NeqSim core | 3.11.0+ | Must be installed to local Maven repo first |
 
 ---
 
@@ -76,7 +76,7 @@ From the **parent neqsim directory**:
 .\mvnw.cmd install -DskipTests "-Dmaven.javadoc.skip=true"
 ```
 
-This installs `com.equinor.neqsim:neqsim:3.10.0` to your local `~/.m2/repository`.
+This installs `com.equinor.neqsim:neqsim:3.11.0` to your local `~/.m2/repository`.
 
 ### Step 2: Build the MCP Server
 
@@ -719,7 +719,7 @@ examples, capability descriptors, standard response contracts, and validation be
 
 ## Troubleshooting
 
-### "Could not find artifact com.equinor.neqsim:neqsim:3.10.0"
+### "Could not find artifact com.equinor.neqsim:neqsim:3.11.0"
 
 Install NeqSim core first:
 
