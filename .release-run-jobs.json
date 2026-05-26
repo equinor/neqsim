@@ -1,0 +1,5 @@
+{"conclusion":"success","name":"Get version numbers from pom-files","status":"completed"}
+{"conclusion":null,"name":"Build Neqsim 3.11.0 with java 8","status":"in_progress"}
+{"conclusion":null,"name":"Build Neqsim 3.11.0 with java 11","status":"in_progress"}
+{"conclusion":"success","name":"Build MCP Server (Java 17)","status":"completed"}
+{"conclusion":null,"name":"Build Neqsim 3.11.0 with java 21","status":"in_progress"}

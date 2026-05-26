@@ -29,7 +29,7 @@ class BatchRunnerTest {
     assertNotNull(result);
 
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("ok", obj.get("status").getAsString(), "Expected ok but got: " + result);
+    assertEquals("success", obj.get("status").getAsString(), "Expected success but got: " + result);
     assertTrue(obj.has("apiVersion"));
     assertTrue(obj.has("tool"));
     assertTrue(obj.has("data"));
@@ -73,7 +73,7 @@ class BatchRunnerTest {
 
     String result = BatchRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("ok", obj.get("status").getAsString(), "Expected ok but got: " + result);
+    assertEquals("success", obj.get("status").getAsString(), "Expected success but got: " + result);
     assertEquals(2, obj.getAsJsonObject("summary").get("succeeded").getAsInt());
   }
 
@@ -137,7 +137,7 @@ class BatchRunnerTest {
 
     String result = BatchRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertEquals("ok", obj.get("status").getAsString());
+    assertEquals("success", obj.get("status").getAsString());
     assertEquals(1, obj.getAsJsonObject("summary").get("succeeded").getAsInt());
   }
 }

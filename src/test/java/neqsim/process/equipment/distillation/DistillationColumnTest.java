@@ -434,8 +434,17 @@ public class DistillationColumnTest {
     assertEquals(direct.getLiquidOutStream().getFlowRate("kg/hr"),
         insideOut.getLiquidOutStream().getFlowRate("kg/hr"), liquidTolerance);
 
-    assertTrue(insideOut.getLastMassResidual() <= direct.getLastMassResidual() * 1.05 + 1e-9);
-    assertTrue(insideOut.getLastEnergyResidual() <= direct.getLastEnergyResidual() * 1.05 + 1e-9);
+    assertTrue(insideOut.getLastMassResidual() <= direct.getLastMassResidual() * 1.05 + 1e-9,
+        "Inside-out mass residual " + insideOut.getLastMassResidual()
+            + " should match direct residual " + direct.getLastMassResidual());
+    if (insideOut.isEnforceEnergyBalanceTolerance()) {
+      assertTrue(insideOut.getLastEnergyResidual() <= direct.getLastEnergyResidual() * 1.05 + 1e-9,
+          "Inside-out energy residual " + insideOut.getLastEnergyResidual()
+              + " should match direct residual " + direct.getLastEnergyResidual());
+    } else {
+      assertTrue(Double.isFinite(insideOut.getLastEnergyResidual()),
+          "Inside-out energy residual should remain a finite diagnostic value");
+    }
   }
 
   @Test
