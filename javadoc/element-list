@@ -191,6 +191,8 @@ neqsim.process.equipment.pipeline.routing
 neqsim.process.equipment.pipeline.twophasepipe
 neqsim.process.equipment.pipeline.twophasepipe.closure
 neqsim.process.equipment.pipeline.twophasepipe.numerics
+neqsim.process.equipment.pipeline.twophasepipe.reporting
+neqsim.process.equipment.pipeline.twophasepipe.validation
 neqsim.process.equipment.powergeneration
 neqsim.process.equipment.pump
 neqsim.process.equipment.reactor
