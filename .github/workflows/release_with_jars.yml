@@ -55,7 +55,7 @@ jobs:
           java-version: '8'
           cache: 'maven'
       - name: Build java 8 version of Neqsim ${{ needs.get_versions.outputs.version_8 }} with Maven
-        run: mvn -B package --file pomJava8.xml
+        run: mvn -B package --file pomJava8.xml -DskipTests -Djacoco.skip=true
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*Java8.jar staging
       - uses: actions/upload-artifact@v7
@@ -80,7 +80,7 @@ jobs:
           java-version: '11'
           cache: 'maven'
       - name: Build java 11 version with Maven
-        run: mvn -B package --file pom.xml
+        run: mvn -B package --file pom.xml -DskipTests -Djacoco.skip=true
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*.jar staging
       - uses: actions/upload-artifact@v7
@@ -105,7 +105,7 @@ jobs:
           java-version: '21'
           cache: 'maven'
       - name: Build java 21 version with Maven
-        run: mvn -B package --file pomJava21.xml
+        run: mvn -B package --file pomJava21.xml -DskipTests -Djacoco.skip=true
       - name: Rename files
         run: cd target && find . -type f -name "neqsim-*.jar" -exec sh -c 'mv -f $0 ${0%.jar}-Java21.jar' {} \; && cd ..
       - name: Copy jar file to staging
