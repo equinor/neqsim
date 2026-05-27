@@ -13,6 +13,17 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class SaturationPressure extends BasePVTsimulation {
+  /** Minimum pressure searched for saturation boundaries, in bara. */
+  private static final double MINIMUM_SEARCH_PRESSURE_BARA = 1.0;
+  /** Maximum pressure searched for saturation boundaries, in bara. */
+  private static final double MAXIMUM_SEARCH_PRESSURE_BARA = 1000.0;
+  /** Coarse pressure step used to bracket saturation boundaries, in bara. */
+  private static final double SEARCH_PRESSURE_STEP_BARA = 10.0;
+  /** Pressure tolerance used when refining the saturation boundary, in bara. */
+  private static final double PRESSURE_TOLERANCE_BARA = 1.0e-5;
+  /** Maximum bisection iterations used when refining the saturation boundary. */
+  private static final int MAXIMUM_BISECTION_ITERATIONS = 500;
+
   /**
    * <p>
    * Constructor for SaturationPressure.
@@ -41,40 +52,83 @@ public class SaturationPressure extends BasePVTsimulation {
       isMultiPhaseCheckChanged = true;
       getThermoSystem().setMultiPhaseCheck(true);
     }
-    // getThermoSystem().isImplementedCompositionDeriativesofFugacity(false);
-    getThermoSystem().setPressure(1.0);
-    do {
-      getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
-      thermoOps.TPflash();
-    } while (getThermoSystem().getNumberOfPhases() == 1
-        && getThermoSystem().getPressure() < 1000.0);
-    do {
-      getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
-      thermoOps.TPflash();
-    } while (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPressure() < 1000.0);
 
-    if (getThermoSystem().getPressure() > 1000.0) {
-      return getThermoSystem().getPressure();
+    try {
+      double twoPhasePressure = Double.NaN;
+      double singlePhasePressure = Double.NaN;
+      double previousPressure = MINIMUM_SEARCH_PRESSURE_BARA;
+      boolean previousIsTwoPhase = isTwoPhaseAtPressure(previousPressure);
+
+      for (double trialPressure = previousPressure
+          + SEARCH_PRESSURE_STEP_BARA; trialPressure <= MAXIMUM_SEARCH_PRESSURE_BARA; trialPressure +=
+              SEARCH_PRESSURE_STEP_BARA) {
+        boolean trialIsTwoPhase = isTwoPhaseAtPressure(trialPressure);
+        if (previousIsTwoPhase && !trialIsTwoPhase) {
+          twoPhasePressure = previousPressure;
+          singlePhasePressure = trialPressure;
+        }
+        previousPressure = trialPressure;
+        previousIsTwoPhase = trialIsTwoPhase;
+      }
+
+      if (previousPressure < MAXIMUM_SEARCH_PRESSURE_BARA) {
+        boolean trialIsTwoPhase = isTwoPhaseAtPressure(MAXIMUM_SEARCH_PRESSURE_BARA);
+        if (previousIsTwoPhase && !trialIsTwoPhase) {
+          twoPhasePressure = previousPressure;
+          singlePhasePressure = MAXIMUM_SEARCH_PRESSURE_BARA;
+        }
+      }
+
+      if (Double.isNaN(twoPhasePressure) || Double.isNaN(singlePhasePressure)) {
+        getThermoSystem().setPressure(MAXIMUM_SEARCH_PRESSURE_BARA);
+        thermoOps.TPflash();
+        return getThermoSystem().getPressure();
+      }
+
+      return refineUpperSaturationPressure(twoPhasePressure, singlePhasePressure);
+    } finally {
+      if (isMultiPhaseCheckChanged) {
+        getThermoSystem().setMultiPhaseCheck(false);
+      }
     }
+  }
 
-    double minPres = getThermoSystem().getPressure() - 10.0;
-    double maxPres = getThermoSystem().getPressure();
+  /**
+   * Checks whether the system is multiphase at a trial pressure.
+   *
+   * @param trialPressure pressure to test in bara
+   * @return true when the TP flash gives more than one phase
+   */
+  private boolean isTwoPhaseAtPressure(double trialPressure) {
+    getThermoSystem().setPressure(trialPressure);
+    thermoOps.TPflash();
+    return getThermoSystem().getNumberOfPhases() > 1;
+  }
+
+  /**
+   * Refines the upper saturation pressure between a two-phase and a single-phase point.
+   *
+   * @param twoPhasePressure lower pressure known to be inside a two-phase region, in bara
+   * @param singlePhasePressure higher pressure known to be outside the two-phase region, in bara
+   * @return refined upper saturation pressure in bara
+   */
+  private double refineUpperSaturationPressure(double twoPhasePressure,
+      double singlePhasePressure) {
+    double minPres = twoPhasePressure;
+    double maxPres = singlePhasePressure;
     int iteration = 0;
     do {
       iteration++;
-      getThermoSystem().setPressure((minPres + maxPres) / 2.0);
-      thermoOps.TPflash();
-      if (getThermoSystem().getNumberOfPhases() > 1) {
-        minPres = getThermoSystem().getPressure();
+      double trialPressure = (minPres + maxPres) / 2.0;
+      if (isTwoPhaseAtPressure(trialPressure)) {
+        minPres = trialPressure;
       } else {
-        maxPres = getThermoSystem().getPressure();
+        maxPres = trialPressure;
       }
-    } while (Math.abs(maxPres - minPres) > 1e-5 && iteration < 500);
+    } while (Math.abs(maxPres - minPres) > PRESSURE_TOLERANCE_BARA
+        && iteration < MAXIMUM_BISECTION_ITERATIONS);
     getThermoSystem().setPressure(maxPres);
     thermoOps.TPflash();
-    if (isMultiPhaseCheckChanged) {
-      getThermoSystem().setMultiPhaseCheck(false);
-    }
     return getThermoSystem().getPressure();
   }
 
