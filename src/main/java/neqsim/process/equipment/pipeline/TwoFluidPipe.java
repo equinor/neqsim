@@ -3518,7 +3518,11 @@ public class TwoFluidPipe extends Pipeline {
       timeIntegrator.advanceTime(dtActual);
     }
 
-    relaxHoldupTowardSteadyClosure(dt);
+    if (relaxHoldupTowardSteadyClosure(dt)) {
+      reconstructPressureProfile();
+      applyBoundaryConditions();
+      validateSectionStates();
+    }
 
     // Update outlet stream and result arrays
     updateOutletStream();
@@ -3538,20 +3542,21 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    *
    * @param dt elapsed transient step in seconds
+   * @return true if the section primitive state was relaxed
    */
-  private void relaxHoldupTowardSteadyClosure(double dt) {
+  private boolean relaxHoldupTowardSteadyClosure(double dt) {
     if (sections == null || sections.length == 0 || dt <= 0.0) {
-      return;
+      return false;
     }
     if (outletBCType == BoundaryCondition.CLOSED || inletBCType == BoundaryCondition.CLOSED) {
-      return;
+      return false;
     }
 
     double massFlow =
         inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet ? inletMassFlow
             : getInletStream().getFlowRate("kg/sec");
     if (massFlow <= 0.0) {
-      return;
+      return false;
     }
 
     double[] phaseMassFractions = calculateInletPhaseMassFractions(getInletStream().getFluid());
@@ -3586,6 +3591,7 @@ public class TwoFluidPipe extends Pipeline {
       sec.updateStratifiedGeometry();
       sec.updateConservativeVariables();
     }
+    return true;
   }
 
   /**

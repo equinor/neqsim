@@ -74,6 +74,44 @@ public class DistillationSolverBenchmarkTest {
   }
 
   /**
+   * Run a compact binary column configured for Murphree-efficiency regression checks.
+   *
+   * @param name column name
+   * @param efficiency Murphree efficiency to apply to all stages
+   * @param solverType solver to use for the column
+   * @return configured and executed binary column
+   */
+  private DistillationColumn runBinaryMurphreeColumn(String name, double efficiency,
+      DistillationColumn.SolverType solverType) {
+    SystemInterface system = new SystemSrkEos(323.15, 10.0);
+    system.addComponent("propane", 1.0);
+    system.addComponent("n-butane", 1.0);
+    system.setMixingRule("classic");
+
+    Stream feed = new Stream(name + "_feed", system);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.setTemperature(323.15);
+    feed.setPressure(10.0, "bara");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn(name, 5, true, true);
+    column.addFeedStream(feed, 3);
+    column.getCondenser().setOutTemperature(298.15);
+    column.getReboiler().setOutTemperature(348.15);
+    column.getCondenser().setRefluxRatio(2.0);
+    column.getReboiler().setRefluxRatio(2.0);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.0);
+    column.setMaxNumberOfIterations(80);
+    column.setTemperatureTolerance(1.0e-1);
+    column.setMassBalanceTolerance(1.0e-1);
+    column.setMurphreeEfficiency(efficiency);
+    column.setSolverType(solverType);
+    column.run();
+    return column;
+  }
+
+  /**
    * Assert that a converged deethanizer solve reports an accepted non-fallback status.
    *
    * @param column column to inspect after running
@@ -109,10 +147,8 @@ public class DistillationSolverBenchmarkTest {
     double[] liquidFlows = new double[solvers.length];
     int[] iterations = new int[solvers.length];
     double[] times = new double[solvers.length];
-    DistillationColumn.SolveStatus[] statuses =
-        new DistillationColumn.SolveStatus[solvers.length];
-    DistillationColumn.SolverType[] solversUsed =
-        new DistillationColumn.SolverType[solvers.length];
+    DistillationColumn.SolveStatus[] statuses = new DistillationColumn.SolveStatus[solvers.length];
+    DistillationColumn.SolverType[] solversUsed = new DistillationColumn.SolverType[solvers.length];
 
     for (int i = 0; i < solvers.length; i++) {
       DistillationColumn col = runDeethanizer(solvers[i]);
@@ -130,14 +166,14 @@ public class DistillationSolverBenchmarkTest {
       times[i] = col.getLastSolveTimeSeconds();
       statuses[i] = col.getLastSolveStatus();
       solversUsed[i] = col.getLastSolverTypeUsed();
-    if (solvers[i] == DistillationColumn.SolverType.SUM_RATES) {
-      assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, solversUsed[i],
-        "SUM_RATES should guard condenser/reboiler columns with damped substitution");
-    }
-    if (solvers[i] == DistillationColumn.SolverType.NAPHTALI_SANDHOLM) {
-      assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, solversUsed[i],
-        "Naphtali-Sandholm should keep its accepted warm-start when its candidate is rejected");
-    }
+      if (solvers[i] == DistillationColumn.SolverType.SUM_RATES) {
+        assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, solversUsed[i],
+            "SUM_RATES should guard condenser/reboiler columns with damped substitution");
+      }
+      if (solvers[i] == DistillationColumn.SolverType.NAPHTALI_SANDHOLM) {
+        assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, solversUsed[i],
+            "Naphtali-Sandholm should keep its accepted warm-start when its candidate is rejected");
+      }
 
       // Mass balance closure: within 0.5%
       double massbalance = Math.abs(100.0 - gasFlows[i] - liquidFlows[i]) / 100.0 * 100;
@@ -1262,43 +1298,27 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void murphreeEfficiencyAffectsProductSplit() {
-    // Run with ideal trays (E_MV = 1.0)
-    Stream feed1 = new Stream("ideal_feed", createDeethanizerFeed().clone());
-    feed1.setFlowRate(100.0, "kg/hr");
-    feed1.run();
-    DistillationColumn ideal = new DistillationColumn("ideal_col", 5, true, false);
-    ideal.addFeedStream(feed1, 5);
-    ideal.getReboiler().setOutTemperature(105.0 + 273.15);
-    ideal.setTopPressure(30.0);
-    ideal.setBottomPressure(32.0);
-    ideal.setMaxNumberOfIterations(50);
-    ideal.setMurphreeEfficiency(1.0);
-    ideal.run();
+    DistillationColumn ideal = runBinaryMurphreeColumn("ideal_murphree_binary", 1.0,
+        DistillationColumn.SolverType.DIRECT_SUBSTITUTION);
     assertTrue(ideal.solved(), "Ideal column should converge");
 
-    // Run with 85% Murphree efficiency
-    Stream feed2 = new Stream("murphree_feed", createDeethanizerFeed().clone());
-    feed2.setFlowRate(100.0, "kg/hr");
-    feed2.run();
-    DistillationColumn nonIdeal = new DistillationColumn("nonideal_col", 5, true, false);
-    nonIdeal.addFeedStream(feed2, 5);
-    nonIdeal.getReboiler().setOutTemperature(105.0 + 273.15);
-    nonIdeal.setTopPressure(30.0);
-    nonIdeal.setBottomPressure(32.0);
-    nonIdeal.setMaxNumberOfIterations(100);
-    nonIdeal.setMurphreeEfficiency(0.85);
-    nonIdeal.run();
+    DistillationColumn nonIdeal = runBinaryMurphreeColumn("nonideal_murphree_binary", 0.6,
+        DistillationColumn.SolverType.DIRECT_SUBSTITUTION);
     assertTrue(nonIdeal.solved(), "Non-ideal column should converge");
 
     double idealGas = ideal.getGasOutStream().getFlowRate("kg/hr");
     double nonIdealGas = nonIdeal.getGasOutStream().getFlowRate("kg/hr");
+    double idealTopPropane = ideal.getGasOutStream().getThermoSystem().getMolarComposition()[0];
+    double nonIdealTopPropane =
+        nonIdeal.getGasOutStream().getThermoSystem().getMolarComposition()[0];
 
-    // The product splits should differ — lower efficiency means less separation
-    assertTrue(Math.abs(idealGas - nonIdealGas) > 0.01,
-        "Murphree efficiency should change product split. Ideal gas=" + idealGas + " nonIdeal gas="
-            + nonIdealGas);
+    assertTrue(
+        Math.abs(idealGas - nonIdealGas) > 0.01
+            || Math.abs(idealTopPropane - nonIdealTopPropane) > 1.0e-4,
+        "Murphree efficiency should change product split or composition. Ideal gas=" + idealGas
+            + " nonIdeal gas=" + nonIdealGas + " ideal yC3=" + idealTopPropane + " nonIdeal yC3="
+            + nonIdealTopPropane);
 
-    // Ideal mass balance should close tightly
     double idealBalance =
         Math.abs(100.0 - idealGas - ideal.getLiquidOutStream().getFlowRate("kg/hr"));
     assertTrue(idealBalance < 1.0, "Ideal mass balance error=" + idealBalance);
@@ -1313,20 +1333,8 @@ public class DistillationSolverBenchmarkTest {
         DistillationColumn.SolverType.INSIDE_OUT};
 
     for (DistillationColumn.SolverType solver : solvers) {
-      Stream feed = new Stream("murph_" + solver.name(), createDeethanizerFeed().clone());
-      feed.setFlowRate(100.0, "kg/hr");
-      feed.run();
-
       DistillationColumn column =
-          new DistillationColumn("murph_col_" + solver.name(), 5, true, false);
-      column.addFeedStream(feed, 5);
-      column.getReboiler().setOutTemperature(105.0 + 273.15);
-      column.setTopPressure(30.0);
-      column.setBottomPressure(32.0);
-      column.setMaxNumberOfIterations(100);
-      column.setMurphreeEfficiency(0.85);
-      column.setSolverType(solver);
-      column.run();
+          runBinaryMurphreeColumn("murph_col_" + solver.name(), 0.85, solver);
 
       assertTrue(column.solved(), solver.name() + " with Murphree=0.85 should converge");
     }

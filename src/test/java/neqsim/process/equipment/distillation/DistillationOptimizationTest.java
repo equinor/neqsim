@@ -218,6 +218,9 @@ public class DistillationOptimizationTest {
     column.setTemperatureTolerance(1.0e-1);
     column.setMassBalanceTolerance(1.0e-1);
     column.setMaxNumberOfIterations(25);
+    column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
+    column.setMaxTrayOptimizationCandidates(8);
+    column.setMaxTrayOptimizationTimeSeconds(20.0);
 
     DistillationColumnMechanicalDesign design =
         (DistillationColumnMechanicalDesign) column.getMechanicalDesign();
