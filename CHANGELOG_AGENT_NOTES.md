@@ -9,6 +9,42 @@
 
 ---
 
+## 2026-05-27 — Horizon-3 Hydrogen Foundations
+
+### Summary
+Added the first Horizon-3 hydrogen-production foundation utilities: cryogenic
+para/ortho H₂ correction factors and catalyst deactivation activity screening.
+
+### New classes
+- `neqsim.thermo.util.hydrogen.ParaOrthoH2Correction` — rigid-rotor
+  para/ortho partition-function utility for equilibrium para fraction,
+  normal-to-equilibrium conversion heat, equilibrium-vs-frozen Cp correction,
+  bounded thermal-conductivity correction factor and catalyst conversion time
+  screening.
+- `neqsim.process.equipment.reactor.CatalystDeactivationKinetics` — first-order
+  activity decay model for `CatalystBed`, covering sulfur poisoning, chloride
+  poisoning, coking and thermal sintering for nickel reforming, iron-chromium
+  HT-shift, copper-zinc LT-shift and ruthenium ammonia-cracking catalysts.
+
+### Skill and docs
+- `neqsim-hydrogen-production` skill: added Horizon-3 foundation class table,
+  para/ortho correction recipe and catalyst deactivation recipe.
+- `skill-index.json`: added para/ortho hydrogen and catalyst-life keywords.
+- `docs/process/hydrogen_production.md`: added cryogenic spin-isomer and
+  catalyst-deactivation screening sections.
+
+### Tests
+- `ParaOrthoH2CorrectionTest` — equilibrium para-fraction limits, conversion
+  heat, Cp correction, thermal-conductivity factor and catalyst time ranking.
+- `CatalystDeactivationKineticsTest` — catalyst family sensitivity, coking,
+  thermal sintering, dominant mechanism, JSON output and `CatalystBed` activity
+  update.
+
+### Compatibility
+No breaking changes. Existing Leachman, reactor and CatalystBed APIs are unchanged.
+
+---
+
 ## 2026-05-27 — Horizon-1.5 PSA Cascade and Cost Estimate
 
 ### Summary
