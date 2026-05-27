@@ -186,6 +186,7 @@ This documentation is organized into the following sections:
 | **Water Hammer Screening** | [water_hammer_implementation.md](../wiki/water_hammer_implementation.md) | WaterHammerPipe, WaterHammerStudy, MCP runWaterHammer |
 | **Piping Route Builder** | [piping_route_builder.md](piping_route_builder) | PipingRouteBuilder for STID/E3D line-list route hydraulics |
 | **CO2 Well Analysis** | [co2_injection_well_analysis.md](co2_injection_well_analysis) | CO2InjectionWellAnalyzer, ImpurityMonitor, TransientWellbore, CO2FlowCorrections |
+| **Hydrogen Production** | [hydrogen_production.md](hydrogen_production) | PressureSwingAdsorptionBed, Electrolyzer (PEM/Alkaline/SOEC/AEM), ElectrolyzerIVCharacteristic, ElectrolyzerCostEstimate |
 | Looped Networks | [looped_networks.md](equipment/looped_networks) | LoopedPipeNetwork, Hardy Cross solver |
 | Tanks | [tanks.md](equipment/tanks) | Tank, VesselDepressurization |
 | Wells | [wells.md](equipment/wells) | Well equipment |
