@@ -745,6 +745,7 @@ public class TPflash extends Flash {
     }
     rescueSinglePhaseMultiphaseEndpoint();
     rescueSpuriousMultiphaseEndpoint();
+    normalizeActivePhaseFractions();
 
     // Final chemical equilibrium call after all phase reordering
     // This ensures chemical equilibrium is solved on the final phase configuration
@@ -1034,14 +1035,65 @@ public class TPflash extends Flash {
           currentGibbs, referenceSinglePhaseGibbs, referenceSinglePhaseType,
           currentGibbs - referenceSinglePhaseGibbs);
     }
+    collapseToReferenceSinglePhase();
+  }
+
+  /**
+   * Collapses the active phase set to the cached single-phase reference root.
+   *
+   * <p>
+   * The collapse must not call {@code system.init(0)} because that method resets a
+   * {@link neqsim.thermo.system.SystemThermo} phase list to its default two active phases. Instead
+   * the selected active phase is explicitly reset to the overall feed composition and reinitialized
+   * at level 1 so the chosen cubic root is recalculated without reopening a duplicate phase.
+   * </p>
+   */
+  private void collapseToReferenceSinglePhase() {
     system.setNumberOfPhases(1);
     system.setPhaseIndex(0, 0);
     system.setBeta(0, 1.0);
     system.setPhaseType(0, referenceSinglePhaseType);
-    // init(0) recomputes fugacity coefficients for the chosen cubic root at the feed
-    // composition; init(1) finalises mass balance / extensive properties.
-    system.init(0);
+    resetSinglePhaseCompositionToFeed();
+    system.init(1, 0);
     system.init(1);
+  }
+
+  /**
+   * Normalizes active phase fractions before returning the final TPflash state.
+   *
+   * <p>
+   * Late phase-removal and rescue paths can leave the active beta values slightly below or above
+   * unity even when the remaining phase compositions are valid. Normalizing at the final acceptance
+   * point restores phase-fraction closure and reinitializes level 1 properties for the adjusted
+   * phase amounts.
+   * </p>
+   */
+  private void normalizeActivePhaseFractions() {
+    double betaTotal = 0.0;
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      double beta = system.getBeta(phaseIndex);
+      if (!Double.isFinite(beta) || beta < 0.0) {
+        return;
+      }
+      betaTotal += beta;
+    }
+    if (betaTotal <= 0.0 || Math.abs(betaTotal - 1.0) < 1.0e-12) {
+      return;
+    }
+    system.normalizeBeta();
+    system.init(1);
+  }
+
+  /**
+   * Resets phase zero composition to the overall feed composition before a single-phase collapse.
+   */
+  private void resetSinglePhaseCompositionToFeed() {
+    for (int componentIndex = 0; componentIndex < system.getPhase(0)
+        .getNumberOfComponents(); componentIndex++) {
+      system.getPhase(0).getComponent(componentIndex)
+          .setx(system.getPhase(0).getComponent(componentIndex).getz());
+    }
+    system.getPhase(0).normalize();
   }
 
   /** {@inheritDoc} */
