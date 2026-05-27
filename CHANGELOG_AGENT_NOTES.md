@@ -9,7 +9,48 @@
 
 ---
 
-## 2026-05-21 — Agentic ProcessAutomation Extensions
+## 2026-07-04 — Horizon-1 Hydrogen Production Capabilities
+
+### Summary
+
+Added first-pass hydrogen production stack: H₂-tuned pressure-swing adsorption,
+electrolyzer technology selector with I-V characteristic, electrolyzer cost
+estimate. New skill `neqsim-hydrogen-production` packages the recipes.
+
+### New classes
+
+| Class | Package |
+|---|---|
+| `PressureSwingAdsorptionBed` | `neqsim.process.equipment.adsorber` |
+| `ElectrolyzerTechnology` (enum) | `neqsim.process.equipment.electrolyzer` |
+| `ElectrolyzerIVCharacteristic` | `neqsim.process.equipment.electrolyzer` |
+| `ElectrolyzerCostEstimate` | `neqsim.process.costestimation.electrolyzer` |
+
+### Modified classes
+
+- `Electrolyzer` — added `setTechnology`, `setIVCharacteristic`, `setCurrentDensity`,
+  `setFaradaicEfficiency`, `getStackPower`,
+  `getSpecificEnergyConsumption_kWh_per_kg_H2`. Backward-compatible: default
+  cell voltage 1.23 V and η_F = 1.0 preserve the legacy `testElectrolyzer`
+  energy-duty assertion.
+
+### Skill
+
+- New: `.github/skills/neqsim-hydrogen-production/SKILL.md` with SMR+WGS+PSA
+  recipe, electrolyzer technology selector, I-V model, and CAPEX recipe.
+  Indexed under `psa`, `electrolyzer`, `green hydrogen`, `blue hydrogen`, etc.
+
+### Deferred to Horizon 1.5
+
+- `PSACascade` (multi-bed Skarstrom) and `PSACostEstimate` — to keep this PR scoped.
+
+### Migration
+
+None. All existing tests pass unchanged.
+
+---
+
+
 
 ### Summary
 
