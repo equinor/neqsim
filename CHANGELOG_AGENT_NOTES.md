@@ -9,7 +9,125 @@
 
 ---
 
-## 2026-05-21 — Agentic ProcessAutomation Extensions
+## 2026-05-27 — Horizon-3 Hydrogen Foundations
+
+### Summary
+Added the first Horizon-3 hydrogen-production foundation utilities: cryogenic
+para/ortho H₂ correction factors and catalyst deactivation activity screening.
+
+### New classes
+- `neqsim.thermo.util.hydrogen.ParaOrthoH2Correction` — rigid-rotor
+  para/ortho partition-function utility for equilibrium para fraction,
+  normal-to-equilibrium conversion heat, equilibrium-vs-frozen Cp correction,
+  bounded thermal-conductivity correction factor and catalyst conversion time
+  screening.
+- `neqsim.process.equipment.reactor.CatalystDeactivationKinetics` — first-order
+  activity decay model for `CatalystBed`, covering sulfur poisoning, chloride
+  poisoning, coking and thermal sintering for nickel reforming, iron-chromium
+  HT-shift, copper-zinc LT-shift and ruthenium ammonia-cracking catalysts.
+
+### Skill and docs
+- `neqsim-hydrogen-production` skill: added Horizon-3 foundation class table,
+  para/ortho correction recipe and catalyst deactivation recipe.
+- `skill-index.json`: added para/ortho hydrogen and catalyst-life keywords.
+- `docs/process/hydrogen_production.md`: added cryogenic spin-isomer and
+  catalyst-deactivation screening sections.
+
+### Tests
+- `ParaOrthoH2CorrectionTest` — equilibrium para-fraction limits, conversion
+  heat, Cp correction, thermal-conductivity factor and catalyst time ranking.
+- `CatalystDeactivationKineticsTest` — catalyst family sensitivity, coking,
+  thermal sintering, dominant mechanism, JSON output and `CatalystBed` activity
+  update.
+
+### Compatibility
+No breaking changes. Existing Leachman, reactor and CatalystBed APIs are unchanged.
+
+---
+
+## 2026-05-27 — Horizon-1.5 PSA Cascade and Cost Estimate
+
+### Summary
+Multi-bed PSA orchestration and CAPEX correlation added on top of the H1
+`PressureSwingAdsorptionBed`. Closes the H1.5 deferral list from the H1 PR.
+
+### New classes
+- `neqsim.process.equipment.adsorber.PSACascade` — orchestrates 2/4/6/8/10/12
+  beds in a Skarstrom cycle. Inner `CascadeConfiguration` enum encodes the
+  pressure-equalisation count and the recovery uplift over a single bed
+  (0.00 / 0.05 / 0.08 / 0.10 / 0.11 / 0.12). Total cascade recovery is capped at
+  0.93 (industrial benchmark for H₂ PSA on shifted syngas).
+- `neqsim.process.costestimation.adsorber.PSACostEstimate` — per-bed vessel
+  (USD 250 000 reference @ 2 m × 4 m TL-TL, scale exponent 0.6) + valve skid
+  (USD 60 000/bed) + sorbent inventory (USD 4/kg AC, USD 10/kg Zeolite 13X) ×
+  CEPCI ratio (2024 ref = 800). `setIncludeBalanceOfPlant(false)` strips ~25 %
+  for stack-only quotes. Convenience constructor `PSACostEstimate(PSACascade)`
+  derives bed count, sorbent, and sorbent mass from the template bed geometry.
+
+### Skill and docs
+- `neqsim-hydrogen-production` skill: PSACascade/PSACostEstimate promoted from
+  the Horizon-2/3 deferred list into a new **Core Classes (Horizon 1.5)** table.
+  Added Recipe 4 (multi-bed PSA cascade) and Recipe 5 (PSA CAPEX). Bumped
+  `last_verified` to 2026-05-27.
+- `skill-index.json`: added keys `psa cascade`, `multi-bed psa`,
+  `skarstrom cycle`, `psa cost`, `psa capex` → `neqsim-hydrogen-production`.
+- `docs/process/hydrogen_production.md`: extended with PSA cascade and CAPEX
+  sections (see PR description).
+
+### Tests
+- `PSACascadeTest` — 9 assertions: cascade uplift, bed-count monotonicity,
+  0.93 cap, tail-gas mass balance, sorbent propagation, invalid-input rejection.
+- `PSACostEstimateTest` — 7 assertions: bed-count linearity, sorbent ordering
+  (Zeolite > AC), BoP toggle (~0.75× ratio), cascade-derived constructor, order
+  of magnitude (USD 1–10 M for 4 beds × 20 t AC).
+
+### Compatibility
+No breaking changes. H1 `PressureSwingAdsorptionBed` API unchanged.
+
+---
+
+## 2026-07-04 — Horizon-1 Hydrogen Production Capabilities
+
+### Summary
+
+Added first-pass hydrogen production stack: H₂-tuned pressure-swing adsorption,
+electrolyzer technology selector with I-V characteristic, electrolyzer cost
+estimate. New skill `neqsim-hydrogen-production` packages the recipes.
+
+### New classes
+
+| Class | Package |
+|---|---|
+| `PressureSwingAdsorptionBed` | `neqsim.process.equipment.adsorber` |
+| `ElectrolyzerTechnology` (enum) | `neqsim.process.equipment.electrolyzer` |
+| `ElectrolyzerIVCharacteristic` | `neqsim.process.equipment.electrolyzer` |
+| `ElectrolyzerCostEstimate` | `neqsim.process.costestimation.electrolyzer` |
+
+### Modified classes
+
+- `Electrolyzer` — added `setTechnology`, `setIVCharacteristic`, `setCurrentDensity`,
+  `setFaradaicEfficiency`, `getStackPower`,
+  `getSpecificEnergyConsumption_kWh_per_kg_H2`. Backward-compatible: default
+  cell voltage 1.23 V and η_F = 1.0 preserve the legacy `testElectrolyzer`
+  energy-duty assertion.
+
+### Skill
+
+- New: `.github/skills/neqsim-hydrogen-production/SKILL.md` with SMR+WGS+PSA
+  recipe, electrolyzer technology selector, I-V model, and CAPEX recipe.
+  Indexed under `psa`, `electrolyzer`, `green hydrogen`, `blue hydrogen`, etc.
+
+### Deferred to Horizon 1.5
+
+- `PSACascade` (multi-bed Skarstrom) and `PSACostEstimate` — to keep this PR scoped.
+
+### Migration
+
+None. All existing tests pass unchanged.
+
+---
+
+
 
 ### Summary
 
