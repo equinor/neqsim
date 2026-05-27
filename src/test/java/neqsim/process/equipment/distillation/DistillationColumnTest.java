@@ -279,6 +279,11 @@ public class DistillationColumnTest {
     debutanizer.setMaxNumberOfIterations(120);
     debutanizer.run();
 
+    String diagnostics = debutanizer.getConvergenceDiagnostics();
+    assertFalse(debutanizer.wasFullFractionatorFastPathApplied(), diagnostics);
+    assertEquals(9, debutanizer.getFeedTrayNumber(valve.getOutletStream()),
+        "Explicit feed tray assignments must be preserved by default");
+
     double feedMass = valve.getOutletStream().getFlowRate("kg/hr");
     assertTrue(feedMass < feed.getFlowRate("kg/hr"),
         "Debutanizer feed should not exceed the original feed mass");
@@ -818,6 +823,8 @@ public class DistillationColumnTest {
     distillationColumn.addFeedStream(stream1, 1);
     distillationColumn.addFeedStream(stripgas, 1);
     distillationColumn.getReboiler().setOutTemperature(273.15 + 140.0);
+    distillationColumn.getTray(1).setOutTemperature(273.15 + 100.0);
+    distillationColumn.getTray(2).setOutTemperature(273.15 + 75.0);
     distillationColumn.getCondenser().setOutTemperature(273.15 + 35.0);
     distillationColumn.setTopPressure(1.021);
     distillationColumn.setBottomPressure(1.021);
@@ -825,6 +832,7 @@ public class DistillationColumnTest {
     distillationColumn.setTemperatureTolerance(2.0e-2);
     distillationColumn.setMassBalanceTolerance(1.0e-1);
     distillationColumn.setEnthalpyBalanceTolerance(1.0e-1);
+    distillationColumn.setMaxNumberOfIterations(12);
 
     distillationColumn.run();
 

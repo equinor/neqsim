@@ -434,29 +434,105 @@ class TPFlashTest {
   }
 
   /**
-   * Verifies the known isolated cells from the 200 by 200 methane/n-heptane PR phase map converge
-   * to the lower-Gibbs gas-oil split from a cold start.
+   * Verifies known isolated cells from the 200 by 200 methane/n-heptane PR phase map converge to a
+   * stable phase state from a cold start. Low-temperature cells should collapse to the lower-Gibbs
+   * single OIL root, while high-temperature cells remain true GAS/OIL splits.
    */
   @Test
-  void testMethaneHeptaneKnownPhaseMapSpotsResolveToGasOil() {
-    double[][] spotConditions =
-        new double[][] {{78.5, 194.0}, {81.0, 194.0}, {186.0, 424.0}, {191.0, 418.0}};
+  void testMethaneHeptaneKnownPhaseMapSpotsResolveToStablePhaseState() {
+    double[][] singleOilConditions = new double[][] {{78.5, 194.0}, {81.0, 194.0}};
+    double[][] gasOilConditions = new double[][] {{186.0, 424.0}, {191.0, 418.0}};
 
-    for (int spotIndex = 0; spotIndex < spotConditions.length; spotIndex++) {
+    for (int spotIndex = 0; spotIndex < singleOilConditions.length; spotIndex++) {
       SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
       ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
-      fluid.setPressure(spotConditions[spotIndex][0], "bara");
-      fluid.setTemperature(spotConditions[spotIndex][1], "K");
+      fluid.setPressure(singleOilConditions[spotIndex][0], "bara");
+      fluid.setTemperature(singleOilConditions[spotIndex][1], "K");
+
+      operations.TPflash();
+
+      assertEquals(1, fluid.getNumberOfPhases(),
+          "Known methane/nC7 low-temperature spot should collapse to one phase at P="
+              + singleOilConditions[spotIndex][0] + " bara, T=" + singleOilConditions[spotIndex][1]
+              + " K");
+      assertTrue(fluid.hasPhaseType(PhaseType.OIL),
+          "Known methane/nC7 low-temperature spot should be the lower-Gibbs oil root");
+      assertEquals(1.0, phaseFractionSum(fluid), 1.0e-10,
+          "Collapsed methane/nC7 low-temperature spot should have closed phase fractions");
+    }
+
+    for (int spotIndex = 0; spotIndex < gasOilConditions.length; spotIndex++) {
+      SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
+      ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+      fluid.setPressure(gasOilConditions[spotIndex][0], "bara");
+      fluid.setTemperature(gasOilConditions[spotIndex][1], "K");
 
       operations.TPflash();
 
       assertEquals(2, fluid.getNumberOfPhases(),
           "Known methane/nC7 phase-map spot should resolve to two phases at P="
-              + spotConditions[spotIndex][0] + " bara, T=" + spotConditions[spotIndex][1] + " K");
+              + gasOilConditions[spotIndex][0] + " bara, T=" + gasOilConditions[spotIndex][1]
+              + " K");
       assertTrue(fluid.hasPhaseType(PhaseType.GAS),
           "Known methane/nC7 phase-map spot should contain a gas phase");
       assertTrue(fluid.hasPhaseType(PhaseType.OIL),
           "Known methane/nC7 phase-map spot should contain an oil phase");
+      assertEquals(1.0, phaseFractionSum(fluid), 1.0e-10,
+          "Known methane/nC7 gas-oil spot should have closed phase fractions");
+    }
+  }
+
+  /**
+   * Regression test for the v3.11.0 low-density holes caused by an incomplete single-phase
+   * collapse. The failed collapse leaked two active feed-composition phases with beta values of one
+   * each, so the phase count looked unchanged while the reported density became gas-like.
+   */
+  @Test
+  void testMethaneHeptaneSpuriousCollapseLeavesClosedPhaseSet() {
+    double[][] collapsedCells =
+        new double[][] {{47.5, 180.0}, {55.0, 188.0}, {70.0, 192.0}, {78.5, 194.0}, {81.0, 194.0}};
+
+    for (int i = 0; i < collapsedCells.length; i++) {
+      SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
+      ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+      fluid.setPressure(collapsedCells[i][0], "bara");
+      fluid.setTemperature(collapsedCells[i][1], "K");
+
+      operations.TPflash();
+      fluid.initPhysicalProperties("density");
+
+      assertEquals(1.0, phaseFractionSum(fluid), 1.0e-10, "Phase fractions should close at P="
+          + collapsedCells[i][0] + " bara, T=" + collapsedCells[i][1] + " K");
+      assertFalse(hasDuplicateActivePhaseCompositions(fluid),
+          "Duplicate active phases at feed composition should be removed at P="
+              + collapsedCells[i][0] + " bara, T=" + collapsedCells[i][1] + " K");
+      assertTrue(fluid.getDensity("kg/m3") > 400.0,
+          "Collapsed methane/nC7 cell should not be a gas-like density hole at P="
+              + collapsedCells[i][0] + " bara, T=" + collapsedCells[i][1] + " K");
+    }
+  }
+
+  /**
+   * Regression test for final TPflash phase-fraction closure after late phase cleanup.
+   */
+  @Test
+  void testMethaneHeptanePhaseMapPhaseFractionsRemainClosed() {
+    double[][] nonClosedCells =
+        new double[][] {{20.0, 166.0}, {87.5, 196.0}, {105.0, 198.0}, {150.0, 450.0}};
+
+    for (int i = 0; i < nonClosedCells.length; i++) {
+      SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
+      ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+      fluid.setPressure(nonClosedCells[i][0], "bara");
+      fluid.setTemperature(nonClosedCells[i][1], "K");
+
+      operations.TPflash();
+
+      assertEquals(1.0, phaseFractionSum(fluid), 1.0e-10, "Phase fractions should close at P="
+          + nonClosedCells[i][0] + " bara, T=" + nonClosedCells[i][1] + " K");
+      assertFalse(hasDuplicateActivePhaseCompositions(fluid),
+          "Closed phase set should not contain duplicate active compositions at P="
+              + nonClosedCells[i][0] + " bara, T=" + nonClosedCells[i][1] + " K");
     }
   }
 
@@ -564,6 +640,45 @@ class TPFlashTest {
       }
     }
     return signature;
+  }
+
+  /**
+   * Calculates the sum of active phase fractions.
+   *
+   * @param fluid thermodynamic system after a flash calculation
+   * @return sum of beta values for active phases
+   */
+  private double phaseFractionSum(SystemInterface fluid) {
+    double phaseFractionSum = 0.0;
+    for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
+      phaseFractionSum += fluid.getBeta(phaseIndex);
+    }
+    return phaseFractionSum;
+  }
+
+  /**
+   * Checks for duplicate active phases with nearly identical compositions.
+   *
+   * @param fluid thermodynamic system after a flash calculation
+   * @return true when any active phase pair has the same composition vector
+   */
+  private boolean hasDuplicateActivePhaseCompositions(SystemInterface fluid) {
+    for (int firstPhase = 0; firstPhase < fluid.getNumberOfPhases(); firstPhase++) {
+      for (int secondPhase = firstPhase + 1; secondPhase < fluid
+          .getNumberOfPhases(); secondPhase++) {
+        double compositionDifference = 0.0;
+        for (int componentIndex = 0; componentIndex < fluid.getPhase(0)
+            .getNumberOfComponents(); componentIndex++) {
+          compositionDifference +=
+              Math.abs(fluid.getPhase(firstPhase).getComponent(componentIndex).getx()
+                  - fluid.getPhase(secondPhase).getComponent(componentIndex).getx());
+        }
+        if (compositionDifference < 1.0e-6) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**

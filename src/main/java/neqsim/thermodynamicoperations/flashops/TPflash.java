@@ -745,6 +745,7 @@ public class TPflash extends Flash {
     }
     rescueSinglePhaseMultiphaseEndpoint();
     rescueSpuriousMultiphaseEndpoint();
+    normalizeActivePhaseFractions();
 
     // Final chemical equilibrium call after all phase reordering
     // This ensures chemical equilibrium is solved on the final phase configuration
@@ -816,31 +817,36 @@ public class TPflash extends Flash {
    * @return true when the result is a single hydrocarbon phase from an explicit multiphase flash
    */
   private boolean shouldRunMultiphaseEndpointRescue() {
-    if (MULTIPHASE_RESCUE_ACTIVE.get().booleanValue() || !system.doMultiPhaseCheck()
-        || system.getNumberOfPhases() != 1 || system.getPhase(0).getNumberOfComponents() <= 1
-        || system.isChemicalSystem() || system.hasIons()) {
+    if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() != 1 || system.isChemicalSystem()
+        || MULTIPHASE_RESCUE_ACTIVE.get().booleanValue()) {
       return false;
     }
-    PhaseType phaseType = system.getPhase(0).getType();
+    neqsim.thermo.phase.PhaseInterface phase = system.getPhase(0);
+    int numberOfComponents = phase.getNumberOfComponents();
+    if (numberOfComponents <= 1) {
+      return false;
+    }
+    PhaseType phaseType = phase.getType();
     if (!(phaseType == PhaseType.GAS || phaseType == PhaseType.OIL
         || phaseType == PhaseType.LIQUID)) {
       return false;
     }
     boolean hasHydrocarbon = false;
-    for (int componentIndex = 0; componentIndex < system.getPhase(0)
-        .getNumberOfComponents(); componentIndex++) {
-      if (system.getPhase(0).getComponent(componentIndex).getz() < 1.0e-50) {
+    for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = phase.getComponent(componentIndex);
+      if (component.getz() < 1.0e-50) {
         continue;
       }
-      if ("water"
-          .equalsIgnoreCase(system.getPhase(0).getComponent(componentIndex).getComponentName())) {
+      if (component.getIonicCharge() != 0 || component.isIsIon()) {
         return false;
       }
-      if (!system.getPhase(0).getComponent(componentIndex).isHydrocarbon()
-          && !system.getPhase(0).getComponent(componentIndex).isInert()) {
+      if ("water".equalsIgnoreCase(component.getComponentName())) {
         return false;
       }
-      if (system.getPhase(0).getComponent(componentIndex).isHydrocarbon()) {
+      if (!component.isHydrocarbon() && !component.isInert()) {
+        return false;
+      }
+      if (component.isHydrocarbon()) {
         hasHydrocarbon = true;
       }
     }
@@ -857,13 +863,15 @@ public class TPflash extends Flash {
     double sumZK = 0.0;
     double sumZOverK = 0.0;
     double maxAbsLogK = 0.0;
-    for (int componentIndex = 0; componentIndex < system.getPhase(0)
-        .getNumberOfComponents(); componentIndex++) {
-      double z = system.getPhase(0).getComponent(componentIndex).getz();
+    neqsim.thermo.phase.PhaseInterface phase = system.getPhase(0);
+    int numberOfComponents = phase.getNumberOfComponents();
+    for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = phase.getComponent(componentIndex);
+      double z = component.getz();
       if (z < 1.0e-50) {
         continue;
       }
-      double kValue = system.getPhase(0).getComponent(componentIndex).getK();
+      double kValue = component.getK();
       if (kValue <= 0.0 || Double.isNaN(kValue) || Double.isInfinite(kValue)) {
         return true;
       }
@@ -1034,14 +1042,88 @@ public class TPflash extends Flash {
           currentGibbs, referenceSinglePhaseGibbs, referenceSinglePhaseType,
           currentGibbs - referenceSinglePhaseGibbs);
     }
+    collapseToReferenceSinglePhase();
+  }
+
+  /**
+   * Collapses the active phase set to the cached single-phase reference root.
+   *
+   * <p>
+   * The collapse must not call {@code system.init(0)} because that method resets a
+   * {@link neqsim.thermo.system.SystemThermo} phase list to its default two active phases. Instead
+   * the selected active phase is explicitly reset to the overall feed composition and reinitialized
+   * at level 1 so the chosen cubic root is recalculated without reopening a duplicate phase.
+   * </p>
+   */
+  private void collapseToReferenceSinglePhase() {
     system.setNumberOfPhases(1);
     system.setPhaseIndex(0, 0);
     system.setBeta(0, 1.0);
     system.setPhaseType(0, referenceSinglePhaseType);
-    // init(0) recomputes fugacity coefficients for the chosen cubic root at the feed
-    // composition; init(1) finalises mass balance / extensive properties.
-    system.init(0);
+    resetSinglePhaseCompositionToFeed();
+    system.init(1, 0);
+  }
+
+  /**
+   * Normalizes active phase fractions before returning the final TPflash state.
+   *
+   * <p>
+   * Late phase-removal and rescue paths can leave the active beta values slightly below or above
+   * unity even when the remaining phase compositions are valid. Normalizing at the final acceptance
+   * point restores phase-fraction closure and reinitializes level 1 properties for the adjusted
+   * phase amounts.
+   * </p>
+   */
+  private void normalizeActivePhaseFractions() {
+    int numberOfPhases = system.getNumberOfPhases();
+    if (numberOfPhases == 1) {
+      double beta = system.getBeta(0);
+      if (Double.isFinite(beta) && beta > 0.0 && Math.abs(beta - 1.0) >= 1.0e-12) {
+        system.normalizeBeta();
+        system.init(1);
+      }
+      return;
+    }
+    if (numberOfPhases == 2) {
+      double beta0 = system.getBeta(0);
+      double beta1 = system.getBeta(1);
+      if (!Double.isFinite(beta0) || !Double.isFinite(beta1) || beta0 < 0.0 || beta1 < 0.0) {
+        return;
+      }
+      double betaTotal = beta0 + beta1;
+      if (betaTotal <= 0.0 || Math.abs(betaTotal - 1.0) < 1.0e-12) {
+        return;
+      }
+      system.normalizeBeta();
+      system.init(1);
+      return;
+    }
+    double betaTotal = 0.0;
+    for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
+      double beta = system.getBeta(phaseIndex);
+      if (!Double.isFinite(beta) || beta < 0.0) {
+        return;
+      }
+      betaTotal += beta;
+    }
+    if (betaTotal <= 0.0 || Math.abs(betaTotal - 1.0) < 1.0e-12) {
+      return;
+    }
+    system.normalizeBeta();
     system.init(1);
+  }
+
+  /**
+   * Resets phase zero composition to the overall feed composition before a single-phase collapse.
+   */
+  private void resetSinglePhaseCompositionToFeed() {
+    neqsim.thermo.phase.PhaseInterface phase = system.getPhase(0);
+    int numberOfComponents = phase.getNumberOfComponents();
+    for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = phase.getComponent(componentIndex);
+      component.setx(component.getz());
+    }
+    phase.normalize();
   }
 
   /** {@inheritDoc} */
