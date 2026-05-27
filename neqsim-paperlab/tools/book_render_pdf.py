@@ -701,14 +701,23 @@ def render_book_pdf(book_dir, chapter_filter=None):
     # pages around the manuscript body.
     _COVER_FRONT_CANDIDATES = (
         "cover_front.png", "cover_front.jpg", "cover_front.jpeg",
+      "cover_front.svg",
         "front_cover.png", "front_cover.jpg", "front_cover.jpeg",
+      "front_cover.svg",
         "front page.png", "front page.jpg", "front page.jpeg",
+      "front page.svg",
         "frontpage.png", "frontpage.jpg",
+      "frontpage.svg",
     )
     _COVER_BACK_CANDIDATES = (
         "cover_back.png", "cover_back.jpg", "cover_back.jpeg",
+      "cover_back.svg",
         "back_cover.png", "back_cover.jpg", "back_cover.jpeg",
+      "back_cover.svg",
         "back page.png", "back page.jpg",
+      "back page.svg",
+      "backpage.png", "backpage.jpg", "backpage.jpeg",
+      "backpage.svg",
     )
     front_cover_typst = ""
     back_cover_typst = ""
