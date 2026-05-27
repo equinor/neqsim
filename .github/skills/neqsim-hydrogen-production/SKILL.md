@@ -1,6 +1,6 @@
 ---
 name: neqsim-hydrogen-production
-description: "Hydrogen production routes (SMR/ATR, electrolysis, ammonia cracking) with NeqSim. USE WHEN: modeling pressure-swing adsorption (PSA) purification of syngas, water electrolyzers (PEM/Alkaline/SOEC/AEM), stack I-V curves, hydrogen plant cost estimation, or blue/green H2 plant flowsheets. Covers PressureSwingAdsorptionBed, Electrolyzer with technology-specific defaults, ElectrolyzerIVCharacteristic (Tafel + ohmic), and ElectrolyzerCostEstimate."
+description: "Hydrogen production routes (SMR/ATR, electrolysis, ammonia cracking) with NeqSim. USE WHEN: modeling pressure-swing adsorption (PSA) purification of syngas, water electrolyzers (PEM/Alkaline/SOEC/AEM), stack I-V curves, hydrogen plant cost estimation, para/ortho hydrogen conversion, catalyst deactivation, or blue/green H2 plant flowsheets. Covers PressureSwingAdsorptionBed, PSACascade, Electrolyzer, ParaOrthoH2Correction, CatalystDeactivationKinetics, and cost estimates."
 last_verified: "2026-05-27"
 ---
 
@@ -19,6 +19,8 @@ PSA purification (blue H2) and water electrolysis (green/pink H2). Companion to
 - Stack voltage modeling from current density (I-V curves)
 - Specific energy consumption (kWh/kg H₂)
 - Hydrogen plant CAPEX estimation
+- Cryogenic para/ortho H₂ conversion screening
+- Catalyst activity decay for SMR/WGS/ammonia cracking studies
 - Blue vs green H₂ techno-economic comparison
 
 ## Applicable Standards
@@ -51,6 +53,13 @@ PSA purification (blue H2) and water electrolysis (green/pink H2). Companion to
 |---|---|---|
 | `PSACascade` | `neqsim.process.equipment.adsorber` | Multi-bed Skarstrom cascade (2/4/6/8/10/12 beds) with recovery uplift from pressure equalisation |
 | `PSACostEstimate` | `neqsim.process.costestimation.adsorber` | Per-bed vessel + valve skid + sorbent inventory × CEPCI |
+
+## Core Classes (Horizon 3 foundations)
+
+| Class | Package | Purpose |
+|---|---|---|
+| `ParaOrthoH2Correction` | `neqsim.thermo.util.hydrogen` | Equilibrium para fraction, normal-to-equilibrium heat release, Cp correction, thermal-conductivity factor, conversion time |
+| `CatalystDeactivationKinetics` | `neqsim.process.equipment.reactor` | First-order activity decay for sulfur/chloride poisoning, coking, and thermal sintering |
 
 ## Recipe 1 — Blue H₂ (SMR + WGS + PSA)
 
@@ -168,6 +177,44 @@ double usd = cost.getPurchasedEquipmentCost();
 - Balance-of-plant strip (`setIncludeBalanceOfPlant(false)`) removes ~25 % for vessel-only quotes.
 - CEPCI 2024 = 800 reference; multiply by `CostEstimationCalculator.getCurrentCepci()/800`.
 
+## Recipe 6 — Para/ortho H₂ correction for cryogenic screening
+
+```java
+double para20K = ParaOrthoH2Correction.getEquilibriumParaFraction(20.0);
+double heatJPerKg = ParaOrthoH2Correction.getNormalToEquilibriumHeatJPerKg(20.0);
+double cpCorrection = ParaOrthoH2Correction.getCpCorrectionJPerKgK(40.0);
+double conductivityFactor = ParaOrthoH2Correction.getThermalConductivityCorrectionFactor(20.0);
+double tauSeconds = ParaOrthoH2Correction.estimateEquilibrationTimeSeconds(
+    77.0, ParaOrthoH2Correction.ConversionCatalyst.HYDROUS_FERRIC_OXIDE);
+```
+
+- Normal hydrogen is 25% para; equilibrium hydrogen approaches >99% para near 20 K.
+- `getNormalToEquilibriumHeatJPerKg(T)` returns positive exothermic heat release.
+- `getCpCorrectionJPerKgK(T)` is equilibrium minus frozen-normal rotational heat capacity.
+- Thermal-conductivity correction factors are bounded screening multipliers for normal-H₂ correlations.
+
+## Recipe 7 — Catalyst deactivation activity factor
+
+```java
+CatalystBed bed = new CatalystBed();
+CatalystDeactivationKinetics kinetics = new CatalystDeactivationKinetics(
+    CatalystDeactivationKinetics.CatalystFamily.NICKEL_REFORMING)
+        .setTemperature(973.15)
+        .setSulfurPpmv(0.05)
+        .setCarbonPotential(0.5)
+        .setSteamToCarbonRatio(2.5)
+        .setOperationHours(8000.0);
+
+double activity = kinetics.applyTo(bed);
+double timeTo80 = kinetics.estimateTimeToActivity(0.80);
+String mechanism = kinetics.getDominantMechanism();
+```
+
+- Families: `NICKEL_REFORMING`, `IRON_CHROMIUM_HT_SHIFT`, `COPPER_ZINC_LT_SHIFT`,
+  `RUTHENIUM_AMMONIA_CRACKING`.
+- Mechanisms: sulfur poisoning, chloride poisoning, coking, and thermal sintering.
+- Use vendor/lab/historian coefficients before detailed run-length guarantees.
+
 ## Recipe 3 — Electrolyzer CAPEX
 
 ```java
@@ -208,6 +255,10 @@ double usd = cost.getPurchasedEquipmentCost();
   predicting >100% LHV efficiency — recheck inputs.
 - **Cost estimate**: requires `mech.calcDesign()` before construction so
   `totalPowerKW > 0`.
+- **Para/ortho scope**: `ParaOrthoH2Correction` is a screening correction, not a
+  complete liquefaction process model.
+- **Catalyst life scope**: `CatalystDeactivationKinetics` default coefficients are
+  order-of-magnitude values. Tune them to vendor or historian data for plant-specific forecasts.
 
 ## Tests for verification
 
@@ -216,6 +267,8 @@ double usd = cost.getPurchasedEquipmentCost();
 | `PressureSwingAdsorptionBedTest` | Defaults, recovery cap, mass balance, composition, sorbent switch |
 | `PSACascadeTest` | Cascade uplift, bed-count monotonicity, 0.93 cap, tail-gas mass balance |
 | `PSACostEstimateTest` | Bed-count linearity, sorbent ordering, BoP toggle, order of magnitude |
+| `ParaOrthoH2CorrectionTest` | Para equilibrium limits, conversion heat, Cp correction, conductivity factor, catalyst time ranking |
+| `CatalystDeactivationKineticsTest` | Catalyst-family sensitivity, coking, sintering, dominant mechanism, CatalystBed activity update |
 | `ElectrolyzerTechnologyTest` | Per-tech default consistency |
 | `ElectrolyzerIVCharacteristicTest` | E_rev vs T, Tafel monotonicity, technology ordering |
 | `ElectrolyzerTest` | Backward compat + η_F + I-V + specific-energy band |
@@ -224,8 +277,8 @@ double usd = cost.getPurchasedEquipmentCost();
 ## Deferred (Horizon 2/3)
 
 - Rate-based amine absorber for CO₂ capture upstream of blue H₂
-- Cryogenic H₂ liquefaction with ortho/para conversion
+- Full cryogenic H₂ liquefaction train with expanders and heat integration
 - Reformer furnace radiation coupling
 - Ammonia cracking kinetics for H₂ delivery from NH₃
 - Hydrogen LCA per production step
-- LOHC, photo-electrolysis, catalyst deactivation
+- LOHC and photo-electrolysis
