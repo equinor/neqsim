@@ -868,5 +868,10 @@
   "blue hydrogen": ["neqsim-hydrogen-production", "neqsim-ccs-hydrogen"],
   "kwh per kg h2": ["neqsim-hydrogen-production"],
   "specific energy electrolyzer": ["neqsim-hydrogen-production"],
-  "electrolyzer capex": ["neqsim-hydrogen-production"]
+  "electrolyzer capex": ["neqsim-hydrogen-production"],
+  "psa cascade": ["neqsim-hydrogen-production"],
+  "multi-bed psa": ["neqsim-hydrogen-production"],
+  "skarstrom cycle": ["neqsim-hydrogen-production"],
+  "psa cost": ["neqsim-hydrogen-production"],
+  "psa capex": ["neqsim-hydrogen-production"]
 }

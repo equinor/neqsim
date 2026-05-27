@@ -1,7 +1,7 @@
 ---
 name: neqsim-hydrogen-production
 description: "Hydrogen production routes (SMR/ATR, electrolysis, ammonia cracking) with NeqSim. USE WHEN: modeling pressure-swing adsorption (PSA) purification of syngas, water electrolyzers (PEM/Alkaline/SOEC/AEM), stack I-V curves, hydrogen plant cost estimation, or blue/green H2 plant flowsheets. Covers PressureSwingAdsorptionBed, Electrolyzer with technology-specific defaults, ElectrolyzerIVCharacteristic (Tafel + ohmic), and ElectrolyzerCostEstimate."
-last_verified: "2026-07-04"
+last_verified: "2026-05-27"
 ---
 
 # Hydrogen Production with NeqSim
@@ -44,6 +44,13 @@ PSA purification (blue H2) and water electrolysis (green/pink H2). Companion to
 | `ElectrolyzerTechnology` | same | Enum PEM / ALKALINE / SOEC / AEM with default voltage, current density, T, P, η_F |
 | `ElectrolyzerIVCharacteristic` | same | Tafel + ohmic voltage model; tech-specific defaults |
 | `ElectrolyzerCostEstimate` | `neqsim.process.costestimation.electrolyzer` | Specific-CAPEX × scale-factor × CEPCI |
+
+## Core Classes (Horizon 1.5)
+
+| Class | Package | Purpose |
+|---|---|---|
+| `PSACascade` | `neqsim.process.equipment.adsorber` | Multi-bed Skarstrom cascade (2/4/6/8/10/12 beds) with recovery uplift from pressure equalisation |
+| `PSACostEstimate` | `neqsim.process.costestimation.adsorber` | Per-bed vessel + valve skid + sorbent inventory × CEPCI |
 
 ## Recipe 1 — Blue H₂ (SMR + WGS + PSA)
 
@@ -119,6 +126,48 @@ Sources: IRENA 2022 Hydrogen Decarbonisation Pathways; Buttler & Spliethoff RSER
 - Tafel slope `A`, exchange current `j0`, ASR `R` are technology defaults
 - Below `j0` the model returns `E_rev` (no spurious negative overpotential)
 
+## Recipe 4 — Multi-bed PSA cascade
+
+```java
+PSACascade cascade = new PSACascade("H2-PSA", koVap);
+cascade.setConfiguration(PSACascade.CascadeConfiguration.BEDS_6);  // 6 beds, 2 PEQ
+cascade.setSorbent(PressureSwingAdsorptionBed.SorbentType.ACTIVATED_CARBON);
+cascade.setPerBedRecoveryTarget(0.82);   // single-bed equilibrium recovery
+cascade.setCycleTime(300.0);             // seconds per bed cycle
+cascade.run();
+
+double purity   = cascade.getH2Purity();        // > 99.9 %
+double recovery = cascade.getH2Recovery();      // single-bed + cascade uplift
+Stream tail     = cascade.getTailGasStream();   // for SMR fuel-gas balance
+```
+
+**Cascade uplift table** (pressure equalisation steps → recovery gain over a single bed):
+
+| Configuration | Beds | Equalisations | Uplift |
+|---|---|---|---|
+| `BEDS_2` | 2 | 0 | +0.00 |
+| `BEDS_4` | 4 | 1 | +0.05 |
+| `BEDS_6` | 6 | 2 | +0.08 |
+| `BEDS_8` | 8 | 3 | +0.10 |
+| `BEDS_10` | 10 | 4 | +0.11 |
+| `BEDS_12` | 12 | 5 | +0.12 |
+
+Total cascade recovery is capped at **0.93** (industrial benchmark for H₂ PSA on shifted syngas).
+
+## Recipe 5 — PSA cascade CAPEX
+
+```java
+PSACostEstimate cost = new PSACostEstimate(cascade);   // derives N_beds, sorbent, mass
+cost.calculateCostEstimate();
+double usd = cost.getPurchasedEquipmentCost();
+```
+
+- Reference per-bed vessel cost: USD 250 000 at 2 m × 4 m TL-TL, scale exponent 0.6.
+- Valve skid: USD 60 000 per bed (manifold + actuators + cycle controller).
+- Sorbent inventory: USD 4/kg AC or USD 10/kg Zeolite 13X.
+- Balance-of-plant strip (`setIncludeBalanceOfPlant(false)`) removes ~25 % for vessel-only quotes.
+- CEPCI 2024 = 800 reference; multiply by `CostEstimationCalculator.getCurrentCepci()/800`.
+
 ## Recipe 3 — Electrolyzer CAPEX
 
 ```java
@@ -165,6 +214,8 @@ double usd = cost.getPurchasedEquipmentCost();
 | Test | Coverage |
 |---|---|
 | `PressureSwingAdsorptionBedTest` | Defaults, recovery cap, mass balance, composition, sorbent switch |
+| `PSACascadeTest` | Cascade uplift, bed-count monotonicity, 0.93 cap, tail-gas mass balance |
+| `PSACostEstimateTest` | Bed-count linearity, sorbent ordering, BoP toggle, order of magnitude |
 | `ElectrolyzerTechnologyTest` | Per-tech default consistency |
 | `ElectrolyzerIVCharacteristicTest` | E_rev vs T, Tafel monotonicity, technology ordering |
 | `ElectrolyzerTest` | Backward compat + η_F + I-V + specific-energy band |
@@ -172,7 +223,6 @@ double usd = cost.getPurchasedEquipmentCost();
 
 ## Deferred (Horizon 2/3)
 
-- PSA cascade with multi-bed cycling (`PSACascade`, `PSACostEstimate`)
 - Rate-based amine absorber for CO₂ capture upstream of blue H₂
 - Cryogenic H₂ liquefaction with ortho/para conversion
 - Reformer furnace radiation coupling
