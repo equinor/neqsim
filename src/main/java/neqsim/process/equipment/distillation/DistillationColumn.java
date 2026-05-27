@@ -505,8 +505,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
   /** Selected solver algorithm. Defaults to direct substitution. */
   private SolverType solverType = SolverType.DIRECT_SUBSTITUTION;
+  /** Whether the caller explicitly selected a solver strategy. */
+  private boolean solverTypeExplicitlySet = false;
+  /**
+   * Whether opt-in fast defaults may be applied for full fractionators using the default solver.
+   */
+  private boolean fullFractionatorFastPathEnabled = false;
   /** Solver strategy that actually completed the latest solve. */
   private transient SolverType lastSolverTypeUsed = SolverType.DIRECT_SUBSTITUTION;
+  /** Whether the latest run applied the opt-in full-fractionator fast path. */
+  private transient boolean lastFullFractionatorFastPathApplied = false;
+  /** Description of the latest opt-in full-fractionator fast-path action. */
+  private transient String lastFullFractionatorFastPathReason = "";
   /** Strict status of the latest solve. */
   private transient SolveStatus lastSolveStatus = SolveStatus.NOT_RUN;
   /** Optional reason explaining why the latest solve fell back or was rejected. */
@@ -1161,19 +1171,37 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   @Override
   public void run(UUID id) {
+    long runStartTime = System.nanoTime();
     lastInternalTrafficGuardReached = false;
     internalTrafficCapActive = false;
     lastSpecificationHomotopyStepCount = 0;
     lastAutoSolverSummary = "";
+    lastFullFractionatorFastPathApplied = false;
+    lastFullFractionatorFastPathReason = "";
     resetMatrixInsideOutDiagnostics();
     assignUnassignedFeeds();
     convergenceHistory = new ArrayList<>();
     applyDirectSpecifications();
+    applyFullFractionatorFastPath();
     if (hasActiveColumnTearVariables()) {
       solveWithColumnTearVariables(id);
+      ensureSolveTimeIncludesElapsedWallTime(runStartTime);
       return;
     }
     solveConfiguredColumn(id);
+    ensureSolveTimeIncludesElapsedWallTime(runStartTime);
+  }
+
+  /**
+   * Ensures the reported solve time covers the complete public run call.
+   *
+   * @param startTime nano time recorded at the start of {@link #run(UUID)}
+   */
+  private void ensureSolveTimeIncludesElapsedWallTime(long startTime) {
+    double elapsedSeconds = (System.nanoTime() - startTime) / 1.0e9;
+    if (Double.isFinite(elapsedSeconds) && elapsedSeconds > lastSolveTimeSeconds) {
+      lastSolveTimeSeconds = elapsedSeconds;
+    }
   }
 
   /**
@@ -1652,9 +1680,107 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return result from the selected column solver
    */
   private ColumnSolveResult solveSelectedSolver(UUID id) {
-    ColumnSolveResult result = ColumnSolverFactory.create(solverType).solve(this, id);
+    SolverType effectiveSolverType = getEffectiveSolverTypeForRun();
+    ColumnSolveResult result = ColumnSolverFactory.create(effectiveSolverType).solve(this, id);
     lastSolverTypeUsed = result.getSolverType();
     return result;
+  }
+
+  /**
+   * Select the solver to use for the current run after guarded default heuristics are applied.
+   *
+   * @return solver strategy to execute for this run
+   */
+  private SolverType getEffectiveSolverTypeForRun() {
+    if (lastFullFractionatorFastPathApplied) {
+      return SolverType.MESH_RESIDUAL;
+    }
+    return solverType;
+  }
+
+  /**
+   * Apply opt-in fast defaults for large low-reflux full fractionators using the legacy default
+   * solver.
+   */
+  private void applyFullFractionatorFastPath() {
+    if (!shouldApplyFullFractionatorFastPath()) {
+      return;
+    }
+    int feedTrayNumber = getSingleApiFeedTrayNumber();
+    if (feedTrayNumber < 0
+        || (!isFeedTrayNearTop(feedTrayNumber) && !isFeedTrayNearBottom(feedTrayNumber))) {
+      return;
+    }
+    int recommendedFeedTrayNumber = getFullFractionatorFastPathFeedTrayNumber();
+    if (recommendedFeedTrayNumber == feedTrayNumber) {
+      return;
+    }
+    List<StreamInterface> movedFeeds = feedStreams.remove(Integer.valueOf(feedTrayNumber));
+    if (movedFeeds == null || movedFeeds.isEmpty()) {
+      return;
+    }
+    feedStreams.computeIfAbsent(Integer.valueOf(recommendedFeedTrayNumber),
+        k -> new ArrayList<StreamInterface>()).addAll(movedFeeds);
+    resetTrayInputsToExternalFeeds();
+    setDoInitializion(true);
+    lastFullFractionatorFastPathApplied = true;
+    lastFullFractionatorFastPathReason =
+        "Opt-in full-fractionator fast path moved the " + "single feed from tray " + feedTrayNumber
+            + " to tray " + recommendedFeedTrayNumber + " and selected MESH_RESIDUAL.";
+  }
+
+  /**
+   * Check whether the opt-in full-fractionator fast path is applicable.
+   *
+   * @return {@code true} when opt-in fast defaults should be applied for this run
+   */
+  private boolean shouldApplyFullFractionatorFastPath() {
+    return fullFractionatorFastPathEnabled && !solverTypeExplicitlySet
+        && solverType == SolverType.DIRECT_SUBSTITUTION && hasCondenser && hasReboiler
+        && numberOfTrays >= 10 && isLowRefluxFullFractionator();
+  }
+
+  /**
+   * Check whether the condenser reflux is in the low-reflux range where direct substitution often
+   * oscillates.
+   *
+   * @return {@code true} when the reflux ratio is low enough to enable the guarded fast path
+   */
+  private boolean isLowRefluxFullFractionator() {
+    double refluxRatio = getCondenser().getRefluxRatio();
+    return Double.isFinite(refluxRatio) && refluxRatio >= 0.0 && refluxRatio <= 0.25;
+  }
+
+  /**
+   * Get the single feed tray from feeds registered through the column API.
+   *
+   * @return the single feed tray number, or {@code -1} when the feed layout is not a simple case
+   */
+  private int getSingleApiFeedTrayNumber() {
+    if (!directExternalFeedStreams.isEmpty() || feedStreams.size() != 1) {
+      return -1;
+    }
+    Map.Entry<Integer, List<StreamInterface>> entry = feedStreams.entrySet().iterator().next();
+    List<StreamInterface> feeds = entry.getValue();
+    if (feeds == null || feeds.size() != 1) {
+      return -1;
+    }
+    return entry.getKey().intValue();
+  }
+
+  /**
+   * Get the default feed tray used by the guarded fast path.
+   *
+   * @return 0-based feed tray near the middle of the allowed feed section
+   */
+  private int getFullFractionatorFastPathFeedTrayNumber() {
+    int firstFeedTray = getFirstFeedTrayCandidate();
+    int lastFeedTray = getLastFeedTrayCandidate();
+    if (firstFeedTray > lastFeedTray) {
+      firstFeedTray = 0;
+      lastFeedTray = numberOfTrays - 1;
+    }
+    return (firstFeedTray + lastFeedTray) / 2;
   }
 
   /**
@@ -2388,9 +2514,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.hasBeenSolvedBefore = candidate.hasBeenSolvedBefore;
     this.lastTotalFeedFlow = candidate.lastTotalFeedFlow;
     this.doInitializion = candidate.doInitializion;
+    this.solverTypeExplicitlySet = candidate.solverTypeExplicitlySet;
+    this.fullFractionatorFastPathEnabled = candidate.fullFractionatorFastPathEnabled;
     this.lastSolverTypeUsed = candidate.lastSolverTypeUsed;
     this.lastSolveStatus = candidate.lastSolveStatus;
     this.lastSolveStatusReason = candidate.lastSolveStatusReason;
+    this.lastFullFractionatorFastPathApplied = candidate.lastFullFractionatorFastPathApplied;
+    this.lastFullFractionatorFastPathReason = candidate.lastFullFractionatorFastPathReason;
     this.lastAutoSolverSummary = candidate.lastAutoSolverSummary;
     this.lastAutoFeasibilityReport = candidate.lastAutoFeasibilityReport;
     this.lastInitializationReport = candidate.lastInitializationReport;
@@ -7245,8 +7375,46 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public void setSolverType(SolverType solverType) {
     this.solverType = solverType == null ? SolverType.DIRECT_SUBSTITUTION : solverType;
+    this.solverTypeExplicitlySet = true;
     this.lastSolverTypeUsed =
         this.solverType == SolverType.AUTO ? SolverType.DIRECT_SUBSTITUTION : this.solverType;
+  }
+
+  /**
+   * Enable or disable the opt-in fast path for large full fractionators that still use the legacy
+   * default direct-substitution solver.
+   *
+   * @param enabled {@code true} to allow automatic feed re-centering and MESH residual selection
+   */
+  public void setFullFractionatorFastPathEnabled(boolean enabled) {
+    this.fullFractionatorFastPathEnabled = enabled;
+  }
+
+  /**
+   * Check whether the opt-in fast path is enabled for legacy-default full fractionators.
+   *
+   * @return {@code true} when automatic feed re-centering and MESH residual selection is enabled
+   */
+  public boolean isFullFractionatorFastPathEnabled() {
+    return fullFractionatorFastPathEnabled;
+  }
+
+  /**
+   * Check whether the latest run applied the opt-in full-fractionator fast path.
+   *
+   * @return {@code true} when the latest run adjusted the full-fractionator setup
+   */
+  public boolean wasFullFractionatorFastPathApplied() {
+    return lastFullFractionatorFastPathApplied;
+  }
+
+  /**
+   * Get the action taken by the opt-in full-fractionator fast path during the latest run.
+   *
+   * @return diagnostic text for the latest fast-path action, or an empty string if none was applied
+   */
+  public String getLastFullFractionatorFastPathReason() {
+    return lastFullFractionatorFastPathReason;
   }
 
   /**
@@ -7833,6 +8001,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     diagnostics.append("  Solve status: ").append(lastSolveStatus).append("\n");
     if (lastSolveStatusReason != null && !lastSolveStatusReason.trim().isEmpty()) {
       diagnostics.append("  Solve status reason: ").append(lastSolveStatusReason).append("\n");
+    }
+    if (lastFullFractionatorFastPathReason != null
+        && !lastFullFractionatorFastPathReason.trim().isEmpty()) {
+      diagnostics.append("  Opt-in full-fractionator fast path: ")
+          .append(lastFullFractionatorFastPathReason).append("\n");
     }
     diagnostics.append("  Trays: ").append(numberOfTrays).append(" total, ")
         .append(getEffectiveStageCount()).append(" equilibrium stages").append("\n");
@@ -10654,6 +10827,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     lastUsedFeedFlashFallback = false;
     lastSolveStatus = SolveStatus.NOT_RUN;
     lastSolveStatusReason = "No solve has been run";
+    lastFullFractionatorFastPathApplied = false;
+    lastFullFractionatorFastPathReason = "";
     lastAutoSolverSummary = "";
     lastAutoFeasibilityReport = "";
     lastInitializationReport = "";

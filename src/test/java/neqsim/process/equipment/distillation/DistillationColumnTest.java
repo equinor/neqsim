@@ -279,6 +279,11 @@ public class DistillationColumnTest {
     debutanizer.setMaxNumberOfIterations(120);
     debutanizer.run();
 
+    String diagnostics = debutanizer.getConvergenceDiagnostics();
+    assertFalse(debutanizer.wasFullFractionatorFastPathApplied(), diagnostics);
+    assertEquals(9, debutanizer.getFeedTrayNumber(valve.getOutletStream()),
+        "Explicit feed tray assignments must be preserved by default");
+
     double feedMass = valve.getOutletStream().getFlowRate("kg/hr");
     assertTrue(feedMass < feed.getFlowRate("kg/hr"),
         "Debutanizer feed should not exceed the original feed mass");
