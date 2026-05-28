@@ -161,6 +161,112 @@ public class SMRHydrogenPlantBuilder extends HydrogenPlantBuilderBase {
   }
 
   /**
+   * Sets the PSA per-bed recovery target.
+   *
+   * @param psaPerBedRecoveryTarget per-bed recovery target in the interval (0, 1]
+   * @return this builder
+   */
+  public SMRHydrogenPlantBuilder setPsaPerBedRecoveryTarget(double psaPerBedRecoveryTarget) {
+    if (!Double.isFinite(psaPerBedRecoveryTarget) || psaPerBedRecoveryTarget <= 0.0
+        || psaPerBedRecoveryTarget > 1.0) {
+      throw new IllegalArgumentException(
+          "psaPerBedRecoveryTarget must be finite and in the interval (0,1]");
+    }
+    this.psaPerBedRecoveryTarget = psaPerBedRecoveryTarget;
+    return this;
+  }
+
+  /**
+   * Gets the configured plant name.
+   *
+   * @return plant name
+   */
+  protected String getPlantName() {
+    return name;
+  }
+
+  /**
+   * Gets methane feed rate.
+   *
+   * @return methane feed in mole/sec
+   */
+  protected double getMethaneFeedMolePerSec() {
+    return methaneFeedMolePerSec;
+  }
+
+  /**
+   * Gets steam-to-carbon ratio.
+   *
+   * @return steam-to-carbon molar ratio
+   */
+  protected double getSteamToCarbonRatio() {
+    return steamToCarbonRatio;
+  }
+
+  /**
+   * Gets feed temperature.
+   *
+   * @return feed temperature in Kelvin
+   */
+  protected double getFeedTemperatureK() {
+    return feedTemperatureK;
+  }
+
+  /**
+   * Gets plant pressure.
+   *
+   * @return pressure in bara
+   */
+  protected double getPressureBara() {
+    return pressureBara;
+  }
+
+  /**
+   * Gets reforming temperature.
+   *
+   * @return reforming temperature in Kelvin
+   */
+  protected double getReformingTemperatureK() {
+    return reformingTemperatureK;
+  }
+
+  /**
+   * Gets methane fuel ratio.
+   *
+   * @return furnace-fuel methane fraction relative to process methane feed
+   */
+  protected double getFuelToFeedMethaneRatio() {
+    return fuelToFeedMethaneRatio;
+  }
+
+  /**
+   * Gets whether PSA purification is included.
+   *
+   * @return true when the builder includes PSA purification
+   */
+  protected boolean isIncludePsa() {
+    return includePsa;
+  }
+
+  /**
+   * Gets PSA cascade configuration.
+   *
+   * @return PSA cascade configuration
+   */
+  protected PSACascade.CascadeConfiguration getPsaConfiguration() {
+    return psaConfiguration;
+  }
+
+  /**
+   * Gets PSA per-bed recovery target.
+   *
+   * @return per-bed recovery target
+   */
+  protected double getPsaPerBedRecoveryTarget() {
+    return psaPerBedRecoveryTarget;
+  }
+
+  /**
    * Builds the process system.
    *
    * @return configured process system

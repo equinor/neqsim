@@ -56,10 +56,18 @@ public class HydrogenPlantBuilderTest extends neqsim.NeqSimTest {
 
   @Test
   public void testBlueHydrogenBuilderExposesCaptureReadiness() {
-    BlueHydrogenPlantBuilder builder = new BlueHydrogenPlantBuilder().setCo2CaptureFraction(0.92);
-    ProcessSystem process = builder.setMethaneFeedMolePerSec(5.0).setIncludePsa(false).build();
+    BlueHydrogenPlantBuilder builder = new BlueHydrogenPlantBuilder().setCo2CaptureFraction(0.92)
+        .setMethaneFeedMolePerSec(5.0).setIncludePsa(true);
+    ProcessSystem process = builder.build();
 
     assertNotNull(process.getUnit("Blue Hydrogen Plant reformer furnace"));
+    assertNotNull(process.getUnit("Blue Hydrogen Plant high temperature shift"));
+    assertNotNull(process.getUnit("Blue Hydrogen Plant CO2 capture"));
+    assertNotNull(process.getUnit("Blue Hydrogen Plant CO2 export compressor"));
+    assertNotNull(process.getUnit("Blue Hydrogen Plant H2 export compressor"));
     assertTrue(builder.getCaptureReadinessSummary().contains("0.92"));
+    process.run();
+    assertTrue(builder.getHydrogenProductMassFlowKgPerHour() > 0.0);
+    assertTrue(builder.getCapturedCo2MassFlowKgPerHour() > 0.0);
   }
 }

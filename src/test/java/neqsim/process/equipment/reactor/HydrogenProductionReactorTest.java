@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.EquipmentFactory;
+import neqsim.process.equipment.splitter.ComponentCaptureUnit;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -64,6 +65,21 @@ public class HydrogenProductionReactorTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  public void testWaterGasShiftReactorConvertsCoAndReportsMetrics() {
+    Stream feed = createShiftFeed("shift feed", 4.0, 8.0, 10.0, 2.0, 623.15, 25.0);
+
+    WaterGasShiftReactor shift = new WaterGasShiftReactor("HT shift", feed);
+    shift.setShiftTemperature(350.0, "C");
+    shift.run();
+
+    assertNotNull(shift.getOutletStream());
+    assertTrue(
+        shift.getCarbonMonoxideConversion() >= 0.0 && shift.getCarbonMonoxideConversion() <= 1.0);
+    assertTrue(shift.getHydrogenMoleFlowGain() > -1.0e-8);
+    assertTrue(shift.toJson().contains("carbonMonoxideConversion"));
+  }
+
+  @Test
   public void testPartialOxidationReactorQuenchAndRefractoryMetrics() {
     Stream feed = createMethaneSteamOxygenFeed("POX feed", 10.0, 0.1, 0.5, 573.15, 30.0);
 
@@ -89,6 +105,38 @@ public class HydrogenProductionReactorTest extends neqsim.NeqSimTest {
     assertTrue(EquipmentFactory.createEquipment("pox", "pox") instanceof PartialOxidationReactor);
     assertTrue(
         EquipmentFactory.createEquipment("quench", "quenchsection") instanceof QuenchSection);
+    assertTrue(EquipmentFactory.createEquipment("shift", "wgs") instanceof WaterGasShiftReactor);
+    assertTrue(
+        EquipmentFactory.createEquipment("capture", "co2capture") instanceof ComponentCaptureUnit);
+  }
+
+  /**
+   * Creates a water-gas shift benchmark feed stream.
+   *
+   * @param name stream name
+   * @param carbonMonoxideMolesPerSec carbon monoxide flow in mole/sec
+   * @param waterMolesPerSec water flow in mole/sec
+   * @param hydrogenMolesPerSec hydrogen flow in mole/sec
+   * @param carbonDioxideMolesPerSec carbon dioxide flow in mole/sec
+   * @param temperatureK temperature in Kelvin
+   * @param pressureBara pressure in bara
+   * @return configured stream
+   */
+  private Stream createShiftFeed(String name, double carbonMonoxideMolesPerSec,
+      double waterMolesPerSec, double hydrogenMolesPerSec, double carbonDioxideMolesPerSec,
+      double temperatureK, double pressureBara) {
+    SystemInterface system = createBaseSystem(temperatureK, pressureBara);
+    system.addComponent("CO", carbonMonoxideMolesPerSec, "mole/sec");
+    system.addComponent("water", waterMolesPerSec, "mole/sec");
+    system.addComponent("hydrogen", hydrogenMolesPerSec, "mole/sec");
+    system.addComponent("CO2", carbonDioxideMolesPerSec, "mole/sec");
+    system.addComponent("methane", 1.0e-20, "mole/sec");
+    system.addComponent("nitrogen", 1.0e-20, "mole/sec");
+    system.addComponent("oxygen", 1.0e-20, "mole/sec");
+    initialize(system);
+    Stream stream = new Stream(name, system);
+    stream.run();
+    return stream;
   }
 
   /**

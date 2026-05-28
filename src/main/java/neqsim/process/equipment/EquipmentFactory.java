@@ -31,6 +31,7 @@ import neqsim.process.equipment.reactor.QuenchSection;
 import neqsim.process.equipment.reactor.ReformerFurnace;
 import neqsim.process.equipment.reactor.SyngasBurnerZone;
 import neqsim.process.equipment.reactor.StirredTankReactor;
+import neqsim.process.equipment.reactor.WaterGasShiftReactor;
 import neqsim.process.equipment.subsea.SubseaPowerCable;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
@@ -44,6 +45,7 @@ import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.separator.GasScrubber;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.splitter.ComponentCaptureUnit;
 import neqsim.process.equipment.splitter.ComponentSplitter;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
@@ -137,6 +139,16 @@ public final class EquipmentFactory {
       case "quenchsection":
       case "syngasquench":
         return createEquipment(name, EquipmentEnum.QuenchSection);
+      case "watergasshiftreactor":
+      case "watergasshift":
+      case "wgsreactor":
+      case "wgs":
+        return createEquipment(name, EquipmentEnum.WaterGasShiftReactor);
+      case "componentcaptureunit":
+      case "componentcapture":
+      case "co2capture":
+      case "h2dryer":
+        return createEquipment(name, EquipmentEnum.ComponentCaptureUnit);
       case "stirredtankreactor":
       case "cstr":
         return createEquipment(name, EquipmentEnum.StirredTankReactor);
@@ -224,6 +236,8 @@ public final class EquipmentFactory {
         return new PartialOxidationReactor(name);
       case QuenchSection:
         return new QuenchSection(name);
+      case WaterGasShiftReactor:
+        return new WaterGasShiftReactor(name);
       case StirredTankReactor:
         return new StirredTankReactor(name);
       case Cooler:
@@ -260,6 +274,8 @@ public final class EquipmentFactory {
         return new Tank(name);
       case ComponentSplitter:
         return new ComponentSplitter(name);
+      case ComponentCaptureUnit:
+        return new ComponentCaptureUnit(name);
       case ReservoirCVDsim:
         throw new IllegalArgumentException(
             "ReservoirCVDsim requires a reservoir fluid. Use createReservoirCVDsim instead.");

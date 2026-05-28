@@ -251,11 +251,12 @@ burner.run();
 ## Hydrogen Production Reactors
 
 The hydrogen-production reactor models build on `GibbsReactor`, `FurnaceBurner`,
-and catalyst screening utilities to provide route-level models for SMR, ATR, and
-POX studies. Use them for concept screening, heat-balance checks, oxygen and
-steam-ratio envelopes, soot/refractory/tube-temperature warnings, and plant
-builder templates. Detailed radiant-box design, burner CFD, vendor tube ratings,
-and rate-based catalyst calibration remain outside this screening layer.
+and catalyst screening utilities to provide route-level models for SMR, ATR,
+POX, and water-gas shift studies. Use them for concept screening, heat-balance
+checks, oxygen and steam-ratio envelopes, soot/refractory/tube-temperature
+warnings, WGS conversion checks, and plant builder templates. Detailed
+radiant-box design, burner CFD, vendor tube ratings, and rate-based catalyst
+calibration remain outside this screening layer.
 
 | Class | Typical use |
 |---|---|
@@ -265,6 +266,7 @@ and rate-based catalyst calibration remain outside this screening layer.
 | `AutothermalReformer` | Integrated ATR model with O₂/C and S/C controls, burner-zone warnings, and catalytic equilibrium |
 | `PartialOxidationReactor` | POX model with O₂/C control, optional steam, refractory warning, fast quench, and H₂/CO output |
 | `QuenchSection` | Standalone rapid syngas cooling and quench-severity screening |
+| `WaterGasShiftReactor` | HT/LT WGS equilibrium wrapper with CO conversion, H2 gain, CO2 formation, heat duty, and WGS ratio reporting |
 
 For full route examples and plant builders, see
 [Hydrogen Production with NeqSim](../hydrogen_production.md).
@@ -303,4 +305,4 @@ enzyme.run();
 - [PFR Implementation Plan](../PLUG_FLOW_REACTOR_IMPLEMENTATION_PLAN.md) — Design decisions and commercial comparison
 - [Equipment Index](index.md) — All NeqSim equipment types
 - [Chemical Reactions](../../chemicalreactions/) — Reaction modeling background
-- [Hydrogen Production with NeqSim](../hydrogen_production.md) — SMR, ATR, POX, PSA, electrolysis, and blue-H₂ route templates
+- [Hydrogen Production with NeqSim](../hydrogen_production.md) — SMR, ATR, POX, WGS, PSA, electrolysis, and full blue-H₂ route templates

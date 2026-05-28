@@ -1,6 +1,6 @@
 ---
 name: neqsim-hydrogen-production
-description: "Hydrogen production routes (SMR/ATR/POX, electrolysis, ammonia cracking) with NeqSim. USE WHEN: modeling fired SMR reformers, ATR and POX syngas generators, pressure-swing adsorption (PSA), water electrolyzers (PEM/Alkaline/SOEC/AEM), stack I-V curves, hydrogen plant cost estimation, para/ortho hydrogen conversion, catalyst deactivation, or blue/green H2 flowsheets. Covers ReformerFurnace, CatalyticTubeReformer, AutothermalReformer, PartialOxidationReactor, PSACascade, Electrolyzer, ParaOrthoH2Correction, CatalystDeactivationKinetics, and cost estimates."
+description: "Hydrogen production routes (SMR/ATR/POX, blue-H2 WGS/capture/compression chains, electrolysis, ammonia cracking) with NeqSim. USE WHEN: modeling fired SMR reformers, ATR and POX syngas generators, water-gas shift, pressure-swing adsorption (PSA), CO2 capture/compression/export placeholders, H2 drying/compression/export, water electrolyzers (PEM/Alkaline/SOEC/AEM), stack I-V curves, hydrogen plant cost estimation, para/ortho hydrogen conversion, catalyst deactivation, or blue/green H2 flowsheets. Covers ReformerFurnace, CatalyticTubeReformer, WaterGasShiftReactor, ComponentCaptureUnit, BlueHydrogenPlantBuilder, AutothermalReformer, PartialOxidationReactor, PSACascade, Electrolyzer, ParaOrthoH2Correction, CatalystDeactivationKinetics, and cost estimates."
 last_verified: "2026-05-27"
 ---
 
@@ -50,10 +50,12 @@ H2), and water electrolysis (green/pink H2). Companion to
 | `AutothermalReformer` | `neqsim.process.equipment.reactor` | ATR template with O2/C and S/C controls, burner zone, catalytic equilibrium zone, and soot-risk metric |
 | `PartialOxidationReactor` | `neqsim.process.equipment.reactor` | POX template with O2/C control, refractory warning, fast quench, and H2/CO output |
 | `QuenchSection` | `neqsim.process.equipment.reactor` | Rapid syngas cooling model with heat-removed and quench-severity outputs |
+| `WaterGasShiftReactor` | `neqsim.process.equipment.reactor` | HT/LT WGS equilibrium wrapper with CO conversion, H2 gain, CO2 formation, duty, and WGS ratio reporting |
+| `ComponentCaptureUnit` | `neqsim.process.equipment.splitter` | Selective component-capture placeholder for CO2 capture, H2 drying, and other screening separations |
 | `SMRHydrogenPlantBuilder` | `neqsim.process.hydrogen` | Screening plant builder for methane/steam feed, fired reformer, and optional PSA |
 | `ATRHydrogenPlantBuilder` | `neqsim.process.hydrogen` | Screening plant builder for methane/steam/oxygen feed, ATR, and optional PSA |
 | `POXHydrogenPlantBuilder` | `neqsim.process.hydrogen` | Screening plant builder for POX syngas or hydrogen studies with optional PSA |
-| `BlueHydrogenPlantBuilder` | `neqsim.process.hydrogen` | SMR + PSA builder with downstream CO2 capture-readiness metadata |
+| `BlueHydrogenPlantBuilder` | `neqsim.process.hydrogen` | Full screening chain for SMR + HT/LT WGS + CO2 capture/compression + PSA + H2 drying/compression + carbon intensity |
 
 ### Thermochemical maturity map
 
@@ -135,39 +137,54 @@ Key route outputs:
   `getRefractoryWarning()`, `getQuenchSection()`, `getSootRiskIndex()`.
 - Every new route unit exposes `getResults()` and `toJson()` for agent reports.
 
-## Recipe 1 — Blue H₂ (SMR + WGS + PSA)
+## Recipe 1 — Blue H₂ full chain (SMR + WGS + capture + PSA + export)
 
 ```java
-// 1. Natural gas + steam feed
-SystemInterface ng = new SystemSrkEos(298.15, 30.0);
-ng.addComponent("methane", 0.95);
-ng.addComponent("ethane", 0.04);
-ng.addComponent("nitrogen", 0.01);
-ng.setMixingRule("classic");
-Stream ngFeed = new Stream("NG", ng);
-ngFeed.setFlowRate(1000.0, "kg/hr");
-ngFeed.run();
+BlueHydrogenPlantBuilder builder = new BlueHydrogenPlantBuilder()
+    .setName("Blue H2 screening")
+    .setMethaneFeedMolePerSec(100.0)
+    .setSteamToCarbonRatio(3.0)
+    .setCo2CaptureFraction(0.90)
+    .setCo2ExportPressure(110.0)
+    .setH2ExportPressure(100.0)
+    .setIncludePsa(true);
 
-// ... add steam, GibbsReactor for SMR @ 850 °C / 25 bara,
-// HT-WGS @ 400 °C, LT-WGS @ 220 °C, cooler, KO drum ...
+ProcessSystem process = builder.build();
+process.run();
 
-// 2. PSA purification — feed wet syngas, take H₂ overhead.
-PressureSwingAdsorptionBed psa = new PressureSwingAdsorptionBed("PSA", koVap);
-psa.setSorbent(PressureSwingAdsorptionBed.SorbentType.ACTIVATED_CARBON);
-psa.setRecoveryTarget(0.88);   // H₂ recovery, 0.80–0.90 typical
-psa.run();
-
-double purityH2 = psa.getH2Purity();          // >0.999 for fuel-cell grade
-double recoveryH2 = psa.getH2Recovery();      // operating value
-double[] tailComp = psa.getTailGasComposition();  // for furnace LHV
+double h2KgPerHr = builder.getHydrogenProductMassFlowKgPerHour();
+double capturedCo2KgPerHr = builder.getCapturedCo2MassFlowKgPerHour();
+double residualIntensity = builder.getCarbonIntensityKgCO2PerKgH2();
+double grossIntensity = builder.getGrossCarbonIntensityKgCO2PerKgH2();
+String resultsJson = builder.toJson();
 ```
 
 **Notes**
-- Sorbent options today: `ACTIVATED_CARBON` ("AC") and `ZEOLITE_13X`. Zeolite 5A
-  is not in the bundled isotherm database.
-- Recovery target is capped at `(0, 1]`; product H₂ is the unadsorbed light end.
-- Tail gas is delivered as a mole-flow vector via `getTailGasMoleFlow()` and is
-  the right source term for fuel-gas balance to the SMR furnace.
+- The default sequence is SMR furnace → HT WGS → LT WGS → cooler/KO → CO2
+  capture → CO2 compressor → PSA → H2 dryer → H2 compressor.
+- `WaterGasShiftReactor` treats methane, nitrogen, and oxygen as inert and
+  reports CO conversion, H2 gain, CO2 formation, heat duty, and WGS ratio.
+- `ComponentCaptureUnit` is a screening placeholder. Use it for CO2 capture and
+  H2 drying when detailed amine, membrane, or molecular-sieve packages are not
+  yet available.
+- Carbon-intensity reporting counts residual direct carbon as CO2 equivalent and
+  reports both residual and gross intensity per kg H2 product.
+
+## Recipe 1b — PSA-only purification block
+
+```java
+PressureSwingAdsorptionBed psa = new PressureSwingAdsorptionBed("PSA", koVap);
+psa.setSorbent(PressureSwingAdsorptionBed.SorbentType.ACTIVATED_CARBON);
+psa.setRecoveryTarget(0.88);
+psa.run();
+
+double purityH2 = psa.getH2Purity();
+double recoveryH2 = psa.getH2Recovery();
+double[] tailComp = psa.getTailGasComposition();
+```
+
+Use the standalone PSA block when a shifted syngas stream is already available
+from a custom flowsheet.
 
 ## Recipe 2 — Green H₂ Electrolyzer
 
