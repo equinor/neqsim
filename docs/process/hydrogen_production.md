@@ -1,23 +1,22 @@
 ---
 title: Hydrogen Production with NeqSim
-description: Modeling guide for hydrogen production routes — pressure-swing adsorption (PSA) purification of SMR/WGS syngas (blue H2) and water electrolysis (green/pink H2). Covers PressureSwingAdsorptionBed, PSACascade, Electrolyzer with PEM/Alkaline/SOEC/AEM technology selector, I-V characteristic, CAPEX estimation, para/ortho hydrogen corrections, and catalyst deactivation screening.
+description: Modeling guide for hydrogen production routes — SMR fired reformers, ATR and POX syngas generators, pressure-swing adsorption (PSA), and water electrolysis. Covers ReformerFurnace, CatalyticTubeReformer, AutothermalReformer, PartialOxidationReactor, PSACascade, Electrolyzer, CAPEX estimation, para/ortho hydrogen corrections, and catalyst deactivation screening.
 ---
 
 # Hydrogen Production with NeqSim
 
-NeqSim covers two hydrogen production routes natively:
+NeqSim covers thermochemical and electrochemical hydrogen production routes natively:
 
-1. **Blue H₂** — steam methane reforming (SMR) or autothermal reforming (ATR)
-   with water-gas shift (WGS) followed by **pressure-swing adsorption (PSA)**
-   purification.
+1. **Grey / blue H₂** — steam methane reforming (SMR), autothermal reforming
+  (ATR), or partial oxidation (POX), followed by optional water-gas shift,
+  **pressure-swing adsorption (PSA)** purification, and downstream CO₂ capture.
 2. **Green / pink H₂** — water electrolysis using PEM, alkaline, SOEC, or AEM
-   stacks.
+  stacks.
 
-This page documents the Horizon-1 classes added on
-[PR #2221](https://github.com/equinor/neqsim/pull/2221), the Horizon-1.5
-PSA cascade and PSA CAPEX additions, and the first Horizon-3 foundation utilities
-for cryogenic H₂ spin-isomer corrections and catalyst life screening. Companion guides:
-[CCS and hydrogen transport](../ccs_hydrogen/index.md) and the
+This page documents the hydrogen-production route models, PSA cascade and PSA
+CAPEX additions, electrolysis stack models, and foundation utilities for
+cryogenic H₂ spin-isomer corrections and catalyst life screening. Companion
+guides: [CO₂ injection well analysis](co2_injection_well_analysis.md) and
 [reaction engineering](../chemicalreactions/index.md) reformer kinetics.
 
 ## Applicable standards
@@ -37,6 +36,12 @@ for cryogenic H₂ spin-isomer corrections and catalyst life screening. Companio
 
 | Class | Package | Purpose |
 |---|---|---|
+| `CatalyticTubeReformer` | `neqsim.process.equipment.reactor` | Tube-side SMR equilibrium model with duty, pressure-drop, tube-wall, heat-flux, and catalyst activity screening |
+| `ReformerFurnace` | `neqsim.process.equipment.reactor` | Fired SMR furnace coupling combustion heat from `FurnaceBurner` to catalytic tube reformer duty |
+| `SyngasBurnerZone` | `neqsim.process.equipment.reactor` | Oxygen-blown ATR/POX burner-zone model with O₂/C envelope and flame-temperature screening |
+| `AutothermalReformer` | `neqsim.process.equipment.reactor` | ATR template with O₂/C and S/C controls, burner zone, catalytic equilibrium zone, and soot-risk metric |
+| `PartialOxidationReactor` | `neqsim.process.equipment.reactor` | POX template with O₂/C control, refractory-temperature warning, fast-quench section, and H₂/CO metric |
+| `QuenchSection` | `neqsim.process.equipment.reactor` | Rapid syngas cooling model with heat removed and quench severity outputs |
 | `PressureSwingAdsorptionBed` | `neqsim.process.equipment.adsorber` | H₂-tuned single PSA bed (AC or Zeolite 13X) |
 | `PSACascade` | `neqsim.process.equipment.adsorber` | Multi-bed Skarstrom cascade with pressure-equalisation recovery uplift |
 | `Electrolyzer` | `neqsim.process.equipment.electrolyzer` | Stack model with technology defaults and Faradaic efficiency |
@@ -46,6 +51,72 @@ for cryogenic H₂ spin-isomer corrections and catalyst life screening. Companio
 | `PSACostEstimate` | `neqsim.process.costestimation.adsorber` | PSA vessel + switching valve skid + sorbent inventory CAPEX |
 | `ParaOrthoH2Correction` | `neqsim.thermo.util.hydrogen` | Equilibrium para fraction, conversion heat, Cp and thermal-conductivity correction factors |
 | `CatalystDeactivationKinetics` | `neqsim.process.equipment.reactor` | Sulfur/chloride/coking/sintering activity decay for H₂-production catalysts |
+| `SMRHydrogenPlantBuilder` | `neqsim.process.hydrogen` | Screening plant builder for methane/steam feed, fired reformer, and optional PSA |
+| `ATRHydrogenPlantBuilder` | `neqsim.process.hydrogen` | Screening plant builder for methane/steam/oxygen feed, ATR, and optional PSA |
+| `POXHydrogenPlantBuilder` | `neqsim.process.hydrogen` | Screening plant builder for POX syngas or hydrogen route studies with optional PSA |
+| `BlueHydrogenPlantBuilder` | `neqsim.process.hydrogen` | SMR + PSA builder with downstream CO₂ capture-readiness metadata |
+
+## Thermochemical reformer route templates
+
+The thermochemical route models are screening-grade process equipment: they use
+NeqSim equilibrium reactors and local engineering metrics to make route studies
+repeatable before users add detailed WGS, heat recovery, burner layout, amine
+capture, or vendor reactor design data.
+
+| Technology | NeqSim pattern | Maturity | Remaining high-fidelity scope |
+|---|---|---:|---|
+| Steam methane reforming (SMR) | `ReformerFurnace` + `CatalyticTubeReformer` + `FurnaceBurner` | 4/5 | Detailed radiant-box view factors, burner CFD, tube metallurgy/vendor rating |
+| Autothermal reforming (ATR) | `AutothermalReformer` with `SyngasBurnerZone` + catalytic `GibbsReactor` | 4/5 | Burner aerodynamics, oxygen-mixing CFD, rate-based catalyst bed calibration |
+| Partial oxidation (POX) | `PartialOxidationReactor` + `SyngasBurnerZone` + `QuenchSection` | 3/5 | Fast-quench kinetics, refractory thermal model, soot/coke kinetics |
+
+### SMR fired reformer builder
+
+```java
+ProcessSystem process = new SMRHydrogenPlantBuilder().setName("SMR screening")
+  .setMethaneFeedMolePerSec(100.0)
+  .setSteamToCarbonRatio(3.0)
+  .setIncludePsa(true)
+  .build();
+process.run();
+
+ReformerFurnace furnace =
+  (ReformerFurnace) process.getUnit("SMR screening reformer furnace");
+double tubeDutyKW = furnace.getTubeHeatDemandKW();
+double heatBalance = furnace.getHeatBalanceRatio();
+double methaneConversion = furnace.getTubeReformer().getMethaneConversion();
+```
+
+`ReformerFurnace` exposes stable syngas and flue-gas outlet streams, so downstream
+equipment such as WGS reactors, heat exchangers, PSA, or CO₂-capture units can be
+wired from `getSyngasOutStream()` and `getFlueGasOutStream()`.
+
+### ATR and POX builders
+
+```java
+ProcessSystem atrProcess = new ATRHydrogenPlantBuilder().setName("ATR screening")
+  .setMethaneFeedMolePerSec(100.0)
+  .setSteamToCarbonRatio(1.5)
+  .setOxygenToCarbonRatio(0.60)
+  .setIncludePsa(true)
+  .build();
+atrProcess.run();
+
+AutothermalReformer atr =
+  (AutothermalReformer) atrProcess.getUnit("ATR screening autothermal reformer");
+double atrConversion = atr.getMethaneConversion();
+double atrSootRisk = atr.getSootRiskIndex();
+
+ProcessSystem poxProcess = new POXHydrogenPlantBuilder().setName("POX screening")
+  .setMethaneFeedMolePerSec(100.0)
+  .setOxygenToCarbonRatio(0.55)
+  .setSteamToCarbonRatio(0.20)
+  .build();
+```
+
+ATR and POX both rebuild the controlled inlet composition from the methane basis
+before running, so `setOxygenToCarbonTarget()` and `setSteamToCarbonTarget()`
+apply deterministically even when the starting stream has a different O₂/C or
+S/C ratio. `toJson()` on each unit returns the key route-screening metrics.
 
 ## Blue H₂ — PSA purification
 
@@ -249,13 +320,24 @@ the result for guaranteed catalyst run length.
 | Color | Route | NeqSim primitives |
 |---|---|---|
 | Grey | SMR, no CCS | `GibbsReactor` + WGS + `PressureSwingAdsorptionBed` |
-| Blue | SMR/ATR + CCS | Add CO₂ capture upstream of stack — see [CCS hydrogen](../ccs_hydrogen/index.md) |
+| Blue | SMR/ATR + CCS | Add CO₂ capture and compression downstream — see [CO₂ injection well analysis](co2_injection_well_analysis.md) |
 | Green | Renewable electrolysis | `Electrolyzer` (PEM / Alkaline) + renewable power |
 | Pink | Nuclear electrolysis | Same `Electrolyzer`, accounting differs |
 | Turquoise | Methane pyrolysis | Horizon 2 — not yet implemented |
 
 ## Common pitfalls
 
+- **Thermochemical scope**: SMR/ATR/POX classes are screening models. They
+  capture route-level heat balance, conversion, oxygen/steam ratios, soot risk,
+  quench severity, and refractory/tube-temperature warnings, but they do not
+  replace vendor reformer design, CFD, or rate-based catalyst calibration.
+- **Syngas product species**: equilibrium reformer feeds must include trace
+  product species (`hydrogen`, `CO`, `CO2`) before a Gibbs calculation. The
+  hydrogen plant builders and reactor helpers add these automatically.
+- **ATR/POX ratio controls**: with ratio control enabled, O₂/C and S/C targets
+  are applied to a controlled clone of the inlet feed on a methane mole basis.
+  Disable ratio control only when the feed composition itself is the source of
+  truth for a case study.
 - **PSA mass balance**: product purity is computed from
   $\text{feedH}_2 \times \text{recovery}$ divided by remaining light gases.
   Always set the recovery target before `run()`; default is 0.85.
@@ -291,19 +373,21 @@ the result for guaranteed catalyst run length.
 | `PSACostEstimateTest` | Bed-count cost scaling, sorbent cost ordering, BoP toggle, cascade constructor |
 | `ParaOrthoH2CorrectionTest` | Equilibrium para fraction, conversion heat, Cp correction, conductivity factor, catalyst time ranking |
 | `CatalystDeactivationKineticsTest` | Catalyst-family sensitivity, coking, sintering, dominant mechanism, CatalystBed activity update |
+| `HydrogenProductionReactorTest` | SMR tube/furnace metrics, ATR ratio controls, POX quench/refractory metrics, equipment factory aliases |
+| `HydrogenPlantBuilderTest` | Runnable SMR, ATR, POX, and blue-H₂ plant builder templates |
 
 ## Deferred to Horizon 2 / 3
 
 - Rate-based amine absorber for CO₂ capture upstream of blue H₂
 - Full cryogenic H₂ liquefaction train with expanders and heat integration
-- Reformer furnace radiation coupling
+- High-fidelity reformer radiant-box view factors, burner CFD, and vendor tube-rating integration
 - Ammonia cracking kinetics for H₂ delivery from NH₃
 - Hydrogen LCA per production step
 - LOHC and photo-electrolysis
 
 ## Related documentation
 
-- [CCS and hydrogen transport](../ccs_hydrogen/index.md)
+- [CO₂ injection well analysis](co2_injection_well_analysis.md)
 - [Reaction engineering](../chemicalreactions/index.md)
 - [Cost estimation framework](COST_ESTIMATION_FRAMEWORK.md)
 - [Mechanical design](mechanical_design.md)

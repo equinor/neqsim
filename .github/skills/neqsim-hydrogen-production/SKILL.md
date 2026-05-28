@@ -1,19 +1,23 @@
 ---
 name: neqsim-hydrogen-production
-description: "Hydrogen production routes (SMR/ATR, electrolysis, ammonia cracking) with NeqSim. USE WHEN: modeling pressure-swing adsorption (PSA) purification of syngas, water electrolyzers (PEM/Alkaline/SOEC/AEM), stack I-V curves, hydrogen plant cost estimation, para/ortho hydrogen conversion, catalyst deactivation, or blue/green H2 plant flowsheets. Covers PressureSwingAdsorptionBed, PSACascade, Electrolyzer, ParaOrthoH2Correction, CatalystDeactivationKinetics, and cost estimates."
+description: "Hydrogen production routes (SMR/ATR/POX, electrolysis, ammonia cracking) with NeqSim. USE WHEN: modeling fired SMR reformers, ATR and POX syngas generators, pressure-swing adsorption (PSA), water electrolyzers (PEM/Alkaline/SOEC/AEM), stack I-V curves, hydrogen plant cost estimation, para/ortho hydrogen conversion, catalyst deactivation, or blue/green H2 flowsheets. Covers ReformerFurnace, CatalyticTubeReformer, AutothermalReformer, PartialOxidationReactor, PSACascade, Electrolyzer, ParaOrthoH2Correction, CatalystDeactivationKinetics, and cost estimates."
 last_verified: "2026-05-27"
 ---
 
 # Hydrogen Production with NeqSim
 
-Guide for modeling hydrogen production routes — steam methane reforming with
-PSA purification (blue H2) and water electrolysis (green/pink H2). Companion to
+Guide for modeling hydrogen production routes — steam methane reforming (SMR),
+autothermal reforming (ATR), partial oxidation (POX), PSA purification (blue
+H2), and water electrolysis (green/pink H2). Companion to
 `neqsim-ccs-hydrogen` (transport/storage/blending) and `neqsim-reaction-engineering`
 (reformer kinetics).
 
 ## When to Use This Skill
 
-- SMR / ATR plant flowsheets with WGS + PSA
+- SMR fired reformer, ATR, and POX plant flowsheets with WGS + PSA
+- Oxygen-to-carbon and steam-to-carbon envelope screening
+- Reformer furnace heat-balance and tube-wall checks
+- POX/ATR quench, refractory, soot-risk, and H2/CO screening
 - PSA bed sizing and purity/recovery analysis
 - Electrolyzer technology selection (PEM vs Alkaline vs SOEC vs AEM)
 - Stack voltage modeling from current density (I-V curves)
@@ -35,6 +39,29 @@ PSA purification (blue H2) and water electrolysis (green/pink H2). Companion to
 | EIGA Doc 121 | H₂ generator design (SMR/electrolysis) |
 | IRENA 2022 | Green H₂ cost benchmarks |
 | IEA Global H₂ Review 2023 | Capacity factors, USD/kW benchmarks |
+
+## Core Classes (Thermochemical route templates)
+
+| Class | Package | Purpose |
+|---|---|---|
+| `CatalyticTubeReformer` | `neqsim.process.equipment.reactor` | Tube-side SMR equilibrium model with duty, pressure-drop, tube-wall, heat-flux, and catalyst-activity screening |
+| `ReformerFurnace` | `neqsim.process.equipment.reactor` | Fired SMR furnace coupling `FurnaceBurner` combustion heat to reformer-tube duty |
+| `SyngasBurnerZone` | `neqsim.process.equipment.reactor` | Oxygen-blown ATR/POX burner-zone model with O2/C envelope and flame-temperature screening |
+| `AutothermalReformer` | `neqsim.process.equipment.reactor` | ATR template with O2/C and S/C controls, burner zone, catalytic equilibrium zone, and soot-risk metric |
+| `PartialOxidationReactor` | `neqsim.process.equipment.reactor` | POX template with O2/C control, refractory warning, fast quench, and H2/CO output |
+| `QuenchSection` | `neqsim.process.equipment.reactor` | Rapid syngas cooling model with heat-removed and quench-severity outputs |
+| `SMRHydrogenPlantBuilder` | `neqsim.process.hydrogen` | Screening plant builder for methane/steam feed, fired reformer, and optional PSA |
+| `ATRHydrogenPlantBuilder` | `neqsim.process.hydrogen` | Screening plant builder for methane/steam/oxygen feed, ATR, and optional PSA |
+| `POXHydrogenPlantBuilder` | `neqsim.process.hydrogen` | Screening plant builder for POX syngas or hydrogen studies with optional PSA |
+| `BlueHydrogenPlantBuilder` | `neqsim.process.hydrogen` | SMR + PSA builder with downstream CO2 capture-readiness metadata |
+
+### Thermochemical maturity map
+
+| Technology | Implemented NeqSim pattern | Maturity | Remaining high-fidelity scope |
+|---|---|---:|---|
+| Steam methane reforming (SMR) | `ReformerFurnace` + `CatalyticTubeReformer` + `FurnaceBurner` | 4/5 | Detailed radiant-box view factors, burner CFD, tube metallurgy/vendor rating |
+| Autothermal reforming (ATR) | `AutothermalReformer` with `SyngasBurnerZone` + catalytic `GibbsReactor` | 4/5 | Burner aerodynamics, oxygen-mixing CFD, rate-based catalyst bed calibration |
+| Partial oxidation (POX) | `PartialOxidationReactor` + `SyngasBurnerZone` + `QuenchSection` | 3/5 | Fast-quench kinetics, refractory thermal model, soot/coke kinetics |
 
 ## Core Classes (Horizon 1)
 
@@ -60,6 +87,53 @@ PSA purification (blue H2) and water electrolysis (green/pink H2). Companion to
 |---|---|---|
 | `ParaOrthoH2Correction` | `neqsim.thermo.util.hydrogen` | Equilibrium para fraction, normal-to-equilibrium heat release, Cp correction, thermal-conductivity factor, conversion time |
 | `CatalystDeactivationKinetics` | `neqsim.process.equipment.reactor` | First-order activity decay for sulfur/chloride poisoning, coking, and thermal sintering |
+
+## Recipe 0 — SMR / ATR / POX route builders
+
+Use the route builders when a task needs a runnable screening flowsheet quickly.
+They create feeds with correct trace syngas products, set SRK + classic mixing,
+wire the reactor model, and optionally add a PSA cascade.
+
+```java
+ProcessSystem smr = new SMRHydrogenPlantBuilder().setName("SMR screening")
+    .setMethaneFeedMolePerSec(100.0)
+    .setSteamToCarbonRatio(3.0)
+    .setIncludePsa(true)
+    .build();
+smr.run();
+
+ReformerFurnace furnace =
+    (ReformerFurnace) smr.getUnit("SMR screening reformer furnace");
+double dutyKW = furnace.getTubeHeatDemandKW();
+double heatBalance = furnace.getHeatBalanceRatio();
+
+ProcessSystem atr = new ATRHydrogenPlantBuilder().setName("ATR screening")
+    .setMethaneFeedMolePerSec(100.0)
+    .setSteamToCarbonRatio(1.5)
+    .setOxygenToCarbonRatio(0.60)
+    .setIncludePsa(true)
+    .build();
+atr.run();
+
+ProcessSystem pox = new POXHydrogenPlantBuilder().setName("POX screening")
+    .setMethaneFeedMolePerSec(100.0)
+    .setOxygenToCarbonRatio(0.55)
+    .setSteamToCarbonRatio(0.20)
+    .build();
+pox.run();
+```
+
+Key route outputs:
+
+- `ReformerFurnace`: `getSyngasOutStream()`, `getFlueGasOutStream()`,
+  `getTubeHeatDemandKW()`, `getAvailableRadiantHeatKW()`, `getHeatBalanceRatio()`.
+- `CatalyticTubeReformer`: `getMethaneConversion()`, `getHeatDuty("kW")`,
+  `getTubeWallTemperature()`, `isTubeWallTemperatureAcceptable()`.
+- `AutothermalReformer`: `getOxygenToCarbonRatio()`, `getSteamToCarbonRatio()`,
+  `getMethaneConversion()`, `getSootRiskIndex()`, `getBurnerZone()`.
+- `PartialOxidationReactor`: `getHydrogenToCarbonMonoxideRatio()`,
+  `getRefractoryWarning()`, `getQuenchSection()`, `getSootRiskIndex()`.
+- Every new route unit exposes `getResults()` and `toJson()` for agent reports.
 
 ## Recipe 1 — Blue H₂ (SMR + WGS + PSA)
 
@@ -245,6 +319,17 @@ double usd = cost.getPurchasedEquipmentCost();
 
 ## Common pitfalls
 
+- **Thermochemical scope**: `ReformerFurnace`, `AutothermalReformer`, and
+  `PartialOxidationReactor` are route-screening models, not vendor reactor
+  designs. Use them for heat balance, O2/C and S/C envelopes, soot/refractory
+  warnings, and handoff to WGS/PSA/CO2 capture. Use vendor data or detailed CFD
+  for radiant-box, burner, and tube-rating guarantees.
+- **Trace products**: Gibbs syngas models need product components present in the
+  feed. The route builders and `HydrogenProductionUtils.ensureSyngasComponents()`
+  add `hydrogen`, `CO`, and `CO2` at trace levels.
+- **ATR/POX controls**: ratio controls rebuild the controlled inlet clone from
+  methane moles before running. Disable ratio control only when a measured or
+  externally generated feed composition must be preserved exactly.
 - **`PressureSwingAdsorptionBed.run()` mass balance**: product purity is computed
   from `feedH2 × recovery` ÷ remaining light gases. Always set the recovery target
   before `run()`; default is 0.85.
@@ -273,12 +358,14 @@ double usd = cost.getPurchasedEquipmentCost();
 | `ElectrolyzerIVCharacteristicTest` | E_rev vs T, Tafel monotonicity, technology ordering |
 | `ElectrolyzerTest` | Backward compat + η_F + I-V + specific-energy band |
 | `ElectrolyzerCostEstimateTest` | Per-tech ordering, BoP toggle, scale economy |
+| `HydrogenProductionReactorTest` | SMR tube/furnace metrics, ATR ratio controls, POX quench/refractory metrics, equipment factory aliases |
+| `HydrogenPlantBuilderTest` | Runnable SMR, ATR, POX, and blue-H2 plant builder templates |
 
 ## Deferred (Horizon 2/3)
 
 - Rate-based amine absorber for CO₂ capture upstream of blue H₂
 - Full cryogenic H₂ liquefaction train with expanders and heat integration
-- Reformer furnace radiation coupling
+- High-fidelity reformer radiant-box view factors, burner CFD, and vendor tube-rating integration
 - Ammonia cracking kinetics for H₂ delivery from NH₃
 - Hydrogen LCA per production step
 - LOHC and photo-electrolysis
