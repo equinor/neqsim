@@ -22,8 +22,14 @@ import neqsim.process.equipment.powergeneration.OffshoreEnergySystem;
 import neqsim.process.equipment.powergeneration.WindFarm;
 import neqsim.process.equipment.powergeneration.WindTurbine;
 import neqsim.process.equipment.reactor.AmmoniaSynthesisReactor;
+import neqsim.process.equipment.reactor.AutothermalReformer;
+import neqsim.process.equipment.reactor.CatalyticTubeReformer;
 import neqsim.process.equipment.reactor.GibbsReactor;
+import neqsim.process.equipment.reactor.PartialOxidationReactor;
 import neqsim.process.equipment.reactor.PlugFlowReactor;
+import neqsim.process.equipment.reactor.QuenchSection;
+import neqsim.process.equipment.reactor.ReformerFurnace;
+import neqsim.process.equipment.reactor.SyngasBurnerZone;
 import neqsim.process.equipment.reactor.StirredTankReactor;
 import neqsim.process.equipment.subsea.SubseaPowerCable;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
@@ -110,6 +116,27 @@ public final class EquipmentFactory {
       case "plugflowreactor":
       case "pfr":
         return createEquipment(name, EquipmentEnum.PlugFlowReactor);
+      case "catalytictubereformer":
+      case "tubereformer":
+      case "smrtubereformer":
+        return createEquipment(name, EquipmentEnum.CatalyticTubeReformer);
+      case "reformerfurnace":
+      case "smrfurnace":
+      case "firedreformer":
+        return createEquipment(name, EquipmentEnum.ReformerFurnace);
+      case "syngasburnerzone":
+      case "poxburnerzone":
+      case "atrburnerzone":
+        return createEquipment(name, EquipmentEnum.SyngasBurnerZone);
+      case "autothermalreformer":
+      case "atr":
+        return createEquipment(name, EquipmentEnum.AutothermalReformer);
+      case "partialoxidationreactor":
+      case "pox":
+        return createEquipment(name, EquipmentEnum.PartialOxidationReactor);
+      case "quenchsection":
+      case "syngasquench":
+        return createEquipment(name, EquipmentEnum.QuenchSection);
       case "stirredtankreactor":
       case "cstr":
         return createEquipment(name, EquipmentEnum.StirredTankReactor);
@@ -185,6 +212,18 @@ public final class EquipmentFactory {
         return new GibbsReactor(name);
       case PlugFlowReactor:
         return new PlugFlowReactor(name);
+      case CatalyticTubeReformer:
+        return new CatalyticTubeReformer(name);
+      case ReformerFurnace:
+        return new ReformerFurnace(name);
+      case SyngasBurnerZone:
+        return new SyngasBurnerZone(name);
+      case AutothermalReformer:
+        return new AutothermalReformer(name);
+      case PartialOxidationReactor:
+        return new PartialOxidationReactor(name);
+      case QuenchSection:
+        return new QuenchSection(name);
       case StirredTankReactor:
         return new StirredTankReactor(name);
       case Cooler:
