@@ -42,6 +42,21 @@ except ImportError:
     HAS_MATH = False
 
 
+# Strip XML 1.0-incompatible control characters before any add_run call.
+# Valid: \t, \n, \r and U+0020-U+D7FF, U+E000-U+FFFD, U+10000-U+10FFFF.
+_XML_ILLEGAL_RE = re.compile(
+    "[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\uD800-\uDFFF\uFFFE\uFFFF]")
+
+
+def _xml_safe(text):
+    """Return *text* with characters illegal in XML 1.0 removed."""
+    if text is None:
+        return ""
+    if not isinstance(text, str):
+        text = str(text)
+    return _XML_ILLEGAL_RE.sub("", text)
+
+
 # ---------------------------------------------------------------------------
 # Equation counter
 # ---------------------------------------------------------------------------
@@ -272,6 +287,7 @@ def _insert_display_equation(doc, latex_str, eq_label=None):
     clean = latex_str.strip()
     if HAS_MATH:
         clean = latex_to_unicode(clean)
+    clean = _xml_safe(clean)
 
     run = para.add_run(clean)
     run.font.name = "Cambria Math"
@@ -286,7 +302,7 @@ def _insert_display_equation(doc, latex_str, eq_label=None):
 
 def _add_equation_number(para, label):
     """Add right-aligned equation number to a display equation paragraph."""
-    run = para.add_run("\t" + label)
+    run = para.add_run(_xml_safe("\t" + label))
     run.font.name = "Times New Roman"
     run.font.size = Pt(10)
     run.italic = False

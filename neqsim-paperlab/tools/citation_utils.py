@@ -27,13 +27,85 @@ def parse_bibtex(bib_path):
         return {}
     bib_text = bib_path.read_text(encoding="utf-8")
     entries = {}
-    for block in re.finditer(r'@\w+\{(\w+),\s*(.*?)\n\}', bib_text, flags=re.DOTALL):
-        key = block.group(1)
-        fields = {}
-        for fld in re.finditer(r'(\w+)\s*=\s*\{(.*?)\}', block.group(2), flags=re.DOTALL):
-            fields[fld.group(1).lower()] = fld.group(2).strip()
-        entries[key] = fields
+
+    # Brace-balanced scan so entries written on a single line
+    # (e.g. ``@article{key, ..., year={1972}}``) parse the same as
+    # multi-line entries terminated by ``\n}``.
+    i = 0
+    n = len(bib_text)
+    while True:
+        m = re.search(r'@(\w+)\s*\{\s*([^,\s}]+)\s*,', bib_text[i:])
+        if not m:
+            break
+        body_start = i + m.end()
+        depth = 1
+        j = body_start
+        while j < n and depth > 0:
+            c = bib_text[j]
+            if c == '{':
+                depth += 1
+            elif c == '}':
+                depth -= 1
+                if depth == 0:
+                    break
+            j += 1
+        if depth != 0:
+            break
+        key = m.group(2)
+        body = bib_text[body_start:j]
+        entries[key] = _parse_bibtex_fields(body)
+        i = j + 1
     return entries
+
+
+def _parse_bibtex_fields(body):
+    """Parse a BibTeX entry body into a {field: value} dict.
+
+    Handles brace-balanced values such as ``author={{Org Name}}`` and
+    quoted values ``title="..."``, returning the inner value with the
+    outermost delimiters stripped.
+    """
+    fields = {}
+    i = 0
+    n = len(body)
+    while i < n:
+        m = re.match(r'\s*(\w+)\s*=\s*', body[i:])
+        if not m:
+            break
+        name = m.group(1).lower()
+        i += m.end()
+        if i >= n:
+            break
+        c = body[i]
+        if c == '{':
+            depth = 1
+            j = i + 1
+            while j < n and depth > 0:
+                if body[j] == '{':
+                    depth += 1
+                elif body[j] == '}':
+                    depth -= 1
+                    if depth == 0:
+                        break
+                j += 1
+            value = body[i + 1:j]
+            i = j + 1
+        elif c == '"':
+            j = i + 1
+            while j < n and body[j] != '"':
+                j += 1
+            value = body[i + 1:j]
+            i = j + 1
+        else:
+            j = i
+            while j < n and body[j] != ',':
+                j += 1
+            value = body[i:j].strip()
+            i = j
+        fields[name] = value.strip()
+        while i < n and body[i] in ', \n\t\r':
+            i += 1
+    return fields
 
 
 def clean_bibtex_latex(text):

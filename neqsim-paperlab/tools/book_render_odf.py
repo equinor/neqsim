@@ -26,6 +26,12 @@ except ImportError:
 
 import book_builder
 
+
+from citation_utils import (parse_bibtex, collect_all_cited_keys_from_chapters,
+                            build_key_to_num, resolve_citations_numbered_plain,
+                            format_bib_entry_numbered, clean_bibtex_latex,
+                            format_author_short)
+
 try:
     from math_utils import latex_to_unicode
     HAS_MATH = True
@@ -464,6 +470,13 @@ def render_book_odf(book_dir, chapter_filter=None):
     book_dir = Path(book_dir)
     cfg = book_builder.load_book_config(book_dir)
 
+    # Load bibliography and build global citation numbering across the whole
+    # book so [N] numbers in the prose match the numbered References list.
+    bib_path = book_dir / "refs.bib"
+    bib_entries = parse_bibtex(bib_path)
+    all_cited_keys = collect_all_cited_keys_from_chapters(book_dir, cfg)
+    key_to_num = build_key_to_num(all_cited_keys) if all_cited_keys else {}
+
     doc = OpenDocumentText()
     styles = _setup_styles(doc)
 
@@ -486,13 +499,20 @@ def render_book_odf(book_dir, chapter_filter=None):
         _add_page_break(doc, styles)
 
         # ── Preface and other frontmatter ──
+        frontmatter_figures = book_dir / "frontmatter" / "figures"
         for fm in cfg.get("frontmatter", []):
             if fm in ("title_page", "copyright"):
                 continue
             fm_path = book_dir / "frontmatter" / f"{fm}.md"
             if fm_path.exists():
                 text = _strip_html_comments(fm_path.read_text(encoding="utf-8"))
-                _render_md_to_odf(doc, text, styles)
+                if key_to_num:
+                    text = resolve_citations_numbered_plain(text, key_to_num)
+                _render_md_to_odf(
+                    doc,
+                    text,
+                    styles,
+                    figures_dir=frontmatter_figures if frontmatter_figures.exists() else None)
                 _add_page_break(doc, styles)
 
     # ── Chapters ──
@@ -525,6 +545,11 @@ def render_book_odf(book_dir, chapter_filter=None):
         text = ch_md.read_text(encoding="utf-8")
         text = _strip_html_comments(text)
         text = book_builder.strip_heading_numbers(text)
+        if key_to_num:
+            text = resolve_citations_numbered_plain(text, key_to_num)
+        # Strip empty ``## References`` placeholders — the book-wide
+        # References section is appended after the backmatter.
+        text = re.sub(r'##\s+References\s*\n?(?:\s*\n)*', '', text)
 
         figures_dir = ch_dir / "figures"
         _render_md_to_odf(doc, text, styles, chapter_num=ch_num,
@@ -537,7 +562,44 @@ def render_book_odf(book_dir, chapter_filter=None):
             if bm_path.exists():
                 _add_page_break(doc, styles)
                 text = _strip_html_comments(bm_path.read_text(encoding="utf-8"))
+                if key_to_num:
+                    text = resolve_citations_numbered_plain(text, key_to_num)
                 _render_md_to_odf(doc, text, styles)
+
+    # ── References (book-wide, numbered) ──
+    if not chapter_filter and all_cited_keys and bib_entries:
+        _add_page_break(doc, styles)
+        h = H(outlinelevel=1)
+        h.addText("References")
+        doc.text.addElement(h)
+        for key in all_cited_keys:
+            num = key_to_num[key]
+            fields = bib_entries.get(key)
+            if fields:
+                fields_clean = {k: clean_bibtex_latex(v) for k, v in fields.items()}
+                author = format_author_short(fields_clean.get("author", "Unknown"))
+                title = fields_clean.get("title", "Untitled")
+                year = fields_clean.get("year", "n.d.")
+                journal = fields_clean.get(
+                    "journal", fields_clean.get(
+                        "booktitle", fields_clean.get(
+                            "publisher", fields_clean.get("institution", ""))))
+                volume = fields_clean.get("volume", "")
+                pages = fields_clean.get("pages", "")
+                parts = ['[{}] {}, "{}"'.format(num, author, title)]
+                if journal:
+                    parts[-1] += ", " + journal
+                if volume:
+                    parts[-1] += ", vol. " + volume
+                if pages:
+                    parts[-1] += ", " + pages
+                parts[-1] += ", " + year + "."
+                ref_text = " ".join(parts)
+            else:
+                ref_text = "[{}] {} — not in refs.bib".format(num, key)
+            p = P(stylename=styles["normal"])
+            p.addText(ref_text)
+            doc.text.addElement(p)
 
     # ── Save ──
     submission_dir = book_dir / "submission"
