@@ -829,7 +829,7 @@ def _chapter_hero_html(ch_dir, ch_title):
         return ""
     hero = next((f for f in candidates if _HERO_HINT_RE.search(f.name)),
                 candidates[0])
-    rel = f"../figures/{hero.name}"
+    rel = f"figures/{hero.name}"
     return (
         '<figure class="ch-hero">'
         f'<img src="{rel}" alt="{_esc(ch_title)} — chapter illustration"/>'
@@ -2012,16 +2012,17 @@ def render_book_html(book_dir, chapter_filter=None):
 
         parts.append(f'<section class="chapter" id="chapter-{ch_num}">')
 
-        # Build the chapter opener (eyebrow + number + title + rule).
-        # Hero illustration intentionally omitted — chapter-level decorative
-        # images are not part of this book's design.
+        # Build the chapter opener (eyebrow + number + title + rule) and use a
+        # curated lead illustration when the chapter has one.
         ch_title = ch.get("title", "Untitled")
+        hero_html = _chapter_hero_html(ch_dir, ch_title)
         opener_html = (
             '<div class="chapter-opener">'
             '<div class="ch-eyebrow">Chapter</div>'
             f'<div class="ch-number">{ch_num}</div>'
             f'<h1 class="ch-title">{_esc(ch_title)}</h1>'
             '<hr class="ch-rule"/>'
+            f'{hero_html}'
             '</div>'
         )
         parts.append(opener_html)

@@ -1,6 +1,6 @@
 ---
 title: Reactors
-description: "Documentation for chemical reactor equipment in NeqSim: plug flow reactor (PFR), stirred tank reactor (CSTR), Gibbs equilibrium reactor, stoichiometric reactor, ammonia synthesis reactor, sulfur deposition analyser, and bio-processing reactors."
+description: "Documentation for chemical reactor equipment in NeqSim: plug flow reactor (PFR), stirred tank reactor (CSTR), Gibbs equilibrium reactor, stoichiometric reactor, hydrogen production reformers, ammonia synthesis reactor, sulfur deposition analyser, and bio-processing reactors."
 ---
 
 # Reactors
@@ -20,6 +20,7 @@ stoichiometric conversion, catalytic reactions, and bio-processing. All reactors
 - [Ammonia Synthesis Reactor](#ammonia-synthesis-reactor)
 - [Sulfur Deposition Analyser](#sulfur-deposition-analyser)
 - [Furnace Burner](#furnace-burner)
+- [Hydrogen Production Reactors](#hydrogen-production-reactors)
 - [Bio-Processing Reactors](#bio-processing-reactors)
 - [Related Documentation](#related-documentation)
 
@@ -42,6 +43,12 @@ stoichiometric conversion, catalytic reactions, and bio-processing. All reactors
 | `AmmoniaSynthesisReactor` | Specialized reactor for ammonia synthesis |
 | `SulfurDepositionAnalyser` | Sulfur solubility, deposition onset, corrosion assessment |
 | `FurnaceBurner` | Fired heater / furnace burner |
+| `CatalyticTubeReformer` | Tube-side SMR equilibrium model with duty and tube-wall screening |
+| `ReformerFurnace` | Fired SMR furnace coupling burner heat to reformer tube demand |
+| `SyngasBurnerZone` | Oxygen-blown ATR/POX burner-zone screening model |
+| `AutothermalReformer` | ATR route model with O₂/C and S/C control, burner zone, catalytic equilibrium, and soot risk |
+| `PartialOxidationReactor` | POX route model with refractory warning, quench section, and H₂/CO metric |
+| `QuenchSection` | Rapid syngas cooling model with heat-removed and quench-severity outputs |
 | `Fermenter` | Fermentation reactor for bio-processing |
 | `EnzymeTreatment` | Enzyme-based treatment reactor |
 
@@ -55,6 +62,10 @@ stoichiometric conversion, catalytic reactions, and bio-processing. All reactors
 | `StirredTankReactor` | Liquid-phase reactions, good mixing, residence time calculations |
 | `GibbsReactor` | Complex equilibrium without specifying reaction stoichiometry |
 | `StoichiometricReaction` | Known fixed conversion, simple material balance |
+| `CatalyticTubeReformer` | SMR tube-side syngas generation with heat-duty and catalyst-activity screening |
+| `ReformerFurnace` | SMR furnace heat-balance studies with fuel/air combustion and tube reforming |
+| `AutothermalReformer` | ATR concept studies with oxygen/steam ratio control and soot-risk screening |
+| `PartialOxidationReactor` | POX syngas route studies with quench and refractory-temperature screening |
 | `AmmoniaSynthesisReactor` | Haber-Bosch ammonia synthesis modeling |
 | `SulfurDepositionAnalyser` | Sulfur precipitation, H2S reactions, corrosion assessment |
 
@@ -237,6 +248,31 @@ burner.run();
 
 ---
 
+## Hydrogen Production Reactors
+
+The hydrogen-production reactor models build on `GibbsReactor`, `FurnaceBurner`,
+and catalyst screening utilities to provide route-level models for SMR, ATR,
+POX, and water-gas shift studies. Use them for concept screening, heat-balance
+checks, oxygen and steam-ratio envelopes, soot/refractory/tube-temperature
+warnings, WGS conversion checks, and plant builder templates. Detailed
+radiant-box design, burner CFD, vendor tube ratings, and rate-based catalyst
+calibration remain outside this screening layer.
+
+| Class | Typical use |
+|---|---|
+| `CatalyticTubeReformer` | Tube-side steam methane reforming equilibrium, heat duty, tube-wall temperature, heat flux, methane conversion |
+| `ReformerFurnace` | Fired SMR furnace with process feed, fuel feed, combustion air, syngas outlet, and flue-gas outlet |
+| `SyngasBurnerZone` | High-temperature oxygen-blown burner zone for ATR and POX front ends |
+| `AutothermalReformer` | Integrated ATR model with O₂/C and S/C controls, burner-zone warnings, and catalytic equilibrium |
+| `PartialOxidationReactor` | POX model with O₂/C control, optional steam, refractory warning, fast quench, and H₂/CO output |
+| `QuenchSection` | Standalone rapid syngas cooling and quench-severity screening |
+| `WaterGasShiftReactor` | HT/LT WGS equilibrium wrapper with CO conversion, H2 gain, CO2 formation, heat duty, and WGS ratio reporting |
+
+For full route examples and plant builders, see
+[Hydrogen Production with NeqSim](../hydrogen_production.md).
+
+---
+
 ## Bio-Processing Reactors
 
 ### Fermenter
@@ -269,3 +305,4 @@ enzyme.run();
 - [PFR Implementation Plan](../PLUG_FLOW_REACTOR_IMPLEMENTATION_PLAN.md) — Design decisions and commercial comparison
 - [Equipment Index](index.md) — All NeqSim equipment types
 - [Chemical Reactions](../../chemicalreactions/) — Reaction modeling background
+- [Hydrogen Production with NeqSim](../hydrogen_production.md) — SMR, ATR, POX, WGS, PSA, electrolysis, and full blue-H₂ route templates
