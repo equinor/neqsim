@@ -273,6 +273,58 @@ print(f"Kv = {valve.getKv():.2f}")
 See [Valve Mechanical Design](../process/ValveMechanicalDesign.md) for full details
 on available sizing standards, parameters, and formulas.
 
+### Choke Collapse Diagnostic
+
+Detect loss of critical (sonic) flow across a throttling valve or choke and flag
+flashing / cavitation in liquid service. See
+[Choke Collapse Analysis](../process/choke-collapse.md) for the full theory.
+
+```python
+ChokeCollapseAnalyzer = jneqsim.process.equipment.valve.ChokeCollapseAnalyzer
+
+# After valve.run():
+result = valve.analyseChokeCollapse()
+print("Flow regime :", result.getFlowRegime())          # CRITICAL / SUBCRITICAL / TRANSITION / REVERSE
+print("Collapse    :", result.getCollapseMode())        # NONE / NEAR_COLLAPSE / COLLAPSED / FLASHING / CAVITATION
+print("r           :", result.getPressureRatio())
+print("r_c         :", result.getCriticalPressureRatio())
+print("margin      :", result.getMarginToCollapse())
+for rec in result.getRecommendations():
+    print(" -", rec)
+
+# What-if: vary downstream pressure without changing the model
+analyzer = ChokeCollapseAnalyzer(valve)
+analyzer.setCriticalMarginThreshold(0.05)   # 5% transition band
+analyzer.setDownstreamPressure(80.0, "bara")
+print(analyzer.analyze().toJson())
+```
+
+### Inadvertent Valve Operation (IVO) Screening
+
+Screen credible inadvertent open / close / stuck scenarios per API 521 §4.4.13
+and NORSOK P-002 §5.5. See
+[Inadvertent Valve Operation](../process/inadvertent-valve-operation.md) for
+the full scenario taxonomy and severity rules.
+
+```python
+IvoResult = jneqsim.process.equipment.valve.InadvertentValveOperationResult
+
+# After valve.run():
+result = valve.analyseInadvertentOperation(
+    IvoResult.ValveRole.BLOCK,            # BLOCK / CONTROL / BYPASS / CHECK / PSV_ISOLATION / ESD / BLOWDOWN
+    IvoResult.IvoMode.SPURIOUS_CLOSE,     # SPURIOUS_OPEN / SPURIOUS_CLOSE / STUCK_OPEN / STUCK_CLOSED / PARTIAL_STROKE
+    100.0,                                # downstream segment design pressure [bara]
+)
+print("Severity        :", result.getSeverity())     # NONE / MINOR / MAJOR / SAFETY_CRITICAL
+print("Overpressure x  :", result.getOverpressureFactor())
+print("Blocked outlet  :", result.isBlockedOutlet())
+print("Reverse flow    :", result.isReverseFlowRisk())
+print("Loss of relief  :", result.isLossOfReliefPath())
+print("Fails to isolate:", result.isFailureToIsolateOnDemand())
+for rec in result.getRecommendations():
+    print(" -", rec)
+```
+
 ---
 
 ## Flowsheet Building
