@@ -1290,6 +1290,27 @@ def _generate_half_title(cfg):
     )
 
 
+def _generate_back_cover(cfg, book_dir):
+    """Generate a back-cover page if ``figures/back_cover.png`` exists.
+
+    Uses the same full-bleed image layout as the front cover so the printed
+    and on-screen versions stay in visual parity.
+    """
+    if book_dir is None:
+        return ""
+    for name in ("back_cover.png", "back_cover.jpg", "back_cover.jpeg"):
+        p = book_dir / "figures" / name
+        if p.is_file():
+            rel = f"../figures/{name}"
+            return (
+                '<section id="back_cover" class="title-page cover-image">'
+                f'<img class="cover-art" src="{_esc(rel)}" '
+                f'alt="{_esc(cfg.get("title", "Untitled"))} \u2014 back cover"/>'
+                '</section>'
+            )
+    return ""
+
+
 def _generate_copyright_page(cfg, book_dir):
     """Generate a professional copyright page."""
     title = cfg.get("title", "Untitled")
@@ -1924,6 +1945,12 @@ def render_book_html(book_dir, chapter_filter=None):
         parts.append('<section id="bibliography">')
         parts.append(ref_html)
         parts.append("</section>")
+
+    # Back cover (optional, full-bleed image)
+    if not chapter_filter:
+        back_html = _generate_back_cover(cfg, book_dir)
+        if back_html:
+            parts.append(back_html)
 
     parts.append("</main>")
     parts.append("</body>")
