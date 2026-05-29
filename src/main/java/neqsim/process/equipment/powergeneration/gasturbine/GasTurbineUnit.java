@@ -153,6 +153,26 @@ public class GasTurbineUnit extends TwoPortEquipment {
   }
 
   /**
+   * Convenience setter for ambient temperature only. Leaves ambient pressure at its current value
+   * (defaults to ISO sea-level, 1.01325 bara).
+   *
+   * @param temperatureK ambient temperature [K]
+   */
+  public void setAmbientTemperatureK(double temperatureK) {
+    this.ambientTemperatureK = temperatureK;
+  }
+
+  /**
+   * Convenience setter for ambient pressure only. Leaves ambient temperature unchanged (defaults to
+   * ISO 15 °C = 288.15 K).
+   *
+   * @param pressureBara ambient pressure [bara]
+   */
+  public void setAmbientPressureBara(double pressureBara) {
+    this.ambientPressureBara = pressureBara;
+  }
+
+  /**
    * Add a compressor as a power consumer.
    *
    * @param compressor compressor whose getPower() will be summed into demand
@@ -331,15 +351,18 @@ public class GasTurbineUnit extends TwoPortEquipment {
       return 0.0;
     }
     try {
-      // Stream.LCV() returns the inferior calorific value in J/mol
-      // (ISO 6976, 15.55 °C reference). Convert to J/kg via molar mass.
-      double lcvJPerMol = getInletStream().LCV();
+      // Stream.LCV() returns the inferior calorific value on a VOLUME basis (J/Sm3),
+      // not J/mol. To get J/kg we compute ISO 6976 directly on a mass basis.
       SystemInterface fluid = getInletStream().getFluid();
-      double molarMassKgPerMol = (fluid != null) ? fluid.getMolarMass() : 0.0;
-      if (molarMassKgPerMol <= 0.0) {
+      if (fluid == null) {
         return 0.0;
       }
-      return lcvJPerMol / molarMassKgPerMol;
+      neqsim.standards.gasquality.Standard_ISO6976 iso6976 =
+          new neqsim.standards.gasquality.Standard_ISO6976(fluid.clone(), 0, 15.55, "mass");
+      iso6976.setReferenceState("real");
+      iso6976.calculate();
+      // getValue returns kJ/kg on a mass basis; convert to J/kg.
+      return iso6976.getValue("InferiorCalorificValue") * 1.0e3;
     } catch (Exception ex) {
       logger.warn("Could not compute fuel LCV for {}: {}", getName(), ex.getMessage());
       return 0.0;

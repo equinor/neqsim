@@ -121,6 +121,32 @@ public final class GasTurbineCatalog implements Serializable {
     return best;
   }
 
+  /**
+   * Find the best-fit single-unit spec for the given demand. When no single catalog entry is large
+   * enough and {@code returnLargestIfNoneFits} is {@code true}, the largest available entry is
+   * returned instead (indicating a multi-unit dispatch will be required). When the flag is
+   * {@code false}, the behaviour matches the two-argument overload and {@code null} is returned for
+   * infeasible single-unit cases.
+   *
+   * @param demandW power demand [W]
+   * @param redundancyFactor multiplier (e.g. 1.0 for 1×100 %, 2.0 for N+1 with two equal units)
+   * @param returnLargestIfNoneFits if true, fall back to the largest catalog entry when no single
+   *        unit covers the demand
+   * @return best-fit spec, or the largest spec, or {@code null} if the catalog is empty
+   */
+  public static GasTurbineSpec findBestFit(double demandW, double redundancyFactor,
+      boolean returnLargestIfNoneFits) {
+    GasTurbineSpec best = findBestFit(demandW, redundancyFactor);
+    if (best != null || !returnLargestIfNoneFits) {
+      return best;
+    }
+    List<GasTurbineSpec> sorted = sortedByPower();
+    if (sorted.isEmpty()) {
+      return null;
+    }
+    return sorted.get(sorted.size() - 1);
+  }
+
   private static String normalize(String s) {
     return s.trim().toLowerCase().replace(" ", "_").replace("-", "_");
   }

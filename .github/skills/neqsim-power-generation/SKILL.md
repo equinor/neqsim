@@ -246,6 +246,37 @@ System.out.println("Payback (yr):     " + res.simplePaybackYear);
 | You model the GT thermodynamically (compressor + combustor + expander) and care about exhaust composition into an HRSG | You are doing **right-sizing, dispatch, retrofit, or fleet-level CO2/NPV** studies and want vendor rating points, part-load + ambient correction, degradation, and N+1 |
 | Combined-cycle integration where exhaust gas feeds an `HRSG` | Late-life turndown, replacing oversized turbines, CO2-tax sensitivity |
 
+### Combined-cycle retrofit (HRSG + SteamTurbine on top of the fleet)
+
+To evaluate a bottoming cycle on top of a `GasTurbineUnit` retrofit fleet, feed
+the synthesised exhaust into the legacy `HRSG` + `SteamTurbine`. Use the
+per-unit exhaust mass flow and temperature from `GasTurbineSpec` (corrected by
+`GasTurbinePerformanceMap` if needed) to build an exhaust `Stream`, then size
+the bottoming cycle and add its power output to the retrofit `LateLifeRetrofitStudy`
+result as an annual energy credit (extra MWh × fuel-equivalent × CO2 factor).
+The 20-year rightsizing notebook (see below) demonstrates this pattern in
+section 10.
+
+### Reservoir + pipeline-driven shaft demand
+
+Instead of a synthetic linear decline, drive the compressor shaft load from a
+physics-based reservoir + flow line model. A simple gas-law material balance on
+the reservoir gives `(P_res, T_res)` each year; a `PipeBeggsAndBrills` riser
+plus flow line gives arrival pressure at the platform; the export compressor
+suction pressure then sets shaft demand which the `GasTurbineUnit` /
+`TurbineDispatchOptimizer` resolves. This couples the late-life study to real
+field decline (recovery factor, reservoir size uncertainty) and is the right
+pattern when CO2 tax and turbine count must be evaluated against an uncertain
+production profile rather than a stipulated demand curve. Section 11 of the
+20-year rightsizing notebook implements this end-to-end.
+
+### Worked example
+
+See [`examples/notebooks/gas_turbine_rightsizing_20yr.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/gas_turbine_rightsizing_20yr.ipynb)
+for a complete 20-year late-life right-sizing study: catalog + site correction,
+degradation, dispatch with N+1, `LateLifeRetrofitStudy` with `CO2TaxSchedule`,
+HRSG + steam-turbine combined-cycle extension, and reservoir-driven demand.
+
 ## Applicable Standards
 
 | Standard | Scope |
