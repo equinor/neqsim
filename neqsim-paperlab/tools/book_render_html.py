@@ -1639,7 +1639,9 @@ def _inline_fmt(text):
     text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
     # Italic (but not ** and not math $)
     text = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"<em>\1</em>", text)
-    return text
+    # Restore stashed HTML (code spans, math, links, citations) by replacing
+    # the U+E000/U+E001 placeholder tokens with their original markup.
+    return restore(text)
 
 
 def _render_table(lines):
