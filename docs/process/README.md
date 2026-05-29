@@ -172,6 +172,7 @@ This documentation is organized into the following sections:
 | Pumps | [pumps.md](equipment/pumps) | Pump, PumpChart |
 | Expanders | [expanders.md](equipment/expanders) | Expander, TurboExpanderCompressor |
 | Valves | [valves.md](equipment/valves) | ThrottlingValve, SafetyValve, BlowdownValve |
+| **Choke Collapse Analysis** | [choke-collapse.md](choke-collapse) | ChokeCollapseAnalyzer — critical pressure ratio, flashing, cavitation |
 | **Well Chokes** | [well_choke_implementation.md](well_choke_implementation) | Sachdeva, Gilbert choke models, ThrottlingValve integration |
 | Distillation | [distillation.md](equipment/distillation) | DistillationColumn, SimpleTray |
 | Absorbers | [absorbers.md](equipment/absorbers) | SimpleAbsorber, SimpleTEGAbsorber |

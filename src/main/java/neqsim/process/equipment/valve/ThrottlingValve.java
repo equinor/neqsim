@@ -169,6 +169,17 @@ public class ThrottlingValve extends TwoPortEquipment
     return getInletStream().getThermoSystem().getPressure();
   }
 
+  /**
+   * Run a choke-collapse diagnostic on this valve. Convenience wrapper around
+   * {@link ChokeCollapseAnalyzer}. The valve must have been run at least once.
+   *
+   * @return analysis result with flow regime, collapse mode, pressure ratio margin and
+   *         recommendations
+   */
+  public ChokeCollapseResult analyseChokeCollapse() {
+    return new ChokeCollapseAnalyzer(this).analyze();
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setPressure(double pressure) {

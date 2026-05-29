@@ -273,6 +273,32 @@ print(f"Kv = {valve.getKv():.2f}")
 See [Valve Mechanical Design](../process/ValveMechanicalDesign.md) for full details
 on available sizing standards, parameters, and formulas.
 
+### Choke Collapse Diagnostic
+
+Detect loss of critical (sonic) flow across a throttling valve or choke and flag
+flashing / cavitation in liquid service. See
+[Choke Collapse Analysis](../process/choke-collapse.md) for the full theory.
+
+```python
+ChokeCollapseAnalyzer = jneqsim.process.equipment.valve.ChokeCollapseAnalyzer
+
+# After valve.run():
+result = valve.analyseChokeCollapse()
+print("Flow regime :", result.getFlowRegime())          # CRITICAL / SUBCRITICAL / TRANSITION / REVERSE
+print("Collapse    :", result.getCollapseMode())        # NONE / NEAR_COLLAPSE / COLLAPSED / FLASHING / CAVITATION
+print("r           :", result.getPressureRatio())
+print("r_c         :", result.getCriticalPressureRatio())
+print("margin      :", result.getMarginToCollapse())
+for rec in result.getRecommendations():
+    print(" -", rec)
+
+# What-if: vary downstream pressure without changing the model
+analyzer = ChokeCollapseAnalyzer(valve)
+analyzer.setCriticalMarginThreshold(0.05)   # 5% transition band
+analyzer.setDownstreamPressure(80.0, "bara")
+print(analyzer.analyze().toJson())
+```
+
 ---
 
 ## Flowsheet Building
