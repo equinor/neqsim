@@ -1,0 +1,15 @@
+model,type,rated_power_MW,heat_rate_kJ_per_kWh,exhaust_flow_kg_s,exhaust_T_C,nox_ppm_DLE,mass_tonnes,description
+LM2500,AERODERIVATIVE,22.4,9700,70.5,545,25,4.6,Aeroderivative 22 MW single-shaft
+LM2500PLUS_G4,AERODERIVATIVE,32.0,9085,88.4,510,25,5.2,Aeroderivative 32 MW high efficiency
+LM6000PF,AERODERIVATIVE,42.3,8800,128.0,452,25,8.5,Aeroderivative two-shaft 42 MW low NOx
+LM6000PG,AERODERIVATIVE,49.5,8676,138.0,460,25,8.8,Aeroderivative two-shaft 50 MW
+RB211_6562,AERODERIVATIVE,32.0,9450,98.5,490,42,9.5,Aeroderivative 32 MW twin-spool
+TRENT60_DLE,AERODERIVATIVE,52.0,8530,160.0,440,25,11.0,Aeroderivative 52 MW high efficiency
+SGT_700,INDUSTRIAL,33.0,9695,95.0,525,15,30.5,Industrial 33 MW twin-shaft
+SGT_750,INDUSTRIAL,41.0,8930,114.0,462,15,33.0,Industrial 41 MW high efficiency
+CENTAUR_50,INDUSTRIAL,4.6,12180,18.6,510,25,4.5,Industrial 4.6 MW single-shaft
+TAURUS_60,INDUSTRIAL,5.7,11430,22.0,510,25,4.8,Industrial 5.7 MW single-shaft
+TAURUS_70,INDUSTRIAL,8.0,10240,27.0,490,25,5.4,Industrial 8 MW
+MARS_100,INDUSTRIAL,10.7,10760,42.5,485,25,8.5,Industrial 10.7 MW twin-shaft
+TITAN_130,INDUSTRIAL,15.0,10240,49.8,490,25,11.2,Industrial 15 MW twin-shaft
+TITAN_250,INDUSTRIAL,22.4,9245,68.0,465,15,16.5,Industrial 22 MW high efficiency

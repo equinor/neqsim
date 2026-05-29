@@ -152,6 +152,100 @@ double co2Factor = 2.75;  // kg CO2 / kg fuel (adjust for actual composition)
 double co2_tonnes_yr = fuelRate_kg_hr * co2Factor * 8760 / 1e6;
 ```
 
+## 7. Right-Sizing & Dispatch (gasturbine sub-package)
+
+For late-life or turndown studies where the question is *"which turbines, how
+many, and at what load?"* — use the catalog-driven classes under
+`neqsim.process.equipment.powergeneration.gasturbine`. These integrate directly
+with `ProcessSystem` and link to `Compressor.getPower()` via the
+`PowerDemandConsumer` interface.
+
+| Class | Purpose |
+|-------|---------|
+| `GasTurbineCatalog` | Loads the bundled `gas_turbine_catalog.csv` (14 aero + industrial models: LM2500, LM2500PLUS_G4, LM6000PF/PG, RB211_6562, Trent 60, SGT-700/750, Centaur 50, Taurus 60/70, Mars 100, Titan 130/250) |
+| `GasTurbineSpec` | Immutable rating point (rated MW, ISO heat rate, exhaust flow/T, NOx, mass) |
+| `GasTurbinePerformanceMap` | Part-load + ambient correction (aero vs industrial polynomials, min-load fraction) |
+| `GasTurbineDegradation` | Recoverable + non-recoverable fouling vs fired hours, water-wash and overhaul reset |
+| `GasTurbineEmissions` | Full-carbon-balance CO2, NOx, methane slip from fuel composition |
+| `CO2TaxSchedule` | Loads `co2_tax_norway.csv` (2020–2040 NOK/tonne, CO2 tax + EU ETS), linear interpolation |
+| `GasTurbineUnit` | `TwoPortEquipment` — runs inside a `ProcessSystem`, accepts fuel `Stream`, aggregates `Compressor` shaft load via `addPowerConsumer` |
+| `TurbineDispatchOptimizer` | Picks the cheapest feasible on/off combination (brute-force ≤8 units, merit-order above) with N+1 reserve |
+| `LateLifeRetrofitStudy` | Year-by-year NPV / CO2-avoided / payback for baseline vs retrofit fleet over a declining demand profile |
+
+### Catalog & site-corrected available power
+
+```java
+GasTurbineSpec spec = GasTurbineCatalog.get("LM2500");
+GasTurbineUnit gt = new GasTurbineUnit("GT-A", fuelStream, spec);
+gt.setAmbientTemperatureK(273.15 + 30.0);  // hot day derate
+gt.setDemandedPower(15.0e6);                // 15 MW shaft
+gt.run(UUID.randomUUID());
+double avail_MW = gt.getAvailablePowerW() / 1.0e6;
+double load     = gt.getLoadFraction();
+double co2_tph  = gt.getCO2EmissionKgPerS() * 3.6;
+```
+
+### Linking turbine shaft to compressor demand
+
+Each `GasTurbineUnit` aggregates the live shaft demand from any number of
+`Compressor` objects in the same flowsheet — the dispatcher reads it on every
+`run()`:
+
+```java
+ProcessSystem plant = new ProcessSystem();
+plant.add(exportCompressor);     // existing Compressor
+plant.add(injectionCompressor);
+GasTurbineUnit gt = new GasTurbineUnit("GT-A", fuelStream,
+        GasTurbineCatalog.get("LM2500"));
+gt.addPowerConsumer(exportCompressor);
+gt.addPowerConsumer(injectionCompressor);
+plant.add(gt);
+plant.run();   // gt sums Compressor.getPower() automatically
+```
+
+### Fleet dispatch with N+1 redundancy
+
+```java
+List<GasTurbineUnit> fleet = Arrays.asList(gt1, gt2, gt3);  // each is a GasTurbineUnit
+TurbineDispatchOptimizer disp = new TurbineDispatchOptimizer(
+        /*fuelPriceNOKPerKg*/ 4.5,
+        /*co2CostNOKPerTonne*/ 1500.0);
+disp.setRequireNplusOne(true);
+TurbineDispatchOptimizer.DispatchResult r = disp.dispatch(fleet, 18.0e6);
+if (r.feasible) {
+    System.out.println(r.summary());   // running units, load, NOK/hr
+}
+```
+
+### Retrofit NPV vs baseline
+
+```java
+double[] demandMW = new double[15];
+for (int i = 0; i < 15; i++) demandMW[i] = Math.max(8.0, 20.0 - i * 0.8);
+
+LateLifeRetrofitStudy study = new LateLifeRetrofitStudy(
+        baselineFleet,    // e.g. 2x LM6000PF
+        retrofitFleet,    // e.g. 2x SGT-700
+        demandMW,
+        /*startYear*/ 2026,
+        CO2TaxSchedule.loadDefault(),
+        /*fuelPriceNOKPerKg*/ 4.5);
+study.setRetrofitCapexMNOK(800.0);
+study.setDiscountRate(0.08);
+study.setAnnualOperatingHours(8000);
+LateLifeRetrofitStudy.RetrofitResult res = study.run();
+System.out.println("NPV (MNOK):       " + res.npvMNOK);
+System.out.println("CO2 avoided (t):  " + res.totalCO2AvoidedTonne);
+System.out.println("Payback (yr):     " + res.simplePaybackYear);
+```
+
+### When to choose this sub-package vs the legacy `GasTurbine`
+
+| Use legacy `GasTurbine` | Use `GasTurbineUnit` + catalog |
+|-------------------------|--------------------------------|
+| You model the GT thermodynamically (compressor + combustor + expander) and care about exhaust composition into an HRSG | You are doing **right-sizing, dispatch, retrofit, or fleet-level CO2/NPV** studies and want vendor rating points, part-load + ambient correction, degradation, and N+1 |
+| Combined-cycle integration where exhaust gas feeds an `HRSG` | Late-life turndown, replacing oversized turbines, CO2-tax sensitivity |
+
 ## Applicable Standards
 
 | Standard | Scope |
