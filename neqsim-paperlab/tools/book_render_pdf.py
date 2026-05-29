@@ -374,10 +374,15 @@ def build_book_typst_preamble(cfg, profile=None):
   inset: (x: 8pt, y: 5pt),
 )
 
+// Force left alignment for table body cells so prose stays readable.
+// Pandoc emits `align: (auto, auto, ...)` which Typst centers by default.
+#show table.cell: set align(left + horizon)
+
 // Booktabs-style horizontal rules: thicker at top and bottom, thin under
 // the header row. Pandoc emits standard #table; we recolor the outer rules.
 #show table: it => {{
-  set text(size: 9pt)
+  set text(size: 9.5pt)
+  set par(justify: false, leading: 0.55em)
   block(breakable: false, stroke: (top: 1pt + black, bottom: 1pt + black), it)
 }}
 
@@ -408,12 +413,14 @@ def build_book_typst_preamble(cfg, profile=None):
 }}
 
 #show raw.where(block: false): it => {{
+  // Inline code — keep close to surrounding body size so filenames in tables
+  // remain legible (avoid Typst auto-shrink dropping monospace below 8pt).
   box(
     fill: luma(244),
     inset: (x: 3pt, y: 1pt),
     outset: (y: 1pt),
     radius: 2pt,
-    text(size: 0.92em, font: "DejaVu Sans Mono")[#it]
+    text(size: 0.96em, font: "DejaVu Sans Mono")[#it]
   )
 }}
 

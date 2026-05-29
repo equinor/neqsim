@@ -180,10 +180,26 @@ def postprocess_typst(typ_text):
 
     out_lines = []
     in_code = False
+    in_caption = False
+    # Pattern: leading whitespace, optional 'Figure N' or 'Figure N.M' prefix
+    # followed by ':' — strip it so the Typst-generated 'Figure K:' counter
+    # is not duplicated by the source caption.
+    _caption_prefix_re = re.compile(r'^(\s*)(?:Figure|Fig\.)\s+\d+(?:\.\d+)?\s*[:\.]\s*')
     for line in typ_text.split('\n'):
         s = line.lstrip()
         if s.startswith('```'):
             in_code = not in_code
+        # Track entering/leaving a caption: [...] block so we only rewrite
+        # caption text, not body prose that happens to mention "Figure 2.1".
+        if not in_code:
+            if 'caption: [' in line:
+                in_caption = True
+            if in_caption:
+                m = _caption_prefix_re.match(line)
+                if m:
+                    line = line[:m.end(1)] + line[m.end():]
+                if ']' in line and 'caption: [' not in line:
+                    in_caption = False
         if not in_code and re.match(r'\[\d+\]', s):
             # Reference line: strip BibTeX braces
             line = line.replace('{', '').replace('}', '')
