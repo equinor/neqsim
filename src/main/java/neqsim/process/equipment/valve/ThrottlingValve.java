@@ -180,6 +180,23 @@ public class ThrottlingValve extends TwoPortEquipment
     return new ChokeCollapseAnalyzer(this).analyze();
   }
 
+  /**
+   * Run an inadvertent valve operation (IVO) diagnostic on this valve. Convenience wrapper around
+   * {@link InadvertentValveOperationAnalyzer}. The valve must have been run at least once.
+   * Defaults: role = BLOCK, mode = SPURIOUS_CLOSE.
+   *
+   * @param role functional role of the valve
+   * @param mode inadvertent operation mode to evaluate
+   * @param designPressureBara MAWP (bara) of the segment that becomes exposed by the IVO
+   * @return analysis result with severity, frequency, overpressure factor and recommendations
+   */
+  public InadvertentValveOperationResult analyseInadvertentOperation(
+      InadvertentValveOperationResult.ValveRole role, InadvertentValveOperationResult.IvoMode mode,
+      double designPressureBara) {
+    return new InadvertentValveOperationAnalyzer(this).setRole(role).setMode(mode)
+        .setDesignPressure(designPressureBara, "bara").analyze();
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setPressure(double pressure) {

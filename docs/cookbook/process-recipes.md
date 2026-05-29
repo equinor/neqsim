@@ -299,6 +299,32 @@ analyzer.setDownstreamPressure(80.0, "bara")
 print(analyzer.analyze().toJson())
 ```
 
+### Inadvertent Valve Operation (IVO) Screening
+
+Screen credible inadvertent open / close / stuck scenarios per API 521 §4.4.13
+and NORSOK P-002 §5.5. See
+[Inadvertent Valve Operation](../process/inadvertent-valve-operation.md) for
+the full scenario taxonomy and severity rules.
+
+```python
+IvoResult = jneqsim.process.equipment.valve.InadvertentValveOperationResult
+
+# After valve.run():
+result = valve.analyseInadvertentOperation(
+    IvoResult.ValveRole.BLOCK,            # BLOCK / CONTROL / BYPASS / CHECK / PSV_ISOLATION / ESD / BLOWDOWN
+    IvoResult.IvoMode.SPURIOUS_CLOSE,     # SPURIOUS_OPEN / SPURIOUS_CLOSE / STUCK_OPEN / STUCK_CLOSED / PARTIAL_STROKE
+    100.0,                                # downstream segment design pressure [bara]
+)
+print("Severity        :", result.getSeverity())     # NONE / MINOR / MAJOR / SAFETY_CRITICAL
+print("Overpressure x  :", result.getOverpressureFactor())
+print("Blocked outlet  :", result.isBlockedOutlet())
+print("Reverse flow    :", result.isReverseFlowRisk())
+print("Loss of relief  :", result.isLossOfReliefPath())
+print("Fails to isolate:", result.isFailureToIsolateOnDemand())
+for rec in result.getRecommendations():
+    print(" -", rec)
+```
+
 ---
 
 ## Flowsheet Building

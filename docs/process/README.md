@@ -173,6 +173,7 @@ This documentation is organized into the following sections:
 | Expanders | [expanders.md](equipment/expanders) | Expander, TurboExpanderCompressor |
 | Valves | [valves.md](equipment/valves) | ThrottlingValve, SafetyValve, BlowdownValve |
 | **Choke Collapse Analysis** | [choke-collapse.md](choke-collapse) | ChokeCollapseAnalyzer — critical pressure ratio, flashing, cavitation |
+| **Inadvertent Valve Operation** | [inadvertent-valve-operation.md](inadvertent-valve-operation) | InadvertentValveOperationAnalyzer — API 521 §4.4.13 / NORSOK P-002 IVO screening |
 | **Well Chokes** | [well_choke_implementation.md](well_choke_implementation) | Sachdeva, Gilbert choke models, ThrottlingValve integration |
 | Distillation | [distillation.md](equipment/distillation) | DistillationColumn, SimpleTray |
 | Absorbers | [absorbers.md](equipment/absorbers) | SimpleAbsorber, SimpleTEGAbsorber |
