@@ -40,6 +40,9 @@ public class StaticNeqMixer extends StaticMixer {
     String compName = new String();
 
     for (int k = 1; k < streams.size(); k++) {
+      if (streams.get(k).getFlowRate("kg/hr") <= getMinimumFlow()) {
+        continue;
+      }
       for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0]
           .getNumberOfComponents(); i++) {
         boolean gotComponent = false;
@@ -59,10 +62,10 @@ public class StaticNeqMixer extends StaticMixer {
           if (mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getName()
               .equals(componentName)) {
             gotComponent = true;
-            index = mixedStream.getThermoSystem().getPhases()[0].getComponent(p)
-                .getComponentNumber();
-            compName = mixedStream.getThermoSystem().getPhases()[0].getComponent(p)
-                .getComponentName();
+            index =
+                mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getComponentNumber();
+            compName =
+                mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getComponentName();
             break;
           }
         }
@@ -90,19 +93,29 @@ public class StaticNeqMixer extends StaticMixer {
   @Override
   public void run(UUID id) {
     double enthalpy = 0.0;
+    int templateIndex = -1;
     for (int k = 0; k < streams.size(); k++) {
+      if (streams.get(k).getFlowRate("kg/hr") <= getMinimumFlow()) {
+        continue;
+      }
       streams.get(k).getThermoSystem().init(3);
       enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
+      if (templateIndex < 0) {
+        templateIndex = k;
+      }
+    }
+    if (templateIndex < 0) {
+      templateIndex = 0;
     }
 
-    mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
+    mixedStream.setThermoSystem((streams.get(templateIndex).getThermoSystem().clone()));
     mixedStream.getThermoSystem().setNumberOfPhases(2);
     mixedStream.getThermoSystem().reInitPhaseType();
     mixStream();
 
     SystemInterface syst = mixedStream.getThermoSystem().clone();
-    syst.setTemperature(streams.get(0).getThermoSystem().getTemperature());
-    syst.setPressure(streams.get(0).getThermoSystem().getPressure());
+    syst.setTemperature(streams.get(templateIndex).getThermoSystem().getTemperature());
+    syst.setPressure(streams.get(templateIndex).getThermoSystem().getPressure());
     ThermodynamicOperations testOps = new ThermodynamicOperations(syst);
     testOps.PHflash(enthalpy, 0);
     // System.out.println("temp " + syst.getTemperature());
