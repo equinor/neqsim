@@ -9,7 +9,78 @@
 
 ---
 
-## 2026-05-27 — Horizon-3 Hydrogen Foundations
+## 2026-05-30 — Agentic Process Engineering v1 (3 features + dynamics wiring)
+
+### Summary
+Three new capability bundles for autonomous process-engineering agents:
+typed automation writes with rollback, structured separation-duty synthesis,
+and pluggable dynamic-simulation infrastructure with event scheduling.
+
+### Feature 1 — Typed automation writes with rollback
+- `neqsim.process.automation.ProcessAutomation` now performs typed validation
+  before any `setVariableValue` write (range, allowed-values, unit conversion)
+  and supports transactional `setValuesWithRollback(Map updates, String unit)`
+  that reverts all writes if any single update fails.
+- Adds `getWriteHistory()` audit log (timestamped, with old/new value, unit,
+  status, error category). Diagnostics now tag failures with
+  `VALUE_OUT_OF_BOUNDS`, `INVALID_TYPE`, `READ_ONLY_VARIABLE`,
+  `UNIT_CONVERSION_FAILED`. Schema: `SCHEMA_VERSION = "1.0"`.
+
+### Feature 2 — SeparationDuty + FlowsheetSynthesisEngine
+- `neqsim.process.synthesis.SeparationDuty` — structured spec for a
+  separation requirement (feed composition, recovery targets, purity targets,
+  energy/utility constraints, allowed unit-operation classes).
+- `neqsim.process.synthesis.FlowsheetSynthesisEngine` — generates candidate
+  flowsheet topologies (separator trains, columns, flash cascades) from a
+  `SeparationDuty`, scores them on TAC / recovery / energy and emits a ranked
+  `List<FlowsheetCandidate>` with JSON-serializable spec for downstream agents.
+
+### Feature 3 — Pluggable dynamics infrastructure (wired into `runTransient`)
+- `neqsim.process.dynamics.IntegratorStrategy` interface with two
+  implementations: `ExplicitEulerIntegrator` (default) and `BDFIntegrator`
+  (implicit-Euler/BDF-1 with Newton + central-FD Jacobian, tol 1e-8,
+  maxIter 25, falls back to explicit Euler on Newton divergence;
+  `lastStepFellBack()` flags the fallback).
+- `neqsim.process.dynamics.EventScheduler` — time-stamped `Runnable` queue
+  for ESD trips, valve closures, setpoint ramps. Events with
+  `time <= currentTime` fire at the top of every `runTransient` step
+  (before equipment runs).
+- **Wired into the live transient loop**: `ProcessSystem.runTransient(dt, id)`
+  fires due events before `applyFieldInputs()`. Accessors:
+  `get/setIntegratorStrategy()`, `get/setEventScheduler()`.
+- **`ProcessModel` orchestration**: new `runTransient(dt, UUID)` iterates all
+  child areas; `setIntegratorStrategy()` and `setEventScheduler()` propagate to
+  every child area.
+- Three new measurement devices in `neqsim.process.measurementdevice`:
+  `DifferentialPressureTransmitter` (bar), `CompositionAnalyzer`
+  (OVERALL/GAS/LIQUID mole fraction), `FlowRatioMeter` (MASS/MOLE/VOLUME).
+- **Serialization note**: `eventScheduler` is `transient` on `ProcessSystem`
+  because `Runnable` payloads (lambdas, anonymous classes) are usually not
+  serializable. Re-install after deserialising.
+
+### Tests
+- Feature 1: 23 tests pass.
+- Feature 2: 7 tests pass.
+- Feature 3 core: 16 tests pass.
+- `RunTransientEventSchedulerTest`: 4 tests pass — verifies the scheduler fires
+  at the correct timestep, mutates external state, integrator-strategy
+  accessors round-trip, and `ProcessModel` propagates the scheduler to all
+  child areas.
+
+### Migration / agent guidance
+- **No breaking changes**. All new APIs are additive.
+- Agents performing dynamic studies should prefer `EventScheduler` over
+  manually polling `i == 300` step-counter patterns inside the transient loop.
+- For stiff dynamics (small pressure-vessel volumes, fast PID loops), set
+  `process.setIntegratorStrategy(new BDFIntegrator())`.
+- For multi-area plants, install the scheduler once on `ProcessModel`; it
+  propagates to every area.
+- Skills updated: `neqsim-dynamic-simulation` (Pluggable Integrator
+  Strategies, Event Scheduling, New Measurement Devices sections).
+
+---
+
+
 
 ### Summary
 Added the first Horizon-3 hydrogen-production foundation utilities: cryogenic

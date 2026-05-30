@@ -26,6 +26,9 @@ import neqsim.process.ProcessElementInterface;
 import neqsim.process.alarm.ProcessAlarmManager;
 import neqsim.process.conditionmonitor.ConditionMonitor;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
+import neqsim.process.dynamics.EventScheduler;
+import neqsim.process.dynamics.ExplicitEulerIntegrator;
+import neqsim.process.dynamics.IntegratorStrategy;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
@@ -135,6 +138,29 @@ public class ProcessSystem extends SimulationBaseClass {
   private boolean parallelTransientEnabled = false;
   /** Thread pool size for parallel transient execution. */
   private int transientThreadPoolSize = Runtime.getRuntime().availableProcessors();
+
+  /**
+   * Pluggable integration strategy advertised to equipment during {@code runTransient}. Defaults to
+   * {@link ExplicitEulerIntegrator} so equipment that opt into the new {@link IntegratorStrategy}
+   * API get backwards-compatible explicit-Euler behaviour. Equipment that still embed their own
+   * hand-rolled integration are unaffected — they ignore this field. See
+   * {@code neqsim-dynamic-simulation} skill for the migration pattern.
+   */
+  private IntegratorStrategy integratorStrategy = new ExplicitEulerIntegrator();
+
+  /**
+   * Optional event scheduler. When set, all events with {@code time <= currentTime} are fired at
+   * the top of every {@link #runTransient(double, UUID)} step, before equipment is run. This is the
+   * integration point for ESD/IOA/setpoint-change events in dynamic studies.
+   *
+   * <p>
+   * Declared {@code transient} because scheduled event payloads ({@link Runnable}) are typically
+   * not serializable (lambdas, anonymous inner classes capturing non-serializable references). A
+   * deserialized {@code ProcessSystem} starts with no scheduler attached; the caller must
+   * re-install one if event-driven behaviour is needed after restore.
+   * </p>
+   */
+  private transient EventScheduler eventScheduler = null;
 
   // Graph-based execution fields
   /** Cached process graph for topology analysis. */
@@ -3234,6 +3260,14 @@ public class ProcessSystem extends SimulationBaseClass {
     setTimeStep(dt);
     increaseTime(dt);
 
+    // Fire any scheduled events whose trigger time has been reached. Events run BEFORE
+    // equipment so an ESD/IOA action (e.g. valve close, setpoint change) takes effect on
+    // the current timestep. Exceptions inside an event payload are surfaced to stderr by
+    // the scheduler and do not abort the transient loop.
+    if (eventScheduler != null) {
+      eventScheduler.fireDueEvents(time);
+    }
+
     // Apply field data from INPUT instruments before running the model
     applyFieldInputs();
 
@@ -3607,6 +3641,47 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public IntegrationMethod getIntegrationMethod() {
     return integrationMethod;
+  }
+
+  /**
+   * Returns the pluggable {@link IntegratorStrategy} (defaults to {@link ExplicitEulerIntegrator}).
+   * Equipment that opt into the new strategy API should call this getter inside their own
+   * {@code runTransient} implementation to advance state.
+   *
+   * @return the current integrator strategy (never {@code null})
+   */
+  public IntegratorStrategy getIntegratorStrategy() {
+    return integratorStrategy;
+  }
+
+  /**
+   * Sets the pluggable {@link IntegratorStrategy} used by equipment that opt into the strategy API.
+   * Passing {@code null} restores the default {@link ExplicitEulerIntegrator}.
+   *
+   * @param strategy integrator strategy, or {@code null} for default
+   */
+  public void setIntegratorStrategy(IntegratorStrategy strategy) {
+    this.integratorStrategy = (strategy == null) ? new ExplicitEulerIntegrator() : strategy;
+  }
+
+  /**
+   * Returns the attached {@link EventScheduler}, or {@code null} if no scheduler has been
+   * configured.
+   *
+   * @return the event scheduler or {@code null}
+   */
+  public EventScheduler getEventScheduler() {
+    return eventScheduler;
+  }
+
+  /**
+   * Attaches an {@link EventScheduler}. When set, its {@code fireDueEvents(currentTime)} is called
+   * at the top of every {@link #runTransient(double, UUID)} step. Pass {@code null} to detach.
+   *
+   * @param scheduler scheduler instance, or {@code null} to detach
+   */
+  public void setEventScheduler(EventScheduler scheduler) {
+    this.eventScheduler = scheduler;
   }
 
   /**

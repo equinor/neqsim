@@ -10,6 +10,7 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import com.google.gson.JsonArray;
@@ -17,6 +18,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.dynamics.EventScheduler;
+import neqsim.process.dynamics.IntegratorStrategy;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -981,6 +984,64 @@ public class ProcessModel implements Runnable, Serializable {
       return valueJ / 1.0e6;
     }
     return valueJ;
+  }
+
+  /**
+   * Advances every registered {@link ProcessSystem} by a single transient step of size {@code dt}.
+   *
+   * <p>
+   * Areas are stepped in insertion order. Any {@link EventScheduler} previously installed via
+   * {@link #setEventScheduler(EventScheduler)} is propagated to each child {@code ProcessSystem}
+   * before stepping, so a single scheduler can coordinate events across all areas.
+   * </p>
+   *
+   * @param dt timestep size in seconds (must be {@code > 0})
+   * @param id calculation UUID forwarded to each child {@code ProcessSystem.runTransient}
+   */
+  public void runTransient(double dt, UUID id) {
+    for (ProcessSystem area : processes.values()) {
+      area.runTransient(dt, id);
+    }
+  }
+
+  /**
+   * Returns the {@link EventScheduler} currently attached to this model. Returns the scheduler of
+   * the first child area, or {@code null} if no schedulers are attached.
+   *
+   * @return event scheduler or {@code null}
+   */
+  public EventScheduler getEventScheduler() {
+    for (ProcessSystem area : processes.values()) {
+      EventScheduler s = area.getEventScheduler();
+      if (s != null) {
+        return s;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Attaches an {@link EventScheduler} to every child {@link ProcessSystem}, so events scheduled on
+   * the shared scheduler will fire during any area's transient step. Pass {@code null} to detach
+   * from all child areas.
+   *
+   * @param scheduler scheduler instance, or {@code null} to detach
+   */
+  public void setEventScheduler(EventScheduler scheduler) {
+    for (ProcessSystem area : processes.values()) {
+      area.setEventScheduler(scheduler);
+    }
+  }
+
+  /**
+   * Sets the same {@link IntegratorStrategy} on every child {@link ProcessSystem}.
+   *
+   * @param strategy integrator strategy ({@code null} restores the default explicit Euler)
+   */
+  public void setIntegratorStrategy(IntegratorStrategy strategy) {
+    for (ProcessSystem area : processes.values()) {
+      area.setIntegratorStrategy(strategy);
+    }
   }
 
   /**
