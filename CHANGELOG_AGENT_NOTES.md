@@ -9,6 +9,70 @@
 
 ---
 
+## 2026-05-30 — Agentic Process Engineering v1.1 (depth, not foundation)
+
+### Summary
+Closes three depth gaps surfaced by the v1 self-assessment in
+`docs/integration/agentic_capability_rating.md`:
+
+1. **More integrator options** for dynamic simulation.
+2. **Gradient access** through `ProcessAutomation` without instrumenting
+   individual equipment classes.
+3. **Broader synthesis coverage** — multi-stage compression with
+   inter/after-coolers.
+
+### New classes
+
+- `neqsim.process.dynamics.RK4Integrator` — classical fixed-step 4th-order
+  Runge–Kutta. Drop-in `IntegratorStrategy` for smooth non-stiff problems where
+  Explicit Euler is too noisy and BDF is overkill.
+- `neqsim.process.dynamics.AdaptiveRK45Integrator` — Cash–Karp 5(4) embedded RK
+  with adaptive sub-stepping inside one outer `step()` call. Tolerance-controlled
+  via `setAbsoluteTolerance`/`setRelativeTolerance`/`setMaxSubSteps` (chainable).
+  Use `getLastSubSteps()` to inspect work per outer step.
+- `neqsim.process.automation.SensitivityAnalyzer` — finite-difference gradients
+  and Jacobians built on top of `ProcessAutomation`. Supports `CENTRAL` and
+  `FORWARD` modes, per-variable step from `max(absStep, relStep · |x|)`,
+  always restores original inputs (try/finally). Returns Java structures
+  (`double`, `Map`, `double[][]`) and JSON with stable `SCHEMA_VERSION = "1.0"`.
+- `neqsim.process.synthesis.CompressionDuty` — immutable+chainable spec for a
+  compression service: feed, discharge pressure, max stage ratio (default 3.5),
+  inter-stage cooler T (default 35 °C), polytropic efficiency (default 0.78),
+  after-cooler on/off.
+- `neqsim.process.synthesis.CompressionProposal` — result of the heuristic:
+  built `ProcessSystem`, stage count, per-stage ratio, rationale, ordered stage
+  names. `toJson()` for agent handoff.
+
+### New methods
+- `FlowsheetSynthesisEngine.proposeAndBuildCompression(CompressionDuty)` —
+  picks stage count from `ceil(ln(overallRatio)/ln(maxStageRatio))`, builds
+  alternating `Compressor`/`Cooler` units named `<duty>-K{i}` / `<duty>-IC{i}`,
+  appends `<duty>-AC` if the after-cooler is enabled. Returns an **unrun**
+  `ProcessSystem` so callers can wire it into a larger flowsheet before solving.
+
+### Migration notes
+- Pure additions; no existing methods or class shapes changed.
+- `AdaptiveRK45Integrator` exposes both short (`getAbsTol/getRelTol`) and
+  long (`getAbsoluteTolerance/getRelativeTolerance`) accessors for clarity;
+  the long names are also the chainable setters.
+
+### Tests
+- `src/test/java/neqsim/process/dynamics/AdvancedIntegratorsTest.java`
+- `src/test/java/neqsim/process/automation/SensitivityAnalyzerTest.java`
+- `src/test/java/neqsim/process/synthesis/CompressionDutyTest.java`
+
+All 18 tests pass (`mvnw.cmd test -Dtest=AdvancedIntegratorsTest,SensitivityAnalyzerTest,CompressionDutyTest`).
+
+### Agents / skills to update
+- `neqsim-dynamic-simulation` — mention `RK4Integrator` and `AdaptiveRK45Integrator`
+  in the integrator-strategies section.
+- `neqsim-api-patterns` — add a "finite-difference sensitivity via
+  `ProcessAutomation`" recipe.
+- `neqsim-process-extraction` / `@flowsheet.synthesis` — extend the synthesis
+  block with a "compression train" example using `CompressionDuty`.
+
+---
+
 ## 2026-05-30 — Agentic Process Engineering v1 (3 features + dynamics wiring)
 
 ### Summary
