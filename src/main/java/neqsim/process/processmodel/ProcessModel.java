@@ -818,6 +818,55 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Sets the low-flow bypass threshold on a single named unit. Searches every area for the unit
+   * name and applies the threshold to the first match.
+   *
+   * @param unitName name of the unit
+   * @param threshold low-flow cutoff in kg/hr (must be &gt;= 0)
+   * @return true if a matching unit was found and updated, false otherwise
+   */
+  public boolean setSectionLowFlowThreshold(String unitName, double threshold) {
+    for (ProcessSystem ps : processes.values()) {
+      if (ps.hasUnitName(unitName)) {
+        ps.setSectionLowFlowThreshold(unitName, threshold);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Sets the low-flow bypass threshold on every unit in every area as a fraction of its current
+   * primary inlet flow.
+   *
+   * @param fraction fraction of the inlet flow used as the cutoff (must be &gt;= 0)
+   * @return total number of units updated across all areas
+   */
+  public int setSectionLowFlowThresholdFraction(double fraction) {
+    int total = 0;
+    for (ProcessSystem ps : processes.values()) {
+      total += ps.setSectionLowFlowThresholdFraction(fraction);
+    }
+    return total;
+  }
+
+  /**
+   * Returns the names of bypassed units across every area, prefixed with the area name as
+   * {@code "area::unitName"} to disambiguate when the same unit name appears in multiple areas.
+   *
+   * @return ordered list of bypassed units (may be empty)
+   */
+  public java.util.List<String> getBypassedUnits() {
+    java.util.List<String> all = new java.util.ArrayList<String>();
+    for (Map.Entry<String, ProcessSystem> e : processes.entrySet()) {
+      for (String unit : e.getValue().getBypassedUnits()) {
+        all.add(e.getKey() + "::" + unit);
+      }
+    }
+    return all;
+  }
+
+  /**
    * Manually deactivates a section starting at the given unit. Searches every area for a unit with
    * the supplied name and delegates to {@link ProcessSystem#deactivateSection(String)} on the first
    * match.

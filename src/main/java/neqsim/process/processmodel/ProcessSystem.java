@@ -2967,6 +2967,82 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Sets the low-flow bypass threshold ({@code minimumFlow}, kg/hr) on a single named unit
+   * operation. Useful for tuning per-unit cutoffs (e.g., a higher threshold on a small recycle pump
+   * than on the main feed train).
+   *
+   * @param unitName name of the unit to configure
+   * @param thresholdKgPerHour low-flow cutoff in kg/hr (must be &gt;= 0)
+   * @throws IllegalArgumentException if no unit with the given name exists or the threshold is
+   *         negative
+   */
+  public void setSectionLowFlowThreshold(String unitName, double thresholdKgPerHour) {
+    if (thresholdKgPerHour < 0.0) {
+      throw new IllegalArgumentException("Low-flow threshold must be >= 0");
+    }
+    ProcessEquipmentInterface unit = getUnit(unitName);
+    if (unit == null) {
+      throw new IllegalArgumentException("No unit named '" + unitName + "' in process");
+    }
+    unit.setMinimumFlow(thresholdKgPerHour);
+  }
+
+  /**
+   * Sets the low-flow bypass threshold on every unit operation as a fraction of the unit's current
+   * primary inlet flow. Useful as a relative cutoff (e.g., "bypass anything currently below 1% of
+   * its inlet flow"). Units with no inlet stream or whose inlet flow lookup fails are skipped.
+   *
+   * @param fraction fraction of the current inlet flow to use as the cutoff (must be &gt;= 0,
+   *        typical values 0.001 - 0.05)
+   * @return the number of units whose threshold was updated
+   * @throws IllegalArgumentException if fraction is negative
+   */
+  public int setSectionLowFlowThresholdFraction(double fraction) {
+    if (fraction < 0.0) {
+      throw new IllegalArgumentException("Fraction must be >= 0");
+    }
+    int updated = 0;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      java.util.List<neqsim.process.equipment.stream.StreamInterface> inlets;
+      try {
+        inlets = unit.getInletStreams();
+      } catch (RuntimeException ex) {
+        continue;
+      }
+      if (inlets == null || inlets.isEmpty() || inlets.get(0) == null) {
+        continue;
+      }
+      try {
+        double inletFlow = inlets.get(0).getFlowRate("kg/hr");
+        if (Double.isFinite(inletFlow) && inletFlow > 0.0) {
+          unit.setMinimumFlow(inletFlow * fraction);
+          updated++;
+        }
+      } catch (RuntimeException ex) {
+        // skip units with no thermo system yet
+      }
+    }
+    return updated;
+  }
+
+  /**
+   * Returns the names of every unit operation that is currently bypassed (either manually locked
+   * inactive or auto-bypassed via low-flow detection). Useful for post-run diagnostics in agents
+   * and notebooks.
+   *
+   * @return ordered list of bypassed unit names (may be empty)
+   */
+  public java.util.List<String> getBypassedUnits() {
+    java.util.List<String> bypassed = new java.util.ArrayList<String>();
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit.isLockedInactive() || !unit.isActive()) {
+        bypassed.add(unit.getName());
+      }
+    }
+    return bypassed;
+  }
+
+  /**
    * Manually deactivates a section of the flowsheet by locking the named starting unit and every
    * downstream unit reachable via {@link ProcessConnection.ConnectionType#MATERIAL} edges in
    * {@link #getConnections()}. Traversal stops at any {@link neqsim.process.equipment.mixer.Mixer}
@@ -2992,8 +3068,11 @@ public class ProcessSystem extends SimulationBaseClass {
       if (!visited.add(u)) {
         continue;
       }
-      // If this is a mixer with other (still-active) feed equipment, do not descend past it.
-      if (u != start && u instanceof neqsim.process.equipment.mixer.Mixer) {
+      // If this is a mixer or recycle node with other (still-active) feed equipment, do not
+      // descend past it — otherwise we would silently kill an unrelated branch that still has live
+      // feeds.
+      if (u != start && (u instanceof neqsim.process.equipment.mixer.Mixer
+          || u instanceof neqsim.process.equipment.util.Recycle)) {
         boolean hasOtherActiveFeed = false;
         for (ProcessConnection c : connections) {
           if (c.getType() != ProcessConnection.ConnectionType.MATERIAL) {

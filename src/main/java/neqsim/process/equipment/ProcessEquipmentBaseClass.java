@@ -18,6 +18,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.SimulationBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.capacity.CapacityConstraint;
@@ -43,6 +45,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     implements ProcessEquipmentInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  /** Logger for this class hierarchy (used for low-flow propagation diagnostics). */
+  private static final Logger logger = LogManager.getLogger(ProcessEquipmentBaseClass.class);
 
   private ControllerDeviceInterface controller = null;
   ControllerDeviceInterface flowValveController = null;
@@ -515,7 +520,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     double flow;
     try {
       flow = inlet.getFlowRate("kg/hr");
-    } catch (Exception ex) {
+    } catch (NullPointerException ex) {
+      // Inlet stream has not been solved yet (no thermo system attached). Treat as
+      // "not low flow" so the unit runs normally and surfaces the real error.
       return false;
     }
     if (flow < getMinimumFlow()) {
@@ -525,6 +532,41 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     }
     isActive(true);
     return false;
+  }
+
+  /**
+   * Convenience helper for auto-bypassing equipment to propagate zero mass flow to one or more
+   * outlet streams, so downstream equipment also auto-bypasses via
+   * {@link #checkAndHandleLowFlow(neqsim.process.equipment.stream.StreamInterface, UUID)}.
+   *
+   * <p>
+   * Each outlet stream's total flow rate is set to {@code 0.0 kg/hr} and the calculation identifier
+   * {@code id} is stamped onto it so the scheduler treats it as solved for the current pass. Null
+   * outlets are skipped silently. Failures to mutate the thermo system are logged at DEBUG level
+   * and otherwise swallowed so a missing thermo system on one outlet does not abort propagation to
+   * the others.
+   * </p>
+   *
+   * @param id current calculation identifier
+   * @param outlets outlet streams to zero out (may include null entries)
+   */
+  protected void propagateZeroFlow(UUID id,
+      neqsim.process.equipment.stream.StreamInterface... outlets) {
+    if (outlets == null) {
+      return;
+    }
+    for (neqsim.process.equipment.stream.StreamInterface outlet : outlets) {
+      if (outlet == null) {
+        continue;
+      }
+      try {
+        outlet.getThermoSystem().setTotalFlowRate(0.0, "kg/hr");
+        outlet.setCalculationIdentifier(id);
+      } catch (NullPointerException ex) {
+        logger.debug("Could not propagate zero flow from inactive '" + getName()
+            + "' (outlet has no thermo system attached)", ex);
+      }
+    }
   }
 
   /**

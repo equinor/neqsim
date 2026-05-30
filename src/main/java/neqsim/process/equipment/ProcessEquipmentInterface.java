@@ -987,6 +987,10 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * {@link neqsim.process.processmodel.ProcessSystem} at the start of each run for equipment that
    * is not locked inactive.
    *
+   * @implSpec The default implementation is a no-op. Equipment classes that participate in the
+   *           low-flow bypass mechanism must override this method together with {@link #isActive()}
+   *           (see {@link neqsim.process.equipment.ProcessEquipmentBaseClass}).
+   *
    * @param active true to mark active, false to skip on the next solver pass
    */
   public default void isActive(boolean active) {
@@ -1004,6 +1008,10 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
 
   /**
    * Manually lock or unlock this equipment in the inactive state.
+   *
+   * @implSpec The default implementation is a no-op. Equipment classes that participate in the
+   *           low-flow bypass mechanism must override this method together with
+   *           {@link #isLockedInactive()} to persist the locked state across runs.
    *
    * @param lockedInactive true to bypass this equipment indefinitely; false to allow normal
    *        execution
@@ -1025,6 +1033,10 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
 
   /**
    * Sets the low-flow bypass threshold (kg/hr) for this equipment.
+   *
+   * @implSpec The default implementation is a no-op. Equipment classes that participate in the
+   *           low-flow bypass mechanism must override this method together with
+   *           {@link #getMinimumFlow()} to persist the configured threshold.
    *
    * @param minimumFlow low-flow cutoff in kg/hr (must be &gt;= 0)
    */

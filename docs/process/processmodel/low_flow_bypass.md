@@ -371,3 +371,59 @@ and the single-area suite in
 - [Controllers](../controllers.md) — for adjusting feed splits at runtime.
 - [Process automation API](../json_process_models_and_systems.md) — string-addressable
   access for setting `minimumFlow` programmatically.
+
+## Interaction with recycles
+
+`deactivateSection` walks downstream from the named unit and stops at any
+`Mixer` **or** `Recycle` node, because both represent a point where another
+active train may inject material that should keep the rest of the flowsheet
+alive. Without this guard, locking out one parallel train would also lock
+out the shared header it feeds into.
+
+### Worked example
+
+A splitter sends 90% of the feed to a duty train and 10% into a recycle
+loop that returns to a feed mixer:
+
+```text
+freshFeed ───┐
+             ├─► mix ─► sep ─► split ─┬─► duty (90%) ─►
+recycleSeed ─┘                        └─► recycleHeater (10%) ─► recycle ─► (back to mix via recycleSeed)
+```
+
+Deactivating `recycleHeater` should bypass only the recycle leg; the duty
+train and the shared mixer must keep running on `freshFeed`:
+
+```java
+ps.deactivateSection("recycleHeater");
+ps.run();
+assertFalse(freshFeed.isLockedInactive());  // upstream feed untouched
+assertFalse(mix.isLockedInactive());        // shared mixer kept alive
+assertTrue(recycleHeater.isLockedInactive());
+assertTrue(ps.getBypassedUnits().contains("recycleHeater"));
+```
+
+`getBypassedUnits()` returns the names of units that are currently bypassed
+(either `lockedInactive` or `!isActive()`), which is the recommended way
+to log or assert what the engine actually skipped on a given run. On a
+`ProcessModel`, the same method returns `area::unit` qualified names.
+
+This behaviour is covered by
+[ProcessSystemBypassRecycleTest.java](../../../src/test/java/neqsim/process/processmodel/ProcessSystemBypassRecycleTest.java).
+
+## Per-unit and fractional thresholds
+
+In addition to the section-wide `setSectionLowFlowThreshold(kgPerHour)`,
+two finer-grained helpers are available:
+
+- `setSectionLowFlowThreshold(unitName, threshold)` — set the threshold on
+  a single named unit. Throws `IllegalArgumentException` if the unit does
+  not exist, which protects against silent typos in long flowsheets.
+- `setSectionLowFlowThresholdFraction(fraction)` — set every unit's
+  threshold to `fraction × inletMassFlowKgPerHour` based on its current
+  first inlet. Useful when feed rate spans several decades and a single
+  absolute value is not appropriate. Returns the number of units that
+  were updated.
+
+Both helpers are also exposed on `ProcessModel`, with the per-unit variant
+returning `true` if any area matched the unit name.
