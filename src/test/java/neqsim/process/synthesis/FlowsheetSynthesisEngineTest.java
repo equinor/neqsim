@@ -37,11 +37,13 @@ class FlowsheetSynthesisEngineTest {
   @Test
   void dutyValidatesArguments() {
     assertThrows(IllegalArgumentException.class,
-        () -> new SeparationDuty(null, makeFeed("f", 30, 30, new String[] {"methane"},
-            new double[] {1.0}, 1000), null, null, Double.NaN));
+        () -> new SeparationDuty(null,
+            makeFeed("f", 30, 30, new String[] {"methane"}, new double[] {1.0}, 1000), null, null,
+            Double.NaN));
     assertThrows(IllegalArgumentException.class,
-        () -> new SeparationDuty("", makeFeed("f", 30, 30, new String[] {"methane"},
-            new double[] {1.0}, 1000), null, null, Double.NaN));
+        () -> new SeparationDuty("",
+            makeFeed("f", 30, 30, new String[] {"methane"}, new double[] {1.0}, 1000), null, null,
+            Double.NaN));
   }
 
   @Test
