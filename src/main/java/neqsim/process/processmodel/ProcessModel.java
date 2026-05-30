@@ -1345,6 +1345,12 @@ public class ProcessModel implements Runnable, Serializable {
    *        parallel/hybrid execution, false to force sequential child execution for this run
    */
   private void runSingleProcess(ProcessSystem process, boolean allowInnerParallelExecution) {
+    // Skip areas whose units are all bypassed (manually locked or auto-bypassed via
+    // low-flow detection). The inner convergence loop in ProcessSystem.run() would do
+    // no useful work but still pay the iteration / event / state-snapshot overhead.
+    if (isFullyBypassed(process)) {
+      return;
+    }
     boolean previousOptimizedExecution = process.isUseOptimizedExecution();
     try {
       process.setUseOptimizedExecution(useOptimizedExecution && allowInnerParallelExecution);
@@ -1354,6 +1360,22 @@ public class ProcessModel implements Runnable, Serializable {
     } finally {
       process.setUseOptimizedExecution(previousOptimizedExecution);
     }
+  }
+
+  /**
+   * Returns true when every unit in the given process is currently bypassed (manually locked
+   * inactive or auto-bypassed via low-flow detection). Such areas have no work to do and may be
+   * skipped by {@link #runSingleProcess(ProcessSystem, boolean)} without affecting results.
+   *
+   * @param process the process area to inspect
+   * @return true if there is at least one unit and all of them are bypassed
+   */
+  private boolean isFullyBypassed(ProcessSystem process) {
+    int total = process.getUnitOperations().size();
+    if (total == 0) {
+      return false;
+    }
+    return process.getBypassedUnits().size() == total;
   }
 
   /**

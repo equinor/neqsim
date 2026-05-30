@@ -2562,6 +2562,11 @@ public class ProcessSystem extends SimulationBaseClass {
 
       for (int i = 0; i < executionOrder.size(); i++) {
         ProcessEquipmentInterface unit = executionOrder.get(i);
+        // Skip bypassed / inactive adjusters — they never execute, so solved() may
+        // stay false and would otherwise burn the full iteration budget for nothing.
+        if (unit.isLockedInactive() || !unit.isActive()) {
+          continue;
+        }
         if (unit instanceof Adjuster) {
           if (!((Adjuster) unit).solved()) {
             isConverged = false;
@@ -2600,7 +2605,14 @@ public class ProcessSystem extends SimulationBaseClass {
           logger.debug("Process simulation was interrupted, exiting run()..." + getName());
           break;
         }
-        unitOperations.get(i).run(id);
+        ProcessEquipmentInterface unit = unitOperations.get(i);
+        // Mirror the bypass guard used by run(UUID): deactivated units must stay
+        // dormant during transient timesteps as well, otherwise dynamic simulations
+        // get zero benefit from deactivateSection() / low-flow auto-bypass.
+        if (unit.isLockedInactive() || !unit.isActive()) {
+          continue;
+        }
+        unit.run(id);
       } catch (Exception ex) {
         throw createUnitRunException(unitOperations.get(i), ex);
       }
