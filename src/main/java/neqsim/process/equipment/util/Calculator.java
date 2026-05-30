@@ -99,16 +99,43 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
     Splitter antiSurgeSplitter = (Splitter) outputVariable;
 
-    double inletFlow = compressor.getInletStream().getFlowRate("Sm3/hr");
-    double currentRecycleFlow = antiSurgeSplitter.getSplitStream(1).getFlowRate("MSm3/day");
-    if (!Double.isFinite(inletFlow) || !Double.isFinite(currentRecycleFlow)) {
-      logger.warn("Invalid flow rate detected during anti-surge calculation");
+    double inletFlow = compressor.getInletStream().getFlowRate("m3/hr");
+    double surgeFlow = compressor.getSurgeFlowRate();
+    double currentRecycle = antiSurgeSplitter.getSplitStream(1).getFlowRate("m3/hr");
+
+    // Guard against non-finite state coming from a failed compressor run or an
+    // inactive surge curve. Without this the proportional update below can
+    // propagate NaN into the splitter setpoint and deadlock the recycle loop.
+    if (!Double.isFinite(inletFlow) || !Double.isFinite(surgeFlow)
+        || !Double.isFinite(currentRecycle) || surgeFlow <= 0.0) {
+      logger.warn("Anti-surge calc skipped: non-finite input (inlet=" + inletFlow + " m3/hr"
+          + ", surge=" + surgeFlow + " m3/hr, current=" + currentRecycle + " m3/hr)");
+      setCalculationIdentifier(id);
       return;
     }
 
-    double flowAntiSurge = antiSurgeSplitter.getSplitStream(1).getFlowRate("m3/hr")
-        + 0.5 * (compressor.getSurgeFlowRate() - compressor.getInletStream().getFlowRate("m3/hr"));
-    flowAntiSurge = Math.max(flowAntiSurge, compressor.getInletStream().getFlowRate("m3/hr") / 1e6);
+    // If we are comfortably above the surge line, close the recycle valve to
+    // (effectively) zero. This short-circuit avoids the proportional step
+    // overshooting when the compressor is operating far from surge.
+    if (inletFlow > 1.2 * surgeFlow) {
+      double minRecycle = Math.max(inletFlow / 1.0e6, 1.0e-6);
+      antiSurgeSplitter.setFlowRates(new double[] {-1, minRecycle}, "m3/hr");
+      antiSurgeSplitter.getSplitStream(1).setFlowRate(minRecycle, "m3/hr");
+      antiSurgeSplitter.getSplitStream(1).run();
+      antiSurgeSplitter.setCalculationIdentifier(id);
+      return;
+    }
+
+    // Proportional anti-surge step with a per-iteration bound. The unbounded
+    // step (0.5 * (surgeFlow - inletFlow)) caused 1000x overshoots when the
+    // recycle seed was tiny relative to the surge spec, leaving the splitter
+    // pinned to a physically impossible setpoint and crashing the EOS on the
+    // next iteration.
+    double rawStep = 0.5 * (surgeFlow - inletFlow);
+    double maxStep = 0.25 * Math.max(currentRecycle, Math.max(inletFlow, surgeFlow));
+    double cappedStep = Math.max(-maxStep, Math.min(maxStep, rawStep));
+    double flowAntiSurge = Math.max(currentRecycle + cappedStep, inletFlow / 1.0e6);
+
     antiSurgeSplitter.setFlowRates(new double[] {-1, flowAntiSurge}, "m3/hr");
     antiSurgeSplitter.getSplitStream(1).setFlowRate(flowAntiSurge, "m3/hr");
     antiSurgeSplitter.getSplitStream(1).run();
