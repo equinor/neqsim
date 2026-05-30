@@ -138,6 +138,7 @@ neqsim.process.costestimation.adsorber
 neqsim.process.costestimation.column
 neqsim.process.costestimation.compressor
 neqsim.process.costestimation.ejector
+neqsim.process.costestimation.electrolyzer
 neqsim.process.costestimation.expander
 neqsim.process.costestimation.heatexchanger
 neqsim.process.costestimation.mixer
@@ -151,6 +152,7 @@ neqsim.process.design
 neqsim.process.design.template
 neqsim.process.diagnostics
 neqsim.process.diagnostics.restart
+neqsim.process.dynamics
 neqsim.process.electricaldesign
 neqsim.process.electricaldesign.components
 neqsim.process.electricaldesign.compressor
@@ -194,6 +196,7 @@ neqsim.process.equipment.pipeline.twophasepipe.numerics
 neqsim.process.equipment.pipeline.twophasepipe.reporting
 neqsim.process.equipment.pipeline.twophasepipe.validation
 neqsim.process.equipment.powergeneration
+neqsim.process.equipment.powergeneration.gasturbine
 neqsim.process.equipment.pump
 neqsim.process.equipment.reactor
 neqsim.process.equipment.reservoir
@@ -222,6 +225,7 @@ neqsim.process.fielddevelopment.subsea
 neqsim.process.fielddevelopment.tieback
 neqsim.process.fielddevelopment.tieback.capacity
 neqsim.process.fielddevelopment.workflow
+neqsim.process.hydrogen
 neqsim.process.instrumentdesign
 neqsim.process.instrumentdesign.compressor
 neqsim.process.instrumentdesign.heatexchanger
@@ -331,6 +335,7 @@ neqsim.process.safety.rupture
 neqsim.process.safety.scenario
 neqsim.process.streaming
 neqsim.process.sustainability
+neqsim.process.synthesis
 neqsim.process.util
 neqsim.process.util.event
 neqsim.process.util.example
@@ -387,6 +392,7 @@ neqsim.thermo.util.derivatives
 neqsim.thermo.util.empiric
 neqsim.thermo.util.gerg
 neqsim.thermo.util.humidair
+neqsim.thermo.util.hydrogen
 neqsim.thermo.util.jni
 neqsim.thermo.util.leachman
 neqsim.thermo.util.readwrite
