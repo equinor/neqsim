@@ -2867,9 +2867,20 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   private void runUnitTransientSkippingInactive(ProcessEquipmentInterface unit, double dt,
       UUID id) {
-    if (unit.isLockedInactive() || !unit.isActive()) {
+    // Honor only the explicit user lock during dynamic stepping. Units that were
+    // auto-bypassed by the low-flow heuristic on a previous (possibly steady-state)
+    // pass must be given a chance to re-evaluate each timestep: they may hold dynamic
+    // inventory (separators, accumulators), have just had their mode switched from
+    // steady→dynamic, or have had inlet flow restored by upstream changes (e.g. a
+    // splitter re-routing to a previously-zero outlet during an ESD). Each unit's
+    // run()/runTransient() is self-protecting via checkAndHandleLowFlow, so it will
+    // simply re-bypass itself on the next call if the inlet is still empty.
+    if (unit.isLockedInactive()) {
       unit.setCalculationIdentifier(id);
       return;
+    }
+    if (!unit.isActive()) {
+      unit.isActive(true);
     }
     unit.runTransient(dt, id);
   }
