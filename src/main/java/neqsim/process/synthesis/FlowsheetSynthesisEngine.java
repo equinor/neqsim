@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -417,5 +419,83 @@ public final class FlowsheetSynthesisEngine {
   public static StreamInterface ensureRun(StreamInterface feed) {
     feed.run();
     return feed;
+  }
+
+  // ===========================================================================
+  // Multi-stage compression synthesis
+  // ===========================================================================
+
+  /**
+   * Builds and returns a {@link CompressionProposal} for the given {@link CompressionDuty}.
+   *
+   * <p>
+   * The number of stages is chosen so that no stage exceeds
+   * {@link CompressionDuty#getMaxStageRatio()}; per-stage ratio is the geometric mean of the
+   * overall ratio. Each compressor is followed by a {@link Cooler} that brings the gas back down to
+   * the configured inter-stage temperature. Optionally a final after-cooler is added.
+   * </p>
+   *
+   * <p>
+   * Naming convention: {@code &lt;duty&gt;-K1, &lt;duty&gt;-IC1, &lt;duty&gt;-K2, ...}. The final
+   * after-cooler (when present) is named {@code &lt;duty&gt;-AC}.
+   * </p>
+   *
+   * @param duty the compression duty; must be non-null
+   * @return the proposal containing the assembled (but not yet run) flowsheet
+   * @throws IllegalArgumentException if {@code duty} is null
+   */
+  public CompressionProposal proposeAndBuildCompression(CompressionDuty duty) {
+    if (duty == null) {
+      throw new IllegalArgumentException("duty must not be null");
+    }
+    double pIn = duty.getFeed().getPressure("bara");
+    double pOut = duty.getDischargePressureBara();
+    double overallRatio = pOut / pIn;
+    int stages =
+        (int) Math.max(1, Math.ceil(Math.log(overallRatio) / Math.log(duty.getMaxStageRatio())));
+    double perStageRatio = Math.pow(overallRatio, 1.0 / stages);
+
+    ProcessSystem ps = new ProcessSystem();
+    ps.add(duty.getFeed());
+
+    java.util.List<String> stageNames = new java.util.ArrayList<String>();
+    StreamInterface upstream = duty.getFeed();
+    double pCurrent = pIn;
+    for (int idx = 1; idx <= stages; idx++) {
+      pCurrent = pCurrent * perStageRatio;
+      String kName = duty.getName() + "-K" + idx;
+      Compressor k = new Compressor(kName, upstream);
+      k.setPolytropicEfficiency(duty.getPolytropicEfficiency());
+      k.setOutletPressure(pCurrent, "bara");
+      ps.add(k);
+      stageNames.add(kName);
+      upstream = k.getOutletStream();
+
+      if (idx < stages) {
+        String coolerName = duty.getName() + "-IC" + idx;
+        Cooler cooler = new Cooler(coolerName, upstream);
+        cooler.setOutletTemperature(duty.getInterstageCoolerTemperatureC(), "C");
+        ps.add(cooler);
+        upstream = cooler.getOutletStream();
+      }
+    }
+
+    if (duty.hasAfterCooler()) {
+      String acName = duty.getName() + "-AC";
+      Cooler ac = new Cooler(acName, upstream);
+      ac.setOutletTemperature(duty.getFinalCoolerTemperatureC(), "C");
+      ps.add(ac);
+    }
+
+    String rationale = "Selected " + stages + " stage" + (stages == 1 ? "" : "s")
+        + " for overall pressure ratio " + fmt(overallRatio) + " ("
+        + fmt(pIn) + " → " + fmt(pOut) + " bara); per-stage ratio "
+        + fmt(perStageRatio) + " ≤ max " + fmt(duty.getMaxStageRatio())
+        + ". Polytropic efficiency " + fmt(duty.getPolytropicEfficiency())
+        + ", inter-stage cooling to " + fmt(duty.getInterstageCoolerTemperatureC()) + " °C"
+        + (duty.hasAfterCooler()
+            ? ", after-cooler to " + fmt(duty.getFinalCoolerTemperatureC()) + " °C."
+            : ", no after-cooler.");
+    return new CompressionProposal(ps, stages, perStageRatio, rationale, stageNames);
   }
 }

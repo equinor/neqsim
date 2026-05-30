@@ -15,8 +15,8 @@ import java.io.Serializable;
  *
  * <p>
  * Implementations are expected to be stateless across calls (no hidden history); BDF-N variants
- * that need previous states should accept them via the {@link #step} overload that takes a
- * {@link IntegrationContext}.
+ * that need previous states should accept them via an integration-context overload of
+ * {@link #step(double, double, Slope, double)}.
  * </p>
  *
  * @author Even Solbraa

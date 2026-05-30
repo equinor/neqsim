@@ -1591,6 +1591,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @param levelGroups independent groups in a level
    * @param id calculation identifier
+   * @throws InterruptedException if the executing thread is interrupted while running units
    */
   private void runLevelGroups(List<List<ProcessNode>> levelGroups, UUID id)
       throws InterruptedException {

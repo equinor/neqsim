@@ -390,6 +390,7 @@ public final class SessionRunner {
   /**
    * Lists all active sessions.
    *
+   * @param input JSON request object; optional {@code ownerId} filters by owner
    * @return JSON with session summaries
    */
   private static String listSessions(JsonObject input) {
