@@ -30,6 +30,9 @@ public class Calculator extends ProcessEquipmentBaseClass {
   private Runnable simpleCalculationMethod;
   String type = "sumTEG";
 
+  /** Anti-surge: emit a warning if compressor stays below this fraction of surge after update. */
+  private static final double ANTI_SURGE_STUCK_THRESHOLD = 0.98;
+
   /**
    * <p>
    * Constructor for Calculator.
@@ -126,11 +129,11 @@ public class Calculator extends ProcessEquipmentBaseClass {
       return;
     }
 
-    // Proportional anti-surge step with a per-iteration bound. The unbounded
-    // step (0.5 * (surgeFlow - inletFlow)) caused 1000x overshoots when the
-    // recycle seed was tiny relative to the surge spec, leaving the splitter
-    // pinned to a physically impossible setpoint and crashing the EOS on the
-    // next iteration.
+    // Proportional anti-surge step with a per-iteration bound. The step is
+    // proportional to the surge-inlet gap (NOT to (gap - currentRecycle)) so
+    // the fixed point is inletFlow == surgeFlow regardless of the recycle
+    // path topology. This matches the legacy formula exactly while adding a
+    // 25%-of-max-flow per-iteration cap to prevent single-step overshoot.
     double rawStep = 0.5 * (surgeFlow - inletFlow);
     double maxStep = 0.25 * Math.max(currentRecycle, Math.max(inletFlow, surgeFlow));
     double cappedStep = Math.max(-maxStep, Math.min(maxStep, rawStep));
@@ -140,6 +143,18 @@ public class Calculator extends ProcessEquipmentBaseClass {
     antiSurgeSplitter.getSplitStream(1).setFlowRate(flowAntiSurge, "m3/hr");
     antiSurgeSplitter.getSplitStream(1).run();
     antiSurgeSplitter.setCalculationIdentifier(id);
+
+    // Diagnostic: if (inletFlow + flowAntiSurge) is still well below surge
+    // after this update, the loop is likely stuck (e.g. recycle path is not
+    // wired back into the compressor inlet, or outer iteration cap is too
+    // low). Surfacing this is much friendlier than a silent in-surge result.
+    double projected = inletFlow + flowAntiSurge;
+    if (projected < ANTI_SURGE_STUCK_THRESHOLD * surgeFlow) {
+      logger.warn("Anti-surge: compressor still below surge after recycle update "
+          + "(projected total=" + projected + " m3/hr, surge=" + surgeFlow
+          + " m3/hr). Check that the recycle stream feeds back into the compressor "
+          + "inlet and that the outer recycle iteration cap is sufficient.");
+    }
   }
 
   /** {@inheritDoc} */
