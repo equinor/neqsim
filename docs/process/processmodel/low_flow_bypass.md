@@ -1,6 +1,6 @@
 ---
 title: Low-Flow Section Bypass
-description: Auto-bypass and manual deactivation of low-flow process sections in ProcessSystem and ProcessModel. Covers minimum-flow thresholds, section deactivation, ProcessModel convergence handling, and feed-flow configuration patterns for testosb-style parallel compressor trains.
+description: Auto-bypass and manual deactivation of low-flow process sections in ProcessSystem and ProcessModel. Covers minimum-flow thresholds, section deactivation, ProcessModel convergence handling, and feed-flow configuration patterns for parallel compressor trains on platform-scale models.
 ---
 
 # Low-Flow Section Bypass
@@ -189,9 +189,9 @@ bypassed section does **not** prevent the active areas from converging.
 
 When you intentionally turn off a downstream section, you also have to
 decide what the *feed* to that section should be. The patterns below
-mirror real `testosb`-style platform models.
+mirror real platform-scale process models.
 
-### Pattern A — `setFlowRates` with negative remainder (testosb)
+### Pattern A — `setFlowRates` with negative remainder
 
 A `Splitter` with `setFlowRates([...], unit)` accepts `-1.0` on exactly
 one outlet to mean *"absorb the remainder"*:
@@ -203,8 +203,7 @@ htTrain.setSectionLowFlowThreshold(1.0);
 
 Effect: export gets `(feed - smallFlow)`, the HT train gets `smallFlow`.
 Set `smallFlow = 0.0` (or any value below the train threshold) to bypass
-the train without changing piping. This is the pattern used in the
-testosb `process_model.ipynb` reference notebook.
+the train without changing piping.
 
 ### Pattern B — Fixed split factors
 
@@ -249,9 +248,9 @@ The lock is sticky; subsequent `plant.run()` calls keep the section
 bypassed regardless of upstream changes. Use this for "shut-in for
 maintenance" scenarios.
 
-## Drop-in snippet for `task_solve/testosb/process_model.ipynb`
+## Drop-in snippet for parallel HT injection trains
 
-The Oseberg / testosb model already wires the manifold using **Pattern A**:
+A typical platform model wires the manifold using **Pattern A**:
 
 ```python
 tex_gas_splitter.setFlowRates([-1.0, inp.injection_gas_rate_ht + 0.000001], "MSm3/day")
@@ -264,7 +263,7 @@ With `injection_gas_rate_ht = 0.001` MSm3/day and the A/B split at
 `0.9999 / 0.0001`, train B receives ~1e-7 MSm3/day — numerically zero and
 guaranteed to upset compressor curves and intercoolers if left
 un-bypassed. Add two lines immediately **after** the trains are built and
-**before** they are added to `oseberg_process`:
+**before** they are added to the plant `ProcessModel`:
 
 ```python
 # --- Auto-bypass the HT injection trains when their feed is effectively zero ---
@@ -280,28 +279,28 @@ touching downstream wiring or recycles. Downstream consumers of
 compressor outlet at the *inlet* state with zero flow, which mixers
 already handle natively.
 
-### Where to put each configuration pattern in the testosb notebook
+### Where to put each configuration pattern in your platform notebook
 
-| Goal | Pattern | Where in the notebook |
-|------|---------|----------------------|
-| Set the **fraction** of feed routed to HT injection | A (`setFlowRates([-1.0, x], "MSm3/day")`) | Already in `tex_process` builder (line ~3025) — just set `input_parameters.injection_gas_rate_ht` |
-| Set the **A/B split** inside the HT manifold | B (`setSplitFactors`) | Already in cell at line ~4234 — set `input_parameters.injection_gas_rate_ht_split_to_train_A` |
-| **Auto-bypass** an entire HT train when its feed is below threshold | D (`setSectionLowFlowThreshold`) | Add immediately after `ht_injection_process_A/B.run()` (cell at line ~4239–4242) |
-| **Manually shut in** a train regardless of feed | E (`plant.deactivateSection`) | Add after `oseberg_process.add(...)` calls (line ~4827) and before `oseberg_process.run()` |
+| Goal | Pattern | Where |
+|------|---------|-------|
+| Set the **fraction** of feed routed to HT injection | A (`setFlowRates([-1.0, x], "MSm3/day")`) | In the upstream-process builder, on the export/injection splitter |
+| Set the **A/B split** inside the HT manifold | B (`setSplitFactors`) | On the manifold splitter inside the HT manifold area |
+| **Auto-bypass** an entire HT train when its feed is below threshold | D (`setSectionLowFlowThreshold`) | Immediately after each HT train `ProcessSystem` is built |
+| **Manually shut in** a train regardless of feed | E (`plant.deactivateSection`) | After all areas are added to the `ProcessModel`, before `plant.run()` |
 
 Example for full manual lock of train B:
 
 ```python
-oseberg_process.deactivateSection("HT injection process B", "ht 1st stage compressor")
-oseberg_process.run()
+plant.deactivateSection("HT injection process B", "ht 1st stage compressor")
+plant.run()
 # Later, to re-enable:
-oseberg_process.activateAll()
-oseberg_process.run()
+plant.activateAll()
+plant.run()
 ```
 
 A unit test mirroring this exact dual-train + manifold structure lives in
 [ProcessModelLowFlowBypassParallelTrainsTest.java](../../../src/test/java/neqsim/process/processmodel/ProcessModelLowFlowBypassParallelTrainsTest.java)
-under `dualHtTrainsMirrorsOsebergTestosbNotebookStructure()`.
+under `dualHtTrainsMirrorsPlatformProcessModelStructure()`.
 
 ## End-to-end example (parallel compressor trains)
 

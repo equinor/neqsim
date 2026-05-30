@@ -14,10 +14,10 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Validates that the low-flow bypass feature works end-to-end on a {@link ProcessModel} composed of
- * multiple {@link ProcessSystem} areas — mirroring the
- * {@code task_solve/testosb/process_model.ipynb} pattern where a manifold {@link Splitter} feeds
- * parallel compressor trains (active export branch + an "ht injection compressors" branch that is
- * frequently turned off by setting an injection rate close to zero).
+ * multiple {@link ProcessSystem} areas — mirroring the platform process-model pattern where a
+ * manifold {@link Splitter} feeds parallel compressor trains (active export branch + an "ht
+ * injection compressors" branch that is frequently turned off by setting an injection rate close to
+ * zero).
  *
  * <p>
  * Demonstrates three configuration approaches:
@@ -73,7 +73,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
   @Test
   public void splitterFractionToHtTrainNearZeroAutoBypassesEveryUnitInThatTrain() {
     double totalFlow = 200000.0; // kg/hr
-    double htFraction = 1.0e-6; // mirrors injection_gas_rate_ht ~ 0.001 MSm3/day in testosb
+    double htFraction = 1.0e-6; // tiny HT-injection fraction (~0.001 MSm3/day) of main feed
     double exportFraction = 1.0 - htFraction;
 
     Stream feed = new Stream("feed", makeGas(totalFlow));
@@ -187,8 +187,8 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
   }
 
   @Test
-  public void setFlowRatesPatternMirrorsTestosbInjectionConfig() {
-    // testosb sets: tex_gas_splitter.setFlowRates([-1.0, injection_gas_rate_ht + 1e-6], 'MSm3/day')
+  public void setFlowRatesPatternWithNegativeRemainder() {
+    // Pattern: splitter.setFlowRates([-1.0, small_injection_rate], 'MSm3/day')
     // The -1.0 on the export branch means "absorb whatever the other branches do not consume".
     double totalFlow = 50000.0;
     Stream feed = new Stream("feed", makeGas(totalFlow));
@@ -213,28 +213,27 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
   }
 
   /**
-   * Mirrors the exact structure used by {@code task_solve/testosb/process_model.ipynb}: an upstream
-   * {@code tex_gas_splitter} routes a tiny fraction (injection_gas_rate_ht ≈ 0.001 MSm3/day) to a
-   * second {@code manifold_upstream_ht_injection_compressors} which then splits that tiny stream
+   * Mirrors the canonical platform-model structure: an upstream gas splitter routes a tiny fraction
+   * (≈ 0.001 MSm3/day) of the main feed to a second manifold which then splits that tiny stream
    * across two parallel HT injection trains (A: 99.99%, B: 0.01%). With
    * {@link ProcessSystem#setSectionLowFlowThreshold(double)} applied to both HT trains, train B
    * (which receives a near-zero stream) must auto-bypass while train A and the export branch run
    * normally and the full {@link ProcessModel} converges.
    */
   @Test
-  public void dualHtTrainsMirrorsOsebergTestosbNotebookStructure() {
+  public void dualHtTrainsMirrorsPlatformProcessModelStructure() {
     double totalFlow = 500000.0; // kg/hr — main feed
-    double htFractionOfTotal = 5e-6; // testosb: 0.001 MSm3/day out of ~MSm3/day-scale feed
+    double htFractionOfTotal = 5e-6; // 0.001 MSm3/day out of ~MSm3/day-scale feed
     double aSplit = 0.9999; // injection_gas_rate_ht_split_to_train_A
     double bSplit = 1.0 - aSplit;
 
     Stream feed = new Stream("feed", makeGas(totalFlow));
 
-    // Upstream tex_gas_splitter: export vs HT injection (Pattern A)
-    Splitter texSplitter = new Splitter("tex_gas_splitter", feed, 2);
+    // Upstream gas splitter: export vs HT injection (Pattern A)
+    Splitter texSplitter = new Splitter("gas_splitter", feed, 2);
     texSplitter.setSplitFactors(new double[] {1.0 - htFractionOfTotal, htFractionOfTotal});
     ProcessSystem texArea = new ProcessSystem();
-    texArea.setName("tex process");
+    texArea.setName("upstream process");
     texArea.add(feed);
     texArea.add(texSplitter);
 
@@ -249,7 +248,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     ProcessSystem htA = buildCompressorTrain("HT_A", htManifold.getSplitStream(0), 350.0);
     ProcessSystem htB = buildCompressorTrain("HT_B", htManifold.getSplitStream(1), 350.0);
 
-    // Drop-in snippet from the testosb notebook documentation
+    // Drop-in snippet from the low-flow bypass documentation
     htA.setSectionLowFlowThreshold(1.0);
     htB.setSectionLowFlowThreshold(1.0);
 
@@ -258,7 +257,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
         buildCompressorTrain("export", texSplitter.getSplitStream(0), 150.0);
 
     ProcessModel plant = new ProcessModel();
-    plant.add("tex process", texArea);
+    plant.add("upstream process", texArea);
     plant.add("ht injection compressor manifold", htManifoldArea);
     plant.add("HT injection process A", htA);
     plant.add("HT injection process B", htB);
