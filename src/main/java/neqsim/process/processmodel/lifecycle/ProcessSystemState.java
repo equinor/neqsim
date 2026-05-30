@@ -393,8 +393,19 @@ public class ProcessSystemState implements Serializable {
     for (EquipmentState eqState : equipmentStates) {
       ProcessEquipmentInterface equipment = process.getUnit(eqState.getName());
       if (equipment != null) {
-        // Apply saved properties if we have matching equipment
-        // This is a foundation - full implementation would apply numeric/string properties
+        // Restore low-flow bypass configuration (Phase-2 feature).
+        // See docs/process/processmodel/low_flow_bypass.md.
+        Map<String, Double> np = eqState.getNumericProperties();
+        if (np != null) {
+          Double minFlow = np.get("minimumFlow");
+          if (minFlow != null) {
+            equipment.setMinimumFlow(minFlow.doubleValue());
+          }
+          Double locked = np.get("lockedInactive");
+          if (locked != null) {
+            equipment.setLockedInactive(locked.doubleValue() != 0.0);
+          }
+        }
       }
     }
   }
@@ -748,6 +759,11 @@ public class ProcessSystemState implements Serializable {
       if (thermo != null) {
         state.fluidState = FluidState.fromFluid(thermo);
       }
+
+      // Capture low-flow bypass configuration (always — primitive defaults round-trip safely).
+      // See docs/process/processmodel/low_flow_bypass.md.
+      state.numericProperties.put("minimumFlow", equipment.getMinimumFlow());
+      state.numericProperties.put("lockedInactive", equipment.isLockedInactive() ? 1.0 : 0.0);
 
       // Capture equipment-specific properties
       captureEquipmentProperties(equipment, state);
