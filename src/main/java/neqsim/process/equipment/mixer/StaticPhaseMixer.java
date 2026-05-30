@@ -33,6 +33,9 @@ public class StaticPhaseMixer extends StaticMixer {
     String compName = new String();
 
     for (int k = 1; k < streams.size(); k++) {
+      if (streams.get(k).getFlowRate("kg/hr") <= getMinimumFlow()) {
+        continue;
+      }
       for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0]
           .getNumberOfComponents(); i++) {
         boolean gotComponent = false;
@@ -61,10 +64,10 @@ public class StaticPhaseMixer extends StaticMixer {
           if (mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getName()
               .equals(componentName)) {
             gotComponent = true;
-            index = mixedStream.getThermoSystem().getPhases()[0].getComponent(p)
-                .getComponentNumber();
-            compName = mixedStream.getThermoSystem().getPhases()[0].getComponent(p)
-                .getComponentName();
+            index =
+                mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getComponentNumber();
+            compName =
+                mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getComponentName();
             break;
           }
         }
@@ -99,11 +102,21 @@ public class StaticPhaseMixer extends StaticMixer {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    int templateIndex = -1;
     for (int k = 0; k < streams.size(); k++) {
+      if (streams.get(k).getFlowRate("kg/hr") <= getMinimumFlow()) {
+        continue;
+      }
       streams.get(k).getThermoSystem().init(3);
+      if (templateIndex < 0) {
+        templateIndex = k;
+      }
+    }
+    if (templateIndex < 0) {
+      templateIndex = 0;
     }
 
-    mixedStream.setThermoSystem((streams.get(0).getThermoSystem().clone()));
+    mixedStream.setThermoSystem((streams.get(templateIndex).getThermoSystem().clone()));
     mixedStream.getThermoSystem().init(0);
     mixedStream.getThermoSystem().setBeta(1, 1e-10);
     mixedStream.getThermoSystem().init(2);

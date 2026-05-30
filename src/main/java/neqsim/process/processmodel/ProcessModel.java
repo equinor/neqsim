@@ -809,6 +809,138 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Propagates a low-flow bypass threshold to every equipment in every area of this model.
+   *
+   * @param threshold low-flow cutoff in kg/hr (must be &gt;= 0). Equipment whose primary inlet flow
+   *        is below this value auto-bypasses on the next run.
+   */
+  public void setSectionLowFlowThreshold(double threshold) {
+    for (ProcessSystem ps : processes.values()) {
+      ps.setSectionLowFlowThreshold(threshold);
+    }
+  }
+
+  /**
+   * Sets the low-flow bypass threshold on a single named unit. Searches every area for the unit
+   * name and applies the threshold to the first match.
+   *
+   * @param unitName name of the unit
+   * @param threshold low-flow cutoff in kg/hr (must be &gt;= 0)
+   * @return true if a matching unit was found and updated, false otherwise
+   */
+  public boolean setSectionLowFlowThreshold(String unitName, double threshold) {
+    for (ProcessSystem ps : processes.values()) {
+      if (ps.hasUnitName(unitName)) {
+        ps.setSectionLowFlowThreshold(unitName, threshold);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Sets the low-flow bypass threshold on every unit in every area as a fraction of its current
+   * primary inlet flow.
+   *
+   * @param fraction fraction of the inlet flow used as the cutoff (must be &gt;= 0)
+   * @return total number of units updated across all areas
+   */
+  public int setSectionLowFlowThresholdFraction(double fraction) {
+    int total = 0;
+    for (ProcessSystem ps : processes.values()) {
+      total += ps.setSectionLowFlowThresholdFraction(fraction);
+    }
+    return total;
+  }
+
+  /**
+   * Returns the names of bypassed units across every area, prefixed with the area name as
+   * {@code "area::unitName"} to disambiguate when the same unit name appears in multiple areas.
+   *
+   * @return ordered list of bypassed units (may be empty)
+   */
+  public java.util.List<String> getBypassedUnits() {
+    java.util.List<String> all = new java.util.ArrayList<String>();
+    for (Map.Entry<String, ProcessSystem> e : processes.entrySet()) {
+      for (String unit : e.getValue().getBypassedUnits()) {
+        all.add(e.getKey() + "::" + unit);
+      }
+    }
+    return all;
+  }
+
+  /**
+   * Manually deactivates a section starting at the given unit. Searches every area for a unit with
+   * the supplied name and delegates to {@link ProcessSystem#deactivateSection(String)} on the first
+   * match.
+   *
+   * @param unitName name of the seed unit in some area
+   * @return number of units locked inactive (0 if not found)
+   */
+  public int deactivateSection(String unitName) {
+    for (ProcessSystem ps : processes.values()) {
+      if (ps.hasUnitName(unitName)) {
+        return ps.deactivateSection(unitName);
+      }
+    }
+    return 0;
+  }
+
+  /**
+   * Manually deactivates a section starting at {@code areaName::unitName}.
+   *
+   * @param areaName name of the process area
+   * @param unitName name of the seed unit within that area
+   * @return number of units locked inactive (0 if area or unit not found)
+   */
+  public int deactivateSection(String areaName, String unitName) {
+    ProcessSystem ps = processes.get(areaName);
+    if (ps == null) {
+      return 0;
+    }
+    return ps.deactivateSection(unitName);
+  }
+
+  /**
+   * Re-activates a previously deactivated section starting at the given unit (first area match).
+   *
+   * @param unitName name of the seed unit
+   * @return number of units unlocked
+   */
+  public int activateSection(String unitName) {
+    for (ProcessSystem ps : processes.values()) {
+      if (ps.hasUnitName(unitName)) {
+        return ps.activateSection(unitName);
+      }
+    }
+    return 0;
+  }
+
+  /**
+   * Re-activates a previously deactivated section in a specific area.
+   *
+   * @param areaName name of the process area
+   * @param unitName name of the seed unit within that area
+   * @return number of units unlocked
+   */
+  public int activateSection(String areaName, String unitName) {
+    ProcessSystem ps = processes.get(areaName);
+    if (ps == null) {
+      return 0;
+    }
+    return ps.activateSection(unitName);
+  }
+
+  /**
+   * Re-activates every equipment in every area (clears all locked-inactive flags).
+   */
+  public void activateAll() {
+    for (ProcessSystem ps : processes.values()) {
+      ps.activateAll();
+    }
+  }
+
+  /**
    * Generates IEC 81346 reference designations for all equipment across all process areas in this
    * model. Each area receives a unique function sub-level (A1, A2, A3, ...).
    *
@@ -1274,6 +1406,12 @@ public class ProcessModel implements Runnable, Serializable {
    *        parallel/hybrid execution, false to force sequential child execution for this run
    */
   private void runSingleProcess(ProcessSystem process, boolean allowInnerParallelExecution) {
+    // Skip areas whose units are all bypassed (manually locked or auto-bypassed via
+    // low-flow detection). The inner convergence loop in ProcessSystem.run() would do
+    // no useful work but still pay the iteration / event / state-snapshot overhead.
+    if (isFullyBypassed(process)) {
+      return;
+    }
     boolean previousOptimizedExecution = process.isUseOptimizedExecution();
     try {
       process.setUseOptimizedExecution(useOptimizedExecution && allowInnerParallelExecution);
@@ -1283,6 +1421,22 @@ public class ProcessModel implements Runnable, Serializable {
     } finally {
       process.setUseOptimizedExecution(previousOptimizedExecution);
     }
+  }
+
+  /**
+   * Returns true when every unit in the given process is currently bypassed (manually locked
+   * inactive or auto-bypassed via low-flow detection). Such areas have no work to do and may be
+   * skipped by {@link #runSingleProcess(ProcessSystem, boolean)} without affecting results.
+   *
+   * @param process the process area to inspect
+   * @return true if there is at least one unit and all of them are bypassed
+   */
+  private boolean isFullyBypassed(ProcessSystem process) {
+    int total = process.getUnitOperations().size();
+    if (total == 0) {
+      return false;
+    }
+    return process.getBypassedUnits().size() == total;
   }
 
   /**
@@ -2010,6 +2164,12 @@ public class ProcessModel implements Runnable, Serializable {
       if (previous.containsKey(key)) {
         double[] prev = previous.get(key);
         double[] curr = current.get(key);
+
+        // Skip near-zero (inactive / bypassed) boundary streams so that low-flow
+        // sections do not block global convergence.
+        if (Math.max(Math.abs(prev[0]), Math.abs(curr[0])) < 1e-9) {
+          continue;
+        }
 
         // Flow rate relative error (with min threshold to avoid div by zero)
         double flowBase = Math.max(Math.abs(prev[0]), 1e-10);

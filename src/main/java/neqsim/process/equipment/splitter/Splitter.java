@@ -298,6 +298,11 @@ public class Splitter extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (checkAndHandleLowFlow(inletStream, id)) {
+      // Propagate zero flow to all split outlets so downstream equipment also auto-bypasses.
+      propagateZeroFlow(id, splitStream);
+      return;
+    }
     double totSplit = 0.0;
 
     if (flowRates != null) {
