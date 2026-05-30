@@ -132,6 +132,67 @@ public class AdaptiveRK45Integrator implements IntegratorStrategy {
     return lastSubSteps;
   }
 
+  /**
+   * Alias for {@link #getAbsTol()} for consistency with other libraries.
+   *
+   * @return absolute tolerance
+   */
+  public double getAbsoluteTolerance() {
+    return absTol;
+  }
+
+  /**
+   * Alias for {@link #getRelTol()} for consistency with other libraries.
+   *
+   * @return relative tolerance
+   */
+  public double getRelativeTolerance() {
+    return relTol;
+  }
+
+  /**
+   * Sets the absolute local-error tolerance.
+   *
+   * @param value must be {@code > 0}
+   * @return this integrator for chaining
+   */
+  public AdaptiveRK45Integrator setAbsoluteTolerance(double value) {
+    if (!(value > 0.0)) {
+      throw new IllegalArgumentException("absoluteTolerance must be > 0");
+    }
+    this.absTol = value;
+    return this;
+  }
+
+  /**
+   * Sets the relative local-error tolerance.
+   *
+   * @param value must be {@code > 0}
+   * @return this integrator for chaining
+   */
+  public AdaptiveRK45Integrator setRelativeTolerance(double value) {
+    if (!(value > 0.0)) {
+      throw new IllegalArgumentException("relativeTolerance must be > 0");
+    }
+    this.relTol = value;
+    return this;
+  }
+
+  /**
+   * Sets the maximum number of internal sub-steps the adaptive controller may take inside one
+   * outer {@link #step} call.
+   *
+   * @param value must be {@code >= 1}
+   * @return this integrator for chaining
+   */
+  public AdaptiveRK45Integrator setMaxSubSteps(int value) {
+    if (value < 1) {
+      throw new IllegalArgumentException("maxSubSteps must be >= 1");
+    }
+    this.maxSubSteps = value;
+    return this;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double step(double time, double state, Slope slope, double dt) {
