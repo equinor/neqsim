@@ -107,6 +107,13 @@ public class ProcessAutomation {
   private final ProcessModel processModel;
   private final AutomationDiagnostics diagnostics;
   /**
+   * Registry of typed write validators consulted by
+   * {@link #setVariableValueValidated(String, double, String)} and
+   * {@link #setValuesTransactional(Map, String)}. Defaults to
+   * {@link WriteValidatorRegistry#createDefault()}.
+   */
+  private WriteValidatorRegistry validatorRegistry = WriteValidatorRegistry.createDefault();
+  /**
    * Dirty flag: true when one or more inputs have been changed via {@link #setVariableValue} since
    * the last successful run. Used by {@link #isDirty()}, {@link #runIfDirty()}, and the
    * {@code stale} warning emitted by {@link #getVariableValueSafe}.
@@ -2036,6 +2043,280 @@ public class ProcessAutomation {
       run();
     }
     return ok;
+  }
+
+  // ----------------------------- Typed validation ------------------------------
+
+  /**
+   * Returns the registry of typed {@link WriteValidator write validators} consulted by
+   * {@link #setVariableValueValidated(String, double, String)} and
+   * {@link #setValuesTransactional(Map, String)}. Defaults to
+   * {@link WriteValidatorRegistry#createDefault()}; replace it via
+   * {@link #setWriteValidatorRegistry(WriteValidatorRegistry)} to disable validation or to add
+   * project-specific checks.
+   *
+   * @return the current registry; never null
+   */
+  public WriteValidatorRegistry getWriteValidatorRegistry() {
+    return validatorRegistry;
+  }
+
+  /**
+   * Replaces the registry of typed {@link WriteValidator write validators}.
+   *
+   * @param registry the new registry; must not be null
+   */
+  public void setWriteValidatorRegistry(WriteValidatorRegistry registry) {
+    if (registry == null) {
+      throw new IllegalArgumentException("registry must not be null");
+    }
+    this.validatorRegistry = registry;
+  }
+
+  /**
+   * Resolves the {@link ProcessEquipmentInterface} addressed by an automation address (handling the
+   * optional area prefix and stripping any port/property suffix). Returns {@code null} when the
+   * address cannot be resolved; never throws.
+   *
+   * @param address the dot-notation address
+   * @return the equipment, or null when unresolvable
+   */
+  private ProcessEquipmentInterface tryResolveEquipment(String address) {
+    if (address == null || address.trim().isEmpty()) {
+      return null;
+    }
+    String local = address;
+    String areaName = null;
+    int areaSepIdx = address.indexOf(AREA_SEPARATOR);
+    if (areaSepIdx >= 0) {
+      areaName = address.substring(0, areaSepIdx);
+      local = address.substring(areaSepIdx + AREA_SEPARATOR.length());
+    }
+    String[] parts = local.split("\\.", 3);
+    try {
+      return findUnit(areaName, parts[0]);
+    } catch (Exception ex) {
+      return null;
+    }
+  }
+
+  /**
+   * Returns the property path that the typed validators see (the portion of the address after the
+   * unit name). For a two-part address {@code "Compressor.outletPressure"} this is
+   * {@code "outletPressure"}; for a three-part address {@code "Sep1.gasOut.pressure"} this is
+   * {@code "gasOut.pressure"}.
+   *
+   * @param address the dot-notation address
+   * @return the property path, or null when the address has no property part
+   */
+  private String extractPropertyPath(String address) {
+    if (address == null) {
+      return null;
+    }
+    String local = address;
+    int areaSepIdx = address.indexOf(AREA_SEPARATOR);
+    if (areaSepIdx >= 0) {
+      local = address.substring(areaSepIdx + AREA_SEPARATOR.length());
+    }
+    int dot = local.indexOf('.');
+    if (dot < 0) {
+      return null;
+    }
+    return local.substring(dot + 1);
+  }
+
+  /**
+   * Reads the current value of an address without throwing. Returns {@code null} when the value is
+   * unreadable for any reason (typically because the variable is INPUT-only and has not yet been
+   * set, or because the equipment has not been run).
+   *
+   * @param address the dot-notation address
+   * @param unitOfMeasure the unit of measure, or null for the default
+   * @return the current value, or null when unreadable
+   */
+  private Double tryReadValue(String address, String unitOfMeasure) {
+    try {
+      return getVariableValue(address, unitOfMeasure);
+    } catch (Exception ex) {
+      return null;
+    }
+  }
+
+  /**
+   * Like {@link #setVariableValue(String, double, String)} but first runs the
+   * {@link WriteValidatorRegistry} against the proposed write. When validation returns
+   * {@link WriteValidationResult.Severity#ERROR ERROR} the write is rejected with an
+   * {@link IllegalArgumentException} and the simulation is left unchanged.
+   *
+   * @param address the dot-notation address
+   * @param value the value to set
+   * @param unitOfMeasure the unit of measure, or null for the default
+   * @return the validation result (always non-null; {@link WriteValidationResult.Severity#OK OK} or
+   *         {@link WriteValidationResult.Severity#WARNING WARNING})
+   * @throws IllegalArgumentException if validation fails or the address cannot be resolved
+   */
+  public WriteValidationResult setVariableValueValidated(String address, double value,
+      String unitOfMeasure) {
+    ProcessEquipmentInterface eq = tryResolveEquipment(address);
+    WriteValidationResult vr = WriteValidationResult.ok();
+    if (eq != null) {
+      String propertyPath = extractPropertyPath(address);
+      vr = validatorRegistry.validate(eq, propertyPath, value, unitOfMeasure);
+      if (!vr.isAllowed()) {
+        throw new IllegalArgumentException(
+            "Write rejected by validator [" + vr.getCode() + "]: " + vr.getMessage());
+      }
+    }
+    setVariableValue(address, value, unitOfMeasure);
+    return vr;
+  }
+
+  /**
+   * Applies many input writes atomically: validates every write up-front, snapshots the current
+   * values, applies the writes, runs the simulation, and rolls back to the snapshot when any phase
+   * fails.
+   *
+   * <p>
+   * Rollback semantics:
+   * </p>
+   * <ul>
+   * <li><strong>Validation failure</strong> — if any validator returns
+   * {@link WriteValidationResult.Severity#ERROR ERROR}, the batch is rejected without touching the
+   * simulation and {@link TransactionalBatchResult#getRollbackCategory()} returns
+   * {@link TransactionalBatchResult.RollbackCategory#VALIDATION_FAILED VALIDATION_FAILED}.</li>
+   * <li><strong>Apply failure</strong> — if a write throws when applied, the snapshot is restored
+   * and the simulation is re-run to coherence;
+   * {@link TransactionalBatchResult.RollbackCategory#APPLY_FAILED APPLY_FAILED} is returned.</li>
+   * <li><strong>Run failure</strong> — if the writes apply cleanly but {@link #run()} throws, the
+   * snapshot is restored and re-run; {@link TransactionalBatchResult.RollbackCategory#RUN_FAILED
+   * RUN_FAILED} is returned.</li>
+   * </ul>
+   *
+   * <p>
+   * Previous values that cannot be read (typically because the variable is INPUT-only and was not
+   * previously set) are recorded as {@code null} in the per-write outcome and skipped during
+   * rollback. For best results, ensure inputs have been set at least once before relying on
+   * transactional rollback.
+   * </p>
+   *
+   * @param updates ordered map from address to value
+   * @param unitOfMeasure unit applied to every update, or null for defaults
+   * @return the {@link TransactionalBatchResult}; never null
+   * @throws IllegalArgumentException if {@code updates} is null
+   */
+  public TransactionalBatchResult setValuesTransactional(Map<String, Double> updates,
+      String unitOfMeasure) {
+    if (updates == null) {
+      throw new IllegalArgumentException("updates must not be null");
+    }
+
+    // Phase 0 — snapshot + validate
+    List<TransactionalBatchResult.WriteOutcome> outcomes =
+        new ArrayList<TransactionalBatchResult.WriteOutcome>(updates.size());
+    boolean anyValidationError = false;
+    String firstValidationFailure = null;
+    for (Map.Entry<String, Double> e : updates.entrySet()) {
+      String address = e.getKey();
+      double value = e.getValue();
+      Double previous = tryReadValue(address, unitOfMeasure);
+      ProcessEquipmentInterface eq = tryResolveEquipment(address);
+      WriteValidationResult vr = WriteValidationResult.ok();
+      if (eq != null) {
+        vr = validatorRegistry.validate(eq, extractPropertyPath(address), value, unitOfMeasure);
+      }
+      outcomes.add(new TransactionalBatchResult.WriteOutcome(address, value, unitOfMeasure,
+          previous, vr, false, null));
+      if (!vr.isAllowed() && !anyValidationError) {
+        anyValidationError = true;
+        firstValidationFailure = address + " — " + vr.getCode() + ": " + vr.getMessage();
+      }
+    }
+    if (anyValidationError) {
+      return TransactionalBatchResult.rolledBack(
+          TransactionalBatchResult.RollbackCategory.VALIDATION_FAILED,
+          "Validation failed: " + firstValidationFailure, outcomes);
+    }
+
+    // Phase 1 — apply
+    List<TransactionalBatchResult.WriteOutcome> applied =
+        new ArrayList<TransactionalBatchResult.WriteOutcome>(outcomes.size());
+    int idx = 0;
+    String applyError = null;
+    String applyErrorAddress = null;
+    for (Map.Entry<String, Double> e : updates.entrySet()) {
+      String address = e.getKey();
+      double value = e.getValue();
+      TransactionalBatchResult.WriteOutcome existing = outcomes.get(idx++);
+      try {
+        setVariableValue(address, value, unitOfMeasure);
+        applied.add(new TransactionalBatchResult.WriteOutcome(address, value, unitOfMeasure,
+            existing.getPreviousValue(), existing.getValidation(), true, null));
+      } catch (Exception ex) {
+        applyError = ex.getMessage();
+        applyErrorAddress = address;
+        applied.add(new TransactionalBatchResult.WriteOutcome(address, value, unitOfMeasure,
+            existing.getPreviousValue(), existing.getValidation(), false, ex.getMessage()));
+        break;
+      }
+    }
+    // Carry over any not-yet-attempted outcomes so the result lists every requested write
+    while (applied.size() < outcomes.size()) {
+      applied.add(outcomes.get(applied.size()));
+    }
+
+    if (applyError != null) {
+      rollbackSnapshot(applied, unitOfMeasure);
+      return TransactionalBatchResult.rolledBack(
+          TransactionalBatchResult.RollbackCategory.APPLY_FAILED,
+          "Apply failed at " + applyErrorAddress + ": " + applyError, applied);
+    }
+
+    // Phase 2 — run
+    try {
+      run();
+    } catch (Exception ex) {
+      String runError = ex.getMessage();
+      rollbackSnapshot(applied, unitOfMeasure);
+      return TransactionalBatchResult.rolledBack(
+          TransactionalBatchResult.RollbackCategory.RUN_FAILED,
+          "Run failed after applying writes: " + runError, applied);
+    }
+
+    return TransactionalBatchResult.committed(applied);
+  }
+
+  /**
+   * Restores values from a snapshot stored in {@link TransactionalBatchResult.WriteOutcome} entries
+   * and re-runs the simulation to leave it in a coherent state. Values whose snapshot is
+   * {@code null} are skipped. Restore-time errors are logged through the diagnostics but never
+   * thrown.
+   *
+   * @param snapshot the snapshot entries from the failed batch
+   * @param unitOfMeasure the unit of measure used for the original writes
+   */
+  private void rollbackSnapshot(List<TransactionalBatchResult.WriteOutcome> snapshot,
+      String unitOfMeasure) {
+    for (TransactionalBatchResult.WriteOutcome wo : snapshot) {
+      if (!wo.isApplied()) {
+        continue;
+      }
+      Double prev = wo.getPreviousValue();
+      if (prev == null) {
+        continue;
+      }
+      try {
+        setVariableValue(wo.getAddress(), prev.doubleValue(), unitOfMeasure);
+      } catch (Exception ex) {
+        diagnostics.recordFailure("rollback", wo.getAddress(),
+            AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
+      }
+    }
+    try {
+      run();
+    } catch (Exception ex) {
+      diagnostics.recordFailure("rollback-run", "*",
+          AutomationDiagnostics.ErrorCategory.CONVERGENCE_FAILURE, null);
+    }
   }
 
   // ----------------------------- Snapshot ------------------------------
