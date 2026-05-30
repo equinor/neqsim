@@ -9,7 +9,142 @@
 
 ---
 
-## 2026-05-27 — Horizon-3 Hydrogen Foundations
+## 2026-05-30 — Agentic Process Engineering v1.1 (depth, not foundation)
+
+### Summary
+Closes three depth gaps surfaced by the v1 self-assessment in
+`docs/integration/agentic_capability_rating.md`:
+
+1. **More integrator options** for dynamic simulation.
+2. **Gradient access** through `ProcessAutomation` without instrumenting
+   individual equipment classes.
+3. **Broader synthesis coverage** — multi-stage compression with
+   inter/after-coolers.
+
+### New classes
+
+- `neqsim.process.dynamics.RK4Integrator` — classical fixed-step 4th-order
+  Runge–Kutta. Drop-in `IntegratorStrategy` for smooth non-stiff problems where
+  Explicit Euler is too noisy and BDF is overkill.
+- `neqsim.process.dynamics.AdaptiveRK45Integrator` — Cash–Karp 5(4) embedded RK
+  with adaptive sub-stepping inside one outer `step()` call. Tolerance-controlled
+  via `setAbsoluteTolerance`/`setRelativeTolerance`/`setMaxSubSteps` (chainable).
+  Use `getLastSubSteps()` to inspect work per outer step.
+- `neqsim.process.automation.SensitivityAnalyzer` — finite-difference gradients
+  and Jacobians built on top of `ProcessAutomation`. Supports `CENTRAL` and
+  `FORWARD` modes, per-variable step from `max(absStep, relStep · |x|)`,
+  always restores original inputs (try/finally). Returns Java structures
+  (`double`, `Map`, `double[][]`) and JSON with stable `SCHEMA_VERSION = "1.0"`.
+- `neqsim.process.synthesis.CompressionDuty` — immutable+chainable spec for a
+  compression service: feed, discharge pressure, max stage ratio (default 3.5),
+  inter-stage cooler T (default 35 °C), polytropic efficiency (default 0.78),
+  after-cooler on/off.
+- `neqsim.process.synthesis.CompressionProposal` — result of the heuristic:
+  built `ProcessSystem`, stage count, per-stage ratio, rationale, ordered stage
+  names. `toJson()` for agent handoff.
+
+### New methods
+- `FlowsheetSynthesisEngine.proposeAndBuildCompression(CompressionDuty)` —
+  picks stage count from `ceil(ln(overallRatio)/ln(maxStageRatio))`, builds
+  alternating `Compressor`/`Cooler` units named `<duty>-K{i}` / `<duty>-IC{i}`,
+  appends `<duty>-AC` if the after-cooler is enabled. Returns an **unrun**
+  `ProcessSystem` so callers can wire it into a larger flowsheet before solving.
+
+### Migration notes
+- Pure additions; no existing methods or class shapes changed.
+- `AdaptiveRK45Integrator` exposes both short (`getAbsTol/getRelTol`) and
+  long (`getAbsoluteTolerance/getRelativeTolerance`) accessors for clarity;
+  the long names are also the chainable setters.
+
+### Tests
+- `src/test/java/neqsim/process/dynamics/AdvancedIntegratorsTest.java`
+- `src/test/java/neqsim/process/automation/SensitivityAnalyzerTest.java`
+- `src/test/java/neqsim/process/synthesis/CompressionDutyTest.java`
+
+All 18 tests pass (`mvnw.cmd test -Dtest=AdvancedIntegratorsTest,SensitivityAnalyzerTest,CompressionDutyTest`).
+
+### Agents / skills to update
+- `neqsim-dynamic-simulation` — mention `RK4Integrator` and `AdaptiveRK45Integrator`
+  in the integrator-strategies section.
+- `neqsim-api-patterns` — add a "finite-difference sensitivity via
+  `ProcessAutomation`" recipe.
+- `neqsim-process-extraction` / `@flowsheet.synthesis` — extend the synthesis
+  block with a "compression train" example using `CompressionDuty`.
+
+---
+
+## 2026-05-30 — Agentic Process Engineering v1 (3 features + dynamics wiring)
+
+### Summary
+Three new capability bundles for autonomous process-engineering agents:
+typed automation writes with rollback, structured separation-duty synthesis,
+and pluggable dynamic-simulation infrastructure with event scheduling.
+
+### Feature 1 — Typed automation writes with rollback
+- `neqsim.process.automation.ProcessAutomation` now performs typed validation
+  before any `setVariableValue` write (range, allowed-values, unit conversion)
+  and supports transactional `setValuesWithRollback(Map updates, String unit)`
+  that reverts all writes if any single update fails.
+- Adds `getWriteHistory()` audit log (timestamped, with old/new value, unit,
+  status, error category). Diagnostics now tag failures with
+  `VALUE_OUT_OF_BOUNDS`, `INVALID_TYPE`, `READ_ONLY_VARIABLE`,
+  `UNIT_CONVERSION_FAILED`. Schema: `SCHEMA_VERSION = "1.0"`.
+
+### Feature 2 — SeparationDuty + FlowsheetSynthesisEngine
+- `neqsim.process.synthesis.SeparationDuty` — structured spec for a
+  separation requirement (feed composition, recovery targets, purity targets,
+  energy/utility constraints, allowed unit-operation classes).
+- `neqsim.process.synthesis.FlowsheetSynthesisEngine` — generates candidate
+  flowsheet topologies (separator trains, columns, flash cascades) from a
+  `SeparationDuty`, scores them on TAC / recovery / energy and emits a ranked
+  `List<FlowsheetCandidate>` with JSON-serializable spec for downstream agents.
+
+### Feature 3 — Pluggable dynamics infrastructure (wired into `runTransient`)
+- `neqsim.process.dynamics.IntegratorStrategy` interface with two
+  implementations: `ExplicitEulerIntegrator` (default) and `BDFIntegrator`
+  (implicit-Euler/BDF-1 with Newton + central-FD Jacobian, tol 1e-8,
+  maxIter 25, falls back to explicit Euler on Newton divergence;
+  `lastStepFellBack()` flags the fallback).
+- `neqsim.process.dynamics.EventScheduler` — time-stamped `Runnable` queue
+  for ESD trips, valve closures, setpoint ramps. Events with
+  `time <= currentTime` fire at the top of every `runTransient` step
+  (before equipment runs).
+- **Wired into the live transient loop**: `ProcessSystem.runTransient(dt, id)`
+  fires due events before `applyFieldInputs()`. Accessors:
+  `get/setIntegratorStrategy()`, `get/setEventScheduler()`.
+- **`ProcessModel` orchestration**: new `runTransient(dt, UUID)` iterates all
+  child areas; `setIntegratorStrategy()` and `setEventScheduler()` propagate to
+  every child area.
+- Three new measurement devices in `neqsim.process.measurementdevice`:
+  `DifferentialPressureTransmitter` (bar), `CompositionAnalyzer`
+  (OVERALL/GAS/LIQUID mole fraction), `FlowRatioMeter` (MASS/MOLE/VOLUME).
+- **Serialization note**: `eventScheduler` is `transient` on `ProcessSystem`
+  because `Runnable` payloads (lambdas, anonymous classes) are usually not
+  serializable. Re-install after deserialising.
+
+### Tests
+- Feature 1: 23 tests pass.
+- Feature 2: 7 tests pass.
+- Feature 3 core: 16 tests pass.
+- `RunTransientEventSchedulerTest`: 4 tests pass — verifies the scheduler fires
+  at the correct timestep, mutates external state, integrator-strategy
+  accessors round-trip, and `ProcessModel` propagates the scheduler to all
+  child areas.
+
+### Migration / agent guidance
+- **No breaking changes**. All new APIs are additive.
+- Agents performing dynamic studies should prefer `EventScheduler` over
+  manually polling `i == 300` step-counter patterns inside the transient loop.
+- For stiff dynamics (small pressure-vessel volumes, fast PID loops), set
+  `process.setIntegratorStrategy(new BDFIntegrator())`.
+- For multi-area plants, install the scheduler once on `ProcessModel`; it
+  propagates to every area.
+- Skills updated: `neqsim-dynamic-simulation` (Pluggable Integrator
+  Strategies, Event Scheduling, New Measurement Devices sections).
+
+---
+
+
 
 ### Summary
 Added the first Horizon-3 hydrogen-production foundation utilities: cryogenic

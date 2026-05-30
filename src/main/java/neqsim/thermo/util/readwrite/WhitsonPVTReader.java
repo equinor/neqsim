@@ -390,6 +390,10 @@ public class WhitsonPVTReader {
 
   /**
    * Add a component to the fluid with all properties from the parameter file.
+   *
+   * @param fluid target fluid system
+   * @param comp component data parsed from the Whitson PVT file
+   * @param moles moles of the component to add
    */
   private void addComponentToFluid(SystemInterface fluid, ComponentData comp, double moles) {
     String name = comp.name;
@@ -527,6 +531,9 @@ public class WhitsonPVTReader {
 
   /**
    * Map Whitson component names to NeqSim standard names.
+   *
+   * @param name Whitson component name (e.g. {@code "C1"}, {@code "I-C4"})
+   * @return NeqSim standard component name, or the original name when no mapping exists
    */
   private String mapToStandardName(String name) {
     switch (name.toUpperCase()) {

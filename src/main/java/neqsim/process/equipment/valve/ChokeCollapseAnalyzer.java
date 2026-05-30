@@ -178,6 +178,12 @@ public class ChokeCollapseAnalyzer implements Serializable {
 
   /**
    * Gas-service analysis using the critical-pressure-ratio criterion.
+   *
+   * @param sys inlet thermodynamic system
+   * @param p1 inlet pressure in bara
+   * @param p2 outlet pressure in bara
+   * @param r pressure ratio {@code p2/p1}
+   * @param result result object to populate
    */
   private void analyseGas(SystemInterface sys, double p1, double p2, double r,
       ChokeCollapseResult result) {
@@ -236,6 +242,11 @@ public class ChokeCollapseAnalyzer implements Serializable {
   /**
    * Liquid-service analysis: flashing and cavitation flags via a bubble-point flash at inlet
    * temperature on a cloned inlet system.
+   *
+   * @param sys inlet thermodynamic system
+   * @param p1 inlet pressure in bara
+   * @param p2 outlet pressure in bara
+   * @param result result object to populate
    */
   private void analyseLiquid(SystemInterface sys, double p1, double p2,
       ChokeCollapseResult result) {
