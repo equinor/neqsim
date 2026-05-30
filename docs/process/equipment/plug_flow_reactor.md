@@ -837,5 +837,5 @@ plt.show()
 - [Reactor Models Overview](reactors.md) — All NeqSim reactor types
 - [Gibbs Reactor](../../wiki/gibbs_reactor.md) — Chemical equilibrium reactor
 - [Bio-Processing Reactors](../bioprocessing.md) — Fermenter and enzyme reactor models
-- [PFR Implementation Plan](../PLUG_FLOW_REACTOR_IMPLEMENTATION_PLAN.md) — Design decisions and commercial comparison
+- [Reactor Equipment Overview](reactors.md) — Design decisions and commercial reactor comparison
 - [Chemical Reactions](../../chemicalreactions/) — Reaction modeling background

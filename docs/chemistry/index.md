@@ -11,7 +11,7 @@ explicit list of source standards (NORSOK, NACE, ISO, API, ASTM) so results are
 auditable.
 
 All classes live under `neqsim.process.chemistry`. The same routines are
-exposed over the [Model Context Protocol](../mcp/index.md) as `runChemistry`.
+exposed over the [Model Context Protocol](../integration/mcp_getting_started.md) as `runChemistry`.
 
 ## Capability matrix
 

@@ -254,7 +254,7 @@ For improved accuracy, calibrate against lab measurements:
 system.setLabGWR(0.15, "Sm3/m3");  // Measured at lab conditions
 
 // Set lab gas composition (mole fractions)
-system.setLabGasComposition(new String[]{"CO2", "methane"}, 
+system.setLabGasComposition(new String[]{"CO2", "methane"},
                             new double[]{0.52, 0.45});
 
 // Enable tuned parameters
@@ -361,6 +361,6 @@ double currentEmissions = system.getCurrentEmissionsRate("kg/hr");
 ## Related Documentation
 
 - [Emissions Calculator](../measurement_devices#emissionscalculator) - Component emission calculations
-- [Offshore Emission Reporting](../../emissions/OFFSHORE_EMISSION_REPORTING) - Norwegian regulations
-- [Norwegian Emission Methods Comparison](../../examples/NorwegianEmissionMethods_Comparison) - Method comparison example
-- [H2S Distribution Guide](../../thermo/H2S_distribution_guide) - Gas-liquid equilibria
+- [Offshore Emission Reporting](../../../emissions/OFFSHORE_EMISSION_REPORTING) - Norwegian regulations
+- [Norwegian Emission Methods Comparison](../../../examples/NorwegianEmissionMethods_Comparison) - Method comparison example
+- [H2S Distribution Guide](../../../thermo/H2S_distribution_guide) - Gas-liquid equilibria

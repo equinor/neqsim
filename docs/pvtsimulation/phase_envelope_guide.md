@@ -697,4 +697,4 @@ For the full mathematical formulation, see the [Phase Envelope Algorithm](../the
 - [Flash Calculations Guide](../thermo/flash_calculations_guide) - TP/PH/PS flash
 - [Thermodynamic Operations](../thermo/thermodynamic_operations) - All thermo operations
 - [Flow Assurance Overview](flow_assurance_overview) - HCDP in context
-- [Gas Quality Standards](../standards/gas_quality) - Pipeline specifications
+- [Gas Quality Standards](../standards/index.md) - Pipeline specifications (ISO 6976, dew point, sales contracts)

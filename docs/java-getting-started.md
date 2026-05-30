@@ -283,7 +283,7 @@ The Maven wrapper (`mvnw`/`mvnw.cmd`) downloads the correct Maven version automa
 
 ### VS Code with dev container
 
-The repository includes a ready-to-use [dev container](.devcontainer/) with Maven and recommended extensions pre-installed:
+The repository includes a ready-to-use [dev container](../.devcontainer/) with Maven and recommended extensions pre-installed:
 
 ```bash
 git clone https://github.com/equinor/neqsim.git

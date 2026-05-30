@@ -302,7 +302,7 @@ enzyme.run();
 ## Related Documentation
 
 - [Plug Flow Reactor Guide](plug_flow_reactor.md) — Comprehensive PFR documentation with equations, kinetics, and examples
-- [PFR Implementation Plan](../PLUG_FLOW_REACTOR_IMPLEMENTATION_PLAN.md) — Design decisions and commercial comparison
+- [Plug Flow Reactor Reference](plug_flow_reactor.md) — Design decisions and commercial PFR comparison
 - [Equipment Index](index.md) — All NeqSim equipment types
 - [Chemical Reactions](../../chemicalreactions/) — Reaction modeling background
 - [Hydrogen Production with NeqSim](../hydrogen_production.md) — SMR, ATR, POX, WGS, PSA, electrolysis, and full blue-H₂ route templates
