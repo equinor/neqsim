@@ -1162,18 +1162,13 @@ public abstract class Flash extends BaseOperation {
       boolean retryFoundInstability = false;
       boolean ambiguousStability = Math.abs(tm[0]) < 5e-2 || Math.abs(tm[1]) < 5e-2;
       boolean doLLESupplementaryCheck = shouldRunAutomaticLLECheck();
-      // Skip the supplementary stability trials when the caller explicitly disabled
-      // the multi-phase check (e.g. Compressor.setOutletPressure for a known single-
-      // phase inlet). The trials can declare a near-cricondenbar single-phase gas
-      // "unstable" and seed the main TPflash loop with a trial composition whose
-      // cubic EOS has no real Z root, causing a downstream NaN. The user's intent is
-      // clear: stay single-phase.
-      boolean runSupplementary = system.doMultiPhaseCheck();
       // Save K-vector BEFORE running supplementary trials, since the trial
       // functions themselves may commit non-physical K-values to the system
       // phases (e.g. K~5e5 for methane near cricondenbar). If post-trial init
       // throws NaN we revert to these pre-trial K-values, not the corrupted
-      // post-trial ones.
+      // post-trial ones. The trials always run (they catch legitimate
+      // near-cricondenbar VLE that the standard analysis misses); the revert
+      // logic below is the safety net for non-physical trial seeds.
       double[] preTrialKvector = null;
       try {
         preTrialKvector = system.getKvector();
@@ -1184,7 +1179,7 @@ public abstract class Flash extends BaseOperation {
         preTrialKvector = null;
       }
       // Amplified K-value trials catch near-critical VLE instability (near cricondenbar)
-      if (runSupplementary && (tm[0] < 0.5 || tm[1] < 0.5 || ambiguousStability)
+      if ((tm[0] < 0.5 || tm[1] < 0.5 || ambiguousStability)
           && !system.getModelName().contains("CPA")) {
         retryFoundInstability = amplifiedKStabilityRetry();
       }
@@ -1193,7 +1188,7 @@ public abstract class Flash extends BaseOperation {
       // (both tm values comfortably positive), since the expensive trials
       // (3 components x 80 iterations x init(1) each) rarely find instability
       // in that regime.
-      if (!retryFoundInstability && runSupplementary && doLLESupplementaryCheck
+      if (!retryFoundInstability && doLLESupplementaryCheck
           && (tm[0] < 1.0 || tm[1] < 1.0 || ambiguousStability)) {
         retryFoundInstability = pureComponentStabilityTrials();
       }

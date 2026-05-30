@@ -424,30 +424,12 @@ public class ThrottlingValve extends TwoPortEquipment
     }
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-    // Guard against PR #2099 supplementary-stability trials producing NaN Z-factor
-    // when a single-phase inlet is flashed across a large pressure drop. The trials
-    // can commit non-physical K-values into the cached phases, leading to
-    // PhasePrEos:molarVolumeAnalytical NaN inside the outer PH-flash Newton loop.
-    // Disable multi-phase check for single-phase inlets (mirrors PR #2153 Compressor fix).
-    boolean originalMultiPhaseCheck = thermoSystem.doMultiPhaseCheck();
-    int inletPhases = thermoSystem.getNumberOfPhases();
-    boolean toggledMultiPhaseCheck = false;
-    if (inletPhases <= 1 && originalMultiPhaseCheck) {
-      thermoSystem.setMultiPhaseCheck(false);
-      toggledMultiPhaseCheck = true;
-    }
-    try {
-      if (isIsoThermal() || Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6
-          || thermoSystem.getTotalNumberOfMoles() < 1e-12 || pressure == 0) {
-        thermoSystem.setPressure(outPres, pressureUnit);
-        thermoOps.TPflash();
-      } else {
-        thermoOps.PHflash(enthalpy, 0);
-      }
-    } finally {
-      if (toggledMultiPhaseCheck) {
-        thermoSystem.setMultiPhaseCheck(originalMultiPhaseCheck);
-      }
+    if (isIsoThermal() || Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6
+        || thermoSystem.getTotalNumberOfMoles() < 1e-12 || pressure == 0) {
+      thermoSystem.setPressure(outPres, pressureUnit);
+      thermoOps.TPflash();
+    } else {
+      thermoOps.PHflash(enthalpy, 0);
     }
     outStream.setThermoSystem(thermoSystem);
 
