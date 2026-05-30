@@ -2843,6 +2843,26 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Skip-aware wrapper used by the dynamic ({@code runTransient}) stepping loops. Mirrors the gate
+   * in {@link #runUnitProfiled} so units that are manually locked via
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#setLockedInactive(boolean)} or
+   * auto-deactivated by low-flow bypass keep their current state during the timestep instead of
+   * being re-integrated. See docs/process/processmodel/low_flow_bypass.md.
+   *
+   * @param unit the equipment unit to step
+   * @param dt time step in seconds
+   * @param id the calculation identifier for this timestep
+   */
+  private void runUnitTransientSkippingInactive(ProcessEquipmentInterface unit, double dt,
+      UUID id) {
+    if (unit.isLockedInactive() || !unit.isActive()) {
+      unit.setCalculationIdentifier(id);
+      return;
+    }
+    unit.runTransient(dt, id);
+  }
+
+  /**
    * Resets the transient {@code isActive} flag to {@code true} for every unit operation that has
    * not been explicitly locked inactive via
    * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#setLockedInactive(boolean)}.
@@ -3551,12 +3571,15 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     // Run equipment transient calculations
-    // Note: Multiple iterations cause accumulation errors - run once per time step
+    // Note: Multiple iterations cause accumulation errors - run once per time step.
+    // Equipment that is manually locked inactive (setLockedInactive) or auto-deactivated
+    // by low-flow bypass keeps its current state during the timestep — same skip gate as
+    // the steady run() path (runUnitProfiled). See docs/process/processmodel/low_flow_bypass.md.
     if (parallelTransientEnabled && unitOperations.size() > 1) {
       runEquipmentTransientParallel(dt, id);
     } else {
       for (int i = 0; i < unitOperations.size(); i++) {
-        unitOperations.get(i).runTransient(dt, id);
+        runUnitTransientSkippingInactive(unitOperations.get(i), dt, id);
       }
     }
 
@@ -3566,7 +3589,7 @@ public class ProcessSystem extends SimulationBaseClass {
         runEquipmentTransientParallel(dt, id);
       } else {
         for (int i = 0; i < unitOperations.size(); i++) {
-          unitOperations.get(i).runTransient(dt, id);
+          runUnitTransientSkippingInactive(unitOperations.get(i), dt, id);
         }
       }
     }
@@ -3627,7 +3650,7 @@ public class ProcessSystem extends SimulationBaseClass {
       futures.add(executor.submit(new Runnable() {
         @Override
         public void run() {
-          unit.runTransient(stepSize, calcId);
+          runUnitTransientSkippingInactive(unit, stepSize, calcId);
         }
       }));
     }

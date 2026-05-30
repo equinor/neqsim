@@ -286,4 +286,75 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     assertEquals(totalFlow * (1.0 - htFractionOfTotal),
         expK2.getOutletStream().getFlowRate("kg/hr"), totalFlow * 1e-3);
   }
+
+  /**
+   * Verifies the low-flow bypass also works during dynamic ({@code runTransient}) simulation —
+   * units that are auto-deactivated or manually locked must be skipped by the per-timestep stepping
+   * loop in {@link ProcessSystem#runTransient(double, java.util.UUID)} (both the sequential and
+   * parallel paths), and the active branch must still produce correct output every timestep.
+   */
+  @Test
+  public void lowFlowBypassIsHonoredInDynamicTransientStepping() {
+    double totalFlow = 100000.0;
+    Stream feed = new Stream("feed", makeGas(totalFlow));
+    Splitter manifold = new Splitter("manifold", feed, 2);
+    manifold.setSplitFactors(new double[] {1.0 - 1e-6, 1e-6});
+
+    ProcessSystem manifoldArea = new ProcessSystem();
+    manifoldArea.setName("manifold");
+    manifoldArea.add(feed);
+    manifoldArea.add(manifold);
+
+    ProcessSystem exportTrain = buildCompressorTrain("export", manifold.getSplitStream(0), 150.0);
+    ProcessSystem htTrain = buildCompressorTrain("ht", manifold.getSplitStream(1), 350.0);
+    htTrain.setSectionLowFlowThreshold(1.0);
+
+    // Steady-state warmup so auto-bypass evaluates inlet flows and trips HT units inactive.
+    manifoldArea.run();
+    exportTrain.run();
+    htTrain.run();
+
+    Compressor htK1 = (Compressor) htTrain.getUnit("ht_K1");
+    Heater htIC = (Heater) htTrain.getUnit("ht_IC");
+    Compressor htK2 = (Compressor) htTrain.getUnit("ht_K2");
+    Compressor expK2 = (Compressor) exportTrain.getUnit("export_K2");
+    assertFalse(htK1.isActive(), "HT K1 should be auto-bypassed after steady warmup");
+    assertFalse(htK2.isActive(), "HT K2 should be auto-bypassed after steady warmup");
+
+    // Now step the HT train transiently — bypassed units must stay bypassed, NOT get re-run
+    // (which would otherwise risk NaN/zero-flow divisions inside compressor models).
+    double dt = 1.0;
+    for (int step = 0; step < 5; step++) {
+      manifoldArea.runTransient(dt, java.util.UUID.randomUUID());
+      exportTrain.runTransient(dt, java.util.UUID.randomUUID());
+      htTrain.runTransient(dt, java.util.UUID.randomUUID());
+
+      assertFalse(htK1.isActive(), "HT K1 must remain inactive during transient step " + step);
+      assertFalse(htIC.isActive(),
+          "HT intercooler must remain inactive during transient step " + step);
+      assertFalse(htK2.isActive(), "HT K2 must remain inactive during transient step " + step);
+
+      assertTrue(expK2.isActive(), "Export K2 must remain active during transient step " + step);
+      assertEquals(150.0, expK2.getOutletStream().getPressure("bara"), 0.5,
+          "Export discharge pressure must stay on spec during transient step " + step);
+    }
+
+    // Manual lock must also be honored during runTransient (not just auto-bypass).
+    htTrain.activateAll();
+    manifoldArea.run();
+    htTrain.run();
+    assertTrue(htK1.isActive() || htK1.isLockedInactive() == false,
+        "after activateAll() + low feed, K1 is either active or low-flow-bypassed");
+
+    htK1.setLockedInactive(true);
+    htIC.setLockedInactive(true);
+    htK2.setLockedInactive(true);
+    for (int step = 0; step < 3; step++) {
+      htTrain.runTransient(dt, java.util.UUID.randomUUID());
+      assertFalse(htK1.isActive(),
+          "Manually locked K1 must stay inactive in transient step " + step);
+      assertFalse(htK2.isActive(),
+          "Manually locked K2 must stay inactive in transient step " + step);
+    }
+  }
 }

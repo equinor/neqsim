@@ -136,6 +136,49 @@ So both the manual lock and a transient low-flow bypass produce the same
 effect — the unit appears solved (`calculationIdentifier` advances) but
 no thermodynamic work happens.
 
+### Dynamic mode (`runTransient`)
+
+The dynamic stepping loops in
+`ProcessSystem.runTransient(dt, id)` honor the **same** `lockedInactive` /
+`isActive` skip gate via the private helper
+`runUnitTransientSkippingInactive`. This applies to:
+
+- The sequential Euler integration loop.
+- The semi-implicit corrector second pass.
+- The parallel transient executor (`runEquipmentTransientParallel`).
+
+A unit that is auto-bypassed or manually locked keeps its current state
+during every timestep — it is **not** re-integrated, so compressor curves
+are never evaluated at zero flow and heaters never hit `Q = UA · LMTD`
+divisions by zero during dynamic simulation.
+
+#### Pattern: warm-start before `runTransient`
+
+`checkAndHandleLowFlow` (the auto-bypass evaluator) only fires inside the
+steady `run()` of each equipment subclass. Dynamic simulations therefore
+follow the standard NeqSim "warm start" pattern:
+
+```java
+htTrain.setSectionLowFlowThreshold(1.0);
+process.run();                          // 1) steady warmup — marks low-flow units inactive
+for (int step = 0; step < nSteps; step++) {
+  process.runTransient(dt);             // 2) inactive units are skipped each step
+}
+```
+
+To bypass a section purely for dynamic mode without a steady warmup, set
+the flag directly:
+
+```java
+htTrain.getUnit("ht_K1").setLockedInactive(true);
+process.runTransient(dt);               // K1 is skipped from the first step onwards
+```
+
+To re-enable units mid-simulation (for example after a step change
+restores the feed flow), call `unit.setLockedInactive(false)` or
+`process.activateAll()` and the next `runTransient` step will integrate
+them again.
+
 ## ProcessModel convergence
 
 `ProcessModel.calculateConvergenceErrors` skips any boundary stream whose
