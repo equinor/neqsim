@@ -298,6 +298,21 @@ public class Splitter extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (checkAndHandleLowFlow(inletStream, id)) {
+      // Propagate zero flow to all split outlets so downstream equipment also auto-bypasses.
+      for (int i = 0; i < splitNumber; i++) {
+        if (splitStream[i] != null) {
+          try {
+            splitStream[i].getThermoSystem().setTotalFlowRate(0.0, "kg/hr");
+            splitStream[i].setCalculationIdentifier(id);
+          } catch (Exception ex) {
+            logger.debug("Could not propagate zero flow from inactive splitter '" + getName()
+                + "' to outlet " + i, ex);
+          }
+        }
+      }
+      return;
+    }
     double totSplit = 0.0;
 
     if (flowRates != null) {

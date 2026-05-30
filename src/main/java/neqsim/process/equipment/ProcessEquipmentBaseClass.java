@@ -60,6 +60,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   private boolean isSetEnergyStream = false;
   protected boolean isSolved = true;
   private boolean isActive = true;
+  private boolean lockedInactive = false;
   private double minimumFlow = 1e-20;
 
   /**
@@ -478,6 +479,89 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    */
   public void isActive(boolean isActive) {
     this.isActive = isActive;
+  }
+
+  /**
+   * Convenience helper for equipment to auto-bypass when its primary inlet flow is below the
+   * configured low-flow threshold.
+   *
+   * <p>
+   * Typical usage at the start of {@code run(UUID)}:
+   * </p>
+   *
+   * <pre>
+   * if (checkAndHandleLowFlow(getInletStream(), id)) {
+   *   return;
+   * }
+   * </pre>
+   *
+   * <p>
+   * When the inlet mass flow is below {@link #getMinimumFlow()} the equipment is marked inactive
+   * via {@link #isActive(boolean)} and {@link #setCalculationIdentifier(UUID)} is called so the
+   * scheduler treats the unit as solved for the current calculation pass. Otherwise the equipment
+   * is (re)marked active and {@code false} is returned so the caller can continue normal execution.
+   * </p>
+   *
+   * @param inlet primary inlet stream (may be null, in which case no bypass is applied)
+   * @param id current calculation identifier
+   * @return true if the equipment was auto-bypassed and {@code run()} should return immediately,
+   *         false if the equipment should execute normally
+   */
+  protected boolean checkAndHandleLowFlow(neqsim.process.equipment.stream.StreamInterface inlet,
+      UUID id) {
+    if (inlet == null) {
+      return false;
+    }
+    double flow;
+    try {
+      flow = inlet.getFlowRate("kg/hr");
+    } catch (Exception ex) {
+      return false;
+    }
+    if (flow < getMinimumFlow()) {
+      isActive(false);
+      setCalculationIdentifier(id);
+      return true;
+    }
+    isActive(true);
+    return false;
+  }
+
+  /**
+   * Returns whether this equipment has been explicitly (manually) deactivated and should remain
+   * bypassed across simulation runs.
+   *
+   * <p>
+   * Unlike the transient {@link #isActive()} flag — which is set automatically by
+   * {@link #checkAndHandleLowFlow} based on the current inlet flow — {@code lockedInactive} is a
+   * user-controlled "hard bypass" flag. {@link neqsim.process.processmodel.ProcessSystem} resets
+   * {@code isActive} to {@code true} at the start of each run for every unit where
+   * {@code lockedInactive == false}; locked units remain inactive and their {@code run()} method is
+   * never invoked.
+   * </p>
+   *
+   * @return true if the equipment is manually locked in the inactive state
+   */
+  public boolean isLockedInactive() {
+    return lockedInactive;
+  }
+
+  /**
+   * Manually lock or unlock this equipment in the inactive (bypassed) state. When set to
+   * {@code true} the equipment is also marked inactive ({@link #isActive(boolean)}) so the next
+   * scheduler pass skips it; when set to {@code false} the equipment is re-marked active and will
+   * be evaluated on the next simulation run.
+   *
+   * @param lockedInactive true to bypass this equipment indefinitely; false to allow normal
+   *        execution (default)
+   */
+  public void setLockedInactive(boolean lockedInactive) {
+    this.lockedInactive = lockedInactive;
+    if (lockedInactive) {
+      isActive(false);
+    } else {
+      isActive(true);
+    }
   }
 
   /**

@@ -633,6 +633,23 @@ public class Separator extends ProcessEquipmentBaseClass
   @Override
   public void run(UUID id) {
     inletStreamMixer.run(id);
+    if (checkAndHandleLowFlow(inletStreamMixer.getOutletStream(), id)) {
+      // Propagate zero flow to both outlet products so downstream equipment also auto-bypasses.
+      try {
+        if (gasOutStream != null) {
+          gasOutStream.getThermoSystem().setTotalFlowRate(0.0, "kg/hr");
+          gasOutStream.setCalculationIdentifier(id);
+        }
+        if (liquidOutStream != null) {
+          liquidOutStream.getThermoSystem().setTotalFlowRate(0.0, "kg/hr");
+          liquidOutStream.setCalculationIdentifier(id);
+        }
+      } catch (Exception ex) {
+        logger.debug("Could not propagate zero flow from inactive separator '" + getName() + "'",
+            ex);
+      }
+      return;
+    }
     double enthalpy = inletStreamMixer.getOutletStream().getFluid().getEnthalpy();
     double flow = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
     double pres = inletStreamMixer.getOutletStream().getPressure();

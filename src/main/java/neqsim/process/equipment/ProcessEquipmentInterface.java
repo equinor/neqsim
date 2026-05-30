@@ -966,4 +966,69 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
     }
     return summary;
   }
+
+  /**
+   * Returns whether this equipment is currently active (will run on the next solver pass).
+   *
+   * <p>
+   * Equipment that has been auto-bypassed via
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#checkAndHandleLowFlow} or manually
+   * locked inactive via {@link #setLockedInactive(boolean)} returns {@code false}.
+   * </p>
+   *
+   * @return true if the equipment will be run by the scheduler
+   */
+  public default boolean isActive() {
+    return true;
+  }
+
+  /**
+   * Sets the transient active flag. The flag is reset to {@code true} by
+   * {@link neqsim.process.processmodel.ProcessSystem} at the start of each run for equipment that
+   * is not locked inactive.
+   *
+   * @param active true to mark active, false to skip on the next solver pass
+   */
+  public default void isActive(boolean active) {
+    // default no-op; ProcessEquipmentBaseClass overrides
+  }
+
+  /**
+   * Returns whether this equipment has been manually locked in the inactive (bypassed) state.
+   *
+   * @return true if the equipment is locked inactive
+   */
+  public default boolean isLockedInactive() {
+    return false;
+  }
+
+  /**
+   * Manually lock or unlock this equipment in the inactive state.
+   *
+   * @param lockedInactive true to bypass this equipment indefinitely; false to allow normal
+   *        execution
+   */
+  public default void setLockedInactive(boolean lockedInactive) {
+    // default no-op; ProcessEquipmentBaseClass overrides
+  }
+
+  /**
+   * Returns the low-flow bypass threshold (kg/hr). Equipment whose primary inlet flow is below this
+   * value auto-bypasses via
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass#checkAndHandleLowFlow}.
+   *
+   * @return low-flow cutoff in kg/hr
+   */
+  public default double getMinimumFlow() {
+    return 1e-20;
+  }
+
+  /**
+   * Sets the low-flow bypass threshold (kg/hr) for this equipment.
+   *
+   * @param minimumFlow low-flow cutoff in kg/hr (must be &gt;= 0)
+   */
+  public default void setMinimumFlow(double minimumFlow) {
+    // default no-op; ProcessEquipmentBaseClass overrides
+  }
 }

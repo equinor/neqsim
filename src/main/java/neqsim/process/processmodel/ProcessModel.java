@@ -806,6 +806,89 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Propagates a low-flow bypass threshold to every equipment in every area of this model.
+   *
+   * @param threshold low-flow cutoff in kg/hr (must be &gt;= 0). Equipment whose primary inlet flow
+   *        is below this value auto-bypasses on the next run.
+   */
+  public void setSectionLowFlowThreshold(double threshold) {
+    for (ProcessSystem ps : processes.values()) {
+      ps.setSectionLowFlowThreshold(threshold);
+    }
+  }
+
+  /**
+   * Manually deactivates a section starting at the given unit. Searches every area for a unit with
+   * the supplied name and delegates to {@link ProcessSystem#deactivateSection(String)} on the first
+   * match.
+   *
+   * @param unitName name of the seed unit in some area
+   * @return number of units locked inactive (0 if not found)
+   */
+  public int deactivateSection(String unitName) {
+    for (ProcessSystem ps : processes.values()) {
+      if (ps.hasUnitName(unitName)) {
+        return ps.deactivateSection(unitName);
+      }
+    }
+    return 0;
+  }
+
+  /**
+   * Manually deactivates a section starting at {@code areaName::unitName}.
+   *
+   * @param areaName name of the process area
+   * @param unitName name of the seed unit within that area
+   * @return number of units locked inactive (0 if area or unit not found)
+   */
+  public int deactivateSection(String areaName, String unitName) {
+    ProcessSystem ps = processes.get(areaName);
+    if (ps == null) {
+      return 0;
+    }
+    return ps.deactivateSection(unitName);
+  }
+
+  /**
+   * Re-activates a previously deactivated section starting at the given unit (first area match).
+   *
+   * @param unitName name of the seed unit
+   * @return number of units unlocked
+   */
+  public int activateSection(String unitName) {
+    for (ProcessSystem ps : processes.values()) {
+      if (ps.hasUnitName(unitName)) {
+        return ps.activateSection(unitName);
+      }
+    }
+    return 0;
+  }
+
+  /**
+   * Re-activates a previously deactivated section in a specific area.
+   *
+   * @param areaName name of the process area
+   * @param unitName name of the seed unit within that area
+   * @return number of units unlocked
+   */
+  public int activateSection(String areaName, String unitName) {
+    ProcessSystem ps = processes.get(areaName);
+    if (ps == null) {
+      return 0;
+    }
+    return ps.activateSection(unitName);
+  }
+
+  /**
+   * Re-activates every equipment in every area (clears all locked-inactive flags).
+   */
+  public void activateAll() {
+    for (ProcessSystem ps : processes.values()) {
+      ps.activateAll();
+    }
+  }
+
+  /**
    * Generates IEC 81346 reference designations for all equipment across all process areas in this
    * model. Each area receives a unique function sub-level (A1, A2, A3, ...).
    *
@@ -1949,6 +2032,12 @@ public class ProcessModel implements Runnable, Serializable {
       if (previous.containsKey(key)) {
         double[] prev = previous.get(key);
         double[] curr = current.get(key);
+
+        // Skip near-zero (inactive / bypassed) boundary streams so that low-flow
+        // sections do not block global convergence.
+        if (Math.max(Math.abs(prev[0]), Math.abs(curr[0])) < 1e-9) {
+          continue;
+        }
 
         // Flow rate relative error (with min threshold to avoid div by zero)
         double flowBase = Math.max(Math.abs(prev[0]), 1e-10);
