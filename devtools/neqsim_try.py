@@ -12,13 +12,15 @@ Usage:
 import os
 import sys
 import textwrap
+import importlib.util
+from pathlib import Path
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
-# Preamble to suppress Java 21+ native access warnings from JPype.
+# Preamble for pip-installed neqsim package.
 # Must start JVM with the flag before 'import neqsim' which eagerly starts it.
-_JVM_PREAMBLE = textwrap.dedent("""\
+_PIP_JVM_PREAMBLE = textwrap.dedent("""\
     import jpype, os, importlib.util
     if not jpype.isJVMStarted():
         _spec = importlib.util.find_spec("neqsim")
@@ -38,7 +40,10 @@ _JVM_PREAMBLE = textwrap.dedent("""\
         jpype.startJVM(*_jvm_args, classpath=[_jar_dir], convertStrings=False)
 """)
 
-DEMO_CODE = _JVM_PREAMBLE + textwrap.dedent("""\
+
+def _build_pip_demo_code():
+    """Return demo startup code for pip-installed neqsim."""
+    return _PIP_JVM_PREAMBLE + textwrap.dedent("""\
     from neqsim import jneqsim
 
     # -- Create a natural gas fluid ------------------------------------
@@ -72,40 +77,9 @@ DEMO_CODE = _JVM_PREAMBLE + textwrap.dedent("""\
 """)
 
 
-def main():
-    args = sys.argv[1:]
-
-    if "-h" in args or "--help" in args:
-        print("Usage: neqsim try [--demo]")
-        print()
-        print("  Drops you into a Python REPL with NeqSim pre-imported and a")
-        print("  sample natural gas fluid ready to explore.")
-        print()
-        print("Options:")
-        print("  --demo    Run a demo first, then drop into the REPL")
-        print()
-        print("Inside the REPL, `fluid`, `ops`, and `gas` are already defined.")
-        print("Type any Python expression to explore fluid properties.")
-        sys.exit(0)
-
-    demo_mode = "--demo" in args
-
-    # Check neqsim is importable (without starting JVM)
-    import importlib.util
-    if importlib.util.find_spec("neqsim") is None:
-        print("  [!!] neqsim is not installed.")
-        print("       Install it:  pip install neqsim")
-        print("       Then retry:  neqsim try")
-        sys.exit(1)
-
-    print()
-    print("  NeqSim Interactive Playground")
-    print("  -----------------------------")
-    print("  Setting up a sample fluid (natural gas, SRK EOS, 25 C, 60 bara)...")
-    print()
-
-    # Build the startup code that the REPL will execute
-    startup = DEMO_CODE if demo_mode else _JVM_PREAMBLE + textwrap.dedent("""\
+def _build_pip_repl_code():
+    """Return REPL startup code for pip-installed neqsim."""
+    return _PIP_JVM_PREAMBLE + textwrap.dedent("""\
         from neqsim import jneqsim
 
         fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 60.0)
@@ -129,6 +103,127 @@ def main():
         print("    gas.getDensity('kg/m3')")
         print()
     """)
+
+
+def _build_devtools_bootstrap():
+    """Return startup bootstrap that loads classes from the local repository."""
+    return textwrap.dedent("""\
+        import sys
+        from pathlib import Path
+
+        PROJECT_ROOT = Path({project_root!r})
+        sys.path.insert(0, str(PROJECT_ROOT / "devtools"))
+
+        from neqsim_dev_setup import neqsim_init, neqsim_classes
+
+        ns = neqsim_init(project_root=PROJECT_ROOT, recompile=False, verbose=False)
+        ns = neqsim_classes(ns)
+    """).format(project_root=str(PROJECT_ROOT))
+
+
+def _build_devtools_demo_code():
+    """Return demo startup code for local devtools/classes mode."""
+    return _build_devtools_bootstrap() + textwrap.dedent("""\
+        fluid = ns.SystemSrkEos(273.15 + 25.0, 60.0)
+        fluid.addComponent("methane", 0.85)
+        fluid.addComponent("ethane", 0.10)
+        fluid.addComponent("propane", 0.05)
+        fluid.setMixingRule("classic")
+
+        ops = ns.ThermodynamicOperations(fluid)
+        ops.TPflash()
+        fluid.initProperties()
+
+        gas = fluid.getPhase("gas")
+        print()
+        print("  Natural gas at 25 C, 60 bara")
+        print("  -------------------------------------")
+        print("  Density:            {:.2f} kg/m3".format(gas.getDensity("kg/m3")))
+        print("  Viscosity:          {:.6f} kg/(m*s)".format(gas.getViscosity("kg/msec")))
+        print("  Thermal cond.:      {:.4f} W/(m*K)".format(gas.getThermalConductivity("W/mK")))
+        print("  Z-factor:           {:.4f}".format(gas.getZ()))
+        print("  Molar mass:         {:.4f} kg/mol".format(fluid.getMolarMass("kg/mol")))
+        print("  Number of phases:   {}".format(fluid.getNumberOfPhases()))
+        print()
+        print("  Try: fluid.setTemperature(273.15 + 80.0)")
+        print("       ops.TPflash(); fluid.initProperties()")
+        print("       gas.getDensity('kg/m3')")
+        print()
+    """)
+
+
+def _build_devtools_repl_code():
+    """Return REPL startup code for local devtools/classes mode."""
+    return _build_devtools_bootstrap() + textwrap.dedent("""\
+        fluid = ns.SystemSrkEos(273.15 + 25.0, 60.0)
+        fluid.addComponent("methane", 0.85)
+        fluid.addComponent("ethane", 0.10)
+        fluid.addComponent("propane", 0.05)
+        fluid.setMixingRule("classic")
+
+        ops = ns.ThermodynamicOperations(fluid)
+        ops.TPflash()
+        fluid.initProperties()
+        gas = fluid.getPhase("gas")
+
+        print("  Ready!  Variables: fluid, ops, gas")
+        print()
+        print("  Quick examples:")
+        print("    gas.getDensity('kg/m3')")
+        print("    gas.getViscosity('kg/msec')")
+        print("    fluid.setTemperature(273.15 + 80.0)")
+        print("    ops.TPflash(); fluid.initProperties()")
+        print("    gas.getDensity('kg/m3')")
+        print()
+    """)
+
+
+def main():
+    args = sys.argv[1:]
+
+    if "-h" in args or "--help" in args:
+        print("Usage: neqsim try [--demo]")
+        print()
+        print("  Drops you into a Python REPL with NeqSim pre-imported and a")
+        print("  sample natural gas fluid ready to explore.")
+        print()
+        print("Options:")
+        print("  --demo    Run a demo first, then drop into the REPL")
+        print()
+        print("Inside the REPL, `fluid`, `ops`, and `gas` are already defined.")
+        print("Type any Python expression to explore fluid properties.")
+        sys.exit(0)
+
+    demo_mode = "--demo" in args
+
+    pip_neqsim_available = importlib.util.find_spec("neqsim") is not None
+    devtools_available = (
+        (Path(PROJECT_ROOT) / "devtools" / "neqsim_dev_setup.py").exists()
+        and (Path(PROJECT_ROOT) / "pom.xml").exists()
+    )
+
+    if not pip_neqsim_available and not devtools_available:
+        print("  [!!] Could not find NeqSim runtime.")
+        print("       Option 1: pip install neqsim")
+        print("       Option 2: run from the NeqSim repository root")
+        print("       Then retry:  neqsim try")
+        sys.exit(1)
+
+    print()
+    print("  NeqSim Interactive Playground")
+    print("  -----------------------------")
+    if pip_neqsim_available:
+        print("  Runtime: pip package (neqsim)")
+    else:
+        print("  Runtime: local repository classes (devtools)")
+    print("  Setting up a sample fluid (natural gas, SRK EOS, 25 C, 60 bara)...")
+    print()
+
+    # Build the startup code that the REPL will execute.
+    if pip_neqsim_available:
+        startup = _build_pip_demo_code() if demo_mode else _build_pip_repl_code()
+    else:
+        startup = _build_devtools_demo_code() if demo_mode else _build_devtools_repl_code()
 
     # Write a temp startup file
     import tempfile
