@@ -16,6 +16,8 @@ Usage:
 Agents are installed to ~/.neqsim/agents/<name>/ and are never executed during
 installation. An agent package may be a single .agent.md file, a folder with
 AGENT.md, or a folder with AGENT.md plus agent.yaml and supporting resources.
+Private GitHub repositories can be read with GITHUB_TOKEN or an authenticated gh
+CLI session.
 """
 
 import argparse
@@ -105,7 +107,7 @@ PRIVATE_CATALOG_TEMPLATE = """\
 # Agents can be sourced from:
 #   - Local file paths or folders (source: local)
 #   - Network shares (source: local, with UNC path)
-#   - Private GitHub repos (source: github, requires GITHUB_TOKEN)
+#   - Private GitHub repos (source: github, requires GITHUB_TOKEN or gh auth)
 #   - Internal Git servers (source: url, with direct URL)
 #
 # Install with: neqsim agent install <name>
@@ -113,6 +115,19 @@ PRIVATE_CATALOG_TEMPLATE = """\
 catalog_version: "1.0"
 last_updated: "{today}"
 organisation: "your-company"
+
+repositories:
+    # -- Private GitHub repository discovery --
+    # Requires either GITHUB_TOKEN in the shell or `gh auth login` with repo access.
+    # Use catalog_path: "" when the repo has no community-agents.yaml and should
+    # be scanned for AGENT.md / *.agent.md files directly.
+    # - repo: "your-org/neqsim-enterprise-agents"
+    #   source: github
+    #   branch: "main"
+    #   catalog_path: ""
+    #   agent_path_glob: ["agents/**/AGENT.md", "agents/**/*.agent.md"]
+    #   name_prefix: "enterprise-"  # optional, avoids public/private name clashes
+    #   tags: [enterprise, private]
 
 agents:
   # -- Local folder package --
@@ -471,6 +486,10 @@ def _agent_globs(repository):
 def _normalize_discovered_agent(agent, repository, default_branch=None, content=""):
     """Normalize an agent discovered from a repository catalog or scan."""
     normalized = dict(agent)
+    name_prefix = repository.get("name_prefix", "")
+    if name_prefix and normalized.get("name") and not str(normalized["name"]).startswith(name_prefix):
+        normalized["name"] = "{prefix}{name}".format(
+            prefix=name_prefix, name=normalized["name"])
     repo = normalized.get("repo") or repository.get("repo", "")
     path = normalized.get("path") or repository.get("default_path", "AGENT.md")
     normalized["repo"] = repo
@@ -513,6 +532,44 @@ def _discover_agents_from_remote_catalog(repository, branch):
     return discovered
 
 
+def _parse_remote_agent_yaml(text):
+    """Parse remote agent.yaml text into a metadata mapping."""
+    if yaml is not None:
+        data = yaml.safe_load(text) or {}
+    else:
+        data = _parse_flat_yaml(text)
+    return data if isinstance(data, dict) else {}
+
+
+def _sibling_agent_yaml_path(path, paths):
+    """Return the sibling agent.yaml path for an AGENT.md package, if present."""
+    path_obj = Path(path)
+    yaml_path = str(path_obj.parent / "agent.yaml").replace("\\", "/")
+    return yaml_path if yaml_path in paths else ""
+
+
+def _agent_folder_path(path, paths, yaml_path):
+    """Return the package folder for an AGENT.md entry, if it has one."""
+    path_obj = Path(path)
+    if path_obj.name != "AGENT.md":
+        return ""
+    folder = str(path_obj.parent).replace("\\", "/")
+    if not folder or folder == ".":
+        return ""
+    prefix = folder.rstrip("/") + "/"
+    has_package_files = yaml_path or any(
+        other_path != path and other_path.startswith(prefix) for other_path in paths)
+    return folder if has_package_files else ""
+
+
+def _fetch_remote_agent_yaml(repo, yaml_path, branch):
+    """Fetch and parse a remote agent.yaml file."""
+    if not yaml_path:
+        return {}
+    text = install_skill._fetch_github_text(repo, yaml_path, branch=branch)
+    return _parse_remote_agent_yaml(text)
+
+
 def _discover_agents_by_scanning_repo(repository, branch):
     """Discover agents by scanning an online GitHub repo for agent files."""
     repo = repository.get("repo", "")
@@ -528,19 +585,31 @@ def _discover_agents_by_scanning_repo(repository, branch):
         content = install_skill._fetch_github_text(
             repo, path, branch=used_branch)
         frontmatter = install_skill._extract_frontmatter(content)
+        yaml_path = _sibling_agent_yaml_path(path, paths)
+        agent_yaml = _fetch_remote_agent_yaml(repo, yaml_path, used_branch)
+        metadata = dict(frontmatter)
+        metadata.update(agent_yaml)
         agent_id = frontmatter.get("agent_id") or frontmatter.get(
-            "id") or _agent_id_from_path(path)
-        agent = {
+            "id") or agent_yaml.get("name") or _agent_id_from_path(path)
+        display_name = metadata.get("display_name") or frontmatter.get(
+            "name") or agent_yaml.get("display_name") or agent_yaml.get("name") or agent_id
+        agent = dict(metadata)
+        agent.update({
             "name": agent_id,
-            "display_name": frontmatter.get("name", agent_id),
-            "version": frontmatter.get("version", repository.get("version", "")),
-            "description": frontmatter.get(
+            "display_name": display_name,
+            "version": metadata.get("version", repository.get("version", "")),
+            "description": metadata.get(
                 "description", "Community agent from {repo}/{path}".format(
                     repo=repo, path=path)
             ),
             "path": path,
-            "required_skills": _extract_required_skills(content, frontmatter),
-        }
+            "required_skills": _extract_required_skills(content, metadata),
+        })
+        folder = _agent_folder_path(path, paths, yaml_path)
+        if folder:
+            agent["folder"] = folder
+        if yaml_path:
+            agent["agent_yaml_path"] = yaml_path
         discovered.append(_normalize_discovered_agent(
             agent, repository, used_branch, content))
     return discovered
@@ -1295,7 +1364,7 @@ def main():
               neqsim agent remove neqsim-example-agent
               neqsim agent private-init
 
-            Private repos require GITHUB_TOKEN env var.
+            Private repos require GITHUB_TOKEN or `gh auth login` with repo access.
             Internal URLs can use PRIVATE_AGENT_TOKEN env var.
             Install never executes agent code.
         """),

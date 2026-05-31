@@ -121,6 +121,94 @@ Loaded skills: neqsim-api-patterns, neqsim-flow-assurance
         self.assertIn("process", agents[0]["tags"])
         self.assertIn("community", agents[0]["tags"])
 
+    def test_repository_discovery_can_prefix_private_agent_names(self):
+        """Private repository scans may prefix discovered install ids."""
+        agent_md = """---
+name: PVT Agent
+description: "Private PVT agent."
+---
+You are a private PVT agent.
+"""
+
+        def fake_fetch_text(_repo, path, branch=None):
+            if path == "community-agents.yaml":
+                raise RuntimeError("remote catalog missing")
+            return agent_md
+
+        repository = {
+            "repo": "owner/private",
+            "agent_path_glob": "agents/**/AGENT.md",
+            "name_prefix": "enterprise-",
+        }
+
+        with mock.patch.object(install_agent.install_skill, "_get_default_github_branch",
+                               return_value="main"), \
+                mock.patch.object(install_agent.install_skill, "_list_github_tree_paths",
+                                  return_value=("main", ["agents/pvt-agent/AGENT.md"])), \
+                mock.patch.object(install_agent.install_skill, "_fetch_github_text",
+                                  side_effect=fake_fetch_text):
+            agents = install_agent._discover_github_repository_agents(
+                repository)
+
+        self.assertEqual("enterprise-pvt-agent", agents[0]["name"])
+        self.assertEqual("PVT Agent", agents[0]["display_name"])
+
+    def test_repository_discovery_reads_sibling_agent_yaml(self):
+        """AGENT.md package scans should preserve agent.yaml metadata."""
+        agent_md = "You are a packaged private agent.\n"
+        agent_yaml = """name: demo-agent
+display_name: "Demo Agent"
+description: Private package agent.
+version: "0.1.0"
+required_skills: [enterprise-hydrate-screening]
+supported_domains: [flow-assurance, process]
+inputs: [feed data]
+outputs: [screening report]
+human_review_required: true
+trust_level: private
+"""
+
+        def fake_fetch_text(_repo, path, branch=None):
+            if path == "community-agents.yaml":
+                raise RuntimeError("remote catalog missing")
+            if path == "agents/demo-agent/AGENT.md":
+                return agent_md
+            if path == "agents/demo-agent/agent.yaml":
+                return agent_yaml
+            raise AssertionError("unexpected path: {path}".format(path=path))
+
+        repository = {
+            "repo": "owner/private",
+            "agent_path_glob": "agents/**/AGENT.md",
+            "name_prefix": "enterprise-",
+        }
+        paths = [
+            "agents/demo-agent/AGENT.md",
+            "agents/demo-agent/agent.yaml",
+            "agents/demo-agent/prompts/system_prompt.md",
+        ]
+
+        with mock.patch.object(install_agent.install_skill, "_get_default_github_branch",
+                               return_value="main"), \
+                mock.patch.object(install_agent.install_skill, "_list_github_tree_paths",
+                                  return_value=("main", paths)), \
+                mock.patch.object(install_agent.install_skill, "_fetch_github_text",
+                                  side_effect=fake_fetch_text):
+            agents = install_agent._discover_github_repository_agents(
+                repository)
+
+        self.assertEqual("enterprise-demo-agent", agents[0]["name"])
+        self.assertEqual("Demo Agent", agents[0]["display_name"])
+        self.assertEqual("agents/demo-agent", agents[0]["folder"])
+        self.assertEqual("agents/demo-agent/agent.yaml",
+                         agents[0]["agent_yaml_path"])
+        self.assertEqual(["enterprise-hydrate-screening"],
+                         agents[0]["required_skills"])
+        self.assertEqual(["flow-assurance", "process"],
+                         agents[0]["supported_domains"])
+        self.assertTrue(agents[0]["human_review_required"])
+        self.assertEqual("private", agents[0]["trust_level"])
+
     def test_validate_agent_dir_accepts_agent_yaml_package(self):
         """Folder packages may define metadata in agent.yaml."""
         with tempfile.TemporaryDirectory() as tmp:

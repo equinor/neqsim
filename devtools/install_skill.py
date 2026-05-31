@@ -21,13 +21,14 @@ community-skills.yaml catalog, then falls back to scanning for SKILL.md files.
 
 Private skills are listed in ~/.neqsim/private-skills.yaml (gitignored,
 never committed). They support local file paths, network shares, and
-private GitHub repos.
+private GitHub repos via GITHUB_TOKEN or an authenticated gh CLI session.
 """""
 
 import argparse
 import fnmatch
 import json
 import os
+import subprocess
 import sys
 import textwrap
 import urllib.error
@@ -67,7 +68,7 @@ PRIVATE_CATALOG_TEMPLATE = """\
 # Skills can be sourced from:
 #   - Local file paths (source: local)
 #   - Network shares (source: local, with UNC path)
-#   - Private GitHub repos (source: github, requires GITHUB_TOKEN)
+#   - Private GitHub repos (source: github, requires GITHUB_TOKEN or gh auth)
 #   - Internal Git servers (source: url, with direct URL)
 #
 # Install with: neqsim skill install <name>
@@ -75,6 +76,19 @@ PRIVATE_CATALOG_TEMPLATE = """\
 catalog_version: "1.0"
 last_updated: "{today}"
 organisation: "your-company"
+
+repositories:
+    # -- Private GitHub repository discovery --
+    # Requires either GITHUB_TOKEN in the shell or `gh auth login` with repo access.
+    # Use catalog_path: "" when the repo has no community-skills.yaml and should
+    # be scanned for SKILL.md files directly.
+    # - repo: "your-org/neqsim-enterprise-skills"
+    #   source: github
+    #   branch: "main"
+    #   catalog_path: ""
+    #   skill_path_glob: "skills/**/SKILL.md"
+    #   name_prefix: "enterprise-"  # optional, avoids public/private name clashes
+    #   tags: [enterprise, private]
 
 skills:
   # ── Local file path ──
@@ -269,6 +283,50 @@ def _github_request(url, accept="application/vnd.github+json"):
         return resp.read()
 
 
+def _gh_api_request(endpoint, accept="application/vnd.github+json"):
+    """Return bytes from GitHub CLI using the user's active gh login."""
+    cmd = ["gh", "api", endpoint]
+    if accept:
+        cmd.extend(["--header", f"Accept: {accept}"])
+    return subprocess.check_output(cmd, stderr=subprocess.PIPE)
+
+
+def _github_api_endpoint(repo, path="", query=""):
+    """Build a GitHub API endpoint for use with gh api."""
+    encoded_repo = "/".join(urllib.parse.quote(part, safe="") for part in repo.split("/"))
+    endpoint = f"repos/{encoded_repo}"
+    if path:
+        endpoint = f"{endpoint}/{path}"
+    if query:
+        endpoint = f"{endpoint}?{query}"
+    return endpoint
+
+
+def _github_contents_endpoint(repo, path, branch):
+    """Build a GitHub contents API endpoint for a repository file."""
+    encoded_path = urllib.parse.quote(path, safe="/")
+    encoded_branch = urllib.parse.quote(branch, safe="")
+    return _github_api_endpoint(
+        repo, f"contents/{encoded_path}", f"ref={encoded_branch}")
+
+
+def _fetch_github_contents_with_gh(repo, path, branch):
+    """Fetch repository file bytes using GitHub CLI authentication."""
+    endpoint = _github_contents_endpoint(repo, path, branch)
+    return _gh_api_request(endpoint, accept="application/vnd.github.raw")
+
+
+def _github_access_error(repo, operation, http_error, gh_error):
+    """Return an access error that explains both auth paths."""
+    if gh_error is None:
+        return http_error
+    return RuntimeError(
+        f"Could not {operation} for GitHub repo {repo}. "
+        "Set GITHUB_TOKEN or run `gh auth login` with repo read access. "
+        f"HTTP error: {http_error}. gh error: {gh_error}"
+    )
+
+
 def _get_default_github_branch(repo):
     """Return the default branch for a GitHub repo, or None if unavailable."""
     encoded_repo = "/".join(urllib.parse.quote(part, safe="") for part in repo.split("/"))
@@ -277,7 +335,12 @@ def _get_default_github_branch(repo):
         data = json.loads(_github_request(url).decode("utf-8"))
         return data.get("default_branch")
     except Exception:
-        return None
+        try:
+            endpoint = _github_api_endpoint(repo)
+            data = json.loads(_gh_api_request(endpoint).decode("utf-8"))
+            return data.get("default_branch")
+        except Exception:
+            return None
 
 
 def _branch_candidates(branch=None):
@@ -298,6 +361,7 @@ def _raw_github_url(repo, path, branch):
 def _fetch_github_bytes(repo, path, branch=None):
     """Fetch a file from GitHub raw content using branch fallback."""
     last_error = None
+    last_gh_error = None
     for candidate in _branch_candidates(branch):
         raw_url = _raw_github_url(repo, path, candidate)
         try:
@@ -305,8 +369,14 @@ def _fetch_github_bytes(repo, path, branch=None):
             return content, candidate, raw_url
         except urllib.error.HTTPError as exc:
             last_error = exc
+            try:
+                content = _fetch_github_contents_with_gh(repo, path, candidate)
+                source = f"gh api {_github_contents_endpoint(repo, path, candidate)}"
+                return content, candidate, source
+            except Exception as gh_exc:
+                last_gh_error = gh_exc
     if last_error is not None:
-        raise last_error
+        raise _github_access_error(repo, f"fetch {path}", last_error, last_gh_error)
     raise RuntimeError(f"No branch candidates available for {repo}")
 
 
@@ -319,6 +389,7 @@ def _fetch_github_text(repo, path, branch=None):
 def _list_github_tree_paths(repo, branch=None):
     """List files in a GitHub repository tree using the online GitHub API."""
     last_error = None
+    last_gh_error = None
     for candidate in _branch_candidates(branch):
         encoded_repo = "/".join(urllib.parse.quote(part, safe="") for part in repo.split("/"))
         encoded_branch = urllib.parse.quote(candidate, safe="")
@@ -332,8 +403,19 @@ def _list_github_tree_paths(repo, branch=None):
             return candidate, paths
         except urllib.error.HTTPError as exc:
             last_error = exc
+            try:
+                endpoint = _github_api_endpoint(
+                    repo, f"git/trees/{encoded_branch}", "recursive=1")
+                data = json.loads(_gh_api_request(endpoint).decode("utf-8"))
+                paths = [item.get("path", "") for item in data.get("tree", [])
+                         if item.get("type") == "blob" and item.get("path")]
+                if data.get("truncated"):
+                    print(f"  [!!] GitHub tree for {repo}@{candidate} is truncated.", file=sys.stderr)
+                return candidate, paths
+            except Exception as gh_exc:
+                last_gh_error = gh_exc
     if last_error is not None:
-        raise last_error
+        raise _github_access_error(repo, "list tree paths", last_error, last_gh_error)
     raise RuntimeError(f"No branch candidates available for {repo}")
 
 
@@ -362,6 +444,9 @@ def _infer_tags(content, path=""):
 def _normalize_discovered_skill(skill, repository, default_branch=None, content=""):
     """Normalize a skill discovered from a repository-level catalog or scan."""
     normalized = dict(skill)
+    name_prefix = repository.get("name_prefix", "")
+    if name_prefix and normalized.get("name") and not str(normalized["name"]).startswith(name_prefix):
+        normalized["name"] = f"{name_prefix}{normalized['name']}"
     repo = normalized.get("repo") or repository.get("repo", "")
     path = normalized.get("path") or repository.get("default_path", "SKILL.md")
     normalized["repo"] = repo
@@ -880,7 +965,7 @@ def main():
               neqsim skill list --private   # verify entries
               neqsim skill install <name>   # install from any catalog
 
-            Private repos require GITHUB_TOKEN env var.
+            Private repos require GITHUB_TOKEN or `gh auth login` with repo access.
             Internal URLs can use PRIVATE_SKILL_TOKEN env var.
         """),
     )

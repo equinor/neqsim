@@ -214,6 +214,7 @@ repository under the generated `repositories:` section:
 | `catalog_path` | `community-skills.yaml` |
 | `skill_path_glob` | `skills/**/SKILL.md` |
 | `tags` | `[enterprise, private]` |
+| `name_prefix` | Optional, for example `enterprise-`, to avoid public/private name clashes |
 
 Edit `%USERPROFILE%\.neqsim\private-agents.yaml` the same way for private agent
 repositories:
@@ -226,10 +227,14 @@ repositories:
 | `catalog_path` | `community-agents.yaml` |
 | `agent_path_glob` | `["agents/**/*.agent.md", "agents/**/AGENT.md"]` |
 | `tags` | `[enterprise, private]` |
+| `name_prefix` | Optional, for example `enterprise-`, to avoid public/private name clashes |
 
-Private GitHub repositories require a `GITHUB_TOKEN` in the local shell. Do not
-store tokens in catalog files, prompt files, or this repository. After adding the
-catalog entries, install and verify locally:
+Private GitHub repositories require either a `GITHUB_TOKEN` in the local shell or
+an authenticated GitHub CLI session from `gh auth login`. Do not store tokens in
+catalog files, prompt files, or this repository. Use `catalog_path: ""` when the
+private repository has no `community-skills.yaml` or `community-agents.yaml` and
+should be scanned directly for `SKILL.md`, `AGENT.md`, or `*.agent.md` files.
+After adding the catalog entries, install and verify locally:
 
 ```powershell
 neqsim skill list --private
