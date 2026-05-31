@@ -24,6 +24,7 @@ PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
 # ── Helpers ──────────────────────────────────────────────
 
+
 def _banner(text):
     print("\n" + "=" * 60)
     print("  " + text)
@@ -254,10 +255,42 @@ def step_python_neqsim(check_only=False):
                 _info("  Copy-Item target/neqsim-*.jar {d}".format(d=lib_dir))
         return True
     else:
+        # Fallback: local repository runtime via devtools/neqsim_dev_setup.py
+        dev_setup = os.path.join(
+            PROJECT_ROOT, "devtools", "neqsim_dev_setup.py")
+        if os.path.isfile(dev_setup):
+            local_check_code = (
+                "import sys;"
+                "sys.path.insert(0, {devtools_path!r});"
+                "from neqsim_dev_setup import neqsim_init, neqsim_classes;"
+                "ns = neqsim_init(project_root={project_root!r}, recompile=False, verbose=False);"
+                "ns = neqsim_classes(ns);"
+                "fluid = ns.SystemSrkEos(273.15 + 25.0, 60.0);"
+                "fluid.addComponent('methane', 1.0);"
+                "fluid.setMixingRule('classic');"
+                "print('LOCAL_RUNTIME_OK')"
+            ).format(
+                devtools_path=os.path.join(PROJECT_ROOT, "devtools"),
+                project_root=PROJECT_ROOT,
+            )
+            local_ok, local_stdout, local_stderr = _run_cmd(
+                [sys.executable, "-c", local_check_code],
+                timeout=90,
+            )
+            if local_ok and "LOCAL_RUNTIME_OK" in local_stdout:
+                _ok("neqsim pip package not installed (optional in repo mode)")
+                _ok("Local dev runtime available via devtools/neqsim_dev_setup.py")
+                return True
+            if local_stderr.strip():
+                _info("Local dev runtime check output: {msg}".format(
+                    msg=local_stderr.strip()[:200]
+                ))
+
         _fail("Python neqsim package not installed.")
         print()
         print("  To fix:")
         print("    pip install neqsim")
+        print("    or run from the repo with devtools/neqsim_dev_setup.py available")
         print()
         if check_only:
             return False
@@ -368,7 +401,13 @@ def step_verify(check_only=False):
 
     _info("Running a quick NeqSim simulation via Python...")
 
-    test_code = """
+    pkg_ok, _, _ = _run_cmd(
+        [sys.executable, "-c", "import neqsim"],
+        timeout=10,
+    )
+
+    if pkg_ok:
+        test_code = """
 import sys
 try:
     from neqsim import jneqsim
@@ -386,6 +425,27 @@ except Exception as e:
     print("FAILED: {e}".format(e=e))
     sys.exit(1)
 """
+    else:
+        test_code = (
+            "import sys;"
+            "sys.path.insert(0, {devtools_path!r});"
+            "from neqsim_dev_setup import neqsim_init, neqsim_classes;"
+            "ns = neqsim_init(project_root={project_root!r}, recompile=False, verbose=False);"
+            "ns = neqsim_classes(ns);"
+            "fluid = ns.SystemSrkEos(273.15 + 25.0, 60.0);"
+            "fluid.addComponent('methane', 0.85);"
+            "fluid.addComponent('ethane', 0.10);"
+            "fluid.addComponent('propane', 0.05);"
+            "fluid.setMixingRule('classic');"
+            "ops = ns.ThermodynamicOperations(fluid);"
+            "ops.TPflash();"
+            "fluid.initProperties();"
+            "density = fluid.getDensity('kg/m3');"
+            "print('SUCCESS density={d:.2f} kg/m3'.format(d=density))"
+        ).format(
+            devtools_path=os.path.join(PROJECT_ROOT, "devtools"),
+            project_root=PROJECT_ROOT,
+        )
 
     ok, stdout, stderr = _run_cmd(
         [sys.executable, "-c", test_code],
