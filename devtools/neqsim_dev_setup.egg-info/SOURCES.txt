@@ -1,4 +1,6 @@
 README.md
+install_agent.py
+install_skill.py
 neqsim_cli.py
 neqsim_dev_setup.py
 pyproject.toml
