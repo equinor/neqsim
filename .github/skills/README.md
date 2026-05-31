@@ -3,9 +3,10 @@
 Skills are reusable knowledge packages that agents load automatically when relevant.
 Each skill folder contains a `SKILL.md` file with verified patterns, rules, and domain knowledge.
 
-> **Full documentation:** See the [Skills Guide](../../docs/integration/skills_guide.md)
-> for the complete walkthrough — creating core, community, and private skills, the
-> SKILL.md format, requirements checklist, CLI commands, and worked examples.
+> **Full documentation:** See the [Skills and Agents Guide](../../docs/integration/skills_guide.md)
+> for the complete walkthrough — creating core, community, and private skills,
+> installing community/private agents, the SKILL.md and agent.yaml formats,
+> requirements checklist, CLI commands, and worked examples.
 
 ## How Skills Work
 
