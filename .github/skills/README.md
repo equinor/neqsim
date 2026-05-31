@@ -188,6 +188,73 @@ synthetic or public data. Do not put proprietary methods, plant data, tag names,
 internal URLs, company standards, or project-specific design bases there; those
 belong in a private skill catalog.
 
+### Using private enterprise skills and agents
+
+Company-private skill and agent repositories should be connected through each
+user's local NeqSim catalogs, not through the public `neqsim` repository. This
+keeps proprietary workflows, internal URLs, tag mappings, and company standards
+out of committed files while still making them installable with the same CLI as
+community skills and agents.
+
+Create the local catalogs first:
+
+```powershell
+neqsim skill private-init
+neqsim agent private-init
+```
+
+Then edit `%USERPROFILE%\.neqsim\private-skills.yaml` and add the private skill
+repository under the generated `repositories:` section:
+
+| Field | Value |
+|-------|-------|
+| `repo` | `your-org/your-enterprise-skills-repo` |
+| `source` | `github` |
+| `branch` | `main` |
+| `catalog_path` | `community-skills.yaml` |
+| `skill_path_glob` | `skills/**/SKILL.md` |
+| `tags` | `[enterprise, private]` |
+
+Edit `%USERPROFILE%\.neqsim\private-agents.yaml` the same way for private agent
+repositories:
+
+| Field | Value |
+|-------|-------|
+| `repo` | `your-org/your-enterprise-agents-repo` |
+| `source` | `github` |
+| `branch` | `main` |
+| `catalog_path` | `community-agents.yaml` |
+| `agent_path_glob` | `["agents/**/*.agent.md", "agents/**/AGENT.md"]` |
+| `tags` | `[enterprise, private]` |
+
+Private GitHub repositories require a `GITHUB_TOKEN` in the local shell. Do not
+store tokens in catalog files, prompt files, or this repository. After adding the
+catalog entries, install and verify locally:
+
+```powershell
+neqsim skill list --private
+neqsim skill install <skill-name>
+
+neqsim agent list --private
+neqsim agent install <agent-name>
+neqsim agent validate <agent-name>
+```
+
+Installed private skills are copied to
+`%USERPROFILE%\.neqsim\skills\<skill-name>\SKILL.md`. VS Code Copilot does not
+automatically discover that folder, so copy the skill to the VS Code user prompts
+folder when you want to invoke it with `#<skill-name>`:
+
+```powershell
+New-Item -ItemType Directory -Path "$env:APPDATA\Code\User\prompts" -Force
+Copy-Item "$env:USERPROFILE\.neqsim\skills\<skill-name>\SKILL.md" `
+   "$env:APPDATA\Code\User\prompts\<skill-name>.prompt.md" -Force
+```
+
+Private agents install to `%USERPROFILE%\.neqsim\agents\<agent-name>\`. Point the
+AI tool at that folder, or copy the main `.agent.md` definition into the VS Code
+user prompts/customizations folder supported by your VS Code version.
+
 ### List existing skills
 
 ```bash
