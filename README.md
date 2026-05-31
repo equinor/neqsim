@@ -492,10 +492,26 @@ neqsim doctor              # quick diagnostic if something isn't working
 Browse and install community-contributed skills, or publish your own:
 
 ```bash
-neqsim skill list                    # browse the catalog
+neqsim skill list                    # browse the catalog and discovered repositories
 neqsim skill install <name>          # install a skill
 neqsim skill publish user/repo-name  # publish yours (creates a draft PR)
 ```
+
+The catalog can list individual skills directly and can also point to public
+multi-skill GitHub repositories. When a repository is listed under
+`repositories:` in `community-skills.yaml`, `neqsim skill list` reads the online
+repo catalog first and falls back to scanning matching `SKILL.md` files, so new
+skills can appear without adding one entry per skill to the NeqSim repo.
+
+The shared public home for reusable community skills is
+[equinor/neqsim-community-skills](https://github.com/equinor/neqsim-community-skills).
+Put skills there when they are public, reproducible, useful beyond one project,
+and do not need to live in NeqSim core. Good candidates include educational
+screening workflows, public validation helpers, open engineering checklists,
+agent guidance around existing NeqSim workflows, and examples with synthetic or
+public data. Keep proprietary methods, plant data, private tag names, internal
+URLs, company standards, and project-specific design bases out of the public
+community repo; use a private skill catalog for those.
 
 See the [Skills Guide](docs/integration/skills_guide.md) for the full walkthrough,
 [community-skills.yaml](community-skills.yaml) for the catalog, and

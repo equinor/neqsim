@@ -231,16 +231,27 @@ A core skill should be:
 
 ## Creating Community Skills
 
-Community skills are contributed by domain experts and hosted in their own repositories. They are listed in the `community-skills.yaml` catalog for discoverability and can be installed by any user.
+Community skills are contributed by domain experts and hosted outside the core
+NeqSim source tree. They are listed in the `community-skills.yaml` catalog for
+discoverability and can be installed by any user. The recommended shared public
+collection is
+[equinor/neqsim-community-skills](https://github.com/equinor/neqsim-community-skills),
+which is intended for reusable, public, non-confidential skills.
 
 ### When to Create a Community Skill (vs. Core)
 
 Create a **community** skill when:
 
-- The skill covers a narrow workflow (e.g., "my company's TEG sizing procedure")
-- It doesn't reference NeqSim internal class structure
-- It orchestrates existing NeqSim capabilities in a specific way
-- It's experimental or unverified against NeqSim's latest API
+- The skill covers a public, reusable workflow that does not need to live in core
+- It uses synthetic, public, or open reference data only
+- It gives educational screening guidance, validation helpers, checklists, examples, or agent workflow patterns
+- It orchestrates existing NeqSim capabilities without depending on internal Java package details
+- It is documented with clear limitations and tested examples when runnable code is included
+
+Do **not** put proprietary methods, plant data, private tag names, internal URLs,
+company standards, customer/project identifiers, or project-specific design bases
+in the public community repository. Put that material in a private skill catalog
+instead.
 
 ### Step 1: Create the Skill in Your Repository
 
@@ -267,6 +278,21 @@ your-repo/
 The `path` field in the catalog entry tells the installer where to find `SKILL.md`.
 For a single-skill repo it defaults to `SKILL.md` (the repo root). For a multi-skill
 repo, set it explicitly (e.g., `path: "skills/neqsim-skill-a/SKILL.md"`).
+
+For a public multi-skill GitHub repo, the NeqSim catalog can also list the repo once
+under `repositories:`. The CLI searches the online repository, first reading its
+remote `community-skills.yaml` and then falling back to scanning for matching
+`SKILL.md` files:
+
+```yaml
+repositories:
+  - repo: "equinor/neqsim-community-skills"
+    catalog_path: "community-skills.yaml"
+    skill_path_glob: "skills/**/SKILL.md"
+```
+
+This keeps the NeqSim catalog small while allowing new skills in the external repo
+to appear in `neqsim skill list` after the external repo updates its own catalog.
 
 The skill name must start with `neqsim-`. Use the anatomy template shown above, including the `version` and `requires` fields in the YAML frontmatter.
 
