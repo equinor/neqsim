@@ -10,6 +10,7 @@ Usage:
     neqsim new-task TITLE    Create a task-solving workspace
     neqsim new-skill NAME    Scaffold a new AI skill
     neqsim skill CMD         Manage skills (list/search/install/remove/private-init)
+    neqsim agent CMD         Manage agents (list/search/install/remove/validate/private-init)
 
 Run `neqsim <command> --help` for per-command options.
 """
@@ -50,9 +51,17 @@ COMMANDS = {
         "module": "install_skill",
         "desc": "Manage skills (list/search/install/remove/private-init)",
     },
+    "agent": {
+        "module": "install_agent",
+        "desc": "Manage agents (list/search/install/remove/validate/private-init)",
+    },
     "install-skill": {
         "module": "install_skill",
         "desc": "(alias for 'skill') Manage skills",
+    },
+    "install-agent": {
+        "module": "install_agent",
+        "desc": "(alias for 'agent') Manage agents",
     },
 }
 
