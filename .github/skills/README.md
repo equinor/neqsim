@@ -3,9 +3,10 @@
 Skills are reusable knowledge packages that agents load automatically when relevant.
 Each skill folder contains a `SKILL.md` file with verified patterns, rules, and domain knowledge.
 
-> **Full documentation:** See the [Skills Guide](../../docs/integration/skills_guide.md)
-> for the complete walkthrough — creating core, community, and private skills, the
-> SKILL.md format, requirements checklist, CLI commands, and worked examples.
+> **Full documentation:** See the [Skills and Agents Guide](../../docs/integration/skills_guide.md)
+> for the complete walkthrough — creating core, community, and private skills,
+> installing community/private agents, the SKILL.md and agent.yaml formats,
+> requirements checklist, CLI commands, and worked examples.
 
 ## How Skills Work
 
@@ -155,7 +156,8 @@ Every code example must work against NeqSim's actual API. Test by:
 See `VISION_AGENTS.md` for the full policy. Quick rule:
 
 - **Core skill** — references NeqSim Java classes, useful to multiple users, verified
-- **Personal skill** — company-specific workflow, experimental, doesn't need NeqSim internals
+- **Community skill** — public, reusable workflow guidance that does not need to live in core
+- **Private skill** — company-specific workflow, plant data, internal standards, private URLs, or project-specific knowledge
 
 ### Publishing a community skill (hosted in your own repo)
 
@@ -172,6 +174,19 @@ PR to add it to `community-skills.yaml`. Others can then install it with:
 ```bash
 neqsim skill install neqsim-my-skill
 ```
+
+For public multi-skill repositories, add the repo once under `repositories:` in
+`community-skills.yaml`. The skill CLI reads the online repo catalog and falls
+back to scanning matching `SKILL.md` files, so `neqsim skill list` can show all
+skills from that repo without one NeqSim catalog entry per skill.
+
+The recommended public collection is
+[equinor/neqsim-community-skills](https://github.com/equinor/neqsim-community-skills).
+Use it for public, reproducible skills such as educational screening workflows,
+open validation helpers, public engineering checklists, and examples based on
+synthetic or public data. Do not put proprietary methods, plant data, tag names,
+internal URLs, company standards, or project-specific design bases there; those
+belong in a private skill catalog.
 
 ### List existing skills
 

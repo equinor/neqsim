@@ -22,4 +22,4 @@ ocr = [
 neqsim = "neqsim_cli:main"
 
 [tool.setuptools]
-py-modules = ["neqsim_dev_setup", "neqsim_cli"]
+py-modules = ["neqsim_dev_setup", "neqsim_cli", "install_skill", "install_agent"]

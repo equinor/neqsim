@@ -8,15 +8,30 @@
 #
 # Format:
 #   - name: neqsim-<topic>           # must start with neqsim-
+#     version: "1.0.0"              # optional: skill version
 #     description: "Short description"
 #     author: "GitHub username or name"
 #     repo: "owner/repo"              # GitHub repo containing the skill
 #     path: "path/to/SKILL.md"        # path within the repo (default: SKILL.md)
 #     tags: [tag1, tag2]              # searchable keywords
 #     min_neqsim_version: "3.7.0"    # optional: minimum NeqSim version
+#
+# Multi-skill GitHub repositories can be discovered online:
+#   - repo: "owner/repo"
+#     catalog_path: "community-skills.yaml"  # optional, default shown
+#     skill_path_glob: "skills/**/SKILL.md"  # fallback when no catalog is found
 
 catalog_version: "1.0"
-last_updated: "2026-04-18"
+last_updated: "2026-05-31"
+
+repositories:
+  # Discover all public community skills from the external community repo.
+  - repo: "equinor/neqsim-community-skills"
+    catalog_path: "community-skills.yaml"
+    skill_path_glob: "skills/**/SKILL.md"
+    author: "neqsim-community"
+    tags: [community]
+    min_neqsim_version: "3.7.0"
 
 skills:
   # ── Example entries (remove or replace with real community skills) ──

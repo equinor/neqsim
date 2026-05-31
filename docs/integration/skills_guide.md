@@ -1,17 +1,18 @@
 ---
-title: "Skills Guide: Creating, Using, and Managing Skills in NeqSim"
-description: "Comprehensive guide to the three types of skills in NeqSim's agentic engineering system: core program skills, user-contributed community skills, and local private skills. Covers skill anatomy, creation workflow, installation, and real-world examples including STID document retrieval and plant data integration."
+title: "Skills and Agents Guide: Creating, Using, and Managing NeqSim Agentic Extensions"
+description: "Comprehensive guide to skills and agents in NeqSim's agentic engineering system: core program skills, community and private skills, and installable agent workflow definitions. Covers skill anatomy, agent packaging, installation, and examples including STID document retrieval and plant data integration."
 ---
 
-# Skills Guide: Creating, Using, and Managing Skills in NeqSim
+# NeqSim Skills and Agents
 
-> **TL;DR — Quick Start by Skill Type**
+> **TL;DR — Quick Start by Extension Type**
 >
 > | I want to… | Do this |
 > |------------|---------|
 > | **Use an existing core skill** | Nothing — agents load them automatically from `.github/skills/` |
 > | **Create a new core skill** | `neqsim new-skill "name"` → edit SKILL.md → register in README + copilot-instructions → PR |
 > | **Install a community skill** | `neqsim skill install neqsim-topic` → copy to VS Code prompts → use with `#neqsim-topic` |
+> | **Install a community agent** | `neqsim agent install agent-name` → point your AI tool at `~/.neqsim/agents/agent-name/` |
 > | **Publish my skill to the community** | Host SKILL.md in a GitHub repo → `neqsim skill publish user/repo` → PR gets reviewed |
 > | **Create a private/local skill** | Write a `.md` file in `%APPDATA%\Code\User\prompts\` → use with `#filename` in Chat |
 > | **Share private skills with my team** | `neqsim skill private-init` → edit `~/.neqsim/private-skills.yaml` → distribute to team |
@@ -20,7 +21,12 @@ description: "Comprehensive guide to the three types of skills in NeqSim's agent
 
 Skills are the knowledge layer of NeqSim's agentic engineering system. They are structured markdown documents that encode domain-specific expertise — API patterns, code templates, decision rules, reference data, common error patterns, and recovery strategies — in a format that AI agents can read, interpret, and apply to engineering tasks.
 
-This guide covers the three types of skills, how to create each type, and how they work together.
+Agents are the workflow layer. An agent defines a role, objective, constraints,
+handoff pattern, and the skills it expects to load. In professional agent tools
+this separation is common: skills are reusable capabilities; agents are curated
+workflows that combine those capabilities for a specific job.
+
+This guide covers skills, installable agents, how to create each type, and how they work together.
 
 ## The Three Types of Skills
 
@@ -231,16 +237,27 @@ A core skill should be:
 
 ## Creating Community Skills
 
-Community skills are contributed by domain experts and hosted in their own repositories. They are listed in the `community-skills.yaml` catalog for discoverability and can be installed by any user.
+Community skills are contributed by domain experts and hosted outside the core
+NeqSim source tree. They are listed in the `community-skills.yaml` catalog for
+discoverability and can be installed by any user. The recommended shared public
+collection is
+[equinor/neqsim-community-skills](https://github.com/equinor/neqsim-community-skills),
+which is intended for reusable, public, non-confidential skills.
 
 ### When to Create a Community Skill (vs. Core)
 
 Create a **community** skill when:
 
-- The skill covers a narrow workflow (e.g., "my company's TEG sizing procedure")
-- It doesn't reference NeqSim internal class structure
-- It orchestrates existing NeqSim capabilities in a specific way
-- It's experimental or unverified against NeqSim's latest API
+- The skill covers a public, reusable workflow that does not need to live in core
+- It uses synthetic, public, or open reference data only
+- It gives educational screening guidance, validation helpers, checklists, examples, or agent workflow patterns
+- It orchestrates existing NeqSim capabilities without depending on internal Java package details
+- It is documented with clear limitations and tested examples when runnable code is included
+
+Do **not** put proprietary methods, plant data, private tag names, internal URLs,
+company standards, customer/project identifiers, or project-specific design bases
+in the public community repository. Put that material in a private skill catalog
+instead.
 
 ### Step 1: Create the Skill in Your Repository
 
@@ -267,6 +284,21 @@ your-repo/
 The `path` field in the catalog entry tells the installer where to find `SKILL.md`.
 For a single-skill repo it defaults to `SKILL.md` (the repo root). For a multi-skill
 repo, set it explicitly (e.g., `path: "skills/neqsim-skill-a/SKILL.md"`).
+
+For a public multi-skill GitHub repo, the NeqSim catalog can also list the repo once
+under `repositories:`. The CLI searches the online repository, first reading its
+remote `community-skills.yaml` and then falling back to scanning for matching
+`SKILL.md` files:
+
+```yaml
+repositories:
+  - repo: "equinor/neqsim-community-skills"
+    catalog_path: "community-skills.yaml"
+    skill_path_glob: "skills/**/SKILL.md"
+```
+
+This keeps the NeqSim catalog small while allowing new skills in the external repo
+to appear in `neqsim skill list` after the external repo updates its own catalog.
 
 The skill name must start with `neqsim-`. Use the anatomy template shown above, including the `version` and `requires` fields in the YAML frontmatter.
 
@@ -386,6 +418,114 @@ Installed community skills at `~/.neqsim/skills/` are **not** auto-discovered by
    Then reference with `#neqsim-my-topic` in Copilot Chat.
 
 2. **Add to workspace `copilot-instructions.md`** for automatic loading.
+
+## Installing Community and Private Agents
+
+Skills and agents are intentionally separate concepts. A skill is a reusable
+capability or knowledge package. An agent is a role/workflow definition that may
+depend on several skills. NeqSim installs agents into `~/.neqsim/agents/` so they
+do not pollute the core repository, and installation never executes agent code.
+
+Agent packages can use either of these shapes:
+
+```text
+single-file-agent/
+└── process.agent.md
+
+folder-agent/
+├── AGENT.md
+├── agent.yaml
+├── prompts/
+├── workflows/
+├── examples/
+└── tests/
+```
+
+The folder package is preferred for larger workflows because `agent.yaml` can
+declare dependencies and compatibility metadata in a tool-neutral way. The
+current NeqSim agent manifest schema is `1.0`:
+
+```yaml
+agent_manifest_schema_version: "1.0"
+name: tie-in-screening-agent
+description: Early-stage tie-in screening using NeqSim and community skills
+version: "0.1.0"
+required_skills:
+  - neqsim-flow-assurance
+  - neqsim-standards-lookup
+supported_domains:
+  - flow-assurance
+  - process
+inputs:
+  - feed_composition
+  - operating_conditions
+outputs:
+  - results_json
+  - report
+requires_mcp_tools:
+  - runProcess
+human_review_required: true
+trust_level: community  # core | community | private | experimental
+```
+
+### Agent CLI Commands
+
+```bash
+# Browse available community and private agents
+neqsim agent list
+
+# Search by name, tag, description, or required skill
+neqsim agent search "tie-in"
+
+# Inspect catalog metadata
+neqsim agent info neqsim-example-agent
+
+# Install an agent definition to ~/.neqsim/agents/
+neqsim agent install neqsim-example-agent
+
+# Optionally install missing required skills that are present in skill catalogs
+neqsim agent install neqsim-example-agent --install-missing-skills
+
+# Validate an installed agent or local folder
+neqsim agent validate neqsim-example-agent
+neqsim agent validate ./agents/tie-in-screening-agent
+
+# Show the supported agent.yaml schema
+neqsim agent schema
+
+# Remove an installed agent
+neqsim agent remove neqsim-example-agent
+```
+
+The public catalog lives in `community-agents.yaml`. Private/internal agents use
+the same pattern as private skills:
+
+```bash
+neqsim agent private-init
+# Edit ~/.neqsim/private-agents.yaml
+neqsim agent list --private
+neqsim agent install company-tie-in-screening-agent
+```
+
+Agent catalog entries support local folders, private GitHub repositories,
+network shares, and direct internal URLs. Private GitHub repositories use the
+`GITHUB_TOKEN` environment variable; direct internal URLs can use
+`PRIVATE_AGENT_TOKEN`.
+
+### Making Installed Agents Visible to Tools
+
+Installed agents are not automatically run by NeqSim. Point your AI tool at the
+installed folder, or copy the main definition into that tool's agent directory.
+For VS Code Copilot custom agents, copy a `.agent.md` definition into the
+workspace or user customizations location supported by your VS Code version.
+
+This keeps the trust boundary explicit:
+
+```text
+skill install = install reusable capability
+agent install = install workflow/role definition
+agent run = explicit action in the AI tool that owns execution
+```
 
 ### Complete Example: Contributing a TEG Dehydration Skill
 
@@ -1031,18 +1171,18 @@ Skills can be promoted through the tiers:
 
 ## Summary
 
-| Aspect | Core Skills | Community Skills | Private Catalog | Local Skills |
-|--------|-------------|-----------------|-----------------|--------------|
-| **Location** | `.github/skills/` | External repos | `~/.neqsim/private-skills.yaml` | `~/.neqsim/skills/` or VS Code prompts |
-| **Visibility** | All users | Catalog browsers | Your team | Only you |
-| **Creation** | `neqsim new-skill` + PR | Your repo + catalog entry | YAML entry | Manual `mkdir` + write |
-| **Installation** | Automatic (in repo) | `neqsim skill install` | `neqsim skill install` | Manual |
-| **Source types** | Git repo | Public GitHub | Local / network / private GitHub / URL | Local file |
-| **Contains private data** | Never | Never | Yes (company-internal) | Yes (personal) |
-| **Review process** | PR review by maintainers | Self-published | Team-managed | None |
-| **Examples** | `neqsim-api-patterns` | Custom TEG sizing | Company STID, PI tags, TR standards | Personal shortcuts |
+| Aspect | Core Skills | Community Skills | Private Skills | Community/Private Agents |
+|--------|-------------|-----------------|----------------|--------------------------|
+| **Location** | `.github/skills/` | External repos | `~/.neqsim/private-skills.yaml`, `~/.neqsim/skills/` | External repos or `~/.neqsim/private-agents.yaml`, installed to `~/.neqsim/agents/` |
+| **Visibility** | All users | Catalog browsers | You or your team | Catalog browsers, you, or your team |
+| **Creation** | `neqsim new-skill` + PR | Your repo + catalog entry | YAML entry or local file | Agent markdown/folder + `community-agents.yaml` or private catalog |
+| **Installation** | Automatic (in repo) | `neqsim skill install` | `neqsim skill install` | `neqsim agent install` |
+| **Source types** | Git repo | Public GitHub | Local / network / private GitHub / URL | Local / network / GitHub / URL |
+| **Contains private data** | Never | Never | Yes (company-internal) | Yes only in private catalogs |
+| **Review process** | PR review by maintainers | Self-published | Team-managed | PR review for public catalog; team-managed for private |
+| **Examples** | `neqsim-api-patterns` | Custom TEG sizing | Company STID, PI tags, TR standards | Tie-in screening agent, internal review agent |
 
-The skill system makes it possible for any engineer to package their domain expertise — from thermodynamic model selection rules to company-specific data retrieval procedures — in a format that AI agents can use to solve engineering tasks correctly. The three-tier architecture ensures that public knowledge is shared broadly while private knowledge stays private.
+The skill and agent system makes it possible for any engineer to package domain expertise and repeatable workflows — from thermodynamic model selection rules to company-specific review processes — in a format AI tools can use safely. Public knowledge is shared broadly while private knowledge stays private.
 
 ---
 
@@ -1050,7 +1190,7 @@ The skill system makes it possible for any engineer to package their domain expe
 
 NeqSim's skill system was partly inspired by [OpenClaw](https://github.com/openclaw/openclaw) (360k+ GitHub stars), the largest open-source AI assistant. OpenClaw has a mature skill ecosystem with [ClawHub](https://github.com/openclaw/clawhub) — a public registry hosting 18,000+ community-published skills with vector search, versioning, and security analysis.
 
-Both systems share the same core format: a `SKILL.md` file with optional YAML frontmatter inside a named folder. The key differences and lessons learned are:
+Both systems share the same core idea: install structured, versioned knowledge or workflow packages into layered locations. For NeqSim, `SKILL.md` packages knowledge and `AGENT.md` or `.agent.md` packages workflow definitions. The key differences and lessons learned are:
 
 ### What NeqSim adopted from OpenClaw
 
@@ -1059,6 +1199,7 @@ Both systems share the same core format: a `SKILL.md` file with optional YAML fr
 | **Semver versioning** | `version: "1.2.0"` in frontmatter | Added to all skills — major/minor/patch with CHANGELOG.md |
 | **Dependency declarations** | `metadata.openclaw.requires` (env, bins, config) | Added `requires` block: python_packages, java_packages, env, network |
 | **CLI workflow** | `clawhub install/publish/search/sync` | `neqsim skill` (install/list/search/remove/publish) |
+| **Agent packages** | Role/workflow definitions can depend on skills | `neqsim agent` (install/list/search/remove/validate) with `required_skills` checks |
 
 ### Where the systems differ
 
@@ -1069,7 +1210,7 @@ Both systems share the same core format: a `SKILL.md` file with optional YAML fr
 | **Quality** | Unfiltered, variable quality | Expert-verified, PR-reviewed core skills |
 | **Search** | Vector search (OpenAI embeddings) | Keyword search in YAML catalog |
 | **Security** | Automated analysis of declared vs actual behavior | Manual PR review by maintainers |
-| **Agent integration** | Skills installed into workspace, agent discovers them | Skills wired into `copilot-instructions.md` with `USE WHEN` triggers |
+| **Agent integration** | Skills installed into workspace, agent discovers them | Core skills wired into `copilot-instructions.md`; installed agents live under `~/.neqsim/agents/` for explicit tool use |
 | **Tiers** | Single public tier + local workspace | Three tiers (core/community/local) with different trust levels |
 | **License** | MIT-0 (no attribution) | Per-skill, follows NeqSim's Apache 2.0 for core |
 
