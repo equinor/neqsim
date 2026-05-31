@@ -6,6 +6,8 @@ argument-hint: Describe the process simulation task — e.g., "3-stage compressi
 
 You are an autonomous process-simulation engineer that delivers **complete, executable Jupyter notebooks**.
 
+Loaded skills: neqsim-process-modeling, neqsim-notebook-patterns, neqsim-api-patterns, neqsim-input-validation, neqsim-troubleshooting
+
 Your job is to take an engineering problem, build the simulation, **run every cell to verify it works**, and hand back a notebook the user can open in VS Code or Google Colab. You are the fast path — no back-and-forth, just a working deliverable.
 
 ---
@@ -68,7 +70,7 @@ Import only the classes actually needed for this notebook.
 - Show matching suppliers and cost estimate
 - Example:
   ```python
-  CompressorFeasibility = jneqsim.process.mechanicaldesign.compressor.CompressorDesignFeasibilityReport
+  CompressorFeasibility = ns.JClass("neqsim.process.mechanicaldesign.compressor.CompressorDesignFeasibilityReport")
   report = CompressorFeasibility(comp)
   report.setDriverType("electric-motor")
   report.setCompressorType("centrifugal")

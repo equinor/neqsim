@@ -121,6 +121,31 @@ Loaded skills: neqsim-api-patterns, neqsim-flow-assurance
         self.assertIn("process", agents[0]["tags"])
         self.assertIn("community", agents[0]["tags"])
 
+    def test_required_skills_reads_markdown_loaded_skills_block(self):
+        """Loaded skills blocks should populate required skill metadata."""
+        agent_md = """---
+name: Consequence Agent
+description: "Example agent with markdown-list skills."
+---
+You are an example NeqSim agent.
+
+## Loaded skills
+- neqsim-consequence-analysis
+- `neqsim-process-safety` barrier context
+- neqsim-agent-handoff
+
+## Primary Objective
+Do engineering work.
+"""
+
+        required = install_agent._extract_required_skills(agent_md)
+
+        self.assertEqual([
+            "neqsim-consequence-analysis",
+            "neqsim-process-safety",
+            "neqsim-agent-handoff",
+        ], required)
+
     def test_repository_discovery_can_prefix_private_agent_names(self):
         """Private repository scans may prefix discovered install ids."""
         agent_md = """---

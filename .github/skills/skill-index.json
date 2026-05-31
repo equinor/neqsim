@@ -26,6 +26,48 @@
     "neqsim-pid-process-operations",
     "neqsim-plant-data"
   ],
+  "process simulation": [
+    "neqsim-process-modeling",
+    "neqsim-api-patterns",
+    "neqsim-input-validation",
+    "neqsim-troubleshooting"
+  ],
+  "process flowsheet": [
+    "neqsim-process-modeling",
+    "neqsim-api-patterns",
+    "neqsim-process-extraction"
+  ],
+  "process model": [
+    "neqsim-process-modeling",
+    "neqsim-api-patterns",
+    "neqsim-notebook-patterns"
+  ],
+  "build a process model": [
+    "neqsim-process-modeling",
+    "neqsim-api-patterns",
+    "neqsim-process-extraction"
+  ],
+  "separator compressor heat exchanger": [
+    "neqsim-process-modeling",
+    "neqsim-api-patterns",
+    "neqsim-equipment-cost-estimation"
+  ],
+  "distillation": [
+    "neqsim-distillation-design",
+    "neqsim-process-modeling"
+  ],
+  "deethanizer": [
+    "neqsim-distillation-design",
+    "neqsim-process-modeling"
+  ],
+  "distillation column": [
+    "neqsim-distillation-design",
+    "neqsim-process-modeling"
+  ],
+  "column convergence": [
+    "neqsim-distillation-design",
+    "neqsim-troubleshooting"
+  ],
   "root cause analysis": [
     "neqsim-root-cause-analysis"
   ],

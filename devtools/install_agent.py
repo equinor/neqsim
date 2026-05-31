@@ -448,18 +448,53 @@ def _agent_id_from_path(path):
     return path_obj.stem.replace(".", "-")
 
 
+_LOADED_SKILLS_INLINE_RE = re.compile(
+    r"(?im)^\s*(?:[-*]\s*)?(?:\*\*)?Loaded skills(?:\*\*)?\s*[:\-]\s*(.+)$")
+_LOADED_SKILLS_BLOCK_HEADER_RE = re.compile(
+    r"^\s{0,3}#{1,6}\s+(?:\*\*)?Loaded skills(?:\*\*)?\s*$",
+    re.IGNORECASE)
+_MARKDOWN_HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s+\S")
+
+
+def _extract_loaded_skill_block_entries(content):
+    """Return skill entries listed under markdown Loaded skills headings."""
+    entries = []
+    lines = content.splitlines()
+    for line_number, line in enumerate(lines):
+        if not _LOADED_SKILLS_BLOCK_HEADER_RE.match(line):
+            continue
+        for next_line in lines[line_number + 1:]:
+            if _MARKDOWN_HEADING_RE.match(next_line):
+                break
+            stripped = next_line.strip()
+            if not stripped and entries:
+                break
+            if stripped.startswith(("-", "*")):
+                entries.extend(_normalize_list(stripped[1:].strip()))
+    return entries
+
+
+def _clean_required_skill_name(skill):
+    """Normalize a required skill name from inline or markdown-list text."""
+    cleaned = skill.strip().strip("`").lstrip("@").rstrip(".")
+    if not cleaned:
+        return ""
+    return re.split(r"\s+", cleaned, 1)[0].strip("`").rstrip(".")
+
+
 def _extract_required_skills(content, metadata=None):
-    """Extract required skills from metadata and Loaded skills lines."""
+    """Extract required skills from metadata and Loaded skills declarations."""
     required = []
     if metadata:
         required.extend(_normalize_list(metadata.get("required_skills")))
         required.extend(_normalize_list(metadata.get("skills")))
-    for match in re.finditer(r"(?im)^\s*Loaded skills:\s*(.+)$", content):
+    for match in _LOADED_SKILLS_INLINE_RE.finditer(content):
         required.extend(_normalize_list(match.group(1)))
+    required.extend(_extract_loaded_skill_block_entries(content))
 
     deduped = []
     for skill in required:
-        cleaned = skill.strip().strip("`")
+        cleaned = _clean_required_skill_name(skill)
         if cleaned and cleaned not in deduped:
             deduped.append(cleaned)
     return deduped

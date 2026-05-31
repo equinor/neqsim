@@ -1,0 +1,67 @@
+---
+name: neqsim-process-modeling
+description: "Process modeling and flowsheet construction patterns for NeqSim. USE WHEN: building executable NeqSim process simulations, ProcessSystem flowsheets, or runnable process models with streams, separators, compressors, heat exchangers, valves, pumps, distillation columns, recycles, adjusters, topology checks, result extraction, and engineering validation."
+last_verified: "2026-05-31"
+---
+
+# NeqSim Process Modeling Skill
+
+Build executable NeqSim process simulations from engineering descriptions. This skill
+is the process-flowsheet layer between thermodynamic fluid setup and downstream
+specialists such as mechanical design, safety, plant data, and reporting.
+
+## Use When
+
+- Building a `ProcessSystem` or `ProcessModel` flowsheet from a process description.
+- Connecting equipment such as streams, separators, compressors, coolers, heaters,
+  heat exchangers, pumps, valves, pipes, mixers, splitters, recycles, adjusters, and
+  distillation columns.
+- Extracting process results with units, compositions, duties, powers, phase splits,
+  mass balances, energy balances, or equipment profiles.
+- Preparing a steady-state process base case for mechanical design, relief sizing,
+  flow assurance, dynamic simulation, plant-data comparison, or optimization.
+
+## Core Workflow
+
+1. **Define the fluid** using the EOS and component sequence from
+   `neqsim-api-patterns`.
+2. **Create feed streams** with explicit temperature, pressure, and flow units.
+3. **Add equipment in topological order** to a `ProcessSystem`.
+4. **Connect by outlet stream objects**, for example separator gas outlet to
+   compressor inlet or valve outlet to downstream separator.
+5. **Run once after assembly** unless recycle initialization requires a staged solve.
+6. **Validate results** using conservation checks, phase sanity checks, equipment
+   limits, and applicable standards.
+7. **Report outputs with units** and include assumptions for missing design data.
+
+## Modeling Choices
+
+| Situation | Recommended Pattern |
+|-----------|---------------------|
+| Single train, linear or branched flowsheet | One `ProcessSystem` |
+| Multiple areas with cross-area streams | Multiple `ProcessSystem` objects in a `ProcessModel` |
+| PFD/P&ID or unstructured text input | Use `neqsim-process-extraction` first |
+| Distillation or fractionation | Load `neqsim-distillation-design` |
+| Startup, shutdown, controllers, inventory dynamics | Load `neqsim-dynamic-simulation` |
+| Turndown or control valve operability | Load `neqsim-controllability-operability` |
+| Platform-scale separation/recompression | Load `neqsim-platform-modeling` |
+
+## Required Checks
+
+- Temperatures and pressures use explicit units in setters.
+- Fluids have a mixing rule before simulation.
+- Branching streams use cloned fluids or well-defined equipment outlet streams.
+- Every equipment item has a unique name inside the process.
+- Recycles and adjusters are added after their connected equipment.
+- Results include mass balance, expected pressure ordering, and physically reasonable
+  phase splits.
+- Compressor, pump, heat exchanger, separator, and pipeline cases identify applicable
+  standards through `neqsim-standards-lookup`.
+
+## Related Skills
+
+- `neqsim-api-patterns` — fluid setup, equipment APIs, and result extraction.
+- `neqsim-input-validation` — pre-simulation physical bounds and component checks.
+- `neqsim-troubleshooting` — flash and process convergence recovery.
+- `neqsim-process-extraction` — JSON builder and route extraction from documents.
+- `neqsim-notebook-patterns` — executable notebook structure and devtools setup.

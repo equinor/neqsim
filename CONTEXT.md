@@ -92,8 +92,8 @@ src/test/java/neqsim/   Mirrors production structure. JUnit 5. Extend NeqSimTest
 src/main/resources/      Component databases, design data CSVs
 examples/notebooks/      28+ Jupyter notebooks
 docs/                    350+ markdown files, Jekyll site
-.github/agents/          19 Copilot Chat agents (router, thermo, process, field development, test, PVT, reaction engineering, control systems, emissions, ...)
-.github/skills/          28 reusable knowledge packages (API, Java8, notebooks, field-development, field-economics, subsea-and-wells, eos-regression, reaction-engineering, dynamic-simulation, distillation-design, electrolyte-systems, ...)
+.github/agents/          30+ Copilot Chat agents (router, thermo, process, field development, test, PVT, reaction engineering, control systems, emissions, ...)
+.github/skills/          45+ reusable knowledge packages (API, process-modeling, Java8, notebooks, field-development, field-economics, subsea-and-wells, eos-regression, reaction-engineering, dynamic-simulation, distillation-design, electrolyte-systems, ...)
 community-skills.yaml    Community skill catalog — external skills installable via `neqsim skill install`
 devtools/                Unified CLI (`neqsim` command), Jupyter dev setup, task/skill tools, UniSim reader
 ```
