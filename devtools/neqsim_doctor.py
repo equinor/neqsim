@@ -305,6 +305,7 @@ def check_devtools():
     scripts = [
         ("new_task.py", "Task scaffolding"),
         ("new_skill.py", "Skill scaffolding"),
+        ("install_agent.py", "Agent installer"),
         ("consistency_checker.py", "Consistency checker"),
         ("neqsim_dev_setup.py", "Dev setup for notebooks"),
     ]

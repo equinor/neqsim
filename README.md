@@ -487,7 +487,7 @@ neqsim doctor              # quick diagnostic if something isn't working
 | 5 | Fix a broken doc link | Easy | Search `docs/**/*.md` for dead links and fix them |
 | 6 | Add a unit test for existing equipment | Medium | Add tests under `src/test/java/neqsim/` |
 
-#### Community Skill Catalog
+#### Community Skill and Agent Catalogs
 
 Browse and install community-contributed skills, or publish your own:
 
@@ -497,24 +497,45 @@ neqsim skill install <name>          # install a skill
 neqsim skill publish user/repo-name  # publish yours (creates a draft PR)
 ```
 
+Browse and install community-contributed agents separately from skills:
+
+```bash
+neqsim agent list                    # browse installable agent workflows
+neqsim agent search hydrate          # search by name, tag, description, or required skill
+neqsim agent install <name>          # install an agent definition
+neqsim agent validate <name-or-path> # validate an installed or local agent package
+neqsim agent schema                  # show the supported agent.yaml fields
+```
+
 The catalog can list individual skills directly and can also point to public
 multi-skill GitHub repositories. When a repository is listed under
 `repositories:` in `community-skills.yaml`, `neqsim skill list` reads the online
 repo catalog first and falls back to scanning matching `SKILL.md` files, so new
 skills can appear without adding one entry per skill to the NeqSim repo.
 
+Agents follow the same discovery model through `community-agents.yaml`, but they
+are kept as a separate install type. Skills are reusable engineering knowledge;
+agents are role/workflow definitions that can declare `required_skills` and are
+installed to `~/.neqsim/agents/`. Agent packages can include an `agent.yaml`
+manifest with supported domains, inputs, outputs, MCP tool requirements, human
+review policy, and trust level. Installing an agent downloads and validates the
+definition only; execution is an explicit action in the AI tool that uses it.
+
 The shared public home for reusable community skills is
 [equinor/neqsim-community-skills](https://github.com/equinor/neqsim-community-skills).
+The shared public home for reusable community agents is
+[equinor/neqsim-community-agents](https://github.com/equinor/neqsim-community-agents).
 Put skills there when they are public, reproducible, useful beyond one project,
 and do not need to live in NeqSim core. Good candidates include educational
 screening workflows, public validation helpers, open engineering checklists,
 agent guidance around existing NeqSim workflows, and examples with synthetic or
 public data. Keep proprietary methods, plant data, private tag names, internal
 URLs, company standards, and project-specific design bases out of the public
-community repo; use a private skill catalog for those.
+community repos; use private skill or agent catalogs for those.
 
 See the [Skills Guide](docs/integration/skills_guide.md) for the full walkthrough,
-[community-skills.yaml](community-skills.yaml) for the catalog, and
+[community-skills.yaml](community-skills.yaml) and
+[community-agents.yaml](community-agents.yaml) for the catalogs, and
 [.github/skills/README.md](.github/skills/README.md) for the quick contribution guide.
 
 All tests and `./mvnw checkstyle:check` must pass before a PR is merged.
