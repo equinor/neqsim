@@ -1,4 +1,5 @@
 """Tests for NeqSim community agent catalog loading and validation."""
+import install_agent
 import argparse
 import os
 import sys
@@ -8,8 +9,6 @@ from pathlib import Path
 from unittest import mock
 
 sys.path.insert(0, os.path.dirname(__file__))
-
-import install_agent
 
 
 class InstallAgentDiscoveryTest(unittest.TestCase):
@@ -41,13 +40,15 @@ agents:
                                return_value="main"), \
                 mock.patch.object(install_agent.install_skill, "_fetch_github_text",
                                   return_value=remote_catalog):
-            agents = install_agent._discover_github_repository_agents(repository)
+            agents = install_agent._discover_github_repository_agents(
+                repository)
 
         self.assertEqual(1, len(agents))
         self.assertEqual("tie-in-screening-agent", agents[0]["name"])
         self.assertEqual("Tie-in Screening Agent", agents[0]["display_name"])
         self.assertEqual("equinor/neqsim-community-agents", agents[0]["repo"])
-        self.assertEqual("agents/tie-in-screening-agent/AGENT.md", agents[0]["path"])
+        self.assertEqual(
+            "agents/tie-in-screening-agent/AGENT.md", agents[0]["path"])
         self.assertEqual("main", agents[0]["branch"])
         self.assertIn("neqsim-flow-assurance", agents[0]["required_skills"])
         self.assertIn("flow-assurance", agents[0]["tags"])
@@ -72,9 +73,11 @@ agents:
         parsed = install_agent._parse_catalog_fallback(catalog)
 
         self.assertEqual("owner/repo", parsed["repositories"][0]["repo"])
-        self.assertEqual(["community", "public"], parsed["repositories"][0]["tags"])
+        self.assertEqual(["community", "public"],
+                         parsed["repositories"][0]["tags"])
         self.assertEqual("direct-agent", parsed["agents"][0]["name"])
-        self.assertEqual(["neqsim-api-patterns"], parsed["agents"][0]["required_skills"])
+        self.assertEqual(["neqsim-api-patterns"],
+                         parsed["agents"][0]["required_skills"])
 
     def test_repository_discovery_falls_back_to_scanning_agent_files(self):
         """If no remote catalog is present, .agent.md frontmatter is enough."""
@@ -105,7 +108,8 @@ Loaded skills: neqsim-api-patterns, neqsim-flow-assurance
                                   return_value=("main", ["agents/demo/process.agent.md"])), \
                 mock.patch.object(install_agent.install_skill, "_fetch_github_text",
                                   side_effect=fake_fetch_text):
-            agents = install_agent._discover_github_repository_agents(repository)
+            agents = install_agent._discover_github_repository_agents(
+                repository)
 
         self.assertEqual(1, len(agents))
         self.assertEqual("process", agents[0]["name"])
@@ -149,7 +153,8 @@ Loaded skills: neqsim-api-patterns, neqsim-flow-assurance
         self.assertEqual([], report["errors"])
         self.assertEqual([], report["warnings"])
         self.assertIn("neqsim-api-patterns", report["required_skills"])
-        self.assertEqual(["flow-assurance", "process"], report["metadata"]["supported_domains"])
+        self.assertEqual(["flow-assurance", "process"],
+                         report["metadata"]["supported_domains"])
         self.assertTrue(report["metadata"]["human_review_required"])
         self.assertEqual("community", report["metadata"]["trust_level"])
 
@@ -172,8 +177,10 @@ Loaded skills: neqsim-api-patterns, neqsim-flow-assurance
             report = install_agent.validate_agent_dir(agent_dir)
 
         self.assertFalse(report["valid"])
-        self.assertTrue(any("human_review_required" in error for error in report["errors"]))
-        self.assertTrue(any("trust_level" in error for error in report["errors"]))
+        self.assertTrue(
+            any("human_review_required" in error for error in report["errors"]))
+        self.assertTrue(
+            any("trust_level" in error for error in report["errors"]))
 
     def test_validate_agent_dir_warns_for_missing_required_skills(self):
         """Validation should report missing dependent skills without failing metadata."""
@@ -194,6 +201,31 @@ Loaded skills: neqsim-api-patterns, neqsim-flow-assurance
         self.assertTrue(report["valid"])
         self.assertTrue(any("neqsim-does-not-exist" in warning
                             for warning in report["warnings"]))
+
+    def test_required_skill_alias_resolves_prefixed_catalog_name(self):
+        """Missing skill should auto-resolve between unprefixed/prefixed names."""
+        required = ["fluid-quality-check"]
+        catalog = [{
+            "name": "neqsim-fluid-quality-check",
+            "description": "Alias resolution test",
+            "source": "local",
+            "path": "/tmp/neqsim-fluid-quality-check/SKILL.md",
+        }]
+
+        with mock.patch.object(install_agent, "_find_missing_required_skills",
+                               return_value=["fluid-quality-check"]), \
+                mock.patch.object(install_agent.install_skill, "load_catalog",
+                                  return_value=catalog), \
+                mock.patch.object(install_agent.install_skill, "cmd_install") as mocked_install:
+            unresolved = install_agent._print_required_skill_guidance(
+                required,
+                install_missing=True,
+            )
+
+        self.assertEqual([], unresolved)
+        mocked_install.assert_called_once()
+        args_obj = mocked_install.call_args[0][1]
+        self.assertEqual("neqsim-fluid-quality-check", args_obj.name)
 
     def test_local_file_install_writes_manifest(self):
         """Installing a local .agent.md file should copy it and register metadata."""
@@ -230,7 +262,8 @@ Loaded skills: neqsim-api-patterns, neqsim-flow-assurance
                 install_agent.cmd_install(catalog, args)
                 manifest = json_load(manifest_file)
                 self.assertIn("local-test-agent", manifest)
-                self.assertTrue(Path(manifest["local-test-agent"]["main_file"]).exists())
+                self.assertTrue(
+                    Path(manifest["local-test-agent"]["main_file"]).exists())
 
             self.assertIn("local-test-agent", manifest)
 
@@ -279,12 +312,93 @@ Loaded skills: neqsim-api-patterns, neqsim-flow-assurance
 
         installed = manifest["catalog-only-agent"]
         self.assertEqual(["neqsim-api-patterns"], installed["required_skills"])
-        self.assertEqual(["process", "flow-assurance"], installed["supported_domains"])
-        self.assertEqual(["feed_composition", "operating_conditions"], installed["inputs"])
+        self.assertEqual(["process", "flow-assurance"],
+                         installed["supported_domains"])
+        self.assertEqual(
+            ["feed_composition", "operating_conditions"], installed["inputs"])
         self.assertEqual(["results_json", "report"], installed["outputs"])
         self.assertEqual(["runProcess"], installed["requires_mcp_tools"])
         self.assertTrue(installed["human_review_required"])
         self.assertEqual("community", installed["trust_level"])
+
+    def test_install_defaults_to_auto_install_missing_skills(self):
+        """Agent install should auto-install required skills when flag is omitted."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "auto-skill.agent.md"
+            source.write_text(
+                "---\n"
+                "name: Auto Skill Agent\n"
+                "description: Agent to test default skill auto-install behavior.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            install_dir = tmp_path / "installed-agents"
+            manifest_file = install_dir / "installed.json"
+            catalog = [{
+                "name": "auto-skill-agent",
+                "description": "Auto skill test agent",
+                "author": "tests",
+                "source": "local",
+                "path": str(source),
+                "_source": "community",
+                "required_skills": ["neqsim-api-patterns"],
+            }]
+
+            with mock.patch.object(install_agent, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file), \
+                    mock.patch.object(install_agent, "_print_required_skill_guidance",
+                                      return_value=[]) as mocked_guidance:
+                args = argparse.Namespace(
+                    name="auto-skill-agent",
+                    force=False,
+                )
+                install_agent.cmd_install(catalog, args)
+
+                self.assertTrue(mocked_guidance.called)
+                self.assertTrue(
+                    mocked_guidance.call_args.kwargs["install_missing"])
+
+    def test_install_can_opt_out_of_auto_install_missing_skills(self):
+        """Explicit opt-out should disable automatic required skill installation."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "no-auto-skill.agent.md"
+            source.write_text(
+                "---\n"
+                "name: No Auto Skill Agent\n"
+                "description: Agent to test opt-out skill behavior.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            install_dir = tmp_path / "installed-agents"
+            manifest_file = install_dir / "installed.json"
+            catalog = [{
+                "name": "no-auto-skill-agent",
+                "description": "No auto skill test agent",
+                "author": "tests",
+                "source": "local",
+                "path": str(source),
+                "_source": "community",
+                "required_skills": ["neqsim-api-patterns"],
+            }]
+
+            with mock.patch.object(install_agent, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file), \
+                    mock.patch.object(install_agent, "_print_required_skill_guidance",
+                                      return_value=[]) as mocked_guidance:
+                args = argparse.Namespace(
+                    name="no-auto-skill-agent",
+                    force=False,
+                    install_missing_skills=False,
+                )
+                install_agent.cmd_install(catalog, args)
+
+                self.assertTrue(mocked_guidance.called)
+                self.assertFalse(
+                    mocked_guidance.call_args.kwargs["install_missing"])
 
     def test_local_install_refuses_source_inside_target(self):
         """Installer should not delete a local source package under install dir."""

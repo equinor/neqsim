@@ -46,7 +46,8 @@ MANIFEST_FILE = INSTALL_DIR / "installed.json"
 CORE_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
 INSTALLED_SKILLS_DIR = Path.home() / ".neqsim" / "skills"
 
-DEFAULT_AGENT_PATH_GLOBS = ["agents/**/*.agent.md", "agents/**/AGENT.md", "**/*.agent.md"]
+DEFAULT_AGENT_PATH_GLOBS = ["agents/**/*.agent.md",
+                            "agents/**/AGENT.md", "**/*.agent.md"]
 AGENT_MANIFEST_SCHEMA_VERSION = "1.0"
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+([-.+][0-9A-Za-z.-]+)?$")
 
@@ -211,10 +212,12 @@ def _parse_catalog_fallback(text):
             remainder = line[2:].strip()
             if ":" in remainder:
                 key, value = remainder.split(":", 1)
-                current[key.strip()] = install_skill._parse_scalar_value(value.strip())
+                current[key.strip()] = install_skill._parse_scalar_value(
+                    value.strip())
         elif current is not None and ":" in line:
             key, value = line.split(":", 1)
-            current[key.strip()] = install_skill._parse_scalar_value(value.strip())
+            current[key.strip()] = install_skill._parse_scalar_value(
+                value.strip())
     if current and section in data:
         data[section].append(current)
     return data
@@ -230,7 +233,8 @@ def _add_catalog_entries(agents, data, source):
             for agent in _discover_github_repository_agents(repository):
                 _append_agent(agents, agent, source)
         except Exception as exc:
-            repo = repository.get("repo", "?") if isinstance(repository, dict) else "?"
+            repo = repository.get("repo", "?") if isinstance(
+                repository, dict) else "?"
             print("  [!!] Could not discover agents from {repo}: {exc}".format(
                 repo=repo, exc=exc
             ), file=sys.stderr)
@@ -247,7 +251,8 @@ def _append_agent(agents, agent, source):
         return
     normalized = dict(agent)
     normalized["_source"] = source
-    normalized["required_skills"] = _normalize_list(normalized.get("required_skills"))
+    normalized["required_skills"] = _normalize_list(
+        normalized.get("required_skills"))
     agents.append(normalized)
 
 
@@ -381,7 +386,8 @@ def _validate_manifest_metadata(metadata, check_unknown_fields=False):
     if check_unknown_fields:
         for field in sorted(normalized):
             if field not in ALLOWED_MANIFEST_FIELDS and not field.startswith("_"):
-                warnings.append("unknown agent manifest field: {field}".format(field=field))
+                warnings.append(
+                    "unknown agent manifest field: {field}".format(field=field))
 
     return errors, warnings, normalized
 
@@ -473,9 +479,11 @@ def _normalize_discovered_agent(agent, repository, default_branch=None, content=
     if default_branch and "branch" not in normalized:
         normalized["branch"] = default_branch
     if "author" not in normalized:
-        normalized["author"] = repository.get("author") or repo.split("/", 1)[0]
+        normalized["author"] = repository.get(
+            "author") or repo.split("/", 1)[0]
     if "display_name" not in normalized and normalized.get("name"):
-        normalized["display_name"] = normalized.get("display_name", normalized.get("name"))
+        normalized["display_name"] = normalized.get(
+            "display_name", normalized.get("name"))
     required = _extract_required_skills(content, normalized) if content else normalized.get(
         "required_skills", []
     )
@@ -500,14 +508,16 @@ def _discover_agents_from_remote_catalog(repository, branch):
     for agent in (data.get("agents") or []):
         if not isinstance(agent, dict) or not agent.get("name"):
             continue
-        discovered.append(_normalize_discovered_agent(agent, repository, branch))
+        discovered.append(_normalize_discovered_agent(
+            agent, repository, branch))
     return discovered
 
 
 def _discover_agents_by_scanning_repo(repository, branch):
     """Discover agents by scanning an online GitHub repo for agent files."""
     repo = repository.get("repo", "")
-    used_branch, paths = install_skill._list_github_tree_paths(repo, branch=branch)
+    used_branch, paths = install_skill._list_github_tree_paths(
+        repo, branch=branch)
     patterns = _agent_globs(repository)
     discovered = []
     for path in sorted(paths):
@@ -515,20 +525,24 @@ def _discover_agents_by_scanning_repo(repository, branch):
             continue
         if not (path.endswith(".agent.md") or path.endswith("AGENT.md")):
             continue
-        content = install_skill._fetch_github_text(repo, path, branch=used_branch)
+        content = install_skill._fetch_github_text(
+            repo, path, branch=used_branch)
         frontmatter = install_skill._extract_frontmatter(content)
-        agent_id = frontmatter.get("agent_id") or frontmatter.get("id") or _agent_id_from_path(path)
+        agent_id = frontmatter.get("agent_id") or frontmatter.get(
+            "id") or _agent_id_from_path(path)
         agent = {
             "name": agent_id,
             "display_name": frontmatter.get("name", agent_id),
             "version": frontmatter.get("version", repository.get("version", "")),
             "description": frontmatter.get(
-                "description", "Community agent from {repo}/{path}".format(repo=repo, path=path)
+                "description", "Community agent from {repo}/{path}".format(
+                    repo=repo, path=path)
             ),
             "path": path,
             "required_skills": _extract_required_skills(content, frontmatter),
         }
-        discovered.append(_normalize_discovered_agent(agent, repository, used_branch, content))
+        discovered.append(_normalize_discovered_agent(
+            agent, repository, used_branch, content))
     return discovered
 
 
@@ -541,9 +555,11 @@ def _discover_github_repository_agents(repository):
     repo = repository.get("repo", "")
     if not repo:
         return []
-    branch = repository.get("branch") or install_skill._get_default_github_branch(repo)
+    branch = repository.get(
+        "branch") or install_skill._get_default_github_branch(repo)
     try:
-        catalog_agents = _discover_agents_from_remote_catalog(repository, branch)
+        catalog_agents = _discover_agents_from_remote_catalog(
+            repository, branch)
         if catalog_agents:
             return catalog_agents
     except Exception:
@@ -605,7 +621,8 @@ def _parse_flat_yaml(text):
         if not line or line.startswith("#"):
             continue
         if is_indented and current_list_key and line.startswith("- "):
-            data.setdefault(current_list_key, []).append(line[2:].strip().strip('"').strip("'"))
+            data.setdefault(current_list_key, []).append(
+                line[2:].strip().strip('"').strip("'"))
             continue
         current_list_key = None
         if ":" not in line:
@@ -653,10 +670,12 @@ def validate_agent_dir(agent_dir):
     else:
         content = main_file.read_text(encoding="utf-8", errors="replace")
         if len(content.strip()) < 20 or "<html" in content.lower()[:200]:
-            errors.append("Agent markdown does not look like a valid agent definition")
+            errors.append(
+                "Agent markdown does not look like a valid agent definition")
         frontmatter = install_skill._extract_frontmatter(content)
         if not frontmatter and not agent_yaml:
-            errors.append("Agent definition needs YAML frontmatter or agent.yaml")
+            errors.append(
+                "Agent definition needs YAML frontmatter or agent.yaml")
 
     metadata.update(frontmatter)
     metadata.update(agent_yaml)
@@ -692,9 +711,11 @@ def _available_skill_names():
     """Return core and locally installed skill names."""
     names = set()
     if CORE_SKILLS_DIR.exists():
-        names.update(path.name for path in CORE_SKILLS_DIR.iterdir() if path.is_dir())
+        names.update(
+            path.name for path in CORE_SKILLS_DIR.iterdir() if path.is_dir())
     if INSTALLED_SKILLS_DIR.exists():
-        names.update(path.name for path in INSTALLED_SKILLS_DIR.iterdir() if path.is_dir())
+        names.update(
+            path.name for path in INSTALLED_SKILLS_DIR.iterdir() if path.is_dir())
     try:
         names.update(install_skill.load_manifest().keys())
     except Exception:
@@ -702,10 +723,42 @@ def _available_skill_names():
     return names
 
 
+def _skill_name_candidates(skill_name):
+    """Return normalized candidate names for a required skill identifier."""
+    normalized = str(skill_name or "").strip()
+    if not normalized:
+        return []
+
+    candidates = [normalized]
+    if normalized.startswith("neqsim-"):
+        unprefixed = normalized[len("neqsim-"):]
+        if unprefixed:
+            candidates.append(unprefixed)
+    else:
+        candidates.append("neqsim-{name}".format(name=normalized))
+
+    deduped = []
+    for candidate in candidates:
+        if candidate not in deduped:
+            deduped.append(candidate)
+    return deduped
+
+
+def _resolve_skill_name(skill_name, available_names):
+    """Resolve a skill identifier against available names, handling common aliases."""
+    for candidate in _skill_name_candidates(skill_name):
+        if candidate in available_names:
+            return candidate
+    return ""
+
+
 def _find_missing_required_skills(required_skills):
     """Return required skills that are not available locally."""
     available = _available_skill_names()
-    return [skill for skill in required_skills if skill not in available]
+    return [
+        skill for skill in required_skills
+        if not _resolve_skill_name(skill, available)
+    ]
 
 
 def _print_required_skill_guidance(required_skills, install_missing=False):
@@ -719,7 +772,8 @@ def _print_required_skill_guidance(required_skills, install_missing=False):
         ))
         return []
 
-    print("  [!!] Missing required skills: {skills}".format(skills=", ".join(missing)))
+    print("  [!!] Missing required skills: {skills}".format(
+        skills=", ".join(missing)))
     if not install_missing:
         print("  Install them with: neqsim skill install <skill-name>")
         return missing
@@ -728,19 +782,28 @@ def _print_required_skill_guidance(required_skills, install_missing=False):
         skill_catalog = install_skill.load_catalog()
     except SystemExit:
         return missing
+
+    catalog_by_name = {
+        str(skill.get("name", "")).strip(): skill for skill in skill_catalog
+        if str(skill.get("name", "")).strip()
+    }
+
     unresolved = []
     for skill_name in missing:
-        if not any(skill.get("name") == skill_name for skill in skill_catalog):
+        resolved_name = _resolve_skill_name(
+            skill_name, set(catalog_by_name.keys()))
+        if not resolved_name:
             unresolved.append(skill_name)
             continue
-        print("  Installing missing skill: {name}".format(name=skill_name))
-        args = argparse.Namespace(name=skill_name, force=False)
+        print("  Installing missing skill: {name}".format(name=resolved_name))
+        args = argparse.Namespace(name=resolved_name, force=False)
         try:
             install_skill.cmd_install(skill_catalog, args)
         except SystemExit:
             unresolved.append(skill_name)
     if unresolved:
-        print("  [!!] Could not install: {skills}".format(skills=", ".join(unresolved)))
+        print("  [!!] Could not install: {skills}".format(
+            skills=", ".join(unresolved)))
     return unresolved
 
 
@@ -749,7 +812,8 @@ def cmd_list(agents, args):
     manifest = load_manifest()
     private_only = getattr(args, "private", False)
     source_filter = "private" if private_only else None
-    filtered = [agent for agent in agents if not source_filter or agent.get("_source") == source_filter]
+    filtered = [agent for agent in agents if not source_filter or agent.get(
+        "_source") == source_filter]
 
     label = "Private" if private_only else "All"
     print("\n  {label} Agent Catalog ({count} agents)\n".format(
@@ -758,7 +822,8 @@ def cmd_list(agents, args):
     print("  {name:<35} {source:<10} {tags:<24} {installed}".format(
         name="Name", source="Source", tags="Tags", installed="Installed"
     ))
-    print("  {a} {b} {c} {d}".format(a="-" * 35, b="-" * 10, c="-" * 24, d="-" * 9))
+    print("  {a} {b} {c} {d}".format(
+        a="-" * 35, b="-" * 10, c="-" * 24, d="-" * 9))
     for agent in filtered:
         name = agent.get("name", "?")
         source = agent.get("_source", "?")
@@ -783,7 +848,8 @@ def cmd_search(agents, args):
             agent.get("display_name", ""),
             agent.get("description", ""),
             " ".join(tags) if isinstance(tags, list) else str(tags),
-            " ".join(required) if isinstance(required, list) else str(required),
+            " ".join(required) if isinstance(
+                required, list) else str(required),
             _format_list(agent.get("supported_domains", [])),
             _format_list(agent.get("inputs", [])),
             _format_list(agent.get("outputs", [])),
@@ -803,11 +869,13 @@ def cmd_search(agents, args):
     for agent in matches:
         print("  {name}".format(name=agent.get("name", "?")))
         if agent.get("display_name") and agent.get("display_name") != agent.get("name"):
-            print("    Display: {display}".format(display=agent.get("display_name")))
+            print("    Display: {display}".format(
+                display=agent.get("display_name")))
         print("    {desc}".format(desc=agent.get("description", "")))
         required = agent.get("required_skills", [])
         if required:
-            print("    Required skills: {skills}".format(skills=", ".join(required)))
+            print("    Required skills: {skills}".format(
+                skills=", ".join(required)))
         print()
 
 
@@ -824,7 +892,8 @@ def cmd_info(agents, args):
     print("\n  Agent: {name}".format(name=agent.get("name")))
     if agent.get("display_name") and agent.get("display_name") != agent.get("name"):
         print("  Display name: {name}".format(name=agent.get("display_name")))
-    print("  Source: {source}".format(source=agent.get("_source", "community")))
+    print("  Source: {source}".format(
+        source=agent.get("_source", "community")))
     print("  Description: {desc}".format(desc=agent.get("description", "-")))
     print("  Author: {author}".format(author=agent.get("author", "-")))
     if source_type == "local":
@@ -832,7 +901,8 @@ def cmd_info(agents, args):
     elif source_type == "url":
         print("  URL: {url}".format(url=agent.get("url", "-")))
     else:
-        print("  Repo: https://github.com/{repo}".format(repo=agent.get("repo", "-")))
+        print(
+            "  Repo: https://github.com/{repo}".format(repo=agent.get("repo", "-")))
         print("  Path: {path}".format(path=agent.get("path", "AGENT.md")))
         if agent.get("folder"):
             print("  Folder: {folder}".format(folder=agent.get("folder")))
@@ -844,9 +914,11 @@ def cmd_info(agents, args):
             domains=_format_list(agent.get("supported_domains"))
         ))
     if agent.get("inputs"):
-        print("  Inputs: {inputs}".format(inputs=_format_list(agent.get("inputs"))))
+        print("  Inputs: {inputs}".format(
+            inputs=_format_list(agent.get("inputs"))))
     if agent.get("outputs"):
-        print("  Outputs: {outputs}".format(outputs=_format_list(agent.get("outputs"))))
+        print("  Outputs: {outputs}".format(
+            outputs=_format_list(agent.get("outputs"))))
     if agent.get("requires_mcp_tools"):
         print("  MCP tools: {tools}".format(
             tools=_format_list(agent.get("requires_mcp_tools"))
@@ -858,16 +930,20 @@ def cmd_info(agents, args):
     if agent.get("trust_level"):
         print("  Trust level: {value}".format(value=agent.get("trust_level")))
     tags = agent.get("tags", [])
-    print("  Tags: {tags}".format(tags=", ".join(tags) if isinstance(tags, list) else tags))
-    print("  Installed: {value}".format(value="yes" if name in manifest else "no"))
+    print("  Tags: {tags}".format(tags=", ".join(
+        tags) if isinstance(tags, list) else tags))
+    print("  Installed: {value}".format(
+        value="yes" if name in manifest else "no"))
     if name in manifest:
-        print("  Local path: {path}".format(path=manifest[name].get("path", "-")))
+        print("  Local path: {path}".format(
+            path=manifest[name].get("path", "-")))
     print()
 
 
 def _copy_local_file(src_path, dest_dir):
     """Copy a local single-file agent package."""
-    dest_name = src_path.name if src_path.name.endswith(".agent.md") else "AGENT.md"
+    dest_name = src_path.name if src_path.name.endswith(
+        ".agent.md") else "AGENT.md"
     dest_file = dest_dir / dest_name
     shutil.copy2(str(src_path), str(dest_file))
     sibling_yaml = src_path.parent / "agent.yaml"
@@ -895,7 +971,8 @@ def _install_from_url(agent, dest_dir):
     """Install an agent from a direct URL."""
     url = agent.get("url", "")
     if not url:
-        print("  [!!] No URL specified for '{name}'.".format(name=agent.get("name")))
+        print("  [!!] No URL specified for '{name}'.".format(
+            name=agent.get("name")))
         sys.exit(1)
     print("  Downloading: {url}".format(url=url))
 
@@ -912,7 +989,8 @@ def _install_from_url(agent, dest_dir):
 
 def _github_paths_under_folder(repo, folder, branch):
     """Return GitHub blob paths under a folder."""
-    used_branch, paths = install_skill._list_github_tree_paths(repo, branch=branch)
+    used_branch, paths = install_skill._list_github_tree_paths(
+        repo, branch=branch)
     prefix = folder.rstrip("/") + "/"
     selected = [path for path in paths if path.startswith(prefix)]
     return used_branch, selected
@@ -925,10 +1003,12 @@ def _install_github_folder(agent, dest_dir):
     branch = agent.get("branch")
     used_branch, paths = _github_paths_under_folder(repo, folder, branch)
     if not paths:
-        print("  [!!] No files found under {repo}/{folder}".format(repo=repo, folder=folder))
+        print(
+            "  [!!] No files found under {repo}/{folder}".format(repo=repo, folder=folder))
         sys.exit(1)
     for path in paths:
-        content, _branch, _url = install_skill._fetch_github_bytes(repo, path, branch=used_branch)
+        content, _branch, _url = install_skill._fetch_github_bytes(
+            repo, path, branch=used_branch)
         relative = Path(path).relative_to(folder)
         dest_file = dest_dir / relative
         dest_file.parent.mkdir(parents=True, exist_ok=True)
@@ -946,15 +1026,18 @@ def _install_from_github(agent, dest_dir):
     path = agent.get("path", "AGENT.md")
     branch = agent.get("branch")
     if not repo:
-        print("  [!!] No repo specified for '{name}'.".format(name=agent.get("name")))
+        print("  [!!] No repo specified for '{name}'.".format(
+            name=agent.get("name")))
         sys.exit(1)
 
     if agent.get("folder") or agent.get("copy_root"):
         return _install_github_folder(agent, dest_dir)
 
-    content, used_branch, raw_url = install_skill._fetch_github_bytes(repo, path, branch=branch)
+    content, used_branch, raw_url = install_skill._fetch_github_bytes(
+        repo, path, branch=branch)
     print("  Downloading: {url}".format(url=raw_url))
-    dest_name = Path(path).name if Path(path).name.endswith(".agent.md") else "AGENT.md"
+    dest_name = Path(path).name if Path(
+        path).name.endswith(".agent.md") else "AGENT.md"
     dest_file = dest_dir / dest_name
     dest_file.write_bytes(content)
     agent["branch"] = used_branch
@@ -1037,8 +1120,9 @@ def cmd_install(agents, args):
             + report.get("required_skills", [])
             + _normalize_list(agent.get("required_skills"))
         )
+        install_missing_skills = getattr(args, "install_missing_skills", True)
         unresolved = _print_required_skill_guidance(
-            required_skills, install_missing=args.install_missing_skills
+            required_skills, install_missing=install_missing_skills
         )
         for warning in report["warnings"]:
             if not warning.startswith("Missing required skills"):
@@ -1094,7 +1178,8 @@ def cmd_installed(agents, args):
         print("  Run: neqsim agent list\n")
         return
 
-    print("\n  Installed Community Agents ({count}):\n".format(count=len(manifest)))
+    print("\n  Installed Community Agents ({count}):\n".format(
+        count=len(manifest)))
     print("  {name:<35} {author:<20} {path}".format(
         name="Name", author="Author", path="Path"
     ))
@@ -1131,7 +1216,8 @@ def cmd_validate(agents, args):
         if info:
             target = Path(info.get("path", ""))
         else:
-            print("\n  Agent path/name not found: {target}\n".format(target=args.target))
+            print(
+                "\n  Agent path/name not found: {target}\n".format(target=args.target))
             sys.exit(1)
 
     report = validate_agent_dir(target)
@@ -1159,7 +1245,8 @@ def cmd_run(agents, args):
     info = manifest.get(args.name)
     if not info:
         print("\n  Agent '{name}' is not installed.".format(name=args.name))
-        print("  Install it first with: neqsim agent install {name}\n".format(name=args.name))
+        print("  Install it first with: neqsim agent install {name}\n".format(
+            name=args.name))
         sys.exit(1)
     print("\n  NeqSim does not execute installed agents directly.")
     print("  Installed package: {path}".format(path=info.get("path", "-")))
@@ -1170,7 +1257,8 @@ def cmd_run(agents, args):
 def cmd_private_init(agents, args):
     """Create the private agent catalog template at ~/.neqsim/private-agents.yaml."""
     if PRIVATE_CATALOG_FILE.exists():
-        print("\n  Private catalog already exists: {path}".format(path=PRIVATE_CATALOG_FILE))
+        print("\n  Private catalog already exists: {path}".format(
+            path=PRIVATE_CATALOG_FILE))
         print("  Edit it to add your private agents.\n")
         return
 
@@ -1178,7 +1266,8 @@ def cmd_private_init(agents, args):
     content = PRIVATE_CATALOG_TEMPLATE.format(today=date.today().isoformat())
     PRIVATE_CATALOG_FILE.parent.mkdir(parents=True, exist_ok=True)
     PRIVATE_CATALOG_FILE.write_text(content, encoding="utf-8")
-    print("\n  [OK] Created private catalog: {path}".format(path=PRIVATE_CATALOG_FILE))
+    print("\n  [OK] Created private catalog: {path}".format(
+        path=PRIVATE_CATALOG_FILE))
     print("  Edit it to add your internal/company agents.")
     print("  Then: neqsim agent list --private\n")
 
@@ -1198,7 +1287,7 @@ def main():
               neqsim agent list
               neqsim agent search "tie-in"
               neqsim agent install neqsim-example-agent
-              neqsim agent install neqsim-example-agent --install-missing-skills
+                            neqsim agent install neqsim-example-agent --no-install-missing-skills
               neqsim agent installed
               neqsim agent info neqsim-example-agent
               neqsim agent validate neqsim-example-agent
@@ -1214,7 +1303,8 @@ def main():
     sub = parser.add_subparsers(dest="command")
 
     p_list = sub.add_parser("list", help="List all agents in the catalog")
-    p_list.add_argument("--private", action="store_true", help="List private catalog only")
+    p_list.add_argument("--private", action="store_true",
+                        help="List private catalog only")
 
     p_search = sub.add_parser("search", help="Search agents by keyword")
     p_search.add_argument("query", help="Search term")
@@ -1226,11 +1316,20 @@ def main():
 
     p_install = sub.add_parser("install", help="Install an agent")
     p_install.add_argument("name", help="Agent name from catalog")
-    p_install.add_argument("--force", action="store_true", help="Reinstall if exists")
+    p_install.add_argument("--force", action="store_true",
+                           help="Reinstall if exists")
+    p_install.set_defaults(install_missing_skills=True)
+    p_install.add_argument(
+        "--no-install-missing-skills",
+        dest="install_missing_skills",
+        action="store_false",
+        help="Do not auto-install required skills",
+    )
     p_install.add_argument(
         "--install-missing-skills",
+        dest="install_missing_skills",
         action="store_true",
-        help="Install required skills that are present in skill catalogs",
+        help="Deprecated alias; auto-install is enabled by default",
     )
 
     sub.add_parser("installed", help="Show installed agents")
@@ -1238,16 +1337,22 @@ def main():
     p_remove = sub.add_parser("remove", help="Remove an installed agent")
     p_remove.add_argument("name", help="Agent name to remove")
 
-    p_validate = sub.add_parser("validate", help="Validate an installed agent or local path")
-    p_validate.add_argument("target", help="Installed agent name or local path")
-    p_validate.add_argument("--strict", action="store_true", help="Fail on validation warnings")
+    p_validate = sub.add_parser(
+        "validate", help="Validate an installed agent or local path")
+    p_validate.add_argument(
+        "target", help="Installed agent name or local path")
+    p_validate.add_argument("--strict", action="store_true",
+                            help="Fail on validation warnings")
 
-    p_run = sub.add_parser("run", help="Show safe launch guidance for an installed agent")
+    p_run = sub.add_parser(
+        "run", help="Show safe launch guidance for an installed agent")
     p_run.add_argument("name", help="Installed agent name")
 
-    sub.add_parser("schema", help="Show the supported agent.yaml manifest schema")
+    sub.add_parser(
+        "schema", help="Show the supported agent.yaml manifest schema")
 
-    sub.add_parser("private-init", help="Create private catalog template at ~/.neqsim/")
+    sub.add_parser(
+        "private-init", help="Create private catalog template at ~/.neqsim/")
 
     args = parser.parse_args()
     if not args.command:
@@ -1258,7 +1363,8 @@ def main():
         cmd_private_init([], args)
         return
     if args.command in ("validate", "run", "schema"):
-        commands_without_catalog = {"validate": cmd_validate, "run": cmd_run, "schema": cmd_schema}
+        commands_without_catalog = {
+            "validate": cmd_validate, "run": cmd_run, "schema": cmd_schema}
         commands_without_catalog[args.command]([], args)
         return
 
