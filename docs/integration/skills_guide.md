@@ -801,7 +801,7 @@ skills:
     path: "//fileserver/shared/neqsim-skills/company-standards/SKILL.md"
     tags: [standards, tr, internal]
 
-  # Private GitHub repo (requires GITHUB_TOKEN env var)
+  # Private GitHub repo (requires GITHUB_TOKEN or gh auth with repo access)
   - name: neqsim-plant-data-mapping
     description: "PI tag mappings for our platforms"
     author: "data-team"
