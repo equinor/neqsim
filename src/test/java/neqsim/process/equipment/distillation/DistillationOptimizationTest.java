@@ -144,9 +144,16 @@ public class DistillationOptimizationTest {
     column.setTopPressure(12.8);
     column.setBottomPressure(15.0);
 
-    assertEquals(9, column.estimateFeedTrayNumber(feed));
+    int estimatedFeedTrayNumber = column.estimateFeedTrayNumber(feed);
+    assertEquals(9, estimatedFeedTrayNumber);
 
-    column.addFeedStream(feed);
+    column.addFeedStream(feed, estimatedFeedTrayNumber);
+    column.getCondenser().setOutTemperature(273.15 + 65.0);
+    for (int trayIndex = 1; trayIndex <= 10; trayIndex++) {
+      double trayFraction = (trayIndex - 1.0) / 9.0;
+      column.getTray(trayIndex).setOutTemperature(273.15 + 165.0 - trayFraction * 95.0);
+    }
+    column.setMaxNumberOfIterations(8);
     column.run();
 
     assertEquals(9, column.getFeedTrayNumber(feed));
@@ -218,6 +225,9 @@ public class DistillationOptimizationTest {
     column.setTemperatureTolerance(1.0e-1);
     column.setMassBalanceTolerance(1.0e-1);
     column.setMaxNumberOfIterations(25);
+    column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
+    column.setMaxTrayOptimizationCandidates(8);
+    column.setMaxTrayOptimizationTimeSeconds(20.0);
 
     DistillationColumnMechanicalDesign design =
         (DistillationColumnMechanicalDesign) column.getMechanicalDesign();

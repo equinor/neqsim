@@ -77,7 +77,7 @@ double[] liquidVol = cce.getLiquidVolume();
 double saturationP = cce.getSaturationPressure();
 
 for (int i = 0; i < pressures.length; i++) {
-    System.out.printf("%15.1f | %11.4f | %10.2f%n", 
+    System.out.printf("%15.1f | %11.4f | %10.2f%n",
         pressures[i], relVol[i], liquidVol[i] * 100);
 }
 
@@ -450,6 +450,6 @@ char.characterisePlusFraction();
 
 ## See Also
 
-- [Fluid Characterization](../pvtsimulation/fluid_characterization) - Plus fraction characterization
+- [Fluid Characterization](../wiki/fluid_characterization) - Plus fraction characterization
 - [Thermodynamic Models](../thermo/thermodynamic_models) - EoS selection
 - [Phase Envelope Guide](../pvtsimulation/phase_envelope_guide) - PT diagrams

@@ -27,7 +27,7 @@ If you use results produced with NeqSim in a publication, please cite the
 software as follows:
 
 > Solbraa, E. *et al.* **NeqSim: A library for thermodynamic and process
-> simulation.** Equinor / NTNU, 2026. <https://github.com/equinor/neqsim>
+> simulation.** NeqSim Project / NTNU, 2026. <https://github.com/equinor/neqsim>
 
 ```bibtex
 @software{neqsim,

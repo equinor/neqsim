@@ -151,4 +151,28 @@ class TwoPhasePipeFlowSystemBuilderTest {
 
     assertNotNull(pipe);
   }
+
+  @Test
+  void testUnsupportedLengthUnitThrows() {
+    assertThrows(IllegalArgumentException.class,
+        () -> TwoPhasePipeFlowSystem.builder().withDiameter(1.0, "yard"));
+  }
+
+  @Test
+  void testUnsupportedRoughnessUnitThrows() {
+    assertThrows(IllegalArgumentException.class,
+        () -> TwoPhasePipeFlowSystem.builder().withRoughness(1.0, "mil"));
+  }
+
+  @Test
+  void testUnsupportedTemperatureUnitThrows() {
+    assertThrows(IllegalArgumentException.class,
+        () -> TwoPhasePipeFlowSystem.builder().withWallTemperature(20.0, "degC"));
+  }
+
+  @Test
+  void testUnsupportedInclinationUnitThrows() {
+    assertThrows(IllegalArgumentException.class,
+        () -> TwoPhasePipeFlowSystem.builder().withInclination(10.0, "grade"));
+  }
 }

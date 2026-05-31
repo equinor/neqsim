@@ -191,6 +191,7 @@ for i in range(n_steps):
     levels[i] = LT100.getMeasuredValue()
 
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+
 ax1.plot(times / 60, pressures)
 ax1.set_ylabel("Pressure (bara)")
 ax1.set_xlabel("Time (min)")
@@ -250,3 +251,91 @@ TransferFunctionBlock leadLag = new TransferFunctionBlock();
 4. **Controller windup**: Large setpoint changes can cause integral windup
 5. **Separator dimensions**: Must set `setInternalDiameter()` and `setSeparatorLength()` for meaningful level dynamics. For dynamic simulation, set directly on the separator; for design purposes, configure via `SeparatorMechanicalDesign` (see neqsim-api-patterns skill)
 6. **Measurement range**: Set min/max on transmitters to match process range
+
+
+## Pluggable Integrator Strategies
+
+Beyond the default fixed-step explicit-Euler loop, `ProcessSystem` accepts a
+pluggable `IntegratorStrategy`. Implementations live in `neqsim.process.dynamics`:
+
+| Strategy | Class | Notes |
+|----------|-------|-------|
+| Explicit Euler | `ExplicitEulerIntegrator` | Default; fast, conditionally stable |
+| BDF-1 (Implicit Euler) | `BDFIntegrator` | Newton + FD Jacobian (tol 1e-8, maxIter 25). Falls back to explicit Euler if Newton diverges; check `lastStepFellBack()` |
+
+```java
+import neqsim.process.dynamics.BDFIntegrator;
+import neqsim.process.dynamics.ExplicitEulerIntegrator;
+import neqsim.process.dynamics.IntegratorStrategy;
+
+process.setIntegratorStrategy(new BDFIntegrator());   // stiff dynamics
+// process.setIntegratorStrategy(new ExplicitEulerIntegrator()); // explicit default
+// process.setIntegratorStrategy(null);  // reset to default ExplicitEulerIntegrator
+IntegratorStrategy current = process.getIntegratorStrategy();
+```
+
+For multi-area plants the strategy is propagated to every child area:
+`plant.setIntegratorStrategy(new BDFIntegrator())`.
+
+## Event Scheduling (ESD, IOA, setpoint changes)
+
+Time-stamped events (ESD trips, valve closures, setpoint ramps) are managed by
+`EventScheduler` in `neqsim.process.dynamics`. Every call to
+`runTransient(dt, id)` fires events with `time <= currentTime` at the top of
+the step, before equipment runs.
+
+```java
+import neqsim.process.dynamics.EventScheduler;
+
+EventScheduler events = new EventScheduler();
+events.scheduleEvent(120.0, "ESD trip", new Runnable() {
+  public void run() { esdValve.setPercentOpen(0.0); }
+});
+events.scheduleEvent(300.0, "Setpoint ramp", new Runnable() {
+  public void run() { pressureController.setControllerSetPoint(45.0); }
+});
+process.setEventScheduler(events);
+
+for (int i = 0; i < nSteps; i++) {
+  process.runTransient(dt);   // due events fire automatically
+}
+
+int fired = events.getFiredEvents().size();
+int pending = events.getPendingEvents().size();
+```
+
+For multi-area plants install the scheduler once on the `ProcessModel`; it is
+propagated to every child area, and `plant.runTransient(dt, id)` advances all
+areas:
+
+```java
+plant.setEventScheduler(events);
+plant.runTransient(dt, java.util.UUID.randomUUID());
+```
+
+**Note**: `EventScheduler` is declared `transient` on `ProcessSystem` because
+event `Runnable` payloads (lambdas, anonymous classes) are usually not
+serializable. Re-install the scheduler after deserialising a saved process.
+
+## New Measurement Devices (v3.11)
+
+Three new measurement devices in `neqsim.process.measurementdevice` complement
+the existing PT/TT/LT/FT family:
+
+| Class | Reads | Unit |
+|-------|-------|------|
+| `DifferentialPressureTransmitter(name, high, low)` | `pHigh - pLow` across two streams | bar |
+| `CompositionAnalyzer(name, stream, component, phase)` | Mole fraction; phase `OVERALL` / `GAS` / `LIQUID` | mole/mole |
+| `FlowRatioMeter(name, num, den, basis)` | Flow ratio; basis `MASS` / `MOLE` / `VOLUME` | dimensionless |
+
+```java
+import neqsim.process.measurementdevice.DifferentialPressureTransmitter;
+import neqsim.process.measurementdevice.CompositionAnalyzer;
+import neqsim.process.measurementdevice.FlowRatioMeter;
+
+DifferentialPressureTransmitter dpdt = new DifferentialPressureTransmitter("dPT-1", upstream, downstream);
+CompositionAnalyzer ax = new CompositionAnalyzer("AX-1", sweetGas, "methane",
+    CompositionAnalyzer.AnalyzerPhase.GAS);
+FlowRatioMeter rxn = new FlowRatioMeter("FR-1", recycleStream, feedStream,
+    FlowRatioMeter.FlowBasis.MASS);
+```

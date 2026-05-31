@@ -20,8 +20,8 @@ The `neqsim.process.corrosion` package provides industry-standard corrosion asse
 | [`OxygenCorrosionAssessment`](oxygen_corrosion_assessment) | NORSOK M-001 / NACE SP0499 | Dissolved oxygen corrosion and pitting assessment |
 | [`DensePhaseCO2Corrosion`](dense_phase_co2_corrosion) | DNV-RP-J202 / ISO 27913 | CCS pipeline corrosion — impurity limits, free water risk |
 | [`AmmoniaCompatibility`](ammonia_compatibility) | CGA G-2.1 / ASME B31.3 | Ammonia service material compatibility and SCC assessment |
-| [`HydrogenMaterialAssessment`](hydrogen_material_assessment) | API 941 / ASME B31.12 | Hydrogen embrittlement and HTHA assessment |
-| [`NelsonCurveAssessment`](nelson_curve_assessment) | API 941 8th Ed | High-temperature hydrogen attack (HTHA) Nelson curve check |
+| `HydrogenMaterialAssessment` *(API reference)* | API 941 / ASME B31.12 | Hydrogen embrittlement and HTHA assessment |
+| `NelsonCurveAssessment` *(API reference)* | API 941 8th Ed | High-temperature hydrogen attack (HTHA) Nelson curve check |
 
 ## Integration
 

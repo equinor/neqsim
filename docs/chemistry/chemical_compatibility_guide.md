@@ -300,8 +300,8 @@ If declared but not attached, a data gap is reported:
 
 ## 9. Related Documentation
 
-- [Flow assurance index](../flowassurance/index.md)
-- [Scale prediction calculator](../flowassurance/scale_prediction.md) (if available)
+- [Flow assurance index](../pvtsimulation/flowassurance/index.md)
+- [Mineral scale formation](../pvtsimulation/mineral_scale_formation.md) (scale prediction)
 - [PVT simulation](../pvtsimulation/index.md)
 
 ---

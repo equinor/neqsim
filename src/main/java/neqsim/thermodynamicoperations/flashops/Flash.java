@@ -1162,6 +1162,22 @@ public abstract class Flash extends BaseOperation {
       boolean retryFoundInstability = false;
       boolean ambiguousStability = Math.abs(tm[0]) < 5e-2 || Math.abs(tm[1]) < 5e-2;
       boolean doLLESupplementaryCheck = shouldRunAutomaticLLECheck();
+      // Save K-vector BEFORE running supplementary trials, since the trial
+      // functions themselves may commit non-physical K-values to the system
+      // phases (e.g. K~5e5 for methane near cricondenbar). If post-trial init
+      // throws NaN we revert to these pre-trial K-values, not the corrupted
+      // post-trial ones. The trials always run (they catch legitimate
+      // near-cricondenbar VLE that the standard analysis misses); the revert
+      // logic below is the safety net for non-physical trial seeds.
+      double[] preTrialKvector = null;
+      try {
+        preTrialKvector = system.getKvector();
+        if (preTrialKvector != null) {
+          preTrialKvector = preTrialKvector.clone();
+        }
+      } catch (Exception ignored) {
+        preTrialKvector = null;
+      }
       // Amplified K-value trials catch near-critical VLE instability (near cricondenbar)
       if ((tm[0] < 0.5 || tm[1] < 0.5 || ambiguousStability)
           && !system.getModelName().contains("CPA")) {
@@ -1177,21 +1193,52 @@ public abstract class Flash extends BaseOperation {
         retryFoundInstability = pureComponentStabilityTrials();
       }
       if (retryFoundInstability) {
-        recordStabilityOutcome("unstable - supplementary stability trial");
-        // Supplementary trial found instability - calculate beta and init for two-phase
-        RachfordRice rachfordRice = new RachfordRice();
+        // Supplementary trial found instability. The trial-seeded K-values may
+        // produce a non-physical state (PR cubic with no real Z root → NaN in
+        // molarVolumeAnalytical). If init(1) throws, restore the PRE-trial
+        // K-vector and revert to the single-phase declaration.
+        double[] savedKvector = preTrialKvector;
         try {
-          system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
+          RachfordRice rachfordRice = new RachfordRice();
+          try {
+            system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
+          } catch (Exception ex) {
+            if (!Double.isNaN(rachfordRice.getBeta()[0])) {
+              system.setBeta(rachfordRice.getBeta()[0]);
+            } else {
+              system.setBeta(Double.NaN);
+            }
+          }
+          system.calc_x_y();
+          system.init(1);
+          recordStabilityOutcome("unstable - supplementary stability trial");
+          stable = false;
         } catch (Exception ex) {
-          if (!Double.isNaN(rachfordRice.getBeta()[0])) {
-            system.setBeta(rachfordRice.getBeta()[0]);
+          // Supplementary trial seeded a non-physical 2-phase split. Revert.
+          logger.debug(
+              "Supplementary trial K-values produced non-physical state ({}); reverting to stable",
+              ex.getMessage());
+          if (savedKvector != null) {
+            int nComp = system.getPhase(0).getNumberOfComponents();
+            for (int i = 0; i < nComp && i < savedKvector.length; i++) {
+              system.getPhase(0).getComponent(i).setK(savedKvector[i]);
+              system.getPhase(1).getComponent(i).setK(savedKvector[i]);
+            }
+          }
+          recordStabilityOutcome("stable - supplementary trial reverted (non-physical state)");
+          stable = true;
+          system.init(0);
+          system.setNumberOfPhases(1);
+          if (lowestGibbsEnergyPhase == 0) {
+            system.setPhaseType(0, PhaseType.GAS);
           } else {
-            system.setBeta(Double.NaN);
+            system.setPhaseType(0, PhaseType.LIQUID);
+          }
+          system.init(1);
+          if (solidCheck && !system.doMultiPhaseCheck()) {
+            this.solidPhaseFlash();
           }
         }
-        system.calc_x_y();
-        system.init(1);
-        stable = false;
       } else {
         if (lastStabilityAnalysisFailed) {
           recordStabilityOutcome("stable after supplementary fallback");

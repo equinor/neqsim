@@ -32,7 +32,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-USER_AGENT = "neqsim-paperlab/1.0 (mailto:postmaster@equinor.com)"
+USER_AGENT = "neqsim-paperlab/1.0"
 CROSSREF_BASE = "https://api.crossref.org"
 DEFAULT_MIN_SCORE = 70.0
 

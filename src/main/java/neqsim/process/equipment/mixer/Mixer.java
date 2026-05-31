@@ -182,15 +182,23 @@ public class Mixer extends ProcessEquipmentBaseClass
    */
   public void mixStream() {
     int index = 0;
-    lowestPressure = mixedStream.getThermoSystem().getPhase(0).getPressure();
+    // Determine outlet pressure from the lowest pressure across ACTIVE inlet streams only.
+    // Streams with negligible flow (bypassed / deactivated) must not influence the mixer
+    // pressure — their stale pressure would otherwise drive the outlet to a wrong value.
+    lowestPressure = Double.POSITIVE_INFINITY;
     boolean hasAddedNewComponent = false;
-    for (int k = 1; k < streams.size(); k++) {
-      if (streams.get(k).getThermoSystem().getPhase(0).getPressure() < lowestPressure) {
-        lowestPressure = streams.get(k).getThermoSystem().getPhase(0).getPressure();
+    for (int k = 0; k < streams.size(); k++) {
+      if (streams.get(k).getFlowRate("kg/hr") <= getMinimumFlow()) {
+        continue;
+      }
+      double p = streams.get(k).getThermoSystem().getPhase(0).getPressure();
+      if (p < lowestPressure) {
+        lowestPressure = p;
       }
     }
-    for (int k = 0; k < streams.size(); k++) {
-      // streams.get(k).getThermoSystem().getPhase(0).setPressure(lowestPressure);
+    if (Double.isInfinite(lowestPressure)) {
+      // All inlets are inactive — fall back to the template stream's pressure.
+      lowestPressure = mixedStream.getThermoSystem().getPhase(0).getPressure();
     }
 
     // Process ALL streams starting from k=1 (k=0 is already cloned into mixedStream)
@@ -305,9 +313,8 @@ public class Mixer extends ProcessEquipmentBaseClass
       }
       SystemInterface inletSystem = stream.getThermoSystem();
       if (inletSystem.getTemperature() != lastInletTemperatures[streamIndex]
-          || inletSystem.getPressure() != lastInletPressures[streamIndex]
-          || !java.util.Objects.equals(stream.getSpecification(),
-              lastInletSpecifications[streamIndex])) {
+          || inletSystem.getPressure() != lastInletPressures[streamIndex] || !java.util.Objects
+              .equals(stream.getSpecification(), lastInletSpecifications[streamIndex])) {
         return true;
       }
       double flow = inletSystem.getFlowRate("kg/hr");

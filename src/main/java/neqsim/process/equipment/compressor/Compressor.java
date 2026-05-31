@@ -584,7 +584,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
         || outTemperature != lastOutTemperature || isentropicEfficiency != lastIsentropicEfficiency
         || polytropicEfficiency != lastPolytropicEfficiency || dH != lastPower
         || numberOfCompressorCalcSteps != lastNumberOfCompressorCalcSteps
-        || useOutTemperature != lastUseOutTemperature || useCompressionRatio != lastUseCompressionRatio
+        || useOutTemperature != lastUseOutTemperature
+        || useCompressionRatio != lastUseCompressionRatio
         || usePolytropicCalc != lastUsePolytropicCalc || powerSet != lastPowerSet
         || calcPressureOut != lastCalcPressureOut || solveSpeed != lastSolveSpeed
         || compressorChart.isUseCompressorChart() != lastUseCompressorChart
@@ -650,6 +651,38 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       outStream.setCalculationIdentifier(id);
     }
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Run a PH flash and retry with the multi-phase check temporarily disabled if the first attempt
+   * raises an IsNaN-derived RuntimeException. Compressor outlet conditions often sit close to the
+   * cricondenbar where the PR #2099 supplementary stability trials can seed a non-physical 2-phase
+   * split, producing PhasePrEos:molarVolumeAnalytical NaN. Falling back to a single-phase flash
+   * recovers gracefully without changing the result for well-posed cases.
+   *
+   * @param thermoOps thermodynamic operations bound to the compressor thermo system
+   * @param hout target total enthalpy in J
+   */
+  private void runPHflashWithNaNRetry(ThermodynamicOperations thermoOps, double hout) {
+    try {
+      thermoOps.PHflash(hout, 0);
+    } catch (RuntimeException ex) {
+      Throwable cause = ex.getCause();
+      boolean isNaN = (ex.getMessage() != null && ex.getMessage().contains("NaN"))
+          || (cause != null && cause.getMessage() != null && cause.getMessage().contains("NaN"));
+      if (!isNaN) {
+        throw ex;
+      }
+      logger.debug("PHflash produced NaN; retrying with multi-phase check disabled");
+      boolean savedMpc = getThermoSystem().doMultiPhaseCheck();
+      getThermoSystem().setMultiPhaseCheck(false);
+      try {
+        getThermoSystem().init(0);
+        thermoOps.PHflash(hout, 0);
+      } finally {
+        getThermoSystem().setMultiPhaseCheck(savedMpc);
+      }
+    }
   }
 
   /**
@@ -808,9 +841,18 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     // additional phase can appear during compression. For multi-phase inlets (e.g.
     // gas + aqueous), stability analysis must remain active to maintain the correct
     // phase structure as pressure increases.
+    // Also treat phantom phases (beta < 1e-10) as single-phase, otherwise the
+    // phantom phase carries non-physical Z values that can seed NaN in
+    // PhasePrEos:molarVolumeAnalytical when MPC is left enabled.
     boolean originalMultiPhaseCheck = getThermoSystem().doMultiPhaseCheck();
     int inletPhases = getThermoSystem().getNumberOfPhases();
-    if (inletPhases <= 1 && originalMultiPhaseCheck) {
+    int realPhases = 0;
+    for (int phaseIdx = 0; phaseIdx < inletPhases; phaseIdx++) {
+      if (getThermoSystem().getPhase(phaseIdx).getBeta() > 1.0e-10) {
+        realPhases++;
+      }
+    }
+    if (realPhases <= 1 && originalMultiPhaseCheck) {
       getThermoSystem().setMultiPhaseCheck(false);
     }
 
@@ -1299,7 +1341,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
         double hout = hinn * (1 - 0 + fractionAntiSurge) + dH;
         thermoSystem.setPressure(pressure, pressureUnit);
         thermoOps = new ThermodynamicOperations(getThermoSystem());
-        thermoOps.PHflash(hout, 0);
+        runPHflashWithNaNRetry(thermoOps, hout);
         if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
           thermoOps.PHflashGERG2008(hout);
         }
@@ -1363,7 +1405,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
               newEnt = VegaProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
             }
             double hout = hinn + (newEnt - hinn) / polytropicEfficiency;
-            thermoOps.PHflash(hout, 0);
+            runPHflashWithNaNRetry(thermoOps, hout);
             if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
               thermoOps.PHflashGERG2008(hout);
             }
@@ -1426,7 +1468,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
               * (Math.pow(getOutletPressure() / presinn, 1.0 / term) - 1.0) / polytropicEfficiency;
           double hout = hinn + dH;
           thermoOps = new ThermodynamicOperations(getThermoSystem());
-          thermoOps.PHflash(hout, 0);
+          runPHflashWithNaNRetry(thermoOps, hout);
           if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
             thermoOps.PHflashGERG2008(hout);
           }
@@ -1481,7 +1523,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
               * (Math.pow(getOutletPressure() / presinn, 1.0 / term) - 1.0);
           double hout = hinn + dH;
           thermoOps = new ThermodynamicOperations(getThermoSystem());
-          thermoOps.PHflash(hout, 0);
+          runPHflashWithNaNRetry(thermoOps, hout);
           if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
             thermoOps.PHflashGERG2008(hout);
           }
@@ -1538,7 +1580,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       polytropicEfficiency = isentropicEfficiency;
       dH = hout - hinn;
       thermoOps = new ThermodynamicOperations(getThermoSystem());
-      thermoOps.PHflash(hout, 0);
+      runPHflashWithNaNRetry(thermoOps, hout);
       if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
         thermoOps.PHflashGERG2008(hout);
       }

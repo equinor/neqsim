@@ -275,14 +275,25 @@ def add_chapter(book_dir, title, part_index=0):
 def iter_chapters(cfg):
     """Yield ``(chapter_number, chapter_dict, part_title)`` for all chapters.
 
-    *chapter_number* is 1-based, sequential across all parts.
+    By default, *chapter_number* is 1-based and sequential across all parts.
+    Books that intentionally use directory numbers such as ``ch00``, ``ch01``,
+    ... may set ``settings.chapter_numbering_source: directory`` in
+    ``book.yaml``. In that mode the numeric prefix in the chapter directory is
+    used for rendered chapter numbers and consistency checks.
     """
+    settings = cfg.get("settings", {}) or {}
+    number_from_dir = settings.get("chapter_numbering_source") == "directory"
     num = 0
     for part in cfg.get("parts", []):
         part_title = part.get("title", "")
         for ch in part.get("chapters", []):
             num += 1
-            yield num, ch, part_title
+            ch_num = num
+            if number_from_dir:
+                match = re.match(r"ch(\d+)", ch.get("dir", ""))
+                if match:
+                    ch_num = int(match.group(1))
+            yield ch_num, ch, part_title
 
 
 def resolve_chapter_dir(book_dir, ch_dict):

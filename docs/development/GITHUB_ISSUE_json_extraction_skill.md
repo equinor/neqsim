@@ -14,7 +14,7 @@ Create a Copilot skill (and companion agent) that reads **unstructured informati
 
 ## Motivation
 
-NeqSim already has a powerful **JSON process builder** (`ProcessSystem.fromJson()` / `ProcessSystem.fromJsonAndRun()`) that can declaratively build and run complete process simulations from structured JSON. The evaluation notebook ([json_process_builder_evaluation.ipynb](../../examples/notebooks/json_process_builder_evaluation.ipynb)) confirms this works well for:
+NeqSim already has a powerful **JSON process builder** (`ProcessSystem.fromJson()` / `ProcessSystem.fromJsonAndRun()`) that can declaratively build and run complete process simulations from structured JSON. An evaluation notebook (`examples/notebooks/json_process_builder_evaluation.ipynb`, *planned*) confirms this works well for:
 
 - Linear and branching process trains
 - 40+ equipment types via `EquipmentFactory`
@@ -311,7 +311,7 @@ Minimum viable skill that can:
 
 ## Related Work
 
-- **Evaluation notebook:** [json_process_builder_evaluation.ipynb](../../examples/notebooks/json_process_builder_evaluation.ipynb) — prototypes the translation layer and validates the architecture
+- **Evaluation notebook:** `examples/notebooks/json_process_builder_evaluation.ipynb` *(planned)* — prototypes the translation layer and validates the architecture
 - **JSON builder:** `ProcessSystem.fromJson()` in [ProcessSystem.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/processmodel/ProcessSystem.java)
 - **Equipment factory:** [EquipmentFactory.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/EquipmentFactory.java)
 - **Existing agents:** `solve.process.agent.md`, `router.agent.md` — could use this skill

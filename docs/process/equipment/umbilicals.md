@@ -435,7 +435,7 @@ String report = design.toJson();
 - [Subsea Trees](subsea_trees) - Christmas tree modeling
 - [Subsea Manifolds](subsea_manifolds) - Manifold modeling
 - [Subsea Boosters](subsea_boosters) - Boosting systems
-- [PLEM/PLET](plem_plet) - Pipeline end structures
+- PLEM/PLET - Pipeline end structures *(see SURF subsea equipment overview)*
 
 ---
 

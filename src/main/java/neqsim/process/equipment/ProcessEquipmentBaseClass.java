@@ -18,6 +18,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.SimulationBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.capacity.CapacityConstraint;
@@ -44,6 +46,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /** Logger for this class hierarchy (used for low-flow propagation diagnostics). */
+  private static final Logger logger = LogManager.getLogger(ProcessEquipmentBaseClass.class);
+
   private ControllerDeviceInterface controller = null;
   ControllerDeviceInterface flowValveController = null;
   public boolean hasController = false;
@@ -60,6 +65,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   private boolean isSetEnergyStream = false;
   protected boolean isSolved = true;
   private boolean isActive = true;
+  private boolean lockedInactive = false;
   private double minimumFlow = 1e-20;
 
   /**
@@ -478,6 +484,126 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    */
   public void isActive(boolean isActive) {
     this.isActive = isActive;
+  }
+
+  /**
+   * Convenience helper for equipment to auto-bypass when its primary inlet flow is below the
+   * configured low-flow threshold.
+   *
+   * <p>
+   * Typical usage at the start of {@code run(UUID)}:
+   * </p>
+   *
+   * <pre>
+   * if (checkAndHandleLowFlow(getInletStream(), id)) {
+   *   return;
+   * }
+   * </pre>
+   *
+   * <p>
+   * When the inlet mass flow is below {@link #getMinimumFlow()} the equipment is marked inactive
+   * via {@link #isActive(boolean)} and {@link #setCalculationIdentifier(UUID)} is called so the
+   * scheduler treats the unit as solved for the current calculation pass. Otherwise the equipment
+   * is (re)marked active and {@code false} is returned so the caller can continue normal execution.
+   * </p>
+   *
+   * @param inlet primary inlet stream (may be null, in which case no bypass is applied)
+   * @param id current calculation identifier
+   * @return true if the equipment was auto-bypassed and {@code run()} should return immediately,
+   *         false if the equipment should execute normally
+   */
+  protected boolean checkAndHandleLowFlow(neqsim.process.equipment.stream.StreamInterface inlet,
+      UUID id) {
+    if (inlet == null) {
+      return false;
+    }
+    double flow;
+    try {
+      flow = inlet.getFlowRate("kg/hr");
+    } catch (NullPointerException ex) {
+      // Inlet stream has not been solved yet (no thermo system attached). Treat as
+      // "not low flow" so the unit runs normally and surfaces the real error.
+      return false;
+    }
+    if (flow < getMinimumFlow()) {
+      isActive(false);
+      setCalculationIdentifier(id);
+      return true;
+    }
+    isActive(true);
+    return false;
+  }
+
+  /**
+   * Convenience helper for auto-bypassing equipment to propagate zero mass flow to one or more
+   * outlet streams, so downstream equipment also auto-bypasses via
+   * {@link #checkAndHandleLowFlow(neqsim.process.equipment.stream.StreamInterface, UUID)}.
+   *
+   * <p>
+   * Each outlet stream's total flow rate is set to {@code 0.0 kg/hr} and the calculation identifier
+   * {@code id} is stamped onto it so the scheduler treats it as solved for the current pass. Null
+   * outlets are skipped silently. Failures to mutate the thermo system are logged at DEBUG level
+   * and otherwise swallowed so a missing thermo system on one outlet does not abort propagation to
+   * the others.
+   * </p>
+   *
+   * @param id current calculation identifier
+   * @param outlets outlet streams to zero out (may include null entries)
+   */
+  protected void propagateZeroFlow(UUID id,
+      neqsim.process.equipment.stream.StreamInterface... outlets) {
+    if (outlets == null) {
+      return;
+    }
+    for (neqsim.process.equipment.stream.StreamInterface outlet : outlets) {
+      if (outlet == null) {
+        continue;
+      }
+      try {
+        outlet.getThermoSystem().setTotalFlowRate(0.0, "kg/hr");
+        outlet.setCalculationIdentifier(id);
+      } catch (NullPointerException ex) {
+        logger.debug("Could not propagate zero flow from inactive '" + getName()
+            + "' (outlet has no thermo system attached)", ex);
+      }
+    }
+  }
+
+  /**
+   * Returns whether this equipment has been explicitly (manually) deactivated and should remain
+   * bypassed across simulation runs.
+   *
+   * <p>
+   * Unlike the transient {@link #isActive()} flag — which is set automatically by
+   * {@link #checkAndHandleLowFlow} based on the current inlet flow — {@code lockedInactive} is a
+   * user-controlled "hard bypass" flag. {@link neqsim.process.processmodel.ProcessSystem} resets
+   * {@code isActive} to {@code true} at the start of each run for every unit where
+   * {@code lockedInactive == false}; locked units remain inactive and their {@code run()} method is
+   * never invoked.
+   * </p>
+   *
+   * @return true if the equipment is manually locked in the inactive state
+   */
+  public boolean isLockedInactive() {
+    return lockedInactive;
+  }
+
+  /**
+   * Manually lock or unlock this equipment in the inactive (bypassed) state. When set to
+   * {@code true} the equipment is also marked inactive ({@link #isActive(boolean)}) so the next
+   * scheduler pass skips it; when set to {@code false} the equipment is re-marked active and will
+   * be evaluated on the next simulation run.
+   *
+   * @param lockedInactive true to bypass this equipment indefinitely; false to allow normal
+   *        execution (default)
+   */
+  public void setLockedInactive(boolean lockedInactive) {
+    this.lockedInactive = lockedInactive;
+    if (lockedInactive) {
+      isActive(false);
+    } else {
+      isActive(true);
+    }
   }
 
   /**

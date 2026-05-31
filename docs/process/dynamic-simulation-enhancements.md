@@ -581,4 +581,4 @@ Run all tests:
 - [Dynamic Simulation Guide](../simulation/dynamic_simulation_guide.md) — Comprehensive transient simulation guide
 - [Process Controllers and Logic](controllers.md) — PID controllers and adjusters
 - [Separators](equipment/separators.md) — Separator configuration and sizing
-- [Heat Exchangers](equipment/heat-exchangers.md) — Heat exchanger types and design
+- [Heat Exchangers](equipment/heat_exchangers.md) — Heat exchanger types and design

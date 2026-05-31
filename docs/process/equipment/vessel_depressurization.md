@@ -1077,9 +1077,6 @@ print(f"Min gas T: {float(vessel.getMinimumTemperatureReached('C')):.1f} C")
 
 ## Related Documentation
 
-- [CNG Tank Filling Notebook](../../../examples/CNGtankmodelling/CNG_FillingSimulation.ipynb) - Filling simulation example
-- [CNG Tank Emptying Notebook](../../../examples/CNGtankmodelling/CNG_EmptyingSimulation.ipynb) - Depressurization example
-- [CNG Gas Properties Notebook](../../../examples/CNGtankmodelling/CNG_GasProperties_HTC.ipynb) - Gas properties and HTC calculations
 - [HTC Literature Comparison](../../../examples/CNGtankmodelling/CNG_HTC_Literature_Comparison.ipynb) - Validation against published experimental data
 - [QRA Integration Guide](../../integration/QRA_INTEGRATION_GUIDE.md) - Safety analysis integration
 - [Fire Heat Transfer](../../safety/fire_heat_transfer_enhancements.md) - Fire exposure and blowdown enhancements

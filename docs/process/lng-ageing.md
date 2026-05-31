@@ -341,12 +341,12 @@ LNGShipModel
 
 ## Related Documentation
 
-- [ISO 6578 Standard](../standards/iso6578.md) — LNG density calculation
-- [ISO 6976 Standard](../standards/iso6976.md) — Calorific value and Wobbe index
+- [ISO 6578 Standard](../standards/iso6578_lng_density.md) — LNG density calculation
+- [ISO 6976 Standard](../standards/iso6976_calorific_values.md) — Calorific value and Wobbe index
 - [Process Equipment Overview](../process/index.md) — All NeqSim process equipment
 
 ## Example Notebooks
 
-- [LNG Ageing Basics](../examples/notebooks/lng_ageing_basics.ipynb) — Single-tank simulation with visualization
-- [LNG Advanced Features](../examples/notebooks/lng_ageing_advanced.ipynb) — Tank geometry, sloshing, methane number, rollover
-- [LNG Ship Voyage Simulation](../examples/notebooks/lng_ship_voyage.ipynb) — Multi-tank Q-Max carrier voyage
+- [LNG Ageing Basics](../../examples/notebooks/lng_ageing_basics.ipynb) — Single-tank simulation with visualization
+- [LNG Advanced Features](../../examples/notebooks/lng_ageing_advanced.ipynb) — Tank geometry, sloshing, methane number, rollover
+- [LNG Ship Voyage Simulation](../../examples/notebooks/lng_ship_voyage.ipynb) — Multi-tank Q-Max carrier voyage

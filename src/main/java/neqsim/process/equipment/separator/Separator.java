@@ -633,6 +633,11 @@ public class Separator extends ProcessEquipmentBaseClass
   @Override
   public void run(UUID id) {
     inletStreamMixer.run(id);
+    if (checkAndHandleLowFlow(inletStreamMixer.getOutletStream(), id)) {
+      // Propagate zero flow to both outlet products so downstream equipment also auto-bypasses.
+      propagateZeroFlow(id, gasOutStream, liquidOutStream);
+      return;
+    }
     double enthalpy = inletStreamMixer.getOutletStream().getFluid().getEnthalpy();
     double flow = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
     double pres = inletStreamMixer.getOutletStream().getPressure();

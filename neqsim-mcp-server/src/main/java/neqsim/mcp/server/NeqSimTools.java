@@ -1,5 +1,8 @@
 package neqsim.mcp.server;
 
+import java.util.Map;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.quarkiverse.mcp.server.Tool;
@@ -124,6 +127,10 @@ public class NeqSimTools {
           + "dewPointT (dew point T at given P), dewPointP (dew point P at given T), "
           + "bubblePointT (bubble point T at given P), bubblePointP (bubble point P at given T), "
           + "hydrateTP (hydrate equilibrium T at given P)") String flashType) {
+    String policyBlocked = enforceToolAccess("runFlash");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
       JsonObject json = new JsonObject();
       json.add("components", JsonParser.parseString(components));
@@ -141,7 +148,8 @@ public class NeqSimTools {
       json.addProperty("model", eos);
       json.addProperty("flashType", flashType);
 
-      return withAutoValidation(FlashRunner.run(json.toString()), "flash");
+      return standardizeResponse("runFlash",
+          withAutoValidation(FlashRunner.run(json.toString()), "flash"), "general");
     } catch (Exception e) {
       return errorJson("Flash calculation failed: " + e.getMessage());
     }
@@ -164,8 +172,13 @@ public class NeqSimTools {
           + "either 'fluid' with components and model plus a 'process' array, or "
           + "top-level 'areas' containing named process-area JSON objects. "
           + "Use getExample(category='process', name='simple-separation') for a template.") String processJson) {
+    String policyBlocked = enforceToolAccess("runProcess");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
-      return withAutoValidation(ProcessRunner.validateAndRun(processJson), "process");
+      return standardizeResponse("runProcess",
+          withAutoValidation(ProcessRunner.validateAndRun(processJson), "process"), "general");
     } catch (Exception e) {
       return errorJson("Process simulation failed: " + e.getMessage());
     }
@@ -183,8 +196,12 @@ public class NeqSimTools {
   public String validateInput(
       @ToolArg(description = "JSON string to validate. Can be a flash input or "
           + "process definition - the validator auto-detects the type.") String inputJson) {
+    String policyBlocked = enforceToolAccess("validateInput");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
-      return Validator.validate(inputJson);
+      return standardizeResponse("validateInput", Validator.validate(inputJson), "general");
     } catch (Exception e) {
       return errorJson("Validation failed: " + e.getMessage());
     }
@@ -203,8 +220,12 @@ public class NeqSimTools {
       @ToolArg(description = "Component name or partial name to search for. "
           + "Examples: 'methane', 'C3', 'water', 'hydro'. "
           + "Empty string returns all components.") String query) {
+    String policyBlocked = enforceToolAccess("searchComponents");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
-      return ComponentQuery.search(query);
+      return standardizeResponse("searchComponents", ComponentQuery.search(query), "general");
     } catch (Exception e) {
       return errorJson("Component search failed: " + e.getMessage());
     }
@@ -232,6 +253,10 @@ public class NeqSimTools {
       @ToolArg(description = "Example name, e.g. 'tp-simple-gas', "
           + "'simple-separation', 'hazop-study', or a schema-backed tool name "
           + "when category is 'tool'") final String name) {
+    String policyBlocked = enforceToolAccess("getExample");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     String example = ExampleCatalog.getExample(category, name);
     if (example != null) {
       return example;
@@ -260,6 +285,10 @@ public class NeqSimTools {
       @ToolArg(description = "Schema-backed tool name, e.g. run_flash, run_process, "
           + "run_dynamic, run_hazop, or run_safety_system_performance") final String toolName,
       @ToolArg(description = "Schema type: input or output") final String schemaType) {
+    String policyBlocked = enforceToolAccess("getSchema");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     String schema = SchemaCatalog.getSchema(toolName, schemaType);
     if (schema != null) {
       return schema;
@@ -279,8 +308,13 @@ public class NeqSimTools {
   public String listSimulationUnits(
       @ToolArg(description = "Complete process definition as JSON string. "
           + "Same format as runProcess.") String processJson) {
+    String policyBlocked = enforceToolAccess("listSimulationUnits");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
-      return AutomationRunner.listUnits(processJson);
+      return standardizeResponse("listSimulationUnits", AutomationRunner.listUnits(processJson),
+          "general");
     } catch (Exception e) {
       return errorJson("Failed to list units: " + e.getMessage());
     }
@@ -302,8 +336,13 @@ public class NeqSimTools {
       @ToolArg(description = "Equipment unit name to list variables for, "
           + "e.g. 'HP Separator', 'Compressor Stage 1'. "
           + "Use listSimulationUnits to find valid names.") String unitName) {
+    String policyBlocked = enforceToolAccess("listUnitVariables");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
-      return AutomationRunner.listVariables(processJson, unitName);
+      return standardizeResponse("listUnitVariables",
+          AutomationRunner.listVariables(processJson, unitName), "general");
     } catch (Exception e) {
       return errorJson("Failed to list variables: " + e.getMessage());
     }
@@ -329,8 +368,13 @@ public class NeqSimTools {
       @ToolArg(description = "Desired unit of measurement: "
           + "Temperature: C, K, F | Pressure: bara, barg, Pa, kPa, MPa, psi | "
           + "Flow: kg/hr, m3/hr, MSm3/day | Power: kW, MW, hp") String unit) {
+    String policyBlocked = enforceToolAccess("getSimulationVariable");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
-      return AutomationRunner.getVariable(processJson, address, unit);
+      return standardizeResponse("getSimulationVariable",
+          AutomationRunner.getVariable(processJson, address, unit), "general");
     } catch (Exception e) {
       return errorJson("Failed to get variable: " + e.getMessage());
     }
@@ -356,8 +400,13 @@ public class NeqSimTools {
       @ToolArg(description = "New value for the variable.") double value,
       @ToolArg(description = "Unit of measurement for the value, "
           + "e.g. 'C', 'bara', 'kg/hr'.") String unit) {
+    String policyBlocked = enforceToolAccess("setSimulationVariable");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
-      return AutomationRunner.setVariableAndRun(processJson, address, value, unit);
+      return standardizeResponse("setSimulationVariable",
+          AutomationRunner.setVariableAndRun(processJson, address, value, unit), "general");
     } catch (Exception e) {
       return errorJson("Failed to set variable: " + e.getMessage());
     }
@@ -380,8 +429,13 @@ public class NeqSimTools {
       @ToolArg(description = "Name for the state snapshot, "
           + "e.g. 'Gas Processing Base Case'.") String stateName,
       @ToolArg(description = "Version string, e.g. '1.0.0'.") String stateVersion) {
+    String policyBlocked = enforceToolAccess("saveSimulationState");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
-      return AutomationRunner.saveState(processJson, stateName, stateVersion);
+      return standardizeResponse("saveSimulationState",
+          AutomationRunner.saveState(processJson, stateName, stateVersion), "general");
     } catch (Exception e) {
       return errorJson("Failed to save state: " + e.getMessage());
     }
@@ -401,8 +455,13 @@ public class NeqSimTools {
       description = "First state JSON (from saveSimulationState 'state' field)") String stateJson1,
       @ToolArg(
           description = "Second state JSON (from saveSimulationState 'state' field)") String stateJson2) {
+    String policyBlocked = enforceToolAccess("compareSimulationStates");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
-      return AutomationRunner.compareStates(stateJson1, stateJson2);
+      return standardizeResponse("compareSimulationStates",
+          AutomationRunner.compareStates(stateJson1, stateJson2), "general");
     } catch (Exception e) {
       return errorJson("Failed to compare states: " + e.getMessage());
     }
@@ -428,8 +487,13 @@ public class NeqSimTools {
           description = "The address that failed, e.g. 'HP separator.gasOut.temp'") String failedAddress,
       @ToolArg(
           description = "The operation that failed: 'get', 'set', or 'list'") String operation) {
+    String policyBlocked = enforceToolAccess("diagnoseAutomation");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
-      return AutomationRunner.diagnose(processJson, failedAddress, operation);
+      return standardizeResponse("diagnoseAutomation",
+          AutomationRunner.diagnose(processJson, failedAddress, operation), "general");
     } catch (Exception e) {
       return errorJson("Failed to diagnose: " + e.getMessage());
     }
@@ -448,8 +512,13 @@ public class NeqSimTools {
       + "and improve future calls.")
   public String getAutomationLearningReport(
       @ToolArg(description = "Process definition as JSON string") String processJson) {
+    String policyBlocked = enforceToolAccess("getAutomationLearningReport");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
-      return AutomationRunner.getLearningReport(processJson);
+      return standardizeResponse("getAutomationLearningReport",
+          AutomationRunner.getLearningReport(processJson), "general");
     } catch (Exception e) {
       return errorJson("Failed to get learning report: " + e.getMessage());
     }
@@ -479,12 +548,13 @@ public class NeqSimTools {
           + "settlingTolerance. For evaluateOperatingEnvelope, include optional designCapacities, "
           + "tagBindings, fieldData, marginHistory, and predictionHorizonSeconds. Use "
           + "action=getSchema for the full input guide.") String operationalJson) {
-    String blocked = IndustrialProfile.enforceAccess("runOperationalStudy");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runOperationalStudy");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return OperationalStudyRunner.run(operationalJson);
+      return standardizeResponse("runOperationalStudy", OperationalStudyRunner.run(operationalJson),
+          "general");
     } catch (Exception e) {
       return errorJson("Operational study failed: " + e.getMessage());
     }
@@ -529,6 +599,10 @@ public class NeqSimTools {
       @ToolArg(description = "Number of data points (2-200, default 20)") int points,
       @ToolArg(description = "Equation of state: SRK, PR, CPA, GERG2008, "
           + "PCSAFT, UMRPRU") String eos) {
+    String policyBlocked = enforceToolAccess("getPropertyTable");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
       com.google.gson.JsonObject json = new com.google.gson.JsonObject();
       json.add("components", com.google.gson.JsonParser.parseString(components));
@@ -559,7 +633,8 @@ public class NeqSimTools {
         json.add("fixedTemperature", fixedT);
       }
 
-      return PropertyTableRunner.run(json.toString());
+      return standardizeResponse("getPropertyTable", PropertyTableRunner.run(json.toString()),
+          "general");
     } catch (Exception e) {
       return errorJson("Property table calculation failed: " + e.getMessage());
     }
@@ -581,11 +656,16 @@ public class NeqSimTools {
           + "to mole fractions, e.g. {\"methane\": 0.85, \"ethane\": 0.10}") String components,
       @ToolArg(description = "Equation of state: SRK, PR, CPA, GERG2008, "
           + "PCSAFT, UMRPRU") String eos) {
+    String policyBlocked = enforceToolAccess("getPhaseEnvelope");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
       com.google.gson.JsonObject json = new com.google.gson.JsonObject();
       json.add("components", com.google.gson.JsonParser.parseString(components));
       json.addProperty("model", eos);
-      return PhaseEnvelopeRunner.run(json.toString());
+      return standardizeResponse("getPhaseEnvelope", PhaseEnvelopeRunner.run(json.toString()),
+          "general");
     } catch (Exception e) {
       return errorJson("Phase envelope calculation failed: " + e.getMessage());
     }
@@ -604,8 +684,13 @@ public class NeqSimTools {
       + "tool descriptors, setup templates, process JSON contracts, validation "
       + "coverage, and response-contract coverage.")
   public String getCapabilities() {
+    String policyBlocked = enforceToolAccess("getCapabilities");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
-      return CapabilitiesRunner.getCapabilities();
+      return standardizeResponse("getCapabilities", CapabilitiesRunner.getCapabilities(),
+          "general");
     } catch (Exception e) {
       return errorJson("Failed to get capabilities: " + e.getMessage());
     }
@@ -642,9 +727,9 @@ public class NeqSimTools {
           + "\"pressure\": {\"value\": 50, \"unit\": \"bara\"}}, "
           + "{\"temperature\": {\"value\": 25, \"unit\": \"C\"}, "
           + "\"pressure\": {\"value\": 50, \"unit\": \"bara\"}}]") String cases) {
-    String blocked = IndustrialProfile.enforceAccess("runBatch");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runBatch");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
       com.google.gson.JsonObject json = new com.google.gson.JsonObject();
@@ -652,20 +737,24 @@ public class NeqSimTools {
       json.addProperty("model", eos);
       json.addProperty("flashType", flashType);
       json.add("cases", com.google.gson.JsonParser.parseString(cases));
-      return BatchRunner.run(json.toString());
+      return standardizeResponse("runBatch", BatchRunner.run(json.toString()), "general");
     } catch (Exception e) {
       return errorJson("Batch calculation failed: " + e.getMessage());
     }
   }
 
   private static String errorJson(String message) {
+    String toolName = currentToolName();
     JsonObject error = new JsonObject();
     error.addProperty("apiVersion", ApiEnvelope.API_VERSION);
     error.addProperty("status", "error");
+    error.addProperty("tool", toolName);
     error.addProperty("message", message);
+    error.add("data", new JsonObject());
     error.add("validation", ApiEnvelope.validationStatus(false, "server", message));
     error.add("qualityGate", ApiEnvelope.qualityGate("failed", message, true));
-    return error.toString();
+    error.add("warnings", new JsonArray());
+    return GSON_PRETTY.toJson(error);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -689,12 +778,13 @@ public class NeqSimTools {
           + "'compareVariables' (array of {address, unit} to track across models), and "
           + "optional 'tolerances' ({\"temperature\": 2.0, \"density\": 5.0, \"default\": 10.0} "
           + "as percent thresholds).") String crossValidationJson) {
-    String blocked = IndustrialProfile.enforceAccess("crossValidateModels");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("crossValidateModels");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return CrossValidationRunner.crossValidate(crossValidationJson);
+      return standardizeResponse("crossValidateModels",
+          CrossValidationRunner.crossValidate(crossValidationJson), "general");
     } catch (Exception e) {
       return errorJson("Cross-validation failed: " + e.getMessage());
     }
@@ -717,12 +807,13 @@ public class NeqSimTools {
           + "'values' array or 'from'/'to'/'steps' range), 'outputs' (array of {address, unit} "
           + "to extract from each case), and optional 'mode' ('one_at_a_time' or "
           + "'full_factorial', default one_at_a_time).") String studyJson) {
-    String blocked = IndustrialProfile.enforceAccess("runParametricStudy");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runParametricStudy");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return ParametricStudyRunner.run(studyJson);
+      return standardizeResponse("runParametricStudy", ParametricStudyRunner.run(studyJson),
+          "general");
     } catch (Exception e) {
       return errorJson("Parametric study failed: " + e.getMessage());
     }
@@ -750,12 +841,13 @@ public class NeqSimTools {
           + "saturationTemperature, separatorTest, swellingTest, GOR, viscosity), and "
           + "'experimentConfig' with experiment-specific parameters like 'pressures_bara' "
           + "array, separator stages, or injection gas composition.") String pvtJson) {
-    String blocked = IndustrialProfile.enforceAccess("runPVT");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runPVT");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return withAutoValidation(PVTRunner.run(pvtJson), "general");
+      return standardizeResponse("runPVT", withAutoValidation(PVTRunner.run(pvtJson), "general"),
+          "general");
     } catch (Exception e) {
       return errorJson("PVT simulation failed: " + e.getMessage());
     }
@@ -783,12 +875,13 @@ public class NeqSimTools {
           + "'analysis' (hydrateRiskMap, waxAppearance, asphalteneStability, CO2Corrosion, "
           + "scalePrediction, erosion, pipelineCooldown, emulsionViscosity), and "
           + "'analysisConfig' with analysis-specific parameters.") String flowAssuranceJson) {
-    String blocked = IndustrialProfile.enforceAccess("runFlowAssurance");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runFlowAssurance");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return withAutoValidation(FlowAssuranceRunner.run(flowAssuranceJson), "pipeline");
+      return standardizeResponse("runFlowAssurance",
+          withAutoValidation(FlowAssuranceRunner.run(flowAssuranceJson), "pipeline"), "general");
     } catch (Exception e) {
       return errorJson("Flow assurance analysis failed: " + e.getMessage());
     }
@@ -809,12 +902,12 @@ public class NeqSimTools {
   public String runChemistry(@ToolArg(description = "JSON specification with 'analysis' field "
       + "(one of: electrolyteScale, mechanisticCorrosion, langmuirInhibitor, "
       + "packedBedScavenger) and analysis-specific parameters.") String chemistryJson) {
-    String blocked = IndustrialProfile.enforceAccess("runChemistry");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runChemistry");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return ChemistryRunner.run(chemistryJson);
+      return standardizeResponse("runChemistry", ChemistryRunner.run(chemistryJson), "general");
     } catch (Exception e) {
       return errorJson("Chemistry analysis failed: " + e.getMessage());
     }
@@ -836,12 +929,13 @@ public class NeqSimTools {
       @ToolArg(description = "JSON with optional 'processJson' (same format as runProcess), "
           + "'materialsRegister' or 'items' array, optional 'stidData' normalized extract, "
           + "and optional 'projectName' and 'designLifeYears'.") String materialsReviewJson) {
-    String blocked = IndustrialProfile.enforceAccess("runMaterialsReview");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runMaterialsReview");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return withAutoValidation(MaterialsReviewRunner.run(materialsReviewJson), "general");
+      return standardizeResponse("runMaterialsReview",
+          withAutoValidation(MaterialsReviewRunner.run(materialsReviewJson), "general"), "general");
     } catch (Exception e) {
       return errorJson("Materials review failed: " + e.getMessage());
     }
@@ -864,12 +958,13 @@ public class NeqSimTools {
       + "standards, drainageCapacityKgPerS, fireWaterCapacityKgPerS, liquidLeakRateKgPerS, "
       + "backflowPrevented, closedOpenDrainInteractionPrevented, hazardous/non-hazardous "
       + "segregation, seal/vent evidence, and optional tagreader evidence.") String openDrainReviewJson) {
-    String blocked = IndustrialProfile.enforceAccess("runOpenDrainReview");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runOpenDrainReview");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return withAutoValidation(OpenDrainReviewRunner.run(openDrainReviewJson), "general");
+      return standardizeResponse("runOpenDrainReview",
+          withAutoValidation(OpenDrainReviewRunner.run(openDrainReviewJson), "general"), "general");
     } catch (Exception e) {
       return errorJson("Open-drain review failed: " + e.getMessage());
     }
@@ -895,12 +990,14 @@ public class NeqSimTools {
           + "PSV capacity fields, secondary pressure protection pressures/frequencies, and "
           + "instrument data such as bypassActive, overrideActive, proofTestOverdue, or "
           + "tripDemandFailures.") String clause10ReviewJson) {
-    String blocked = IndustrialProfile.enforceAccess("runNorsokS001Clause10Review");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runNorsokS001Clause10Review");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return withAutoValidation(NorsokS001Clause10ReviewRunner.run(clause10ReviewJson), "general");
+      return standardizeResponse("runNorsokS001Clause10Review",
+          withAutoValidation(NorsokS001Clause10ReviewRunner.run(clause10ReviewJson), "general"),
+          "general");
     } catch (Exception e) {
       return errorJson("NORSOK S-001 Clause 10 review failed: " + e.getMessage());
     }
@@ -929,8 +1026,13 @@ public class NeqSimTools {
           + "'model' (SRK/PR), 'temperature_C', 'pressure_bara', and "
           + "'standard' (ISO6976, ISO12213, AGA3, ASTM_D86, etc.). "
           + "Some standards require additional parameters in 'standardConfig'.") String standardJson) {
+    String policyBlocked = enforceToolAccess("calculateStandard");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
-      return withAutoValidation(StandardsRunner.run(standardJson), "general");
+      return standardizeResponse("calculateStandard",
+          withAutoValidation(StandardsRunner.run(standardJson), "general"), "general");
     } catch (Exception e) {
       return errorJson("Standard calculation failed: " + e.getMessage());
     }
@@ -955,12 +1057,13 @@ public class NeqSimTools {
           + "'model' (SRK/PR), 'temperature_C', 'pressure_bara', "
           + "'flowRate' ({value, unit}), 'pipe' ({diameter_m, length_m, "
           + "elevation_m, roughness_m, numberOfIncrements}).") String pipelineJson) {
-    String blocked = IndustrialProfile.enforceAccess("runPipeline");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runPipeline");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return withAutoValidation(PipelineRunner.run(pipelineJson), "pipeline");
+      return standardizeResponse("runPipeline",
+          withAutoValidation(PipelineRunner.run(pipelineJson), "pipeline"), "general");
     } catch (Exception e) {
       return errorJson("Pipeline simulation failed: " + e.getMessage());
     }
@@ -984,12 +1087,13 @@ public class NeqSimTools {
           + "optional 'stidRoute' ({segments:[...]}), 'fieldData' tagreader overrides, "
           + "'eventSchedule' valve events, 'simulationTime_s', 'timeStep_s', and "
           + "'designPressure_bara'.") String waterHammerJson) {
-    String blocked = IndustrialProfile.enforceAccess("runWaterHammer");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runWaterHammer");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return withAutoValidation(WaterHammerRunner.run(waterHammerJson), "pipeline");
+      return standardizeResponse("runWaterHammer",
+          withAutoValidation(WaterHammerRunner.run(waterHammerJson), "pipeline"), "general");
     } catch (Exception e) {
       return errorJson("Water-hammer study failed: " + e.getMessage());
     }
@@ -1016,12 +1120,12 @@ public class NeqSimTools {
           + "'gasVolume_Sm3', 'oilVolume_Sm3', 'waterVolume_Sm3', "
           + "'producers' (array of {name, flowRate: {value, unit}}), "
           + "'simulationYears' (optional), 'timeStepDays' (optional).") String reservoirJson) {
-    String blocked = IndustrialProfile.enforceAccess("runReservoir");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runReservoir");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return ReservoirRunner.run(reservoirJson);
+      return standardizeResponse("runReservoir", ReservoirRunner.run(reservoirJson), "general");
     } catch (Exception e) {
       return errorJson("Reservoir simulation failed: " + e.getMessage());
     }
@@ -1052,12 +1156,13 @@ public class NeqSimTools {
           + "gas: {year: sm3}}), 'discountRate'. For productionProfile: 'declineType' "
           + "(EXPONENTIAL/HYPERBOLIC/HARMONIC), 'initialRate_bblPerDay', 'annualDeclineRate', "
           + "'startYear', 'totalYears', 'plateauYears' (optional).") String economicsJson) {
-    String blocked = IndustrialProfile.enforceAccess("runFieldEconomics");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runFieldEconomics");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return FieldDevelopmentRunner.run(economicsJson);
+      return standardizeResponse("runFieldEconomics", FieldDevelopmentRunner.run(economicsJson),
+          "general");
     } catch (Exception e) {
       return errorJson("Field economics calculation failed: " + e.getMessage());
     }
@@ -1084,12 +1189,12 @@ public class NeqSimTools {
           + "definition), 'duration_seconds' (simulation length), 'timeStep_seconds' "
           + "(step size, default 1.0), and optional 'tuning' ({pressure: {kp, ti}, "
           + "level: {kp, ti}, flow: {kp, ti}, temperature: {kp, ti}}).") String dynamicJson) {
-    String blocked = IndustrialProfile.enforceAccess("runDynamic");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runDynamic");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return DynamicRunner.run(dynamicJson);
+      return standardizeResponse("runDynamic", DynamicRunner.run(dynamicJson), "general");
     } catch (Exception e) {
       return errorJson("Dynamic simulation failed: " + e.getMessage());
     }
@@ -1122,12 +1227,12 @@ public class NeqSimTools {
           + "'gasifierType' (DOWNDRAFT, UPDRAFT, FLUIDIZED_BED), 'agentType' (AIR, OXYGEN, STEAM). "
           + "For pyrolysis: 'biomass' (same), 'mode' (SLOW, FAST, FLASH), "
           + "'temperature_C'.") String bioprocessJson) {
-    String blocked = IndustrialProfile.enforceAccess("runBioprocess");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runBioprocess");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return BioprocessRunner.run(bioprocessJson);
+      return standardizeResponse("runBioprocess", BioprocessRunner.run(bioprocessJson), "general");
     } catch (Exception e) {
       return errorJson("Bioprocess simulation failed: " + e.getMessage());
     }
@@ -1156,12 +1261,12 @@ public class NeqSimTools {
           + "For addEquipment: 'sessionId', 'equipment' ({type, name, inlet, properties}). "
           + "For modify: 'sessionId', 'address' (e.g. 'Compressor.outletPressure'), "
           + "'value', 'unit'. For run/getState/close: 'sessionId'.") String sessionJson) {
-    String blocked = IndustrialProfile.enforceAccess("manageSession");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("manageSession");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return SessionRunner.run(sessionJson);
+      return standardizeResponse("manageSession", SessionRunner.run(sessionJson), "general");
     } catch (Exception e) {
       return errorJson("Session operation failed: " + e.getMessage());
     }
@@ -1189,12 +1294,12 @@ public class NeqSimTools {
           + "'fluid' (composition), 'parameters' (task-specific values like outletPressure, "
           + "stages, intercoolerTemp), optional 'process' (equipment definitions), "
           + "optional 'validate' (true/false, default true).") String taskJson) {
-    String blocked = IndustrialProfile.enforceAccess("solveTask");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("solveTask");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return TaskSolverRunner.solveTask(taskJson);
+      return standardizeResponse("solveTask", TaskSolverRunner.solveTask(taskJson), "general");
     } catch (Exception e) {
       return errorJson("Task solving failed: " + e.getMessage());
     }
@@ -1216,12 +1321,13 @@ public class NeqSimTools {
           + "'steps' array of {runner, name, input} objects. Runners: flash, process, "
           + "pipeline, pvt, flow_assurance, reservoir, economics, dynamic, standards, "
           + "bioprocess. Each step's output is available to subsequent steps.") String workflowJson) {
-    String blocked = IndustrialProfile.enforceAccess("composeWorkflow");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("composeWorkflow");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return TaskSolverRunner.composeWorkflow(workflowJson);
+      return standardizeResponse("composeWorkflow", TaskSolverRunner.composeWorkflow(workflowJson),
+          "general");
     } catch (Exception e) {
       return errorJson("Workflow composition failed: " + e.getMessage());
     }
@@ -1243,12 +1349,13 @@ public class NeqSimTools {
           + "fluid, objectives, constraints, standards, and deliverables. For trust provide result, "
           + "provenance, validation, qualityGate, benchmarkTrust, evidence, assumptions, and "
           + "limitations. For study provide candidates with metrics, objectives, and constraints.") String agenticJson) {
-    String blocked = IndustrialProfile.enforceAccess("runAgenticEngineering");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runAgenticEngineering");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return AgenticEngineeringRunner.run(agenticJson);
+      return standardizeResponse("runAgenticEngineering", AgenticEngineeringRunner.run(agenticJson),
+          "general");
     } catch (Exception e) {
       return errorJson("Agentic engineering failed: " + e.getMessage());
     }
@@ -1277,8 +1384,13 @@ public class NeqSimTools {
           + "from any runner (flash, process, pipeline, etc.).") String resultsJson,
       @ToolArg(description = "Validation context: 'process', 'compressor', 'separator', "
           + "'heatExchanger', 'pipeline', 'valve', or 'general'.") String context) {
+    String policyBlocked = enforceToolAccess("validateResults");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
-      return EngineeringValidator.validate(resultsJson, context);
+      return standardizeResponse("validateResults",
+          EngineeringValidator.validate(resultsJson, context), "general");
     } catch (Exception e) {
       return errorJson("Validation failed: " + e.getMessage());
     }
@@ -1304,12 +1416,12 @@ public class NeqSimTools {
           + "parametric_sweep|flow_assurance|equipment_design|custom), 'title' (report "
           + "title), 'data' (simulation results to report on), optional 'author', "
           + "'includeValidation' (true/false), 'includeChartData' (true/false).") String reportJson) {
-    String blocked = IndustrialProfile.enforceAccess("generateReport");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("generateReport");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return ReportRunner.run(reportJson);
+      return standardizeResponse("generateReport", ReportRunner.run(reportJson), "general");
     } catch (Exception e) {
       return errorJson("Report generation failed: " + e.getMessage());
     }
@@ -1337,12 +1449,13 @@ public class NeqSimTools {
           + "For toResultsJson: 'toolOutput' (raw output from any MCP tool), "
           + "'sourceRunner' (tool name, e.g. 'runFlash'), optional 'taskTitle', "
           + "'approach' (methodology description), 'conclusions'.") String bridgeJson) {
-    String blocked = IndustrialProfile.enforceAccess("bridgeTaskWorkflow");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("bridgeTaskWorkflow");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return TaskWorkflowBridge.run(bridgeJson);
+      return standardizeResponse("bridgeTaskWorkflow", TaskWorkflowBridge.run(bridgeJson),
+          "general");
     } catch (Exception e) {
       return errorJson("Task workflow bridge failed: " + e.getMessage());
     }
@@ -1365,20 +1478,21 @@ public class NeqSimTools {
       @ToolArg(description = "JSON with: 'action' ('list' or 'run'). For 'run': "
           + "'pluginName' (registered plugin name), 'input' (plugin-specific JSON). "
           + "For 'list': no additional fields needed.") String pluginJson) {
-    String blocked = IndustrialProfile.enforceAccess("runPlugin");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runPlugin");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
       JsonObject input = JsonParser.parseString(pluginJson).getAsJsonObject();
       String action = input.has("action") ? input.get("action").getAsString() : "list";
 
       if ("list".equals(action)) {
-        return PluginRegistry.listPlugins();
+        return standardizeResponse("runPlugin", PluginRegistry.listPlugins(), "general");
       } else if ("run".equals(action)) {
         String pluginName = input.has("pluginName") ? input.get("pluginName").getAsString() : "";
         String pluginInput = input.has("input") ? input.get("input").toString() : "{}";
-        return PluginRegistry.runPlugin(pluginName, pluginInput);
+        return standardizeResponse("runPlugin", PluginRegistry.runPlugin(pluginName, pluginInput),
+            "general");
       } else {
         return errorJson("Unknown plugin action: " + action + ". Use 'list' or 'run'.");
       }
@@ -1403,16 +1517,21 @@ public class NeqSimTools {
   public String getProgress(
       @ToolArg(description = "JSON with: 'action' ('get' or 'listActive'). For 'get': "
           + "'operationId' (ID returned when starting a long simulation).") String progressJson) {
+    String policyBlocked = enforceToolAccess("getProgress");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
       JsonObject input = JsonParser.parseString(progressJson).getAsJsonObject();
       String action = input.has("action") ? input.get("action").getAsString() : "listActive";
 
       if ("listActive".equals(action)) {
-        return ProgressTracker.listActive();
+        return standardizeResponse("getProgress", ProgressTracker.listActive(), "general");
       } else if ("get".equals(action) && input.has("operationId")) {
-        return ProgressTracker.getProgress(input.get("operationId").getAsString());
+        return standardizeResponse("getProgress",
+            ProgressTracker.getProgress(input.get("operationId").getAsString()), "general");
       } else {
-        return ProgressTracker.listActive();
+        return standardizeResponse("getProgress", ProgressTracker.listActive(), "general");
       }
     } catch (Exception e) {
       return errorJson("Progress query failed: " + e.getMessage());
@@ -1439,12 +1558,12 @@ public class NeqSimTools {
           + "startMonteCarlo|pollResults|cancelOperation|listOperations). "
           + "For start actions: simulation parameters. "
           + "For pollResults: 'operationId' and 'lastIndex'.") String streamJson) {
-    String blocked = IndustrialProfile.enforceAccess("streamSimulation");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("streamSimulation");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return StreamingRunner.run(streamJson);
+      return standardizeResponse("streamSimulation", StreamingRunner.run(streamJson), "general");
     } catch (Exception e) {
       return errorJson("Streaming operation failed: " + e.getMessage());
     }
@@ -1469,12 +1588,13 @@ public class NeqSimTools {
           + "barChart|styledTable). For phaseEnvelope: fluid components. "
           + "For flowsheetDiagram: processJson. For barChart: labels, values. "
           + "For styledTable: headers, rows, caption.") String vizJson) {
-    String blocked = IndustrialProfile.enforceAccess("generateVisualization");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("generateVisualization");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return VisualizationRunner.run(vizJson);
+      return standardizeResponse("generateVisualization", VisualizationRunner.run(vizJson),
+          "general");
     } catch (Exception e) {
       return errorJson("Visualization failed: " + e.getMessage());
     }
@@ -1502,12 +1622,13 @@ public class NeqSimTools {
           + "For planComposition: 'task' (natural language description). "
           + "For getWorkflow: 'workflowId' (digital-twin|feed-study|vendor-evaluation|"
           + "safety-study).") String compositionJson) {
-    String blocked = IndustrialProfile.enforceAccess("composeMultiServerWorkflow");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("composeMultiServerWorkflow");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return CompositionRunner.run(compositionJson);
+      return standardizeResponse("composeMultiServerWorkflow",
+          CompositionRunner.run(compositionJson), "general");
     } catch (Exception e) {
       return errorJson("Composition failed: " + e.getMessage());
     }
@@ -1532,12 +1653,12 @@ public class NeqSimTools {
           + "getAuditLog|getRateLimits|setConfig|getStatus). "
           + "For createApiKey: 'userId', 'project', 'role', 'rateLimit'. "
           + "For getAuditLog: optional 'userId', 'tool', 'limit' filters.") String securityJson) {
-    String blocked = IndustrialProfile.enforceAccess("manageSecurity");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("manageSecurity");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return SecurityRunner.run(securityJson);
+      return standardizeResponse("manageSecurity", SecurityRunner.run(securityJson), "general");
     } catch (Exception e) {
       return errorJson("Security operation failed: " + e.getMessage());
     }
@@ -1562,12 +1683,12 @@ public class NeqSimTools {
           + "setStorageDir|getInfo). " + "For save: 'sessionId', 'name', 'version', 'description'. "
           + "For load: 'filename' or 'filePath'. "
           + "For compare: 'file1', 'file2'.") String persistJson) {
-    String blocked = IndustrialProfile.enforceAccess("manageState");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("manageState");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return StatePersistenceRunner.run(persistJson);
+      return standardizeResponse("manageState", StatePersistenceRunner.run(persistJson), "general");
     } catch (Exception e) {
       return errorJson("State persistence failed: " + e.getMessage());
     }
@@ -1594,12 +1715,13 @@ public class NeqSimTools {
           + "getStandardsForEquipment). " + "For setActiveProfile: 'profileName'. "
           + "For createProfile: 'profileName', optional 'basedOn', 'overrides'. "
           + "For getStandardsForEquipment: 'equipmentType'.") String profileJson) {
-    String blocked = IndustrialProfile.enforceAccess("manageValidationProfile");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("manageValidationProfile");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return ValidationProfileRunner.run(profileJson);
+      return standardizeResponse("manageValidationProfile",
+          ValidationProfileRunner.run(profileJson), "general");
     } catch (Exception e) {
       return errorJson("Validation profile operation failed: " + e.getMessage());
     }
@@ -1625,12 +1747,12 @@ public class NeqSimTools {
           + "For getComponentProperties: 'componentName'. "
           + "For listMaterials: 'materialType' (pipe|plate|casing|compressor|heatExchanger). "
           + "For queryStandard: 'code', optional 'equipmentType'.") String catalogJson) {
-    String blocked = IndustrialProfile.enforceAccess("queryDataCatalog");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("queryDataCatalog");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return DataCatalogRunner.run(catalogJson);
+      return standardizeResponse("queryDataCatalog", DataCatalogRunner.run(catalogJson), "general");
     } catch (Exception e) {
       return errorJson("Data catalog query failed: " + e.getMessage());
     }
@@ -1651,12 +1773,12 @@ public class NeqSimTools {
           + "'model', 'temperature_C', 'pressure_bara', 'components', 'flowRate'. "
           + "For separator: 'orientation', 'liquidRetentionTime_min'. "
           + "For compressor: 'outletPressure_bara', 'polytropicEfficiency'.") String sizingJson) {
-    String blocked = IndustrialProfile.enforceAccess("sizeEquipment");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("sizeEquipment");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return EquipmentSizingRunner.run(sizingJson);
+      return standardizeResponse("sizeEquipment", EquipmentSizingRunner.run(sizingJson), "general");
     } catch (Exception e) {
       return errorJson("Equipment sizing failed: " + e.getMessage());
     }
@@ -1675,12 +1797,13 @@ public class NeqSimTools {
   public String compareProcesses(
       @ToolArg(description = "JSON with 'cases' array. Each case has 'name', 'fluid', "
           + "and 'process' (same format as runProcess). Minimum 2 cases.") String comparisonJson) {
-    String blocked = IndustrialProfile.enforceAccess("compareProcesses");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("compareProcesses");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return ProcessComparisonRunner.run(comparisonJson);
+      return standardizeResponse("compareProcesses", ProcessComparisonRunner.run(comparisonJson),
+          "general");
     } catch (Exception e) {
       return errorJson("Process comparison failed: " + e.getMessage());
     }
@@ -1713,12 +1836,12 @@ public class NeqSimTools {
           + "For twoPhase: 'massFlowRate_kg_s', 'gasMassFraction', 'gasDensity_kg_m3', "
           + "'liquidDensity_kg_m3', 'latentHeat_J_kg', 'liquidCp_J_kgK', 'temperature_K'. "
           + "For fireHeatInput: 'wettedArea_m2', 'hasDrainage', 'hasFireFighting'.") String reliefJson) {
-    String blocked = IndustrialProfile.enforceAccess("runRelief");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runRelief");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return ReliefRunner.run(reliefJson);
+      return standardizeResponse("runRelief", ReliefRunner.run(reliefJson), "general");
     } catch (Exception e) {
       return errorJson("Relief sizing failed: " + e.getMessage());
     }
@@ -1742,12 +1865,12 @@ public class NeqSimTools {
           + "{\"scenario\":\"HP separator overpressure\",\"initiatingEventFrequency_per_year\":0.1,"
           + "\"targetFrequency_per_year\":1e-5,\"layers\":[{\"name\":\"BPCS\",\"pfd\":0.1},"
           + "{\"name\":\"PSV\",\"pfd\":0.01}]}") String lopaJson) {
-    String blocked = IndustrialProfile.enforceAccess("runLOPA");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runLOPA");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return LOPARunner.run(lopaJson);
+      return standardizeResponse("runLOPA", LOPARunner.run(lopaJson), "general");
     } catch (Exception e) {
       return errorJson("LOPA calculation failed: " + e.getMessage());
     }
@@ -1769,12 +1892,12 @@ public class NeqSimTools {
           + "(1oo1|1oo2|2oo3), 'proofTestInterval_hours', and EITHER 'pfdAvg' (direct) OR "
           + "'components' array with each component having 'name', 'type' (sensor|logic|finalElement), "
           + "and either 'pfd' or 'lambdaDU_per_hr' (dangerous undetected failure rate).") String silJson) {
-    String blocked = IndustrialProfile.enforceAccess("runSIL");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runSIL");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return SILRunner.run(silJson);
+      return standardizeResponse("runSIL", SILRunner.run(silJson), "general");
     } catch (Exception e) {
       return errorJson("SIL verification failed: " + e.getMessage());
     }
@@ -1795,12 +1918,12 @@ public class NeqSimTools {
       @ToolArg(description = "JSON with: 'events' array. Each event has 'name' and EITHER "
           + "('probabilityLevel' 1-5 + 'consequenceLevel' 1-5) OR "
           + "('failuresPerYear' + 'productionLossPercent'), plus optional 'mitigation'.") String riskJson) {
-    String blocked = IndustrialProfile.enforceAccess("runRiskMatrix");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runRiskMatrix");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return RiskMatrixRunner.run(riskJson);
+      return standardizeResponse("runRiskMatrix", RiskMatrixRunner.run(riskJson), "general");
     } catch (Exception e) {
       return errorJson("Risk matrix scoring failed: " + e.getMessage());
     }
@@ -1820,12 +1943,12 @@ public class NeqSimTools {
       @ToolArg(description = "JSON with: 'heatDuty_MW' (or 'heatDuty_W'), optional "
           + "'flameHeight_m' (default 30), 'radiantFraction' (default 0.18), and "
           + "'distances_m' array (default 15-200 m grid).") String flareJson) {
-    String blocked = IndustrialProfile.enforceAccess("runFlareNetwork");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runFlareNetwork");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return FlareRadiationRunner.run(flareJson);
+      return standardizeResponse("runFlareNetwork", FlareRadiationRunner.run(flareJson), "general");
     } catch (Exception e) {
       return errorJson("Flare radiation calculation failed: " + e.getMessage());
     }
@@ -1850,12 +1973,12 @@ public class NeqSimTools {
           + "'failureModes' array (e.g. COOLING_LOSS, VALVE_STUCK_CLOSED), optional "
           + "'barrierRegister', and 'runSimulations' boolean. Use getExample with category "
           + "'safety' and name 'hazop-study' for a template.") String hazopJson) {
-    String blocked = IndustrialProfile.enforceAccess("runHAZOP");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runHAZOP");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return HAZOPStudyRunner.run(hazopJson);
+      return standardizeResponse("runHAZOP", HAZOPStudyRunner.run(hazopJson), "general");
     } catch (Exception e) {
       return errorJson("HAZOP study generation failed: " + e.getMessage());
     }
@@ -1875,12 +1998,13 @@ public class NeqSimTools {
       @ToolArg(description = "JSON with 'register' containing registerId, evidence, "
           + "performanceStandards, barriers, and safetyCriticalElements. Use getExample "
           + "with category 'safety' and name 'barrier-register' for a template.") String barrierJson) {
-    String blocked = IndustrialProfile.enforceAccess("runBarrierRegister");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runBarrierRegister");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return BarrierRegisterRunner.run(barrierJson);
+      return standardizeResponse("runBarrierRegister", BarrierRegisterRunner.run(barrierJson),
+          "general");
     } catch (Exception e) {
       return errorJson("Barrier register analysis failed: " + e.getMessage());
     }
@@ -1900,12 +2024,13 @@ public class NeqSimTools {
       @ToolArg(description = "JSON with 'register' (or barrierRegister), optional 'demands', "
           + "'measurementDevices', 'logicSifs', and 'quantitativeSifs'. Use getExample with "
           + "category 'safety' and name 'safety-system-performance' for a template.") String safetySystemJson) {
-    String blocked = IndustrialProfile.enforceAccess("runSafetySystemPerformance");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runSafetySystemPerformance");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return SafetySystemPerformanceRunner.run(safetySystemJson);
+      return standardizeResponse("runSafetySystemPerformance",
+          SafetySystemPerformanceRunner.run(safetySystemJson), "general");
     } catch (Exception e) {
       return errorJson("Safety-system performance analysis failed: " + e.getMessage());
     }
@@ -1935,12 +2060,12 @@ public class NeqSimTools {
           + "optional 'designLimits' ({param: [min, max]}), "
           + "optional 'stidData' ({param: value}), "
           + "optional 'simulationEnabled' (true/false, default true).") String rcaJson) {
-    String blocked = IndustrialProfile.enforceAccess("runRootCauseAnalysis");
-    if (blocked != null) {
-      return blocked;
+    String policyBlocked = enforceToolAccess("runRootCauseAnalysis");
+    if (policyBlocked != null) {
+      return policyBlocked;
     }
     try {
-      return RootCauseRunner.run(rcaJson);
+      return standardizeResponse("runRootCauseAnalysis", RootCauseRunner.run(rcaJson), "general");
     } catch (Exception e) {
       return errorJson("Root cause analysis failed: " + e.getMessage());
     }
@@ -1967,27 +2092,49 @@ public class NeqSimTools {
       + "Profiles: DESKTOP_ENGINEER (all tools), STUDY_TEAM (collaborative), "
       + "DIGITAL_TWIN (read-heavy advisory), ENTERPRISE (restricted industrial core). "
       + "Actions: describe (list all profiles), getActive (current mode), "
-      + "setActive (change mode), classifyTool (check a tool's category).")
+      + "setActive (admin-gated mode change), approveTool (one-shot approval), "
+      + "classifyTool (check a tool's category).")
   public String manageIndustrialProfile(
-      @ToolArg(description = "JSON with: 'action' (describe|getActive|setActive|classifyTool). "
+      @ToolArg(description = "JSON with: 'action' (describe|getActive|setActive|approveTool|"
+          + "classifyTool). "
           + "For setActive: 'mode' (DESKTOP_ENGINEER|STUDY_TEAM|DIGITAL_TWIN|ENTERPRISE). "
+          + "For setActive/approveTool: 'adminToken'. "
           + "For classifyTool: 'toolName' (name of tool to classify).") String profileJson) {
+    String policyBlocked = enforceToolAccess("manageIndustrialProfile");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
       JsonObject input = JsonParser.parseString(profileJson).getAsJsonObject();
       String action = input.has("action") ? input.get("action").getAsString() : "describe";
 
       switch (action) {
         case "describe":
-          return IndustrialProfile.describeProfiles();
+          return standardizeResponse("manageIndustrialProfile",
+              IndustrialProfile.describeProfiles(), "general");
         case "getActive": {
           JsonObject result = new JsonObject();
           result.addProperty("status", "success");
           result.addProperty("activeMode", IndustrialProfile.getActiveMode().name());
           result.addProperty("autoValidation", IndustrialProfile.isAutoValidationEnabled());
-          return GSON_PRETTY.toJson(result);
+          result.addProperty("adminConfigured", IndustrialProfile.isAdminConfigured());
+          return standardizeResponse("manageIndustrialProfile", GSON_PRETTY.toJson(result),
+              "general");
         }
         case "setActive": {
           String modeName = input.has("mode") ? input.get("mode").getAsString() : "";
+          String adminToken = input.has("adminToken") ? input.get("adminToken").getAsString() : "";
+          if (!IndustrialProfile.isAdminAuthorized(adminToken)) {
+            JsonObject result = new JsonObject();
+            result.addProperty("status", "blocked");
+            result.addProperty("message",
+                "Admin token required to change the active profile at runtime.");
+            result.addProperty("remediation",
+                "Set NEQSIM_MCP_ADMIN_TOKEN and pass adminToken, or configure NEQSIM_MCP_PROFILE at startup.");
+            result.addProperty("adminConfigured", IndustrialProfile.isAdminConfigured());
+            return standardizeResponse("manageIndustrialProfile", GSON_PRETTY.toJson(result),
+                "policy");
+          }
           try {
             IndustrialProfile.DeploymentMode mode =
                 IndustrialProfile.DeploymentMode.valueOf(modeName);
@@ -1997,28 +2144,39 @@ public class NeqSimTools {
             result.addProperty("activeMode", mode.name());
             result.addProperty("message",
                 "Deployment mode set to " + mode.name() + ". Tool access updated.");
-            return GSON_PRETTY.toJson(result);
+            return standardizeResponse("manageIndustrialProfile", GSON_PRETTY.toJson(result),
+                "general");
           } catch (IllegalArgumentException e) {
             return errorJson("Invalid mode: " + modeName
                 + ". Use DESKTOP_ENGINEER, STUDY_TEAM, DIGITAL_TWIN, or ENTERPRISE.");
           }
         }
+        case "approveTool": {
+          String toolName = input.has("toolName") ? input.get("toolName").getAsString() : "";
+          String adminToken = input.has("adminToken") ? input.get("adminToken").getAsString() : "";
+          return standardizeResponse("manageIndustrialProfile",
+              IndustrialProfile.approveNextInvocation(toolName, adminToken), "policy");
+        }
         case "classifyTool": {
           String toolName = input.has("toolName") ? input.get("toolName").getAsString() : "";
           IndustrialProfile.ToolCategory cat = IndustrialProfile.getToolCategory(toolName);
+          IndustrialProfile.ToolTier tier = IndustrialProfile.getToolTier(toolName);
           JsonObject result = new JsonObject();
           result.addProperty("status", "success");
           result.addProperty("tool", toolName);
-          result.addProperty("category", cat != null ? cat.name() : "UNKNOWN");
+          result.addProperty("category", tier != null ? tier.name() : "UNKNOWN");
+          result.addProperty("toolCategory", cat != null ? cat.name() : "UNKNOWN");
+          result.addProperty("tier", tier != null ? tier.name() : "UNKNOWN");
           result.addProperty("allowed", IndustrialProfile.isToolAllowed(toolName));
           result.addProperty("requiresApproval", IndustrialProfile.requiresApproval(toolName));
           result.addProperty("inIndustrialCore",
               IndustrialProfile.getIndustrialCore().contains(toolName));
-          return GSON_PRETTY.toJson(result);
+          return standardizeResponse("manageIndustrialProfile", GSON_PRETTY.toJson(result),
+              "general");
         }
         default:
           return errorJson("Unknown action: " + action
-              + ". Use describe, getActive, setActive, or classifyTool.");
+              + ". Use describe, getActive, setActive, approveTool, or classifyTool.");
       }
     } catch (Exception e) {
       return errorJson("Industrial profile operation failed: " + e.getMessage());
@@ -2044,15 +2202,20 @@ public class NeqSimTools {
       + "Actions: getAll (full trust report), getTool (single tool trust page).")
   public String getBenchmarkTrust(@ToolArg(description = "JSON with: 'action' (getAll|getTool). "
       + "For getTool: 'toolName' (e.g. 'runFlash', 'runProcess', 'runPVT').") String trustJson) {
+    String policyBlocked = enforceToolAccess("getBenchmarkTrust");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
       JsonObject input = JsonParser.parseString(trustJson).getAsJsonObject();
       String action = input.has("action") ? input.get("action").getAsString() : "getAll";
 
       if ("getTool".equals(action)) {
         String toolName = input.has("toolName") ? input.get("toolName").getAsString() : "";
-        return BenchmarkTrust.getToolTrust(toolName);
+        return standardizeResponse("getBenchmarkTrust", BenchmarkTrust.getToolTrust(toolName),
+            "general");
       } else {
-        return BenchmarkTrust.getTrustReport();
+        return standardizeResponse("getBenchmarkTrust", BenchmarkTrust.getTrustReport(), "general");
       }
     } catch (Exception e) {
       return errorJson("Benchmark trust query failed: " + e.getMessage());
@@ -2073,6 +2236,10 @@ public class NeqSimTools {
       + "and active deployment mode.")
   public String checkToolAccess(@ToolArg(description = "Tool name to check, e.g. 'runProcess', "
       + "'setSimulationVariable', 'manageSecurity'.") String toolName) {
+    String policyBlocked = enforceToolAccess("checkToolAccess");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
     try {
       JsonObject result = new JsonObject();
       result.addProperty("status", "success");
@@ -2098,7 +2265,7 @@ public class NeqSimTools {
                 + " mode. Present the planned action to the engineer for confirmation.");
       }
 
-      return GSON_PRETTY.toJson(result);
+      return standardizeResponse("checkToolAccess", GSON_PRETTY.toJson(result), "general");
     } catch (Exception e) {
       return errorJson("Tool access check failed: " + e.getMessage());
     }
@@ -2110,6 +2277,150 @@ public class NeqSimTools {
 
   private static final com.google.gson.Gson GSON_PRETTY = new com.google.gson.GsonBuilder()
       .setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+
+  /** Contract fields that should not be duplicated into the canonical data block. */
+  private static final java.util.Set<String> CONTRACT_FIELDS =
+      new java.util.HashSet<String>(java.util.Arrays.asList("apiVersion", "status", "tool", "data",
+          "provenance", "validation", "qualityGate", "warnings", "errors"));
+
+  /**
+   * Enforces shared MCP server policy for a tool invocation.
+   *
+   * @param toolName the MCP tool name
+   * @return null if execution may continue, otherwise a standardized blocked response
+   */
+  private static String enforceToolAccess(String toolName) {
+    String blocked = IndustrialProfile.enforceAccess(toolName);
+    if (blocked == null) {
+      return null;
+    }
+    return standardizeResponse(toolName, blocked, "policy");
+  }
+
+  /**
+   * Converts any runner response into the standard MCP response envelope while preserving legacy
+   * top-level fields for backwards compatibility.
+   *
+   * @param toolName the MCP tool name
+   * @param resultJson raw JSON returned by a runner
+   * @param context engineering validation context
+   * @return standardized response JSON
+   */
+  static String standardizeResponse(String toolName, String resultJson, String context) {
+    try {
+      JsonElement parsed = JsonParser.parseString(resultJson);
+      JsonObject result;
+      if (parsed.isJsonObject()) {
+        result = parsed.getAsJsonObject();
+      } else {
+        result = new JsonObject();
+        result.addProperty("status", "success");
+        result.add("data", parsed);
+      }
+
+      if (!result.has("status")) {
+        result.addProperty("status", "success");
+      }
+      normalizeValidationField(result, context);
+      ensureDataBlock(result);
+      ApiEnvelope.applyStandardFields(result, toolName, null, null, null);
+      ensureWarningsArray(result);
+      return GSON_PRETTY.toJson(result);
+    } catch (Exception e) {
+      JsonObject error = new JsonObject();
+      error.addProperty("apiVersion", ApiEnvelope.API_VERSION);
+      error.addProperty("status", "error");
+      error.addProperty("tool", toolName);
+      error.addProperty("message", "Failed to standardize tool response: " + e.getMessage());
+      error.addProperty("rawResponse", resultJson);
+      error.add("data", new JsonObject());
+      error.add("validation", ApiEnvelope.validationStatus(false, "server",
+          "Failed to standardize tool response: " + e.getMessage()));
+      error.add("qualityGate",
+          ApiEnvelope.qualityGate("failed", "Response standardization failed", true));
+      error.add("warnings", new JsonArray());
+      return GSON_PRETTY.toJson(error);
+    }
+  }
+
+  /**
+   * Moves legacy primitive validation fields aside so the standard validation object can be added.
+   *
+   * @param result response object to normalize
+   * @param context engineering validation context
+   */
+  private static void normalizeValidationField(JsonObject result, String context) {
+    if (result.has("validation") && !result.get("validation").isJsonObject()) {
+      result.add("legacyValidation", result.get("validation"));
+      result.remove("validation");
+    }
+    if (!result.has("validation")) {
+      boolean success =
+          result.has("status") && "success".equals(result.get("status").getAsString());
+      result.add("validation", ApiEnvelope.validationStatus(success, context,
+          success ? "Server response normalized" : "Tool returned a non-success status"));
+    }
+  }
+
+  /**
+   * Ensures every response has a canonical data block.
+   *
+   * @param result response object to update
+   */
+  private static void ensureDataBlock(JsonObject result) {
+    if (result.has("data")) {
+      return;
+    }
+    JsonObject data = new JsonObject();
+    for (Map.Entry<String, JsonElement> entry : result.entrySet()) {
+      if (!CONTRACT_FIELDS.contains(entry.getKey())) {
+        data.add(entry.getKey(), entry.getValue().deepCopy());
+      }
+    }
+    result.add("data", data);
+  }
+
+  /**
+   * Ensures the warnings field is always an array.
+   *
+   * @param result response object to update
+   */
+  private static void ensureWarningsArray(JsonObject result) {
+    if (!result.has("warnings") || !result.get("warnings").isJsonArray()) {
+      result.add("warnings", new JsonArray());
+    }
+  }
+
+  /**
+   * Finds the public MCP tool method that called a helper.
+   *
+   * @return inferred tool method name, or {@code unknown}
+   */
+  private static String currentToolName() {
+    StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+    for (StackTraceElement element : stack) {
+      if (NeqSimTools.class.getName().equals(element.getClassName())
+          && !isHelperMethod(element.getMethodName())) {
+        return element.getMethodName();
+      }
+    }
+    return "unknown";
+  }
+
+  /**
+   * Checks if a stack-trace method belongs to the helper layer.
+   *
+   * @param methodName method name from a stack trace
+   * @return true if the method is an internal helper
+   */
+  private static boolean isHelperMethod(String methodName) {
+    return "currentToolName".equals(methodName) || "isHelperMethod".equals(methodName)
+        || "errorJson".equals(methodName) || "withAutoValidation".equals(methodName)
+        || "appendAutoValidationFailure".equals(methodName)
+        || "standardizeResponse".equals(methodName) || "normalizeValidationField".equals(methodName)
+        || "ensureDataBlock".equals(methodName) || "ensureWarningsArray".equals(methodName)
+        || "enforceToolAccess".equals(methodName);
+  }
 
   /**
    * Wraps a calculation result with automatic engineering validation when enabled.

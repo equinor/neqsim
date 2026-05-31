@@ -277,6 +277,6 @@ print(calc.toJson())
 
 ## Related Documentation
 
-- [Flow Assurance Screening Tools](../pvtsimulation/flowassurance/flow_assurance_screening_tools)
-- [Flow Assurance Overview](../pvtsimulation/flow_assurance_overview)
+- [Flow Assurance Screening Tools](flow_assurance_screening_tools)
+- [Flow Assurance Overview](../flow_assurance_overview)
 - [Emulsion Viscosity Calculator](emulsion_viscosity_calculator)

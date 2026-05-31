@@ -20,7 +20,7 @@
 	</scm>
 
         <properties>
-				<revision>3.10.0</revision>
+				<revision>3.12.0</revision>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
                 <checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
@@ -51,6 +51,12 @@
 			<url>https://repo1.maven.org/maven2/</url>
 		</repository>
 	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>central</id>
+			<url>https://repo1.maven.org/maven2/</url>
+		</pluginRepository>
+	</pluginRepositories>
 
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
@@ -381,14 +387,6 @@
 				<configuration>
 					<failOnError>false</failOnError>
 				</configuration>
-				<executions>
-					<execution>
-						<phase>verify</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -397,14 +395,6 @@
 				<configuration>
 					<failOnViolation>false</failOnViolation>
 				</configuration>
-				<executions>
-					<execution>
-						<phase>verify</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>

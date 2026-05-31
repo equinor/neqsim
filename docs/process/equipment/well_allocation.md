@@ -265,13 +265,13 @@ import neqsim.process.equipment.well.allocation.WellProductionAllocator;
 
 // Integration with production optimization
 public class ProductionOptimizationService {
-    
+
     private WellProductionAllocator allocator;
-    
+
     public Map<String, Double> getAllocatedRates(Map<String, Double[]> testData,
                                                   double[] commingledRates) {
         allocator = new WellProductionAllocator("Real-Time Allocation");
-        
+
         // Add well data
         for (Map.Entry<String, Double[]> entry : testData.entrySet()) {
             WellData well = new WellData(entry.getKey());
@@ -279,15 +279,15 @@ public class ProductionOptimizationService {
             well.setTestRates(rates[0], rates[1], rates[2]);
             allocator.addWell(well);
         }
-        
+
         // Set commingled rates
         allocator.setCommingledOilRate(commingledRates[0]);
         allocator.setCommingledGasRate(commingledRates[1]);
         allocator.setCommingledWaterRate(commingledRates[2]);
-        
+
         // Allocate
         AllocationResult result = allocator.allocate();
-        
+
         // Return as map for AI platform
         Map<String, Double> allocation = new HashMap<>();
         for (String wellName : result.getWellNames()) {
@@ -295,7 +295,7 @@ public class ProductionOptimizationService {
             allocation.put(wellName + "_gas", result.getAllocatedGasRate(wellName));
             allocation.put(wellName + "_water", result.getAllocatedWaterRate(wellName));
         }
-        
+
         return allocation;
     }
 }
@@ -363,7 +363,7 @@ String jsonReport = result.toJson();
 ```java
 // Validate allocation results
 if (Math.abs(result.getOilReconciliationError()) > 5.0) {
-    logger.warn("High oil reconciliation error: {}%", 
+    logger.warn("High oil reconciliation error: {}%",
         result.getOilReconciliationError());
 }
 
@@ -381,4 +381,4 @@ for (String well : result.getWellNames()) {
 
 - [AI Platform Integration](../../integration/ai_platform_integration) - Full AI integration guide
 - [Production Optimization](../../fielddevelopment/API_GUIDE) - Field development optimization
-- [Wells](../wells) - Well equipment modeling
+- [Wells](wells) - Well equipment modeling

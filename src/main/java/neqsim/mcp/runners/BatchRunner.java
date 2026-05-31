@@ -157,7 +157,7 @@ public class BatchRunner {
     // --- Build response ---
     JsonObject response = new JsonObject();
     response.addProperty("status",
-        errorCount == 0 ? "ok" : (successCount == 0 ? "error" : "partial"));
+        errorCount == 0 ? "success" : (successCount == 0 ? "error" : "partial"));
 
     JsonObject summary = new JsonObject();
     summary.addProperty("totalCases", casesArray.size());

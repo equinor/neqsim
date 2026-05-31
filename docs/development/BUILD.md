@@ -368,5 +368,5 @@ On every PR, CI runs:
 
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) - Code style and contribution guidelines
 - [GETTING_STARTED_DEVELOPER.md](GETTING_STARTED_DEVELOPER.md) - Developer onboarding
-- [TESTING.md](TESTING.md) - Testing guidelines (if exists)
+- TESTING.md - Testing guidelines *(planned)*
 - [pom.xml](../../pom.xml) - Main build configuration
