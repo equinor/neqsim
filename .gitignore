@@ -137,3 +137,5 @@ neqsim_profile.jfr
 # Local agent data (not tracked, as it may contain sensitive information or be large)
 .agents/
 
+.release-run-jobs.json
+.release-run-status.json
