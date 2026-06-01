@@ -850,7 +850,8 @@ public final class SchemaCatalog {
     properties.put("analysis",
         enumProp("Analysis type",
             Arrays.asList("hydrateRiskMap", "waxAppearance", "asphalteneStability", "CO2Corrosion",
-                "scalePrediction", "erosion", "pipelineCooldown", "emulsionViscosity")));
+                "scalePrediction", "erosion", "pipelineCooldown", "emulsionViscosity",
+                "demulsifierDoseOptimization")));
 
     Map<String, Object> components = new LinkedHashMap<String, Object>();
     components.put("type", "object");

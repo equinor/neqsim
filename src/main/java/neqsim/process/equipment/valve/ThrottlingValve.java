@@ -429,11 +429,54 @@ public class ThrottlingValve extends TwoPortEquipment
       thermoSystem.setPressure(outPres, pressureUnit);
       thermoOps.TPflash();
     } else {
-      thermoOps.PHflash(enthalpy, 0);
+      runPHflashWithNaNRetry(thermoOps, enthalpy);
     }
     outStream.setThermoSystem(thermoSystem);
 
     finishRun(id);
+  }
+
+  /**
+   * Run an isenthalpic (PH) flash and recover gracefully when the default first-order solver raises
+   * an IsNaN-derived RuntimeException. The default {@code PHflash} (type 0) damped Newton iteration
+   * on 1/T is fragile for low-flow, single-phase gas at high reduced pressure: an intermediate
+   * temperature can drive the cubic EOS into a region with no positive compressibility-factor root,
+   * producing {@code PhasePrEos:molarVolumeAnalytical} NaN. The second-order solver (type 1,
+   * {@code SysNewtonRhapsonPHflash}) re-initialises from a fresh TP flash and converges robustly on
+   * the same well-posed problem, so it is used as the primary recovery. A
+   * multi-phase-check-disabled retry is kept as a final fallback.
+   *
+   * @param thermoOps thermodynamic operations bound to the valve thermo system
+   * @param enthalpy target total enthalpy in J
+   */
+  private void runPHflashWithNaNRetry(ThermodynamicOperations thermoOps, double enthalpy) {
+    double preFlashTemperature = thermoSystem.getTemperature();
+    try {
+      thermoOps.PHflash(enthalpy, 0);
+    } catch (RuntimeException ex) {
+      Throwable cause = ex.getCause();
+      boolean isNaN = (ex.getMessage() != null && ex.getMessage().contains("NaN"))
+          || (cause != null && cause.getMessage() != null && cause.getMessage().contains("NaN"));
+      if (!isNaN) {
+        throw ex;
+      }
+      logger.debug("PHflash (type 0) produced NaN; retrying with second-order solver (type 1)");
+      try {
+        thermoSystem.setTemperature(preFlashTemperature);
+        thermoOps.PHflash(enthalpy, 1);
+      } catch (RuntimeException ex2) {
+        logger.debug("Second-order PHflash also failed; retrying with multi-phase check disabled");
+        boolean savedMpc = thermoSystem.doMultiPhaseCheck();
+        thermoSystem.setMultiPhaseCheck(false);
+        try {
+          thermoSystem.setTemperature(preFlashTemperature);
+          thermoSystem.init(0);
+          thermoOps.PHflash(enthalpy, 1);
+        } finally {
+          thermoSystem.setMultiPhaseCheck(savedMpc);
+        }
+      }
+    }
   }
 
   /** {@inheritDoc} */
@@ -508,7 +551,7 @@ public class ThrottlingValve extends TwoPortEquipment
     if (isIsoThermal()) {
       thermoOps.TPflash();
     } else {
-      thermoOps.PHflash(enthalpy, 0);
+      runPHflashWithNaNRetry(thermoOps, enthalpy);
     }
     thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     outStream.setThermoSystem(thermoSystem);
