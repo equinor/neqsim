@@ -33,14 +33,14 @@ jobs:
           echo "Cleaned EJML from Maven cache to ensure fresh download"
       # --- Java 8 artifact ---
       - name: Publish package (Java 8)
-        run: ./mvnw -f pomJava8.xml -P release --batch-mode clean deploy -DskipTests -Djacoco.skip=true -Drevision=${{ steps.release_version.outputs.version }}
+        run: ./mvnw -f pomJava8.xml -P release --batch-mode clean deploy -Dmaven.deploy.skip=true -DskipTests -Djacoco.skip=true -Drevision=${{ steps.release_version.outputs.version }}
         env:
           MAVEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
       # --- Java 21 artifact ---
       - name: Publish package
-        run: ./mvnw -P release --batch-mode clean deploy -DskipTests -Djacoco.skip=true -Drevision=${{ steps.release_version.outputs.version }}
+        run: ./mvnw -P release --batch-mode clean deploy -Dmaven.deploy.skip=true -DskipTests -Djacoco.skip=true -Drevision=${{ steps.release_version.outputs.version }}
         env:
           MAVEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
