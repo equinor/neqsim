@@ -654,16 +654,21 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   }
 
   /**
-   * Run a PH flash and retry with the multi-phase check temporarily disabled if the first attempt
-   * raises an IsNaN-derived RuntimeException. Compressor outlet conditions often sit close to the
-   * cricondenbar where the PR #2099 supplementary stability trials can seed a non-physical 2-phase
-   * split, producing PhasePrEos:molarVolumeAnalytical NaN. Falling back to a single-phase flash
-   * recovers gracefully without changing the result for well-posed cases.
+   * Run a PH flash and recover gracefully when the default first-order solver raises an
+   * IsNaN-derived RuntimeException. The default {@code PHflash} (type 0) damped Newton iteration on
+   * 1/T is fragile for low-flow, single-phase gas at high reduced pressure: an intermediate
+   * temperature can drive the cubic EOS into a region with no positive compressibility-factor root,
+   * producing {@code PhasePrEos:molarVolumeAnalytical} NaN. The second-order solver (type 1,
+   * {@code SysNewtonRhapsonPHflash}) re-initialises from a fresh TP flash and converges robustly on
+   * the same well-posed problem, so it is used as the primary recovery. A
+   * multi-phase-check-disabled retry is kept as a final fallback for systems that seed a
+   * non-physical 2-phase split near the cricondenbar (PR #2099).
    *
    * @param thermoOps thermodynamic operations bound to the compressor thermo system
    * @param hout target total enthalpy in J
    */
   private void runPHflashWithNaNRetry(ThermodynamicOperations thermoOps, double hout) {
+    double preFlashTemperature = getThermoSystem().getTemperature();
     try {
       thermoOps.PHflash(hout, 0);
     } catch (RuntimeException ex) {
@@ -673,14 +678,21 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       if (!isNaN) {
         throw ex;
       }
-      logger.debug("PHflash produced NaN; retrying with multi-phase check disabled");
-      boolean savedMpc = getThermoSystem().doMultiPhaseCheck();
-      getThermoSystem().setMultiPhaseCheck(false);
+      logger.debug("PHflash (type 0) produced NaN; retrying with second-order solver (type 1)");
       try {
-        getThermoSystem().init(0);
-        thermoOps.PHflash(hout, 0);
-      } finally {
-        getThermoSystem().setMultiPhaseCheck(savedMpc);
+        getThermoSystem().setTemperature(preFlashTemperature);
+        thermoOps.PHflash(hout, 1);
+      } catch (RuntimeException ex2) {
+        logger.debug("Second-order PHflash also failed; retrying with multi-phase check disabled");
+        boolean savedMpc = getThermoSystem().doMultiPhaseCheck();
+        getThermoSystem().setMultiPhaseCheck(false);
+        try {
+          getThermoSystem().setTemperature(preFlashTemperature);
+          getThermoSystem().init(0);
+          thermoOps.PHflash(hout, 1);
+        } finally {
+          getThermoSystem().setMultiPhaseCheck(savedMpc);
+        }
       }
     }
   }
