@@ -8,7 +8,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Tests to verify correctness of the gamma function implementation in WhitsonGammaModel.
- * 
+ *
  * Known exact values of Gamma function: - Gamma(1) = 1 - Gamma(2) = 1 - Gamma(3) = 2 - Gamma(0.5) =
  * sqrt(pi) = 1.7724538509 - Gamma(1.5) = sqrt(pi)/2 = 0.8862269255 - Gamma(2.5) = 3*sqrt(pi)/4 =
  * 1.3293403882

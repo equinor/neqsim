@@ -20,7 +20,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Test class demonstrating a complete oil stabilization process with recycle streams.
- * 
+ *
  * <p>
  * This test generates a process flow diagram for a 4-stage oil stabilization train with:
  * </p>
@@ -30,7 +30,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Dew point control with turbo-expander</li>
  * <li>Three recycle streams returning condensate to oil separation</li>
  * </ul>
- * 
+ *
  * <p>
  * The process is based on realistic offshore oil/gas processing with integrated condensate
  * recovery.

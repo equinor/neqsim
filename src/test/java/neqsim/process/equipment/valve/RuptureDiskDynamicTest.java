@@ -20,7 +20,7 @@ import neqsim.thermo.system.SystemSrkEos;
 class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
   /**
    * Dynamic test for rupture disk with blocked outlet scenario.
-   * 
+   *
    * Scenario: - Gas from a separator flows through a splitter - Split stream 1 goes to a pressure
    * control valve (PCV) for normal operation - Split stream 2 goes to a rupture disk for
    * overpressure protection - At time t=50s, the PCV outlet becomes blocked (valve closes to 1%) -
@@ -223,7 +223,7 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
 
   /**
    * Test comparing rupture disk vs safety valve behavior.
-   * 
+   *
    * This test demonstrates the key difference: - Safety valve: reseats when pressure drops -
    * Rupture disk: remains open once burst
    */

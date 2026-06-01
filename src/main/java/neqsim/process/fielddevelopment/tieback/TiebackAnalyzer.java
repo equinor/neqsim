@@ -17,7 +17,6 @@ import neqsim.process.fielddevelopment.network.MultiphaseFlowIntegrator;
 import neqsim.process.fielddevelopment.network.MultiphaseFlowIntegrator.PipelineResult;
 import neqsim.process.fielddevelopment.network.TiebackRouteNetwork;
 import neqsim.process.fielddevelopment.screening.FlowAssuranceReport;
-import neqsim.process.fielddevelopment.screening.FlowAssuranceResult;
 import neqsim.process.fielddevelopment.screening.FlowAssuranceScreener;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;

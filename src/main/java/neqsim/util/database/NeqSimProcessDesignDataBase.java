@@ -65,7 +65,6 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
     }
   }
 
-  /** {@inheritDoc} */
   public static void updateTable(String tableName) {
     updateTable(tableName, "designdata/" + tableName + ".csv");
   }

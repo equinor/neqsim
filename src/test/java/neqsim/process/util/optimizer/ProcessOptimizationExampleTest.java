@@ -26,7 +26,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Comprehensive example demonstrating process optimization with separators and compressors.
- * 
+ *
  * <p>
  * This test class shows how to:
  * <ul>
@@ -36,17 +36,17 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Use capacity constraints for bottleneck detection</li>
  * <li>Optimize feed flow to maximize throughput within equipment limits</li>
  * </ul>
- * 
+ *
  * <p>
  * The process train simulated is a typical offshore oil processing facility:
- * 
+ *
  * <pre>
- * Feed --> HP Separator --> Gas Scrubber --> 1st Stage Compressor --> Cooler 
+ * Feed --> HP Separator --> Gas Scrubber --> 1st Stage Compressor --> Cooler
  *              |                                    |
  *              v                                    v
  *         Oil Outlet                    2nd Stage Compressor --> Export
  * </pre>
- * 
+ *
  * @author NeqSim Development Team
  * @version 1.0
  */
@@ -144,7 +144,7 @@ public class ProcessOptimizationExampleTest {
 
   /**
    * Demonstrates basic bottleneck detection in the process.
-   * 
+   *
    * <p>
    * Shows how to identify the limiting equipment and its utilization using the capacity constraint
    * framework.
@@ -177,7 +177,7 @@ public class ProcessOptimizationExampleTest {
 
   /**
    * Demonstrates separator capacity estimation based on Souders-Brown K-factor.
-   * 
+   *
    * <p>
    * The separator capacity is calculated using: V_max = K * sqrt((rho_liq - rho_gas) / rho_gas)
    */
@@ -219,7 +219,7 @@ public class ProcessOptimizationExampleTest {
 
   /**
    * Demonstrates compressor curve generation and capacity constraints.
-   * 
+   *
    * <p>
    * Shows how to:
    * <ul>
@@ -271,7 +271,7 @@ public class ProcessOptimizationExampleTest {
 
   /**
    * Demonstrates throughput optimization using the ProductionOptimizer.
-   * 
+   *
    * <p>
    * Finds the maximum feed rate while respecting equipment capacity constraints. Note: Compressors
    * have a minimum flow requirement (surge limit) so there may be a minimum feed rate below which
@@ -401,7 +401,7 @@ public class ProcessOptimizationExampleTest {
 
   /**
    * Demonstrates finding bottleneck with detailed constraint information.
-   * 
+   *
    * <p>
    * Uses the multi-constraint framework to identify exactly which constraint is limiting.
    */
@@ -449,7 +449,7 @@ public class ProcessOptimizationExampleTest {
 
   /**
    * Demonstrates optimization with varying inlet conditions.
-   * 
+   *
    * <p>
    * Shows how bottleneck shifts with changing feed composition and conditions.
    */
@@ -491,7 +491,7 @@ public class ProcessOptimizationExampleTest {
 
   /**
    * Demonstrates manual flow optimization using bisection method.
-   * 
+   *
    * <p>
    * Shows how to implement a simple optimization loop checking equipment capacity.
    */
@@ -552,7 +552,7 @@ public class ProcessOptimizationExampleTest {
 
   /**
    * Sets up compressor performance charts for both compression stages.
-   * 
+   *
    * <p>
    * Also configures speed constraints with proper max speed values to allow for optimization
    * headroom.
@@ -590,7 +590,7 @@ public class ProcessOptimizationExampleTest {
 
   /**
    * Prints utilization status for a separator.
-   * 
+   *
    * @param separator the separator to print status for
    */
   private void printEquipmentUtilization(Separator separator) {
@@ -604,7 +604,7 @@ public class ProcessOptimizationExampleTest {
 
   /**
    * Prints utilization status for a compressor.
-   * 
+   *
    * @param compressor the compressor to print status for
    */
   private void printEquipmentUtilization(Compressor compressor) {
@@ -630,7 +630,7 @@ public class ProcessOptimizationExampleTest {
 
   /**
    * Prints detailed compressor operating status.
-   * 
+   *
    * @param compressor the compressor
    * @param chart the compressor chart
    */
@@ -660,7 +660,7 @@ public class ProcessOptimizationExampleTest {
 
   /**
    * Gets the maximum utilization across all equipment in the system.
-   * 
+   *
    * @return maximum utilization (0.0 to 1.0+)
    */
   private double getMaxSystemUtilization() {

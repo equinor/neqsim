@@ -1040,7 +1040,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       return 2.0 * sqrtAi * Ai;
     }
 
-    /** {@inheritDoc} */
     public double calcBiFull(int compNumb, PhaseInterface phase, double temperature,
         double pressure, int numbcomp) {
       double Bi = 0.0;

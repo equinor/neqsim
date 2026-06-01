@@ -16,6 +16,7 @@ class DynamicImprovementsTest {
 
   /** Simple transmitter stub returning a configurable value. */
   static class StubTransmitter extends MeasurementDeviceBaseClass {
+    private static final long serialVersionUID = 1L;
     private double value = 50.0;
 
     StubTransmitter(String name) {

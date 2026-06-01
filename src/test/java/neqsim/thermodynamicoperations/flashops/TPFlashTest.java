@@ -19,6 +19,8 @@ class TPFlashTest {
 
   /** Test double that forces the TPflash stability gate to fail. */
   private static final class ThrowingStabilityTPflash extends TPflash {
+    private static final long serialVersionUID = 1L;
+
     /**
      * Creates a TPflash test double for a thermodynamic system.
      *

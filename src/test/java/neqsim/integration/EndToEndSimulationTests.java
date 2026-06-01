@@ -13,7 +13,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * End-to-end integration tests for complete process simulations.
- * 
+ *
  * <p>
  * These tests validate multi-unit flowsheets spanning thermo, PVT, and process modules.
  */

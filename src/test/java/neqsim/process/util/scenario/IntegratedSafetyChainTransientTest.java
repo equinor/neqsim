@@ -181,6 +181,7 @@ class IntegratedSafetyChainTransientTest {
    * Keeps detectors, HIPPS voting, and alarm evaluation aligned with process dynamics every step.
    */
   private static final class SafetyInstrumentationCoordinator implements ProcessLogic {
+    private static final long serialVersionUID = 1L;
     private final Stream feed;
     private final Separator separator;
     private final HIPPSLogic hippsLogic;

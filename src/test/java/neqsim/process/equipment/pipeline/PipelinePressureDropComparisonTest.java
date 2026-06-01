@@ -11,7 +11,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Comparison tests for different pipeline pressure drop models with pure methane.
- * 
+ *
  * <p>
  * This test class compares the pressure drop calculations from:
  * <ul>
@@ -20,7 +20,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>{@link PipeBeggsAndBrills} - Beggs and Brill correlation</li>
  * </ul>
  * </p>
- * 
+ *
  * <p>
  * Reference equations for gas pipeline flow:
  * </p>
@@ -31,7 +31,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>AGA equation - most accurate, uses Colebrook friction factor</li>
  * <li>Darcy-Weisbach - fundamental equation with explicit friction factor</li>
  * </ul>
- * 
+ *
  * <p>
  * Reference: Menon, E.S. "Gas Pipeline Hydraulics", CRC Press, 2005
  * </p>
@@ -68,11 +68,11 @@ public class PipelinePressureDropComparisonTest {
   /**
    * Calculates pressure drop using the Darcy-Weisbach equation with Colebrook friction factor. This
    * is the fundamental equation for pipe flow pressure drop.
-   * 
+   *
    * <p>
    * ΔP = f * (L/D) * (ρV²/2)
    * </p>
-   * 
+   *
    * @param length pipe length in meters
    * @param diameter pipe inner diameter in meters
    * @param roughness pipe wall roughness in meters
@@ -90,11 +90,11 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Iteratively solves the Colebrook-White equation for friction factor.
-   * 
+   *
    * <p>
    * 1/√f = -2 log₁₀(ε/(3.7D) + 2.51/(Re√f))
    * </p>
-   * 
+   *
    * @param reynoldsNumber Reynolds number
    * @param relativeRoughness ε/D
    * @return Darcy friction factor
@@ -124,20 +124,20 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Calculates outlet pressure using the General Flow Equation for gas pipelines.
-   * 
+   *
    * <p>
    * This is the fundamental equation derived from the mechanical energy balance for compressible
    * flow in horizontal pipes:
    * </p>
-   * 
+   *
    * <p>
    * Q = C * (Tb/Pb) * √[(P1² - P2²) * D⁵ / (f * G * Tf * L * Z)]
    * </p>
-   * 
+   *
    * <p>
    * Rearranged for P2: P2 = √[P1² - (Q * Pb / (C * Tb))² * (f * G * Tf * L * Z / D⁵)]
    * </p>
-   * 
+   *
    * @param inletPressure inlet pressure in bara
    * @param flowRateSm3Sec flow rate in Sm³/s at standard conditions
    * @param length pipe length in m
@@ -181,16 +181,16 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Calculates outlet pressure using the Weymouth equation.
-   * 
+   *
    * <p>
    * The Weymouth equation (1912) is commonly used for high-pressure gas transmission lines. It
    * assumes fully turbulent flow and uses an implicit friction factor of f = 0.032/D^(1/3).
    * </p>
-   * 
+   *
    * <p>
    * Q = 3.7435e-3 * (Tb/Pb) * √[(P1² - P2²) * D^(16/3) / (G * Tf * L * Z)]
    * </p>
-   * 
+   *
    * @param inletPressure inlet pressure in bara
    * @param flowRateSm3Sec flow rate in Sm³/s at standard conditions
    * @param length pipe length in m
@@ -228,17 +228,17 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Calculates outlet pressure using the Panhandle A equation.
-   * 
+   *
    * <p>
    * The Panhandle A equation is used for medium to large diameter pipelines with Reynolds numbers
    * in the range of 5 to 11 million. It uses an effective friction factor that varies with Reynolds
    * number.
    * </p>
-   * 
+   *
    * <p>
    * The Panhandle A effectively uses f = 0.085 / Re^0.147
    * </p>
-   * 
+   *
    * @param inletPressure inlet pressure in bara
    * @param flowRateSm3Sec flow rate in Sm³/s at standard conditions
    * @param length pipe length in m
@@ -590,7 +590,7 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Compares NeqSim pipeline models against classical reference equations from literature.
-   * 
+   *
    * <p>
    * Reference equations used:
    * <ul>
@@ -599,7 +599,7 @@ public class PipelinePressureDropComparisonTest {
    * <li>Panhandle A equation - for medium-large diameter pipelines</li>
    * </ul>
    * </p>
-   * 
+   *
    * <p>
    * Reference: Menon, E.S. "Gas Pipeline Hydraulics", CRC Press, 2005 Reference: Mohitpour, M. et
    * al. "Pipeline Design & Construction", ASME Press, 2007
@@ -777,7 +777,7 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test case based on example from Menon "Gas Pipeline Hydraulics" Chapter 3.
-   * 
+   *
    * <p>
    * Example: 100 mile (160.9 km), 16-inch (406.4 mm) natural gas pipeline Inlet pressure: 1400 psia
    * (96.5 bara), temperature: 60°F (15.6°C) Flow rate: 100 MMSCFD, Gas gravity: 0.6
@@ -877,21 +877,21 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Calculates the Hazen-Williams pressure drop for water flow.
-   * 
+   *
    * <p>
    * The Hazen-Williams equation is an empirical formula commonly used for water distribution
    * systems. It is valid only for water at 60°F (15.6°C) and for turbulent flow.
    * </p>
-   * 
+   *
    * <p>
    * ΔP = 4.52 * Q^1.85 / (C^1.85 * D^4.87) [psi/ft] or ΔP = 10.67 * Q^1.85 / (C^1.85 * D^4.87) * L
    * [m of head]
    * </p>
-   * 
+   *
    * <p>
    * In SI units: ΔP [Pa] = 10.67 * (Q [m³/s])^1.85 * L [m] / (C^1.85 * D^4.87 [m]) * ρg
    * </p>
-   * 
+   *
    * @param length pipe length in meters
    * @param diameter pipe inner diameter in meters
    * @param flowRateM3s volumetric flow rate in m³/s
@@ -909,11 +909,11 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Calculates pressure drop using Darcy-Weisbach for incompressible (liquid) flow.
-   * 
+   *
    * <p>
    * For incompressible flow, the equation simplifies to: ΔP = f * (L/D) * (ρV²/2)
    * </p>
-   * 
+   *
    * <p>
    * This is exact for liquid flow and serves as the benchmark.
    * </p>
@@ -927,7 +927,7 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test liquid (water) flow pressure drop against Darcy-Weisbach reference.
-   * 
+   *
    * <p>
    * This test uses water at standard conditions to validate the pipeline models for incompressible
    * liquid flow. Water is ideal for validation because its properties are well-known.
@@ -1075,7 +1075,7 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test crude oil flow pressure drop with realistic field conditions.
-   * 
+   *
    * <p>
    * Uses a medium-weight crude oil (API 30) at typical pipeline conditions. Note: SRK EOS requires
    * high pressure to keep hydrocarbons in liquid phase.
@@ -1197,7 +1197,7 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test comparison of liquid flow at different Reynolds numbers.
-   * 
+   *
    * <p>
    * This test validates the friction factor calculation across different flow regimes: laminar,
    * transition, and turbulent.
@@ -1285,7 +1285,7 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test viscous (high viscosity) liquid flow - heavy oil or glycol.
-   * 
+   *
    * <p>
    * High viscosity liquids can result in laminar flow even at significant flow rates.
    * </p>
@@ -1387,12 +1387,12 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test two-phase gas-oil flow with Beggs & Brill correlation.
-   * 
+   *
    * <p>
    * Reference: Beggs, H.D. and Brill, J.P. "A Study of Two-Phase Flow in Inclined Pipes", Journal
    * of Petroleum Technology, May 1973, pp. 607-617.
    * </p>
-   * 
+   *
    * <p>
    * The original Beggs & Brill correlation was developed from 584 tests with: - Pipe diameters:
    * 1-1.5 inches - Pipe angles: -90° to +90° - Gas flow rates: 0-300 Mscf/D - Liquid flow rates:
@@ -1531,7 +1531,7 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test two-phase uphill flow (well tubing scenario).
-   * 
+   *
    * <p>
    * Uphill flow typically results in higher liquid holdup due to gravity effects, and the pressure
    * drop includes significant hydrostatic component.
@@ -1613,7 +1613,7 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test two-phase downhill flow (flowline scenario).
-   * 
+   *
    * <p>
    * Downhill flow typically results in lower liquid holdup (gravity assists liquid drainage), and
    * the hydrostatic component reduces the total pressure drop.
@@ -1689,7 +1689,7 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test three-phase gas-oil-water flow.
-   * 
+   *
    * <p>
    * The Beggs & Brill correlation handles three-phase flow by treating water and oil as a combined
    * liquid phase with averaged properties.
@@ -1769,7 +1769,7 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test flow regime transitions across different gas-liquid ratios.
-   * 
+   *
    * <p>
    * The Beggs & Brill correlation identifies flow regimes: - Segregated (stratified, wavy) -
    * Intermittent (plug, slug) - Distributed (bubble, mist) - Transition (between segregated and
@@ -1844,12 +1844,12 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Comparison of Beggs-Brill against Dukler correlation for horizontal two-phase flow.
-   * 
+   *
    * <p>
    * The Dukler correlation is another widely-used method for horizontal two-phase flow. This test
    * compares pressure gradients from both methods.
    * </p>
-   * 
+   *
    * <p>
    * Dukler correlation for pressure gradient: (dP/dL) = f_tp * ρ_ns * v_m² / (2 * D) where f_tp =
    * f_ns * (ρ_ns/ρ_m)
@@ -1967,7 +1967,7 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test that transient simulation includes friction and hydrostatic pressure effects.
-   * 
+   *
    * <p>
    * This test verifies that: 1. Friction losses are applied during transient flow 2. Hydrostatic
    * pressure is properly calculated for inclined pipes 3. The transient solution converges to
@@ -2138,11 +2138,11 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test that inlet pressure/flow changes propagate to outlet at physically reasonable time.
-   * 
+   *
    * <p>
    * The transit time for a fluid particle through a pipe is: τ = L / v (where L = pipe length, v =
    * fluid velocity)
-   * 
+   *
    * For gas at typical pipeline velocities (5-15 m/s), a 1000m pipe should see changes arrive at
    * the outlet in roughly 60-200 seconds.
    * </p>
@@ -2655,7 +2655,7 @@ public class PipelinePressureDropComparisonTest {
   /**
    * Tests that AdiabaticPipe can calculate flow rate when outlet pressure is specified. This
    * verifies the existing setOutPressure functionality.
-   * 
+   *
    * <p>
    * NOTE: AdiabaticPipe uses a gas transmission equation (similar to Weymouth/Panhandle) which
    * calculates flow in standard volumetric units. The flow rate calculation may not be accurate for
@@ -2723,7 +2723,7 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Tests that AdiabaticTwoPhasePipe can calculate flow rate when outlet pressure is specified.
-   * 
+   *
    * <p>
    * NOTE: Similar to AdiabaticPipe, uses a gas transmission equation. The flow rate calculation may
    * not be accurate - this test verifies the mechanism works.

@@ -16,7 +16,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Test class for Emergency Shutdown (ESD) system with Blowdown Valve.
- * 
+ *
  * <p>
  * This test demonstrates a complete ESD blowdown system where:
  * <ul>
@@ -27,7 +27,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Blowdown gas is sent to flare for safe disposal</li>
  * <li>System tracks depressurization rate and flare load</li>
  * </ul>
- * 
+ *
  * <p>
  * The scenario demonstrates:
  * <ul>
@@ -60,7 +60,7 @@ public class BlowdownValveESDSystemTest {
 
   /**
    * Set up the ESD blowdown system.
-   * 
+   *
    * <p>
    * System configuration:
    * <ul>
@@ -135,7 +135,7 @@ public class BlowdownValveESDSystemTest {
 
   /**
    * Test complete ESD blowdown scenario.
-   * 
+   *
    * <p>
    * Scenario:
    * <ol>
@@ -535,7 +535,7 @@ public class BlowdownValveESDSystemTest {
 
   /**
    * Test pressure relief via blowdown valve with pressure monitoring.
-   * 
+   *
    * <p>
    * This test simulates a scenario where separator pressure builds up due to blocked outlet, then
    * ESD is activated and pressure is relieved through the blowdown valve.

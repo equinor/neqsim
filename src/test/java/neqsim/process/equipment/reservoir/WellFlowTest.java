@@ -204,7 +204,6 @@ public class WellFlowTest {
       reservoirOps.runTransient(60 * 60 * 365);
       process.run();
       if (pipeline.getOutletStream().getPressure("bara") < 5.0) {
-        continue;
       }
       /*
        * System.out.println("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));

@@ -2,13 +2,11 @@ package neqsim.process.equipment;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.ScrubColumn;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.LNGHeatExchanger;
 import neqsim.process.equipment.separator.CryogenicSeparator;
 import neqsim.process.equipment.separator.EndFlash;
-import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.tank.LNGTank;
 import neqsim.process.equipment.valve.ThrottlingValve;

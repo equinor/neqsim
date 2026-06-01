@@ -13,7 +13,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Validation tests comparing NeqSim asphaltene predictions against published literature data.
- * 
+ *
  * <p>
  * References:
  * <ul>
@@ -34,7 +34,7 @@ public class AsphalteneValidationTest {
   /**
    * Literature data from De Boer et al. (1995) SPE-24987-PA Table 1. Field cases with known
    * asphaltene problem status.
-   * 
+   *
    * Data format: {reservoirPressure [bar], bubblePointPressure [bar], inSituDensity [kg/m³],
    * hadProblems (1=yes, 0=no)}
    */
@@ -84,7 +84,7 @@ public class AsphalteneValidationTest {
   /**
    * CII thresholds from literature: - CII < 0.7: Stable - CII 0.7-0.9: Metastable - CII > 0.9:
    * Unstable
-   * 
+   *
    * Source: Ashoori, S., et al. (2017). "Comparison of Scaling Equation with Neural Network Model
    * for Prediction of Asphaltene Precipitation."
    */
@@ -94,7 +94,7 @@ public class AsphalteneValidationTest {
   /**
    * R/A ratio thresholds from literature: - R/A > 3: Stable - R/A 1.5-3: Moderate risk - R/A < 1.5:
    * High risk
-   * 
+   *
    * Source: Leontaritis, K.J. (1989). "Asphaltene Deposition: A Comprehensive Description of
    * Problem Manifestations and Modeling Approaches."
    */
@@ -530,16 +530,16 @@ public class AsphalteneValidationTest {
 
   /**
    * Literature experimental onset pressure data.
-   * 
+   *
    * <p>
    * Reference: Gonzalez, D.L., et al. (2005). "Prediction of Asphaltene Instability under Gas
    * Injection with the PC-SAFT Equation of State." Energy & Fuels, 19(4), 1230-1234.
-   * 
+   *
    * Also: Vargas, F.M., et al. (2009). "Modeling Asphaltene Phase Behavior in Crude Oil Systems
    * Using the Perturbed Chain Form of the Statistical Associating Fluid Theory (PC-SAFT) Equation
    * of State." Energy & Fuels, 23(3), 1140-1146.
    * </p>
-   * 
+   *
    * Note: Exact onset pressures depend on crude-specific tuning. These tests validate that CPA
    * produces physically reasonable onset pressures in the expected range.
    */

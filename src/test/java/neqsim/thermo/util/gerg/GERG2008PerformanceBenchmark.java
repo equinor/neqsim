@@ -21,7 +21,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class GERG2008PerformanceBenchmark {
   /**
    * Benchmark to measure the speedup from GERG-2008 caching.
-   * 
+   *
    * This simulates what happens during compressor performance estimation with detailed polytropic
    * method: many repeated flash calculations and property lookups.
    */
@@ -268,7 +268,7 @@ public class GERG2008PerformanceBenchmark {
 
   /**
    * Benchmark compressor performance with GERG-2008 to simulate Streamlit app usage.
-   * 
+   *
    * Uses SRK EoS with useGERG2008=true flag (the proper way to use GERG-2008 in compressors).
    */
   @Test
@@ -344,7 +344,7 @@ public class GERG2008PerformanceBenchmark {
 
   /**
    * Benchmark using native GERG-2008 EoS with forced single-phase gas.
-   * 
+   *
    * This tests the performance when using SystemGERG2008Eos directly with numberOfPhases=1 to force
    * single-phase gas calculations (no flash needed).
    */

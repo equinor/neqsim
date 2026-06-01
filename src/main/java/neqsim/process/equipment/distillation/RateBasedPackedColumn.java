@@ -1005,6 +1005,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    *
    * @return JSON report with configuration, hydraulics, transfer totals, and segment profiles
    */
+  @Override
   public String toJson() {
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
         .toJson(new ColumnReport(this));

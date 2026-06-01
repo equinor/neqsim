@@ -19,7 +19,7 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * Comprehensive test for ESD (Emergency Shutdown) system demonstrating fire alarm handling with
  * voting logic.
- * 
+ *
  * <p>
  * This test simulates a realistic ESD scenario where:
  * <ul>
@@ -30,7 +30,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Flare heat output and CO2 emissions are calculated</li>
  * <li>System tracks cumulative emissions during blowdown</li>
  * </ul>
- * 
+ *
  * <p>
  * Test Scenario:
  * <ol>
@@ -76,7 +76,7 @@ class ESDFireAlarmSystemTest {
 
   /**
    * Test complete ESD fire alarm system with 2-out-of-2 voting logic.
-   * 
+   *
    * <p>
    * Demonstrates:
    * <ul>
@@ -318,7 +318,7 @@ class ESDFireAlarmSystemTest {
 
   /**
    * Test ESD system with 2-out-of-3 voting logic for fire alarms.
-   * 
+   *
    * <p>
    * Demonstrates redundancy with three fire detectors where any two alarms will trigger ESD. This
    * is a more robust configuration used in critical safety applications.
@@ -441,7 +441,7 @@ class ESDFireAlarmSystemTest {
 
   /**
    * Test ESD system with gas detectors (hydrocarbon detection).
-   * 
+   *
    * <p>
    * Demonstrates:
    * <ul>
@@ -674,7 +674,7 @@ class ESDFireAlarmSystemTest {
 
   /**
    * Test combined fire and gas detection system with voting logic.
-   * 
+   *
    * <p>
    * Demonstrates realistic F&amp;G (Fire &amp; Gas) system where ESD activates when EITHER:
    * <ul>

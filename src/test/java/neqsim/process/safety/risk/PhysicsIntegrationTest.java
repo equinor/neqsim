@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Tests that verify risk calculations properly integrate with NeqSim physics.
- * 
+ *
  * <p>
  * These tests demonstrate that:
  * </p>
