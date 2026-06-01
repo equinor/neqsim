@@ -1,7 +1,7 @@
-name: Release to Github Packages 
+name: Release to GitHub Packages
 
 on:
-  workflow_dispatch:  
+  workflow_dispatch:
   push:
     branches:
       - release/*
@@ -15,16 +15,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-      - name: Set up JDK 11
+      - name: Set up Java 21 environment
         uses: actions/setup-java@v5
         with:
-          java-version: 11
+          java-version: 21
           distribution: 'temurin'
           cache: 'maven'
       - name: Get the version number from the pushed tag
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\/v/}
-      - name: Deploy to Github Package Registry
+      - name: Deploy to GitHub Package Registry
         env:
           GITHUB_USERNAME: x-access-token
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

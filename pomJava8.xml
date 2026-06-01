@@ -85,7 +85,7 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
-			<version>5.9.3</version> <!-- Last version supporting Java 8 -->
+			<version>5.14.4</version> <!-- 5.14.4 is latest version supporting Java 8 runtime -->
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -168,12 +168,20 @@
 					<plugin>
 						<groupId>org.sonatype.central</groupId>
 						<artifactId>central-publishing-maven-plugin</artifactId>
-						<version>0.9.0</version>
-						<extensions>true</extensions>
+						<version>0.10.0</version>
 						<configuration>
 							<publishingServerId>central</publishingServerId>
 							<autoPublish>true</autoPublish>
 						</configuration>
+						<executions>
+							<execution>
+								<id>publish-to-central</id>
+								<phase>deploy</phase>
+								<goals>
+									<goal>publish</goal>
+								</goals>
+							</execution>
+						</executions>
 					</plugin>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
@@ -234,7 +242,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
-				<version>3.6.2</version>
+				<version>3.6.3</version>
 				<executions>
 					<execution>
 						<id>enforce-maven</id>
@@ -254,7 +262,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.4.2</version>
+				<version>3.5.0</version>
 				<configuration>
 					<archive>
 						<manifest>
@@ -292,7 +300,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.6.1</version>
+				<version>3.6.2</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -305,7 +313,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.14.0</version>
+				<version>3.15.0</version>
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
@@ -331,7 +339,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.5.4</version>
+				<version>3.5.6</version>
 				<configuration>
 					<!-- Add test heap and required module opens for XStream reflection when running tests on JDK
 					>= 17 -->
@@ -341,7 +349,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-failsafe-plugin</artifactId>
-				<version>3.5.4</version>
+				<version>3.5.6</version>
 				<configuration>
 					<!-- Add test heap and required module opens for XStream reflection when running tests on JDK
 					>= 17 -->
@@ -368,7 +376,7 @@
 			<plugin>
 				<groupId>org.owasp</groupId>
 				<artifactId>dependency-check-maven</artifactId>
-				<version>12.2.0</version>
+				<version>12.2.2</version>
 				<reportSets>
 					<reportSet>
 						<reports>

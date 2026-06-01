@@ -53,29 +53,9 @@ See the [full documentation](https://equinor.github.io/neqsim/), [Java Wiki](htt
 
 ### Python - try it in 30 seconds
 
-```bash
-pip install neqsim
-```
+A Python wrapper is available on pip. Install using `pip install neqsim`.
 
-```python
-from neqsim import jneqsim
-
-# Create a natural gas fluid
-fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 60.0)  # 25 C, 60 bara
-fluid.addComponent("methane", 0.85)
-fluid.addComponent("ethane", 0.10)
-fluid.addComponent("propane", 0.05)
-fluid.setMixingRule("classic")
-
-# Run a flash calculation
-ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
-ops.TPflash()
-fluid.initProperties()
-
-print(f"Gas density:    {fluid.getPhase('gas').getDensity('kg/m3'):.2f} kg/m3")
-print(f"Gas viscosity:  {fluid.getPhase('gas').getViscosity('kg/msec'):.6f} kg/(m*s)")
-print(f"Z-factor:       {fluid.getPhase('gas').getZ():.4f}")
-```
+See [neqsim-python](https://github.com/equinor/neqsim-python) for more details.
 
 ### Java - add to your project
 
@@ -395,7 +375,7 @@ graph TB
     subgraph access["Access Layers"]
         PYTHON["Python / Jupyter<br/>pip install neqsim"]
         JAVA["Java / Maven<br/>Direct API"]
-        MCP["MCP Server (Java 17+)<br/>LLM integration"]
+        MCP["MCP Server (Java 21+)<br/>LLM integration"]
         AGENTS["AI Agents<br/>VS Code Copilot"]
     end
 
@@ -413,9 +393,9 @@ graph TB
 
 | I want to... | Use | Requires |
 |---|---|---|
-| Quick property lookup via LLM | [MCP Server](neqsim-mcp-server/) + any LLM client | Java 17+ (or Docker) |
-| Python scripting / Jupyter notebooks | `pip install neqsim` | Python 3.8+, JVM |
-| Embed in a Java application | Maven dependency | Java 8+ |
+| Quick property lookup via LLM | [MCP Server](neqsim-mcp-server/) + any LLM client | Java 21+ (or Docker) |
+| Python scripting / Jupyter notebooks | `pip install neqsim` | Python 3.9+, JVM |
+| Embed in a Java application | Maven dependency | Java 21+ (default) or Java 8+ (use the `-Java8` artifact) |
 | Full engineering study with reports | `@solve.task` agent in VS Code | VS Code + GitHub Copilot |
 | .NET / MATLAB integration | [Language bindings](#other-language-bindings) | See linked repos |
 
@@ -424,9 +404,9 @@ graph TB
 | Component | Java Version | Notes |
 |---|---|---|
 | **NeqSim core library** | 8+ | All thermodynamics, process equipment, PVT |
-| **MCP server** | 17+ | Quarkus-based; thin wrapper around core |
+| **MCP server** | 21+ | Quarkus-based; thin wrapper around core |
 | **Python users** | No Java coding | JVM bundled via jpype |
-| **Running prebuilt MCP jar** | 17+ | Download from [releases](https://github.com/equinor/neqsim/releases) |
+| **Running prebuilt MCP jar** | 21+ | Download from [releases](https://github.com/equinor/neqsim/releases) |
 
 #### Core modules
 
