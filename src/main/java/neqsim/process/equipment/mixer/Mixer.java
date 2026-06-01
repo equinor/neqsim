@@ -218,18 +218,37 @@ public class Mixer extends ProcessEquipmentBaseClass
         double moles =
             streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getNumberOfmoles();
 
+        double srcMolarMass =
+            streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getMolarMass();
+        double destMolarMass = srcMolarMass;
+
         for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0)
             .getNumberOfComponents(); p++) {
           if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName()
               .equals(componentName)) {
             gotComponent = true;
             index = mixedStream.getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
+            destMolarMass =
+                mixedStream.getThermoSystem().getPhase(0).getComponent(p).getMolarMass();
             break;
           }
         }
 
         if (gotComponent) {
-          mixedStream.getThermoSystem().addComponent(index, moles);
+          // Two inlets may carry a component with the same name but a different molar mass
+          // (e.g. independently characterized pseudo/plus-fractions such as "C7" in separate
+          // trains). Adding source moles onto the destination component keeps the destination's
+          // molar mass, which conserves moles but NOT mass. Scale the added moles by the
+          // source/destination molar-mass ratio so that the added MASS (moles * MW) is preserved.
+          double molesToAdd = moles;
+          if (destMolarMass > 0.0 && Math.abs(srcMolarMass - destMolarMass) > 1.0e-9) {
+            molesToAdd = moles * srcMolarMass / destMolarMass;
+            logger.warn("Mixer '" + getName() + "': component '" + componentName
+                + "' has different molar mass in inlet stream (" + srcMolarMass
+                + " kg/mol) than in the mixed stream (" + destMolarMass
+                + " kg/mol). Scaling moles to conserve mass.");
+          }
+          mixedStream.getThermoSystem().addComponent(index, molesToAdd);
         } else {
           hasAddedNewComponent = true;
           mixedStream.getThermoSystem().addComponent(componentName, moles);
