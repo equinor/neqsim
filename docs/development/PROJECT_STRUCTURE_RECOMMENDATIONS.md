@@ -34,7 +34,7 @@ Update references in:
 - `.vscode/settings.json` → Update formatter URLs if needed
 
 #### B. Group POM Variants
-**Current**: `pom.xml`, `pomJava8.xml`, `pomJava21.xml`, `dependency-reduced-pom.xml` all at root
+**Current**: `pom.xml`, `pomJava8.xml`, `dependency-reduced-pom.xml` all at root
 
 **Recommendation**: Add a `README_POMS.md` at root explaining:
 ```markdown
