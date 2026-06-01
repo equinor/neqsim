@@ -6,7 +6,9 @@ import java.util.Collections;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.ejml.simple.SimpleMatrix;
+import org.ojalgo.matrix.decomposition.LU;
+import org.ojalgo.matrix.store.MatrixStore;
+import org.ojalgo.matrix.store.Primitive64Store;
 
 /**
  * Data reconciliation engine using weighted least squares (WLS) with linear constraints.
@@ -268,20 +270,20 @@ public class DataReconciliationEngine implements java.io.Serializable {
    */
   private ReconciliationResult solveWLS(int n, int m, long startTime) {
     // Build measurement vector y (n x 1)
-    SimpleMatrix y = new SimpleMatrix(n, 1);
+    Primitive64Store y = Primitive64Store.FACTORY.make(n, 1);
     for (int i = 0; i < n; i++) {
       y.set(i, 0, variables.get(i).getMeasuredValue());
     }
 
     // Build covariance matrix V = diag(sigma^2) (n x n)
-    SimpleMatrix bigV = new SimpleMatrix(n, n);
+    Primitive64Store bigV = Primitive64Store.FACTORY.make(n, n);
     for (int i = 0; i < n; i++) {
       double sigma = variables.get(i).getUncertainty();
       bigV.set(i, i, sigma * sigma);
     }
 
     // Build constraint matrix A (m x n)
-    SimpleMatrix bigA = new SimpleMatrix(m, n);
+    Primitive64Store bigA = Primitive64Store.FACTORY.make(m, n);
     for (int i = 0; i < m; i++) {
       double[] row = constraintRows.get(i);
       for (int j = 0; j < n; j++) {
@@ -290,7 +292,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
     }
 
     // Constraint residuals before: r_before = A * y
-    SimpleMatrix rBefore = bigA.mult(y);
+    MatrixStore<Double> rBefore = bigA.multiply(y);
     double[] residualsBefore = new double[m];
     for (int i = 0; i < m; i++) {
       residualsBefore[i] = rBefore.get(i, 0);
@@ -298,21 +300,24 @@ public class DataReconciliationEngine implements java.io.Serializable {
 
     // Solve: x_adj = y - V * A^T * solve(A * V * A^T, A * y)
     // Step 1: A * V * A^T (m x m)
-    SimpleMatrix aTimesV = bigA.mult(bigV);
-    SimpleMatrix avat = aTimesV.mult(bigA.transpose());
+    MatrixStore<Double> aTimesV = bigA.multiply(bigV);
+    MatrixStore<Double> avat = aTimesV.multiply(bigA.transpose());
 
     // Step 2: solve(AVAT, A*y) without forming AVAT^-1
-    SimpleMatrix lagrangeMultipliers = avat.solve(rBefore);
+    MatrixStore<Double> lagrangeMultipliers = solveLinearSystem(avat, rBefore);
 
     // Step 3: correction = V * A^T * solve(AVAT, A*y)
-    SimpleMatrix vAt = bigV.mult(bigA.transpose());
-    SimpleMatrix correction = vAt.mult(lagrangeMultipliers);
+    MatrixStore<Double> vAt = bigV.multiply(bigA.transpose());
+    MatrixStore<Double> correction = vAt.multiply(lagrangeMultipliers);
 
     // Step 4: reconciled = y - correction
-    SimpleMatrix xAdj = y.minus(correction);
+    Primitive64Store xAdj = Primitive64Store.FACTORY.make(n, 1);
+    for (int i = 0; i < n; i++) {
+      xAdj.set(i, 0, y.get(i, 0) - correction.get(i, 0));
+    }
 
     // Constraint residuals after: r_after = A * x_adj (should be ~0)
-    SimpleMatrix rAfter = bigA.mult(xAdj);
+    MatrixStore<Double> rAfter = bigA.multiply(xAdj);
     double[] residualsAfter = new double[m];
     for (int i = 0; i < m; i++) {
       residualsAfter[i] = rAfter.get(i, 0);
@@ -333,9 +338,14 @@ public class DataReconciliationEngine implements java.io.Serializable {
 
     // Gross error detection via normalized residuals
     // Covariance of adjustments: V_adj = V - V * A^T * solve(AVAT, A * V)
-    SimpleMatrix solvedAv = avat.solve(aTimesV);
-    SimpleMatrix projectionM = vAt.mult(solvedAv);
-    SimpleMatrix vAdj = bigV.minus(projectionM);
+    MatrixStore<Double> solvedAv = solveLinearSystem(avat, aTimesV);
+    MatrixStore<Double> projectionM = vAt.multiply(solvedAv);
+    Primitive64Store vAdj = Primitive64Store.FACTORY.make(n, n);
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        vAdj.set(i, j, bigV.get(i, j) - projectionM.get(i, j));
+      }
+    }
 
     detectGrossErrors(n, vAdj);
 
@@ -384,7 +394,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
    * @param n number of variables
    * @param vAdj covariance matrix of reconciled adjustments (V - V*A^T*(AVA^T)^-1*A*V)
    */
-  private void detectGrossErrors(int n, SimpleMatrix vAdj) {
+  private void detectGrossErrors(int n, MatrixStore<Double> vAdj) {
     for (int i = 0; i < n; i++) {
       ReconciliationVariable v = variables.get(i);
       double sigma = v.getUncertainty();
@@ -404,6 +414,23 @@ public class DataReconciliationEngine implements java.io.Serializable {
 	    grossErrorThreshold);
       }
     }
+  }
+
+  /**
+   * Solves a linear system A*X = B using an LU decomposition.
+   *
+   * @param a coefficient matrix A
+   * @param b right-hand side matrix B
+   * @return solution matrix X
+   */
+  private MatrixStore<Double> solveLinearSystem(MatrixStore<Double> a, MatrixStore<Double> b) {
+    int rows = (int) a.countRows();
+    int cols = (int) a.countColumns();
+    LU<Double> lu = LU.PRIMITIVE.make(rows, cols);
+    if (!lu.decompose(a)) {
+      throw new IllegalStateException("LU decomposition failed in data reconciliation solve");
+    }
+    return lu.getSolution(b);
   }
 
   /**

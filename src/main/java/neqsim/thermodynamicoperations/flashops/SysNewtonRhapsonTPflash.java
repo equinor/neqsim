@@ -1,24 +1,24 @@
 package neqsim.thermodynamicoperations.flashops;
 
-import org.ejml.data.DMatrixRMaj;
-import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
-import org.ejml.interfaces.linsol.LinearSolverDense;
+import org.ojalgo.matrix.decomposition.LU;
+import org.ojalgo.matrix.store.MatrixStore;
+import org.ojalgo.matrix.store.Primitive64Store;
 import neqsim.thermo.system.SystemInterface;
 
 /**
  * Newton-Raphson solver for two-phase TP flash using Michelsen's u-variable formulation.
  *
  * <p>
- * Variables: u[i] = beta * y[i] (Michelsen 1982b). Residual: g[i] = ln(f_gas_i) - ln(f_liq_i). Jacobian: Hessian of the
- * reduced Gibbs energy Q(u). Uses Armijo backtracking line search on Q for global convergence (Michelsen &amp; Mollerup
- * 2007, Ch. 12).
+ * Variables: u[i] = beta * y[i] (Michelsen 1982b). Residual: g[i] = ln(f_gas_i) - ln(f_liq_i).
+ * Jacobian: Hessian of the reduced Gibbs energy Q(u). Uses Armijo backtracking line search on Q for
+ * global convergence (Michelsen &amp; Mollerup 2007, Ch. 12).
  * </p>
  *
  * <p>
  * Performance optimizations vs standard implementation:
  * </p>
  * <ul>
- * <li>EJML dense solver instead of JAMA (~2x faster linear solve for n&gt;=10)</li>
+ * <li>ojAlgo dense LU solver instead of JAMA (~2x faster linear solve for n&gt;=10)</li>
  * <li>Pre-allocated solver and work buffers (zero allocation in solve loop)</li>
  * </ul>
  *
@@ -44,18 +44,18 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   /** Cached feed compositions (constant during flash). */
   private double[] z;
 
-  // Pre-allocated EJML matrices for zero-allocation Newton steps
+  // Pre-allocated matrices for zero-allocation Newton steps
   /** Jacobian matrix (Hessian of Q). */
-  private DMatrixRMaj jacMatrix;
+  private Primitive64Store jacMatrix;
 
   /** Residual vector (gradient of Q). */
-  private DMatrixRMaj fvecVector;
+  private double[] fvecVector;
 
   /** Newton step vector. */
-  private DMatrixRMaj dxVector;
+  private double[] dxVector;
 
   /** Work copy of Jacobian for LU decomposition. */
-  private DMatrixRMaj jacWork;
+  private Primitive64Store jacWork;
 
   /** u-variable array: u[i] = beta * y[i]. */
   private double[] uVector;
@@ -63,8 +63,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   /** Trial u-vector used by the Armijo line search. */
   private double[] uTrialVector;
 
-  /** Pre-allocated EJML LU solver. */
-  private transient LinearSolverDense<DMatrixRMaj> linearSolver;
+  /** Pre-allocated ojAlgo LU solver. */
+  private transient LU<Double> linearSolver;
 
   /**
    * <p>
@@ -75,19 +75,20 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * @param numberOfPhases a int
    * @param numberOfComponents a int
    */
-  public SysNewtonRhapsonTPflash(SystemInterface system, int numberOfPhases, int numberOfComponents) {
+  public SysNewtonRhapsonTPflash(SystemInterface system, int numberOfPhases,
+      int numberOfComponents) {
     this.system = system;
     this.numberOfComponents = numberOfComponents;
     neq = numberOfComponents;
 
-    // Pre-allocate EJML matrices
-    jacMatrix = new DMatrixRMaj(neq, neq);
-    fvecVector = new DMatrixRMaj(neq, 1);
-    dxVector = new DMatrixRMaj(neq, 1);
-    jacWork = new DMatrixRMaj(neq, neq);
+    // Pre-allocate matrix and vector workspaces
+    jacMatrix = Primitive64Store.FACTORY.make(neq, neq);
+    fvecVector = new double[neq];
+    dxVector = new double[neq];
+    jacWork = Primitive64Store.FACTORY.make(neq, neq);
     uVector = new double[neq];
     uTrialVector = new double[neq];
-    linearSolver = LinearSolverFactory_DDRM.lu(neq);
+    linearSolver = LU.PRIMITIVE.make(neq, neq);
 
     setu();
     z = new double[numberOfComponents];
@@ -97,8 +98,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   }
 
   /**
-   * Number of components this solver was sized for. Used by the caller to detect when the cached instance is stale
-   * (e.g. after solid precipitation removed a component).
+   * Number of components this solver was sized for. Used by the caller to detect when the cached
+   * instance is stale (e.g. after solid precipitation removed a component).
    *
    * @return number of components
    */
@@ -107,8 +108,9 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   }
 
   /**
-   * Re-bind this solver to a (possibly updated) system reference and refresh the cached feed composition, without
-   * re-allocating the EJML matrices. The component count must match — call {@link #getNumberOfComponents()} first.
+   * Re-bind this solver to a (possibly updated) system reference and refresh the cached feed
+   * composition, without re-allocating the matrix workspaces. The component count must match — call
+   * {@link #getNumberOfComponents()} first.
    *
    * @param system system to solve
    */
@@ -129,10 +131,11 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    */
   public void setfvec() {
     for (int i = 0; i < numberOfComponents; i++) {
-      fvecVector.set(i, 0, Math
-	  .log(system.getPhase(0).getComponent(i).getFugacityCoefficient() * system.getPhase(0).getComponent(i).getx())
-	  - Math.log(
-	      system.getPhase(1).getComponent(i).getFugacityCoefficient() * system.getPhase(1).getComponent(i).getx()));
+      fvecVector[i] = Math
+          .log(system.getPhase(0).getComponent(i).getFugacityCoefficient()
+              * system.getPhase(0).getComponent(i).getx())
+          - Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient()
+              * system.getPhase(1).getComponent(i).getx());
     }
   }
 
@@ -150,10 +153,11 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       double invYi = 1.0 / system.getPhase(0).getComponent(i).getx();
       double invXi = 1.0 / system.getPhase(1).getComponent(i).getx();
       for (int j = 0; j < numberOfComponents; j++) {
-	dij = i == j ? 1.0 : 0.0;
-	tempJ = invBeta * (dij * invYi - 1.0 + system.getPhase(0).getComponent(i).getdfugdx(j))
-	    + invOneMinusBeta * (dij * invXi - 1.0 + system.getPhase(1).getComponent(i).getdfugdx(j));
-	jacMatrix.set(i, j, tempJ);
+        dij = i == j ? 1.0 : 0.0;
+        tempJ = invBeta * (dij * invYi - 1.0 + system.getPhase(0).getComponent(i).getdfugdx(j))
+            + invOneMinusBeta
+                * (dij * invXi - 1.0 + system.getPhase(1).getComponent(i).getdfugdx(j));
+        jacMatrix.set(i, j, tempJ);
       }
     }
   }
@@ -184,8 +188,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     for (int i = 0; i < numberOfComponents; i++) {
       system.getPhase(0).getComponent(i).setx(uVector[i] / betaSum);
       system.getPhase(1).getComponent(i).setx((z[i] - uVector[i]) / (1.0 - betaSum));
-      system.getPhase(0).getComponent(i)
-	  .setK(system.getPhase(0).getComponent(i).getx() / system.getPhase(1).getComponent(i).getx());
+      system.getPhase(0).getComponent(i).setK(
+          system.getPhase(0).getComponent(i).getx() / system.getPhase(1).getComponent(i).getx());
       system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
     }
 
@@ -194,8 +198,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   }
 
   /**
-   * Compute Michelsen's reduced Gibbs energy Q(u). Q = sum[u_i * ln(y_i * phi_gas_i) + (z_i - u_i) * ln(x_i *
-   * phi_liq_i)]. Gradient of Q equals fvec; Hessian of Q equals Jac.
+   * Compute Michelsen's reduced Gibbs energy Q(u). Q = sum[u_i * ln(y_i * phi_gas_i) + (z_i - u_i)
+   * * ln(x_i * phi_liq_i)]. Gradient of Q equals fvec; Hessian of Q equals Jac.
    *
    * @return Q value
    */
@@ -221,7 +225,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     double betaTrial = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       if (uTrial[i] < 1e-15 || uTrial[i] > z[i] - 1e-15) {
-	return false;
+        return false;
       }
       betaTrial += uTrial[i];
     }
@@ -229,8 +233,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   }
 
   /**
-   * Set compositions from trial u vector and compute fugacities only (init level 1). Used for line search Q evaluation
-   * at trial points.
+   * Set compositions from trial u vector and compute fugacities only (init level 1). Used for line
+   * search Q evaluation at trial points.
    *
    * @param uTrial trial u vector
    */
@@ -249,11 +253,11 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   }
 
   /**
-   * Lazily initializes the EJML solver after deserialization.
+   * Lazily initializes the ojAlgo LU solver after deserialization.
    */
   private void ensureSolverInitialized() {
     if (linearSolver == null) {
-      linearSolver = LinearSolverFactory_DDRM.lu(neq);
+      linearSolver = LU.PRIMITIVE.make(neq, neq);
     }
     if (uTrialVector == null || uTrialVector.length != numberOfComponents) {
       uTrialVector = new double[numberOfComponents];
@@ -286,15 +290,29 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       jacMatrix.set(i, i, jacMatrix.get(i, i) + lambda);
     }
 
-    // Solve J * dx = fvec using EJML (pre-allocated work buffer)
-    jacWork.setTo(jacMatrix);
-    linearSolver.setA(jacWork);
-    linearSolver.solve(fvecVector, dxVector);
+    // Solve J * dx = fvec using ojAlgo LU (pre-allocated work buffer)
+    for (int i = 0; i < neq; i++) {
+      for (int j = 0; j < neq; j++) {
+        jacWork.set(i, j, jacMatrix.get(i, j));
+      }
+    }
+    Primitive64Store rhsVector = Primitive64Store.FACTORY.make(neq, 1);
+    for (int i = 0; i < neq; i++) {
+      rhsVector.set(i, 0, fvecVector[i]);
+    }
+
+    if (!linearSolver.decompose(jacWork)) {
+      throw new IllegalStateException("Failed to decompose Jacobian matrix in Newton solver");
+    }
+    MatrixStore<Double> solution = linearSolver.getSolution(rhsVector);
+    for (int i = 0; i < neq; i++) {
+      dxVector[i] = solution.get(i, 0);
+    }
 
     // Directional derivative: slope = fvec^T * dx = grad(Q)^T * (Jac^-1 * grad(Q)) > 0
     double slope = 0.0;
     for (int i = 0; i < neq; i++) {
-      slope += fvecVector.get(i, 0) * dxVector.get(i, 0);
+      slope += fvecVector[i] * dxVector[i];
     }
 
     // Armijo backtracking line search on Michelsen Q function
@@ -303,20 +321,20 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     int maxBacktrack = 8;
     for (int bt = 0; bt < maxBacktrack; bt++) {
       for (int i = 0; i < numberOfComponents; i++) {
-	uTrialVector[i] = uVector[i] - alpha * dxVector.get(i, 0);
+        uTrialVector[i] = uVector[i] - alpha * dxVector[i];
       }
 
       if (isFeasible(uTrialVector)) {
-	try {
-	  setTrialAndComputeFugacities(uTrialVector);
-	  double qTrial = computeQ();
-	  // Armijo condition: Q_trial <= Q_current - c1 * alpha * slope
-	  if (qTrial <= qCurrent - c1 * alpha * slope) {
-	    break;
-	  }
-	} catch (Exception ex) {
-	  // Cubic solver failed at trial point — try shorter step
-	}
+        try {
+          setTrialAndComputeFugacities(uTrialVector);
+          double qTrial = computeQ();
+          // Armijo condition: Q_trial <= Q_current - c1 * alpha * slope
+          if (qTrial <= qCurrent - c1 * alpha * slope) {
+            break;
+          }
+        } catch (Exception ex) {
+          // Cubic solver failed at trial point — try shorter step
+        }
       }
 
       alpha *= 0.5;
@@ -326,7 +344,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     double stepNormSq = 0.0;
     double uNormSq = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      double step = alpha * dxVector.get(i, 0);
+      double step = alpha * dxVector[i];
       uVector[i] -= step;
       stepNormSq += step * step;
       uNormSq += uVector[i] * uVector[i];

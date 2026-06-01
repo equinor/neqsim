@@ -110,6 +110,11 @@
 			<version>0.41</version> <!-- Last version supporting java 8-->
 		</dependency>
 		<dependency>
+			<groupId>org.ojalgo</groupId>
+			<artifactId>ojalgo</artifactId>
+			<version>52.0.0</version>
+		</dependency>
+		<dependency>
 			<groupId>gov.nist.math</groupId>
 			<artifactId>jama</artifactId>
 			<version>1.0.3</version>

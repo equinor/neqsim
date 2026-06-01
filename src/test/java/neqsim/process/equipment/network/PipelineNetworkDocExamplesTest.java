@@ -3,6 +3,7 @@ package neqsim.process.equipment.network;
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -10,6 +11,7 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * Verifies that every code example in docs/process/pipeline_network_optimization.md compiles and runs correctly.
  */
+@Tag("LinearAlgebra")
 class PipelineNetworkDocExamplesTest {
 
   private static SystemInterface gas;

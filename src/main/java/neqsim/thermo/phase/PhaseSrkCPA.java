@@ -2,12 +2,9 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.ejml.data.DMatrixRMaj;
-import org.ejml.dense.row.CommonOps_DDRM;
-import org.ejml.dense.row.NormOps_DDRM;
-import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
-import org.ejml.interfaces.linsol.LinearSolverDense;
-import org.ejml.simple.SimpleMatrix;
+import org.ojalgo.matrix.decomposition.LU;
+import org.ojalgo.matrix.store.MatrixStore;
+import org.ojalgo.matrix.store.Primitive64Store;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.mixingrule.CPAMixingRuleHandler;
@@ -2083,5 +2080,280 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       // + fVV());
     }
     return getMolarVolume();
+  }
+
+  /**
+   * Minimal matrix wrapper used during EJML migration, backed by primitive arrays and ojAlgo LU
+   * solves.
+   */
+  private static final class SimpleMatrix {
+    private final DMatrixRMaj data;
+
+    SimpleMatrix(int rows, int cols) {
+      this.data = new DMatrixRMaj(rows, cols);
+    }
+
+    SimpleMatrix(double[][] values) {
+      this.data = new DMatrixRMaj(values);
+    }
+
+    private SimpleMatrix(DMatrixRMaj ddrm) {
+      this.data = ddrm;
+    }
+
+    static SimpleMatrix identity(int n) {
+      SimpleMatrix id = new SimpleMatrix(n, n);
+      for (int i = 0; i < n; i++) {
+        id.set(i, i, 1.0);
+      }
+      return id;
+    }
+
+    static SimpleMatrix wrap(DMatrixRMaj ddrm) {
+      return new SimpleMatrix(ddrm);
+    }
+
+    DMatrixRMaj getDDRM() {
+      return data;
+    }
+
+    DMatrixRMaj getMatrix() {
+      return data;
+    }
+
+    double get(int row, int col) {
+      return data.unsafe_get(row, col);
+    }
+
+    void set(int row, int col, double value) {
+      data.unsafe_set(row, col, value);
+    }
+
+    SimpleMatrix transpose() {
+      SimpleMatrix t = new SimpleMatrix(data.numCols, data.numRows);
+      for (int i = 0; i < data.numRows; i++) {
+        for (int j = 0; j < data.numCols; j++) {
+          t.set(j, i, get(i, j));
+        }
+      }
+      return t;
+    }
+
+    SimpleMatrix mult(SimpleMatrix other) {
+      SimpleMatrix result = new SimpleMatrix(data.numRows, other.data.numCols);
+      for (int i = 0; i < data.numRows; i++) {
+        for (int j = 0; j < other.data.numCols; j++) {
+          double sum = 0.0;
+          for (int k = 0; k < data.numCols; k++) {
+            sum += get(i, k) * other.get(k, j);
+          }
+          result.set(i, j, sum);
+        }
+      }
+      return result;
+    }
+
+    SimpleMatrix plus(SimpleMatrix other) {
+      SimpleMatrix result = new SimpleMatrix(data.numRows, data.numCols);
+      for (int i = 0; i < data.numRows; i++) {
+        for (int j = 0; j < data.numCols; j++) {
+          result.set(i, j, get(i, j) + other.get(i, j));
+        }
+      }
+      return result;
+    }
+
+    SimpleMatrix minus(SimpleMatrix other) {
+      SimpleMatrix result = new SimpleMatrix(data.numRows, data.numCols);
+      for (int i = 0; i < data.numRows; i++) {
+        for (int j = 0; j < data.numCols; j++) {
+          result.set(i, j, get(i, j) - other.get(i, j));
+        }
+      }
+      return result;
+    }
+
+    SimpleMatrix scale(double factor) {
+      SimpleMatrix result = new SimpleMatrix(data.numRows, data.numCols);
+      for (int i = 0; i < data.numRows; i++) {
+        for (int j = 0; j < data.numCols; j++) {
+          result.set(i, j, get(i, j) * factor);
+        }
+      }
+      return result;
+    }
+
+    SimpleMatrix elementMult(SimpleMatrix other) {
+      SimpleMatrix result = new SimpleMatrix(data.numRows, data.numCols);
+      for (int i = 0; i < data.numRows; i++) {
+        for (int j = 0; j < data.numCols; j++) {
+          result.set(i, j, get(i, j) * other.get(i, j));
+        }
+      }
+      return result;
+    }
+
+    SimpleMatrix invert() {
+      LU<Double> lu = LU.PRIMITIVE.make(data.numRows, data.numCols);
+      Primitive64Store store = Primitive64Store.FACTORY.make(data.numRows, data.numCols);
+      for (int i = 0; i < data.numRows; i++) {
+        for (int j = 0; j < data.numCols; j++) {
+          store.set(i, j, get(i, j));
+        }
+      }
+      if (!lu.decompose(store)) {
+        throw new RuntimeException("Matrix inversion failed: LU decomposition failed");
+      }
+      MatrixStore<Double> inv = lu.getInverse();
+      DMatrixRMaj out = new DMatrixRMaj(data.numRows, data.numCols);
+      for (int i = 0; i < data.numRows; i++) {
+        for (int j = 0; j < data.numCols; j++) {
+          out.unsafe_set(i, j, inv.get(i, j));
+        }
+      }
+      return new SimpleMatrix(out);
+    }
+
+    SimpleMatrix extractVector(boolean extractRow, int index) {
+      if (extractRow) {
+        SimpleMatrix row = new SimpleMatrix(1, data.numCols);
+        for (int j = 0; j < data.numCols; j++) {
+          row.set(0, j, get(index, j));
+        }
+        return row;
+      }
+      SimpleMatrix col = new SimpleMatrix(data.numRows, 1);
+      for (int i = 0; i < data.numRows; i++) {
+        col.set(i, 0, get(i, index));
+      }
+      return col;
+    }
+  }
+
+  /** Lightweight dense matrix used by CommonOps/NormOps compatibility helpers. */
+  private static final class DMatrixRMaj {
+    final int numRows;
+    final int numCols;
+    private final double[] values;
+
+    DMatrixRMaj(int rows, int cols) {
+      this.numRows = rows;
+      this.numCols = cols;
+      this.values = new double[rows * cols];
+    }
+
+    DMatrixRMaj(double[][] matrix) {
+      this(matrix.length, matrix.length == 0 ? 0 : matrix[0].length);
+      for (int i = 0; i < numRows; i++) {
+        for (int j = 0; j < numCols; j++) {
+          unsafe_set(i, j, matrix[i][j]);
+        }
+      }
+    }
+
+    double unsafe_get(int row, int col) {
+      return values[row * numCols + col];
+    }
+
+    void unsafe_set(int row, int col, double value) {
+      values[row * numCols + col] = value;
+    }
+
+    double[] getData() {
+      return values;
+    }
+  }
+
+  /** Compatibility operations mirroring the subset of EJML ops used here. */
+  private static final class CommonOps_DDRM {
+    private CommonOps_DDRM() {}
+
+    static void mult(DMatrixRMaj a, DMatrixRMaj b, DMatrixRMaj out) {
+      for (int i = 0; i < a.numRows; i++) {
+        for (int j = 0; j < b.numCols; j++) {
+          double sum = 0.0;
+          for (int k = 0; k < a.numCols; k++) {
+            sum += a.unsafe_get(i, k) * b.unsafe_get(k, j);
+          }
+          out.unsafe_set(i, j, sum);
+        }
+      }
+    }
+
+    static void subtract(DMatrixRMaj a, DMatrixRMaj b, DMatrixRMaj out) {
+      for (int i = 0; i < a.numRows; i++) {
+        for (int j = 0; j < a.numCols; j++) {
+          out.unsafe_set(i, j, a.unsafe_get(i, j) - b.unsafe_get(i, j));
+        }
+      }
+    }
+  }
+
+  /** Compatibility norm helper. */
+  private static final class NormOps_DDRM {
+    private NormOps_DDRM() {}
+
+    static double normF(DMatrixRMaj m) {
+      double sum = 0.0;
+      double[] data = m.getData();
+      for (int i = 0; i < data.length; i++) {
+        sum += data[i] * data[i];
+      }
+      return Math.sqrt(sum);
+    }
+  }
+
+  /** Minimal linear solver interface matching the previous use. */
+  private interface LinearSolverDense<T> {
+    boolean setA(T matrix);
+
+    void solve(T rhs, T out);
+  }
+
+  /** Factory for LU solvers backed by ojAlgo. */
+  private static final class LinearSolverFactory_DDRM {
+    private LinearSolverFactory_DDRM() {}
+
+    static LinearSolverDense<DMatrixRMaj> lu(int n) {
+      return new OjAlgoLUSolver(n);
+    }
+  }
+
+  /** LU solver adapter using ojAlgo decomposition. */
+  private static final class OjAlgoLUSolver implements LinearSolverDense<DMatrixRMaj> {
+    private final int size;
+    private LU<Double> lu;
+
+    OjAlgoLUSolver(int n) {
+      this.size = n;
+      this.lu = LU.PRIMITIVE.make(n, n);
+    }
+
+    @Override
+    public boolean setA(DMatrixRMaj matrix) {
+      Primitive64Store store = Primitive64Store.FACTORY.make(size, size);
+      for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+          store.set(i, j, matrix.unsafe_get(i, j));
+        }
+      }
+      return lu.decompose(store);
+    }
+
+    @Override
+    public void solve(DMatrixRMaj rhs, DMatrixRMaj out) {
+      Primitive64Store rhsStore = Primitive64Store.FACTORY.make(rhs.numRows, rhs.numCols);
+      for (int i = 0; i < rhs.numRows; i++) {
+        for (int j = 0; j < rhs.numCols; j++) {
+          rhsStore.set(i, j, rhs.unsafe_get(i, j));
+        }
+      }
+      MatrixStore<Double> sol = lu.getSolution(rhsStore);
+      for (int i = 0; i < out.numRows; i++) {
+        for (int j = 0; j < out.numCols; j++) {
+          out.unsafe_set(i, j, sol.get(i, j));
+        }
+      }
+    }
   }
 }
