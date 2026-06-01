@@ -53,7 +53,7 @@ See the [full documentation](https://equinor.github.io/neqsim/), [Java Wiki](htt
 
 ### Python - try it in 30 seconds
 
-A python wrapper is available on pip. Install using ```bash pip install neqsim```.
+A Python wrapper is available on pip. Install using `pip install neqsim`.
 
 See [neqsim-python](https://github.com/equinor/neqsim-python) for more details.
 
