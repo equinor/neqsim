@@ -9,12 +9,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.mcp.model.ResultProvenance;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Stateless reservoir simulation runner for MCP integration.

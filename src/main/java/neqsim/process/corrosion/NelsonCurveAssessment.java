@@ -1,7 +1,6 @@
 package neqsim.process.corrosion;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,33 +32,61 @@ import com.google.gson.GsonBuilder;
  *
  * <p>
  * The methane molecules are too large to diffuse out and accumulate at grain boundaries, creating
- * internal pressure that leads to fissuring and blistering. This process is irreversible —
- * once HTHA occurs, the steel must be replaced.
+ * internal pressure that leads to fissuring and blistering. This process is irreversible — once
+ * HTHA occurs, the steel must be replaced.
  * </p>
  *
  * <h2>Material Categories</h2>
  *
  * <p>
- * Higher alloy content (Cr, Mo, V) stabilises carbides against hydrogen attack, shifting
- * the Nelson curve to higher temperatures and pressures:
+ * Higher alloy content (Cr, Mo, V) stabilises carbides against hydrogen attack, shifting the Nelson
+ * curve to higher temperatures and pressures:
  * </p>
  *
  * <table>
  * <caption>Material categories for Nelson curve assessment</caption>
- * <tr><th>Material</th><th>Typical Max Temp at 100 psia H2</th><th>Resistance</th></tr>
- * <tr><td>Carbon steel</td><td>~220°C</td><td>Lowest</td></tr>
- * <tr><td>C-0.5Mo</td><td>~300°C</td><td>Low-moderate</td></tr>
- * <tr><td>1Cr-0.5Mo</td><td>~400°C</td><td>Moderate</td></tr>
- * <tr><td>1.25Cr-0.5Mo</td><td>~450°C</td><td>Good</td></tr>
- * <tr><td>2.25Cr-1Mo</td><td>~500°C</td><td>Very good</td></tr>
- * <tr><td>Austenitic SS</td><td>&gt;550°C</td><td>Excellent</td></tr>
+ * <tr>
+ * <th>Material</th>
+ * <th>Typical Max Temp at 100 psia H2</th>
+ * <th>Resistance</th>
+ * </tr>
+ * <tr>
+ * <td>Carbon steel</td>
+ * <td>~220°C</td>
+ * <td>Lowest</td>
+ * </tr>
+ * <tr>
+ * <td>C-0.5Mo</td>
+ * <td>~300°C</td>
+ * <td>Low-moderate</td>
+ * </tr>
+ * <tr>
+ * <td>1Cr-0.5Mo</td>
+ * <td>~400°C</td>
+ * <td>Moderate</td>
+ * </tr>
+ * <tr>
+ * <td>1.25Cr-0.5Mo</td>
+ * <td>~450°C</td>
+ * <td>Good</td>
+ * </tr>
+ * <tr>
+ * <td>2.25Cr-1Mo</td>
+ * <td>~500°C</td>
+ * <td>Very good</td>
+ * </tr>
+ * <tr>
+ * <td>Austenitic SS</td>
+ * <td>&gt;550°C</td>
+ * <td>Excellent</td>
+ * </tr>
  * </table>
  *
  * <h2>Standards</h2>
  *
  * <ul>
- * <li>API 941, 8th Edition (2016) — Steels for Hydrogen Service at Elevated Temperatures
- * and Pressures in Petroleum Refineries and Petrochemical Plants</li>
+ * <li>API 941, 8th Edition (2016) — Steels for Hydrogen Service at Elevated Temperatures and
+ * Pressures in Petroleum Refineries and Petrochemical Plants</li>
  * <li>API RP 941 Annex A — Operating limit curves</li>
  * </ul>
  *
@@ -100,11 +127,8 @@ public class NelsonCurveAssessment implements Serializable {
    * qualification testing is performed.
    * </p>
    */
-  private static final double[][] CARBON_STEEL_CURVE = {
-      {0, 500}, {50, 480}, {100, 450}, {200, 420}, {500, 400},
-      {1000, 380}, {1500, 370}, {2000, 360}, {3000, 350}, {5000, 340},
-      {10000, 330}
-  };
+  private static final double[][] CARBON_STEEL_CURVE = {{0, 500}, {50, 480}, {100, 450}, {200, 420},
+      {500, 400}, {1000, 380}, {1500, 370}, {2000, 360}, {3000, 350}, {5000, 340}, {10000, 330}};
 
   /**
    * C-0.5Mo steel Nelson curve data points.
@@ -114,11 +138,8 @@ public class NelsonCurveAssessment implements Serializable {
    * many operators now use the carbon steel curve for C-0.5Mo equipment.
    * </p>
    */
-  private static final double[][] C_0_5MO_CURVE = {
-      {0, 600}, {50, 580}, {100, 550}, {200, 530}, {500, 510},
-      {1000, 500}, {1500, 490}, {2000, 480}, {3000, 470}, {5000, 460},
-      {10000, 450}
-  };
+  private static final double[][] C_0_5MO_CURVE = {{0, 600}, {50, 580}, {100, 550}, {200, 530},
+      {500, 510}, {1000, 500}, {1500, 490}, {2000, 480}, {3000, 470}, {5000, 460}, {10000, 450}};
 
   /**
    * 1Cr-0.5Mo steel Nelson curve data points.
@@ -127,11 +148,8 @@ public class NelsonCurveAssessment implements Serializable {
    * Reference: API 941 Figure 1. Applicable to F12, P12, and equivalent grades.
    * </p>
    */
-  private static final double[][] CR1_0_5MO_CURVE = {
-      {0, 800}, {50, 780}, {100, 750}, {200, 720}, {500, 700},
-      {1000, 680}, {1500, 670}, {2000, 660}, {3000, 650}, {5000, 640},
-      {10000, 630}
-  };
+  private static final double[][] CR1_0_5MO_CURVE = {{0, 800}, {50, 780}, {100, 750}, {200, 720},
+      {500, 700}, {1000, 680}, {1500, 670}, {2000, 660}, {3000, 650}, {5000, 640}, {10000, 630}};
 
   /**
    * 1.25Cr-0.5Mo steel Nelson curve data points.
@@ -140,25 +158,19 @@ public class NelsonCurveAssessment implements Serializable {
    * Reference: API 941 Figure 1. Applicable to F11, P11, and equivalent grades.
    * </p>
    */
-  private static final double[][] CR1_25_0_5MO_CURVE = {
-      {0, 850}, {50, 830}, {100, 800}, {200, 780}, {500, 760},
-      {1000, 740}, {1500, 730}, {2000, 725}, {3000, 715}, {5000, 700},
-      {10000, 690}
-  };
+  private static final double[][] CR1_25_0_5MO_CURVE = {{0, 850}, {50, 830}, {100, 800}, {200, 780},
+      {500, 760}, {1000, 740}, {1500, 730}, {2000, 725}, {3000, 715}, {5000, 700}, {10000, 690}};
 
   /**
    * 2.25Cr-1Mo steel Nelson curve data points.
    *
    * <p>
-   * Reference: API 941 Figure 1. Applicable to F22, P22, and equivalent grades. Most common
-   * upgrade material for hydrogen service.
+   * Reference: API 941 Figure 1. Applicable to F22, P22, and equivalent grades. Most common upgrade
+   * material for hydrogen service.
    * </p>
    */
-  private static final double[][] CR2_25_1MO_CURVE = {
-      {0, 1000}, {50, 980}, {100, 950}, {200, 920}, {500, 900},
-      {1000, 880}, {1500, 870}, {2000, 860}, {3000, 850}, {5000, 840},
-      {10000, 830}
-  };
+  private static final double[][] CR2_25_1MO_CURVE = {{0, 1000}, {50, 980}, {100, 950}, {200, 920},
+      {500, 900}, {1000, 880}, {1500, 870}, {2000, 860}, {3000, 850}, {5000, 840}, {10000, 830}};
 
   /**
    * Austenitic stainless steel Nelson curve data points.
@@ -169,19 +181,15 @@ public class NelsonCurveAssessment implements Serializable {
    * typically not the controlling limit in practice.
    * </p>
    */
-  private static final double[][] AUSTENITIC_SS_CURVE = {
-      {0, 1200}, {50, 1180}, {100, 1150}, {200, 1120}, {500, 1100},
-      {1000, 1080}, {1500, 1070}, {2000, 1060}, {3000, 1050}, {5000, 1040},
-      {10000, 1030}
-  };
+  private static final double[][] AUSTENITIC_SS_CURVE =
+      {{0, 1200}, {50, 1180}, {100, 1150}, {200, 1120}, {500, 1100}, {1000, 1080}, {1500, 1070},
+          {2000, 1060}, {3000, 1050}, {5000, 1040}, {10000, 1030}};
 
   // ─── Supported material types ───────────────────────────
 
   /** Supported material type identifiers. */
-  private static final List<String> SUPPORTED_MATERIALS = Arrays.asList(
-      "carbon_steel", "c_0_5mo", "1cr_0_5mo", "1_25cr_0_5mo",
-      "2_25cr_1mo", "austenitic_ss"
-  );
+  private static final List<String> SUPPORTED_MATERIALS = Arrays.asList("carbon_steel", "c_0_5mo",
+      "1cr_0_5mo", "1_25cr_0_5mo", "2_25cr_1mo", "austenitic_ss");
 
   // ─── Input parameters ───────────────────────────────────
 
@@ -421,11 +429,10 @@ public class NelsonCurveAssessment implements Serializable {
    * @return recommended material name, or empty if none found
    */
   private String findMinimumUpgrade(double tempF, double pressurePsia) {
-    double[][][] curves = {C_0_5MO_CURVE, CR1_0_5MO_CURVE, CR1_25_0_5MO_CURVE,
-        CR2_25_1MO_CURVE, AUSTENITIC_SS_CURVE};
-    String[] names = {"C-0.5Mo (use with caution per API 941)",
-        "1Cr-0.5Mo", "1.25Cr-0.5Mo", "2.25Cr-1Mo",
-        "Austenitic stainless steel (304/316)"};
+    double[][][] curves =
+        {C_0_5MO_CURVE, CR1_0_5MO_CURVE, CR1_25_0_5MO_CURVE, CR2_25_1MO_CURVE, AUSTENITIC_SS_CURVE};
+    String[] names = {"C-0.5Mo (use with caution per API 941)", "1Cr-0.5Mo", "1.25Cr-0.5Mo",
+        "2.25Cr-1Mo", "Austenitic stainless steel (304/316)"};
 
     for (int i = 0; i < curves.length; i++) {
       double maxT = interpolateMaxTemp(curves[i], pressurePsia);
@@ -533,8 +540,8 @@ public class NelsonCurveAssessment implements Serializable {
    * @return JSON representation of the assessment
    */
   public String toJson() {
-    Gson gson = new GsonBuilder().setPrettyPrinting()
-        .serializeSpecialFloatingPointValues().create();
+    Gson gson =
+        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(toMap());
   }
 }

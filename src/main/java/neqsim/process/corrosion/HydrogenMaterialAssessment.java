@@ -2,7 +2,6 @@ package neqsim.process.corrosion;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,13 +38,34 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <table>
  * <caption>Standards used for hydrogen material assessment</caption>
- * <tr><th>Standard</th><th>Scope</th></tr>
- * <tr><td>API 941</td><td>Nelson curves for HTHA boundaries</td></tr>
- * <tr><td>ASME B31.12</td><td>Hydrogen piping — material limits, derating, hardness</td></tr>
- * <tr><td>NACE MR0175 / ISO 15156</td><td>Sour service material requirements</td></tr>
- * <tr><td>EIGA 121/14</td><td>Hydrogen pipeline material compatibility</td></tr>
- * <tr><td>NORSOK M-001</td><td>General material selection framework</td></tr>
- * <tr><td>CGA G-5.6</td><td>Hydrogen pipeline systems</td></tr>
+ * <tr>
+ * <th>Standard</th>
+ * <th>Scope</th>
+ * </tr>
+ * <tr>
+ * <td>API 941</td>
+ * <td>Nelson curves for HTHA boundaries</td>
+ * </tr>
+ * <tr>
+ * <td>ASME B31.12</td>
+ * <td>Hydrogen piping — material limits, derating, hardness</td>
+ * </tr>
+ * <tr>
+ * <td>NACE MR0175 / ISO 15156</td>
+ * <td>Sour service material requirements</td>
+ * </tr>
+ * <tr>
+ * <td>EIGA 121/14</td>
+ * <td>Hydrogen pipeline material compatibility</td>
+ * </tr>
+ * <tr>
+ * <td>NORSOK M-001</td>
+ * <td>General material selection framework</td>
+ * </tr>
+ * <tr>
+ * <td>CGA G-5.6</td>
+ * <td>Hydrogen pipeline systems</td>
+ * </tr>
  * </table>
  *
  * <h2>Usage</h2>
@@ -469,8 +489,8 @@ public class HydrogenMaterialAssessment implements Serializable {
 
     // Assess PWHT
     if (!pwhtApplied && h2PartialPressureBar > 5.0) {
-      warnings.add("PWHT not applied — ASME B31.12 requires PWHT for hydrogen service "
-          + "at pH2 > 5 bar");
+      warnings.add(
+          "PWHT not applied — ASME B31.12 requires PWHT for hydrogen service " + "at pH2 > 5 bar");
     }
 
     // Classify HE risk based on H2 partial pressure and material strength
@@ -543,8 +563,8 @@ public class HydrogenMaterialAssessment implements Serializable {
     hthaRisk = nelsonCurve.getRiskLevel();
 
     if (!hthaAcceptable) {
-      warnings.add("Operating point ABOVE API 941 Nelson curve for " + materialGrade
-          + " at " + maxTemp + "°C, " + h2PartialPressureBar + " bar H2. "
+      warnings.add("Operating point ABOVE API 941 Nelson curve for " + materialGrade + " at "
+          + maxTemp + "°C, " + h2PartialPressureBar + " bar H2. "
           + "Risk of high-temperature hydrogen attack (decarburisation).");
       warnings.add("Consider: (1) low-alloy Cr-Mo steel, (2) reduce temperature, "
           + "or (3) reduce H2 partial pressure");
@@ -804,8 +824,7 @@ public class HydrogenMaterialAssessment implements Serializable {
     if (risk.startsWith("Negligible") || risk.startsWith("Not applicable")) {
       return 0;
     }
-    if (risk.startsWith("Low") || risk.startsWith("SSC Region 1")
-        || risk.startsWith("Trace")) {
+    if (risk.startsWith("Low") || risk.startsWith("SSC Region 1") || risk.startsWith("Trace")) {
       return 1;
     }
     if (risk.startsWith("Medium") || risk.startsWith("SSC Region 2")) {
@@ -1043,8 +1062,8 @@ public class HydrogenMaterialAssessment implements Serializable {
    * @return JSON representation of the assessment
    */
   public String toJson() {
-    Gson gson = new GsonBuilder().setPrettyPrinting()
-        .serializeSpecialFloatingPointValues().create();
+    Gson gson =
+        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(toMap());
   }
 }

@@ -153,8 +153,9 @@ public class TPmultiflash extends TPflash {
         Erow[i] += system.getPhase(k).getBeta()
             / system.getPhase(k).getComponent(i).getFugacityCoefficient();
       }
-      if (Erow[i] < 1e-100)
+      if (Erow[i] < 1e-100) {
         Erow[i] = 1e-100;
+      }
       if (Double.isNaN(Erow[i])) {
         logger.error("Erow is NaN for component " + system.getPhase(0).getComponent(i).getName());
         Erow[i] = 1e-100;
@@ -1440,16 +1441,16 @@ public class TPmultiflash extends TPflash {
               logger.error("Fallback matrix solve failed: " + ex.getMessage());
               logger.debug("Attempting pseudo-inverse fallback...");
               try {
-                DMatrixRMaj pinv = new DMatrixRMaj(df.numCols(), df.numRows());
+                DMatrixRMaj pinv = new DMatrixRMaj(df.getNumCols(), df.getNumRows());
                 CommonOps_DDRM.pinv(df.getDDRM(), pinv);
-                DMatrixRMaj result = new DMatrixRMaj(df.numCols(), 1);
+                DMatrixRMaj result = new DMatrixRMaj(df.getNumCols(), 1);
                 CommonOps_DDRM.mult(pinv, f.getDDRM(), result);
                 dx = SimpleMatrix.wrap(result).negative();
                 logger.warn("Used pseudo-inverse matrix solve.");
               } catch (Exception ex2) {
                 logger.error("Pseudo-inverse fallback failed: " + ex2.getMessage());
                 logger.warn("Setting dx to zero matrix as a last resort.");
-                dx = new SimpleMatrix(f.numRows(), f.numCols());
+                dx = new SimpleMatrix(f.getNumRows(), f.getNumCols());
               }
             }
           }
