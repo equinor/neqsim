@@ -873,7 +873,8 @@ public class NeqSimTools {
       @ToolArg(description = "JSON specification with: 'components' (composition map), "
           + "'model' (SRK/PR/CPA), 'temperature_C', 'pressure_bara', "
           + "'analysis' (hydrateRiskMap, waxAppearance, asphalteneStability, CO2Corrosion, "
-          + "scalePrediction, erosion, pipelineCooldown, emulsionViscosity), and "
+          + "scalePrediction, erosion, pipelineCooldown, emulsionViscosity, "
+          + "demulsifierDoseOptimization), and "
           + "'analysisConfig' with analysis-specific parameters.") String flowAssuranceJson) {
     String policyBlocked = enforceToolAccess("runFlowAssurance");
     if (policyBlocked != null) {
