@@ -13,8 +13,22 @@ jobs:
       - name: Determine release version
         id: release_version
         run: |
-          TAG="${{ github.event.release.tag_name }}"
-          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          TAG="${{ github.event.release.tag_name || '' }}"
+
+          # Use release tag when valid, otherwise fall back to pom.xml revision for manual runs.
+          if [[ -n "$TAG" && "$TAG" =~ ^v?[0-9]+(\.[0-9]+){1,3}([-.][0-9A-Za-z]+)?$ ]]; then
+            VERSION="${TAG#v}"
+            echo "Using version from tag: $VERSION"
+          else
+            VERSION="$(awk -F'[<>]' '/<revision>/{print $3; exit}' pom.xml)"
+            if [[ -z "$VERSION" ]]; then
+              echo "Failed to resolve version from tag or pom.xml"
+              exit 1
+            fi
+            echo "Tag missing/invalid ('$TAG'). Using version from pom.xml: $VERSION"
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v5
         with:
