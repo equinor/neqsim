@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  <strong>Industrial Agentic Engineering with NeqSim<br>AI Agents for Engineering Task Solving in Industry</strong>
+  <strong>From Simulation Models to AI-Assisted Industrial Workflows</strong>
 </p>
 
 <p align="center">
