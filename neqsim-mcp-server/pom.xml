@@ -16,8 +16,8 @@
         <!-- Keep in sync with ../pom.xml <revision> property until a parent/module build is used. -->
         <revision>3.12.0</revision>
         <neqsim.version>${revision}</neqsim.version>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
