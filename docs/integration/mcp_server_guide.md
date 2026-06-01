@@ -29,7 +29,7 @@ to compute answers with rigorous thermodynamic models.
 ## Architecture
 
 ```
-neqsim-mcp-server/                         # Separate Maven project (Java 17+)
+neqsim-mcp-server/                         # Separate Maven project (Java 21+)
 ├── pom.xml                                 # Quarkus 3.33.1 + MCP Server 1.12.0
 ├── test_mcp_server.py                      # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
@@ -56,7 +56,7 @@ runner layer in neqsim core. This means:
 
 | Requirement | Version | Notes |
 |---|---|---|
-| JDK | 17+ | Quarkus requires Java 17. NeqSim core compiles with Java 8. |
+| JDK | 21+ | Quarkus requires Java 21. NeqSim core compiles with Java 8. |
 | Maven | 3.9+ | Or use the Maven wrapper (`mvnw`/`mvnw.cmd`) from the parent project |
 | NeqSim core | 3.12.0+ | Must be installed to local Maven repo first |
 

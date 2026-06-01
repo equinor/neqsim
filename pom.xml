@@ -83,7 +83,7 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
-			<version>5.14.1</version>
+			<version>6.1.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -313,7 +313,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.15.0</version>
 				<configuration>
-					<release>11</release> <!-- Upgrade jdk version to 11 if you are having issues
+					<release>21</release> <!-- Upgrade jdk version to 21 if you are having issues
 					compiling -->
 					<encoding>${project.build.sourceEncoding}</encoding>
 					<!-- Uncomment below to get compiler warnings

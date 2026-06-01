@@ -48,7 +48,7 @@ jobs:
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v6
-      - name: Set up JDK 8 environment
+      - name: Set up Java 21 environment
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
@@ -63,32 +63,7 @@ jobs:
           name: jarfiles-java8
           path: staging
 
-  compile_java_11:
-    name: Build Neqsim ${{ needs.get_versions.outputs.version }} for java 11
-    needs: get_versions
-
-    if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out neqsim java project
-        uses: actions/checkout@v6
-      - name: Set up JDK 21 environment
-        uses: actions/setup-java@v5
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-          cache: 'maven'
-      - name: Build java 11 version with Maven
-        run: mvn -B package --file pom.xml -DskipTests -Djacoco.skip=true
-      - name: Copy jar file to staging
-        run: mkdir staging && cp target/neqsim*.jar staging
-      - uses: actions/upload-artifact@v7
-        with:
-          name: jarfiles-java11
-          path: staging
-
-  compile_java_21:
+  compile_java:
     name: Build Neqsim ${{ needs.get_versions.outputs.version }} with java 21
     needs: get_versions
 
@@ -98,21 +73,19 @@ jobs:
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v6
-      - name: Set up JDK 21 environment
+      - name: Set up Java 21 environment
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
       - name: Build java 21 version with Maven
-        run: mvn -B package --file pomJava21.xml -DskipTests -Djacoco.skip=true
-      - name: Rename files
-        run: cd target && find . -type f -name "neqsim-*.jar" -exec sh -c 'mv -f $0 ${0%.jar}-Java21.jar' {} \; && cd ..
+        run: mvn -B package --file pom.xml -DskipTests -Djacoco.skip=true
       - name: Copy jar file to staging
-        run: mkdir staging && cp target/neqsim*Java21.jar staging
+        run: mkdir staging && cp target/neqsim*.jar staging
       - uses: actions/upload-artifact@v7
         with:
-          name: jarfiles-java21
+          name: jarfiles-java
           path: staging
 
   compile_mcp_server:
@@ -125,7 +98,7 @@ jobs:
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v6
-      - name: Set up JDK 21 environment
+      - name: Set up Java 21 environment
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
@@ -159,21 +132,17 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    needs: [get_versions, compile_java_8, compile_java_11, compile_java_21, compile_mcp_server]
+    needs: [get_versions, compile_java, compile_java_8, compile_mcp_server]
 
     steps:
       - name: Download java 8 jar files
         uses: actions/download-artifact@v8
         with:
           name: jarfiles-java8
-      - name: Download java 11 jar files
+      - name: Download java jar files
         uses: actions/download-artifact@v8
         with:
-          name: jarfiles-java11
-      - name: Download java 21 jar files
-        uses: actions/download-artifact@v8
-        with:
-          name: jarfiles-java21
+          name: jarfiles-java
       - name: Download MCP server jar
         uses: actions/download-artifact@v8
         with:
@@ -200,9 +169,8 @@ jobs:
 
             | Distribution | Asset | Runtime | Use this when |
             |--------------|-------|---------|---------------|
-            | NeqSim core library | `neqsim-${{ needs.get_versions.outputs.version }}.jar` | Java 11+ | You want the default standalone Java library. |
+            | NeqSim core library | `neqsim-${{ needs.get_versions.outputs.version }}.jar` | Java 21+ | You need Java 21 or Python `neqsim-python` compatibility. |
             | NeqSim core library | `neqsim-${{ needs.get_versions.outputs.version }}-Java8.jar` | Java 8+ | You need Java 8 or Python `neqsim-python` compatibility. |
-            | NeqSim core library | `neqsim-${{ needs.get_versions.outputs.version }}-Java21.jar` | Java 21+ | You run on the latest LTS JDK. |
             | NeqSim MCP server | `neqsim-mcp-server-${{ needs.get_versions.outputs.version }}-runner.jar` | Java 21+ | You want VS Code Copilot, Claude Desktop, Cursor, or another MCP client to use NeqSim tools. |
             | NeqSim MCP server checksum | `neqsim-mcp-server-${{ needs.get_versions.outputs.version }}-runner.jar.sha256` | - | You want to verify the downloaded MCP runner jar. |
             | NeqSim MCP server container | `ghcr.io/equinor/neqsim-mcp-server:${{ needs.get_versions.outputs.version }}` | Docker | You want to run the MCP server without installing Java locally. |

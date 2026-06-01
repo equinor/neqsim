@@ -24,7 +24,7 @@ This guide covers the complete workflow for converting process simulation models
 |-------------|---------|
 | **Operating System** | Windows (COM automation requires Windows) |
 | **UniSim Design** | R460+ installed and licensed (R510+ recommended) |
-| **Python** | 3.8+ with `pywin32` (`pip install pywin32`) |
+| **Python** | 3.9+ with `pywin32` (`pip install pywin32`) |
 | **NeqSim** | `pip install neqsim` (or local dev build) |
 
 Install the required packages:

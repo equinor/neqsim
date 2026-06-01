@@ -247,7 +247,7 @@ Pick **jar** or **Docker** — both are first-class paths.
 
 <table>
 <tr>
-<th width="50%">Option A — Jar (requires Java 17+)</th>
+<th width="50%">Option A — Jar (requires Java 21+)</th>
 <th width="50%">Option B — Docker (no Java needed)</th>
 </tr>
 <tr><td>
@@ -303,7 +303,7 @@ docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest
 > — look for the assets named **`neqsim-mcp-server-*-runner.jar`** and **`neqsim-mcp-server-*-runner.jar.sha256`**.
 
 <details>
-<summary><strong>Install Java 17+ (if using the jar path)</strong></summary>
+<summary><strong>Install Java 21+ (if using the jar path)</strong></summary>
 
 | OS | Command |
 |----|---------|
@@ -702,7 +702,7 @@ If you want to build from source (for development or to use the latest unrelease
 
 | Requirement | Version | Notes |
 |---|---|---|
-| JDK | 17+ | Quarkus requires Java 17. NeqSim core still compiles with Java 8. |
+| JDK | 17+ | Quarkus requires 21+. NeqSim core still compiles with Java 8. |
 | Maven | 3.9+ | Or use the Maven wrapper (`mvnw` / `mvnw.cmd`) from the parent project |
 | NeqSim core | 3.12.0 | Must be installed to local Maven repo first (see below) |
 
@@ -839,7 +839,7 @@ runFlash({
 ## Architecture
 
 ```
-neqsim-mcp-server/                        # Separate Maven project (Java 17+)
+neqsim-mcp-server/                        # Separate Maven project (Java 21+)
 ├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.12.0
 ├── test_mcp_server.py                     # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
