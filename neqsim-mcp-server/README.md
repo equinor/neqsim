@@ -702,7 +702,7 @@ If you want to build from source (for development or to use the latest unrelease
 
 | Requirement | Version | Notes |
 |---|---|---|
-| JDK | 17+ | Quarkus requires 21+. NeqSim core still compiles with Java 8. |
+| JDK | 21+ | Quarkus requires 21+. NeqSim core still compiles with Java 8. |
 | Maven | 3.9+ | Or use the Maven wrapper (`mvnw` / `mvnw.cmd`) from the parent project |
 | NeqSim core | 3.12.0 | Must be installed to local Maven repo first (see below) |
 
