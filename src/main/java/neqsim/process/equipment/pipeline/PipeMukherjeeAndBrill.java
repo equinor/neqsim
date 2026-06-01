@@ -596,6 +596,7 @@ public class PipeMukherjeeAndBrill extends Pipeline {
    *
    * @return liquid holdup fraction
    */
+  @Override
   public double getLiquidHoldup() {
     return calculatedHoldup;
   }

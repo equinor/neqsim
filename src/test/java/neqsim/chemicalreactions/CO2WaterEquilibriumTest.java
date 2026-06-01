@@ -9,12 +9,12 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Test class for CO2-water chemical equilibrium using the Smith & Missen algorithm.
- * 
+ *
  * <p>
  * When CO2 dissolves in water, it forms carbonic acid and its dissociation products: CO2(aq) + H2O
  * <-> H2CO3 <-> HCO3- + H+ <-> CO3-- + 2H+
  * </p>
- * 
+ *
  * <p>
  * The chemical equilibrium solver should correctly calculate the species distribution while
  * conserving mass (atoms) and charge.
@@ -23,7 +23,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class CO2WaterEquilibriumTest {
   /**
    * Test basic CO2-water equilibrium at ambient conditions.
-   * 
+   *
    * <p>
    * At 25°C and 1 bar, dissolved CO2 in water should produce: - pH around 4-5 (acidic due to
    * carbonic acid) - H3O+ concentration > OH- concentration - HCO3- as the dominant carbonate
@@ -122,7 +122,7 @@ public class CO2WaterEquilibriumTest {
 
   /**
    * Test CO2-water equilibrium at slightly elevated pressure.
-   * 
+   *
    * <p>
    * At higher pressure, more CO2 should dissolve in water. Note: High pressures (>5 bar) can cause
    * numerical issues with electrolyte CPA.
@@ -252,7 +252,7 @@ public class CO2WaterEquilibriumTest {
 
   /**
    * Test configurable solver parameters (LOW priority improvements).
-   * 
+   *
    * <p>
    * Verifies that: - Convergence tolerance can be configured - Max iterations can be configured -
    * Solver metrics (iteration count, error) are accessible after solve

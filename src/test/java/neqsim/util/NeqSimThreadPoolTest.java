@@ -455,7 +455,7 @@ class NeqSimThreadPoolTest {
 
   /**
    * Benchmark comparing old runAsThread() vs new runAsTask() approach.
-   * 
+   *
    * This test demonstrates the performance difference between: - runAsThread(): Creates a new
    * Thread for each process (unmanaged) - runAsTask(): Uses the managed thread pool (reuses
    * threads)

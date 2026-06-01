@@ -432,6 +432,7 @@ public class Hydrocyclone extends Separator {
    *
    * @param dp pressure drop in bar
    */
+  @Override
   public void setPressureDrop(double dp) {
     this.pressureDrop = Math.max(0.0, dp);
     super.setPressureDrop(dp);
@@ -624,6 +625,7 @@ public class Hydrocyclone extends Separator {
    * after the inlet stream has been configured and run.
    * </p>
    */
+  @Override
   public void autoSize() {
     if (getInletStreams() != null && !getInletStreams().isEmpty()) {
       StreamInterface inlet = getInletStreams().get(0);
@@ -982,6 +984,7 @@ public class Hydrocyclone extends Separator {
    *
    * @return true if overloaded
    */
+  @Override
   public boolean isOverloaded() {
     return flowPerLinerM3h > maxFlowPerLinerM3h;
   }

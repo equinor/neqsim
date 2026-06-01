@@ -21,7 +21,7 @@ import neqsim.thermo.system.SystemSrkEos;
 class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
   /**
    * Dynamic test for PSV sizing with blocked outlet scenario.
-   * 
+   *
    * Scenario: - Gas from a separator flows through a splitter - Split stream 1 goes to a pressure
    * control valve (PCV) for normal operation - Split stream 2 goes to a pressure safety valve (PSV)
    * for overpressure protection - At time t=50s, the PCV outlet becomes blocked (valve closes to
@@ -246,7 +246,7 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
 
   /**
    * Simplified dynamic test for PSV response characteristics.
-   * 
+   *
    * This test validates that the PSV opens at the correct pressure and modulates properly.
    */
   @Test

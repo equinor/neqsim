@@ -642,7 +642,7 @@ public class TestCurvesTr {
 
   /**
    * Test loading compressor curves from a JSON file.
-   * 
+   *
    * This test demonstrates how to load pre-defined compressor performance curves from a JSON file
    * and apply them to a compressor.
    */

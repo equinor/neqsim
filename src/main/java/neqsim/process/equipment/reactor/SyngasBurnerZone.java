@@ -137,6 +137,7 @@ public class SyngasBurnerZone extends TwoPortEquipment {
    *
    * @return true when O2/C and flame temperature are inside limits
    */
+  @Override
   public boolean isWithinOperatingEnvelope() {
     return "ok".equals(safetyWarning);
   }

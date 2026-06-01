@@ -20,11 +20,11 @@ import org.junit.jupiter.api.Test;
  * mass fractions. While unconditionally stable, this scheme has inherent numerical (artificial)
  * diffusion proportional to:
  * </p>
- * 
+ *
  * <pre>
  * D_numerical ≈ (v * Δx / 2) * (1 - CFL)
  * </pre>
- * 
+ *
  * <p>
  * where CFL = v * Δt / Δx is the Courant-Friedrichs-Lewy number.
  * </p>
@@ -51,7 +51,7 @@ import org.junit.jupiter.api.Test;
 public class NumericalDispersionAnalysisTest {
   /**
    * Compares analytical vs numerical front spreading predictions.
-   * 
+   *
    * <p>
    * For first-order upwind, the equivalent diffusion coefficient is: D_num = v*dx/2 * (1 - CFL)
    * This allows prediction of front spreading.
@@ -116,7 +116,7 @@ public class NumericalDispersionAnalysisTest {
 
   /**
    * Test the grid refinement convergence formula.
-   * 
+   *
    * <p>
    * Demonstrates that halving the grid size reduces dispersion by sqrt(2).
    * </p>
@@ -168,7 +168,7 @@ public class NumericalDispersionAnalysisTest {
 
   /**
    * Test CFL number effect on dispersion.
-   * 
+   *
    * <p>
    * Shows that operating at CFL closer to 1.0 minimizes numerical dispersion.
    * </p>

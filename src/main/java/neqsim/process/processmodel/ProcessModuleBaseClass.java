@@ -227,6 +227,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
    * @param surroundingTemperature dead-state temperature in K
    * @return total exergy destruction in the requested unit
    */
+  @Override
   public double getExergyDestruction(String unit, double surroundingTemperature) {
     return getOperations().getExergyDestruction(unit, surroundingTemperature);
   }

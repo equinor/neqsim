@@ -219,6 +219,7 @@ public class RateBasedAbsorber extends SimpleAbsorber {
    *
    * @return gas outlet stream
    */
+  @Override
   public StreamInterface getGasOutStream() {
     if (gasOutStream == null && gasInStream != null) {
       gasOutStream = gasInStream.clone();
@@ -407,6 +408,7 @@ public class RateBasedAbsorber extends SimpleAbsorber {
    *
    * @return wetted area in m2/m3
    */
+  @Override
   public double getWettedArea() {
     return wettedArea;
   }

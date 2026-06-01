@@ -82,6 +82,7 @@ public interface PumpInterface extends ProcessEquipmentInterface, TwoPortInterfa
    *
    * @return minimum flow in kg/sec
    */
+  @Override
   public double getMinimumFlow();
 
   /**
@@ -91,5 +92,6 @@ public interface PumpInterface extends ProcessEquipmentInterface, TwoPortInterfa
    *
    * @param minimumFlow minimum flow in kg/sec
    */
+  @Override
   public void setMinimumFlow(double minimumFlow);
 }

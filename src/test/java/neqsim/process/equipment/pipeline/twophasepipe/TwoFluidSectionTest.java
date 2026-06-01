@@ -10,7 +10,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Unit tests for TwoFluidSection.
- * 
+ *
  * Tests two-fluid specific state variables and geometry calculations.
  */
 public class TwoFluidSectionTest {

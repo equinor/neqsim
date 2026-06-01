@@ -449,6 +449,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    *
    * @return a double
    */
+  @Override
   public double getMinimumFlow() {
     return minimumFlow;
   }
@@ -460,6 +461,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    *
    * @param minimumFlow a double
    */
+  @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
   }
@@ -471,6 +473,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    *
    * @return a boolean
    */
+  @Override
   public boolean isActive() {
     return isActive;
   }
@@ -482,6 +485,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    *
    * @param isActive a boolean
    */
+  @Override
   public void isActive(boolean isActive) {
     this.isActive = isActive;
   }
@@ -584,6 +588,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    *
    * @return true if the equipment is manually locked in the inactive state
    */
+  @Override
   public boolean isLockedInactive() {
     return lockedInactive;
   }
@@ -597,6 +602,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * @param lockedInactive true to bypass this equipment indefinitely; false to allow normal
    *        execution (default)
    */
+  @Override
   public void setLockedInactive(boolean lockedInactive) {
     this.lockedInactive = lockedInactive;
     if (lockedInactive) {

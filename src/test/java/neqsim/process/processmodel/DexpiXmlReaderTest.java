@@ -13,9 +13,9 @@ import neqsim.NeqSimTest;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 
 /**
- * 
+ *
  * Tests for {@link DexpiXmlReader}.
- * 
+ *
  */
 
 public class DexpiXmlReaderTest extends NeqSimTest {

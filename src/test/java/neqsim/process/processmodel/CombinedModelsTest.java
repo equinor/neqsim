@@ -15,12 +15,12 @@ import neqsim.thermo.system.SystemInterface;
 /**
  * CombinedModelsTest is a test class for validating the combined process model which includes an
  * inlet model and a compressor process.
- * 
+ *
  * <p>
  * The class contains methods to set up individual process systems and combine them into a single
  * process model. It also includes a test method to verify the behavior of the combined process
  * model.
- * 
+ *
  * <p>
  * Methods:
  * <ul>
@@ -34,7 +34,7 @@ import neqsim.thermo.system.SystemInterface;
  * temperature and pressure for the well stream and the outlet pressure for the compressor, running
  * the process, and asserting the expected outlet temperature of the compressor.</li>
  * </ul>
- * 
+ *
  * <p>
  * Dependencies:
  * <ul>
@@ -69,7 +69,7 @@ public class CombinedModelsTest {
     process1.add(firstStageSeparator);
 
     return process1;
-  };
+  }
 
   public ProcessSystem getCompressorProcess(StreamInterface gasFeedStream) {
     neqsim.process.equipment.compressor.Compressor compressor1 =
@@ -98,12 +98,12 @@ public class CombinedModelsTest {
 
   /**
    * Test method for the combined process model.
-   * 
+   *
    * This test sets up a combined process model, configures the temperature and pressure for the "HP
    * well stream" in the "feed process", and sets the outlet pressure for "Compressor1" in the
    * "compressor process". The process is then run, and the test asserts that the outlet temperature
    * of "Compressor1" is as expected.
-   * 
+   *
    * The expected outlet temperature of "Compressor1" is 164.44139872 degrees Celsius with a
    * tolerance of 0.1 degrees.
    */

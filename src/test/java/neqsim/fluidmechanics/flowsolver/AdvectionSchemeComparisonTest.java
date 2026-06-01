@@ -11,7 +11,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Tests comparing different advection schemes for numerical dispersion.
- * 
+ *
  * <p>
  * This test suite validates that higher-order schemes reduce numerical dispersion compared to
  * first-order upwind, while TVD schemes maintain monotonicity.

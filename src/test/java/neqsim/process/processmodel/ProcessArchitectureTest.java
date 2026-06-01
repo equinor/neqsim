@@ -7,8 +7,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.ProcessElementInterface;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
-import neqsim.process.equipment.ProcessEquipmentInterface;
-import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
@@ -17,7 +15,6 @@ import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
-import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**

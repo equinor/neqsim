@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for TimeIntegrator.
- * 
+ *
  * Tests RK4 time integration and CFL-based time step calculation.
  */
 public class TimeIntegratorTest {

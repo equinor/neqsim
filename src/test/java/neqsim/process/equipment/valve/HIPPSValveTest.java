@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Test class for HIPPSValve functionality.
- * 
+ *
  * <p>
  * Tests cover:
  * <ul>

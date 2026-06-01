@@ -10,6 +10,8 @@ import neqsim.util.database.NeqSimDataBase;
 
 public class SystemIdealGasTest extends neqsim.NeqSimTest
     implements ThermodynamicConstantsInterface {
+  private static final long serialVersionUID = 1L;
+
   @Test
   public void testFugacityCoefficient() {
     SystemInterface testSystem = new SystemIdealGas(298.15, 10.0);

@@ -10,12 +10,12 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Test class demonstrating mass transfer calculations between gas and liquid phases in a pipeline.
- * 
+ *
  * <p>
  * Based on the example notebook: masstransferMeOH.ipynb This demonstrates mass transfer calculation
  * using NeqSim, based on Solbraa (2002): https://ntnuopen.ntnu.no/ntnu-xmlui/handle/11250/231326
  * </p>
- * 
+ *
  * <p>
  * The test simulates:
  * <ul>
@@ -61,7 +61,7 @@ public class MassTransferMeOHTest {
 
   /**
    * Test basic mass transfer calculation between gas and liquid TEG.
-   * 
+   *
    * <p>
    * This test verifies that mass transfer occurs between phases and that the interphase temperature
    * calculation works correctly.
@@ -101,7 +101,7 @@ public class MassTransferMeOHTest {
 
   /**
    * Test mass transfer evolution over multiple steps.
-   * 
+   *
    * <p>
    * Simulates the mass transfer process over multiple iterations to verify that the system evolves
    * correctly towards equilibrium.
@@ -141,7 +141,7 @@ public class MassTransferMeOHTest {
 
   /**
    * Test diffusion coefficient calculation.
-   * 
+   *
    * <p>
    * Verifies that diffusion coefficients are calculated correctly for the gas phase.
    * </p>
@@ -170,7 +170,7 @@ public class MassTransferMeOHTest {
 
   /**
    * Test stratified flow pattern mass transfer.
-   * 
+   *
    * <p>
    * Tests mass transfer in stratified flow regime.
    * </p>
@@ -196,7 +196,7 @@ public class MassTransferMeOHTest {
 
   /**
    * Test mass transfer with different pipe lengths.
-   * 
+   *
    * <p>
    * Verifies that longer contact lengths result in more mass transfer, approaching equilibrium.
    * </p>
@@ -232,7 +232,7 @@ public class MassTransferMeOHTest {
 
   /**
    * Test simple methane-ethane two-phase system mass transfer.
-   * 
+   *
    * <p>
    * Tests a simpler system similar to the ethane evaporation example in the notebook.
    * </p>
@@ -269,7 +269,7 @@ public class MassTransferMeOHTest {
 
   /**
    * Test interphase molar flux calculation.
-   * 
+   *
    * <p>
    * Verifies that the interphase molar flux is calculated and returns finite values.
    * </p>
@@ -296,7 +296,7 @@ public class MassTransferMeOHTest {
 
   /**
    * Test interphase contact area calculation.
-   * 
+   *
    * <p>
    * Verifies the interphase contact area is calculated correctly.
    * </p>
@@ -315,7 +315,7 @@ public class MassTransferMeOHTest {
 
   /**
    * Test heat transfer calculation.
-   * 
+   *
    * <p>
    * Verifies that heat transfer between phases is calculated.
    * </p>
@@ -354,7 +354,7 @@ public class MassTransferMeOHTest {
 
   /**
    * Test finite flux correction.
-   * 
+   *
    * <p>
    * Tests that finite flux correction can be enabled and used.
    * </p>
@@ -380,7 +380,7 @@ public class MassTransferMeOHTest {
 
   /**
    * Test thermodynamic corrections.
-   * 
+   *
    * <p>
    * Tests that thermodynamic corrections can be enabled and used.
    * </p>

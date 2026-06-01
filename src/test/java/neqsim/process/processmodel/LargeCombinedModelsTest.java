@@ -105,7 +105,7 @@ public class LargeCombinedModelsTest {
     process.add(lpManifold);
 
     return process;
-  };
+  }
 
   /**
    * Test method for validating the well stream and manifold model.
