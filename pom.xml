@@ -155,11 +155,19 @@
 						<groupId>org.sonatype.central</groupId>
 						<artifactId>central-publishing-maven-plugin</artifactId>
 						<version>0.10.0</version>
-						<extensions>true</extensions>
 						<configuration>
 							<publishingServerId>central</publishingServerId>
 							<autoPublish>true</autoPublish>
 						</configuration>
+						<executions>
+							<execution>
+								<id>publish-to-central</id>
+								<phase>deploy</phase>
+								<goals>
+									<goal>publish</goal>
+								</goals>
+							</execution>
+						</executions>
 					</plugin>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
