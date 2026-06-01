@@ -15,7 +15,6 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.distillation.internals.PackingHydraulicsCalculator;
 import neqsim.process.equipment.distillation.internals.PackingSpecification;
 import neqsim.process.equipment.distillation.internals.PackingSpecificationLibrary;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;

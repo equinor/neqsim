@@ -2,12 +2,10 @@ package neqsim.process.equipment.absorber;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;

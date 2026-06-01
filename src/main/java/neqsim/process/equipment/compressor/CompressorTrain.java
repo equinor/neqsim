@@ -13,7 +13,6 @@ import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**

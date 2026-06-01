@@ -12,23 +12,22 @@
 	<packaging>jar</packaging>
 	<version>${revision}</version>
 
-
 	<scm>
 		<connection>scm:git:https://github.com/equinor/neqsim.git</connection>
 		<developerConnection>scm:git:https://github.com/equinor/neqsim.git</developerConnection>
 		<url>https://github.com/equinor/neqsim</url>
 	</scm>
 
-        <properties>
-				<revision>3.12.1</revision>
-                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-                <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-                <checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
-                <skipFlattening>false</skipFlattening>
-                <argLine></argLine>
-                <!-- Exclude slow tests by default. Run with -DexcludedTestGroups= to include all tests -->
-                <excludedTestGroups>slow</excludedTestGroups>
-        </properties>
+	<properties>
+		<revision>3.12.1</revision>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
+		<skipFlattening>false</skipFlattening>
+		<argLine></argLine>
+		<!-- Exclude slow tests by default. Run with -DexcludedTestGroups= to include all tests -->
+		<excludedTestGroups>slow</excludedTestGroups>
+	</properties>
 	<licenses>
 		<license>
 			<name>The Apache Software License, Version 2.0</name>
@@ -143,9 +142,9 @@
 			<version>2.21.3</version>
 		</dependency>
 	</dependencies>
-        <profiles>
-                <profile>
-                        <id>release</id>
+	<profiles>
+		<profile>
+			<id>release</id>
 			<properties>
 				<skipFlattening>true</skipFlattening>
 			</properties>
@@ -349,24 +348,24 @@
 					</execution>
 				</executions>
 			</plugin>
-                        <plugin>
-                                <artifactId>maven-surefire-plugin</artifactId>
-                                <version>3.5.6</version>
-                                <configuration>
-                                        <!-- Preserve any Jacoco agent injection (@{argLine}) and add required module opens for XStream reflection when running tests on JDK >= 11 -->
-										<argLine>@{argLine} -Xmx3g --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
-                                        <!-- Exclude slow tests by default. Run with -DincludeSlow=true to include them -->
-                                        <excludedGroups>${excludedTestGroups}</excludedGroups>
-                                </configuration>
-                        </plugin>
-                        <plugin>
-                                <artifactId>maven-failsafe-plugin</artifactId>
-                                <version>3.5.6</version>
-                                <configuration>
-                                        <!-- Preserve any Jacoco agent injection (@{argLine}) and add required module opens for XStream reflection when running tests on JDK >= 11 -->
-										<argLine>@{argLine} -Xmx3g --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
-                                </configuration>
-                        </plugin>
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.5.6</version>
+				<configuration>
+					<!-- Preserve any Jacoco agent injection (@{argLine}) and add required module opens for XStream reflection when running tests on JDK >= 11 -->
+					<argLine>@{argLine} -Xmx3g --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
+					<!-- Exclude slow tests by default. Run with -DincludeSlow=true to include them -->
+					<excludedGroups>${excludedTestGroups}</excludedGroups>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>3.5.6</version>
+				<configuration>
+					<!-- Preserve any Jacoco agent injection (@{argLine}) and add required module opens for XStream reflection when running tests on JDK >= 11 -->
+					<argLine>@{argLine} -Xmx3g --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
