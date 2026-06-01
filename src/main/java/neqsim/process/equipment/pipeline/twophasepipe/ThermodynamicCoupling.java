@@ -434,6 +434,60 @@ public class ThermodynamicCoupling implements Serializable {
   }
 
   /**
+   * Calculate a conservative flash-driven gas/liquid mass transfer source per pipe length.
+   *
+   * <p>
+   * Positive values mean evaporation from liquid to gas. The target is the equilibrium liquid
+   * inventory from the local PT flash, expressed on the section area. The method returns kg/(m*s),
+   * which can be split conservatively into gas, oil, and water equations by the hydrodynamic
+   * solver.
+   * </p>
+   *
+   * @param section current pipe section
+   * @param relaxationTime relaxation time toward flash equilibrium (s)
+   * @return gas mass source per length, kg/(m*s)
+   */
+  public double calcMassTransferRatePerLength(TwoFluidSection section, double relaxationTime) {
+    if (referenceFluid == null || relaxationTime <= 0.0 || !Double.isFinite(relaxationTime)) {
+      return 0.0;
+    }
+
+    ThermoProperties eqProps = flashPT(section.getPressure(), section.getTemperature());
+    if (!eqProps.converged) {
+      return 0.0;
+    }
+
+    double gasDensity = Math.max(eqProps.gasDensity, 0.1);
+    double liquidDensity = Math.max(eqProps.liquidDensity, 100.0);
+    double gasMolarMass = Math.max(eqProps.gasMolarMass, 1e-6);
+    double liquidMolarMass = Math.max(eqProps.liquidMolarMass, 1e-6);
+
+    double eqGasVolume = Math.max(eqProps.gasVaporFraction, 0.0) * gasMolarMass / gasDensity;
+    double eqLiquidVolume = Math.max(eqProps.liquidFraction, 0.0) * liquidMolarMass / liquidDensity;
+    double totalEquilibriumVolume = eqGasVolume + eqLiquidVolume;
+    if (totalEquilibriumVolume <= 1e-20) {
+      return 0.0;
+    }
+
+    double equilibriumLiquidHoldup = eqLiquidVolume / totalEquilibriumVolume;
+    equilibriumLiquidHoldup = Math.max(0.0, Math.min(1.0, equilibriumLiquidHoldup));
+
+    double currentLiquidMassPerLength = Math.max(0.0, section.getLiquidMassPerLength());
+    if (currentLiquidMassPerLength <= 0.0) {
+      currentLiquidMassPerLength = Math.max(0.0,
+          section.getOilMassPerLength() + section.getWaterMassPerLength());
+    }
+    double equilibriumLiquidMassPerLength =
+        equilibriumLiquidHoldup * liquidDensity * section.getArea();
+
+    double source = (currentLiquidMassPerLength - equilibriumLiquidMassPerLength) / relaxationTime;
+    source = Math.min(source, currentLiquidMassPerLength / relaxationTime);
+    source = Math.max(source, -Math.max(0.0, section.getGasMassPerLength()) / relaxationTime);
+
+    return Double.isFinite(source) ? source : 0.0;
+  }
+
+  /**
    * Calculate mixture sound speed for wave propagation.
    *
    * <p>

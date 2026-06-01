@@ -4,20 +4,27 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import neqsim.integration.EOSComparison;
-import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.distillation.DistillationColumn;
-import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
-import neqsim.process.equipment.heatexchanger.FiredHeater;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.distillation.ColumnSpecification;
+import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.distillation.RateBasedPackedColumn;
+import neqsim.process.equipment.distillation.internals.ColumnInternalsDesigner;
+import neqsim.process.equipment.heatexchanger.CoolingWaterSystem;
+import neqsim.process.equipment.heatexchanger.FiredHeater;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction.InterfacialFrictionResult;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.fielddevelopment.concept.DevelopmentCaseTemplate;
 import neqsim.process.fielddevelopment.concept.FieldConcept;
 import neqsim.process.fielddevelopment.concept.GreenfieldConceptFactory;
@@ -34,6 +41,8 @@ import neqsim.process.mechanicaldesign.heatexchanger.LMTDcorrectionFactor;
 import neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator;
 import neqsim.process.mechanicaldesign.heatexchanger.VibrationAnalysis;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.processmodel.SimulationResult;
+import neqsim.process.processmodel.dexpi.DexpiXmlWriter;
 import neqsim.process.util.fielddevelopment.DCFCalculator;
 import neqsim.process.util.heatintegration.PinchAnalyzer;
 import neqsim.process.util.optimizer.DebottleneckAnalyzer;
@@ -175,6 +184,38 @@ public class DocExamplesCompilationTest {
     Stream hostFeed = new Stream("Host Feed", gas);
     hostFeed.setFlowRate(1000.0, "kg/hr");
     return hostFeed;
+  }
+
+  /**
+   * JSON visualization example from docs/integration/web_api_json_process_builder.md.
+   *
+   * @throws IOException if DEXPI export fails
+   */
+  @Test
+  public void testWebApiJsonVisualizationDocExample() throws IOException {
+    String jsonString =
+        "{" + "\"fluid\":{\"model\":\"SRK\",\"temperature\":298.15,\"pressure\":50.0,"
+            + "\"mixingRule\":\"classic\",\"components\":{\"methane\":0.9,\"ethane\":0.1}},"
+            + "\"process\":[" + "{\"type\":\"Stream\",\"name\":\"feed\","
+            + "\"properties\":{\"flowRate\":[1000.0,\"kg/hr\"]}},"
+            + "{\"type\":\"Separator\",\"name\":\"HP Sep\",\"inlet\":\"feed\"},"
+            + "{\"type\":\"Compressor\",\"name\":\"Export Compressor\","
+            + "\"inlet\":\"HP Sep.gasOut\","
+            + "\"properties\":{\"outletPressure\":[80.0,\"bara\"]}}]," + "\"autoRun\":true}";
+
+    SimulationResult result = ProcessSystem.fromJsonAndRun(jsonString);
+    assertTrue(result.isSuccess(), result.toJson());
+    ProcessSystem process = result.getProcessSystem();
+
+    String dot = process.toDOT();
+    assertTrue(dot.contains("digraph"));
+    assertTrue(dot.contains("Export Compressor"));
+
+    ByteArrayOutputStream dexpiXml = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, dexpiXml);
+    String dexpi = new String(dexpiXml.toByteArray(), StandardCharsets.UTF_8);
+    assertTrue(dexpi.contains("PlantModel"));
+    assertTrue(dexpi.contains("CentrifugalCompressor"));
   }
 
   /**
@@ -454,6 +495,186 @@ public class DocExamplesCompilationTest {
     assertTrue(Double.isFinite(column.getLastMeshEnergyResidualNorm()));
     assertTrue(Double.isFinite(column.getLastMeshSpecificationResidualNorm()));
     assertTrue(column.getLastMeshResidualVector().length > 0);
+
+    ColumnSpecification bottomPurity =
+        new ColumnSpecification(ColumnSpecification.SpecificationType.PRODUCT_PURITY,
+            ColumnSpecification.ProductLocation.BOTTOM, 0.50, "propane");
+    Stream builderFeed = new Stream("doc builder distillation feed", fluid.clone());
+    builderFeed.setFlowRate(100.0, "kg/hr");
+    builderFeed.run();
+    DistillationColumn builderColumn = DistillationColumn.builder("Doc Builder Column")
+        .numberOfTrays(3).withCondenserAndReboiler().topPressure(25.0, "bara")
+        .bottomPressure(26.0, "bara").temperatureTolerance(1.0e-3).massBalanceTolerance(1.0e-2)
+        .maxIterations(20).insideOut().internalDiameter(1.2).addFeedStream(builderFeed, 2)
+        .topProductPurity("ethane", 0.50).bottomSpecification(bottomPurity).build();
+    assertEquals(DistillationColumn.SolverType.INSIDE_OUT, builderColumn.getSolverType());
+    assertEquals(1.2, builderColumn.getInternalDiameter(), 1.0e-12);
+    assertNotNull(builderColumn.getTopSpecification());
+    assertNotNull(builderColumn.getBottomSpecification());
+
+    apiColumn.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
+    apiColumn.setCondenserMode(DistillationColumn.CondenserMode.TOTAL);
+    assertEquals(DistillationColumn.CondenserMode.TOTAL, apiColumn.getCondenserMode());
+    apiColumn.setCondenserLiquidReflux(500.0, "kg/hr");
+    assertEquals(DistillationColumn.CondenserMode.LIQUID_REFLUX_SPLIT,
+        apiColumn.getCondenserMode());
+    apiColumn.setReboilerMode(DistillationColumn.ReboilerMode.EQUILIBRIUM);
+    apiColumn.setReboilerVaporBoilupRatio(1.8);
+    assertEquals(DistillationColumn.ReboilerMode.VAPOR_BOILUP_RATIO, apiColumn.getReboilerMode());
+
+    apiColumn.setMurphreeEfficiency(0.70);
+    apiColumn.setMurphreeEfficiency(3, 0.65);
+    assertEquals(0.65, apiColumn.getMurphreeEfficiency(3), 1.0e-12);
+    apiColumn.clearPerStageMurphreeEfficiency();
+    assertEquals(0.70, apiColumn.getMurphreeEfficiency(3), 1.0e-12);
+
+    apiColumn.setDynamicColumnEnabled(true);
+    apiColumn.setDynamicEnergyEnabled(true);
+    apiColumn.setTrayWeirHeight(0.05);
+    apiColumn.setTrayWeirLength(1.0);
+    apiColumn.setTrayDryPressureDrop(200.0);
+    assertTrue(apiColumn.isDynamicColumnEnabled());
+    assertTrue(apiColumn.isDynamicEnergyEnabled());
+    assertEquals(DistillationColumn.DynamicColumnModel.EXPERIMENTAL_EULER,
+        apiColumn.getDynamicColumnModel());
+    assertTrue(apiColumn.isDynamicColumnModelExperimental());
+
+    Stream sideDrawFeed = createDocMethaneFeed("doc side draw feed");
+    DistillationColumn sideDrawColumn =
+        new DistillationColumn("Doc Side Draw Column", 1, false, false);
+    sideDrawColumn.addFeedStream(sideDrawFeed, 0);
+    sideDrawColumn.setGasSideDrawFraction(0, 0.10);
+    sideDrawColumn.setLiquidSideDrawFraction(0, 0.0);
+    DistillationColumn.ColumnSideDrawSpecification sideDrawSpec = sideDrawColumn
+        .addSideDrawFlowSpecification(0, DistillationColumn.SideDrawPhase.GAS, 25.0, "kg/hr");
+    sideDrawSpec.setTolerance(1.0e-5);
+    sideDrawSpec.setMaxIterations(15);
+    sideDrawColumn.setMaxColumnTearIterations(20);
+    sideDrawColumn.setColumnTearTolerance(1.0e-5);
+    sideDrawColumn.run();
+    StreamInterface gasSideDraw =
+        sideDrawColumn.getSideDrawStream(0, DistillationColumn.SideDrawPhase.GAS);
+    List<StreamInterface> allSideDraws = sideDrawColumn.getSideDrawStreams();
+    assertTrue(gasSideDraw.getFlowRate("kg/hr") > 0.0);
+    assertTrue(allSideDraws.contains(gasSideDraw));
+    assertTrue(Double.isFinite(sideDrawSpec.getLastActualFlowRate()));
+    assertTrue(Double.isFinite(sideDrawSpec.getLastRelativeResidual()));
+    assertTrue(sideDrawColumn.isLastColumnTearConverged());
+
+    Stream pumparoundFeed = createDocPentaneFeed("doc pumparound feed");
+    DistillationColumn pumparoundColumn =
+        new DistillationColumn("Doc Pumparound Column", 1, false, false);
+    pumparoundColumn.addFeedStream(pumparoundFeed, 0);
+    DistillationColumn.ColumnPumparound pumparound =
+        pumparoundColumn.addLiquidPumparound("PA-1", 0, 0, 0.15, 10.0);
+    pumparoundColumn.setMaxPumparoundIterations(12);
+    pumparoundColumn.setPumparoundTolerance(1.0e-4);
+    pumparoundColumn.run();
+    assertNotNull(pumparound.getReturnStream());
+    assertTrue(Double.isFinite(pumparoundColumn.getLastColumnTearResidual()));
+    assertTrue(pumparoundColumn.getLastPumparoundRelativeChange() >= 0.0);
+
+    column.setInternalDiameter(1.5);
+    ColumnInternalsDesigner designer = column.calcColumnInternals("sieve");
+    assertTrue(designer.getTotalPressureDrop() >= 0.0);
+    column.enableHydraulicPressureDropCoupling("sieve");
+    assertTrue(column.isHydraulicPressureDropCouplingEnabled());
+
+    DistillationColumn shortcutColumn =
+        new DistillationColumn("Doc Shortcut Init Column", 3, true, true);
+    DistillationColumn.ShortcutInitializationResult init =
+        shortcutColumn.initializeFromShortcut(runFeed, "ethane", "propane", 0.90, 0.90, 1.3);
+    assertNotNull(init);
+    assertNotNull(shortcutColumn.getLastShortcutInitializationResult());
+    shortcutColumn.setMaxTrayOptimizationCandidates(5);
+    shortcutColumn.setMaxTrayOptimizationTimeSeconds(1.0);
+    assertTrue(shortcutColumn.getMaxTrayOptimizationCandidates() > 0);
+    assertTrue(shortcutColumn.getMaxTrayOptimizationTimeSeconds() > 0.0);
+
+    Stream rateGas = createDocRateBasedGas("doc rate gas", 0.10);
+    Stream rateLiquid = createDocRateBasedLiquid("doc rate liquid", 0.0);
+    RateBasedPackedColumn absorber =
+        new RateBasedPackedColumn("Doc CO2 absorber", rateGas, rateLiquid);
+    absorber.setColumnDiameter(1.2);
+    absorber.setPackedHeight(6.0);
+    absorber.setNumberOfSegments(3);
+    absorber.setPackingType("Pall-Ring-50");
+    absorber.setTransferComponents("CO2");
+    absorber.run();
+    StreamInterface treatedGas = absorber.getGasOutStream();
+    String report = absorber.toJson();
+    assertNotNull(treatedGas);
+    assertNotNull(report);
+  }
+
+  /**
+   * Create a methane feed for distillation side-draw documentation examples.
+   *
+   * @param name stream name
+   * @return initialized methane stream
+   */
+  private Stream createDocMethaneFeed(String name) {
+    SystemInterface gas = new neqsim.thermo.system.SystemSrkEos(300.0, 10.0);
+    gas.addComponent("methane", 1.0);
+    gas.setMixingRule("classic");
+    Stream feed = new Stream(name, gas);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.run();
+    return feed;
+  }
+
+  /**
+   * Create a liquid pentane feed for pumparound documentation examples.
+   *
+   * @param name stream name
+   * @return initialized pentane stream
+   */
+  private Stream createDocPentaneFeed(String name) {
+    SystemInterface liquid = new neqsim.thermo.system.SystemSrkEos(300.0, 10.0);
+    liquid.addComponent("n-pentane", 1.0);
+    liquid.setMixingRule("classic");
+    Stream feed = new Stream(name, liquid);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.run();
+    return feed;
+  }
+
+  /**
+   * Create a gas stream for rate-based packed-column documentation examples.
+   *
+   * @param name stream name
+   * @param co2Fraction carbon dioxide mole fraction
+   * @return initialized gas stream
+   */
+  private Stream createDocRateBasedGas(String name, double co2Fraction) {
+    SystemInterface gas = new neqsim.thermo.system.SystemSrkEos(313.15, 50.0);
+    gas.addComponent("methane", 1.0 - co2Fraction);
+    gas.addComponent("CO2", co2Fraction);
+    gas.setMixingRule("classic");
+    Stream stream = new Stream(name, gas);
+    stream.setFlowRate(1000.0, "kg/hr");
+    stream.run();
+    stream.getThermoSystem().initProperties();
+    return stream;
+  }
+
+  /**
+   * Create a liquid stream for rate-based packed-column documentation examples.
+   *
+   * @param name stream name
+   * @param co2Fraction carbon dioxide mole fraction
+   * @return initialized liquid stream
+   */
+  private Stream createDocRateBasedLiquid(String name, double co2Fraction) {
+    SystemInterface liquid = new neqsim.thermo.system.SystemSrkEos(303.15, 50.0);
+    liquid.addComponent("water", 1.0 - co2Fraction);
+    liquid.addComponent("CO2", co2Fraction);
+    liquid.setMixingRule("classic");
+    Stream stream = new Stream(name, liquid);
+    stream.setFlowRate(2000.0, "kg/hr");
+    stream.run();
+    stream.getThermoSystem().initProperties();
+    return stream;
   }
 
   /**
@@ -900,6 +1121,51 @@ public class DocExamplesCompilationTest {
     calc.calculate();
     double uBD = calc.getOverallU();
     assertTrue(uBD > 0, "Bell-Delaware overall U should be positive");
+  }
+
+  /**
+   * TwoFluidPipe steady-state and dynamic boundary examples from docs/process/TWOFLUIDPIPE_MODEL.md.
+   */
+  @Test
+  public void testTwoFluidPipeSteadyAndDynamicBoundaryDocExamples() {
+    SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(293.15, 70.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.06);
+    fluid.addComponent("propane", 0.04);
+    fluid.setMixingRule("classic");
+
+    Stream inlet = new Stream("inlet", fluid);
+    inlet.setFlowRate(4.0, "kg/sec");
+    inlet.setTemperature(20.0, "C");
+    inlet.setPressure(70.0, "bara");
+    inlet.run();
+
+    neqsim.process.equipment.pipeline.TwoFluidPipe pipe =
+        new neqsim.process.equipment.pipeline.TwoFluidPipe("export line", inlet);
+    pipe.setLength(300.0);
+    pipe.setDiameter(0.20);
+    pipe.setRoughness(1.0e-5);
+    pipe.setNumberOfSections(4);
+    pipe.run();
+    assertTrue(pipe.getPressureProfile().length > 0);
+
+    pipe.setOutletPressure(55.0, "bara");
+    pipe.run();
+    double outletPressure = pipe.getPressureProfile()[pipe.getPressureProfile().length - 1] / 1.0e5;
+    assertEquals(55.0, outletPressure, 0.05);
+
+    pipe.setInletBoundaryCondition(
+        neqsim.process.equipment.pipeline.TwoFluidPipe.BoundaryCondition.CONSTANT_FLOW);
+    pipe.setInletMassFlow(4.0, "kg/sec");
+    pipe.setOutletBoundaryCondition(
+        neqsim.process.equipment.pipeline.TwoFluidPipe.BoundaryCondition.CONSTANT_PRESSURE);
+    pipe.setOutletPressure(55.0, "bara");
+    pipe.run();
+
+    pipe.openOutlet(52.0, "bara");
+    pipe.runTransient(2.0, java.util.UUID.randomUUID());
+    assertEquals(52.0, pipe.getPressureProfile()[pipe.getPressureProfile().length - 1] / 1.0e5,
+        0.05);
   }
 
   /**

@@ -19,7 +19,7 @@
 	</scm>
 
 	<properties>
-		<revision>3.9.1</revision>
+		<revision>3.12.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<sha1 />
@@ -27,6 +27,9 @@
 		<checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
 		<skipFlattening>false</skipFlattening>
 		<argLine></argLine>
+		<!-- Java 21 build runs the extended test suite, including slow-tagged tests.
+		     Override with -DexcludedTestGroups=slow to skip them locally. -->
+		<excludedTestGroups></excludedTestGroups>
 	</properties>
 	<licenses>
 		<license>
@@ -98,7 +101,7 @@
 		<dependency>
 			<groupId>org.ejml</groupId>
 			<artifactId>ejml-all</artifactId>
-			<version>0.44.0</version>
+			<version>0.45.1</version>
 		</dependency>
 		<dependency>
 			<groupId>gov.nist.math</groupId>
@@ -318,11 +321,15 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<!-- Preserve any Jacoco agent injection (${argLine}) and add required module
-					opens for XStream reflection when running tests on JDK >= 17 -->
-					<argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED
+					opens for XStream reflection when running tests on JDK >= 17.
+					-Xmx6g is required because the extended (slow) test suite includes
+					distillation Newton-iteration tests that allocate large scalar-replaced
+					object arrays. -->
+					<argLine>${argLine} -Xmx6g --add-opens=java.base/java.util=ALL-UNNAMED
 						--add-opens=java.base/java.lang=ALL-UNNAMED
 						--add-opens=java.base/java.io=ALL-UNNAMED
 						--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
+					<excludedGroups>${excludedTestGroups}</excludedGroups>
 				</configuration>
 				<version>3.5.4</version>
 			</plugin>
@@ -331,8 +338,10 @@
 				<version>3.5.4</version>
 				<configuration>
 					<!-- Preserve any Jacoco agent injection (${argLine}) and add required module
-					opens for XStream reflection when running integration tests on JDK >= 17 -->
-					<argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED
+					opens for XStream reflection when running integration tests on JDK >= 17.
+					-Xmx6g matches surefire to give failsafe enough headroom for the same
+					extended slow-tagged tests. -->
+					<argLine>${argLine} -Xmx6g --add-opens=java.base/java.util=ALL-UNNAMED
 						--add-opens=java.base/java.lang=ALL-UNNAMED
 						--add-opens=java.base/java.io=ALL-UNNAMED
 						--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>

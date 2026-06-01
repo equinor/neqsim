@@ -23,6 +23,12 @@ class PVTRunnerTest {
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("success", obj.get("status").getAsString(), "CME failed: " + result);
     assertTrue(obj.has("data"), "CME should return data");
+    assertTrue(obj.has("apiVersion"));
+    assertTrue(obj.has("tool"));
+    assertTrue(obj.has("validation"));
+    assertTrue(obj.has("qualityGate"));
+    assertTrue(obj.has("warnings"));
+    assertTrue(obj.getAsJsonObject("provenance").has("benchmarkTrustLevel"));
   }
 
   @Test
@@ -40,6 +46,9 @@ class PVTRunnerTest {
     String result = PVTRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertEquals("error", obj.get("status").getAsString());
+    assertTrue(obj.has("apiVersion"));
+    assertTrue(obj.has("validation"));
+    assertTrue(obj.has("qualityGate"));
   }
 
   @Test

@@ -20,7 +20,7 @@
 	</scm>
 
         <properties>
-                <revision>3.9.1</revision>
+				<revision>3.12.0</revision>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
                 <checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
@@ -51,6 +51,12 @@
 			<url>https://repo1.maven.org/maven2/</url>
 		</repository>
 	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>central</id>
+			<url>https://repo1.maven.org/maven2/</url>
+		</pluginRepository>
+	</pluginRepositories>
 
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
@@ -62,12 +68,12 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
-			<version>2.25.4</version>
+			<version>2.26.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>2.25.4</version>
+			<version>2.26.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.thoughtworks.xstream</groupId>
@@ -99,7 +105,7 @@
 		<dependency>
 			<groupId>org.ejml</groupId>
 			<artifactId>ejml-all</artifactId>
-			<version>0.44.0</version>
+			<version>0.45.1</version>
 		</dependency>
 		<dependency>
 			<groupId>gov.nist.math</groupId>
@@ -214,7 +220,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
-				<version>3.6.2</version>
+				<version>3.6.3</version>
 				<executions>
 					<execution>
 						<id>enforce-maven</id>
@@ -337,20 +343,20 @@
 			</plugin>
                         <plugin>
                                 <artifactId>maven-surefire-plugin</artifactId>
-                                <version>3.5.5</version>
+                                <version>3.5.6</version>
                                 <configuration>
                                         <!-- Preserve any Jacoco agent injection (@{argLine}) and add required module opens for XStream reflection when running tests on JDK >= 11 -->
-                                        <argLine>@{argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
+										<argLine>@{argLine} -Xmx3g --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
                                         <!-- Exclude slow tests by default. Run with -DincludeSlow=true to include them -->
                                         <excludedGroups>${excludedTestGroups}</excludedGroups>
                                 </configuration>
                         </plugin>
                         <plugin>
                                 <artifactId>maven-failsafe-plugin</artifactId>
-                                <version>3.5.5</version>
+                                <version>3.5.6</version>
                                 <configuration>
                                         <!-- Preserve any Jacoco agent injection (@{argLine}) and add required module opens for XStream reflection when running tests on JDK >= 11 -->
-                                        <argLine>@{argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
+										<argLine>@{argLine} -Xmx3g --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
                                 </configuration>
                         </plugin>
 			<plugin>
@@ -381,14 +387,6 @@
 				<configuration>
 					<failOnError>false</failOnError>
 				</configuration>
-				<executions>
-					<execution>
-						<phase>verify</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -397,14 +395,6 @@
 				<configuration>
 					<failOnViolation>false</failOnViolation>
 				</configuration>
-				<executions>
-					<execution>
-						<phase>verify</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>

@@ -61,6 +61,9 @@ public class ReactiveTray extends SimpleTray {
     invalidateOutStreamCache();
     double enthalpy = 0.0;
     boolean changeTo2Phase = false;
+    if (streams.isEmpty()) {
+      throw new IllegalStateException("Reactive tray " + getName() + " has no inlet streams");
+    }
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
     if (thermoSystem2.doMultiPhaseCheck()) {
       changeTo2Phase = true;

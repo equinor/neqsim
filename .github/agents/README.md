@@ -388,6 +388,7 @@ They contain verified patterns, rules, and domain knowledge.
 | `neqsim-physics-explanations` | Explaining results or adding educational context | Plain-language explanations of thermodynamic and process phenomena |
 | `neqsim-capability-map` | Checking what NeqSim can do, planning implementations | Structured inventory of all NeqSim capabilities by discipline |
 | `neqsim-technical-document-reading` | Reading technical documents (PDF, Word, Excel) | Extraction patterns, unit normalization, component mapping, quality scoring |
+| `neqsim-trapped-liquid-fire-rupture` | Blocked-in liquid fire rupture studies | Evidence retrieval, trapped inventory, fire exposure, material/flange derating, PFP demand, source-term handoff |
 | `neqsim-ccs-hydrogen` | CCS or hydrogen system tasks | CO2 phase behavior, impurity management, injection wells, H2 blending |
 | `neqsim-distillation-design` | Distillation column setup or troubleshooting | Solver selection, feed tray rules, convergence, internals sizing |
 | `neqsim-dynamic-simulation` | Transient simulations, controller tuning | runTransient, PID controllers, transmitters, depressurization |

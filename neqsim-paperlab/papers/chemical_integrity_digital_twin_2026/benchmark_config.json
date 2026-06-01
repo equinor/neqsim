@@ -1,0 +1,93 @@
+{
+  "benchmark_id": "chemical_integrity_digital_twin_2026",
+  "created": "2026-05-09T11:07:51.938604",
+  "algorithms": [
+    "baseline"
+  ],
+  "eos_models": [
+    "SRK"
+  ],
+  "random_seed": 42,
+  "timing_repeats": 3,
+  "families": [
+    {
+      "name": "lean_gas",
+      "base_composition": {
+        "methane": 0.9,
+        "ethane": 0.05,
+        "propane": 0.03,
+        "nitrogen": 0.01,
+        "CO2": 0.01
+      },
+      "n_composition_variants": 5,
+      "dirichlet_concentration": 50,
+      "T_range_K": [
+        200,
+        400
+      ],
+      "P_range_bara": [
+        1,
+        200
+      ],
+      "n_T": 10,
+      "n_P": 10
+    },
+    {
+      "name": "rich_gas",
+      "base_composition": {
+        "methane": 0.7,
+        "ethane": 0.1,
+        "propane": 0.08,
+        "n-butane": 0.05,
+        "n-pentane": 0.03,
+        "nitrogen": 0.02,
+        "CO2": 0.02
+      },
+      "n_composition_variants": 5,
+      "dirichlet_concentration": 40,
+      "T_range_K": [
+        220,
+        450
+      ],
+      "P_range_bara": [
+        5,
+        300
+      ],
+      "n_T": 10,
+      "n_P": 10
+    },
+    {
+      "name": "gas_condensate",
+      "base_composition": {
+        "methane": 0.65,
+        "ethane": 0.08,
+        "propane": 0.06,
+        "n-butane": 0.04,
+        "n-pentane": 0.03,
+        "n-hexane": 0.02,
+        "n-heptane": 0.02,
+        "n-decane": 0.05,
+        "nitrogen": 0.02,
+        "CO2": 0.03
+      },
+      "n_composition_variants": 5,
+      "dirichlet_concentration": 30,
+      "T_range_K": [
+        250,
+        500
+      ],
+      "P_range_bara": [
+        10,
+        500
+      ],
+      "n_T": 10,
+      "n_P": 10
+    }
+  ],
+  "stress_cases": {
+    "near_critical": 20,
+    "near_bubble": 10,
+    "near_dew": 10,
+    "trace_component": 10
+  }
+}

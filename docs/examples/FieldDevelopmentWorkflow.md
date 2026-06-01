@@ -60,7 +60,7 @@ The screening level uses correlations and empirical models for quick assessment.
 ```python
 # Create a quick gas tieback screening study
 workflow = FieldDevelopmentWorkflow.quickGasTieback(
-    "Satellite_Field",
+    "Snorre_Satellite",
     50.0,    # reserves in GSm3
     120.0,   # distance to host in km
     350.0,   # water depth in m
@@ -242,7 +242,7 @@ The FieldDevelopmentWorkflow provides:
 
 Key integration points:
 - PVT: `SystemSrkEos`, `SystemSrkCPAstatoil`
-- Reservoir: `SimpleReservoir`, `WellSystem`
+- Reservoir: `SimpleReservoir`, `WellSystem`  
 - Process: `ProcessSystem`, unit operations
 - Economics: `CashFlowEngine`, tax models
 

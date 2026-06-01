@@ -170,6 +170,7 @@ public class FlashRunner {
     if (input.has("mixingRule")) {
       mixingRule = input.get("mixingRule").getAsString();
     }
+    addApplicabilityWarnings(warnings, model, pressureBara, components);
 
     // --- Parse optional flash specs ---
     double enthalpySpec = Double.NaN;
@@ -316,10 +317,19 @@ public class FlashRunner {
 
       // Provenance (trust metadata)
       ResultProvenance provenance = ResultProvenance.forFlash(model, flashType, mixingRule);
+      provenance.setBenchmarkTrustLevel(BenchmarkTrust.getMaturityLevel("runFlash"));
       provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
       provenance.addValidationPassed("component_names_verified");
       provenance.addValidationPassed("flash_converged");
+      for (String warning : warnings) {
+        provenance.addApplicabilityWarning(warning);
+      }
       result.add("provenance", GSON.toJsonTree(provenance));
+
+      JsonObject data = new JsonObject();
+      data.add("flash", meta);
+      data.add("fluid", fluidObj);
+      result.add("data", data);
 
       // Warnings
       if (!warnings.isEmpty()) {
@@ -329,6 +339,14 @@ public class FlashRunner {
         }
         result.add("warnings", warnArray);
       }
+
+      ApiEnvelope.applyStandardFields(result, "runFlash", provenance,
+          ApiEnvelope.validationStatus(true, "input_and_flash",
+              "Component names, units, and flash convergence checks passed"),
+          ApiEnvelope.qualityGate(warnings.isEmpty() ? "passed" : "warning",
+              warnings.isEmpty() ? "Flash calculation completed"
+                  : "Flash calculation completed with applicability warnings",
+              true));
 
       return GSON.toJson(result);
     } catch (Exception e) {
@@ -499,6 +517,56 @@ public class FlashRunner {
   }
 
   /**
+   * Adds model applicability warnings for common agent-facing mistakes.
+   *
+   * @param warnings warning list to append to
+   * @param model thermodynamic model name
+   * @param pressureBara pressure in bara
+   * @param components validated component map
+   */
+  private static void addApplicabilityWarnings(List<String> warnings, String model,
+      double pressureBara, Map<String, Double> components) {
+    if (isCubicModel(model) && pressureBara > 500.0) {
+      warnings.add("SRK/PR cubic EOS results above 500 bara should be benchmarked against "
+          + "GERG-2008 or reference data for high-pressure gas service.");
+    }
+    if (isCubicModel(model) && containsAssociatingComponent(components)) {
+      warnings.add("Water, glycol, alcohol, or acid-gas systems are outside the most reliable "
+          + "SRK/PR envelope. Use CPA or an electrolyte model when phase behavior or water "
+          + "content is decision-critical.");
+    }
+  }
+
+  /**
+   * Checks if a model is a cubic EOS with common association limitations.
+   *
+   * @param model thermodynamic model name
+   * @return true for SRK or PR
+   */
+  private static boolean isCubicModel(String model) {
+    return "SRK".equalsIgnoreCase(model) || "PR".equalsIgnoreCase(model);
+  }
+
+  /**
+   * Checks if a composition contains associating or strongly polar components.
+   *
+   * @param components component mole fractions by name
+   * @return true if a polar or associating component is present
+   */
+  private static boolean containsAssociatingComponent(Map<String, Double> components) {
+    for (String componentName : components.keySet()) {
+      String normalized = componentName.toLowerCase();
+      if (normalized.contains("water") || normalized.contains("h2o")
+          || normalized.contains("methanol") || normalized.contains("ethanol")
+          || normalized.contains("meg") || normalized.contains("deg") || normalized.contains("teg")
+          || normalized.contains("glycol")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Creates a SystemInterface based on the model type string.
    *
    * @param model the model name (e.g., "SRK", "PR", "CPA")
@@ -540,7 +608,7 @@ public class FlashRunner {
    */
   public static ApiEnvelope<FlashResult> runTyped(FlashRequest request) {
     if (request == null) {
-      return ApiEnvelope.error("INPUT_ERROR", "FlashRequest is null",
+      return typedError("INPUT_ERROR", "FlashRequest is null",
           "Provide a valid FlashRequest object");
     }
 
@@ -549,41 +617,41 @@ public class FlashRunner {
     // --- Validate model ---
     String model = request.getModel() != null ? request.getModel().toUpperCase() : "SRK";
     if (!SUPPORTED_MODELS.contains(model)) {
-      return ApiEnvelope.error("UNKNOWN_MODEL", "Unknown thermodynamic model: " + model,
+      return typedError("UNKNOWN_MODEL", "Unknown thermodynamic model: " + model,
           "Use one of: " + SUPPORTED_MODELS);
     }
 
     // --- Convert temperature to Kelvin ---
     double temperatureK = convertTemperatureToKelvin(request.getTemperature());
     if (Double.isNaN(temperatureK)) {
-      return ApiEnvelope.error("TEMPERATURE_ERROR", "Invalid temperature specification",
+      return typedError("TEMPERATURE_ERROR", "Invalid temperature specification",
           "Provide a ValueWithUnit with a supported unit (K, C, F, R)");
     }
 
     // --- Convert pressure to bara ---
     double pressureBara = convertPressureToBara(request.getPressure());
     if (Double.isNaN(pressureBara)) {
-      return ApiEnvelope.error("PRESSURE_ERROR", "Invalid pressure specification",
+      return typedError("PRESSURE_ERROR", "Invalid pressure specification",
           "Provide a ValueWithUnit with a supported unit (bara, barg, Pa, kPa, MPa, psi, atm)");
     }
 
     // --- Validate flash type ---
     String flashType = request.getFlashType() != null ? request.getFlashType() : "TP";
     if (!SUPPORTED_FLASH_TYPES.contains(flashType)) {
-      return ApiEnvelope.error("UNKNOWN_FLASH_TYPE", "Unknown flash type: " + flashType,
+      return typedError("UNKNOWN_FLASH_TYPE", "Unknown flash type: " + flashType,
           "Use one of: " + SUPPORTED_FLASH_TYPES);
     }
 
     // --- Validate components ---
     Map<String, Double> components = request.getComponents();
     if (components == null || components.isEmpty()) {
-      return ApiEnvelope.error("MISSING_COMPONENTS", "No components specified",
+      return typedError("MISSING_COMPONENTS", "No components specified",
           "Add at least one component via addComponent()");
     }
     for (Map.Entry<String, Double> entry : components.entrySet()) {
       if (!ComponentQuery.isValid(entry.getKey())) {
         String suggestion = ComponentQuery.closestMatch(entry.getKey());
-        return ApiEnvelope.error("UNKNOWN_COMPONENT",
+        return typedError("UNKNOWN_COMPONENT",
             "Unknown component: '" + entry.getKey() + "'"
                 + (suggestion != null ? ". Did you mean '" + suggestion + "'?" : ""),
             "Use ComponentQuery.search() to find valid component names");
@@ -592,6 +660,7 @@ public class FlashRunner {
 
     // --- Parse mixing rule ---
     String mixingRule = request.getMixingRule() != null ? request.getMixingRule() : "classic";
+    addApplicabilityWarnings(warnings, model, pressureBara, components);
 
     // --- Validate flash specs ---
     ValueWithUnit enthalpySpec = request.getEnthalpy();
@@ -607,7 +676,7 @@ public class FlashRunner {
       }
       fluid.setMixingRule(mixingRule);
     } catch (Exception e) {
-      return ApiEnvelope.error("FLUID_ERROR", "Failed to create fluid: " + e.getMessage(),
+      return typedError("FLUID_ERROR", "Failed to create fluid: " + e.getMessage(),
           "Check component names and fluid parameters");
     }
 
@@ -621,21 +690,21 @@ public class FlashRunner {
           break;
         case "PH":
           if (enthalpySpec == null) {
-            return ApiEnvelope.error("MISSING_SPEC", "PH flash requires enthalpy specification",
+            return typedError("MISSING_SPEC", "PH flash requires enthalpy specification",
                 "Set enthalpy via setEnthalpy()");
           }
           ops.PHflash(enthalpySpec.getValue(), enthalpySpec.getUnit());
           break;
         case "PS":
           if (entropySpec == null) {
-            return ApiEnvelope.error("MISSING_SPEC", "PS flash requires entropy specification",
+            return typedError("MISSING_SPEC", "PS flash requires entropy specification",
                 "Set entropy via setEntropy()");
           }
           ops.PSflash(entropySpec.getValue(), entropySpec.getUnit());
           break;
         case "TV":
           if (volumeSpec == null) {
-            return ApiEnvelope.error("MISSING_SPEC", "TV flash requires volume specification",
+            return typedError("MISSING_SPEC", "TV flash requires volume specification",
                 "Set volume via setVolume()");
           }
           ops.TVflash(volumeSpec.getValue(), volumeSpec.getUnit());
@@ -657,13 +726,13 @@ public class FlashRunner {
           ops.hydrateTPflash();
           break;
         default:
-          return ApiEnvelope.error("UNKNOWN_FLASH_TYPE", "Unknown flash type: " + flashType,
+          return typedError("UNKNOWN_FLASH_TYPE", "Unknown flash type: " + flashType,
               "Use one of: " + SUPPORTED_FLASH_TYPES);
       }
 
       fluid.initProperties();
     } catch (Exception e) {
-      return ApiEnvelope.error("FLASH_ERROR",
+      return typedError("FLASH_ERROR",
           "Flash calculation failed (" + flashType + "): " + e.getMessage(),
           "Check that inputs are physically reasonable.");
     }
@@ -680,11 +749,38 @@ public class FlashRunner {
       FlashResult result =
           new FlashResult(model, flashType, fluid.getNumberOfPhases(), phaseNames, fluidResponse);
 
-      return ApiEnvelope.success(result, warnings);
+      ResultProvenance provenance = ResultProvenance.forFlash(model, flashType, mixingRule);
+      provenance.setBenchmarkTrustLevel(BenchmarkTrust.getMaturityLevel("runFlash"));
+      provenance.addValidationPassed("component_names_verified");
+      provenance.addValidationPassed("flash_converged");
+      for (String warning : warnings) {
+        provenance.addApplicabilityWarning(warning);
+      }
+
+      return ApiEnvelope.success(result, warnings).withTool("runFlash").withProvenance(provenance)
+          .withValidation(ApiEnvelope.validationStatus(true, "input_and_flash",
+              "Component names, units, and flash convergence checks passed"))
+          .withQualityGate(ApiEnvelope.qualityGate(warnings.isEmpty() ? "passed" : "warning",
+              warnings.isEmpty() ? "Flash calculation completed"
+                  : "Flash calculation completed with applicability warnings",
+              true));
     } catch (Exception e) {
-      return ApiEnvelope.error("RESPONSE_ERROR", "Failed to build response: " + e.getMessage(),
+      return typedError("RESPONSE_ERROR", "Failed to build response: " + e.getMessage(),
           "This is an internal error — please report it");
     }
+  }
+
+  /**
+   * Creates a typed flash error envelope with tool metadata.
+   *
+   * @param code the diagnostic code
+   * @param message the diagnostic message
+   * @param remediation the remediation hint
+   * @return typed flash error envelope
+   */
+  private static ApiEnvelope<FlashResult> typedError(String code, String message,
+      String remediation) {
+    return ApiEnvelope.<FlashResult>error(code, message, remediation).withTool("runFlash");
   }
 
   /**
@@ -767,6 +863,10 @@ public class FlashRunner {
     }
     errors.add(err);
     result.add("errors", errors);
+
+    ApiEnvelope.applyStandardFields(result, "runFlash", null,
+        ApiEnvelope.validationStatus(false, "input_or_flash", message),
+        ApiEnvelope.qualityGate("failed", message, true));
 
     return GSON.toJson(result);
   }

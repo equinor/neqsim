@@ -80,9 +80,30 @@ class ApiEnvelopeTest {
     String json = env.toJson();
     JsonObject root = JsonParser.parseString(json).getAsJsonObject();
 
+    assertEquals(ApiEnvelope.API_VERSION, root.get("apiVersion").getAsString());
     assertEquals("success", root.get("status").getAsString());
     assertTrue(root.has("data"));
     assertFalse(root.has("errors"));
+    assertTrue(root.has("warnings"));
+  }
+
+  @Test
+  void testToJson_successWithContractMetadata() {
+    ResultProvenance provenance = ResultProvenance.forFlash("SRK", "TP", "classic");
+    ApiEnvelope<String> env =
+        ApiEnvelope.success("test-data").withTool("runFlash").withProvenance(provenance)
+            .withValidation(ApiEnvelope.validationStatus(true, "test", "passed"))
+            .withQualityGate(ApiEnvelope.qualityGate("passed", "ok", true));
+
+    String json = env.toJson();
+    JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+
+    assertEquals("runFlash", root.get("tool").getAsString());
+    assertTrue(root.has("provenance"));
+    assertTrue(root.has("validation"));
+    assertTrue(root.has("qualityGate"));
+    assertEquals("SRK", root.getAsJsonObject("provenance").get("model").getAsString());
+    assertTrue(root.getAsJsonObject("validation").get("valid").getAsBoolean());
   }
 
   @Test

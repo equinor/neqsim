@@ -6,7 +6,9 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 /**
  * Structured result of a simulation build or execution.
@@ -131,6 +133,7 @@ public class SimulationResult {
   private final String reportJson;
   private final List<ErrorDetail> errors;
   private final List<String> warnings;
+  private final JsonObject metadata;
 
   /**
    * Private constructor — use static factory methods.
@@ -143,11 +146,27 @@ public class SimulationResult {
    */
   private SimulationResult(Status status, ProcessSystem processSystem, String reportJson,
       List<ErrorDetail> errors, List<String> warnings) {
+    this(status, processSystem, reportJson, errors, warnings, null);
+  }
+
+  /**
+   * Private constructor — use static factory methods.
+   *
+   * @param status the result status
+   * @param processSystem the built process system (nullable on error)
+   * @param reportJson the simulation report JSON (nullable if not run)
+   * @param errors list of errors
+   * @param warnings list of warnings
+   * @param metadata optional build metadata from advanced JSON sections
+   */
+  private SimulationResult(Status status, ProcessSystem processSystem, String reportJson,
+      List<ErrorDetail> errors, List<String> warnings, JsonObject metadata) {
     this.status = status;
     this.processSystem = processSystem;
     this.reportJson = reportJson;
     this.errors = errors != null ? new ArrayList<>(errors) : new ArrayList<>();
     this.warnings = warnings != null ? new ArrayList<>(warnings) : new ArrayList<>();
+    this.metadata = copyJsonObject(metadata);
   }
 
   /**
@@ -162,6 +181,21 @@ public class SimulationResult {
       List<String> warnings) {
     return new SimulationResult(Status.SUCCESS, process, reportJson,
         Collections.<ErrorDetail>emptyList(), warnings);
+  }
+
+  /**
+   * Creates a success result with build metadata.
+   *
+   * @param process the built and optionally run process system
+   * @param reportJson the simulation report JSON (nullable if not run)
+   * @param warnings list of non-fatal warnings
+   * @param metadata optional build metadata from advanced JSON sections
+   * @return the success result
+   */
+  public static SimulationResult success(ProcessSystem process, String reportJson,
+      List<String> warnings, JsonObject metadata) {
+    return new SimulationResult(Status.SUCCESS, process, reportJson,
+        Collections.<ErrorDetail>emptyList(), warnings, metadata);
   }
 
   /**
@@ -275,6 +309,31 @@ public class SimulationResult {
   }
 
   /**
+   * Gets optional metadata captured while building the process.
+   *
+   * <p>
+   * The metadata object is used for advanced JSON process model sections that are not themselves
+   * process equipment, such as advisory equipment design data, data-connection descriptors, and
+   * design-capacity application reports. A defensive copy is returned so callers cannot mutate the
+   * result object.
+   * </p>
+   *
+   * @return metadata JSON object, or an empty object when no metadata was captured
+   */
+  public JsonObject getMetadata() {
+    return copyJsonObject(metadata);
+  }
+
+  /**
+   * Returns true if this result contains build metadata.
+   *
+   * @return true when metadata has at least one entry
+   */
+  public boolean hasMetadata() {
+    return metadata != null && metadata.size() > 0;
+  }
+
+  /**
    * Converts this result to a structured JSON string suitable for web API responses.
    *
    * @return JSON string
@@ -305,6 +364,10 @@ public class SimulationResult {
       root.add("warnings", warnArray);
     }
 
+    if (hasMetadata()) {
+      root.add("metadata", copyJsonObject(metadata));
+    }
+
     // Report (embedded as parsed JSON to avoid double-escaping)
     if (reportJson != null) {
       try {
@@ -317,6 +380,20 @@ public class SimulationResult {
     Gson gson =
         new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     return gson.toJson(root);
+  }
+
+  /**
+   * Creates a defensive copy of a JSON object.
+   *
+   * @param object the JSON object to copy, or null
+   * @return copied JSON object, or an empty object when the input is null
+   */
+  private static JsonObject copyJsonObject(JsonObject object) {
+    if (object == null) {
+      return new JsonObject();
+    }
+    JsonElement parsed = JsonParser.parseString(object.toString());
+    return parsed.getAsJsonObject();
   }
 
   @Override

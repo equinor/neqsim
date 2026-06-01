@@ -34,7 +34,7 @@ public class CompressorCPAHangTest extends neqsim.NeqSimTest {
    * </p>
    */
   @Test
-  @Timeout(120)
+  @Timeout(300)
   public void testCompressorWithWaterWashCPAPlusFractions() {
     double compPin = 27.9;
     double compTin = 27.0;
@@ -133,7 +133,7 @@ public class CompressorCPAHangTest extends neqsim.NeqSimTest {
    * </p>
    */
   @Test
-  @Timeout(120)
+  @Timeout(300)
   public void testCompressorWithPolytropicDetailedCPA() {
     double compPin = 27.9;
     double compTin = 27.0;

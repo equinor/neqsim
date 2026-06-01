@@ -1,2 +1,4 @@
+install_agent
+install_skill
 neqsim_cli
 neqsim_dev_setup

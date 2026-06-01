@@ -53,3 +53,6 @@
 "API-RP-90","1st Ed","Annular Casing Pressure Management","SubseaWell","standards/api_standards.csv","true"
 "API-TR-5C3","2008","Casing and Tubing Buckling in Wells","SubseaWell","standards/api_standards.csv","true"
 "ISO-16530-1","2017","Well Integrity Part 1 Life Cycle Governance","SubseaWell","standards/dnv_iso_en_standards.csv","true"
+"NORSOK-S-001","Template","Technical safety screening template","SafetyCriticalSystem,FirewaterDeluge,FireGasDetection,PassiveFireProtection,SafetyInstrumentedFunction","standards/norsok_standards.csv","true"
+"ISO-13702","Template","Control and mitigation of fires and explosions screening template","SafetyCriticalSystem,FirewaterDeluge,FireGasDetection,PassiveFireProtection","standards/dnv_iso_en_standards.csv","true"
+"TR1055-STYLE","Template","Barrier performance standard follow-up template","SafetyCriticalSystem,FirewaterDeluge,FireGasDetection,PassiveFireProtection,SafetyInstrumentedFunction","standards/norsok_standards.csv","true"

@@ -6,6 +6,8 @@
 
 package neqsim.util.unit;
 
+import neqsim.util.exception.InvalidInputException;
+
 /**
  * <p>
  * LengthUnit class.
@@ -28,5 +30,48 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit {
    */
   public LengthUnit(double value, String name) {
     super(value, name);
+  }
+
+  /**
+   * Get conversion factor to meters (SI unit).
+   *
+   * @param name unit name
+   * @return conversion factor to meters
+   */
+  public double getConversionFactor(String name) {
+    if ("m".equals(name) || "meter".equals(name) || "metre".equals(name)) {
+      return 1.0;
+    } else if ("cm".equals(name)) {
+      return 1.0e-2;
+    } else if ("mm".equals(name)) {
+      return 1.0e-3;
+    } else if ("km".equals(name)) {
+      return 1.0e3;
+    } else if ("in".equals(name) || "inch".equals(name)) {
+      return 0.0254;
+    } else if ("ft".equals(name) || "feet".equals(name)) {
+      return 0.3048;
+    }
+
+    throw new RuntimeException(
+        new InvalidInputException(this, "getConversionFactor", name, "unit not supported"));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSIvalue() {
+    return getValue("m");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getValue(double val, String fromunit, String tounit) {
+    return getConversionFactor(fromunit) / getConversionFactor(tounit) * val;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getValue(String tounit) {
+    return getValue(invalue, inunit, tounit);
   }
 }

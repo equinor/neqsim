@@ -1,13 +1,14 @@
 ---
 name: neqsim-flow-assurance
-description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion, pipeline hydraulics, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
+description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion, pipeline hydraulics, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
 last_verified: "2026-07-04"
 ---
 
 # Flow Assurance Analysis with NeqSim
 
 Consolidated guide for all flow assurance threats — hydrate, wax, asphaltene, corrosion,
-hydraulics, slugging, and thermal management — with NeqSim code patterns.
+hydraulics, water/liquid hammer screening, slugging, and thermal management — with
+NeqSim code patterns.
 
 ## When to Use This Skill
 
@@ -17,6 +18,7 @@ hydraulics, slugging, and thermal management — with NeqSim code patterns.
 - Asphaltene stability screening (de Boer, CII)
 - CO2 and H2S corrosion rate estimation
 - Pipeline pressure drop and temperature profile
+- Water hammer/liquid hammer screening for fast valve closure, pump trip, or check-valve slam
 - Multiphase flow pattern prediction (slug, annular, stratified)
 - Thermal insulation sizing for subsea pipelines
 - Arrival temperature and cooldown calculations
@@ -31,6 +33,11 @@ hydraulics, slugging, and thermal management — with NeqSim code patterns.
 | Hydrate management | DNV-RP-F116 | Hydrate prevention and remediation |
 | GRP piping | ISO 14692 | Non-metallic pipe design |
 | Pipeline integrity | DNV-RP-F116, API 1160 | Integrity management |
+
+For fast acoustic transients, also load `neqsim-water-hammer`. Use
+`WaterHammerStudy` or MCP `runWaterHammer` with STID route geometry, tagreader
+event windows, and valve/pump event schedules; use this flow-assurance skill for
+the broader operating-envelope and mitigation context.
 
 ## 1. Hydrate Analysis
 

@@ -58,9 +58,7 @@ public class VLSolidTray extends SimpleTray {
     for (int k = 0; k < streams.size(); k++) {
       streams.get(k).getThermoSystem().init(3);
       enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
-      System.out.println("total enthalpy k : " + streams.get(k).getThermoSystem().getEnthalpy());
     }
-    System.out.println("total enthalpy of streams: " + enthalpy);
     return enthalpy;
   }
 
@@ -68,42 +66,27 @@ public class VLSolidTray extends SimpleTray {
   @Override
   public void run(UUID id) {
     double enthalpy = 0.0;
-
-    // ((Stream) streams.get(0)).getThermoSystem().display();
+    if (streams.isEmpty()) {
+      throw new IllegalStateException("VLSolidTray has no inlet streams");
+    }
 
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
-    // System.out.println("total number of moles " +
-    // thermoSystem2.getTotalNumberOfMoles());
     mixedStream.setThermoSystem(thermoSystem2);
-    // thermoSystem2.display();
     ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
     if (streams.size() > 0) {
-      // mixedStream.getThermoSystem().setSolidPhaseCheck("CO2");
       mixedStream.getThermoSystem().setNumberOfPhases(2);
       mixedStream.getThermoSystem().init(0);
 
       mixStream();
 
       enthalpy = calcMixStreamEnthalpy();
-      // mixedStream.getThermoSystem().display();
-      // System.out.println("temp guess " + guessTemperature());
       mixedStream.getThermoSystem().setSolidPhaseCheck("CO2");
       mixedStream.getThermoSystem().setTemperature(guessTemperature());
       testOps.PHsolidFlash(enthalpy);
-      mixedStream.getThermoSystem().display();
-      // System.out.println("filan temp " + mixedStream.getTemperature());
     } else {
       testOps.TPflash();
     }
     mixedStream.getThermoSystem().setSolidPhaseCheck(false);
-    // System.out.println("enthalpy: " +
-    // mixedStream.getThermoSystem().getEnthalpy());
-    // System.out.println("enthalpy: " + enthalpy);
-    // System.out.println("temperature: " +
-    // mixedStream.getThermoSystem().getTemperature());
-
-    // System.out.println("beta " + mixedStream.getThermoSystem().getBeta());
-    // outStream.setThermoSystem(mixedStream.getThermoSystem());
     mixedStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
   }
@@ -111,13 +94,93 @@ public class VLSolidTray extends SimpleTray {
   /** {@inheritDoc} */
   @Override
   public StreamInterface getGasOutStream() {
-    return new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
+    return createPhaseStream("gas");
   }
 
   /** {@inheritDoc} */
   @Override
   public StreamInterface getLiquidOutStream() {
-    return new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
+    return createLiquidStream();
+  }
+
+  /**
+   * Create a stream from the requested phase type.
+   *
+   * @param phaseTypeName phase type name to locate
+   * @return stream for the phase, or a zero-flow stream when absent
+   */
+  private StreamInterface createPhaseStream(String phaseTypeName) {
+    SystemInterface system = mixedStream.getThermoSystem();
+    int phaseIndex = findPhaseIndex(system, phaseTypeName);
+    if (phaseIndex < 0) {
+      return createZeroStream(system);
+    }
+    return new Stream("", system.phaseToSystem(phaseIndex));
+  }
+
+  /**
+   * Create a liquid-like phase stream.
+   *
+   * @return stream for the liquid-like phase, or a zero-flow stream when absent
+   */
+  private StreamInterface createLiquidStream() {
+    SystemInterface system = mixedStream.getThermoSystem();
+    int phaseIndex = findLiquidPhaseIndex(system);
+    if (phaseIndex < 0) {
+      return createZeroStream(system);
+    }
+    return new Stream("", system.phaseToSystem(phaseIndex));
+  }
+
+  /**
+   * Find a phase by type name.
+   *
+   * @param system thermodynamic system to inspect
+   * @param phaseTypeName phase type name to locate
+   * @return phase index, or {@code -1} when absent
+   */
+  private int findPhaseIndex(SystemInterface system, String phaseTypeName) {
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      if (phaseTypeName.equals(system.getPhase(phaseIndex).getPhaseTypeName())) {
+        return phaseIndex;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Find a liquid-like phase.
+   *
+   * @param system thermodynamic system to inspect
+   * @return liquid-like phase index, or {@code -1} when absent
+   */
+  private int findLiquidPhaseIndex(SystemInterface system) {
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      String phaseTypeName = system.getPhase(phaseIndex).getPhaseTypeName();
+      if ("liquid".equals(phaseTypeName) || "oil".equals(phaseTypeName)
+          || "aqueous".equals(phaseTypeName)) {
+        return phaseIndex;
+      }
+    }
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      if (!"gas".equals(system.getPhase(phaseIndex).getPhaseTypeName())) {
+        return phaseIndex;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Create a zero-flow stream from a tray system template.
+   *
+   * @param system tray system template
+   * @return zero-flow stream
+   */
+  private StreamInterface createZeroStream(SystemInterface system) {
+    SystemInterface zeroSystem = system.clone();
+    zeroSystem.setTotalNumberOfMoles(0.0);
+    zeroSystem.init(0);
+    return new Stream("", zeroSystem);
   }
 
   /** {@inheritDoc} */

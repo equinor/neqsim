@@ -11,6 +11,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.mcp.model.ApiEnvelope;
 import neqsim.mcp.model.ResultProvenance;
 import neqsim.pvtsimulation.simulation.ConstantMassExpansion;
 import neqsim.pvtsimulation.simulation.ConstantVolumeDepletion;
@@ -100,6 +101,9 @@ public class PVTRunner {
     // --- Parse model ---
     String model = input.has("model") ? input.get("model").getAsString().toUpperCase() : "SRK";
 
+    // --- Parse mixing rule ---
+    String mixingRule = input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
+
     // --- Parse temperature ---
     double temperatureK = 373.15;
     if (input.has("temperature")) {
@@ -130,8 +134,6 @@ public class PVTRunner {
       for (Map.Entry<String, Double> comp : components.entrySet()) {
         fluid.addComponent(comp.getKey(), comp.getValue());
       }
-      String mixingRule =
-          input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
       fluid.setMixingRule(mixingRule);
       fluid.setMultiPhaseCheck(true);
     } catch (Exception e) {
@@ -193,10 +195,17 @@ public class PVTRunner {
       // Provenance
       ResultProvenance provenance = new ResultProvenance();
       provenance.setThermodynamicModel(model);
+      provenance.setMixingRule(mixingRule);
       provenance.setCalculationType("PVT " + experiment);
       provenance.setConverged(true);
       provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
+      provenance.setBenchmarkTrustLevel(BenchmarkTrust.getMaturityLevel("runPVT"));
+      provenance.addValidationPassed("pvt_experiment_completed");
       result.add("provenance", GSON.toJsonTree(provenance));
+
+      ApiEnvelope.applyStandardFields(result, "runPVT", provenance,
+          ApiEnvelope.validationStatus(true, "calculation", "PVT experiment completed"),
+          ApiEnvelope.qualityGate("passed", "PVT experiment completed", true));
 
       return GSON.toJson(result);
     } catch (Exception e) {
@@ -569,6 +578,9 @@ public class PVTRunner {
     err.addProperty("remediation", remediation);
     errors.add(err);
     error.add("errors", errors);
+    ApiEnvelope.applyStandardFields(error, "runPVT", null,
+        ApiEnvelope.validationStatus(false, "input", message),
+        ApiEnvelope.qualityGate("failed", message, true));
     return GSON.toJson(error);
   }
 }

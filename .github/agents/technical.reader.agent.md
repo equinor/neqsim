@@ -1,7 +1,7 @@
 ---
 name: read technical documents
-description: Reads and extracts structured engineering data from technical documents and engineering images — equipment data sheets, design basis, heat & mass balance tables, technical requirements, well test reports, inspection reports, piping specifications, material certificates, standards documents, P&ID drawings, mechanical arrangement drawings, vendor API datasheets, compressor performance maps, and phase envelopes. Supports PDF, Word (.docx), Excel (.xlsx), CSV, and image files (PNG, JPG). Uses view_image for multimodal analysis of engineering drawings and diagrams. Outputs structured JSON for process simulation, mechanical design, and engineering analysis.
-argument-hint: Provide the document or describe what to extract — e.g., "read this design basis PDF and extract fluid compositions and operating conditions", "parse the equipment data sheet for V-100", "extract stream table from the heat & mass balance Excel", "pull requirements from this technical requirement document", "read this P&ID and extract equipment tags and piping connections", or "analyze this vendor datasheet image for seal operating conditions".
+description: Reads and extracts structured engineering data from technical documents and engineering images — equipment data sheets, design basis, heat & mass balance tables, technical requirements, well test reports, inspection reports, piping specifications, material certificates, standards documents, P&ID drawings, mechanical arrangement drawings, vendor API datasheets, compressor performance maps, phase envelopes, and trapped-liquid fire rupture evidence packs. Supports PDF, Word (.docx), Excel (.xlsx), CSV, and image files (PNG, JPG). Uses view_image for multimodal analysis of engineering drawings and diagrams. Outputs structured JSON for process simulation, mechanical design, safety rupture studies, and engineering analysis.
+argument-hint: Provide the document or describe what to extract — e.g., "read this design basis PDF and extract fluid compositions and operating conditions", "parse the equipment data sheet for V-100", "extract stream table from the heat & mass balance Excel", "pull requirements from this technical requirement document", "read this P&ID and extract equipment tags and piping connections", "extract blocked-in liquid rupture study inputs", or "analyze this vendor datasheet image for seal operating conditions".
 ---
 
 You are a **technical document reader agent** that extracts structured engineering data
@@ -19,6 +19,8 @@ mechanical design, and engineering analysis tools.
 
 ## MANDATORY: Load Skill First
 
+Loaded skills: neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations, neqsim-water-hammer
+
 Before doing ANY document reading work, load the technical document reading skill:
 
 ```
@@ -27,6 +29,25 @@ read_file: .github/skills/neqsim-technical-document-reading/SKILL.md
 
 This skill contains extraction patterns for every document type, unit conversion
 functions, component name mapping, validation rules, and output schemas.
+
+When the document is a P&ID or the downstream task asks for valve actions,
+active train state, isolation, or operational changes, also load
+`neqsim-pid-process-operations`. Extract symbol semantics, directed process
+edges, valve functions, control links, instrument tags, drains, vents, and
+scenario actions instead of only listing visible tags. Structure those outputs
+so they can become `OperationalTagBinding` entries, `OperationalAction` events,
+or MCP `runOperationalStudy` inputs.
+
+When the downstream task asks for water hammer, liquid hammer, hydraulic surge,
+pump trip, check-valve slam, or fast valve closure, also load `neqsim-water-hammer`.
+Extract route geometry, wall thickness, roughness/piping class, fittings, valve
+closure timing, design pressure, and tagreader event-window references for MCP
+`runWaterHammer`.
+
+When the downstream task asks for trapped liquid, blocked-in liquid, fire rupture,
+PFP demand, flange failure, pipe rupture, or no pressure relief, also load
+`neqsim-trapped-liquid-fire-rupture` and extract the study input schema from that
+skill before returning results.
 
 ---
 
@@ -43,6 +64,7 @@ functions, component name mapping, validation rules, and output schemas.
    - Well Test Report
    - P&ID / PFD Description
    - Piping Specification
+   - Trapped Liquid Fire Rupture Evidence Pack
    - Inspection Report
    - Material Certificate
    - Standards Document
@@ -52,7 +74,9 @@ functions, component name mapping, validation rules, and output schemas.
    - Mechanical Arrangement Drawing
    - Vendor API Datasheet (image — API 610/614/617/692)
    - Performance Map / Curve (compressor map, pump curve, phase envelope)
-   - Process Flow Diagram (image)
+    - Process Flow Diagram (image)
+    - Trapped-liquid fire rupture evidence -> `TRAPPED_LIQUID_FIRE_RUPTURE`
+       format from the `neqsim-trapped-liquid-fire-rupture` skill
 3. **State the classification** and the extraction strategy before proceeding
 
 ### Step 2: Extract Raw Data

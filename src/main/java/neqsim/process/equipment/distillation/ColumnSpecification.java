@@ -142,6 +142,9 @@ public class ColumnSpecification implements Serializable {
     if (location == null) {
       throw new IllegalArgumentException("Product location cannot be null");
     }
+    if (!Double.isFinite(targetValue)) {
+      throw new IllegalArgumentException("Specification target value must be finite");
+    }
     if (type == SpecificationType.PRODUCT_PURITY || type == SpecificationType.COMPONENT_RECOVERY) {
       if (componentName == null || componentName.trim().isEmpty()) {
         throw new IllegalArgumentException(
@@ -225,7 +228,7 @@ public class ColumnSpecification implements Serializable {
    * @param tolerance the tolerance (must be positive)
    */
   public void setTolerance(double tolerance) {
-    if (tolerance <= 0.0) {
+    if (!Double.isFinite(tolerance) || tolerance <= 0.0) {
       throw new IllegalArgumentException("Tolerance must be positive, got: " + tolerance);
     }
     this.tolerance = tolerance;

@@ -130,6 +130,32 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void testPropertyFlashUsesComponentAliasTextEquality() {
+    List<Double> pressures = Arrays.asList(new Double[] {22.0});
+    List<Double> temperatures = Arrays.asList(new Double[] {298.15});
+    List<String> components =
+        Arrays.asList(new String[] {new StringBuilder().append("N").append("2").toString(),
+            new StringBuilder().append("O").append("2").toString()});
+    List<List<Double>> onlineFractions = new ArrayList<List<Double>>();
+    onlineFractions.add(Arrays.asList(new Double[] {98.0}));
+    onlineFractions.add(Arrays.asList(new Double[] {2.0}));
+
+    SystemInterface fluid = new SystemSrkEos(298.15, 22.0);
+    fluid.addComponent("nitrogen", 0.79);
+    fluid.addComponent("oxygen", 0.21);
+    fluid.setMixingRule(2);
+
+    ThermodynamicOperations fluidOps = new ThermodynamicOperations(fluid);
+    CalculationResult result =
+        fluidOps.propertyFlash(pressures, temperatures, 1, components, onlineFractions);
+
+    Assertions.assertNull(result.calculationError[0]);
+    Assertions.assertNotNull(result.fluidProperties[0]);
+    Assertions.assertEquals(0.98, fluidOps.getSystem().getMolarComposition()[0], 1e-12);
+    Assertions.assertEquals(0.02, fluidOps.getSystem().getMolarComposition()[1], 1e-12);
+  }
+
+  @Test
   void testNeqSimPython() {
     SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(280.0, 10.0);
     thermoSystem.addComponent("methane", 0.7);

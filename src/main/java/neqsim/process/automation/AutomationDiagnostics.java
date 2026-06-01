@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -225,7 +226,15 @@ public class AutomationDiagnostics implements Serializable {
     }
   }
 
+  /**
+   * Operation history. Wrapped in a synchronized list to allow concurrent reads/writes from
+   * multi-agent setups. All iteration must be guarded by {@code synchronized(history)}.
+   */
   private final List<OperationRecord> history;
+  /**
+   * Learned corrections cache. ConcurrentHashMap so multiple agents can safely share one
+   * {@link AutomationDiagnostics} instance via the cached {@link ProcessAutomation} facade.
+   */
   private final Map<String, String> learnedCorrections;
   private int maxHistorySize;
 
@@ -242,8 +251,8 @@ public class AutomationDiagnostics implements Serializable {
    * @param maxHistorySize maximum number of operation records to keep
    */
   public AutomationDiagnostics(int maxHistorySize) {
-    this.history = new ArrayList<OperationRecord>();
-    this.learnedCorrections = new LinkedHashMap<String, String>();
+    this.history = Collections.synchronizedList(new ArrayList<OperationRecord>());
+    this.learnedCorrections = new ConcurrentHashMap<String, String>();
     this.maxHistorySize = maxHistorySize;
   }
 
@@ -320,7 +329,7 @@ public class AutomationDiagnostics implements Serializable {
       }
     }
 
-    // Whitespace-normalized match (e.g., "HP  Sep" -> "HP Sep")
+    // Whitespace-normalized match (e.g., "HP Sep" -> "HP Sep")
     String normalized = trimmed.replaceAll("\\s+", " ");
     for (String valid : validNames) {
       if (valid.replaceAll("\\s+", " ").equalsIgnoreCase(normalized)) {
@@ -427,12 +436,12 @@ public class AutomationDiagnostics implements Serializable {
 
     String remediation;
     if (correctedAddress != null) {
-      remediation = "Auto-corrected property to '" + correctedAddress
-          + "'. Use listUnitVariables('" + unitName + "') to see all variables.";
+      remediation = "Auto-corrected property to '" + correctedAddress + "'. Use listUnitVariables('"
+          + unitName + "') to see all variables.";
     } else if (!suggestions.isEmpty()) {
-      remediation = "Property '" + propertyName + "' not found on unit '" + unitName
-          + "'. Did you mean: " + suggestions + "? Use listUnitVariables('" + unitName
-          + "') for valid addresses.";
+      remediation =
+          "Property '" + propertyName + "' not found on unit '" + unitName + "'. Did you mean: "
+              + suggestions + "? Use listUnitVariables('" + unitName + "') for valid addresses.";
     } else {
       remediation = "Property '" + propertyName + "' not found on unit '" + unitName
           + "'. Valid addresses: " + addressNames;
@@ -466,8 +475,8 @@ public class AutomationDiagnostics implements Serializable {
 
     String remediation;
     if (corrected != null) {
-      remediation = "Auto-corrected port to '" + corrected + "'. Valid ports for this unit: "
-          + validPorts;
+      remediation =
+          "Auto-corrected port to '" + corrected + "'. Valid ports for this unit: " + validPorts;
     } else {
       remediation = "Port '" + portName + "' not found on unit '" + unitName + "'. Valid ports: "
           + validPorts + ". Use listUnitVariables('" + unitName + "') to see all addresses.";
@@ -497,9 +506,9 @@ public class AutomationDiagnostics implements Serializable {
     }
 
     if (value < bound.hardMin || value > bound.hardMax) {
-      String remediation = "Value " + value + " " + unit + " for '" + propertyName
-          + "' is outside physical limits [" + bound.hardMin + ", " + bound.hardMax + "] " + unit
-          + ". Check the value and unit.";
+      String remediation =
+          "Value " + value + " " + unit + " for '" + propertyName + "' is outside physical limits ["
+              + bound.hardMin + ", " + bound.hardMax + "] " + unit + ". Check the value and unit.";
       Map<String, Object> context = new LinkedHashMap<String, Object>();
       context.put("hardMin", bound.hardMin);
       context.put("hardMax", bound.hardMax);
@@ -564,16 +573,18 @@ public class AutomationDiagnostics implements Serializable {
    * @return success rate as fraction (0.0 to 1.0)
    */
   public double getSuccessRate() {
-    if (history.isEmpty()) {
-      return 1.0;
-    }
-    int successes = 0;
-    for (OperationRecord r : history) {
-      if (r.success) {
-        successes++;
+    synchronized (history) {
+      if (history.isEmpty()) {
+        return 1.0;
       }
+      int successes = 0;
+      for (OperationRecord r : history) {
+        if (r.success) {
+          successes++;
+        }
+      }
+      return (double) successes / history.size();
     }
-    return (double) successes / history.size();
   }
 
   /**
@@ -583,10 +594,12 @@ public class AutomationDiagnostics implements Serializable {
    */
   public Map<String, Integer> getErrorCategoryCounts() {
     Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
-    for (OperationRecord r : history) {
-      if (!r.success && r.errorCategory != null) {
-        Integer prev = counts.get(r.errorCategory);
-        counts.put(r.errorCategory, prev != null ? prev + 1 : 1);
+    synchronized (history) {
+      for (OperationRecord r : history) {
+        if (!r.success && r.errorCategory != null) {
+          Integer prev = counts.get(r.errorCategory);
+          counts.put(r.errorCategory, prev != null ? prev + 1 : 1);
+        }
       }
     }
     return counts;
@@ -676,9 +689,9 @@ public class AutomationDiagnostics implements Serializable {
         }
       }
     }
-    double tokenScore =
-        inputTokens.length > 0 ? (double) commonTokens / Math.max(inputTokens.length,
-            validTokens.length) : 0.0;
+    double tokenScore = inputTokens.length > 0
+        ? (double) commonTokens / Math.max(inputTokens.length, validTokens.length)
+        : 0.0;
 
     return Math.max(editScore, Math.max(substringBonus, tokenScore));
   }
@@ -715,9 +728,11 @@ public class AutomationDiagnostics implements Serializable {
    * @param record the record to add
    */
   private void addRecord(OperationRecord record) {
-    history.add(record);
-    while (history.size() > maxHistorySize) {
-      history.remove(0);
+    synchronized (history) {
+      history.add(record);
+      while (history.size() > maxHistorySize) {
+        history.remove(0);
+      }
     }
   }
 
@@ -729,19 +744,21 @@ public class AutomationDiagnostics implements Serializable {
    */
   private List<Map<String, String>> getRecentFailures(int count) {
     List<Map<String, String>> failures = new ArrayList<Map<String, String>>();
-    int added = 0;
-    for (int i = history.size() - 1; i >= 0 && added < count; i--) {
-      OperationRecord r = history.get(i);
-      if (!r.success) {
-        Map<String, String> entry = new LinkedHashMap<String, String>();
-        entry.put("operation", r.operationType);
-        entry.put("address", r.address);
-        entry.put("errorCategory", r.errorCategory);
-        if (r.correction != null) {
-          entry.put("correction", r.correction);
+    synchronized (history) {
+      int added = 0;
+      for (int i = history.size() - 1; i >= 0 && added < count; i--) {
+        OperationRecord r = history.get(i);
+        if (!r.success) {
+          Map<String, String> entry = new LinkedHashMap<String, String>();
+          entry.put("operation", r.operationType);
+          entry.put("address", r.address);
+          entry.put("errorCategory", r.errorCategory);
+          if (r.correction != null) {
+            entry.put("correction", r.correction);
+          }
+          failures.add(entry);
+          added++;
         }
-        failures.add(entry);
-        added++;
       }
     }
     return failures;
@@ -758,36 +775,32 @@ public class AutomationDiagnostics implements Serializable {
 
     Integer unitNotFound = errors.get(ErrorCategory.UNIT_NOT_FOUND.name());
     if (unitNotFound != null && unitNotFound > 2) {
-      recommendations.add(
-          "Frequent unit-not-found errors (" + unitNotFound + "x). "
-              + "Always call listSimulationUnits first to discover valid names.");
+      recommendations.add("Frequent unit-not-found errors (" + unitNotFound + "x). "
+          + "Always call listSimulationUnits first to discover valid names.");
     }
 
     Integer propNotFound = errors.get(ErrorCategory.PROPERTY_NOT_FOUND.name());
     if (propNotFound != null && propNotFound > 2) {
-      recommendations.add(
-          "Frequent property-not-found errors (" + propNotFound + "x). "
-              + "Call listUnitVariables(unitName) before accessing variables.");
+      recommendations.add("Frequent property-not-found errors (" + propNotFound + "x). "
+          + "Call listUnitVariables(unitName) before accessing variables.");
     }
 
     Integer outOfBounds = errors.get(ErrorCategory.VALUE_OUT_OF_BOUNDS.name());
     if (outOfBounds != null && outOfBounds > 1) {
-      recommendations.add(
-          "Values out of bounds detected (" + outOfBounds + "x). "
-              + "Check units match the expected unit (e.g., Kelvin vs Celsius).");
+      recommendations.add("Values out of bounds detected (" + outOfBounds + "x). "
+          + "Check units match the expected unit (e.g., Kelvin vs Celsius).");
     }
 
     if (!learnedCorrections.isEmpty()) {
-      recommendations.add(
-          "Learned " + learnedCorrections.size() + " corrections automatically. "
-              + "These will be applied in future calls.");
+      recommendations.add("Learned " + learnedCorrections.size() + " corrections automatically. "
+          + "These will be applied in future calls.");
     }
 
     if (recommendations.isEmpty() && !history.isEmpty()) {
       double rate = getSuccessRate();
       if (rate > 0.9) {
-        recommendations.add("Operations running well (success rate: "
-            + String.format("%.0f%%", rate * 100) + ").");
+        recommendations.add(
+            "Operations running well (success rate: " + String.format("%.0f%%", rate * 100) + ").");
       }
     }
 

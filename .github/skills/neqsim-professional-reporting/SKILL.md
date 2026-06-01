@@ -1,7 +1,7 @@
 ---
 name: neqsim-professional-reporting
 version: "1.0.0"
-description: "Engineering deliverable quality — results.json schema, figure→discussion→linked_results traceability, citation conventions, KaTeX math formatting, units consistency, executive-summary structure, AACE class declaration. USE WHEN: producing a task report, building a notebook deliverable, or finalizing any engineering output that needs to look like it came from a senior engineer. Consolidates the rules scattered across AGENTS.md and copilot-instructions.md."
+description: "Engineering deliverable quality — results.json schema, figure→discussion→linked_results traceability, evidence matrices, assumptions/gaps registers, citation conventions, KaTeX math formatting, units consistency, executive-summary structure, AACE class declaration. USE WHEN: producing a task report, building a notebook deliverable, or finalizing any engineering output that needs to look like it came from a senior engineer. Consolidates the rules scattered across AGENTS.md and copilot-instructions.md."
 last_verified: "2026-04-26"
 ---
 
@@ -150,6 +150,24 @@ Every numerical result must be benchmarked against an independent reference:
 
 State the benchmark in the report. **No benchmark = result is provisional.**
 
+## Principle 9b — Evidence Matrix for Safety Studies
+
+For safety-critical studies, especially trapped-liquid fire rupture, relief,
+depressurization, MDMT, and consequence handoffs, include an evidence matrix and
+assumptions/gaps register in both `results.json` and the report:
+
+| Report item | Required content |
+|-------------|------------------|
+| Evidence matrix | Document id, title, revision, page/sheet, extracted value, unit, confidence, consuming calculation |
+| Assumptions/gaps | Missing value, screening default used, impact on result, action to close, owner if known |
+| Standards basis | Standard number/year, clause/table/equation, PASS/FAIL/INFO status |
+| Segment summary | Segment id, limiting mode, event times, PFP margin, source-term handoff status |
+| Recommendations | Specific action: relief/PFP/procedure/data retrieval/detailed specialist analysis |
+
+Do not hide missing material certificates, flange/gasket/bolt ratings, fire-study
+heat fluxes, or acceptance criteria. A study may still provide screening results,
+but the executive summary must state when final design is blocked by evidence gaps.
+
 ## Principle 10 — `results.json` Master Schema
 
 ```json
@@ -170,6 +188,8 @@ State the benchmark in the report. **No benchmark = result is provisional.**
   "risks": [ { "id": "R1", "description": "...", "P": 3, "C": 4, "score": 12, "mitigation": "..." } ],
   "standards_applied": ["API 521-2020", "NORSOK Z-013"],
   "benchmarks": [ { "what": "PSV area", "reference": "API 520 Ex 5", "delta_pct": 1.2 } ],
+  "evidence_matrix": [ { "document": "...", "value": "...", "used_for": "..." } ],
+  "assumptions_gaps": [ { "gap": "...", "default_used": "...", "impact": "...", "action": "..." } ],
   "limitations": ["..."],
   "next_actions": ["..."]
 }
@@ -209,3 +229,4 @@ State the benchmark in the report. **No benchmark = result is provisional.**
 - [`neqsim-input-validation`](../neqsim-input-validation/SKILL.md) — catching bad inputs early
 - [`neqsim-standards-lookup`](../neqsim-standards-lookup/SKILL.md) — citation lookup
 - [`neqsim-process-safety`](../neqsim-process-safety/SKILL.md) — risk-register schema
+- [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — evidence matrix, rupture/PFP results, and source-term handoff reporting

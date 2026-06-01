@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterResult;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.ConservativeStateLimiter;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator.RHSFunction;
 
@@ -132,12 +133,102 @@ class TwoFluidPipeImprovementsTest {
     }
 
     @Test
+    @DisplayName("IMEX momentum correction scales with phase area")
+    void testIMEXMomentumCorrectionUsesPhaseArea() {
+      TimeIntegrator integrator = new TimeIntegrator(TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION);
+
+      final int n = 3;
+      final int neq = 7;
+      double[][] U0 = new double[n][neq];
+      for (int i = 0; i < n; i++) {
+        U0[i][0] = 5.0; // gas mass per length
+        U0[i][1] = 50.0; // oil mass per length
+        U0[i][2] = 10.0; // water mass per length
+      }
+
+      RHSFunction rhsFunc = (state, time) -> {
+        double[][] dUdt = new double[n][neq];
+        dUdt[1][0] = 1.0; // localized mass imbalance to drive pressure correction
+        return dUdt;
+      };
+
+      double[] soundSpeeds = {350.0, 350.0, 350.0};
+      double[] mixtureDensities = {100.0, 100.0, 100.0};
+      double[] areas = {1.0, 1.0, 1.0};
+      double[] gasDensities = {10.0, 10.0, 10.0};
+      double[] oilDensities = {800.0, 800.0, 800.0};
+      double[] waterDensities = {1000.0, 1000.0, 1000.0};
+
+      integrator.setIMEXProperties(soundSpeeds, mixtureDensities, areas, gasDensities,
+          oilDensities, waterDensities, 100.0, 50e5, true);
+
+      double[][] Unew = integrator.step(U0, rhsFunc, 0.5);
+      double gasMomentumChange = Math.abs(Unew[1][3] - U0[1][3]);
+      double oilMomentumChange = Math.abs(Unew[1][4] - U0[1][4]);
+      double waterMomentumChange = Math.abs(Unew[1][5] - U0[1][5]);
+
+      assertTrue(gasMomentumChange > 0.0, "Pressure correction should affect gas momentum");
+      assertTrue(oilMomentumChange > 0.0, "Pressure correction should affect oil momentum");
+      assertTrue(waterMomentumChange > 0.0, "Pressure correction should affect water momentum");
+
+      double gasMassAfterPredictor = U0[1][0] + 0.5;
+      double expectedGasToOilAreaRatio =
+          (gasMassAfterPredictor / gasDensities[1]) / (U0[1][1] / oilDensities[1]);
+      double expectedOilToWaterAreaRatio =
+          (U0[1][1] / oilDensities[1]) / (U0[1][2] / waterDensities[1]);
+
+      assertEquals(expectedGasToOilAreaRatio, gasMomentumChange / oilMomentumChange, 1e-9);
+      assertEquals(expectedOilToWaterAreaRatio, oilMomentumChange / waterMomentumChange, 1e-9);
+    }
+
+    @Test
     @DisplayName("TwoFluidPipe can set IMEX time integration method")
     void testSetIMEXOnPipe() {
       // Verify that the method enum and setter exist
       TimeIntegrator.Method method = TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION;
       assertNotNull(method);
       assertEquals("IMEX_PRESSURE_CORRECTION", method.name());
+    }
+  }
+
+  // =================================================================
+  // G4: Conservative positivity limiter tests
+  // =================================================================
+
+  @Nested
+  @DisplayName("G4: Conservative positivity limiter")
+  class ConservativePositivityTests {
+
+    @Test
+    @DisplayName("Negative phase mass is redistributed without changing total mass")
+    void testMassPositivityPreservesInventoryAndVelocity() {
+      double[] state = {8.0, -1.0, 3.0, 16.0, -2.0, 6.0, 100.0};
+      double totalMassBefore = state[0] + state[1] + state[2];
+
+      ConservativeStateLimiter.enforceThreePhaseMassPositivity(state, null);
+
+      assertTrue(state[0] >= 0.0);
+      assertTrue(state[1] >= 0.0);
+      assertTrue(state[2] >= 0.0);
+      assertEquals(totalMassBefore, state[0] + state[1] + state[2], 1e-12);
+      assertEquals(2.0, state[3] / state[0], 1e-12,
+          "Gas velocity should be preserved by momentum scaling");
+      assertEquals(0.0, state[4], 1e-12, "Momentum of removed oil phase should be zero");
+      assertEquals(2.0, state[5] / state[2], 1e-12,
+          "Water velocity should be preserved by momentum scaling");
+    }
+
+    @Test
+    @DisplayName("Non-finite state reverts to finite previous state")
+    void testNonFiniteStateUsesPreviousState() {
+      double[] previous = {7.0, 2.0, 2.0, 14.0, 4.0, 4.0, 100.0};
+      double[] state = {8.0, Double.NaN, 3.0, 16.0, -2.0, Double.POSITIVE_INFINITY, 100.0};
+
+      ConservativeStateLimiter.enforceThreePhaseMassPositivity(state, previous);
+
+      for (int i = 0; i < previous.length; i++) {
+        assertEquals(previous[i], state[i], 0.0);
+      }
     }
   }
 

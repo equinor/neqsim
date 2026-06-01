@@ -16,6 +16,11 @@ accepted by `ProcessSystem.fromJson()` and `ProcessSystem.fromJsonAndRun()`.
 > The JSON schema is finite and well-defined. `ProcessSystem.fromJson()` handles all
 > NeqSim API calls deterministically. Errors come back as structured, actionable messages.
 >
+> **P&ID operational workflow:** When the source is a P&ID and the user asks
+> about a valve action, active train, isolation boundary, bypass, drain, vent,
+> or control-loop behavior, load `neqsim-pid-process-operations`. Extract both
+> the steady-state topology and the model delta needed to simulate the action.
+>
 > **Exception for route hydraulics:** When the source is a STID/E3D/P&ID/stress-isometric
 > line-list table with serial pipe segments, use
 > `neqsim.process.equipment.pipeline.routing.PipingRouteBuilder` rather than the generic
@@ -151,6 +156,11 @@ builder for serial route hydraulics. Use it when the input table has from/to
 nodes, pipe lengths, sizes, elevations, fittings, valves, and K values. Extract
 the route rows first, then build the route model and export `route.toJson()` for
 traceability.
+
+For P&ID valve-action studies, classify each valve before mapping it to NeqSim:
+control valves become `ThrottlingValve` equipment, isolation and shutdown valves
+become scenario switches or boundary states, check valves become directed route
+constraints, and BDV/PSV/vent valves become relief or blowdown paths.
 
 ### Mixing & Splitting
 

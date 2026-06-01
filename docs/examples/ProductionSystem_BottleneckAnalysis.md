@@ -8,9 +8,9 @@ nav_order: 1
 
 # ProductionSystem BottleneckAnalysis
 
-> **Note:** This is an auto-generated Markdown version of the Jupyter notebook 
+> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`ProductionSystem_BottleneckAnalysis.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/ProductionSystem_BottleneckAnalysis.ipynb).
-> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/ProductionSystem_BottleneckAnalysis.ipynb) 
+> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/ProductionSystem_BottleneckAnalysis.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/ProductionSystem_BottleneckAnalysis.ipynb).
 
 ---

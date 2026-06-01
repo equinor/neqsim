@@ -12,19 +12,21 @@ neqsim.mcp
 │   ├── FlashRunner        Flash / phase equilibrium calculations
 │   ├── ProcessRunner      Process simulation (flowsheets)
 │   ├── Validator          Pre-flight input validation
-│   └── ComponentQuery     Component database search & fuzzy matching
+│   ├── ComponentQuery     Component database search & fuzzy matching
+│   └── CapabilitiesRunner Capability descriptors and setup templates
 │
 ├── model/         Typed Java POJOs for request/response objects
-│   ├── ApiEnvelope<T>     Standard response wrapper (status + data + warnings)
+│   ├── ApiEnvelope<T>     Standard response wrapper and MCP contract fields
 │   ├── FlashRequest       Typed flash input (model, T, P, components, flashType)
 │   ├── FlashResult        Typed flash output (phases, properties, compositions)
 │   ├── ProcessResult      Typed process output (report, process system ref)
+│   ├── ResultProvenance   Model, convergence, limitations, and trust metadata
 │   ├── ValueWithUnit      Numeric value with unit string (e.g. 25.0 "C")
 │   └── DiagnosticIssue    Validation issue with severity, code, and fix hint
 │
 └── catalog/       Example inputs and JSON schemas for MCP resources
-    ├── ExampleCatalog     8 ready-to-use examples (flash + process + validation)
-    └── SchemaCatalog      JSON Schema definitions for all tool inputs/outputs
+  ├── ExampleCatalog     Canonical examples for base and schema-backed tools
+  └── SchemaCatalog      JSON Schema definitions for schema-backed tool contracts
 ```
 
 ## Design Principles
@@ -60,9 +62,15 @@ All runners return responses in a consistent envelope format:
 
 ```json
 {
+  "apiVersion": "1.0",
   "status": "success",
+  "tool": "run_flash",
+  "data": { ... },
   "flash": { ... },
   "fluid": { ... },
+  "provenance": { ... },
+  "validation": { "valid": true, "phase": "runner", "message": "..." },
+  "qualityGate": { "verdict": "passed", "engineeringReviewRequired": true },
   "warnings": []
 }
 ```
@@ -71,15 +79,24 @@ Or on error:
 
 ```json
 {
+  "apiVersion": "1.0",
   "status": "error",
+  "tool": "run_flash",
   "errors": [{
     "severity": "error",
     "code": "UNKNOWN_COMPONENT",
     "message": "'metane' is not a known component. Did you mean 'methane'?",
     "remediation": "Check spelling. Use searchComponents to find valid names."
-  }]
+  }],
+  "validation": { "valid": false, "phase": "runner", "message": "..." },
+  "qualityGate": { "verdict": "failed", "engineeringReviewRequired": true },
+  "warnings": []
 }
 ```
+
+Legacy top-level fields such as `flash`, `fluid`, or `process` remain available for
+backward compatibility. New clients should prefer the canonical `data` payload and use
+`provenance`, `validation`, and `qualityGate` when deciding how much trust to place in a result.
 
 ### 4. Comprehensive Validation
 
@@ -174,10 +191,11 @@ type (flash vs. process) based on the presence of `"fluid"` / `"process"` keys.
 
 | Class | Purpose |
 |---|---|
-| `ApiEnvelope<T>` | Generic wrapper with `status`, `data`, `warnings`, `errors` |
+| `ApiEnvelope<T>` | Generic wrapper with `apiVersion`, `tool`, `data`, `provenance`, `validation`, `qualityGate`, `warnings`, and `errors` |
 | `FlashRequest` | Builder-pattern flash input with defaults (SRK, TP, 15°C, 1 atm) |
 | `FlashResult` | Flash output: model, flashType, numberOfPhases, phases, FluidResponse |
 | `ProcessResult` | Process output: name, ProcessSystem reference, report JSON |
+| `ResultProvenance` | Calculation provenance, convergence, assumptions, limitations, and trust metadata |
 | `ValueWithUnit` | A double value with a unit string (e.g. `50.0 "bara"`) |
 | `DiagnosticIssue` | Validation issue with `severity`, `code`, `message`, `remediation` |
 
@@ -185,22 +203,26 @@ type (flash vs. process) based on the presence of `"fluid"` / `"process"` keys.
 
 | Class | Purpose |
 |---|---|
-| `ExampleCatalog` | 8 examples across flash/process/validation categories |
-| `SchemaCatalog` | JSON Schema (Draft 2020-12) for 4 tools × input + output |
+| `ExampleCatalog` | Canonical and contract-level examples across flash, process, validation, safety, and all MCP tool categories |
+| `SchemaCatalog` | JSON Schema (Draft 2020-12) for all 63 MCP tool input and output contracts; high-use tools have detailed schemas and remaining tools have generic contract schemas |
+| `CapabilitiesRunner` | Machine-readable capability map, setup templates, process JSON contract, unit system, benchmark trust, lifecycle metadata, safety gates, validation coverage, and response-contract coverage |
 
 These are served as MCP Resources so LLMs can read them to learn the format:
 
 | URI Pattern | Example |
 |---|---|
-| `neqsim://example/{category}/{name}` | `neqsim://example/flash/tp-simple-gas` |
-| `neqsim://schema/{tool}/input` | `neqsim://schema/run_flash/input` |
-| `neqsim://schema/{tool}/output` | `neqsim://schema/run_flash/output` |
-| `neqsim://catalog/examples` | Full example listing |
-| `neqsim://catalog/schemas` | Full schema listing |
+| `neqsim://example-catalog` | Full example listing |
+| `neqsim://examples/{category}/{name}` | `neqsim://examples/flash/tp-simple-gas` |
+| `neqsim://setup-templates` | Full setup-template listing |
+| `neqsim://setup-templates/{id}` | `neqsim://setup-templates/thermodynamic-flash` |
+| `neqsim://schemas/{tool}/input` | `neqsim://schemas/run_flash/input` |
+| `neqsim://schemas/{tool}/output` | `neqsim://schemas/run_flash/output` |
+| `neqsim://schema-catalog` | Full schema listing |
 
 ## Test Coverage
 
-12 test classes with 139+ JUnit 5 tests:
+Focused JUnit 5 tests cover the MCP runners, models, catalogs, schemas, examples,
+capability descriptors, response contracts, and validation behavior:
 
 | Test Class | Tests | What It Covers |
 |---|---|---|
@@ -211,7 +233,9 @@ These are served as MCP Resources so LLMs can read them to learn the format:
 | `ValidatorTest` | ~25 | All validation codes, edge cases, error combinations |
 | `ComponentQueryTest` | ~15 | Search, exists, suggest, fuzzy matching |
 | `ExampleCatalogTest` | ~10 | All examples parse and run successfully |
-| `SchemaCatalogTest` | ~10 | All schemas are valid JSON Schema |
+| `SchemaCatalogTest` | ~10 | All advertised tools have input and output schemas |
+| `CapabilitiesRunnerTest` | ~4 | Capability descriptors resolve schemas, examples, setup templates, validation metadata, and response contracts |
+| `McpRunnerContractTest` | ~1 | Standard response-contract fixture |
 | `ApiEnvelopeTest` | ~5 | Envelope serialization, success/error factories |
 | `FlashRequestTest` | ~5 | Builder, defaults, JSON round-trip |
 | `DiagnosticIssueTest` | ~3 | Issue creation and serialization |

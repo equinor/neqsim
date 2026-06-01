@@ -116,6 +116,21 @@ public class Pump extends TwoPortEquipment
   private boolean checkNPSH = false;
   private double npshMargin = 1.3; // Safety margin for NPSH (NPSHa should be > npshMargin *
                                    // NPSHr)
+  private double lastInletTemperature = Double.NaN;
+  private double lastInletPressure = Double.NaN;
+  private double lastInletFlowRate = Double.NaN;
+  private double[] lastInletComposition = null;
+  private double lastOutletPressure = Double.NaN;
+  private double lastOutTemperature = Double.NaN;
+  private double lastSpeed = Double.NaN;
+  private double lastMinimumFlow = Double.NaN;
+  private double lastIsentropicEfficiency = Double.NaN;
+  private double lastPower = Double.NaN;
+  private boolean lastUseOutTemperature = false;
+  private boolean lastCalculateAsCompressor = false;
+  private boolean lastPowerSet = false;
+  private boolean lastUsePumpChart = false;
+  private boolean lastCheckNPSH = false;
 
   /**
    * Constructor for Pump.
@@ -244,6 +259,70 @@ public class Pump extends TwoPortEquipment
 
   /** {@inheritDoc} */
   @Override
+  public boolean needRecalculation() {
+    if (thermoSystem == null || inStream == null || inStream.getThermoSystem() == null
+        || lastInletComposition == null) {
+      return true;
+    }
+    SystemInterface inletSystem = inStream.getThermoSystem();
+    if (inletSystem.getTemperature() != lastInletTemperature
+        || inletSystem.getPressure() != lastInletPressure || pressure != lastOutletPressure
+        || outTemperature != lastOutTemperature || speed != lastSpeed
+        || minimumFlow != lastMinimumFlow || isentropicEfficiency != lastIsentropicEfficiency
+        || dH != lastPower || useOutTemperature != lastUseOutTemperature
+        || calculateAsCompressor != lastCalculateAsCompressor || powerSet != lastPowerSet
+        || pumpChart.isUsePumpChart() != lastUsePumpChart || checkNPSH != lastCheckNPSH) {
+      return true;
+    }
+    double flow = inletSystem.getFlowRate("kg/hr");
+    if (flow <= 0.0 || lastInletFlowRate <= 0.0
+        || Math.abs(flow - lastInletFlowRate) / flow >= 1e-6) {
+      return true;
+    }
+    neqsim.thermo.phase.PhaseInterface phase = inletSystem.getPhase(0);
+    int numberOfComponents = phase.getNumberOfComponents();
+    if (numberOfComponents != lastInletComposition.length) {
+      return true;
+    }
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (phase.getComponent(i).getz() != lastInletComposition[i]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void updateRecalculationState() {
+    if (inStream == null || inStream.getThermoSystem() == null) {
+      lastInletComposition = null;
+      return;
+    }
+    SystemInterface inletSystem = inStream.getThermoSystem();
+    lastInletTemperature = inletSystem.getTemperature();
+    lastInletPressure = inletSystem.getPressure();
+    lastInletFlowRate = inletSystem.getFlowRate("kg/hr");
+    lastInletComposition = inletSystem.getMolarComposition();
+    lastOutletPressure = pressure;
+    lastOutTemperature = outTemperature;
+    lastSpeed = speed;
+    lastMinimumFlow = minimumFlow;
+    lastIsentropicEfficiency = isentropicEfficiency;
+    lastPower = dH;
+    lastUseOutTemperature = useOutTemperature;
+    lastCalculateAsCompressor = calculateAsCompressor;
+    lastPowerSet = powerSet;
+    lastUsePumpChart = pumpChart.isUsePumpChart();
+    lastCheckNPSH = checkNPSH;
+  }
+
+  private void finishRun(UUID id) {
+    updateRecalculationState();
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     // System.out.println("pump running..");
     if (inStream.getFlowRate("kg/sec") < minimumFlow) {
@@ -252,8 +331,7 @@ public class Pump extends TwoPortEquipment
       thermoSystem.init(3);
       dH = 0.0;
       outStream.setThermoSystem(thermoSystem);
-      outStream.setCalculationIdentifier(id);
-      setCalculationIdentifier(id);
+      finishRun(id);
       return;
     }
 
@@ -395,8 +473,7 @@ public class Pump extends TwoPortEquipment
     // thermoOps.PSflash(entropy);
     dH = thermoSystem.getEnthalpy() - hinn;
     outStream.setThermoSystem(thermoSystem);
-    outStream.setCalculationIdentifier(id);
-    setCalculationIdentifier(id);
+    finishRun(id);
 
     // outStream.run(id);
   }

@@ -110,9 +110,14 @@ public class ProductionOptimizationTest {
     }
 
     // Run simulation at optimized feed rate to get detailed design info
-    simulation.getInputParameters().setFeedRate(maxProdResult.getMaxFeedRate());
-    simulation.runSimulation();
-    printSeparatorDesignInfo(simulation.getOilProcess(), "Optimized");
+    if (maxProdResult.getMaxFeedRate() > 0.0) {
+      simulation.getInputParameters().setFeedRate(maxProdResult.getMaxFeedRate());
+      simulation.runSimulation();
+      printSeparatorDesignInfo(simulation.getOilProcess(), "Optimized");
+    } else {
+      System.out.println(
+          "No feasible optimized feed rate found; skipping zero-flow detailed simulation.");
+    }
 
     // Calculate improvement
     double initialFeedRate = 8000.0; // default initial feed rate

@@ -36,6 +36,54 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-05-30 — Agentic dynamics: pluggable integrators + EventScheduler wired into runTransient
+**Type:** E (Feature)
+**Keywords:** dynamic simulation, runTransient, IntegratorStrategy, BDFIntegrator, implicit euler, EventScheduler, ESD trip, setpoint ramp, ProcessSystem, ProcessModel, measurement device, differential pressure transmitter, composition analyzer, flow ratio meter, transient runnable serialization
+**Solution:** `src/main/java/neqsim/process/dynamics/{IntegratorStrategy,ExplicitEulerIntegrator,BDFIntegrator,EventScheduler}.java`; `src/main/java/neqsim/process/measurementdevice/{DifferentialPressureTransmitter,CompositionAnalyzer,FlowRatioMeter}.java`; wiring in `ProcessSystem.runTransient(double,UUID)` and new `ProcessModel.runTransient(double,UUID)` / `setEventScheduler` / `setIntegratorStrategy`; tests in `src/test/java/neqsim/process/processmodel/RunTransientEventSchedulerTest.java`.
+**Notes:** `EventScheduler` must be a `transient` field on `ProcessSystem` because `Runnable` payloads (lambdas, anonymous classes) are not Serializable; otherwise `ProcessSystem.deepCopy` inside `captureInitialState` throws `NotSerializableException` on the first `runTransient` call. Multi-area plants: install scheduler once on `ProcessModel`, it is propagated to every child area. For stiff dynamics use `setIntegratorStrategy(new BDFIntegrator())`; check `lastStepFellBack()` after each step to detect Newton-divergence fallback. Skill `neqsim-dynamic-simulation` updated with three new sections.
+
+### 2026-05-30 — Agentic synthesis: SeparationDuty + FlowsheetSynthesisEngine
+**Type:** E (Feature)
+**Keywords:** flowsheet synthesis, separation duty, candidate topology generation, total annual cost, recovery target, purity target, unit operation selection, agentic process design
+**Solution:** `src/main/java/neqsim/process/synthesis/{SeparationDuty,FlowsheetSynthesisEngine,FlowsheetCandidate}.java`; tests in `src/test/java/neqsim/process/synthesis/`.
+**Notes:** Engine generates candidate flowsheet topologies (separator trains, columns, flash cascades) for a given `SeparationDuty` and scores them on TAC / recovery / energy, returning a ranked `List<FlowsheetCandidate>` with JSON-serializable spec for downstream agents. Reusable lesson: keep the duty spec orthogonal to the synthesis engine so future synthesis strategies (genetic, RL, LLM-guided) plug in cleanly.
+
+### 2026-05-30 — Agentic automation: typed writes with rollback + audit log
+**Type:** E (Feature)
+**Keywords:** ProcessAutomation, typed write validation, setVariableValue, transactional rollback, write history audit, diagnostics taxonomy, VALUE_OUT_OF_BOUNDS, INVALID_TYPE, READ_ONLY_VARIABLE, UNIT_CONVERSION_FAILED
+**Solution:** `src/main/java/neqsim/process/automation/ProcessAutomation.java` plus diagnostics in `AutomationDiagnostics`; tests under `src/test/java/neqsim/process/automation/`.
+**Notes:** `setValuesWithRollback(Map updates, String unit)` reverts every write in the batch if any single update fails validation. `getWriteHistory()` returns a timestamped audit list with old/new value, unit, status, and error category. Reusable lesson: for agentic write paths, validate before mutating and capture the pre-write value for every variable so a single failure does not leave the model in an inconsistent state.
+
+### 2026-05-08 — Safety-system barrier performance analyzer
+**Type:** E (Feature) / G (Workflow)
+**Keywords:** safety critical systems, barrier performance, major accident risk, deluge, firewater, fire gas detection, passive fire protection, SIS voting, STID, performance standards
+**Solution:** `src/main/java/neqsim/process/safety/barrier/SafetySystemPerformanceAnalyzer.java`; tests in `src/test/java/neqsim/process/safety/barrier/SafetySystemPerformanceAnalyzerTest.java`
+**Notes:** Added an analyzer that bridges the existing `BarrierRegister`, `FireDetector`/`GasDetector`, and `neqsim.process.logic.sis.SafetyInstrumentedFunction` models. Reusable lesson: assess active/passive safety-system barriers as a reporting layer over existing evidence, instruments, and SIS logic instead of creating parallel detector or SIF abstractions.
+
+### 2026-05-08 — Recompressor barrier verification technical safety screen
+**Type:** F (Design) / G (Workflow)
+**Keywords:** barrier verification, technical safety, closed flare, recompressor, HAZOP, FMEA, LOPA, bow-tie, risk matrix, STID, tagreader
+**Solution:** `private task folder (redacted)`
+**Notes:** Completed a separate barrier and technical-safety screening study using prior NeqSim source-term results and a real STID retrieval package curated into a barrier-linked evidence inventory. Reusable lesson: broad document retrieval should be converted into a small traceable evidence map, and current barrier credit should still be withheld until status, effectiveness, independence, proof-test/SRS evidence, event replay, and material/MDMT records are verified.
+
+### 2026-05-08 — Closed-flare recompressor blowdown verification screen
+**Type:** F (Design) / G (Workflow)
+**Keywords:** closed flare, recompressor, blowdown, trapped inventory, depressurization, MDMT, flare load, tagreader, STID, technical safety
+**Solution:** `private task folder (redacted)`; reusable code in `src/main/java/neqsim/process/safety/inventory/TrappedInventoryCalculator.java`; tests in `src/test/java/neqsim/process/safety/inventory/TrappedInventoryCalculatorTest.java`
+**Notes:** Reused a private, consistency-checked recompressor inventory and dynamic blowdown source-term task, screened transient flare load versus documented capacity context, and generated Word/HTML report outputs. Added `TrappedInventoryCalculator` to bridge documented equipment/pipe volume evidence to NeqSim blowdown inputs. Reusable lesson: distinguish small transient blowdown loads from sustained closed-flare/recompression operating margin, and treat low blowdown temperatures as an MDMT follow-up until material/wall data are verified.
+
+### 2026-05-07 — Confidential gas precompression inlet velocity screen
+**Type:** B (Process) / G (Workflow)
+**Keywords:** STID, tagreader, P&ID, pressure drop, gas velocity, scrubber, compressor suction, Word report, PipeBeggsAndBrills
+**Solution:** `private task folder (redacted)`
+**Notes:** Retrieved route P&IDs and equipment design documents from STID, extracted line/nozzle diameters, read 24-hour historian averages with tagreader, used NeqSim gas properties plus a PipeBeggsAndBrills straight-pipe check, and generated a Word report. Reusable lesson: reject inconsistent historian unit metadata, document the adopted flow-unit interpretation, and separate measured route pressure loss from straight-pipe friction and local equipment/minor losses.
+
+### 2026-05-07 — Confidential STID UniSim power extraction
+**Type:** B (Process) / G (Workflow)
+**Keywords:** STID, UniSim, HYSYS, process simulation, total power, compressor duty, document retrieval
+**Solution:** `private task folder (redacted)`
+**Notes:** Searched multiple installation scopes for the newest runnable `.usc` case, inspected zip attachments before selecting the latest case file, ran the selected UniSim case through COM, and reported total mechanical power as compressor plus pump duty. Reusable pattern: keep STID identifiers and asset-specific power values private, while recording the selection and power-accounting method publicly.
+
 ### 2026-05-06 — Confidential separator carry-over cooler scaling screen
 **Type:** B (Process) / G (Workflow)
 **Keywords:** separator carry-over, cooler scaling, anti-surge recycle, STID, tagreader, NaCl source term, compressor calibration, plate heat exchanger

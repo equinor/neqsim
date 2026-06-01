@@ -1,20 +1,147 @@
 ---
 title: "Water Hammer Simulation in NeqSim"
-description: "NeqSim provides water hammer (hydraulic transient) simulation through the `WaterHammerPipe` class. This model uses the **Method of Characteristics (MOC)** to simulate fast pressure transients caused b..."
+description: "Guide to NeqSim water hammer and liquid hammer screening with WaterHammerPipe, WaterHammerStudy, process JSON, automation variables, STID route data, tagreader event windows, and MCP runWaterHammer."
 ---
-
-# Water Hammer Simulation in NeqSim
 
 ## Overview
 
-NeqSim provides water hammer (hydraulic transient) simulation through the `WaterHammerPipe` class. This model uses the **Method of Characteristics (MOC)** to simulate fast pressure transients caused by:
+NeqSim provides water hammer and liquid hammer screening through the `WaterHammerPipe`
+class and the higher-level `WaterHammerStudy` workflow facade. The pipe model uses
+the **Method of Characteristics (MOC)** to simulate fast pressure transients caused by:
 
 - Rapid valve closures (emergency shutdown)
 - Pump trips
 - Check valve slam
 - Sudden flow changes
 
-Unlike the advection-based transient model in `PipeBeggsAndBrills`, `WaterHammerPipe` propagates pressure waves at the **speed of sound**, enabling accurate simulation of pressure surges.
+Unlike the advection-based transient model in `PipeBeggsAndBrills`, `WaterHammerPipe`
+propagates pressure waves at the **speed of sound**, enabling fast screening of
+pressure surges. The workflow can start from a NeqSim process model, STID/P&ID/E3D
+route data, line lists, valve schedules, and tagreader field-data snapshots.
+
+Use this as a rapid engineering screening tool. Detailed surge, pipe-stress,
+support-load, pump-curve, vapor-cavity, and branch-network assessments still need
+specialist review when the screening margin is small or the route is complex.
+
+## Full STID, Tagreader, and MCP Workflow
+
+The full workflow is intended for fast industry studies where an engineer has a
+NeqSim process model plus documentation and plant data:
+
+1. Extract the liquid line route from STID/P&ID/E3D/line-list evidence: length,
+     internal diameter, wall thickness, roughness or piping class, elevation change,
+     fittings, valve tags, and design pressure.
+2. Extract the initiating event: ESD valve closure time, check-valve slam, pump trip,
+     controller output ramp, or operator action.
+3. Read tagreader event-window values when available: inlet pressure, temperature,
+     flow rate, valve opening, downstream pressure, pump speed, and pump status.
+4. Run `WaterHammerStudy.run(...)` or MCP `runWaterHammer` with `pipe` or
+     `stidRoute.segments`, `fieldData`, and `eventSchedule`.
+5. Review `maxPressure_bara`, `minPressure_bara`, `pressureSurge_bar`,
+     `joukowskySurgeEstimate_bar`, `waveRoundTripTime_s`, `maxStableTimeStep_s`,
+     and any design-pressure validation flags.
+6. Escalate to a detailed surge study if the peak pressure approaches MAOP/design
+     pressure, the route contains important branches, or support loads and stress
+     checks are required.
+
+### MCP `runWaterHammer` Input
+
+MCP clients can call `runWaterHammer` directly. `runPipeline` also dispatches to
+the same runner when `mode`, `analysis`, or `studyType` is set to `waterHammer`,
+`liquidHammer`, or `hydraulicTransient`.
+
+```json
+{
+    "studyName": "ESD valve closure screening",
+    "model": "SRK",
+    "temperature_C": 20.0,
+    "pressure_bara": 45.0,
+    "components": {"water": 1.0},
+    "flowRate": {"value": 120000.0, "unit": "kg/hr"},
+    "designPressure_bara": 95.0,
+    "pipe": {
+        "length_m": 1200.0,
+        "diameter_m": 0.2032,
+        "wallThickness_m": 0.0127,
+        "roughness_m": 4.6e-5,
+        "elevation_m": 8.0,
+        "numberOfNodes": 80
+    },
+    "fieldData": {
+        "inletPressure_bara": 46.0,
+        "inletTemperature_C": 19.0,
+        "flowRate_kg_hr": 118000.0,
+        "valveOpening": 1.0
+    },
+    "eventSchedule": [
+        {
+            "type": "VALVE_CLOSURE",
+            "startTime_s": 0.10,
+            "duration_s": 0.15,
+            "startOpening": 1.0,
+            "endOpening": 0.0
+        }
+    ],
+    "simulationTime_s": 4.0,
+    "sourceReferences": [
+        "generic STID line-list row",
+        "generic tagreader event window"
+    ]
+}
+```
+
+For documentation-led studies, `stidRoute.segments` can replace the single `pipe`
+object. The facade aggregates a serial route into an equivalent line and adds
+minor-loss equivalent length when fittings or valves are supplied with K values.
+
+### Process JSON Integration
+
+`WaterHammerPipe` is registered in the process equipment factory and JSON builder.
+Accepted type aliases include `WaterHammerPipe`, `waterHammer`, `liquidHammer`, and
+`hydraulicTransientPipe`. Boundary fields can be provided as strings.
+
+```json
+{
+    "name": "water hammer case",
+    "equipment": [
+        {
+            "name": "Hammer Line",
+            "type": "WaterHammerPipe",
+            "inlet": "Feed",
+            "properties": {
+                "length": 1000.0,
+                "diameter": 0.20,
+                "wallThickness": 0.012,
+                "pipeWallRoughness": 4.6e-5,
+                "numberOfNodes": 80,
+                "downstreamBoundary": "VALVE",
+                "valveOpening": 1.0
+            }
+        }
+    ]
+}
+```
+
+### Automation and Operational Scenarios
+
+Water-hammer variables are exposed through `ProcessAutomation` for process studies
+and MCP automation tools:
+
+| Address | Type | Meaning |
+|---------|------|---------|
+| `Hammer Line.valveOpening` | INPUT | Valve opening fraction from 0 to 1 |
+| `Hammer Line.valveOpeningPercent` | INPUT | Valve opening in percent |
+| `Hammer Line.waveSpeed` | INPUT | Override wave speed in m/s |
+| `Hammer Line.numberOfNodes` | INPUT | MOC grid resolution |
+| `Hammer Line.courantNumber` | INPUT | Courant stability factor |
+| `Hammer Line.maxStableTimeStep` | OUTPUT | Courant-limited timestep in seconds |
+| `Hammer Line.waveRoundTripTime` | OUTPUT | Acoustic round-trip time in seconds |
+| `Hammer Line.maxPressure` | OUTPUT | Maximum pressure envelope value |
+| `Hammer Line.minPressure` | OUTPUT | Minimum pressure envelope value |
+
+`OperationalScenarioRunner` applies `SET_VALVE_OPENING` actions directly to a
+`WaterHammerPipe`, so P&ID-driven operational scenarios can drive the initiating
+valve position before the water-hammer runner performs the high-speed transient.
 
 ## Quick Start
 
@@ -47,13 +174,13 @@ double dt = pipe.getMaxStableTimeStep();
 
 for (int step = 0; step < 1000; step++) {
     double t = step * dt;
-    
+
     // Close valve from t=0.1s to t=0.2s
     if (t >= 0.1 && t <= 0.2) {
         double tau = (t - 0.1) / 0.1;
         pipe.setValveOpening(1.0 - tau);  // 100% → 0%
     }
-    
+
     pipe.runTransient(dt, id);
 }
 
@@ -259,9 +386,9 @@ for (double t = 0; t < 30; t += dt) {
     if (t <= closureTime) {
         pipeline.setValveOpening(1.0 - t / closureTime);
     }
-    
+
     pipeline.runTransient(dt, id);
-    
+
     if (t % 1.0 < dt) {
         System.out.printf("t=%.1fs: P_max=%.1f bar, valve=%.0f%%%n",
             t, pipeline.getMaxPressure("bar"), pipeline.getValveOpening() * 100);
@@ -327,9 +454,16 @@ WaterHammerPipe(String name, StreamInterface inStream)
 | `setDiameter(double meters)` | Inside diameter in meters |
 | `setDiameter(double value, String unit)` | Diameter with unit ("m", "mm", "in") |
 | `setWallThickness(double meters)` | Pipe wall thickness |
+| `getWallThickness()` | Pipe wall thickness in meters |
 | `setRoughness(double meters)` | Surface roughness |
+| `setPipeWallRoughness(double meters)` | JSON-friendly roughness setter |
+| `getPipeWallRoughness()` | Surface roughness in meters |
 | `setElevationChange(double meters)` | Outlet - inlet elevation |
+| `setElevation(double meters)` | JSON-friendly elevation setter |
+| `getElevation()` | Elevation change in meters |
 | `setNumberOfNodes(int nodes)` | Computational grid size |
+| `setNumberOfIncrements(int increments)` | Compatibility setter mapping increments to nodes |
+| `getNumberOfIncrements()` | Number of computational increments |
 
 ### Material Properties
 
@@ -344,8 +478,14 @@ WaterHammerPipe(String name, StreamInterface inStream)
 |--------|-------------|
 | `setUpstreamBoundary(BoundaryType)` | Set upstream BC type |
 | `setDownstreamBoundary(BoundaryType)` | Set downstream BC type |
+| `setUpstreamBoundary(String)` | JSON-friendly upstream boundary setter |
+| `setDownstreamBoundary(String)` | JSON-friendly downstream boundary setter |
+| `getUpstreamBoundaryName()` | Upstream boundary as a string |
+| `getDownstreamBoundaryName()` | Downstream boundary as a string |
 | `setValveOpening(double fraction)` | Valve opening 0-1 |
+| `setValveOpeningPercent(double percent)` | Valve opening in percent |
 | `getValveOpening()` | Current valve opening |
+| `getValveOpeningPercent()` | Current valve opening in percent |
 
 ### Simulation Control
 
@@ -354,6 +494,7 @@ WaterHammerPipe(String name, StreamInterface inStream)
 | `run(UUID id)` | Initialize steady state |
 | `runTransient(double dt, UUID id)` | Run one time step |
 | `getMaxStableTimeStep()` | Get Courant-limited time step |
+| `getCourantNumber()` | Current Courant number |
 | `setCourantNumber(double cn)` | Set Courant number (default: 1.0) |
 | `reset()` | Reset to initial state |
 | `resetEnvelopes()` | Reset min/max tracking |
@@ -368,7 +509,9 @@ WaterHammerPipe(String name, StreamInterface inStream)
 | `getFlowProfile()` | Flow rate array (m³/s) |
 | `getHeadProfile()` | Piezometric head (m) |
 | `getMaxPressureEnvelope()` | Max pressure at each node |
+| `getMaxPressureEnvelope(String unit)` | Max pressure envelope in unit |
 | `getMinPressureEnvelope()` | Min pressure at each node |
+| `getMinPressureEnvelope(String unit)` | Min pressure envelope in unit |
 | `getMaxPressure(String unit)` | Overall maximum pressure |
 | `getMinPressure(String unit)` | Overall minimum pressure |
 | `getPressureHistory()` | Outlet pressure vs time |
@@ -399,7 +542,7 @@ WaterHammerPipe(String name, StreamInterface inStream)
 **When to use which:**
 
 - **PipeBeggsAndBrills**: Production rate changes, separator upsets, slow valve operations
-- **WaterHammerPipe**: ESD events, pump trips, check valve slam, pipe stress analysis
+- **WaterHammerPipe**: ESD events, pump trips, check valve slam, pressure-surge screening
 
 ## Limitations
 
@@ -419,6 +562,8 @@ Current implementation limitations:
 
 ## See Also
 
-- [Pipeline Transient Simulation](pipeline_transient_simulation) - Slow transients with PipeBeggsAndBrills
-- [Pipeline Pressure Drop](pipeline_pressure_drop) - Steady-state pressure drop
-- [Pipeline Index](pipeline_index) - All pipeline documentation
+- [Pipeline Transient Simulation](pipeline_transient_simulation.md) - Slow transients with PipeBeggsAndBrills
+- [Pipeline Pressure Drop](pipeline_pressure_drop.md) - Steady-state pressure drop
+- [Pipeline Index](pipeline_index.md) - All pipeline documentation
+- [Piping Route Builder](../process/piping_route_builder.md) - STID/E3D route extraction for steady hydraulics and surge screening
+- [MCP Server Guide](../integration/mcp_server_guide.md) - MCP tool usage including `runWaterHammer`

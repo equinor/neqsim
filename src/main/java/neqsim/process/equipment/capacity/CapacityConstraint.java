@@ -140,6 +140,22 @@ public class CapacityConstraint implements Serializable {
   private boolean enabled = true;
 
   /**
+   * Describes the source of the design value used in this constraint.
+   *
+   * <p>
+   * Typical values:
+   * </p>
+   * <ul>
+   * <li>"equipment" — set directly on the equipment object via API</li>
+   * <li>"designCapacities" — supplied via JSON designCapacities input</li>
+   * <li>"mechanicalDesign" — derived from mechanical design calculations</li>
+   * <li>"default" — a strategy-level default (not from actual equipment data)</li>
+   * <li>"not_set" — no design value has been provided</li>
+   * </ul>
+   */
+  private String dataSource = "not_set";
+
+  /**
    * Creates a new capacity constraint.
    *
    * @param name the name of the constraint
@@ -533,6 +549,32 @@ public class CapacityConstraint implements Serializable {
    */
   public CapacityConstraint setEnabled(boolean enabled) {
     this.enabled = enabled;
+    return this;
+  }
+
+  /**
+   * Gets the data source that provided the design value for this constraint.
+   *
+   * <p>
+   * The data source indicates where the design/limit value came from, helping operators and agents
+   * understand the basis of utilization calculations. Common values: "equipment",
+   * "designCapacities", "mechanicalDesign", "default", "not_set".
+   * </p>
+   *
+   * @return the data source string
+   */
+  public String getDataSource() {
+    return dataSource;
+  }
+
+  /**
+   * Sets the data source that provided the design value for this constraint.
+   *
+   * @param dataSource the data source string (e.g., "equipment", "designCapacities", "default")
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setDataSource(String dataSource) {
+    this.dataSource = dataSource != null ? dataSource : "not_set";
     return this;
   }
 

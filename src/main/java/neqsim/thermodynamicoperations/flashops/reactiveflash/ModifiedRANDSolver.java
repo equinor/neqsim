@@ -141,6 +141,18 @@ public class ModifiedRANDSolver implements java.io.Serializable {
   /** Reference-state ln(phi) correction for ions with electrolyte EOS. */
   private double[] lnPhiRef;
 
+  private transient double[][] errorWork;
+  private transient double[][] correctionMatrixWork;
+  private transient double[] rhsWork;
+  private transient double[] matrixScaleWork;
+  private transient double[][] oldMolesWork;
+  private transient double[] oldLambdaWork;
+  private transient double[][] diisMolesWork;
+  private transient double[] diisLambdaWork;
+  private transient double[] elementResidualWork;
+  private transient double[][] linearAugWork;
+  private transient double[] linearSolutionWork;
+
   /**
    * Constructor.
    *
@@ -208,6 +220,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
 
     updateLnPhi();
     initializeLambda();
+    ensureIterationWorkArrays();
 
     // Initialize DIIS accelerator on lambda (ne-dimensional)
     if (useDIIS) {
@@ -244,7 +257,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
 
       // Compute chemical potential error for each species in each phase
       // e[j][i] = g0_i + ln(x[j][i]) + ln(phi[j][i]) - sum_k lambda_k * A_ki
-      double[][] e = new double[np][nc];
+      double[][] e = errorWork;
       for (int j = 0; j < np; j++) {
         for (int i = 0; i < nc; i++) {
           double xi = x[j][i] > EPS ? x[j][i] : EPS;
@@ -260,8 +273,12 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       // Build RAND correction matrix summing over ALL phases
       // C_kl = sum_j sum_i A_ki * A_li * n[j][i]
       // rhs_k = (b_k - sum_j sum_i A_ki * n[j][i]) + sum_j sum_i A_ki * n[j][i] * e[j][i]
-      double[][] C = new double[ne][ne];
-      double[] rhs = new double[ne];
+      double[][] C = correctionMatrixWork;
+      double[] rhs = rhsWork;
+      clearMatrix(C, ne, ne);
+      for (int k = 0; k < ne; k++) {
+        rhs[k] = 0.0;
+      }
 
       for (int k = 0; k < ne; k++) {
         double elemSum = 0.0;
@@ -294,7 +311,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       // (moles ~1e-10) coexist with molecular species (moles ~0.1-1.0).
       // Without scaling, the charge row of C has diagonal ~1e-10 vs ~10 for
       // element rows, giving condition number >1e10 and loss of precision.
-      double[] cScale = new double[ne];
+      double[] cScale = matrixScaleWork;
       for (int k = 0; k < ne; k++) {
         double d = Math.abs(C[k][k]);
         cScale[k] = d > 1.0e-30 ? 1.0 / Math.sqrt(d) : 1.0;
@@ -319,8 +336,8 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       }
 
       // Save previous state for backtracking line search
-      double[][] nOld = new double[np][nc];
-      double[] lambdaOld = new double[ne];
+      double[][] nOld = oldMolesWork;
+      double[] lambdaOld = oldLambdaWork;
       for (int j = 0; j < np; j++) {
         System.arraycopy(n[j], 0, nOld[j], 0, nc);
       }
@@ -502,8 +519,8 @@ public class ModifiedRANDSolver implements java.io.Serializable {
           double[] lambdaDiis = diis.extrapolate();
           if (lambdaDiis != null) {
             // Save state for rollback
-            double[][] nSave = new double[np][nc];
-            double[] lambdaSave = new double[ne];
+            double[][] nSave = diisMolesWork;
+            double[] lambdaSave = diisLambdaWork;
             for (int j = 0; j < np; j++) {
               System.arraycopy(n[j], 0, nSave[j], 0, nc);
             }
@@ -607,7 +624,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
    * @return vector of (A*n - b)/scale for each element
    */
   private double[] computeElementResidualVector() {
-    double[] r = new double[ne];
+    double[] r = elementResidualWork;
     double scaleFloor = Math.max(totalMoles * 1.0e-6, 1.0e-10);
     for (int k = 0; k < ne; k++) {
       double es = 0.0;
@@ -620,6 +637,30 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       r[k] = (es - b[k]) / scale;
     }
     return r;
+  }
+
+  private void ensureIterationWorkArrays() {
+    if (errorWork == null || errorWork.length != np || errorWork[0].length != nc) {
+      errorWork = new double[np][nc];
+      oldMolesWork = new double[np][nc];
+      diisMolesWork = new double[np][nc];
+    }
+    if (correctionMatrixWork == null || correctionMatrixWork.length != ne) {
+      correctionMatrixWork = new double[ne][ne];
+      rhsWork = new double[ne];
+      matrixScaleWork = new double[ne];
+      oldLambdaWork = new double[ne];
+      diisLambdaWork = new double[ne];
+      elementResidualWork = new double[ne];
+    }
+  }
+
+  private void clearMatrix(double[][] matrix, int rows, int columns) {
+    for (int row = 0; row < rows; row++) {
+      for (int column = 0; column < columns; column++) {
+        matrix[row][column] = 0.0;
+      }
+    }
   }
 
   /**
@@ -920,7 +961,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
 
     double[] sol = solveLinear(AtA, Ath);
     if (sol != null) {
-      lambda = sol;
+      System.arraycopy(sol, 0, lambda, 0, ne);
     }
   }
 
@@ -960,7 +1001,12 @@ public class ModifiedRANDSolver implements java.io.Serializable {
    */
   private double[] solveLinear(double[][] aa, double[] bb) {
     int dim = bb.length;
-    double[][] aug = new double[dim][dim + 1];
+    if (linearAugWork == null || linearAugWork.length != dim
+        || linearAugWork[0].length != dim + 1) {
+      linearAugWork = new double[dim][dim + 1];
+      linearSolutionWork = new double[dim];
+    }
+    double[][] aug = linearAugWork;
     for (int i = 0; i < dim; i++) {
       for (int j = 0; j < dim; j++) {
         aug[i][j] = aa[i][j];
@@ -993,7 +1039,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       }
     }
 
-    double[] s = new double[dim];
+    double[] s = linearSolutionWork;
     for (int i = dim - 1; i >= 0; i--) {
       s[i] = aug[i][dim];
       for (int j = i + 1; j < dim; j++) {

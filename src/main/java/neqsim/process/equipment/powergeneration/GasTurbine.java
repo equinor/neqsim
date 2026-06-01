@@ -97,7 +97,8 @@ public class GasTurbine extends TwoPortEquipment
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public GasTurbine(String name, StreamInterface inletStream) {
-    super(name, inletStream);
+    this(name);
+    setInletStream(inletStream);
   }
 
   /** {@inheritDoc} */

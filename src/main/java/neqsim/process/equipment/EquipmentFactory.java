@@ -22,9 +22,20 @@ import neqsim.process.equipment.powergeneration.OffshoreEnergySystem;
 import neqsim.process.equipment.powergeneration.WindFarm;
 import neqsim.process.equipment.powergeneration.WindTurbine;
 import neqsim.process.equipment.reactor.AmmoniaSynthesisReactor;
+import neqsim.process.equipment.reactor.AutothermalReformer;
+import neqsim.process.equipment.reactor.CatalyticTubeReformer;
+import neqsim.process.equipment.reactor.GibbsReactor;
+import neqsim.process.equipment.reactor.PartialOxidationReactor;
+import neqsim.process.equipment.reactor.PlugFlowReactor;
+import neqsim.process.equipment.reactor.QuenchSection;
+import neqsim.process.equipment.reactor.ReformerFurnace;
+import neqsim.process.equipment.reactor.SyngasBurnerZone;
+import neqsim.process.equipment.reactor.StirredTankReactor;
+import neqsim.process.equipment.reactor.WaterGasShiftReactor;
 import neqsim.process.equipment.subsea.SubseaPowerCable;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.ReservoirCVDsim;
@@ -34,6 +45,7 @@ import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.separator.GasScrubber;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.splitter.ComponentCaptureUnit;
 import neqsim.process.equipment.splitter.ComponentSplitter;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
@@ -99,6 +111,47 @@ public final class EquipmentFactory {
       case "ammoniasynthesisreactor":
       case "haberbosch":
         return createEquipment(name, EquipmentEnum.AmmoniaSynthesisReactor);
+      case "gibbsreactor":
+      case "equilibriumreactor":
+      case "reactor":
+        return createEquipment(name, EquipmentEnum.GibbsReactor);
+      case "plugflowreactor":
+      case "pfr":
+        return createEquipment(name, EquipmentEnum.PlugFlowReactor);
+      case "catalytictubereformer":
+      case "tubereformer":
+      case "smrtubereformer":
+        return createEquipment(name, EquipmentEnum.CatalyticTubeReformer);
+      case "reformerfurnace":
+      case "smrfurnace":
+      case "firedreformer":
+        return createEquipment(name, EquipmentEnum.ReformerFurnace);
+      case "syngasburnerzone":
+      case "poxburnerzone":
+      case "atrburnerzone":
+        return createEquipment(name, EquipmentEnum.SyngasBurnerZone);
+      case "autothermalreformer":
+      case "atr":
+        return createEquipment(name, EquipmentEnum.AutothermalReformer);
+      case "partialoxidationreactor":
+      case "pox":
+        return createEquipment(name, EquipmentEnum.PartialOxidationReactor);
+      case "quenchsection":
+      case "syngasquench":
+        return createEquipment(name, EquipmentEnum.QuenchSection);
+      case "watergasshiftreactor":
+      case "watergasshift":
+      case "wgsreactor":
+      case "wgs":
+        return createEquipment(name, EquipmentEnum.WaterGasShiftReactor);
+      case "componentcaptureunit":
+      case "componentcapture":
+      case "co2capture":
+      case "h2dryer":
+        return createEquipment(name, EquipmentEnum.ComponentCaptureUnit);
+      case "stirredtankreactor":
+      case "cstr":
+        return createEquipment(name, EquipmentEnum.StirredTankReactor);
       case "subseapowercable":
       case "powercable":
         return createEquipment(name, EquipmentEnum.SubseaPowerCable);
@@ -109,6 +162,11 @@ public final class EquipmentFactory {
       case "pipebeggsandbrills":
       case "beggsandbrills":
         return createEquipment(name, EquipmentEnum.PipeBeggsAndBrills);
+      case "waterhammerpipe":
+      case "waterhammer":
+      case "liquidhammer":
+      case "hydraulictransientpipe":
+        return createEquipment(name, EquipmentEnum.WaterHammerPipe);
       case "streamsaturatorutil":
       case "saturator":
         return createEquipment(name, EquipmentEnum.StreamSaturatorUtil);
@@ -161,6 +219,27 @@ public final class EquipmentFactory {
         return new Mixer(name);
       case Splitter:
         return new Splitter(name);
+      case Reactor:
+      case GibbsReactor:
+        return new GibbsReactor(name);
+      case PlugFlowReactor:
+        return new PlugFlowReactor(name);
+      case CatalyticTubeReformer:
+        return new CatalyticTubeReformer(name);
+      case ReformerFurnace:
+        return new ReformerFurnace(name);
+      case SyngasBurnerZone:
+        return new SyngasBurnerZone(name);
+      case AutothermalReformer:
+        return new AutothermalReformer(name);
+      case PartialOxidationReactor:
+        return new PartialOxidationReactor(name);
+      case QuenchSection:
+        return new QuenchSection(name);
+      case WaterGasShiftReactor:
+        return new WaterGasShiftReactor(name);
+      case StirredTankReactor:
+        return new StirredTankReactor(name);
       case Cooler:
         return new Cooler(name);
       case Heater:
@@ -195,6 +274,8 @@ public final class EquipmentFactory {
         return new Tank(name);
       case ComponentSplitter:
         return new ComponentSplitter(name);
+      case ComponentCaptureUnit:
+        return new ComponentCaptureUnit(name);
       case ReservoirCVDsim:
         throw new IllegalArgumentException(
             "ReservoirCVDsim requires a reservoir fluid. Use createReservoirCVDsim instead.");
@@ -238,6 +319,8 @@ public final class EquipmentFactory {
         return new AdiabaticPipe(name);
       case PipeBeggsAndBrills:
         return new PipeBeggsAndBrills(name);
+      case WaterHammerPipe:
+        return new WaterHammerPipe(name);
       case StreamSaturatorUtil:
         return new StreamSaturatorUtil(name);
       case DistillationColumn:

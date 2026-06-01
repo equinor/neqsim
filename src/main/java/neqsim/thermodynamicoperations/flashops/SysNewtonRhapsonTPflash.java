@@ -60,6 +60,9 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   /** u-variable array: u[i] = beta * y[i]. */
   private double[] uVector;
 
+  /** Trial u-vector used by the Armijo line search. */
+  private double[] uTrialVector;
+
   /** Pre-allocated EJML LU solver. */
   private transient LinearSolverDense<DMatrixRMaj> linearSolver;
 
@@ -84,6 +87,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     dxVector = new DMatrixRMaj(neq, 1);
     jacWork = new DMatrixRMaj(neq, neq);
     uVector = new double[neq];
+    uTrialVector = new double[neq];
     linearSolver = LinearSolverFactory_DDRM.lu(neq);
 
     setu();
@@ -255,6 +259,9 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     if (linearSolver == null) {
       linearSolver = LinearSolverFactory_DDRM.lu(neq);
     }
+    if (uTrialVector == null || uTrialVector.length != numberOfComponents) {
+      uTrialVector = new double[numberOfComponents];
+    }
   }
 
   /**
@@ -298,16 +305,14 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     double alpha = 1.0;
     double c1 = 1e-4;
     int maxBacktrack = 8;
-    double[] uTrial = new double[numberOfComponents];
-
     for (int bt = 0; bt < maxBacktrack; bt++) {
       for (int i = 0; i < numberOfComponents; i++) {
-        uTrial[i] = uVector[i] - alpha * dxVector.get(i, 0);
+        uTrialVector[i] = uVector[i] - alpha * dxVector.get(i, 0);
       }
 
-      if (isFeasible(uTrial)) {
+      if (isFeasible(uTrialVector)) {
         try {
-          setTrialAndComputeFugacities(uTrial);
+          setTrialAndComputeFugacities(uTrialVector);
           double qTrial = computeQ();
           // Armijo condition: Q_trial <= Q_current - c1 * alpha * slope
           if (qTrial <= qCurrent - c1 * alpha * slope) {

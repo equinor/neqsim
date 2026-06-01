@@ -5,6 +5,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator
 import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterResult;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.ConservativeStateLimiter;
 
 /**
  * Extended pipe section state for the two-fluid model.
@@ -175,6 +176,15 @@ public class TwoFluidSection extends PipeSection {
   /** Current oil-water flow regime result (null until first detection). */
   private transient OilWaterResult oilWaterResult;
 
+  /** Liquid entrainment fraction in annular/mist flow. */
+  private double entrainmentFraction = 0.0;
+
+  /** Characteristic entrained droplet diameter (m). */
+  private double entrainedDropletDiameter = 0.0;
+
+  /** Severe slugging stability number. Values below 1 indicate elevated risk. */
+  private double severeSluggingNumber = Double.POSITIVE_INFINITY;
+
   /**
    * Default constructor.
    */
@@ -303,32 +313,22 @@ public class TwoFluidSection extends PipeSection {
    *
    * <p>
    * This is the inverse operation of updateConservativeVariables. Requires equation of state
-   * evaluation for complete solution. Includes stability guards to prevent NaN values.
+   * evaluation for complete solution. Conservative positivity limiting is applied before
+   * converting to primitive variables.
    * </p>
    */
   public void extractPrimitiveVariables() {
     double A = getArea();
 
-    // Guard against negative or NaN conservative variables
-    gasMassPerLength = Math.max(0, gasMassPerLength);
-    oilMassPerLength = Math.max(0, oilMassPerLength);
-    waterMassPerLength = Math.max(0, waterMassPerLength);
+    double[] conservativeState = getStateVector();
+    ConservativeStateLimiter.enforceThreePhaseMassPositivity(conservativeState, null);
+    setStateVector(conservativeState);
     liquidMassPerLength = oilMassPerLength + waterMassPerLength;
+    liquidMomentumPerLength = oilMomentumPerLength + waterMomentumPerLength;
 
-    if (Double.isNaN(gasMassPerLength))
-      gasMassPerLength = 0;
-    if (Double.isNaN(oilMassPerLength))
-      oilMassPerLength = 0;
-    if (Double.isNaN(waterMassPerLength))
-      waterMassPerLength = 0;
-    if (Double.isNaN(liquidMassPerLength))
-      liquidMassPerLength = 0;
-    if (Double.isNaN(gasMomentumPerLength))
-      gasMomentumPerLength = 0;
-    if (Double.isNaN(liquidMomentumPerLength))
-      liquidMomentumPerLength = 0;
-    if (Double.isNaN(energyPerLength))
+    if (!Double.isFinite(energyPerLength)) {
       energyPerLength = 0;
+    }
 
     // Extract holdups from mass per length
     double rhoG = getGasDensity();
@@ -1123,6 +1123,31 @@ public class TwoFluidSection extends PipeSection {
    */
   public boolean isWaterDropoutRisk() {
     return oilWaterResult != null ? oilWaterResult.waterDropoutRisk : false;
+  }
+
+  public double getEntrainmentFraction() {
+    return entrainmentFraction;
+  }
+
+  public void setEntrainmentFraction(double entrainmentFraction) {
+    this.entrainmentFraction = Math.max(0.0, Math.min(1.0, entrainmentFraction));
+  }
+
+  public double getEntrainedDropletDiameter() {
+    return entrainedDropletDiameter;
+  }
+
+  public void setEntrainedDropletDiameter(double entrainedDropletDiameter) {
+    this.entrainedDropletDiameter = Math.max(0.0, entrainedDropletDiameter);
+  }
+
+  public double getSevereSluggingNumber() {
+    return severeSluggingNumber;
+  }
+
+  public void setSevereSluggingNumber(double severeSluggingNumber) {
+    this.severeSluggingNumber =
+        Double.isFinite(severeSluggingNumber) ? severeSluggingNumber : Double.POSITIVE_INFINITY;
   }
 
   /**

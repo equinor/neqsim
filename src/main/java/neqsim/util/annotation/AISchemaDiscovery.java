@@ -60,6 +60,17 @@ public class AISchemaDiscovery implements Serializable {
 
     /**
      * Constructor.
+     *
+     * @param className class exposing the method
+     * @param methodName exposed method name
+     * @param description method description
+     * @param category method category
+     * @param example example invocation text
+     * @param priority discovery priority, where higher values sort first
+     * @param safe whether invoking the method is expected to avoid state changes
+     * @param tags discovery tags
+     * @param parameters parameter schemas
+     * @param returnType method return type
      */
     public MethodSchema(String className, String methodName, String description, String category,
         String example, int priority, boolean safe, String[] tags, List<ParameterSchema> parameters,
@@ -118,6 +129,8 @@ public class AISchemaDiscovery implements Serializable {
 
     /**
      * Convert to structured text for AI consumption.
+     *
+     * @return formatted prompt text containing schema metadata
      */
     public String toPromptText() {
       StringBuilder sb = new StringBuilder();
@@ -163,6 +176,16 @@ public class AISchemaDiscovery implements Serializable {
 
     /**
      * Constructor.
+     *
+     * @param name the parameter name
+     * @param type the Java type or schema type name
+     * @param description human-readable parameter description
+     * @param unit engineering unit, or an empty string when unitless
+     * @param minValue minimum allowed value, or {@link Double#NEGATIVE_INFINITY} if unbounded
+     * @param maxValue maximum allowed value, or {@link Double#POSITIVE_INFINITY} if unbounded
+     * @param defaultValue default value represented as text, or an empty string when absent
+     * @param required whether the parameter is required by the exposed method
+     * @param options allowed option values, or an empty array when unrestricted
      */
     public ParameterSchema(String name, String type, String description, String unit,
         double minValue, double maxValue, String defaultValue, boolean required, String[] options) {
@@ -177,16 +200,28 @@ public class AISchemaDiscovery implements Serializable {
       this.options = options;
     }
 
+    /**
+     * Gets the parameter name.
+     *
+     * @return parameter name
+     */
     public String getName() {
       return name;
     }
 
+    /**
+     * Gets the parameter type.
+     *
+     * @return parameter type name
+     */
     public String getType() {
       return type;
     }
 
     /**
      * Convert to structured text for AI consumption.
+     *
+     * @return prompt-friendly parameter schema text
      */
     public String toPromptText() {
       StringBuilder sb = new StringBuilder();
@@ -262,6 +297,11 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Create MethodSchema from annotation.
+   *
+   * @param clazz class declaring the method
+   * @param method reflected method
+   * @param annotation AI exposure annotation on the method
+   * @return generated method schema
    */
   private MethodSchema createMethodSchema(Class<?> clazz, Method method, AIExposable annotation) {
     List<ParameterSchema> params = new ArrayList<>();
@@ -286,6 +326,10 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Create MethodSchema from method without annotation.
+   *
+   * @param clazz class declaring the method
+   * @param method reflected method
+   * @return generated method schema
    */
   private MethodSchema createMethodSchemaFromMethod(Class<?> clazz, Method method) {
     List<ParameterSchema> params = new ArrayList<>();
@@ -303,6 +347,9 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Generate a basic description from method name.
+   *
+   * @param methodName reflected method name
+   * @return generated description text
    */
   private String generateDescriptionFromName(String methodName) {
     if (methodName.startsWith("get")) {
@@ -319,6 +366,9 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Convert camelCase to spaces.
+   *
+   * @param camel camel-case input text
+   * @return lower-case text with spaces between camel-case words
    */
   private String camelToSpaces(String camel) {
     return camel.replaceAll("([a-z])([A-Z])", "$1 $2").toLowerCase();
@@ -407,7 +457,7 @@ public class AISchemaDiscovery implements Serializable {
     sb.append("```java\n");
     sb.append("ThermodynamicOperations ops = new ThermodynamicOperations(fluid);\n");
     sb.append("ops.TPflash();  // Calculate phase equilibrium\n");
-    sb.append("fluid.init(3);  // Initialize properties\n");
+    sb.append("fluid.initProperties();  // Initialize thermodynamic and transport properties\n");
     sb.append("```\n\n");
     sb.append("## Getting Properties\n");
     sb.append("```java\n");

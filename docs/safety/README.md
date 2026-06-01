@@ -21,6 +21,7 @@ This folder contains guides for implementing safety systems in process simulatio
 
 | Document | Description |
 |----------|-------------|
+| [ESD Dynamic Testing Workflow](esd_testing_workflow.md) | Dynamic ESD testing with process logic, OperationalTagMap/tagreader evidence, and JSON criteria reports |
 | [ESD_BLOWDOWN_SYSTEM.md](ESD_BLOWDOWN_SYSTEM) | Complete ESD and blowdown system guide |
 | [PRESSURE_MONITORING_ESD.md](PRESSURE_MONITORING_ESD) | Pressure monitoring for ESD |
 
@@ -41,6 +42,10 @@ This folder contains guides for implementing safety systems in process simulatio
 | [sis_logic_implementation.md](sis_logic_implementation) | Safety Instrumented Systems (SIS) logic |
 | [integration_safety_chain_tests.md](integration_safety_chain_tests) | Safety chain integration testing |
 | [SAFETY_SIMULATION_ROADMAP.md](SAFETY_SIMULATION_ROADMAP) | Safety simulation development roadmap |
+| [Automated HAZOP from STID and Simulation](automated_hazop_from_stid.md) | End-to-end STID/P&ID, plant data, NeqSim simulation, HAZOP, barrier, and report workflow |
+| [Open Drain Review with NeqSim Evidence](open_drain_review.md) | NORSOK S-001 Clause 9 review using NeqSim-calculated liquid leak rate, firewater load, density, pressure, and drain capacity plus STID/tagreader evidence |
+
+| [Barrier Management and SCE Traceability](barrier_management.md) | Evidence-linked PSFs, SCEs, performance standards, and safety-analysis handoffs |
 
 ### Fire and Thermal Protection
 
@@ -48,11 +53,14 @@ This folder contains guides for implementing safety systems in process simulatio
 |----------|-------------|
 | [fire_blowdown_capabilities.md](fire_blowdown_capabilities) | Fire case blowdown simulation |
 | [fire_heat_transfer_enhancements.md](fire_heat_transfer_enhancements) | Fire heat transfer modeling |
+| [Trapped Liquid Fire Rupture](trapped_liquid_fire_rupture.md) | Blocked-in liquid segment fire rupture screening with material, flange, PFP, and source-term handoff |
 
 ### Relief Systems
 
 | Document | Description |
 |----------|-------------|
+| [Trapped Inventory Calculator](trapped_inventory_calculator.md) | Evidence-linked trapped inventory for isolation, blowdown, flare-load, and MDMT screening |
+| [Trapped Liquid Fire Rupture](trapped_liquid_fire_rupture.md) | Fire exposure, thermal expansion, pipe/flange failure screening, PFP demand, and source-term handoff |
 | [psv_dynamic_sizing_example.md](psv_dynamic_sizing_example) | Pressure Safety Valve dynamic sizing |
 | [rupture_disk_dynamic_behavior.md](rupture_disk_dynamic_behavior) | Rupture disk dynamic behavior |
 

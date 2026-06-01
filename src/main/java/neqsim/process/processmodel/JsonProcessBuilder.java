@@ -13,16 +13,29 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.capacity.EquipmentDesignData;
+import neqsim.process.equipment.compressor.AntiSurge;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.CompressorChartInterface;
+import neqsim.process.equipment.compressor.CompressorDriver;
+import neqsim.process.equipment.compressor.DriverType;
+import neqsim.process.equipment.compressor.SafeSplineStoneWallCurve;
+import neqsim.process.equipment.compressor.SafeSplineSurgeCurve;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.ComponentSplitter;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.AccelerationMethod;
 import neqsim.process.equipment.util.Adjuster;
+import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
+import neqsim.thermo.component.ComponentEos;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
@@ -189,6 +202,10 @@ public class JsonProcessBuilder {
               && (props.has("adjustedEquipment") || props.has("targetEquipment"))) {
             wireAdjuster((Adjuster) eq, props);
           }
+          if (eq instanceof Calculator
+              && (props.has("calculatorInputs") || props.has("calculatorOutput"))) {
+            wireCalculator((Calculator) eq, props);
+          }
           applyProperties(eq, props);
         }
       }
@@ -261,6 +278,11 @@ public class JsonProcessBuilder {
     }
 
 
+    JsonObject metadata = createBuildMetadata(root);
+    JsonObject designApplicationReport = applyRootDesignData(process, root);
+    if (designApplicationReport.size() > 0) {
+      metadata.add("designDataApplied", designApplicationReport);
+    }
 
     // Step 2b: Optional explicit topology metadata connections
     if (root.has("connections") && root.get("connections").isJsonArray()) {
@@ -274,15 +296,18 @@ public class JsonProcessBuilder {
             warnings.add("Skipping connections[" + i + "] - requires non-empty 'from' and 'to'");
             continue;
           }
-          String sourcePort = conn.has("sourcePort") ? conn.get("sourcePort").getAsString() : "outlet";
-          String targetPort = conn.has("targetPort") ? conn.get("targetPort").getAsString() : "inlet";
+          String sourcePort =
+              conn.has("sourcePort") ? conn.get("sourcePort").getAsString() : "outlet";
+          String targetPort =
+              conn.has("targetPort") ? conn.get("targetPort").getAsString() : "inlet";
           ProcessConnection.ConnectionType type = ProcessConnection.ConnectionType.MATERIAL;
           if (conn.has("type")) {
             try {
-              type = ProcessConnection.ConnectionType.valueOf(conn.get("type").getAsString().toUpperCase());
+              type = ProcessConnection.ConnectionType
+                  .valueOf(conn.get("type").getAsString().toUpperCase());
             } catch (Exception ex) {
-              warnings.add("connections[" + i + "] has unknown type '" + conn.get("type").getAsString()
-                  + "' - defaulting to MATERIAL");
+              warnings.add("connections[" + i + "] has unknown type '"
+                  + conn.get("type").getAsString() + "' - defaulting to MATERIAL");
             }
           }
           process.connect(from, sourcePort, to, targetPort, type);
@@ -308,10 +333,409 @@ public class JsonProcessBuilder {
       } catch (Exception e) {
         warnings.add("Report generation failed: " + e.getMessage());
       }
-      return SimulationResult.success(process, report, warnings);
+      return SimulationResult.success(process, report, warnings, metadata);
     }
 
-    return SimulationResult.success(process, null, warnings);
+    return SimulationResult.success(process, null, warnings, metadata);
+  }
+
+  /**
+   * Captures optional non-equipment root sections from the input JSON.
+   *
+   * @param root the root JSON object
+   * @return metadata object containing copied advisory sections
+   */
+  private JsonObject createBuildMetadata(JsonObject root) {
+    JsonObject metadata = new JsonObject();
+    copyRootSection(root, metadata, "metadata");
+    copyRootSection(root, metadata, "equipmentDesign");
+    copyRootSection(root, metadata, "dataConnections");
+    copyRootSection(root, metadata, "designCapacities");
+    return metadata;
+  }
+
+  /**
+   * Copies a root JSON section if present.
+   *
+   * @param root the source root object
+   * @param metadata target metadata object
+   * @param sectionName section name to copy
+   */
+  private void copyRootSection(JsonObject root, JsonObject metadata, String sectionName) {
+    if (root.has(sectionName) && !root.get(sectionName).isJsonNull()) {
+      metadata.add(sectionName, JsonParser.parseString(root.get(sectionName).toString()));
+    }
+  }
+
+  /**
+   * Applies optional root-level design data to matching process units.
+   *
+   * @param process the process system being built
+   * @param root the root JSON object
+   * @return JSON report describing design data that was applied
+   */
+  private JsonObject applyRootDesignData(ProcessSystem process, JsonObject root) {
+    JsonObject report = new JsonObject();
+    if (root.has("designCapacities") && root.get("designCapacities").isJsonObject()) {
+      report.add("designCapacities",
+          applyDesignCapacities(process, root.getAsJsonObject("designCapacities")));
+    }
+    if (root.has("equipmentDesign") && root.get("equipmentDesign").isJsonObject()) {
+      report.add("equipmentDesign",
+          applyEquipmentDesignSection(process, root.getAsJsonObject("equipmentDesign")));
+    }
+    return report;
+  }
+
+  /**
+   * Applies normalized design capacity data using the shared capacity utility.
+   *
+   * @param process the process system containing equipment
+   * @param designCapacities design capacity object keyed by unit name
+   * @return JSON report keyed by unit name
+   */
+  private JsonObject applyDesignCapacities(ProcessSystem process, JsonObject designCapacities) {
+    JsonObject report = new JsonObject();
+    Map<String, EquipmentDesignData.ApplyResult> results =
+        EquipmentDesignData.apply(process, designCapacities);
+    for (Map.Entry<String, EquipmentDesignData.ApplyResult> entry : results.entrySet()) {
+      report.add(entry.getKey(), entry.getValue().toJson());
+    }
+    return report;
+  }
+
+  /**
+   * Applies the advisory {@code equipmentDesign} section used by large extracted process models.
+   *
+   * @param process the process system containing equipment
+   * @param equipmentDesign the root equipmentDesign JSON section
+   * @return JSON report describing applied groups and generated capacity data
+   */
+  private JsonObject applyEquipmentDesignSection(ProcessSystem process,
+      JsonObject equipmentDesign) {
+    JsonObject report = new JsonObject();
+    JsonObject generatedDesignCapacities = new JsonObject();
+
+    if (equipmentDesign.has("valveSizingGroups")
+        && equipmentDesign.get("valveSizingGroups").isJsonArray()) {
+      report.add("valveSizingGroups",
+          applyValveSizingGroups(equipmentDesign.getAsJsonArray("valveSizingGroups")));
+    }
+    if (equipmentDesign.has("separatorSizing")
+        && equipmentDesign.get("separatorSizing").isJsonArray()) {
+      report.add("separatorSizing", applySeparatorSizing(
+          equipmentDesign.getAsJsonArray("separatorSizing"), generatedDesignCapacities));
+    }
+    if (equipmentDesign.has("compressorSizing")
+        && equipmentDesign.get("compressorSizing").isJsonArray()) {
+      report.add("compressorSizing", applyCompressorSizing(
+          equipmentDesign.getAsJsonArray("compressorSizing"), generatedDesignCapacities));
+    }
+    if (equipmentDesign.has("coolerSizing") && equipmentDesign.get("coolerSizing").isJsonArray()) {
+      report.add("coolerSizing", applyCoolerSizing(equipmentDesign.getAsJsonArray("coolerSizing"),
+          generatedDesignCapacities));
+    }
+    if (generatedDesignCapacities.size() > 0) {
+      report.add("generatedDesignCapacities",
+          applyDesignCapacities(process, generatedDesignCapacities));
+    }
+    return report;
+  }
+
+  /**
+   * Applies valve sizing groups to named valve units.
+   *
+   * @param groups valveSizingGroups array
+   * @return JSON array with one report object per group
+   */
+  private JsonArray applyValveSizingGroups(JsonArray groups) {
+    JsonArray report = new JsonArray();
+    for (JsonElement groupElement : groups) {
+      if (!groupElement.isJsonObject()) {
+        continue;
+      }
+      JsonObject group = groupElement.getAsJsonObject();
+      JsonObject props = new JsonObject();
+      addMappedNumber(props, "Cv", group, "installedCv");
+      addMappedNumber(props, "percentValveOpening", group, "normalOpeningPercent");
+      addMappedNumber(props, "minimumValveOpening", group, "minimumValveOpeningPercent");
+      addMappedNumber(props, "maximumValveOpening", group, "maximumValveOpeningPercent");
+      report.add(applyGroupedUnitProperties(group, props));
+    }
+    return report;
+  }
+
+  /**
+   * Applies separator sizing groups and records capacity data.
+   *
+   * @param groups separatorSizing array
+   * @param generatedDesignCapacities normalized design capacity object to populate
+   * @return JSON array with one report object per group
+   */
+  private JsonArray applySeparatorSizing(JsonArray groups, JsonObject generatedDesignCapacities) {
+    JsonArray report = new JsonArray();
+    for (JsonElement groupElement : groups) {
+      if (!groupElement.isJsonObject()) {
+        continue;
+      }
+      JsonObject group = groupElement.getAsJsonObject();
+      JsonObject props = new JsonObject();
+      JsonObject capacityProps = new JsonObject();
+      addMappedNumber(props, "internalDiameter", group, "innerDiameterM");
+      addMappedNumber(props, "separatorLength", group, "tanTanLengthM");
+      addMappedNumber(capacityProps, "internalDiameter", group, "innerDiameterM");
+      addMappedNumber(capacityProps, "separatorLength", group, "tanTanLengthM");
+      if (group.has("designPressureBara")) {
+        JsonObject mechanicalDesign = new JsonObject();
+        mechanicalDesign.addProperty("maxOperationPressure",
+            group.get("designPressureBara").getAsDouble());
+        props.add("mechanicalDesign", mechanicalDesign);
+      }
+      addCapacityDataForUnitNames(generatedDesignCapacities, group, capacityProps);
+      report.add(applyGroupedUnitProperties(group, props));
+    }
+    return report;
+  }
+
+  /**
+   * Applies compressor sizing records and records capacity data.
+   *
+   * @param groups compressorSizing array
+   * @param generatedDesignCapacities normalized design capacity object to populate
+   * @return JSON array with one report object per compressor record
+   */
+  private JsonArray applyCompressorSizing(JsonArray groups, JsonObject generatedDesignCapacities) {
+    JsonArray report = new JsonArray();
+    for (JsonElement groupElement : groups) {
+      if (!groupElement.isJsonObject()) {
+        continue;
+      }
+      JsonObject group = groupElement.getAsJsonObject();
+      JsonObject props = new JsonObject();
+      JsonObject capacityProps = new JsonObject();
+      JsonObject driverProps = createCompressorDriverProperties(group);
+      addMappedNumber(props, "outletPressure", group, "designDischargePressureBara");
+      addMappedNumber(props, "isentropicEfficiency", group, "normalIsentropicEfficiency");
+      if (group.has("ratedShaftPowerMW")) {
+        driverProps.addProperty("ratedPower",
+            group.get("ratedShaftPowerMW").getAsDouble() * 1000.0);
+        capacityProps.addProperty("ratedPower",
+            group.get("ratedShaftPowerMW").getAsDouble() * 1000.0);
+      }
+      if (driverProps.size() > 0) {
+        props.add("driver", driverProps);
+      }
+      addCapacityDataForUnitName(generatedDesignCapacities, group, capacityProps);
+      report.add(applySingleUnitProperties(group, props));
+    }
+    return report;
+  }
+
+  /**
+   * Creates compressor driver properties from equipmentDesign compressor sizing data.
+   *
+   * @param group compressor sizing group
+   * @return driver properties object
+   */
+  private JsonObject createCompressorDriverProperties(JsonObject group) {
+    JsonObject driverProps = new JsonObject();
+    if (group.has("driverType")) {
+      driverProps.addProperty("type", group.get("driverType").getAsString());
+    }
+    if (group.has("maxShaftPowerMW")) {
+      driverProps.addProperty("maxPower", group.get("maxShaftPowerMW").getAsDouble() * 1000.0);
+    }
+    addMappedNumber(driverProps, "ratedSpeed", group, "ratedSpeedRPM");
+    addMappedNumber(driverProps, "minSpeed", group, "minSpeedRPM");
+    addMappedNumber(driverProps, "maxSpeed", group, "maxSpeedRPM");
+    addMappedNumber(driverProps, "driverEfficiency", group, "driverEfficiency");
+    addMappedNumber(driverProps, "temperatureDerateFactor", group, "temperatureDerateFactor");
+    if (group.has("maxPowerCurveCoefficients")
+        && group.get("maxPowerCurveCoefficients").isJsonArray()) {
+      driverProps.add("maxPowerCurveCoefficients",
+          group.get("maxPowerCurveCoefficients").deepCopy());
+    }
+    if (group.has("maxPowerSpeedCurve") && group.get("maxPowerSpeedCurve").isJsonObject()) {
+      driverProps.add("maxPowerSpeedCurve", group.get("maxPowerSpeedCurve").deepCopy());
+    }
+    return driverProps;
+  }
+
+  /**
+   * Applies cooler sizing groups and records capacity data.
+   *
+   * @param groups coolerSizing array
+   * @param generatedDesignCapacities normalized design capacity object to populate
+   * @return JSON array with one report object per group
+   */
+  private JsonArray applyCoolerSizing(JsonArray groups, JsonObject generatedDesignCapacities) {
+    JsonArray report = new JsonArray();
+    for (JsonElement groupElement : groups) {
+      if (!groupElement.isJsonObject()) {
+        continue;
+      }
+      JsonObject group = groupElement.getAsJsonObject();
+      JsonObject props = new JsonObject();
+      JsonObject capacityProps = new JsonObject();
+      if (group.has("normalOutletTemperatureDegC")) {
+        JsonArray outletTemperature = new JsonArray();
+        outletTemperature.add(group.get("normalOutletTemperatureDegC").getAsDouble());
+        outletTemperature.add("C");
+        props.add("outletTemperature", outletTemperature);
+      }
+      if (group.has("maxDesignDutyMWEach")) {
+        JsonArray maxDesignDuty = new JsonArray();
+        maxDesignDuty.add(group.get("maxDesignDutyMWEach").getAsDouble());
+        maxDesignDuty.add("MW");
+        props.add("maxDesignDuty", maxDesignDuty);
+        capacityProps.addProperty("maxDesignDutyMW",
+            group.get("maxDesignDutyMWEach").getAsDouble());
+      }
+      addCapacityDataForUnitNames(generatedDesignCapacities, group, capacityProps);
+      report.add(applyGroupedUnitProperties(group, props));
+    }
+    return report;
+  }
+
+  /**
+   * Adds a mapped numeric property when the source key exists.
+   *
+   * @param target target property object
+   * @param targetKey target property name
+   * @param source source object
+   * @param sourceKey source property name
+   */
+  private void addMappedNumber(JsonObject target, String targetKey, JsonObject source,
+      String sourceKey) {
+    if (source.has(sourceKey) && source.get(sourceKey).isJsonPrimitive()
+        && source.get(sourceKey).getAsJsonPrimitive().isNumber()) {
+      target.addProperty(targetKey, source.get(sourceKey).getAsDouble());
+    }
+  }
+
+  /**
+   * Applies one property object to all unit names in a group.
+   *
+   * @param group sizing group containing unitNames
+   * @param props properties to apply
+   * @return JSON report for the group
+   */
+  private JsonObject applyGroupedUnitProperties(JsonObject group, JsonObject props) {
+    JsonObject groupReport = createGroupReport(group, props);
+    JsonArray unitReports = new JsonArray();
+    if (group.has("unitNames") && group.get("unitNames").isJsonArray()) {
+      JsonArray names = group.getAsJsonArray("unitNames");
+      for (JsonElement nameElement : names) {
+        unitReports.add(applyUnitProperties(nameElement.getAsString(), props));
+      }
+    } else if (group.has("unitName")) {
+      unitReports.add(applyUnitProperties(group.get("unitName").getAsString(), props));
+    }
+    groupReport.add("units", unitReports);
+    return groupReport;
+  }
+
+  /**
+   * Applies one property object to the single unitName in a record.
+   *
+   * @param group sizing record containing unitName
+   * @param props properties to apply
+   * @return JSON report for the record
+   */
+  private JsonObject applySingleUnitProperties(JsonObject group, JsonObject props) {
+    JsonObject groupReport = createGroupReport(group, props);
+    JsonArray unitReports = new JsonArray();
+    if (group.has("unitName")) {
+      unitReports.add(applyUnitProperties(group.get("unitName").getAsString(), props));
+    } else if (group.has("unitNames") && group.get("unitNames").isJsonArray()) {
+      JsonArray names = group.getAsJsonArray("unitNames");
+      for (JsonElement nameElement : names) {
+        unitReports.add(applyUnitProperties(nameElement.getAsString(), props));
+      }
+    }
+    groupReport.add("units", unitReports);
+    return groupReport;
+  }
+
+  /**
+   * Creates the common report header for a design group.
+   *
+   * @param group source design group
+   * @param props properties selected for application
+   * @return JSON report object
+   */
+  private JsonObject createGroupReport(JsonObject group, JsonObject props) {
+    JsonObject groupReport = new JsonObject();
+    if (group.has("groupName")) {
+      groupReport.addProperty("groupName", group.get("groupName").getAsString());
+    }
+    if (group.has("unitName")) {
+      groupReport.addProperty("unitName", group.get("unitName").getAsString());
+    }
+    groupReport.add("appliedProperties", JsonParser.parseString(props.toString()));
+    return groupReport;
+  }
+
+  /**
+   * Applies properties to one named equipment item.
+   *
+   * @param unitName equipment name
+   * @param props properties to apply
+   * @return JSON report for the unit
+   */
+  private JsonObject applyUnitProperties(String unitName, JsonObject props) {
+    JsonObject unitReport = new JsonObject();
+    unitReport.addProperty("unitName", unitName);
+    ProcessEquipmentInterface equipment = namedEquipment.get(unitName);
+    if (equipment == null) {
+      unitReport.addProperty("status", "not_found");
+      warnings.add("equipmentDesign references unknown unit '" + unitName + "'");
+      return unitReport;
+    }
+    if (props.size() > 0) {
+      applyProperties(equipment, props);
+    }
+    unitReport.addProperty("status", props.size() > 0 ? "applied" : "metadata_only");
+    return unitReport;
+  }
+
+  /**
+   * Adds capacity data for all unit names in a group.
+   *
+   * @param designCapacities target designCapacities object
+   * @param group source group containing unitNames
+   * @param capacityProps capacity properties to add
+   */
+  private void addCapacityDataForUnitNames(JsonObject designCapacities, JsonObject group,
+      JsonObject capacityProps) {
+    if (capacityProps.size() == 0) {
+      return;
+    }
+    if (group.has("unitNames") && group.get("unitNames").isJsonArray()) {
+      JsonArray names = group.getAsJsonArray("unitNames");
+      for (JsonElement nameElement : names) {
+        designCapacities.add(nameElement.getAsString(),
+            JsonParser.parseString(capacityProps.toString()));
+      }
+    } else {
+      addCapacityDataForUnitName(designCapacities, group, capacityProps);
+    }
+  }
+
+  /**
+   * Adds capacity data for a single unitName in a record.
+   *
+   * @param designCapacities target designCapacities object
+   * @param group source group containing unitName
+   * @param capacityProps capacity properties to add
+   */
+  private void addCapacityDataForUnitName(JsonObject designCapacities, JsonObject group,
+      JsonObject capacityProps) {
+    if (capacityProps.size() == 0 || !group.has("unitName")) {
+      return;
+    }
+    designCapacities.add(group.get("unitName").getAsString(),
+        JsonParser.parseString(capacityProps.toString()));
   }
 
   /**
@@ -367,26 +791,24 @@ public class JsonProcessBuilder {
           double omega = cc.get("acentricFactor").getAsDouble();
           boolean isPlusFraction =
               cc.has("isPlusFraction") && cc.get("isPlusFraction").getAsBoolean();
+          int compIdx;
           if (isPlusFraction) {
             fluid.addPlusFraction(compName, moleFraction, molarMass, density);
-            int compIdx = fluid.getPhase(0).getNumberOfComponents() - 1;
-            fluid.getPhase(0).getComponent(compIdx).setTC(tc);
-            fluid.getPhase(0).getComponent(compIdx).setPC(pc);
-            fluid.getPhase(0).getComponent(compIdx).setAcentricFactor(omega);
-            fluid.getPhase(1).getComponent(compIdx).setTC(tc);
-            fluid.getPhase(1).getComponent(compIdx).setPC(pc);
-            fluid.getPhase(1).getComponent(compIdx).setAcentricFactor(omega);
+            compIdx = fluid.getPhase(0).getNumberOfComponents() - 1;
+            applyComponentPropertiesToIndex(fluid, compIdx, cc);
           } else {
             fluid.addTBPfraction(compName, moleFraction, molarMass, density);
-            int compIdx = fluid.getPhase(0).getNumberOfComponents() - 1;
-            fluid.getPhase(0).getComponent(compIdx).setTC(tc);
-            fluid.getPhase(0).getComponent(compIdx).setPC(pc);
-            fluid.getPhase(0).getComponent(compIdx).setAcentricFactor(omega);
-            fluid.getPhase(1).getComponent(compIdx).setTC(tc);
-            fluid.getPhase(1).getComponent(compIdx).setPC(pc);
-            fluid.getPhase(1).getComponent(compIdx).setAcentricFactor(omega);
+            compIdx = fluid.getPhase(0).getNumberOfComponents() - 1;
+            applyComponentPropertiesToIndex(fluid, compIdx, cc);
           }
+          fluid.getPhase(0).getComponent(compIdx).setTC(tc);
+          fluid.getPhase(0).getComponent(compIdx).setPC(pc);
+          fluid.getPhase(0).getComponent(compIdx).setAcentricFactor(omega);
         }
+      }
+
+      if (!fluidDef.has("e300FilePath") && fluidDef.has("componentProperties")) {
+        applyComponentProperties(fluid, fluidDef.getAsJsonArray("componentProperties"));
       }
 
       // Set mixing rule
@@ -396,19 +818,15 @@ public class JsonProcessBuilder {
         fluid.setMixingRule(mixingRule);
       }
 
+      if (fluidDef.has("useVolumeCorrection")) {
+        fluid.useVolumeCorrection(fluidDef.get("useVolumeCorrection").getAsBoolean());
+      }
+
       // Apply binary interaction parameters (BICs)
       if (!fluidDef.has("e300FilePath") && fluidDef.has("binaryInteractionParameters")) {
         // Build a mapping from exported names to actual system names
         // addTBPfraction appends "_PC" to component names
-        Map<String, String> nameMap = new HashMap<>();
-        for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-          String sysName = fluid.getPhase(0).getComponent(i).getComponentName();
-          nameMap.put(sysName, sysName);
-          // Also map the name without _PC suffix
-          if (sysName.endsWith("_PC")) {
-            nameMap.put(sysName.substring(0, sysName.length() - 3), sysName);
-          }
-        }
+        Map<String, String> nameMap = createComponentNameMap(fluid);
 
         JsonArray bics = fluidDef.getAsJsonArray("binaryInteractionParameters");
         for (int i = 0; i < bics.size(); i++) {
@@ -442,6 +860,134 @@ public class JsonProcessBuilder {
           "Failed to create fluid: " + e.getMessage(), null,
           "Check component names and fluid parameters"));
       return null;
+    }
+  }
+
+  /**
+   * Applies component property overrides to all matching components in a fluid.
+   *
+   * @param fluid the fluid to update
+   * @param componentProperties component property definitions from JSON
+   */
+  private void applyComponentProperties(SystemInterface fluid, JsonArray componentProperties) {
+    Map<String, String> nameMap = createComponentNameMap(fluid);
+    for (int i = 0; i < componentProperties.size(); i++) {
+      JsonObject props = componentProperties.get(i).getAsJsonObject();
+      if (!props.has("name")) {
+        continue;
+      }
+      String mappedName = nameMap.get(props.get("name").getAsString());
+      if (mappedName != null) {
+        applyComponentPropertiesToName(fluid, mappedName, props);
+      }
+    }
+  }
+
+  /**
+   * Creates a map from exported component names to actual names used in the rebuilt fluid.
+   *
+   * @param fluid the rebuilt fluid
+   * @return a component-name lookup map
+   */
+  private Map<String, String> createComponentNameMap(SystemInterface fluid) {
+    Map<String, String> nameMap = new HashMap<String, String>();
+    for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+      String sysName = fluid.getPhase(0).getComponent(i).getComponentName();
+      nameMap.put(sysName, sysName);
+      if (sysName.endsWith("_PC")) {
+        nameMap.put(sysName.substring(0, sysName.length() - 3), sysName);
+      }
+    }
+    return nameMap;
+  }
+
+  /**
+   * Applies component property overrides to a component selected by component index.
+   *
+   * @param fluid the fluid to update
+   * @param componentIndex the component index in each phase
+   * @param props the property definitions to apply
+   */
+  private void applyComponentPropertiesToIndex(SystemInterface fluid, int componentIndex,
+      JsonObject props) {
+    for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+      try {
+        applyComponentProperties(fluid.getPhase(phase).getComponent(componentIndex), props);
+      } catch (Exception ex) {
+        logger.debug("Could not apply component properties to phase {} component index {}", phase,
+            componentIndex, ex);
+      }
+    }
+  }
+
+  /**
+   * Applies component property overrides to a component selected by component name.
+   *
+   * @param fluid the fluid to update
+   * @param componentName the component name used in the rebuilt fluid
+   * @param props the property definitions to apply
+   */
+  private void applyComponentPropertiesToName(SystemInterface fluid, String componentName,
+      JsonObject props) {
+    for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+      try {
+        applyComponentProperties(fluid.getPhase(phase).getComponent(componentName), props);
+      } catch (Exception ex) {
+        logger.debug("Could not apply component properties to phase {} component {}", phase,
+            componentName, ex);
+      }
+    }
+  }
+
+  /**
+   * Applies scalar component property overrides to a component.
+   *
+   * @param component the component to update
+   * @param props the property definitions to apply
+   */
+  private void applyComponentProperties(ComponentInterface component, JsonObject props) {
+    if (props.has("molarMass")) {
+      component.setMolarMass(props.get("molarMass").getAsDouble());
+    }
+    if (props.has("density")) {
+      component.setNormalLiquidDensity(props.get("density").getAsDouble());
+    } else if (props.has("normalLiquidDensity")) {
+      component.setNormalLiquidDensity(props.get("normalLiquidDensity").getAsDouble());
+    }
+    if (props.has("Tc")) {
+      component.setTC(props.get("Tc").getAsDouble());
+    } else if (props.has("criticalTemperature")) {
+      component.setTC(props.get("criticalTemperature").getAsDouble());
+    }
+    if (props.has("Pc")) {
+      component.setPC(props.get("Pc").getAsDouble());
+    } else if (props.has("criticalPressure")) {
+      component.setPC(props.get("criticalPressure").getAsDouble());
+    }
+    if (props.has("acentricFactor")) {
+      component.setAcentricFactor(props.get("acentricFactor").getAsDouble());
+    }
+    if (props.has("normalBoilingPoint")) {
+      component.setNormalBoilingPoint(props.get("normalBoilingPoint").getAsDouble());
+    }
+    if (props.has("criticalVolume")) {
+      component.setCriticalVolume(props.get("criticalVolume").getAsDouble());
+    }
+    if (props.has("parachor")) {
+      component.setParachorParameter(props.get("parachor").getAsDouble());
+    } else if (props.has("parachorParameter")) {
+      component.setParachorParameter(props.get("parachorParameter").getAsDouble());
+    }
+    if (props.has("racketZ")) {
+      component.setRacketZ(props.get("racketZ").getAsDouble());
+    }
+    if (props.has("volumeCorrection")) {
+      component.setVolumeCorrectionConst(props.get("volumeCorrection").getAsDouble());
+    } else if (props.has("volumeShift")) {
+      component.setVolumeCorrectionConst(props.get("volumeShift").getAsDouble());
+    }
+    if (props.has("omegaA") && component instanceof ComponentEos) {
+      ((ComponentEos) component).setOmegaA(props.get("omegaA").getAsDouble());
     }
   }
 
@@ -509,11 +1055,17 @@ public class JsonProcessBuilder {
       }
 
       if (equipment != null) {
+        if (unitDef.has("tagName")) {
+          equipment.setTagName(unitDef.get("tagName").getAsString());
+        }
         // Special handling for Splitter: set split number before wiring
         // so that setInletStream creates the right number of split streams
         if (equipment instanceof Splitter && unitDef.has("properties")) {
           JsonObject props = unitDef.getAsJsonObject("properties");
-          if (props.has("splitFactors")) {
+          if (props.has("flowRates")) {
+            int nSplits = props.getAsJsonArray("flowRates").size();
+            ((Splitter) equipment).setSplitNumber(nSplits);
+          } else if (props.has("splitFactors")) {
             int nSplits = props.getAsJsonArray("splitFactors").size();
             ((Splitter) equipment).setSplitNumber(nSplits);
           }
@@ -681,14 +1233,14 @@ public class JsonProcessBuilder {
           resolved.add(stream);
         }
       }
-      // For Mixer: wire whatever inlets we have (partial is OK)
+      // For Mixer/Manifold: wire whatever inlets we have (partial is OK)
       // For HeatExchanger: need both sides
-      if (equipment instanceof Mixer && !resolved.isEmpty()) {
+      if ((equipment instanceof Mixer || equipment instanceof Manifold) && !resolved.isEmpty()) {
         for (StreamInterface stream : resolved) {
           wireInletStream(equipment, stream);
         }
         if (!allResolved) {
-          warnings.add("Mixer '" + name + "' wired with " + resolved.size() + " of "
+          warnings.add("Mixer/manifold '" + name + "' wired with " + resolved.size() + " of "
               + inletsArr.size() + " inlets (some not found)");
         }
       } else if (equipment instanceof HeatExchanger && resolved.size() == 2) {
@@ -713,7 +1265,15 @@ public class JsonProcessBuilder {
     if (unitDef.has("properties")) {
       JsonObject props = unitDef.getAsJsonObject("properties");
       // Handle split factors specially (Splitter needs inlet stream first)
-      if (equipment instanceof Splitter && props.has("splitFactors")) {
+      if (equipment instanceof Splitter && props.has("flowRates")) {
+        JsonArray flowRates = props.getAsJsonArray("flowRates");
+        double[] splitFlowRates = new double[flowRates.size()];
+        for (int i = 0; i < flowRates.size(); i++) {
+          splitFlowRates[i] = flowRates.get(i).getAsDouble();
+        }
+        String flowUnit = props.has("flowUnit") ? props.get("flowUnit").getAsString() : "mole/sec";
+        ((Splitter) equipment).setFlowRates(splitFlowRates, flowUnit);
+      } else if (equipment instanceof Splitter && props.has("splitFactors")) {
         JsonArray factors = props.getAsJsonArray("splitFactors");
         double[] splitFact = new double[factors.size()];
         for (int i = 0; i < factors.size(); i++) {
@@ -729,10 +1289,22 @@ public class JsonProcessBuilder {
         }
         ((ComponentSplitter) equipment).setSplitFactors(splitFact);
       }
+      if (equipment instanceof Manifold && props.has("splitFactors")) {
+        JsonArray factors = props.getAsJsonArray("splitFactors");
+        double[] splitFact = new double[factors.size()];
+        for (int i = 0; i < factors.size(); i++) {
+          splitFact[i] = factors.get(i).getAsDouble();
+        }
+        ((Manifold) equipment).setSplitFactors(splitFact);
+      }
       // Handle Adjuster: wire adjusted/target variables by equipment reference
       if (equipment instanceof Adjuster
           && (props.has("adjustedEquipment") || props.has("targetEquipment"))) {
         wireAdjuster((Adjuster) equipment, props);
+      }
+      if (equipment instanceof Calculator
+          && (props.has("calculatorInputs") || props.has("calculatorOutput"))) {
+        wireCalculator((Calculator) equipment, props);
       }
       applyProperties(equipment, props);
     }
@@ -865,13 +1437,14 @@ public class JsonProcessBuilder {
   private StreamInterface resolveStreamReference(String ref) {
     String unitName;
     String port = "outlet"; // default
+    String normalizedRef = ref == null ? "" : ref.trim();
 
-    if (ref.contains(".")) {
-      String[] parts = ref.split("\\.", 2);
-      unitName = parts[0];
-      port = parts[1].toLowerCase();
+    if (normalizedRef.contains(".")) {
+      String[] parts = normalizedRef.split("\\.", 2);
+      unitName = parts[0].trim();
+      port = parts[1].trim().toLowerCase();
     } else {
-      unitName = ref;
+      unitName = normalizedRef;
     }
 
     ProcessEquipmentInterface unit = namedEquipment.get(unitName);
@@ -887,9 +1460,11 @@ public class JsonProcessBuilder {
     try {
       switch (port) {
         case "gasout":
+        case "gasoutstream":
         case "gas":
           return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
         case "liquidout":
+        case "liquidoutstream":
         case "liquid":
           return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
         case "oilout":
@@ -898,8 +1473,20 @@ public class JsonProcessBuilder {
         case "waterout":
         case "water":
           return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
+        case "out":
+        case "outstream":
         case "outlet":
         default:
+          // Handle legacy indexed split aliases: "splitStream_0", "splitStream_1", etc.
+          if (port.startsWith("splitstream_") && port.length() > 12) {
+            try {
+              int idx = Integer.parseInt(port.substring(12));
+              return (StreamInterface) unit.getClass().getMethod("getSplitStream", int.class)
+                  .invoke(unit, idx);
+            } catch (NumberFormatException nfe) {
+              // fall through to default outlet
+            }
+          }
           // Handle indexed split streams: "split0", "split1", etc.
           if (port.startsWith("split") && port.length() > 5) {
             try {
@@ -914,6 +1501,18 @@ public class JsonProcessBuilder {
           if (port.startsWith("hx") && port.length() > 2) {
             try {
               int idx = Integer.parseInt(port.substring(2));
+              if (unit instanceof HeatExchanger) {
+                return ((HeatExchanger) unit).getOutStream(idx);
+              }
+            } catch (NumberFormatException nfe) {
+              // fall through to default outlet
+            }
+          }
+          // Handle indexed HeatExchanger ports emitted by JsonProcessExporter:
+          // "outlet1", "outlet2", etc. Plain "outlet" remains the first outlet.
+          if (port.startsWith("outlet") && port.length() > 6) {
+            try {
+              int idx = Integer.parseInt(port.substring(6));
               if (unit instanceof HeatExchanger) {
                 return ((HeatExchanger) unit).getOutStream(idx);
               }
@@ -1004,8 +1603,25 @@ public class JsonProcessBuilder {
   private void applyProperties(ProcessEquipmentInterface equipment, JsonObject properties) {
     // Properties that are handled by dedicated logic (not generic reflection)
     java.util.Set<String> handledProps =
-        new java.util.HashSet<>(java.util.Arrays.asList("splitFactors", "adjustedEquipment",
-            "adjustedVariable", "targetEquipment", "targetVariable", "targetValue", "stepSize"));
+        new java.util.HashSet<>(java.util.Arrays.asList("splitFactors", "flowRates", "flowUnit",
+            "adjustedEquipment", "adjustedVariable", "targetEquipment", "targetVariable",
+            "targetValue", "stepSize", "compressorChart", "antiSurge", "driver", "calculatorInputs",
+            "calculatorOutput", "calculationType", "accelerationMethod", "downstreamProperty"));
+    if (equipment instanceof Recycle) {
+      applyRecycleProperties((Recycle) equipment, properties);
+    }
+    if (equipment instanceof Compressor && properties.has("compressorChart")
+        && properties.get("compressorChart").isJsonObject()) {
+      applyCompressorChart((Compressor) equipment, properties.getAsJsonObject("compressorChart"));
+    }
+    if (equipment instanceof Compressor && properties.has("antiSurge")
+        && properties.get("antiSurge").isJsonObject()) {
+      applyAntiSurge((Compressor) equipment, properties.getAsJsonObject("antiSurge"));
+    }
+    if (equipment instanceof Compressor && properties.has("driver")
+        && properties.get("driver").isJsonObject()) {
+      applyCompressorDriver((Compressor) equipment, properties.getAsJsonObject("driver"));
+    }
     for (Map.Entry<String, JsonElement> entry : properties.entrySet()) {
       String propName = entry.getKey();
       if (handledProps.contains(propName)) {
@@ -1025,7 +1641,428 @@ public class JsonProcessBuilder {
     }
   }
 
-  private void applyMechanicalDesignProperties(ProcessEquipmentInterface equipment, JsonObject mdProps) {
+  /**
+   * Applies recycle-specific convergence settings from JSON.
+   *
+   * @param recycle the recycle to configure
+   * @param props recycle property definitions
+   */
+  private void applyRecycleProperties(Recycle recycle, JsonObject props) {
+    if (props.has("accelerationMethod")) {
+      try {
+        recycle.setAccelerationMethod(
+            AccelerationMethod.valueOf(props.get("accelerationMethod").getAsString()));
+      } catch (IllegalArgumentException exception) {
+        warnings.add("Unknown recycle accelerationMethod on " + recycle.getName() + ": "
+            + props.get("accelerationMethod").getAsString());
+      }
+    }
+    if (props.has("downstreamProperty") && props.get("downstreamProperty").isJsonArray()) {
+      JsonArray downstreamProperties = props.getAsJsonArray("downstreamProperty");
+      for (int i = 0; i < downstreamProperties.size(); i++) {
+        recycle.setDownstreamProperty(downstreamProperties.get(i).getAsString());
+      }
+    }
+  }
+
+  /**
+   * Applies compressor chart data from JSON to a compressor.
+   *
+   * @param compressor the compressor to configure
+   * @param chartJson chart JSON object
+   */
+  private void applyCompressorChart(Compressor compressor, JsonObject chartJson) {
+    try {
+      if (chartJson.has("chartType")) {
+        compressor.setCompressorChartType(chartJson.get("chartType").getAsString());
+      }
+      CompressorChartInterface chart = compressor.getCompressorChart();
+      if (chartJson.has("headUnit")) {
+        chart.setHeadUnit(chartJson.get("headUnit").getAsString());
+      }
+      if (chartJson.has("useRealKappa")) {
+        chart.setUseRealKappa(chartJson.get("useRealKappa").getAsBoolean());
+      }
+      if (chartJson.has("speeds") && chartJson.has("flows") && chartJson.has("heads")
+          && chartJson.has("polytropicEfficiencies")) {
+        double[] chartConditions = chartJson.has("chartConditions")
+            ? readDoubleArray(chartJson.getAsJsonArray("chartConditions"))
+            : new double[0];
+        double[] speeds = readDoubleArray(chartJson.getAsJsonArray("speeds"));
+        double[][] flows = readDoubleMatrix(chartJson.getAsJsonArray("flows"));
+        double[][] heads = readDoubleMatrix(chartJson.getAsJsonArray("heads"));
+        double[][] efficiencies =
+            readDoubleMatrix(chartJson.getAsJsonArray("polytropicEfficiencies"));
+        if (speeds.length > 0) {
+          chart.setCurves(chartConditions, speeds, flows, heads, efficiencies);
+        }
+      }
+      if (chartJson.has("surgeCurve") && chartJson.get("surgeCurve").isJsonObject()) {
+        applySurgeCurve(chart, chartJson.getAsJsonObject("surgeCurve"));
+      }
+      if (chartJson.has("stoneWallCurve") && chartJson.get("stoneWallCurve").isJsonObject()) {
+        applyStoneWallCurve(chart, chartJson.getAsJsonObject("stoneWallCurve"));
+      }
+      if (chartJson.has("useCompressorChart")) {
+        chart.setUseCompressorChart(chartJson.get("useCompressorChart").getAsBoolean());
+      }
+    } catch (Exception exception) {
+      warnings.add("Error applying compressorChart on " + compressor.getName() + ": "
+          + exception.getMessage());
+    }
+  }
+
+  /**
+   * Applies compressor driver data from JSON to a compressor.
+   *
+   * @param compressor the compressor to configure
+   * @param driverJson driver JSON object
+   */
+  private void applyCompressorDriver(Compressor compressor, JsonObject driverJson) {
+    try {
+      DriverType driverType = readDriverType(driverJson);
+      double ratedPower = readPowerValue(driverJson, "ratedPower",
+          new CompressorDriver(driverType).getRatedPower());
+      CompressorDriver driver = new CompressorDriver(driverType, ratedPower);
+
+      applyDriverScalarProperties(driver, driverJson);
+      applyDriverCurveProperties(driver, driverJson);
+      compressor.setDriver(driver);
+    } catch (Exception exception) {
+      warnings
+          .add("Error applying driver on " + compressor.getName() + ": " + exception.getMessage());
+    }
+  }
+
+  /**
+   * Reads a compressor driver type from JSON.
+   *
+   * @param driverJson driver JSON object
+   * @return parsed driver type, or electric motor when not supplied
+   */
+  private DriverType readDriverType(JsonObject driverJson) {
+    if (driverJson.has("type")) {
+      return DriverType.fromName(driverJson.get("type").getAsString());
+    }
+    if (driverJson.has("driverType")) {
+      return DriverType.fromName(driverJson.get("driverType").getAsString());
+    }
+    return DriverType.ELECTRIC_MOTOR;
+  }
+
+  /**
+   * Reads a power value in kW from JSON with optional unit-specific key variants.
+   *
+   * @param source source JSON object
+   * @param baseKey base key, for example {@code ratedPower}
+   * @param defaultValue value returned when no matching key exists
+   * @return power value in kW
+   */
+  private double readPowerValue(JsonObject source, String baseKey, double defaultValue) {
+    if (source.has(baseKey)) {
+      return source.get(baseKey).getAsDouble();
+    }
+    if (source.has(baseKey + "KW")) {
+      return source.get(baseKey + "KW").getAsDouble();
+    }
+    if (source.has(baseKey + "MW")) {
+      return source.get(baseKey + "MW").getAsDouble() * 1000.0;
+    }
+    if (source.has(baseKey + "W")) {
+      return source.get(baseKey + "W").getAsDouble() * 0.001;
+    }
+    return defaultValue;
+  }
+
+  /**
+   * Applies scalar compressor driver properties.
+   *
+   * @param driver the driver to configure
+   * @param driverJson driver JSON object
+   */
+  private void applyDriverScalarProperties(CompressorDriver driver, JsonObject driverJson) {
+    double maxPower = readPowerValue(driverJson, "maxPower", Double.NaN);
+    if (!Double.isNaN(maxPower)) {
+      driver.setMaxPower(maxPower);
+    }
+    double minPower = readPowerValue(driverJson, "minPower", Double.NaN);
+    if (!Double.isNaN(minPower)) {
+      driver.setMinPower(minPower);
+    }
+    if (driverJson.has("driverEfficiency")) {
+      driver.setDriverEfficiency(driverJson.get("driverEfficiency").getAsDouble());
+    }
+    if (driverJson.has("responseTime")) {
+      driver.setResponseTime(driverJson.get("responseTime").getAsDouble());
+    }
+    if (driverJson.has("inertia")) {
+      driver.setInertia(driverJson.get("inertia").getAsDouble());
+    }
+    if (driverJson.has("maxAcceleration")) {
+      driver.setMaxAcceleration(driverJson.get("maxAcceleration").getAsDouble());
+    }
+    if (driverJson.has("maxDeceleration")) {
+      driver.setMaxDeceleration(driverJson.get("maxDeceleration").getAsDouble());
+    }
+    if (driverJson.has("ambientTemperature")) {
+      driver.setAmbientTemperature(driverJson.get("ambientTemperature").getAsDouble());
+    }
+    if (driverJson.has("ambientPressure")) {
+      driver.setAmbientPressure(driverJson.get("ambientPressure").getAsDouble());
+    }
+    if (driverJson.has("overloadProtectionEnabled")) {
+      driver
+          .setOverloadProtectionEnabled(driverJson.get("overloadProtectionEnabled").getAsBoolean());
+    }
+    if (driverJson.has("overloadTripDelay")) {
+      driver.setOverloadTripDelay(driverJson.get("overloadTripDelay").getAsDouble());
+    }
+    if (driverJson.has("minSpeed")) {
+      driver.setMinSpeed(driverJson.get("minSpeed").getAsDouble());
+    }
+    if (driverJson.has("maxSpeed")) {
+      driver.setMaxSpeed(driverJson.get("maxSpeed").getAsDouble());
+    }
+    if (driverJson.has("ratedSpeed")) {
+      driver.setRatedSpeed(driverJson.get("ratedSpeed").getAsDouble());
+    }
+    if (driverJson.has("temperatureDerateFactor")) {
+      driver.setTemperatureDerateFactor(driverJson.get("temperatureDerateFactor").getAsDouble());
+    }
+  }
+
+  /**
+   * Applies compressor driver curve properties.
+   *
+   * @param driver the driver to configure
+   * @param driverJson driver JSON object
+   */
+  private void applyDriverCurveProperties(CompressorDriver driver, JsonObject driverJson) {
+    if (driverJson.has("vfdEfficiencyCoefficients")
+        && driverJson.get("vfdEfficiencyCoefficients").isJsonArray()) {
+      double[] coeffs = readDoubleArray(driverJson.getAsJsonArray("vfdEfficiencyCoefficients"));
+      if (coeffs.length >= 3) {
+        driver.setVfdEfficiencyCoefficients(coeffs[0], coeffs[1], coeffs[2]);
+      }
+    }
+    if (driverJson.has("maxPowerCurveCoefficients")
+        && driverJson.get("maxPowerCurveCoefficients").isJsonArray()) {
+      double[] coeffs = readDoubleArray(driverJson.getAsJsonArray("maxPowerCurveCoefficients"));
+      if (coeffs.length >= 3) {
+        driver.setMaxPowerCurveCoefficients(coeffs[0], coeffs[1], coeffs[2]);
+      }
+    }
+    if (driverJson.has("maxPowerCurveEnabled")
+        && !driverJson.get("maxPowerCurveEnabled").getAsBoolean()) {
+      driver.disableMaxPowerCurve();
+    }
+    applyDriverMaxPowerSpeedCurve(driver, driverJson);
+  }
+
+  /**
+   * Applies a tabular max-power speed curve to a compressor driver.
+   *
+   * @param driver the driver to configure
+   * @param driverJson driver JSON object
+   */
+  private void applyDriverMaxPowerSpeedCurve(CompressorDriver driver, JsonObject driverJson) {
+    if (driverJson.has("maxPowerSpeedCurve")
+        && driverJson.get("maxPowerSpeedCurve").isJsonObject()) {
+      JsonObject curve = driverJson.getAsJsonObject("maxPowerSpeedCurve");
+      if (curve.has("speeds") && curve.has("powers")) {
+        String powerUnit = curve.has("powerUnit") ? curve.get("powerUnit").getAsString() : "kW";
+        driver.setMaxPowerSpeedCurve(readDoubleArray(curve.getAsJsonArray("speeds")),
+            readDoubleArray(curve.getAsJsonArray("powers")), powerUnit);
+      }
+      return;
+    }
+    if (driverJson.has("maxPowerCurveSpeeds") && driverJson.has("maxPowerCurvePowers")) {
+      String powerUnit = driverJson.has("maxPowerCurvePowerUnit")
+          ? driverJson.get("maxPowerCurvePowerUnit").getAsString()
+          : "kW";
+      driver.setMaxPowerSpeedCurve(
+          readDoubleArray(driverJson.getAsJsonArray("maxPowerCurveSpeeds")),
+          readDoubleArray(driverJson.getAsJsonArray("maxPowerCurvePowers")), powerUnit);
+    }
+  }
+
+  /**
+   * Applies an anti-surge controller configuration from JSON.
+   *
+   * @param compressor compressor owning the controller
+   * @param antiSurgeJson anti-surge JSON object
+   */
+  private void applyAntiSurge(Compressor compressor, JsonObject antiSurgeJson) {
+    AntiSurge antiSurge = compressor.getAntiSurge();
+    if (antiSurgeJson.has("active")) {
+      antiSurge.setActive(antiSurgeJson.get("active").getAsBoolean());
+    }
+    if (antiSurgeJson.has("surge")) {
+      antiSurge.setSurge(antiSurgeJson.get("surge").getAsBoolean());
+    }
+    if (antiSurgeJson.has("surgeControlFactor")) {
+      antiSurge.setSurgeControlFactor(antiSurgeJson.get("surgeControlFactor").getAsDouble());
+    }
+    if (antiSurgeJson.has("currentSurgeFraction")) {
+      antiSurge.setCurrentSurgeFraction(antiSurgeJson.get("currentSurgeFraction").getAsDouble());
+    }
+    if (antiSurgeJson.has("controlStrategy")) {
+      try {
+        antiSurge.setControlStrategy(
+            AntiSurge.ControlStrategy.valueOf(antiSurgeJson.get("controlStrategy").getAsString()));
+      } catch (IllegalArgumentException exception) {
+        warnings.add("Unknown antiSurge controlStrategy on " + compressor.getName() + ": "
+            + antiSurgeJson.get("controlStrategy").getAsString());
+      }
+    }
+    if (antiSurgeJson.has("minimumRecycleFlow")) {
+      antiSurge.setMinimumRecycleFlow(antiSurgeJson.get("minimumRecycleFlow").getAsDouble());
+    }
+    if (antiSurgeJson.has("maximumRecycleFlow")) {
+      antiSurge.setMaximumRecycleFlow(antiSurgeJson.get("maximumRecycleFlow").getAsDouble());
+    }
+    if (antiSurgeJson.has("valvePosition")) {
+      antiSurge.setValvePosition(antiSurgeJson.get("valvePosition").getAsDouble());
+    }
+    if (antiSurgeJson.has("valveResponseTime")) {
+      antiSurge.setValveResponseTime(antiSurgeJson.get("valveResponseTime").getAsDouble());
+    }
+    if (antiSurgeJson.has("valveRateLimit")) {
+      antiSurge.setValveRateLimit(antiSurgeJson.get("valveRateLimit").getAsDouble());
+    }
+    if (antiSurgeJson.has("targetValvePosition")) {
+      antiSurge.setTargetValvePosition(antiSurgeJson.get("targetValvePosition").getAsDouble());
+    }
+    if (antiSurgeJson.has("surgeControlLineOffset")) {
+      antiSurge
+          .setSurgeControlLineOffset(antiSurgeJson.get("surgeControlLineOffset").getAsDouble());
+    }
+    if (antiSurgeJson.has("useHotGasBypass")) {
+      antiSurge.setUseHotGasBypass(antiSurgeJson.get("useHotGasBypass").getAsBoolean());
+    }
+    if (antiSurgeJson.has("hotGasBypassFlow")) {
+      antiSurge.setHotGasBypassFlow(antiSurgeJson.get("hotGasBypassFlow").getAsDouble());
+    }
+    if (antiSurgeJson.has("surgeWarningMargin")) {
+      antiSurge.setSurgeWarningMargin(antiSurgeJson.get("surgeWarningMargin").getAsDouble());
+    }
+    if (antiSurgeJson.has("predictiveHorizon")) {
+      antiSurge.setPredictiveHorizon(antiSurgeJson.get("predictiveHorizon").getAsDouble());
+    }
+  }
+
+  /**
+   * Applies a surge curve to a compressor chart.
+   *
+   * @param chart compressor chart to update
+   * @param curveJson JSON curve definition
+   */
+  private void applySurgeCurve(CompressorChartInterface chart, JsonObject curveJson) {
+    boolean active = curveJson.has("active") && curveJson.get("active").getAsBoolean();
+    if (curveJson.has("flow") && curveJson.has("head")) {
+      SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve(
+          ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("flow"))),
+          ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("head"))));
+      surgeCurve.setActive(active);
+      chart.setSurgeCurve(surgeCurve);
+    } else {
+      chart.getSurgeCurve().setActive(active);
+    }
+  }
+
+  /**
+   * Applies a stone wall curve to a compressor chart.
+   *
+   * @param chart compressor chart to update
+   * @param curveJson JSON curve definition
+   */
+  private void applyStoneWallCurve(CompressorChartInterface chart, JsonObject curveJson) {
+    boolean active = curveJson.has("active") && curveJson.get("active").getAsBoolean();
+    if (curveJson.has("flow") && curveJson.has("head")) {
+      SafeSplineStoneWallCurve stoneWallCurve = new SafeSplineStoneWallCurve(
+          ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("flow"))),
+          ensureSplineBoundaryPointCount(readDoubleArray(curveJson.getAsJsonArray("head"))));
+      stoneWallCurve.setActive(active);
+      chart.setStoneWallCurve(stoneWallCurve);
+    } else {
+      chart.getStoneWallCurve().setActive(active);
+    }
+  }
+
+  /**
+   * Wires calculator input and output equipment references from JSON.
+   *
+   * @param calculator the calculator to configure
+   * @param props calculator properties
+   */
+  private void wireCalculator(Calculator calculator, JsonObject props) {
+    if (props.has("calculatorInputs") && calculator.getInputVariable().isEmpty()) {
+      JsonArray inputs = props.getAsJsonArray("calculatorInputs");
+      for (JsonElement inputElement : inputs) {
+        ProcessEquipmentInterface input = namedEquipment.get(inputElement.getAsString());
+        if (input != null) {
+          calculator.addInputVariable(input);
+        } else {
+          warnings.add("Calculator '" + calculator.getName() + "' input equipment '"
+              + inputElement.getAsString() + "' not found");
+        }
+      }
+    }
+    if (props.has("calculatorOutput") && calculator.getOutputVariable() == null) {
+      String outputName = props.get("calculatorOutput").getAsString();
+      ProcessEquipmentInterface output = namedEquipment.get(outputName);
+      if (output != null) {
+        calculator.setOutputVariable(output);
+      } else {
+        warnings.add("Calculator '" + calculator.getName() + "' output equipment '" + outputName
+            + "' not found");
+      }
+    }
+  }
+
+  /**
+   * Reads a JSON array of numbers into a double array.
+   *
+   * @param array JSON array to read
+   * @return double array with the same numeric values
+   */
+  private double[] readDoubleArray(JsonArray array) {
+    double[] values = new double[array.size()];
+    for (int i = 0; i < array.size(); i++) {
+      values[i] = array.get(i).getAsDouble();
+    }
+    return values;
+  }
+
+  /**
+   * Ensures a boundary curve has a point count supported by safe spline curves.
+   *
+   * @param values original boundary curve values
+   * @return original values, or a three-point array with a midpoint inserted for two-point curves
+   */
+  private double[] ensureSplineBoundaryPointCount(double[] values) {
+    if (values.length != 2) {
+      return values;
+    }
+    return new double[] {values[0], 0.5 * (values[0] + values[1]), values[1]};
+  }
+
+  /**
+   * Reads a JSON matrix of numbers into a double matrix.
+   *
+   * @param matrix JSON array of numeric arrays
+   * @return double matrix with the same numeric values
+   */
+  private double[][] readDoubleMatrix(JsonArray matrix) {
+    double[][] values = new double[matrix.size()][];
+    for (int i = 0; i < matrix.size(); i++) {
+      values[i] = readDoubleArray(matrix.get(i).getAsJsonArray());
+    }
+    return values;
+  }
+
+  private void applyMechanicalDesignProperties(ProcessEquipmentInterface equipment,
+      JsonObject mdProps) {
     try {
       equipment.initMechanicalDesign();
       Object design = equipment.getMechanicalDesign();
@@ -1035,19 +2072,22 @@ public class JsonProcessBuilder {
       }
       for (Map.Entry<String, JsonElement> entry : mdProps.entrySet()) {
         String key = entry.getKey();
-        if ("calcDesign".equalsIgnoreCase(key) || "readDesignSpecifications".equalsIgnoreCase(key)) {
+        if ("calcDesign".equalsIgnoreCase(key)
+            || "readDesignSpecifications".equalsIgnoreCase(key)) {
           continue;
         }
         applyPropertyObject(design, equipment.getName(), key, entry.getValue());
       }
-      if (mdProps.has("readDesignSpecifications") && mdProps.get("readDesignSpecifications").getAsBoolean()) {
+      if (mdProps.has("readDesignSpecifications")
+          && mdProps.get("readDesignSpecifications").getAsBoolean()) {
         invokeNoArg(design, equipment.getName(), "readDesignSpecifications");
       }
       if (mdProps.has("calcDesign") && mdProps.get("calcDesign").getAsBoolean()) {
         invokeNoArg(design, equipment.getName(), "calcDesign");
       }
     } catch (Exception e) {
-      warnings.add("Error applying mechanicalDesign on " + equipment.getName() + ": " + e.getMessage());
+      warnings
+          .add("Error applying mechanicalDesign on " + equipment.getName() + ": " + e.getMessage());
     }
   }
 
@@ -1183,8 +2223,7 @@ public class JsonProcessBuilder {
         if (value.getAsJsonPrimitive().isNumber()) {
           // Try double setter first
           try {
-            java.lang.reflect.Method method =
-                target.getClass().getMethod(setterName, double.class);
+            java.lang.reflect.Method method = target.getClass().getMethod(setterName, double.class);
             method.invoke(target, value.getAsDouble());
           } catch (NoSuchMethodException e) {
             // Try int setter
@@ -1192,18 +2231,16 @@ public class JsonProcessBuilder {
             method.invoke(target, value.getAsInt());
           }
         } else if (value.getAsJsonPrimitive().isBoolean()) {
-          java.lang.reflect.Method method =
-              target.getClass().getMethod(setterName, boolean.class);
+          java.lang.reflect.Method method = target.getClass().getMethod(setterName, boolean.class);
           method.invoke(target, value.getAsBoolean());
         } else if (value.getAsJsonPrimitive().isString()) {
-          java.lang.reflect.Method method =
-              target.getClass().getMethod(setterName, String.class);
+          java.lang.reflect.Method method = target.getClass().getMethod(setterName, String.class);
           method.invoke(target, value.getAsString());
         }
       }
     } catch (NoSuchMethodException e) {
-      warnings.add("Property '" + propName + "' not found on " + targetName + " (tried "
-          + setterName + ")");
+      warnings.add(
+          "Property '" + propName + "' not found on " + targetName + " (tried " + setterName + ")");
     } catch (Exception e) {
       warnings.add("Error setting '" + propName + "' on " + targetName + ": " + e.getMessage());
     }

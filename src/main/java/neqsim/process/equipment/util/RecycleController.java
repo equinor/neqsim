@@ -48,6 +48,8 @@ public class RecycleController implements java.io.Serializable {
    * Initializes the controller for a new convergence cycle.
    */
   public void init() {
+    minimumPriorityLevel = 100;
+    maximumPriorityLevel = 100;
     for (Recycle recyc : recycleArray) {
       recyc.resetIterations();
       if (recyc.getPriority() < minimumPriorityLevel) {
@@ -185,7 +187,9 @@ public class RecycleController implements java.io.Serializable {
    */
   public boolean solvedAll() {
     for (Recycle recyc : recycleArray) {
-      logger.info(recyc.getName() + " solved " + recyc.solved());
+      if (logger.isDebugEnabled()) {
+        logger.debug(recyc.getName() + " solved " + recyc.solved());
+      }
       if (!recyc.solved()) {
         return false;
       }
@@ -201,6 +205,9 @@ public class RecycleController implements java.io.Serializable {
   public void clear() {
     recycleArray.clear();
     priorityArray.clear();
+    minimumPriorityLevel = 100;
+    maximumPriorityLevel = 100;
+    currentPriorityLevel = 100;
   }
 
   /**

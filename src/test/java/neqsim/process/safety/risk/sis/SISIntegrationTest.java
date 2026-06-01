@@ -219,6 +219,18 @@ class SISIntegrationTest {
   }
 
   @Test
+  void testSTS0131OverpressureTargetFrequency() {
+    assertEquals(1.0e-2, LOPAResult.getSTS0131OverpressureTargetFrequency(90.0, 100.0, 150.0),
+        1.0e-12);
+    assertEquals(1.0e-3, LOPAResult.getSTS0131OverpressureTargetFrequency(120.0, 100.0, 150.0),
+        1.0e-12);
+    assertEquals(1.0e-4, LOPAResult.getSTS0131OverpressureTargetFrequency(175.0, 100.0, 150.0),
+        1.0e-12);
+    assertEquals(1.0e-5, LOPAResult.getSTS0131OverpressureTargetFrequency(250.0, 100.0, 150.0),
+        1.0e-12);
+  }
+
+  @Test
   void testLOPAResultAddLayer() {
     LOPAResult result = new LOPAResult("Test Scenario");
     result.setInitiatingEventFrequency(0.1);

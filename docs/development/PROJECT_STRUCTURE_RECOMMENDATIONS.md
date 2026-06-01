@@ -685,7 +685,7 @@ git rebase origin/master    # Or merge if you prefer
 ```
 
 ### Debug in IDE
-- **VS Code**: See [.vscode/launch.json](../../.vscode/launch.json)
+- **VS Code**: See `.vscode/launch.json` *(create as needed)*
 - **Eclipse**: Import as Maven project
 - **IntelliJ IDEA**: Import as Maven project
 

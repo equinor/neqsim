@@ -577,7 +577,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   private boolean runAdiabatic = true;
   private boolean runConstantSurfaceTemperature = false;
 
-  private double constantSurfaceTemperature;
+  private double constantSurfaceTemperature = 288.15;
 
   /**
    * Formation (geothermal) temperature gradient in K/m. When set to a positive value, the surface
@@ -815,6 +815,17 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     } else {
       throw new RuntimeException("unit not supported " + unit);
     }
+    super.setConstantSurfaceTemperature(this.constantSurfaceTemperature);
+    this.runIsothermal = false;
+    this.runAdiabatic = false;
+    this.runConstantSurfaceTemperature = true;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setConstantSurfaceTemperature(double temperature) {
+    super.setConstantSurfaceTemperature(temperature);
+    this.constantSurfaceTemperature = temperature;
     this.runIsothermal = false;
     this.runAdiabatic = false;
     this.runConstantSurfaceTemperature = true;
@@ -949,8 +960,12 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       throw new IllegalArgumentException(
           "Heat transfer coefficient must be non-negative, got: " + heatTransferCoefficient);
     }
+    super.setHeatTransferCoefficient(heatTransferCoefficient);
     this.heatTransferCoefficient = heatTransferCoefficient;
     this.heatTransferMode = HeatTransferMode.SPECIFIED_U;
+    this.runIsothermal = false;
+    this.runAdiabatic = heatTransferCoefficient <= 0;
+    this.runConstantSurfaceTemperature = heatTransferCoefficient > 0;
   }
 
   /**
@@ -1094,6 +1109,10 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * </p>
    */
   public void calculateMissingValue() {
+    if (!Double.isNaN(totalLength) && Double.isNaN(totalElevation) && Double.isNaN(angle)) {
+      totalElevation = 0.0;
+      angle = 0.0;
+    }
     if (Double.isNaN(totalLength)) {
       totalLength = calculateLength();
     } else if (Double.isNaN(totalElevation)) {
@@ -2695,19 +2714,25 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   /** {@inheritDoc} */
   @Override
   public double getLength() {
-    return cumulativeLength;
+    return totalLength;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getElevation() {
-    return cumulativeElevation;
+    return totalElevation;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getDiameter() {
     return insideDiameter;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getPipeWallRoughness() {
+    return pipeWallRoughness;
   }
 
   /**

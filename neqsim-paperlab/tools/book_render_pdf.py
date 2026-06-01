@@ -22,6 +22,43 @@ from citation_utils import (parse_bibtex, collect_all_cited_keys_from_chapters,
                             resolve_citations_numbered_plain, build_key_to_num,
                             format_bib_entry_plain)
 
+
+_HERO_HINT_RE = re.compile(
+  r"(s01|01_|_overview|overview|hero|cover|opener|map|layout|gates|"
+  r"value_chain|envelope|topic_map|regulatory_hierarchy|cashflow|"
+  r"decline|aace_classes|tbp_curve|water_depth|well_cost|pfd|"
+  r"separator|teg_contactor|hydrate|cycle|profile)",
+  re.IGNORECASE,
+)
+
+
+def _find_chapter_hero(ch_dir):
+  """Return the preferred decorative chapter-opener image, if present."""
+  fig_dir = Path(ch_dir) / "figures"
+  if not fig_dir.is_dir():
+    return None
+  candidates = sorted(
+    f for f in fig_dir.iterdir()
+    if f.suffix.lower() in (".png", ".svg", ".jpg", ".jpeg", ".webp")
+  )
+  if not candidates:
+    return None
+  return next((f for f in candidates if _HERO_HINT_RE.search(f.name)), candidates[0])
+
+
+def _chapter_hero_typst(ch_dir, ch_num):
+  """Return raw Typst for an unnumbered decorative chapter hero image."""
+  hero = _find_chapter_hero(ch_dir)
+  if hero is None:
+    return ""
+  rel = f"figures_ch{ch_num:02d}/{hero.name}"
+  return (
+    '\n#v(0.4em)\n'
+    '#block(width: 100%, below: 1.0em)[\n'
+    f'  #image("{rel}", width: 100%)\n'
+    ']\n'
+  )
+
 # ---------------------------------------------------------------------------
 # Typst preamble for a book
 # ---------------------------------------------------------------------------
@@ -510,15 +547,15 @@ def build_book_typst_preamble(cfg, profile=None):
   #set text(size: 8.5pt, fill: luma(80))
   #set par(justify: false, leading: 0.8em)
 
-  Copyright \u00a9 {year} Equinor ASA and the Norwegian University of Science and Technology (NTNU). All rights reserved.
+  Copyright \u00a9 {year} Even Solbraa and the NeqSim Project. All rights reserved.
 
   #v(0.3cm)
 
-  This work is the intellectual property of Equinor ASA and NTNU. No part of this publication may be reproduced, stored in a retrieval system, or transmitted, in any form or by any means, electronic, mechanical, photocopying, recording, or otherwise, without the prior written permission of Equinor ASA and NTNU.
+  This book is distributed under the Creative Commons Attribution 4.0 International License (CC BY 4.0). You are free to share and adapt the material, including commercially, provided you give appropriate credit to the authors and the NeqSim Project.
 
   #v(0.3cm)
 
-  The NeqSim library is open-source software released under the Apache License 2.0. All code examples in this book are available at #link("https://github.com/equinor/neqsim")[github.com/equinor/neqsim] and may be freely used and modified under the terms of that license.{isbn_typst}
+  The NeqSim library is open-source software released under the Apache License 2.0. Code examples in this book are released under the MIT License and may be copied, modified, and embedded into proprietary or open-source projects without restriction.{isbn_typst}
 
   #v(0.5cm)
 
@@ -694,6 +731,62 @@ def render_book_pdf(book_dir, chapter_filter=None):
 
     submission_dir = book_dir / "submission"
     submission_dir.mkdir(parents=True, exist_ok=True)
+
+    # ── Cover images ──
+    # If the book directory contains a front and/or back cover image, copy
+    # them into submission/ with normalised names and inject full-bleed
+    # pages around the manuscript body.
+    _COVER_FRONT_CANDIDATES = (
+        "cover_front.png", "cover_front.jpg", "cover_front.jpeg",
+      "cover_front.svg",
+        "front_cover.png", "front_cover.jpg", "front_cover.jpeg",
+      "front_cover.svg",
+        "front page.png", "front page.jpg", "front page.jpeg",
+      "front page.svg",
+        "frontpage.png", "frontpage.jpg",
+      "frontpage.svg",
+    )
+    _COVER_BACK_CANDIDATES = (
+        "cover_back.png", "cover_back.jpg", "cover_back.jpeg",
+      "cover_back.svg",
+        "back_cover.png", "back_cover.jpg", "back_cover.jpeg",
+      "back_cover.svg",
+        "back page.png", "back page.jpg",
+      "back page.svg",
+      "backpage.png", "backpage.jpg", "backpage.jpeg",
+      "backpage.svg",
+    )
+    front_cover_typst = ""
+    back_cover_typst = ""
+
+    def _find_cover(candidates):
+        for name in candidates:
+            p = book_dir / name
+            if p.is_file():
+                return p
+        return None
+
+    front_src = _find_cover(_COVER_FRONT_CANDIDATES)
+    if front_src is not None:
+        dest = submission_dir / ("cover_front" + front_src.suffix.lower())
+        shutil.copy2(front_src, dest)
+        front_cover_typst = (
+            '#page(margin: 0pt, header: none, footer: none, numbering: none)[\n'
+            '  #image("' + dest.name + '", width: 100%, height: 100%, fit: "cover")\n'
+            ']\n\n'
+        )
+
+    back_src = _find_cover(_COVER_BACK_CANDIDATES)
+    if back_src is not None:
+        dest = submission_dir / ("cover_back" + back_src.suffix.lower())
+        shutil.copy2(back_src, dest)
+        back_cover_typst = (
+            '\n\n#pagebreak()\n'
+            '#page(margin: 0pt, header: none, footer: none, numbering: none)[\n'
+            '  #image("' + dest.name + '", width: 100%, height: 100%, fit: "cover")\n'
+            ']\n'
+        )
+
     frontmatter_figures = book_dir / "frontmatter" / "figures"
     if frontmatter_figures.is_dir():
         figures_dir = submission_dir / "figures"
@@ -713,6 +806,15 @@ def render_book_pdf(book_dir, chapter_filter=None):
 
     # Build preamble
     preamble = build_book_typst_preamble(cfg, profile)
+
+    # Inject the front cover image (if any) immediately before the procedural
+    # title page so the printed PDF opens on the designed cover.
+    if front_cover_typst:
+        marker = "// ── Title Page ──"
+        if marker in preamble:
+            preamble = preamble.replace(marker, front_cover_typst + marker, 1)
+        else:
+            preamble = front_cover_typst + preamble
 
     # Append print-shop extras (bleed, crop marks, PDF/UA hint) when the
     # publisher profile requests them.
@@ -851,6 +953,9 @@ def render_book_pdf(book_dir, chapter_filter=None):
             frag_text = typ_fragment.read_text(encoding="utf-8")
             frag_text = postprocess_typst(frag_text)
             frag_text = _keep_typst_ordered_lists_continuous(frag_text)
+            hero_typst = _chapter_hero_typst(ch_dir, ch_num)
+            if hero_typst:
+                frag_text = re.sub(r'^(= .+\n)', r'\1' + hero_typst, frag_text, count=1)
             chapter_fragments.append(frag_text)
 
         # Cleanup temp
@@ -893,6 +998,8 @@ def render_book_pdf(book_dir, chapter_filter=None):
     if bib_fragment:
         all_fragments = all_fragments + [bib_fragment]
     full_typst = preamble + "\n\n".join(all_fragments)
+    if back_cover_typst:
+        full_typst = full_typst + back_cover_typst
 
     # Final postprocessing on the assembled document (catches bibliography
     # fragments and any cross-fragment issues missed by per-chapter passes).

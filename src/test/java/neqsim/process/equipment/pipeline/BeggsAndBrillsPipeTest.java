@@ -3,6 +3,7 @@ package neqsim.process.equipment.pipeline;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -42,6 +43,34 @@ public class BeggsAndBrillsPipeTest {
 
     Assertions.assertEquals(testSystem.getPhase("oil").getFlowRate("m3/hr"),
         testSystem.getFlowRate("m3/hr"), 1);
+  }
+
+  @Test
+  public void testVelocityCapacityConstraintUsesRhonePoulencWhenEnabled() {
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(
+        (273.15 + 20), ThermodynamicConstantsInterface.referencePressure);
+    testSystem.addComponent("methane", 1.0);
+    testSystem.setMixingRule(2);
+    testSystem.setPressure(50.0, "bara");
+    testSystem.setTemperature(20.0, "C");
+    testSystem.setTotalFlowRate(10000.0, "kg/hr");
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    testSystem.initPhysicalProperties();
+
+    Stream stream = new Stream("rhone poulenc feed", testSystem);
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("rhone poulenc pipe", stream);
+    pipe.setLength(100.0);
+    pipe.setAngle(0.0);
+    pipe.setDiameter(0.2);
+    pipe.useRhonePoulencVelocity();
+
+    double expectedMaxVelocity = pipe.getMaxAllowableVelocity();
+    CapacityConstraint velocityConstraint = pipe.getCapacityConstraints().get("velocity");
+
+    Assertions.assertNotNull(velocityConstraint);
+    Assertions.assertEquals(expectedMaxVelocity, velocityConstraint.getMaxValue(), 1e-12);
+    Assertions.assertTrue(velocityConstraint.getDescription().contains("RHONE_POULENC"));
   }
 
   @Test
@@ -347,8 +376,8 @@ public class BeggsAndBrillsPipeTest {
 
     Assertions.assertEquals(testSystem3.hasPhaseType("gas"), true);
 
-    Assertions.assertEquals(temperatureOut3, -11.044631756403703, 1);
-    Assertions.assertEquals(pressureOut3, 18.3429, 1);
+    Assertions.assertEquals(15.000000000083332, temperatureOut3, 1);
+    Assertions.assertEquals(18.3429, pressureOut3, 1);
   }
 
   @Test
@@ -416,5 +445,65 @@ public class BeggsAndBrillsPipeTest {
     // upstream TPflash converges to slightly different inlet enthalpy/density depending on
     // SS/Newton path, propagating ~1 K through the heat-transfer balance over 6 m).
     Assertions.assertEquals(52, temperatureOut2, 7);
+  }
+
+  @Test
+  public void testInheritedConstantSurfaceTemperatureSetterActivatesHeatTransfer() {
+    double pressure = 10; // bara
+    double temperature = 20; // C
+    double massFlowRate = 0.25; // kg/s
+    double heatTransferCoeff = 755; // W/m2K
+
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(
+        (273.15 + 45), ThermodynamicConstantsInterface.referencePressure);
+    testSystem.addComponent("water", 1.0);
+    testSystem.setMixingRule(2);
+    testSystem.init(0);
+    testSystem.useVolumeCorrection(true);
+    testSystem.setPressure(pressure, "bara");
+    testSystem.setTemperature(temperature, "C");
+    testSystem.setTotalFlowRate(massFlowRate, "kg/sec");
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    testSystem.initPhysicalProperties();
+
+    Stream stream1 = new Stream("Stream inherited K", testSystem.clone());
+    stream1.setFlowRate(massFlowRate, "kg/sec");
+    PipeBeggsAndBrills inheritedSetterPipe = new PipeBeggsAndBrills("pipe inherited K", stream1);
+    inheritedSetterPipe.setPipeWallRoughness(0);
+    inheritedSetterPipe.setLength(6.0);
+    inheritedSetterPipe.setAngle(0);
+    inheritedSetterPipe.setDiameter(0.05);
+    inheritedSetterPipe.setNumberOfIncrements(10);
+    inheritedSetterPipe.setConstantSurfaceTemperature(373.15);
+    inheritedSetterPipe.setHeatTransferCoefficient(heatTransferCoeff);
+
+    Stream stream2 = new Stream("Stream explicit K", testSystem.clone());
+    stream2.setFlowRate(massFlowRate, "kg/sec");
+    PipeBeggsAndBrills explicitSetterPipe = new PipeBeggsAndBrills("pipe explicit K", stream2);
+    explicitSetterPipe.setPipeWallRoughness(0);
+    explicitSetterPipe.setLength(6.0);
+    explicitSetterPipe.setAngle(0);
+    explicitSetterPipe.setDiameter(0.05);
+    explicitSetterPipe.setNumberOfIncrements(10);
+    explicitSetterPipe.setConstantSurfaceTemperature(373.15, "K");
+    explicitSetterPipe.setHeatTransferCoefficient(heatTransferCoeff);
+
+    neqsim.process.processmodel.ProcessSystem inheritedOperations =
+        new neqsim.process.processmodel.ProcessSystem();
+    inheritedOperations.add(stream1);
+    inheritedOperations.add(inheritedSetterPipe);
+    inheritedOperations.run();
+
+    neqsim.process.processmodel.ProcessSystem explicitOperations =
+        new neqsim.process.processmodel.ProcessSystem();
+    explicitOperations.add(stream2);
+    explicitOperations.add(explicitSetterPipe);
+    explicitOperations.run();
+
+    Assertions.assertEquals(explicitSetterPipe.getOutletTemperature(),
+        inheritedSetterPipe.getOutletTemperature(), 0.2);
+    Assertions.assertTrue(inheritedSetterPipe.getOutletTemperature() > stream1.getTemperature());
   }
 }

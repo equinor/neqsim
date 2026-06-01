@@ -151,6 +151,42 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
+   * Setter for the pressure convergence tolerance.
+   *
+   * @param pressureTolerance relative pressure tolerance used to decide recycle convergence
+   */
+  public void setPressureTolerance(double pressureTolerance) {
+    this.pressureTolerance = pressureTolerance;
+  }
+
+  /**
+   * Getter for the pressure convergence tolerance.
+   *
+   * @return relative pressure tolerance used to decide recycle convergence
+   */
+  public double getPressureTolerance() {
+    return this.pressureTolerance;
+  }
+
+  /**
+   * Setter for the maximum number of recycle iterations.
+   *
+   * @param maxIterations maximum number of recycle iterations before validation flags the recycle
+   */
+  public void setMaxIterations(int maxIterations) {
+    this.maxIterations = maxIterations;
+  }
+
+  /**
+   * Getter for the maximum number of recycle iterations.
+   *
+   * @return maximum number of recycle iterations before validation flags the recycle
+   */
+  public int getMaxIterations() {
+    return this.maxIterations;
+  }
+
+  /**
    * <p>
    * resetIterations.
    * </p>
@@ -258,8 +294,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
           if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName()
               .equals(componentName)) {
             gotComponent = true;
-            index =
-                mixedStream.getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
+            index = mixedStream.getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
             break;
           }
         }
@@ -542,6 +577,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     this.flowTolerance = tolerance;
     this.temperatureTolerance = tolerance;
     this.compositionTolerance = tolerance;
+    this.pressureTolerance = tolerance;
   }
 
   /**

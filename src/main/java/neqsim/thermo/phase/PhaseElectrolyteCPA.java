@@ -5,6 +5,8 @@ import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
+import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
+import org.ejml.interfaces.linsol.LinearSolverDense;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentElectrolyteCPA;
@@ -69,6 +71,12 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
   private SimpleMatrix KlkMatrix = null;
   private SimpleMatrix hessianMatrix = null;
   private SimpleMatrix hessianInvers = null;
+  /** Cached LU factorization of {@code hessianMatrix} for repeated Hessian backsolves. */
+  private transient LinearSolverDense<DMatrixRMaj> hessianLU = null;
+  /** Scratch matrix passed to EJML LU because the solver may decompose its input in place. */
+  private transient DMatrixRMaj hessianLUinput = null;
+  /** Matrix size associated with the cached Hessian LU factorization. */
+  private transient int hessianLUSize = -1;
   private SimpleMatrix KlkVMatrix = null;
   DMatrixRMaj corr2Matrix = null;
   DMatrixRMaj corr3Matrix = null;
@@ -91,6 +99,9 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
+    clonedPhase.hessianLU = null;
+    clonedPhase.hessianLUinput = null;
+    clonedPhase.hessianLUSize = -1;
     // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
     // clonedPhase.cpamix = (CPAMixingInterface) cpamix.clone();
 
@@ -360,7 +371,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
 
     // dXdV
     SimpleMatrix KlkVMatrixksi = KlkVMatrix.mult(ksiMatrix);
-    SimpleMatrix XV = hessianInvers.mult(KlkVMatrixksi);
+    SimpleMatrix XV = applyHessianInv(KlkVMatrixksi);
     SimpleMatrix XVtranspose = XV.transpose();
 
     SimpleMatrix QCPA =
@@ -407,7 +418,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     // ksiMatrixTranspose.mult(KlkTVMatrix.mult(ksiMatrix)).scale(-0.5).minus(KlkTMatrixTImesKsi.transpose().mult(XV));
     // dFCPAdTdV = tempMatrixTV.get(0, 0);
     // dXdT
-    SimpleMatrix XT = hessianInvers.mult(KlkTMatrixTImesKsi);
+    SimpleMatrix XT = applyHessianInv(KlkTMatrixTImesKsi);
     // dQdTdT
     SimpleMatrix tempMatrixTT = ksiMatrixTranspose.mult(KlkTTMatrix.mult(ksiMatrix)).scale(-0.5)
         .minus(KlkTMatrixTImesKsi.transpose().mult(XT));
@@ -459,7 +470,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       // System.out.println("temp4 matrix");
       // tempMatrix4.print(10, 10);
       // Matrix tempMatrix5 = amatrix.minus(tempMatrix4);
-      SimpleMatrix tempMatrix6 = hessianInvers.mult(tempMatrix5); // .scale(-1.0);
+      SimpleMatrix tempMatrix6 = applyHessianInv(tempMatrix5); // .scale(-1.0);
       // System.out.println("dXdni");
       // tempMatrix4.print(10, 10);
       // tempMatrix5.print(10, 10);
@@ -645,6 +656,26 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
+   * Applies the current Hessian inverse to a right-hand side without forming the inverse when a
+   * cached LU factorization is available.
+   *
+   * @param rhs right-hand-side matrix with one row per association site
+   * @return solution of {@code hessianMatrix * x = rhs}
+   */
+  private SimpleMatrix applyHessianInv(SimpleMatrix rhs) {
+    if (hessianInvers != null) {
+      return hessianInvers.mult(rhs);
+    }
+    if (hessianLU != null && hessianLUSize == totalNumberOfAccociationSites) {
+      DMatrixRMaj rhsMat = rhs.getDDRM();
+      DMatrixRMaj out = new DMatrixRMaj(rhsMat.numRows, rhsMat.numCols);
+      hessianLU.solve(rhsMat, out);
+      return SimpleMatrix.wrap(out);
+    }
+    throw new IllegalStateException("Hessian factorization has not been initialized");
+  }
+
+  /**
    * <p>
    * solveX.
    * </p>
@@ -716,11 +747,17 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         }
       }
 
-      try {
-        hessianInvers = hessianMatrix.invert();
-      } catch (Exception ex) {
+      int n = totalNumberOfAccociationSites;
+      if (hessianLU == null || hessianLUSize != n) {
+        hessianLU = LinearSolverFactory_DDRM.lu(n);
+        hessianLUinput = new DMatrixRMaj(n, n);
+        hessianLUSize = n;
+      }
+      System.arraycopy(hessianMatrix.getDDRM().getData(), 0, hessianLUinput.getData(), 0, n * n);
+      if (!hessianLU.setA(hessianLUinput)) {
         return false;
       }
+      hessianInvers = null;
       if (solvedX) {
         return true;
       }
@@ -728,7 +765,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       DMatrixRMaj mat2 = ksiMatrix.getMatrix();
       CommonOps_DDRM.mult(mat1, mat2, corr2Matrix);
       CommonOps_DDRM.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix, corr3Matrix);
-      CommonOps_DDRM.mult(hessianInvers.getDDRM(), corr3Matrix, corr4Matrix);
+      hessianLU.solve(corr3Matrix, corr4Matrix);
 
       temp = 0;
       double newX;

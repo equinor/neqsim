@@ -128,9 +128,10 @@ double degradedEfficiency = normalEfficiency * fouling.getEfficiencyFactor();  /
 
 ## Reliability Data Source
 
-### OREDA-Based Data
+### Multi-Source Reliability Data
 
-The `ReliabilityDataSource` provides reliability data from OREDA (Offshore Reliability Data):
+The `ReliabilityDataSource` provides reliability data from multiple public databases
+(IOGP/SINTEF, CCPS 1989, IEEE 493-2007, Lees 2012, and optionally OREDA):
 
 ```java
 ReliabilityDataSource source = ReliabilityDataSource.getInstance();

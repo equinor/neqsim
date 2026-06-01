@@ -24,8 +24,15 @@ class PhaseEnvelopeRunnerTest {
     assertTrue("success".equals(obj.get("status").getAsString()),
         "Expected success but got: " + result);
     assertTrue(obj.has("envelope"));
+    assertTrue(obj.has("apiVersion"));
+    assertTrue(obj.has("tool"));
+    assertTrue(obj.has("data"));
+    assertTrue(obj.has("validation"));
+    assertTrue(obj.has("qualityGate"));
+    assertTrue(obj.has("warnings"));
     assertTrue(obj.getAsJsonArray("envelope").size() > 0, "Envelope should have data points");
     assertTrue(obj.has("provenance"), "Response should include provenance metadata");
+    assertTrue(obj.getAsJsonObject("provenance").has("benchmarkTrustLevel"));
     assertTrue(obj.has("model"));
   }
 
@@ -35,6 +42,9 @@ class PhaseEnvelopeRunnerTest {
     String result = PhaseEnvelopeRunner.run(json);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
     assertTrue("error".equals(obj.get("status").getAsString()));
+    assertTrue(obj.has("apiVersion"));
+    assertTrue(obj.has("validation"));
+    assertTrue(obj.has("qualityGate"));
   }
 
   @Test

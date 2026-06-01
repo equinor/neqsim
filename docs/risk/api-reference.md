@@ -80,7 +80,7 @@ EquipmentFailureMode.builder()
 
 ### ReliabilityDataSource
 
-Singleton providing OREDA-based reliability data.
+Singleton providing multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA).
 
 ```java
 public class ReliabilityDataSource

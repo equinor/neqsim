@@ -56,10 +56,15 @@ with summaries that the solver agent can use without re-reading the originals.
 
 ## Skills to Load
 
+Loaded skills: neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-pdf-ocr, neqsim-standards-lookup, neqsim-trapped-liquid-fire-rupture
+
 - `neqsim-stid-retriever` — for internal document corpora (vendor docs,
   STID drawings, mechanical arrangements).
 - `neqsim-technical-document-reading` — to extract structured data from
   retrieved PDFs and images.
+- `neqsim-trapped-liquid-fire-rupture` — when the task needs trapped-liquid
+   rupture evidence: P&IDs/STIDs, line lists, material certificates, fire/PFP
+   documents, relief basis, and acceptance criteria.
 - `neqsim-pdf-ocr` — when retrieved PDFs lack a text layer (scanned).
 - `neqsim-standards-lookup` — to identify which standards documents to
   retrieve for the task.
@@ -92,7 +97,10 @@ with summaries that the solver agent can use without re-reading the originals.
 1. Parse topic and task folder path.
 2. Identify applicable standards via neqsim-standards-lookup.
 3. Query internal corpus (if doc_retrieval_config.yaml configured)
-   via @stid.retriever.
+   via @stid.retriever. For trapped-liquid fire rupture tasks, use the evidence
+   checklist from `neqsim-trapped-liquid-fire-rupture` and retrieve P&IDs/STIDs,
+   line lists, piping specs, material certificates, flange/gasket/bolt data,
+   fire/PFP documents, relief basis, and design criteria before calculation.
 4. Query public sources (DOI/arXiv/Google Scholar via configured backend
    if available; otherwise list candidates and ask the user to confirm
    downloads — do not invent URLs).

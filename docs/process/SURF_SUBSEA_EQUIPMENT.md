@@ -497,26 +497,26 @@ The `SubseaCostEstimator` provides methods for each equipment type:
 
 ```java
 // PLET/PLEM cost
-estimator.calculatePLETCost(dryWeightTonnes, hubSizeInches, waterDepthM, 
+estimator.calculatePLETCost(dryWeightTonnes, hubSizeInches, waterDepthM,
     hasIsolationValve, hasPiggingFacility);
 
 // Subsea Tree cost
-estimator.calculateTreeCost(pressureRatingPsi, boreSizeInches, waterDepthM, 
+estimator.calculateTreeCost(pressureRatingPsi, boreSizeInches, waterDepthM,
     isHorizontal, isDualBore);
 
 // Manifold cost
-estimator.calculateManifoldCost(numberOfSlots, dryWeightTonnes, waterDepthM, 
+estimator.calculateManifoldCost(numberOfSlots, dryWeightTonnes, waterDepthM,
     hasTestHeader);
 
 // Jumper cost
 estimator.calculateJumperCost(lengthM, diameterInches, isRigid, waterDepthM);
 
 // Umbilical cost
-estimator.calculateUmbilicalCost(lengthKm, numberOfHydraulicLines, 
+estimator.calculateUmbilicalCost(lengthKm, numberOfHydraulicLines,
     numberOfChemicalLines, numberOfElectricalCables, waterDepthM, isDynamic);
 
 // Flexible pipe cost
-estimator.calculateFlexiblePipeCost(lengthM, innerDiameterInches, waterDepthM, 
+estimator.calculateFlexiblePipeCost(lengthM, innerDiameterInches, waterDepthM,
     isDynamic, hasBuoyancy);
 
 // Subsea booster cost
@@ -601,7 +601,7 @@ Generate detailed BOM for procurement:
 List<Map<String, Object>> bom = design.generateBillOfMaterials();
 
 for (Map<String, Object> item : bom) {
-    System.out.println(item.get("item") + ": " + 
+    System.out.println(item.get("item") + ": " +
         item.get("quantity") + " " + item.get("unit") +
         " @ $" + item.get("unitCost") + " = $" + item.get("totalCost"));
 }
@@ -631,7 +631,7 @@ tree.setWaterDepth(500.0);
 tree.setDesignPressure(1034.0);
 tree.initMechanicalDesign();
 
-SubseaTreeMechanicalDesign design = 
+SubseaTreeMechanicalDesign design =
     (SubseaTreeMechanicalDesign) tree.getMechanicalDesign();
 design.setMaxOperationPressure(1034.0);
 design.setRegion(SubseaCostEstimator.Region.NORWAY);
@@ -659,8 +659,8 @@ for (int i = 0; i < regions.length; i++) {
     SubseaCostEstimator estimator = new SubseaCostEstimator(regions[i]);
     estimator.calculatePLETCost(25.0, 12.0, 350.0, true, false);
     regionCosts[i] = estimator.getTotalCost();
-    
-    System.out.println(regions[i].name() + ": $" + 
+
+    System.out.println(regions[i].name() + ": $" +
         String.format("%,.0f", regionCosts[i]));
 }
 ```
@@ -819,6 +819,6 @@ String designJson = tree.getMechanicalDesign().toJson();
 
 ## See Also
 
-- [Pipeline Mechanical Design](pipeline_design)
-- [Process Equipment Overview](equipment_overview)
+- [Pipeline Mechanical Design](pipeline_mechanical_design)
+- [Process Equipment Overview](equipment/index.md)
 - [Field Development Module](../fielddevelopment/API_GUIDE)

@@ -66,6 +66,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   private double meshPadAreaM2 = 0.0;
   /** Mesh pad thickness [mm]. */
   private double meshPadThicknessMm = 100.0;
+  /** Mesh pad centerline elevation from bottom of vessel [m]. */
+  private double meshPadElevationM = 0.0;
 
   // ============================================================================
   // Vane pack configuration
@@ -80,6 +82,16 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   // ============================================================================
   /** Drain pipe inner diameter [m]. */
   private double drainPipeDiameterM = 0.0;
+
+  // ============================================================================
+  // TR1965 conformity metadata
+  // ============================================================================
+  /** Inlet device centerline elevation from bottom of vessel [m]. */
+  private double inletDeviceElevationM = 0.0;
+  /** Documented liquid entrainment to gas outlet [litre/MSm3]. */
+  private double liquidEntrainmentLitresPerMSm3 = Double.NaN;
+  /** Documented liquid design margin as fraction of operating liquid load. */
+  private double liquidDesignMarginFraction = Double.NaN;
 
   // ============================================================================
   // Liquid level elevations from BTL [m] — optional for general use,
@@ -536,6 +548,25 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     return meshPadThicknessMm;
   }
 
+  /**
+   * Sets the mesh pad centerline elevation from the bottom tangent line.
+   *
+   * @param elevationM mesh pad elevation in m; values less than zero are allowed only for explicit
+   *        project data corrections and will be checked by conformity rules
+   */
+  public void setMeshPadElevationM(double elevationM) {
+    this.meshPadElevationM = elevationM;
+  }
+
+  /**
+   * Gets the mesh pad centerline elevation from the bottom tangent line.
+   *
+   * @return mesh pad elevation in m, or zero when not configured
+   */
+  public double getMeshPadElevationM() {
+    return meshPadElevationM;
+  }
+
   // ============================================================================
   // Vane pack getters/setters
   // ============================================================================
@@ -588,6 +619,62 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
    */
   public double getDrainPipeDiameterM() {
     return drainPipeDiameterM;
+  }
+
+  /**
+   * Sets the inlet device centerline elevation from the bottom tangent line.
+   *
+   * @param elevationM inlet device elevation in m; values less than zero are allowed only for
+   *        explicit project data corrections and will be checked by conformity rules
+   */
+  public void setInletDeviceElevationM(double elevationM) {
+    this.inletDeviceElevationM = elevationM;
+  }
+
+  /**
+   * Gets the inlet device centerline elevation from the bottom tangent line.
+   *
+   * @return inlet device elevation in m, or zero when not configured
+   */
+  public double getInletDeviceElevationM() {
+    return inletDeviceElevationM;
+  }
+
+  /**
+   * Sets the documented liquid entrainment to the gas outlet for conformity checking.
+   *
+   * @param entrainmentLitresPerMSm3 liquid entrainment in litre/MSm3; use {@link Double#NaN} when
+   *        project data are unavailable
+   */
+  public void setLiquidEntrainmentLitresPerMSm3(double entrainmentLitresPerMSm3) {
+    this.liquidEntrainmentLitresPerMSm3 = entrainmentLitresPerMSm3;
+  }
+
+  /**
+   * Gets the documented liquid entrainment to the gas outlet.
+   *
+   * @return liquid entrainment in litre/MSm3, or NaN when not configured
+   */
+  public double getLiquidEntrainmentLitresPerMSm3() {
+    return liquidEntrainmentLitresPerMSm3;
+  }
+
+  /**
+   * Sets the documented liquid design margin as fraction of the operating liquid load.
+   *
+   * @param marginFraction liquid design margin fraction; 0.20 means 20 percent margin
+   */
+  public void setLiquidDesignMarginFraction(double marginFraction) {
+    this.liquidDesignMarginFraction = marginFraction;
+  }
+
+  /**
+   * Gets the documented liquid design margin as fraction of the operating liquid load.
+   *
+   * @return liquid design margin fraction, or NaN when not configured
+   */
+  public double getLiquidDesignMarginFraction() {
+    return liquidDesignMarginFraction;
   }
 
   // ============================================================================
@@ -728,6 +815,9 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
       Map<String, Object> mesh = new LinkedHashMap<String, Object>();
       mesh.put("area_m2", meshPadAreaM2);
       mesh.put("thickness_mm", meshPadThicknessMm);
+      if (meshPadElevationM > 0) {
+        mesh.put("elevation_mm", meshPadElevationM * 1000.0);
+      }
       resp.addSpecificParameter("meshPad", mesh);
     }
 
@@ -752,6 +842,16 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     // Drain pipe
     if (drainPipeDiameterM > 0) {
       resp.addSpecificParameter("drainPipeDiameter_mm", drainPipeDiameterM * 1000.0);
+    }
+    if (inletDeviceElevationM > 0) {
+      resp.addSpecificParameter("inletDeviceElevation_mm", inletDeviceElevationM * 1000.0);
+    }
+    if (Double.isFinite(liquidEntrainmentLitresPerMSm3)) {
+      resp.addSpecificParameter("liquidEntrainment_litre_per_MSm3",
+          liquidEntrainmentLitresPerMSm3);
+    }
+    if (Double.isFinite(liquidDesignMarginFraction)) {
+      resp.addSpecificParameter("liquidDesignMargin_fraction", liquidDesignMarginFraction);
     }
 
     // Liquid levels

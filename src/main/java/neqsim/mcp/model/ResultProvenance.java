@@ -37,6 +37,9 @@ public class ResultProvenance {
   /** The equation of state or thermodynamic model used. */
   private String thermodynamicModel;
 
+  /** Contract-friendly model alias for agent consumers. */
+  private String model;
+
   /** The mixing rule applied (e.g., "classic", "HV", "WS"). */
   private String mixingRule;
 
@@ -49,6 +52,12 @@ public class ResultProvenance {
   /** Whether the calculation converged successfully. */
   private boolean converged = true;
 
+  /** Structured convergence details for agent consumers. */
+  private Convergence convergence;
+
+  /** Benchmark trust level declared for the producing MCP tool. */
+  private String benchmarkTrustLevel = "TESTED";
+
   /** Validation checks that were applied and their results. */
   private List<String> validationsPassed;
 
@@ -57,6 +66,9 @@ public class ResultProvenance {
 
   /** Known limitations that apply to this result. */
   private List<String> limitations;
+
+  /** Applicability warnings that should travel with the result. */
+  private List<String> applicabilityWarnings;
 
   /** Timestamp of the calculation (ISO-8601). */
   private String timestamp;
@@ -71,7 +83,49 @@ public class ResultProvenance {
     this.validationsPassed = new ArrayList<String>();
     this.assumptions = new ArrayList<String>();
     this.limitations = new ArrayList<String>();
+    this.applicabilityWarnings = new ArrayList<String>();
+    this.convergence = new Convergence(true, "Calculation converged or did not require iteration");
     this.timestamp = Instant.now().toString();
+  }
+
+  /**
+   * Structured convergence metadata.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public static class Convergence {
+    private final boolean converged;
+    private final String message;
+
+    /**
+     * Creates convergence metadata.
+     *
+     * @param converged true if the calculation converged
+     * @param message human-readable convergence summary
+     */
+    public Convergence(boolean converged, String message) {
+      this.converged = converged;
+      this.message = message;
+    }
+
+    /**
+     * Returns whether the calculation converged.
+     *
+     * @return true if converged
+     */
+    public boolean isConverged() {
+      return converged;
+    }
+
+    /**
+     * Gets the convergence summary.
+     *
+     * @return the convergence message
+     */
+    public String getMessage() {
+      return message;
+    }
   }
 
   /**
@@ -84,7 +138,7 @@ public class ResultProvenance {
    */
   public static ResultProvenance forFlash(String model, String flashType, String mixingRule) {
     ResultProvenance p = new ResultProvenance();
-    p.thermodynamicModel = model;
+    p.setThermodynamicModel(model);
     p.calculationType = flashType + " flash";
     p.mixingRule = mixingRule != null ? mixingRule : "classic";
     p.addAssumption("Ideal gas reference state");
@@ -118,7 +172,7 @@ public class ResultProvenance {
    */
   public static ResultProvenance forProcess(String model, String mixingRule, int equipmentCount) {
     ResultProvenance p = new ResultProvenance();
-    p.thermodynamicModel = model;
+    p.setThermodynamicModel(model);
     p.calculationType = "steady-state process simulation";
     p.mixingRule = mixingRule != null ? mixingRule : "classic";
     p.addAssumption("Steady-state operation");
@@ -139,7 +193,7 @@ public class ResultProvenance {
   public static ResultProvenance forPropertyTable(String model, String sweepVariable,
       int pointCount) {
     ResultProvenance p = new ResultProvenance();
-    p.thermodynamicModel = model;
+    p.setThermodynamicModel(model);
     p.calculationType = "property table (" + sweepVariable + " sweep, " + pointCount + " points)";
     p.mixingRule = "classic";
     p.addAssumption("Each point is an independent equilibrium calculation");
@@ -156,7 +210,7 @@ public class ResultProvenance {
    */
   public static ResultProvenance forPhaseEnvelope(String model) {
     ResultProvenance p = new ResultProvenance();
-    p.thermodynamicModel = model;
+    p.setThermodynamicModel(model);
     p.calculationType = "phase envelope (PT diagram)";
     p.mixingRule = "classic";
     p.addAssumption("Bubble and dew point curves traced by successive flash calculations");
@@ -175,7 +229,7 @@ public class ResultProvenance {
    */
   public static ResultProvenance forBatch(String model, int totalCases, int succeededCases) {
     ResultProvenance p = new ResultProvenance();
-    p.thermodynamicModel = model;
+    p.setThermodynamicModel(model);
     p.calculationType =
         "batch flash calculation (" + totalCases + " cases, " + succeededCases + " succeeded)";
     p.mixingRule = "classic";
@@ -216,12 +270,23 @@ public class ResultProvenance {
   }
 
   /**
+   * Adds an applicability warning.
+   *
+   * @param warning warning that describes a model applicability concern
+   */
+  public void addApplicabilityWarning(String warning) {
+    this.applicabilityWarnings.add(warning);
+  }
+
+  /**
    * Sets the convergence status.
    *
    * @param converged true if the calculation converged
    */
   public void setConverged(boolean converged) {
     this.converged = converged;
+    this.convergence = new Convergence(converged,
+        converged ? "Calculation converged" : "Calculation did not converge or returned an error");
   }
 
   /**
@@ -249,6 +314,16 @@ public class ResultProvenance {
    */
   public void setThermodynamicModel(String model) {
     this.thermodynamicModel = model;
+    this.model = model;
+  }
+
+  /**
+   * Sets the benchmark trust level.
+   *
+   * @param benchmarkTrustLevel trust level such as VALIDATED, TESTED, or EXPERIMENTAL
+   */
+  public void setBenchmarkTrustLevel(String benchmarkTrustLevel) {
+    this.benchmarkTrustLevel = benchmarkTrustLevel;
   }
 
   /**
@@ -288,6 +363,15 @@ public class ResultProvenance {
   }
 
   /**
+   * Gets the contract-friendly model alias.
+   *
+   * @return the model name
+   */
+  public String getModel() {
+    return model;
+  }
+
+  /**
    * Gets the calculation type.
    *
    * @return the calculation type description
@@ -306,6 +390,15 @@ public class ResultProvenance {
   }
 
   /**
+   * Gets structured convergence metadata.
+   *
+   * @return the convergence metadata
+   */
+  public Convergence getConvergence() {
+    return convergence;
+  }
+
+  /**
    * Gets the assumptions list.
    *
    * @return the assumptions
@@ -321,6 +414,24 @@ public class ResultProvenance {
    */
   public List<String> getLimitations() {
     return limitations;
+  }
+
+  /**
+   * Gets applicability warnings.
+   *
+   * @return the applicability warnings
+   */
+  public List<String> getApplicabilityWarnings() {
+    return applicabilityWarnings;
+  }
+
+  /**
+   * Gets the benchmark trust level.
+   *
+   * @return the benchmark trust level
+   */
+  public String getBenchmarkTrustLevel() {
+    return benchmarkTrustLevel;
   }
 
   /**

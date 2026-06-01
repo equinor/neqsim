@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Unit tests for TwoFluidSection.
@@ -173,6 +175,126 @@ public class TwoFluidSectionTest {
     assertEquals(10.0, section.getGasMomentumSource(), TOLERANCE);
     assertEquals(-5.0, section.getLiquidMomentumSource(), TOLERANCE);
     assertEquals(1000.0, section.getEnergySource(), TOLERANCE);
+  }
+
+  @Test
+  void testExtractPrimitiveVariablesPreservesTotalMassWhenLimitingPositivity() {
+    section.setGasDensity(10.0);
+    section.setOilDensity(800.0);
+    section.setWaterDensity(1000.0);
+    section.setLiquidDensity(850.0);
+    section.setWaterCut(0.25);
+    section.setStateVector(new double[] {8.0, -1.0, 3.0, 16.0, -2.0, 6.0, 100.0});
+
+    section.extractPrimitiveVariables();
+
+    double totalMass = section.getGasMassPerLength() + section.getOilMassPerLength()
+        + section.getWaterMassPerLength();
+    assertTrue(section.getGasMassPerLength() >= 0.0);
+    assertTrue(section.getOilMassPerLength() >= 0.0);
+    assertTrue(section.getWaterMassPerLength() >= 0.0);
+    assertEquals(10.0, totalMass, 1e-12);
+    assertEquals(0.0, section.getOilMassPerLength(), 1e-12);
+  }
+
+  @Test
+  void testExtractPrimitiveVariablesKeepsMomentumVelocityConsistent() {
+    section.setGasDensity(10.0);
+    section.setOilDensity(800.0);
+    section.setWaterDensity(1000.0);
+    section.setLiquidDensity(850.0);
+    section.setWaterCut(0.4);
+    section.setStateVector(new double[] {5.0, 4.0, 6.0, 25.0, 8.0, 18.0, 100.0});
+
+    section.extractPrimitiveVariables();
+    section.updateWaterOilHoldups();
+
+    assertEquals(section.getGasMomentumPerLength() / section.getGasMassPerLength(),
+        section.getGasVelocity(), 1e-12);
+    assertEquals(section.getOilMomentumPerLength() / section.getOilMassPerLength(),
+        section.getOilVelocity(), 1e-12);
+    assertEquals(section.getWaterMomentumPerLength() / section.getWaterMassPerLength(),
+        section.getWaterVelocity(), 1e-12);
+  }
+
+  @Test
+  void testMassTransferPairIsConservative() {
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    section.setMassTransferRate(2.0);
+
+    double[] massTransfer = equations.calcMassTransfer(section);
+
+    assertEquals(0.2, massTransfer[0], 1e-12);
+    assertEquals(-0.2, massTransfer[1], 1e-12);
+    assertEquals(0.0, massTransfer[0] + massTransfer[1], 1e-12);
+  }
+
+  @Test
+  void testFlashDrivenMassTransferReturnsConservativePair() {
+    SystemInterface fluid = new SystemSrkEos(300.0, 50.0);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("n-heptane", 0.15);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    section.setPressure(50.0e5);
+    section.setTemperature(300.0);
+    section.setGasDensity(40.0);
+    section.setLiquidDensity(700.0);
+    section.setGasMassPerLength(0.05);
+    section.setLiquidMassPerLength(2.0);
+
+    ThermodynamicCoupling coupling = new ThermodynamicCoupling(fluid);
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    equations.setThermodynamicCoupling(coupling);
+    equations.setMassTransferRelaxationTime(20.0);
+
+    double[] massTransfer = equations.calcMassTransfer(section);
+
+    assertTrue(Double.isFinite(massTransfer[0]));
+    assertTrue(Double.isFinite(massTransfer[1]));
+    assertEquals(0.0, massTransfer[0] + massTransfer[1], 1e-12);
+  }
+
+  @Test
+  void testClosurePassUpdatesEntrainmentAndSevereSlugDiagnostics() {
+    section.setGasDensity(25.0);
+    section.setLiquidDensity(750.0);
+    section.setGasViscosity(1.2e-5);
+    section.setLiquidViscosity(1.0e-3);
+    section.setSurfaceTension(0.02);
+    section.setGasHoldup(0.95);
+    section.setLiquidHoldup(0.05);
+    section.setGasVelocity(35.0);
+    section.setLiquidVelocity(0.5);
+    section.updateDerivedQuantities();
+
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    TwoFluidSection section2 = section.clone();
+    section2.setPosition(section.getLength());
+    equations.calcRHS(new TwoFluidSection[] {section, section2}, section.getLength());
+
+    assertTrue(section.getEntrainmentFraction() >= 0.0);
+    assertTrue(section.getEntrainedDropletDiameter() >= 0.0);
+
+    TwoFluidSection riserBase = new TwoFluidSection(0.0, 10.0, 0.1, Math.toRadians(30.0));
+    riserBase.setGasDensity(20.0);
+    riserBase.setLiquidDensity(800.0);
+    riserBase.setGasViscosity(1.0e-5);
+    riserBase.setLiquidViscosity(1.0e-3);
+    riserBase.setSurfaceTension(0.02);
+    riserBase.setGasHoldup(0.2);
+    riserBase.setLiquidHoldup(0.8);
+    riserBase.setGasVelocity(0.02);
+    riserBase.setLiquidVelocity(0.1);
+    riserBase.updateDerivedQuantities();
+
+    TwoFluidSection riserBase2 = riserBase.clone();
+    riserBase2.setPosition(riserBase.getLength());
+    equations.calcRHS(new TwoFluidSection[] {riserBase, riserBase2}, riserBase.getLength());
+
+    assertTrue(riserBase.getSevereSluggingNumber() < 1.0);
+    assertTrue(riserBase.isSevereSlugPotential());
   }
 
   @Test

@@ -206,6 +206,14 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
         initializeWithVLEFlash();
       }
 
+      if (isTraceIonMultiphaseCase(effectiveMaxPhases)) {
+        converged = true;
+        totalIterations = 0;
+        equilibriumTotalMoles = system.getNumberOfMoles();
+        finalGibbsEnergy = computeGibbsEnergy();
+        return;
+      }
+
       // Enforce effectiveMaxPhases: electrolyte CPA init may have created extra phases
       if (effectiveMaxPhases == 1 && system.getNumberOfPhases() > 1) {
         system.setNumberOfPhases(1);
@@ -607,6 +615,29 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
 
     system.init(1);
     logger.debug("VLE initialization: V=" + V + " phases=" + system.getNumberOfPhases());
+  }
+
+  /**
+   * Detect multiphase electrolyte cases where all ionic species are only trace products. In this
+   * limit the chemical-equilibrium correction has negligible effect on the phase split, while the
+   * full RAND solve can spend thousands of iterations polishing near-zero ion amounts.
+   *
+   * @param effectiveMaxPhases maximum phases allowed for this flash
+   * @return true when the current VLE state is already sufficient
+   */
+  private boolean isTraceIonMultiphaseCase(int effectiveMaxPhases) {
+    if (effectiveMaxPhases < 2 || system.getNumberOfPhases() < 2 || formulaMatrix == null
+        || !formulaMatrix.hasIonicSpecies()) {
+      return false;
+    }
+    double ionZTotal = 0.0;
+    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+      if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+          || system.getPhase(0).getComponent(i).isIsIon()) {
+        ionZTotal += Math.abs(system.getPhase(0).getComponent(i).getz());
+      }
+    }
+    return ionZTotal < 1.0e-8;
   }
 
   /**

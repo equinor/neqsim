@@ -26,7 +26,7 @@ runs the full workflow including PR creation.
 
 Java library for thermodynamic fluid properties and process simulation.
 Developed at NTNU, maintained by Equinor. Apache-2.0 license.
-`com.equinor.neqsim:neqsim` version 3.7.0 — **must compile with Java 8**.
+`com.equinor.neqsim:neqsim` version 3.12.0 — **must compile with Java 8**.
 
 ## Repo Map
 
@@ -92,8 +92,8 @@ src/test/java/neqsim/   Mirrors production structure. JUnit 5. Extend NeqSimTest
 src/main/resources/      Component databases, design data CSVs
 examples/notebooks/      28+ Jupyter notebooks
 docs/                    350+ markdown files, Jekyll site
-.github/agents/          19 Copilot Chat agents (router, thermo, process, field development, test, PVT, reaction engineering, control systems, emissions, ...)
-.github/skills/          28 reusable knowledge packages (API, Java8, notebooks, field-development, field-economics, subsea-and-wells, eos-regression, reaction-engineering, dynamic-simulation, distillation-design, electrolyte-systems, ...)
+.github/agents/          30+ Copilot Chat agents (router, thermo, process, field development, test, PVT, reaction engineering, control systems, emissions, ...)
+.github/skills/          45+ reusable knowledge packages (API, process-modeling, Java8, notebooks, field-development, field-economics, subsea-and-wells, eos-regression, reaction-engineering, dynamic-simulation, distillation-design, electrolyte-systems, ...)
 community-skills.yaml    Community skill catalog — external skills installable via `neqsim skill install`
 devtools/                Unified CLI (`neqsim` command), Jupyter dev setup, task/skill tools, UniSim reader
 ```
@@ -122,7 +122,7 @@ devtools/                Unified CLI (`neqsim` command), Jupyter dev setup, task
 
 # Package JAR + copy to Python
 .\mvnw.cmd package -DskipTests
-Copy-Item target\neqsim-3.7.0.jar C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\java11\ -Force
+Copy-Item target\neqsim-3.12.0.jar C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\java11\ -Force
 ```
 
 ## Code Patterns — Copy-Paste Starters

@@ -114,7 +114,7 @@ print(f"Mechanism: {nh3.getPrimaryMechanism()}")
 For ammonia cracking / hydrogen production applications, consider:
 
 - Cracking temperatures (400–900°C) require heat-resistant alloys
-- Downstream H2-rich streams need [HydrogenMaterialAssessment](hydrogen_material_assessment) evaluation
+- Downstream H2-rich streams need `HydrogenMaterialAssessment` evaluation *(API 941 / ASME B31.12)*
 - Residual NH3 in product H2 affects downstream material selection
 
 ## Related Documentation

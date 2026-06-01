@@ -1,6 +1,6 @@
 ---
 name: neqsim-stid-retriever
-description: "Retrieves engineering documents (compressor curves, mechanical drawings, line lists, P&IDs, data sheets, vendor docs) from document management systems for use in NeqSim engineering tasks. Supports local directories, manual upload, and pluggable retrieval backends (e.g., stidapi for STID). USE WHEN: a task needs vendor performance data, mechanical drawings, line-list route hydraulics, or as-built documentation for process equipment."
+description: "Retrieves engineering documents (compressor curves, mechanical drawings, line lists, P&IDs, data sheets, vendor docs, material certificates, fire/PFP documents, piping specs) from document management systems for use in NeqSim engineering tasks. Supports local directories, manual upload, and pluggable retrieval backends (e.g., stidapi for STID). USE WHEN: a task needs vendor performance data, mechanical drawings, line-list route hydraulics, water-hammer route/event evidence, trapped-liquid fire rupture evidence, or as-built documentation for process equipment."
 last_verified: "2026-07-04"
 ---
 
@@ -8,6 +8,11 @@ last_verified: "2026-07-04"
 
 Retrieve engineering documents (compressor curves, mechanical drawings, data
 sheets, vendor reports) for use in NeqSim task-solving workflows.
+
+For water-hammer/liquid-hammer tasks, retrieve STID/P&ID route drawings, line
+lists, stress isometrics, piping specifications, valve data sheets with closure
+time, pump curves or trip logs, design-pressure basis, and relevant tagreader
+event exports into the task references folder.
 
 ## ⚠️ CRITICAL: All documents go INSIDE the task folder
 
@@ -152,6 +157,9 @@ docs = retrieve_documents(
 | `IN` | Instrument Data Sheet | Control system design |
 | `SP` | Specification | Material/piping requirements |
 | `LL` | Line list / route table | Piping hydraulic route models with `PipingRouteBuilder` |
+| `MC` | Material certificate / material class sheet | Pipe grade, SMYS/SMTS, heat number, toughness, temperature limits |
+| `FP` | Fireproofing / PFP specification | Required fire endurance, protection type, inspection/condition evidence |
+| `FC` | Fire or consequence study | Fire zone, heat flux, exposed length/area, escalation and source-term basis |
 
 ### Relevance Scoring
 
@@ -180,6 +188,18 @@ DOC_RELEVANCE = {
     },
     'pipeline_design': {
         'LL': 1.0, 'DS': 1.0, 'SP': 0.9, 'PI': 0.8, 'CE': 0.7, 'MD': 0.6,
+    },
+    'trapped_liquid_fire_rupture': {
+        'PI': 1.0,   # P&ID / STID isolation boundaries
+        'LL': 1.0,   # Line list, ID, wall, design P/T, material class
+        'SP': 0.95,  # Piping spec, flange/gasket/bolt/material class
+        'MC': 0.95,  # Material certificate or material class sheet
+        'FP': 0.90,  # PFP/fireproofing requirement and condition
+        'FC': 0.90,  # Fire/consequence study heat flux and exposed area
+        'DS': 0.75,  # Equipment/piping datasheets
+        'MD': 0.70,  # Mechanical arrangements and dimensions
+        'IN': 0.60,  # Instruments, alarms, trips, relief availability
+        'RE': 0.55,  # Prior reports or technical notes
     },
     'general': {
         'DS': 1.0, 'CE': 0.9, 'AA': 0.7, 'PI': 0.7, 'MD': 0.6,
@@ -211,6 +231,31 @@ def filter_relevant_docs(doc_list, task_type, min_relevance=0.5):
                                  '_reason': f'Below threshold ({score} < {min_relevance})'})
     return relevant, filtered_out
 ```
+
+### Trapped-Liquid Fire Rupture Evidence Retrieval
+
+For tasks involving trapped liquid, blocked-in liquid, no pressure relief,
+fire exposure, PFP demand, pipe rupture, or flange failure, use task type
+`trapped_liquid_fire_rupture` and search for this evidence pack:
+
+1. P&ID/STID or isometric showing isolation valves, vents, drains, relief paths,
+   line numbers, and segment boundaries.
+2. Line list or route table with NPS/ID, wall thickness/schedule, length, design
+   pressure, design temperature, and material class.
+3. Piping specification with flange class, gasket/bolt material, corrosion
+   allowance, and pressure-temperature rating basis.
+4. Material certificate or material class sheet with SMYS/SMTS and toughness notes.
+5. Fire-zone, fire-study, layout, or consequence documents with exposed length,
+   heat flux, fire duration, and escalation basis.
+6. PFP/fireproofing requirement and inspection records showing required endurance
+   and whether protection can be credited.
+7. Relief/thermal relief/blowdown design basis showing availability, set pressure,
+   discharge path, and creditability.
+8. Design basis or technical requirements with acceptance criteria and standards.
+
+Write retrieval attempts, missing documents, and fallback assumptions into the
+manifest so `neqsim-trapped-liquid-fire-rupture` can include them in the final
+evidence matrix.
 
 ---
 

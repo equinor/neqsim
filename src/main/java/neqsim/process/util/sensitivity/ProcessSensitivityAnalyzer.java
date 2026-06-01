@@ -797,6 +797,11 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Sets standard properties common across equipment types.
+   *
+   * @param equipment equipment whose property should be set
+   * @param property standard or generic property name
+   * @param value value to assign to the property
+   * @param unit unit for the value, or null to use the default for the property
    */
   private void setStandardProperty(ProcessEquipmentInterface equipment, String property,
       double value, String unit) {
@@ -827,6 +832,13 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Calls a setter with optional unit parameter.
+   *
+   * @param equipment equipment containing the setter
+   * @param methodName setter method name to call
+   * @param value numeric value to pass to the setter
+   * @param unit requested unit, or null to use {@code defaultUnit}
+   * @param defaultUnit fallback unit used when {@code unit} is null
+   * @throws Exception if reflective method invocation fails
    */
   private void callSetterWithOptionalUnit(ProcessEquipmentInterface equipment, String methodName,
       double value, String unit, String defaultUnit) throws Exception {
@@ -848,6 +860,11 @@ public class ProcessSensitivityAnalyzer implements java.io.Serializable {
 
   /**
    * Finds a method on a class, searching up the hierarchy.
+   *
+   * @param clazz class where the search starts
+   * @param name method name to find
+   * @param paramTypes ordered parameter types for the method signature
+   * @return matching method, or null if no matching method exists
    */
   private Method findMethod(Class<?> clazz, String name, Class<?>... paramTypes) {
     try {

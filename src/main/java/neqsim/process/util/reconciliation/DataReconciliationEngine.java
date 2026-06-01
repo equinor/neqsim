@@ -299,15 +299,17 @@ public class DataReconciliationEngine implements java.io.Serializable {
       residualsBefore[i] = rBefore.get(i, 0);
     }
 
-    // Solve: x_adj = y - V * A^T * (A * V * A^T)^(-1) * A * y
+    // Solve: x_adj = y - V * A^T * solve(A * V * A^T, A * y)
     // Step 1: A * V * A^T (m x m)
-    SimpleMatrix avat = bigA.mult(bigV).mult(bigA.transpose());
+    SimpleMatrix aTimesV = bigA.mult(bigV);
+    SimpleMatrix avat = aTimesV.mult(bigA.transpose());
 
-    // Step 2: (A * V * A^T)^(-1) * A * y = solve(AVAT, A*y) for numerical stability
-    SimpleMatrix avatInv = avat.invert();
+    // Step 2: solve(AVAT, A*y) without forming AVAT^-1
+    SimpleMatrix lagrangeMultipliers = avat.solve(rBefore);
 
-    // Step 3: correction = V * A^T * avatInv * A * y
-    SimpleMatrix correction = bigV.mult(bigA.transpose()).mult(avatInv).mult(bigA).mult(y);
+    // Step 3: correction = V * A^T * solve(AVAT, A*y)
+    SimpleMatrix vAt = bigV.mult(bigA.transpose());
+    SimpleMatrix correction = vAt.mult(lagrangeMultipliers);
 
     // Step 4: reconciled = y - correction
     SimpleMatrix xAdj = y.minus(correction);
@@ -333,8 +335,9 @@ public class DataReconciliationEngine implements java.io.Serializable {
     }
 
     // Gross error detection via normalized residuals
-    // Covariance of adjustments: V_adj = V - V * A^T * (AVAT)^(-1) * A * V
-    SimpleMatrix projectionM = bigV.mult(bigA.transpose()).mult(avatInv).mult(bigA).mult(bigV);
+    // Covariance of adjustments: V_adj = V - V * A^T * solve(AVAT, A * V)
+    SimpleMatrix solvedAv = avat.solve(aTimesV);
+    SimpleMatrix projectionM = vAt.mult(solvedAv);
     SimpleMatrix vAdj = bigV.minus(projectionM);
 
     detectGrossErrors(n, vAdj);

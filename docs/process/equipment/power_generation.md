@@ -17,6 +17,7 @@ Documentation for power generation equipment in NeqSim, including gas turbines, 
 - [Wind Turbine](#wind-turbine)
 - [Solar Panel](#solar-panel)
 - [Battery Storage](#battery-storage)
+- [Right-Sizing, Dispatch & Retrofit (gasturbine sub-package)](#right-sizing-dispatch--retrofit-gasturbine-sub-package)
 - [Usage Examples](#usage-examples)
 - [Capacity Constraints and Optimization](#capacity-constraints-and-optimization)
 - [Related Documentation](#related-documentation)
@@ -444,6 +445,127 @@ double soc = battery.getStateOfChargeFraction();   // 0-1
 
 ---
 
+## Right-Sizing, Dispatch & Retrofit (gasturbine sub-package)
+
+For late-life turndown, fleet right-sizing, dispatch with N+1 reserve, and
+retrofit NPV / CO₂-avoided studies, use the catalog-driven classes under
+`neqsim.process.equipment.powergeneration.gasturbine`. These complement the
+legacy `GasTurbine` class above: use the legacy class when you need full
+thermodynamic GT + HRSG integration; use this sub-package when the question
+is *“which turbines, how many, and at what load over 20 years?”*
+
+| Class | Purpose |
+|-------|---------|
+| `GasTurbineCatalog` | Bundled `gas_turbine_catalog.csv` (14 aero + industrial models: LM2500, LM2500PLUS_G4, LM6000PF/PG, RB211_6562, Trent 60, SGT-700/750, Centaur 50, Taurus 60/70, Mars 100, Titan 130/250) |
+| `GasTurbineSpec` | Immutable rating point (rated MW, ISO heat rate, exhaust flow/T, NOx, mass) |
+| `GasTurbinePerformanceMap` | Part-load + ambient correction (aero vs industrial polynomials, min-load fraction) |
+| `GasTurbineDegradation` | Recoverable + non-recoverable fouling vs fired hours, water-wash and overhaul reset |
+| `GasTurbineEmissions` | Full-carbon-balance CO₂, NOx, methane slip from fuel composition |
+| `CO2TaxSchedule` | Loads `co2_tax_norway.csv` (2020–2040 NOK/tonne, CO₂ tax + EU ETS), linear interpolation |
+| `GasTurbineUnit` | `TwoPortEquipment` — runs inside a `ProcessSystem`, accepts fuel `Stream`, aggregates `Compressor` shaft load via `addPowerConsumer` |
+| `TurbineDispatchOptimizer` | Picks the cheapest feasible on/off combination (brute-force ≤8 units, merit-order above) with N+1 reserve |
+| `LateLifeRetrofitStudy` | Year-by-year NPV / CO₂-avoided / payback for baseline vs retrofit fleet over a declining demand profile |
+
+### Catalog & site-corrected available power
+
+```java
+import neqsim.process.equipment.powergeneration.gasturbine.GasTurbineCatalog;
+import neqsim.process.equipment.powergeneration.gasturbine.GasTurbineSpec;
+import neqsim.process.equipment.powergeneration.gasturbine.GasTurbineUnit;
+
+GasTurbineSpec spec = GasTurbineCatalog.get("LM2500");
+GasTurbineUnit gt = new GasTurbineUnit("GT-A", fuelStream, spec);
+gt.setAmbientTemperatureK(273.15 + 30.0);   // hot-day derate
+gt.setDemandedPower(15.0e6);                 // 15 MW shaft
+gt.run(UUID.randomUUID());
+double availMW = gt.getAvailablePowerW() / 1.0e6;
+double load    = gt.getLoadFraction();
+double co2Tph  = gt.getCO2EmissionKgPerS() * 3.6;
+```
+
+### Linking turbine shaft to compressor demand
+
+Each `GasTurbineUnit` sums the live shaft demand from any number of
+`Compressor` objects in the same flowsheet — the dispatcher reads it on
+every `run()`:
+
+```java
+ProcessSystem plant = new ProcessSystem();
+plant.add(exportCompressor);     // existing Compressor
+plant.add(injectionCompressor);
+GasTurbineUnit gt = new GasTurbineUnit("GT-A", fuelStream,
+        GasTurbineCatalog.get("LM2500"));
+gt.addPowerConsumer(exportCompressor);
+gt.addPowerConsumer(injectionCompressor);
+plant.add(gt);
+plant.run();   // gt aggregates Compressor.getPower() automatically
+```
+
+### Fleet dispatch with N+1 redundancy
+
+```java
+import neqsim.process.equipment.powergeneration.gasturbine.TurbineDispatchOptimizer;
+
+List<GasTurbineUnit> fleet = Arrays.asList(gt1, gt2, gt3);
+TurbineDispatchOptimizer disp = new TurbineDispatchOptimizer(
+        /*fuelPriceNOKPerKg*/ 4.5,
+        /*co2CostNOKPerTonne*/ 1500.0);
+disp.setRequireNplusOne(true);
+TurbineDispatchOptimizer.DispatchResult r = disp.dispatch(fleet, 18.0e6);
+if (r.feasible) {
+    System.out.println(r.summary());   // running units, load, NOK/hr
+}
+```
+
+### Retrofit NPV vs baseline
+
+```java
+import neqsim.process.equipment.powergeneration.gasturbine.CO2TaxSchedule;
+import neqsim.process.equipment.powergeneration.gasturbine.LateLifeRetrofitStudy;
+
+double[] demandMW = new double[20];
+for (int i = 0; i < 20; i++) demandMW[i] = Math.max(8.0, 56.0 - i * 2.0);
+
+LateLifeRetrofitStudy study = new LateLifeRetrofitStudy(
+        baselineFleet,    // e.g. 2x LM6000PF
+        retrofitFleet,    // e.g. 3x SGT-700
+        demandMW,
+        /*startYear*/ 2026,
+        CO2TaxSchedule.loadDefault(),
+        /*fuelPriceNOKPerKg*/ 4.5);
+study.setRetrofitCapexMNOK(800.0);
+study.setDiscountRate(0.08);
+study.setAnnualOperatingHours(8000);
+LateLifeRetrofitStudy.RetrofitResult res = study.run();
+System.out.println("NPV (MNOK):      " + res.npvMNOK);
+System.out.println("CO2 avoided (t): " + res.totalCO2AvoidedTonne);
+System.out.println("Payback (yr):    " + res.simplePaybackYear);
+```
+
+### End-to-end notebook
+
+The [Gas Turbine 20-Year Right-Sizing and Retrofit](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/gas_turbine_rightsizing_20yr.ipynb)
+notebook walks through a complete late-life study:
+
+1. Build a 50 MMSCFD export-compression train and link it to a `GasTurbineUnit`.
+2. Sweep ambient temperature × load to map site-corrected available power.
+3. Apply `GasTurbineDegradation` over fired hours and overhauls.
+4. Dispatch a 3-unit fleet with `TurbineDispatchOptimizer` against an annual
+   load-duration curve.
+5. Run `LateLifeRetrofitStudy` with `CO2TaxSchedule.loadDefault()` to compare
+   baseline (2 × LM6000PF) vs retrofit (3 × SGT-700) on NPV, payback, and CO₂
+   avoided.
+6. Layer an HRSG + steam-turbine bottoming cycle on the retrofit fleet to
+   evaluate a combined-cycle alternative.
+7. Replace the synthetic decline with a reservoir + Beggs-Brills riser +
+   flowline model so the compressor suction — and therefore the shaft
+   demand — is driven by reservoir physics.
+
+The full skill reference lives at
+[.github/skills/neqsim-power-generation/SKILL.md](https://github.com/equinor/neqsim/blob/master/.github/skills/neqsim-power-generation/SKILL.md).
+
+---
+
 ## Usage Examples
 
 ### Combined Heat and Power (CHP) System
@@ -758,3 +880,4 @@ print(gt.getSizingReport())
 - [Compressors](compressors) - Gas compression
 - [Heat Exchangers](heat_exchangers) - Heat recovery
 - [Sustainability](../sustainability/) - Emissions tracking
+- [Gas Turbine 20-Year Right-Sizing and Retrofit Notebook](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/gas_turbine_rightsizing_20yr.ipynb) - End-to-end late-life study using `GasTurbineUnit`, `TurbineDispatchOptimizer`, `LateLifeRetrofitStudy`, and reservoir-driven demand

@@ -43,6 +43,7 @@ public class TPmultiflash extends TPflash {
   boolean secondTime = false;
   boolean aqueousPhaseSeedAttempted = false;
   boolean postFlashStabilityChecked = false;
+  boolean enhancedStabilityChecked = false;
   private int rerunDepth = 0;
 
   double[] multTerm;
@@ -2165,6 +2166,7 @@ public class TPmultiflash extends TPflash {
   @Override
   public void run() {
     int aqueousPhaseNumber = 0;
+    enhancedStabilityChecked = false;
     // logger.info("Starting multiphase-flash....");
 
     // For systems with ions, temporarily remove ions before stability analysis
@@ -2203,6 +2205,7 @@ public class TPmultiflash extends TPflash {
       // equilibria (e.g., sour gas, CO2 systems)
       if (shouldApplyEnhancedMultiPhaseCheck() && !multiPhaseTest
           && system.getNumberOfPhases() < 3) {
+        enhancedStabilityChecked = true;
         stabilityAnalysisEnhanced();
       }
     }
@@ -2399,9 +2402,11 @@ public class TPmultiflash extends TPflash {
       // This is particularly important for systems like CO2/H2S/hydrocarbon mixtures
       // that may exhibit vapor-liquid-liquid equilibrium
       if (system.doMultiPhaseCheck() && system.getNumberOfPhases() >= 2
-          && system.getNumberOfPhases() < 3 && !postFlashStabilityChecked) {
+          && system.getNumberOfPhases() < 3 && !postFlashStabilityChecked
+          && !enhancedStabilityChecked) {
         postFlashStabilityChecked = true;
         int oldNumPhases = system.getNumberOfPhases();
+        enhancedStabilityChecked = true;
         stabilityAnalysisEnhanced();
         if (system.getNumberOfPhases() > oldNumPhases) {
           // Found a third phase - re-run the flash calculation

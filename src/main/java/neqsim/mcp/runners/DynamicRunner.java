@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.mcp.model.ApiEnvelope;
 import neqsim.mcp.model.ResultProvenance;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.DynamicProcessHelper;
@@ -73,15 +74,24 @@ public class DynamicRunner {
       String processJsonStr = input.get("processJson").isJsonObject()
           ? GSON.toJson(input.getAsJsonObject("processJson"))
           : input.get("processJson").getAsString();
+      String normalizedProcessJson = ProcessRunner.normalizeProcessJson(processJsonStr);
 
-      String ssResult = ProcessRunner.run(processJsonStr);
+      String ssResult = ProcessRunner.run(normalizedProcessJson);
       JsonObject ssResponse = JsonParser.parseString(ssResult).getAsJsonObject();
       if (!"success".equals(ssResponse.get("status").getAsString())) {
-        return ssResult; // forward the steady-state error
+        ssResponse.addProperty("tool", "runDynamic");
+        ssResponse.addProperty("upstreamTool", "runProcess");
+        ApiEnvelope.applyStandardFields(ssResponse, "runDynamic", null,
+            ApiEnvelope.validationStatus(false, "steady-state",
+                "Steady-state process simulation failed before dynamic run"),
+            ApiEnvelope.qualityGate("failed", "Dynamic run blocked by steady-state process failure",
+                true));
+        return GSON.toJson(ssResponse);
       }
 
       // Rebuild process for dynamic simulation
-      ProcessSystem process = ProcessSystem.fromJsonAndRun(processJsonStr).getProcessSystem();
+      ProcessSystem process =
+          ProcessSystem.fromJsonAndRun(normalizedProcessJson).getProcessSystem();
 
       // --- Instrument with controllers ---
       double timeStep =
@@ -184,12 +194,28 @@ public class DynamicRunner {
       provenance.setCalculationType("dynamic process simulation (transient)");
       provenance.setConverged(true);
       provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
+      provenance.setBenchmarkTrustLevel(BenchmarkTrust.getMaturityLevel("runDynamic"));
+      provenance.addValidationPassed("steady_state_process_completed");
+      provenance.addValidationPassed("transient_steps_completed");
       response.add("provenance", GSON.toJsonTree(provenance));
+
+      ApiEnvelope.applyStandardFields(response, "runDynamic", provenance,
+          ApiEnvelope.validationStatus(true, "transient", "Dynamic simulation completed"),
+          ApiEnvelope.qualityGate("passed", "Dynamic simulation completed", true));
 
       return GSON.toJson(response);
     } catch (Exception e) {
-      return errorJson("DYNAMIC_ERROR", "Dynamic simulation failed: " + e.getMessage(),
-          "Ensure process is valid and converges in steady-state first");
+      String hint = "Ensure process is valid and converges in steady-state first";
+      String msg = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+      if (msg != null && (msg.contains("gasOutStream") || msg.contains("liquidOutStream")
+          || msg.contains("no inlet stream"))) {
+        hint = "A separator has no inlet stream wired — dynamic mode cannot initialize its gas/"
+            + "liquid outlet streams. Add an 'inlet' field on every separator in the process JSON"
+            + " (e.g. {\"type\":\"separator\",\"name\":\"sep\",\"inlet\":\"feed\"}). For pure"
+            + " depressurization, use a low-flow feed stream to seed the separator inventory and"
+            + " route the gas outlet to a throttling/blowdown valve.";
+      }
+      return errorJson("DYNAMIC_ERROR", "Dynamic simulation failed: " + msg, hint);
     }
   }
 
@@ -211,6 +237,9 @@ public class DynamicRunner {
     err.addProperty("remediation", remediation);
     errors.add(err);
     error.add("errors", errors);
+    ApiEnvelope.applyStandardFields(error, "runDynamic", null,
+        ApiEnvelope.validationStatus(false, "transient", message),
+        ApiEnvelope.qualityGate("failed", message, true));
     return GSON.toJson(error);
   }
 }

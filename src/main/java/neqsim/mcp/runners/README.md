@@ -40,8 +40,14 @@ String result = ProcessRunner.validateAndRun(processJson);
 ApiEnvelope<ProcessResult> result = ProcessRunner.runTyped(processJson);
 ```
 
-**11 equipment types:** Stream, Separator, Compressor, Cooler, Heater, Valve,
+**Core equipment types:** Stream, Separator, Compressor, Cooler, Heater, Valve,
 Mixer, Splitter, HeatExchanger, DistillationColumn, Pipe
+
+The JSON builder also supports additional `EquipmentFactory`-backed units such
+as Pump, Expander, Tank, ComponentSplitter, Recycle, Adjuster, GasScrubber,
+ThreePhaseSeparator, SimpleReservoir, Flare, FlareStack, FuelCell,
+Electrolyzer, CO2Electrolyzer, and power equipment. Top-level `areas` JSON is
+accepted for multi-area `ProcessModel` execution.
 
 Delegates to `ProcessSystem.fromJsonAndRun()` which uses `JsonProcessBuilder`
 for two-pass construction: create all units, then wire inlet/outlet connections.
@@ -55,6 +61,22 @@ String result = Validator.validate(jsonInput);
 ```
 
 Returns `{"valid": true/false, "issues": [...]}` with error codes and fix suggestions.
+
+### HAZOPStudyRunner
+
+Simulation-backed IEC 61882 HAZOP worksheet generation from a NeqSim process
+definition, optional STID/P&ID-extracted nodes, selected failure modes, and an
+optional barrier register.
+
+```java
+String result = HAZOPStudyRunner.run(hazopJson);
+```
+
+The runner builds and runs the baseline `ProcessSystem`, uses
+`AutomaticScenarioGenerator` to identify equipment-failure scenarios, runs those
+scenarios against copied process models, maps failures to HAZOP guidewords and
+parameters, and returns worksheet rows, scenario evidence, quality gates,
+barrier-register handoff, and report markdown.
 
 ### ComponentQuery
 

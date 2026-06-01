@@ -8,9 +8,9 @@ nav_order: 1
 
 # TVP RVP Study
 
-> **Note:** This is an auto-generated Markdown version of the Jupyter notebook 
+> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`TVP_RVP_Study.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/TVP_RVP_Study.ipynb).
-> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/TVP_RVP_Study.ipynb) 
+> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/TVP_RVP_Study.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/TVP_RVP_Study.ipynb).
 
 ---

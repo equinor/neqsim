@@ -154,6 +154,9 @@ public class FlowAssuranceRunner {
         mapper.addProfilePoint(pt.get("km").getAsDouble(), pt.get("pressure_bara").getAsDouble(),
             pt.get("temperature_C").getAsDouble());
       }
+    } else if (input.has("pressure_bara") && input.has("temperature_C")) {
+      mapper.addProfilePoint(0.0, input.get("pressure_bara").getAsDouble(),
+          input.get("temperature_C").getAsDouble());
     }
     HydrateRiskMapper.RiskProfile riskProfile = mapper.calculate();
     return JsonParser.parseString(riskProfile.toJson()).getAsJsonObject();

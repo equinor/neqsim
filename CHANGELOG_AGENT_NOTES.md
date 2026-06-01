@@ -9,14 +9,525 @@
 
 ---
 
+## 2026-05-30 — Agentic Process Engineering v1.1 (depth, not foundation)
+
+### Summary
+Closes three depth gaps surfaced by the v1 self-assessment in
+`docs/integration/agentic_capability_rating.md`:
+
+1. **More integrator options** for dynamic simulation.
+2. **Gradient access** through `ProcessAutomation` without instrumenting
+   individual equipment classes.
+3. **Broader synthesis coverage** — multi-stage compression with
+   inter/after-coolers.
+
+### New classes
+
+- `neqsim.process.dynamics.RK4Integrator` — classical fixed-step 4th-order
+  Runge–Kutta. Drop-in `IntegratorStrategy` for smooth non-stiff problems where
+  Explicit Euler is too noisy and BDF is overkill.
+- `neqsim.process.dynamics.AdaptiveRK45Integrator` — Cash–Karp 5(4) embedded RK
+  with adaptive sub-stepping inside one outer `step()` call. Tolerance-controlled
+  via `setAbsoluteTolerance`/`setRelativeTolerance`/`setMaxSubSteps` (chainable).
+  Use `getLastSubSteps()` to inspect work per outer step.
+- `neqsim.process.automation.SensitivityAnalyzer` — finite-difference gradients
+  and Jacobians built on top of `ProcessAutomation`. Supports `CENTRAL` and
+  `FORWARD` modes, per-variable step from `max(absStep, relStep · |x|)`,
+  always restores original inputs (try/finally). Returns Java structures
+  (`double`, `Map`, `double[][]`) and JSON with stable `SCHEMA_VERSION = "1.0"`.
+- `neqsim.process.synthesis.CompressionDuty` — immutable+chainable spec for a
+  compression service: feed, discharge pressure, max stage ratio (default 3.5),
+  inter-stage cooler T (default 35 °C), polytropic efficiency (default 0.78),
+  after-cooler on/off.
+- `neqsim.process.synthesis.CompressionProposal` — result of the heuristic:
+  built `ProcessSystem`, stage count, per-stage ratio, rationale, ordered stage
+  names. `toJson()` for agent handoff.
+
+### New methods
+- `FlowsheetSynthesisEngine.proposeAndBuildCompression(CompressionDuty)` —
+  picks stage count from `ceil(ln(overallRatio)/ln(maxStageRatio))`, builds
+  alternating `Compressor`/`Cooler` units named `<duty>-K{i}` / `<duty>-IC{i}`,
+  appends `<duty>-AC` if the after-cooler is enabled. Returns an **unrun**
+  `ProcessSystem` so callers can wire it into a larger flowsheet before solving.
+
+### Migration notes
+- Pure additions; no existing methods or class shapes changed.
+- `AdaptiveRK45Integrator` exposes both short (`getAbsTol/getRelTol`) and
+  long (`getAbsoluteTolerance/getRelativeTolerance`) accessors for clarity;
+  the long names are also the chainable setters.
+
+### Tests
+- `src/test/java/neqsim/process/dynamics/AdvancedIntegratorsTest.java`
+- `src/test/java/neqsim/process/automation/SensitivityAnalyzerTest.java`
+- `src/test/java/neqsim/process/synthesis/CompressionDutyTest.java`
+
+All 18 tests pass (`mvnw.cmd test -Dtest=AdvancedIntegratorsTest,SensitivityAnalyzerTest,CompressionDutyTest`).
+
+### Agents / skills to update
+- `neqsim-dynamic-simulation` — mention `RK4Integrator` and `AdaptiveRK45Integrator`
+  in the integrator-strategies section.
+- `neqsim-api-patterns` — add a "finite-difference sensitivity via
+  `ProcessAutomation`" recipe.
+- `neqsim-process-extraction` / `@flowsheet.synthesis` — extend the synthesis
+  block with a "compression train" example using `CompressionDuty`.
+
+---
+
+## 2026-05-30 — Agentic Process Engineering v1 (3 features + dynamics wiring)
+
+### Summary
+Three new capability bundles for autonomous process-engineering agents:
+typed automation writes with rollback, structured separation-duty synthesis,
+and pluggable dynamic-simulation infrastructure with event scheduling.
+
+### Feature 1 — Typed automation writes with rollback
+- `neqsim.process.automation.ProcessAutomation` now performs typed validation
+  before any `setVariableValue` write (range, allowed-values, unit conversion)
+  and supports transactional `setValuesWithRollback(Map updates, String unit)`
+  that reverts all writes if any single update fails.
+- Adds `getWriteHistory()` audit log (timestamped, with old/new value, unit,
+  status, error category). Diagnostics now tag failures with
+  `VALUE_OUT_OF_BOUNDS`, `INVALID_TYPE`, `READ_ONLY_VARIABLE`,
+  `UNIT_CONVERSION_FAILED`. Schema: `SCHEMA_VERSION = "1.0"`.
+
+### Feature 2 — SeparationDuty + FlowsheetSynthesisEngine
+- `neqsim.process.synthesis.SeparationDuty` — structured spec for a
+  separation requirement (feed composition, recovery targets, purity targets,
+  energy/utility constraints, allowed unit-operation classes).
+- `neqsim.process.synthesis.FlowsheetSynthesisEngine` — generates candidate
+  flowsheet topologies (separator trains, columns, flash cascades) from a
+  `SeparationDuty`, scores them on TAC / recovery / energy and emits a ranked
+  `List<FlowsheetCandidate>` with JSON-serializable spec for downstream agents.
+
+### Feature 3 — Pluggable dynamics infrastructure (wired into `runTransient`)
+- `neqsim.process.dynamics.IntegratorStrategy` interface with two
+  implementations: `ExplicitEulerIntegrator` (default) and `BDFIntegrator`
+  (implicit-Euler/BDF-1 with Newton + central-FD Jacobian, tol 1e-8,
+  maxIter 25, falls back to explicit Euler on Newton divergence;
+  `lastStepFellBack()` flags the fallback).
+- `neqsim.process.dynamics.EventScheduler` — time-stamped `Runnable` queue
+  for ESD trips, valve closures, setpoint ramps. Events with
+  `time <= currentTime` fire at the top of every `runTransient` step
+  (before equipment runs).
+- **Wired into the live transient loop**: `ProcessSystem.runTransient(dt, id)`
+  fires due events before `applyFieldInputs()`. Accessors:
+  `get/setIntegratorStrategy()`, `get/setEventScheduler()`.
+- **`ProcessModel` orchestration**: new `runTransient(dt, UUID)` iterates all
+  child areas; `setIntegratorStrategy()` and `setEventScheduler()` propagate to
+  every child area.
+- Three new measurement devices in `neqsim.process.measurementdevice`:
+  `DifferentialPressureTransmitter` (bar), `CompositionAnalyzer`
+  (OVERALL/GAS/LIQUID mole fraction), `FlowRatioMeter` (MASS/MOLE/VOLUME).
+- **Serialization note**: `eventScheduler` is `transient` on `ProcessSystem`
+  because `Runnable` payloads (lambdas, anonymous classes) are usually not
+  serializable. Re-install after deserialising.
+
+### Tests
+- Feature 1: 23 tests pass.
+- Feature 2: 7 tests pass.
+- Feature 3 core: 16 tests pass.
+- `RunTransientEventSchedulerTest`: 4 tests pass — verifies the scheduler fires
+  at the correct timestep, mutates external state, integrator-strategy
+  accessors round-trip, and `ProcessModel` propagates the scheduler to all
+  child areas.
+
+### Migration / agent guidance
+- **No breaking changes**. All new APIs are additive.
+- Agents performing dynamic studies should prefer `EventScheduler` over
+  manually polling `i == 300` step-counter patterns inside the transient loop.
+- For stiff dynamics (small pressure-vessel volumes, fast PID loops), set
+  `process.setIntegratorStrategy(new BDFIntegrator())`.
+- For multi-area plants, install the scheduler once on `ProcessModel`; it
+  propagates to every area.
+- Skills updated: `neqsim-dynamic-simulation` (Pluggable Integrator
+  Strategies, Event Scheduling, New Measurement Devices sections).
+
+---
+
+
+
+### Summary
+Added the first Horizon-3 hydrogen-production foundation utilities: cryogenic
+para/ortho H₂ correction factors and catalyst deactivation activity screening.
+
+### New classes
+- `neqsim.thermo.util.hydrogen.ParaOrthoH2Correction` — rigid-rotor
+  para/ortho partition-function utility for equilibrium para fraction,
+  normal-to-equilibrium conversion heat, equilibrium-vs-frozen Cp correction,
+  bounded thermal-conductivity correction factor and catalyst conversion time
+  screening.
+- `neqsim.process.equipment.reactor.CatalystDeactivationKinetics` — first-order
+  activity decay model for `CatalystBed`, covering sulfur poisoning, chloride
+  poisoning, coking and thermal sintering for nickel reforming, iron-chromium
+  HT-shift, copper-zinc LT-shift and ruthenium ammonia-cracking catalysts.
+
+### Skill and docs
+- `neqsim-hydrogen-production` skill: added Horizon-3 foundation class table,
+  para/ortho correction recipe and catalyst deactivation recipe.
+- `skill-index.json`: added para/ortho hydrogen and catalyst-life keywords.
+- `docs/process/hydrogen_production.md`: added cryogenic spin-isomer and
+  catalyst-deactivation screening sections.
+
+### Tests
+- `ParaOrthoH2CorrectionTest` — equilibrium para-fraction limits, conversion
+  heat, Cp correction, thermal-conductivity factor and catalyst time ranking.
+- `CatalystDeactivationKineticsTest` — catalyst family sensitivity, coking,
+  thermal sintering, dominant mechanism, JSON output and `CatalystBed` activity
+  update.
+
+### Compatibility
+No breaking changes. Existing Leachman, reactor and CatalystBed APIs are unchanged.
+
+---
+
+## 2026-05-27 — Horizon-1.5 PSA Cascade and Cost Estimate
+
+### Summary
+Multi-bed PSA orchestration and CAPEX correlation added on top of the H1
+`PressureSwingAdsorptionBed`. Closes the H1.5 deferral list from the H1 PR.
+
+### New classes
+- `neqsim.process.equipment.adsorber.PSACascade` — orchestrates 2/4/6/8/10/12
+  beds in a Skarstrom cycle. Inner `CascadeConfiguration` enum encodes the
+  pressure-equalisation count and the recovery uplift over a single bed
+  (0.00 / 0.05 / 0.08 / 0.10 / 0.11 / 0.12). Total cascade recovery is capped at
+  0.93 (industrial benchmark for H₂ PSA on shifted syngas).
+- `neqsim.process.costestimation.adsorber.PSACostEstimate` — per-bed vessel
+  (USD 250 000 reference @ 2 m × 4 m TL-TL, scale exponent 0.6) + valve skid
+  (USD 60 000/bed) + sorbent inventory (USD 4/kg AC, USD 10/kg Zeolite 13X) ×
+  CEPCI ratio (2024 ref = 800). `setIncludeBalanceOfPlant(false)` strips ~25 %
+  for stack-only quotes. Convenience constructor `PSACostEstimate(PSACascade)`
+  derives bed count, sorbent, and sorbent mass from the template bed geometry.
+
+### Skill and docs
+- `neqsim-hydrogen-production` skill: PSACascade/PSACostEstimate promoted from
+  the Horizon-2/3 deferred list into a new **Core Classes (Horizon 1.5)** table.
+  Added Recipe 4 (multi-bed PSA cascade) and Recipe 5 (PSA CAPEX). Bumped
+  `last_verified` to 2026-05-27.
+- `skill-index.json`: added keys `psa cascade`, `multi-bed psa`,
+  `skarstrom cycle`, `psa cost`, `psa capex` → `neqsim-hydrogen-production`.
+- `docs/process/hydrogen_production.md`: extended with PSA cascade and CAPEX
+  sections (see PR description).
+
+### Tests
+- `PSACascadeTest` — 9 assertions: cascade uplift, bed-count monotonicity,
+  0.93 cap, tail-gas mass balance, sorbent propagation, invalid-input rejection.
+- `PSACostEstimateTest` — 7 assertions: bed-count linearity, sorbent ordering
+  (Zeolite > AC), BoP toggle (~0.75× ratio), cascade-derived constructor, order
+  of magnitude (USD 1–10 M for 4 beds × 20 t AC).
+
+### Compatibility
+No breaking changes. H1 `PressureSwingAdsorptionBed` API unchanged.
+
+---
+
+## 2026-07-04 — Horizon-1 Hydrogen Production Capabilities
+
+### Summary
+
+Added first-pass hydrogen production stack: H₂-tuned pressure-swing adsorption,
+electrolyzer technology selector with I-V characteristic, electrolyzer cost
+estimate. New skill `neqsim-hydrogen-production` packages the recipes.
+
+### New classes
+
+| Class | Package |
+|---|---|
+| `PressureSwingAdsorptionBed` | `neqsim.process.equipment.adsorber` |
+| `ElectrolyzerTechnology` (enum) | `neqsim.process.equipment.electrolyzer` |
+| `ElectrolyzerIVCharacteristic` | `neqsim.process.equipment.electrolyzer` |
+| `ElectrolyzerCostEstimate` | `neqsim.process.costestimation.electrolyzer` |
+
+### Modified classes
+
+- `Electrolyzer` — added `setTechnology`, `setIVCharacteristic`, `setCurrentDensity`,
+  `setFaradaicEfficiency`, `getStackPower`,
+  `getSpecificEnergyConsumption_kWh_per_kg_H2`. Backward-compatible: default
+  cell voltage 1.23 V and η_F = 1.0 preserve the legacy `testElectrolyzer`
+  energy-duty assertion.
+
+### Skill
+
+- New: `.github/skills/neqsim-hydrogen-production/SKILL.md` with SMR+WGS+PSA
+  recipe, electrolyzer technology selector, I-V model, and CAPEX recipe.
+  Indexed under `psa`, `electrolyzer`, `green hydrogen`, `blue hydrogen`, etc.
+
+### Deferred to Horizon 1.5
+
+- `PSACascade` (multi-bed Skarstrom) and `PSACostEstimate` — to keep this PR scoped.
+
+### Migration
+
+None. All existing tests pass unchanged.
+
+---
+
+
+
+### Summary
+
+`ProcessAutomation` gains a batch / introspection / diagnostics surface designed for
+multi-turn agent workflows. `ProcessSystem.getAutomation()` and `ProcessModel.getAutomation()`
+now return a **cached singleton** so diagnostics history, learned corrections, and the new
+`dirty` flag persist across agent turns. All structured outputs include a stable
+`schemaVersion` field (`ProcessAutomation.SCHEMA_VERSION = "1.0"`).
+
+### New API
+
+| Method | Description |
+|--------|-------------|
+| `getSchemaVersion()` / `SCHEMA_VERSION` | Stable JSON-output schema version (`"1.0"`). |
+| `isDirty()` | `true` after any successful `setVariableValue` and until the next `run()`. |
+| `runIfDirty()` | Calls `run()` only when dirty; returns whether a run was performed. |
+| `setVariableValueAndRun(addr, val, uom)` | Atomic set + run + clear-dirty. |
+| `getValues(addresses, uom)` | Batch read → `Map<String, Double>` of successful entries. |
+| `setValues(updates, uom, runAfter)` | Batch write with optional single `run()`; returns count of successes. |
+| `describe()` | JSON manifest of units and variables (`{schemaVersion, multiArea, units:[...]}`). |
+| `snapshot(scope)` | JSON snapshot for a unit / area / `"*"`. |
+| `getTopology()` | JSON listing equipment and `ProcessConnection` edges. |
+| `getNeighbors(unitName)` | Immediate upstream / downstream units as JSON. |
+| `getStructured(address)` | Returns `JsonElement` — composition / components / phaseFractions / kvalues yield objects/arrays. |
+| `validateAddress(address)` | Non-throwing pre-flight: returns `null` if OK or a `DiagnosticResult` with the right `ErrorCategory`. |
+| `getAllowedUnits(address)` | List of valid UOM strings for the given variable. |
+
+### Diagnostic Taxonomy
+
+`AutomationDiagnostics.ErrorCategory` is wired through `diagnoseAndAttemptRecovery` for:
+`UNIT_NOT_FOUND`, `PROPERTY_NOT_FOUND`, `PORT_NOT_FOUND`, `READ_ONLY_VARIABLE`,
+`VALUE_OUT_OF_BOUNDS`, `UNKNOWN_UNIT`, `INVALID_ADDRESS_FORMAT`, `CONVERGENCE_FAILURE`.
+The category appears in the JSON payload returned by `*Safe` accessors and `validateAddress`.
+
+### Thread Safety
+
+`AutomationDiagnostics.history` is now a `Collections.synchronizedList` and
+`learnedCorrections` is a `ConcurrentHashMap`, allowing multiple agents to share a
+single `ProcessAutomation` facade.
+
+### Migration
+
+- No breaking changes. Existing `getVariableValue` / `setVariableValue` / `*Safe` calls keep
+  working unchanged.
+- Agents previously calling `process.run()` after every `setVariableValue` should switch to
+  `setVariableValueAndRun` or batch `setValues(..., runAfter=true)` for fewer redundant runs.
+- If code depended on `getAutomation()` returning a fresh instance each call, retain a local
+  reference instead. The new cached behaviour is required for diagnostics persistence.
+
+### Agents / Skills to Update
+
+- `neqsim-api-patterns` — add batch/introspection patterns.
+- `neqsim-pid-process-operations`, `neqsim-plant-data` — recommend `setVariableValueAndRun`.
+- `@process.simulation`, `@plant.data` — note cached facade and dirty tracking.
+
+---
+
+## 2026-05-17 — Adaptive Matrix Inside-Out Distillation Solver
+
+### Summary
+
+`DistillationColumn.SolverType.MATRIX_INSIDE_OUT` is now an adaptive matrix warm-start mode.
+For small columns it bypasses matrix setup and runs the rigorous inside-out path directly, avoiding
+the fixed overhead seen in benchmark columns. For larger columns it attempts a tridiagonal
+component-balance matrix warm start, records matrix-stage diagnostics, and then finishes with the
+same rigorous inside-out polishing and product acceptance checks used by `INSIDE_OUT`.
+
+### New API
+
+| Method | Description |
+|--------|-------------|
+| `wasMatrixInsideOutWarmStartUsed()` | Reports whether the latest `MATRIX_INSIDE_OUT` run accepted a matrix warm-start state. |
+| `wasMatrixInsideOutWarmStartBypassed()` | Reports whether the adaptive solver skipped matrix setup and used rigorous inside-out directly. |
+| `getLastMatrixInsideOutIterationCount()` | Matrix warm-start iteration count, or zero if no matrix stage ran. |
+| `getLastMatrixInsideOutTemperatureResidual()` | Matrix-stage average tray-temperature residual in Kelvin, or `Double.NaN` if no matrix stage ran. |
+| `getLastMatrixInsideOutSolveTimeSeconds()` | Matrix-stage wall time in seconds, or zero if no matrix stage ran. |
+
+### Agent Guidance
+
+- Use `INSIDE_OUT` as the default robust hydrocarbon-column solver.
+- Use `MATRIX_INSIDE_OUT` for larger hydrocarbon fractionators where a component-balance matrix
+  warm start may reduce rigorous flash sweeps. Expect it to bypass the matrix stage on small
+  columns.
+- Use the new matrix diagnostics before claiming a matrix-stage speedup; `solved()` still reflects
+  the rigorous inside-out polish and the standard mass/product/fallback gates.
+- Keep using `MESH_RESIDUAL` or `NAPHTALI_SANDHOLM` when a task needs explicit residual-oriented
+  MESH convergence checks.
+
+### Affected Guidance
+
+- `.github/skills/neqsim-distillation-design/SKILL.md`
+- `docs/process/equipment/distillation.md`
+- `docs/wiki/distillation_column.md`
+- `docs/development/CODE_PATTERNS.md`
+- `docs/modules.md`
+
+## 2026-05-16 — Naphtali-Sandholm Distillation Solver
+
+### Summary
+
+`DistillationColumn` now exposes `SolverType.NAPHTALI_SANDHOLM` for guarded
+simultaneous MESH residual correction. The solver warm-starts from the existing
+inside-out path, solves tray blocks containing liquid component flows, tray
+temperature, and vapor flow, and accepts the Newton-refined state only when the
+scaled residual improves.
+
+### Agent Guidance
+
+- Use `NAPHTALI_SANDHOLM` when a well-conditioned hydrocarbon fractionator needs
+  residual-driven MESH convergence checks beyond the tray-temperature `NEWTON`
+  accelerator.
+- Use `MESH_RESIDUAL` for diagnostics-only auditing of material, equilibrium,
+  summation, energy, specification, and product-draw residuals.
+- `NEWTON` remains a tray-temperature accelerator and should not be described as
+  a full simultaneous MESH solver.
+
+---
+
+## 2026-05-10 — Root Cause Analysis Framework & Public Reliability Data
+
+### Summary
+
+New `neqsim.process.diagnostics` package provides Bayesian-inspired root cause
+analysis for process equipment (compressors, pumps, separators, heat exchangers,
+valves). `ReliabilityDataSource` now loads from multiple **public** databases
+by default — no commercial OREDA license required.
+
+### New classes
+
+- `RootCauseAnalyzer` — orchestrator: symptom → hypotheses → evidence → verification → ranked report
+- `Symptom` — enum of 12 equipment symptoms (TRIP, HIGH_VIBRATION, SURGE, etc.)
+- `Hypothesis` — ranked hypothesis with Builder pattern, expected signals, evidence
+- `HypothesisGenerator` — built-in libraries for 5 equipment types + custom registry
+- `EvidenceCollector` — time-series trend, threshold, rate-of-change, correlation analysis
+- `SimulationVerifier` — clone ProcessSystem, apply graduated perturbations, compare KPIs
+- `RootCauseReport` — JSON and text output with ranked hypotheses
+
+### Reliability data sources (loaded automatically)
+
+| CSV | Source | Access |
+|-----|--------|--------|
+| `equipment_reliability.csv` | IOGP Report 434 / SINTEF, CCPS 1989, IEEE 493-2007, Lees 2012 | Free / published |
+| `process_industry_data.csv` | CCPS, AIChE, API RP 689, HSE UK | Free / published |
+| `offshore_specific_data.csv` | IOGP / SINTEF, OGP 434, DNV-RP-G101, NORSOK Z-016 | Free / purchasable |
+| `generic_literature.csv` | Lees, MIL-HDBK-217F, DNV-RP-G101 | Free / purchasable |
+
+### Agent/skill updates
+
+- Skill `neqsim-root-cause-analysis` updated to reference multi-source data
+- Agent `diagnose equipment root cause` description updated
+- Capability map now includes "I-ter. Equipment Diagnostics & Reliability" section
+
+### Migration notes
+
+- Replace any `"OREDA"` references in documentation with "reliability data" or
+  "multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees)"
+- `ReliabilityDataSource.getDataSources()` returns the list of loaded sources
+- `ReliabilityDataSource.getEntryCount()` returns total loaded records
+
+---
+## 2026-05-08 — MCP Server Quarkiverse Transport Refresh
+
+### Summary
+
+The standalone MCP server now follows the current Quarkiverse MCP Server docs:
+Quarkus `3.33.1`, Quarkiverse MCP Server `1.12.0`, STDIO for local clients, and
+`quarkus-mcp-server-http` for Streamable HTTP.
+
+### Migration notes
+
+- Replace the deprecated `quarkus-mcp-server-sse` artifact with
+  `quarkus-mcp-server-http`.
+- Use `http://localhost:8080/mcp` for Streamable HTTP clients.
+- Older HTTP/SSE clients can still use `http://localhost:8080/mcp/sse`.
+- MCP initialize examples now use protocol version `2025-11-25`.
+
+---
+
+## 2026-05-07 — Simulation-backed HAZOP MCP Workflow
+
+### Summary
+
+New `HAZOPStudyRunner` connects STID/P&ID-extracted HAZOP nodes to NeqSim
+`ProcessSystem` simulations. MCP `runHAZOP` builds the baseline process, uses
+`AutomaticScenarioGenerator` to create equipment-failure scenarios, runs copied
+process models, maps failures to IEC 61882 guidewords/parameters, and returns
+HAZOP rows, scenario evidence, quality gates, optional barrier-register handoff,
+and report markdown.
+
+### Agent Guidance
+
+- Use `getExample("safety", "hazop-study")` for a complete input template.
+- Use `getSchema("run_hazop", "input")` and `getSchema("run_hazop", "output")`
+  for the contract.
+- Treat generated rows as screening output. A chaired HAZOP team must verify
+  nodes, causes, consequences, safeguards, barrier credit, and action ownership.
+- Use `docs/safety/automated_hazop_from_stid.md` for the end-to-end STID/data/
+  simulation/report workflow.
+
+---
+
+## 2026-05-XX — Process Safety Consequence Analysis & QRA Package
+
+### Summary
+
+New package `neqsim.process.safety` adds quantitative consequence analysis and
+risk-quantification primitives covering API 521 / API 752 / NORSOK Z-013 /
+CCPS QRA Guidelines / IEC 61025 / IEC 61882 / IEC 60812 / ASME UCS-66.
+
+### New classes
+
+| Subpackage | Classes |
+|------------|---------|
+| `depressurization` | `DepressurizationSimulator` (VU-flash transient blowdown, fire heat input, BDV sizing) |
+| `mdmt` | `MDMTCalculator` (UCS-66 Curves A/B/C/D, UCS-66.1 stress reduction, API 579) |
+| `dispersion` | `GaussianPlume`, `HeavyGasDispersion`, `ProbitModel`, `ToxicLibrary` |
+| `fire` | `JetFireModel`, `PoolFireModel`, `VCEModel` (TNO multi-energy), `BLEVECalculator` |
+| `risk.eta` | `EventTreeAnalyzer` (forward outcome frequencies, IEC 62502) |
+| `risk.fta` | `FaultTreeAnalyzer`, `FaultTreeNode` (AND/OR/k-of-N + β-factor CCF, IEC 61025) |
+| `hazid` | `HAZOPTemplate` (IEC 61882), `FMEAWorksheet` (IEC 60812, RPN=S·O·D) |
+| `escalation` | `EscalationGraphAnalyzer` (domino/escalation screening) |
+| `qra` | `ConsequenceAnalysisEngine` (IRPA roll-up, source-term JSON export) |
+| `inherent` | `InherentSafetyEvaluator` (Substitute/Minimize/Moderate/Simplify) |
+| `alarp` | `ALARPAuditReport` (ICAF vs VSL·GDF gross-disproportion) |
+| `compliance` | `StandardsComplianceReport` (API 14C / NORSOK S-001 / IEC 61511) |
+
+### β-factor semantics (FaultTreeAnalyzer)
+
+`P_top_with_CCF = (1-β)·P_indep + β·max(P_basic_i)` — convex combination per
+IEC 61508 Part 6. Note the directional effect differs by gate type: AND gates
+see *increased* probability (CCF defeats redundancy), OR gates see *decreased*
+probability (replaces independent disjunction with correlated single-event).
+
+### New skills
+
+- `neqsim-consequence-analysis`
+- `neqsim-hazid-fmea-eta-fta`
+- `neqsim-depressurization-mdmt`
+
+### New agent
+
+- `@analyze consequences and dispersion` — orchestrates the three skills above.
+
+### New documentation
+
+- `docs/safety/depressurization_per_API_521.md`
+- `docs/safety/mdmt_assessment.md`
+- `docs/safety/dispersion_and_consequence.md`
+- `docs/safety/HAZOP.md`
+- `docs/safety/FMEA.md`
+- `docs/safety/event_fault_trees.md`
+
+All classes are `Serializable` with `serialVersionUID`. 30 JUnit 5 tests under
+`src/test/java/neqsim/process/safety/` pass.
+
+---
+
 ## 2026-04-30 — Distillation Column MESH Residual Diagnostics
 
 ### Summary
 
 `DistillationColumn` now records a scaled MESH residual vector after every run. The residual
 diagnostics group material, equilibrium, summation, energy, and active specification equations.
-A new `SolverType.MESH_RESIDUAL` entry uses inside-out initialization with Newton polishing and
-keeps the residual diagnostics central to the solve path.
+A new `SolverType.MESH_RESIDUAL` entry uses inside-out initialization and keeps the residual
+diagnostics central to the solve path.
 
 ### New API
 
@@ -37,8 +548,8 @@ keeps the residual diagnostics central to the solve path.
 - Use `SolverType.MESH_RESIDUAL` when a task needs explicit MESH residual auditing.
 - Do not describe `SolverType.NEWTON` as a full simultaneous MESH Newton solver; it is a
   tray-temperature correction accelerator.
-- The MESH residual gate is disabled by default for backward compatibility. Enable it only when
-  the task requires residual-vector convergence as part of the acceptance criteria.
+- The MESH residual gate is effective by default for residual-driven solver modes. Disable it only
+  when a task intentionally needs diagnostic residuals without acceptance gating.
 
 ### Affected Guidance
 

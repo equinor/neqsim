@@ -187,7 +187,7 @@ These classes are designed to be called between Step 2 (analysis) and Step 3 (re
 2. **After saving `results.json`** — call `TaskResultValidator.validate()` to check the output file
 3. Both checks must pass before proceeding to report generation
 
-The workflow pattern is documented in [AGENTS.md](../../../AGENTS.md) under "Save results.json".
+The workflow pattern is documented in [AGENTS.md](../../AGENTS.md) under "Save results.json".
 
 ## Related Documentation
 

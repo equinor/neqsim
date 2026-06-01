@@ -1,5 +1,6 @@
 package neqsim.mcp.runners;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.Arrays;
@@ -128,33 +129,38 @@ public final class DataCatalogRunner {
     JsonObject result = new JsonObject();
     try {
       try (NeqSimDataBase database = new NeqSimDataBase()) {
-        ResultSet rs = database
-            .getResultSet("SELECT * FROM comp WHERE NAME='" + sanitize(componentName) + "'");
-        if (rs.next()) {
-          result.addProperty("status", "success");
-          result.addProperty("component", componentName);
-          ResultSetMetaData meta = rs.getMetaData();
-          JsonObject props = new JsonObject();
-          for (int i = 1; i <= meta.getColumnCount(); i++) {
-            String col = meta.getColumnName(i);
-            String val = rs.getString(i);
-            if (val != null && !val.isEmpty()) {
-              try {
-                double numVal = Double.parseDouble(val);
-                props.addProperty(col, numVal);
-              } catch (NumberFormatException e) {
-                props.addProperty(col, val);
+        try (PreparedStatement statement =
+            database.getConnection().prepareStatement("SELECT * FROM comp WHERE NAME=?")) {
+          String safeComponentName = sanitize(componentName);
+          statement.setString(1, safeComponentName);
+          try (ResultSet rs = statement.executeQuery()) {
+            if (rs.next()) {
+              result.addProperty("status", "success");
+              result.addProperty("component", safeComponentName);
+              ResultSetMetaData meta = rs.getMetaData();
+              JsonObject props = new JsonObject();
+              for (int i = 1; i <= meta.getColumnCount(); i++) {
+                String col = meta.getColumnName(i);
+                String val = rs.getString(i);
+                if (val != null && !val.isEmpty()) {
+                  try {
+                    double numVal = Double.parseDouble(val);
+                    props.addProperty(col, numVal);
+                  } catch (NumberFormatException e) {
+                    props.addProperty(col, val);
+                  }
+                }
+              }
+              result.add("properties", props);
+            } else {
+              result.addProperty("status", "error");
+              result.addProperty("message", "Component '" + componentName + "' not found");
+              // Try fuzzy match
+              String closest = ComponentQuery.closestMatch(componentName);
+              if (closest != null) {
+                result.addProperty("suggestion", closest);
               }
             }
-          }
-          result.add("properties", props);
-        } else {
-          result.addProperty("status", "error");
-          result.addProperty("message", "Component '" + componentName + "' not found");
-          // Try fuzzy match
-          String closest = ComponentQuery.closestMatch(componentName);
-          if (closest != null) {
-            result.addProperty("suggestion", closest);
           }
         }
       }
@@ -240,34 +246,27 @@ public final class DataCatalogRunner {
 
       try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase()) {
         String sql = "SELECT * FROM " + table;
+        String safeEquipmentType = sanitize(equipmentType);
         if (equipmentType != null && !equipmentType.isEmpty()) {
-          sql += " WHERE EQUIPMENT_TYPE LIKE '%" + sanitize(equipmentType) + "%'";
+          sql += " WHERE EQUIPMENT_TYPE LIKE ?";
         }
         sql += " FETCH FIRST 100 ROWS ONLY";
 
-        ResultSet rs = database.getResultSet(sql);
-        ResultSetMetaData meta = rs.getMetaData();
-        JsonArray rows = new JsonArray();
-        JsonArray columns = new JsonArray();
-        for (int i = 1; i <= meta.getColumnCount(); i++) {
-          columns.add(meta.getColumnName(i));
-        }
-        while (rs.next()) {
-          JsonObject row = new JsonObject();
-          for (int i = 1; i <= meta.getColumnCount(); i++) {
-            String val = rs.getString(i);
-            if (val != null) {
-              row.addProperty(meta.getColumnName(i), val);
+        if (equipmentType != null && !equipmentType.isEmpty()) {
+          try (PreparedStatement statement = database.getConnection().prepareStatement(sql)) {
+            statement.setString(1, "%" + safeEquipmentType + "%");
+            try (ResultSet rs = statement.executeQuery()) {
+              addStandardQueryRows(rs, result);
             }
           }
-          rows.add(row);
+        } else {
+          try (ResultSet rs = database.getResultSet(sql)) {
+            addStandardQueryRows(rs, result);
+          }
         }
         result.addProperty("status", "success");
         result.addProperty("standard", standardCode);
         result.addProperty("table", table);
-        result.add("columns", columns);
-        result.addProperty("rowCount", rows.size());
-        result.add("data", rows);
       }
     } catch (Exception e) {
       result.addProperty("status", "error");
@@ -467,7 +466,37 @@ public final class DataCatalogRunner {
     if (input == null) {
       return "";
     }
-    return input.replaceAll("[';\"\\\\]", "");
+    return input.replaceAll("[^a-zA-Z0-9_ .,+()/\\-]", "").trim();
+  }
+
+  /**
+   * Adds rows from a standards query result set to a JSON response.
+   *
+   * @param rs result set to read
+   * @param result JSON response to populate
+   * @throws java.sql.SQLException if reading the result set fails
+   */
+  private static void addStandardQueryRows(ResultSet rs, JsonObject result)
+      throws java.sql.SQLException {
+    ResultSetMetaData meta = rs.getMetaData();
+    JsonArray rows = new JsonArray();
+    JsonArray columns = new JsonArray();
+    for (int i = 1; i <= meta.getColumnCount(); i++) {
+      columns.add(meta.getColumnName(i));
+    }
+    while (rs.next()) {
+      JsonObject row = new JsonObject();
+      for (int i = 1; i <= meta.getColumnCount(); i++) {
+        String val = rs.getString(i);
+        if (val != null) {
+          row.addProperty(meta.getColumnName(i), val);
+        }
+      }
+      rows.add(row);
+    }
+    result.add("columns", columns);
+    result.addProperty("rowCount", rows.size());
+    result.add("data", rows);
   }
 
   /**

@@ -20,9 +20,12 @@ Analyze the request and match it to one or more agents:
 | "Realistic", "feasible", "can this be built", "what will it cost", equipment selection | `@mechanical.design` | `@process.model` for operating conditions |
 | CME, CVD, differential liberation, swelling test, saturation pressure | `@pvt.simulation` | `@thermo.fluid` for fluid setup |
 | Hydrate, wax, asphaltene, corrosion, pipeline pressure drop, slug flow | `@flow.assurance` | `@thermo.fluid` if CPA needed |
+| Water hammer, liquid hammer, hydraulic surge, fast valve closure, pump trip, check-valve slam | `@flow.assurance` | `@plant.data` for tagreader event windows; `@safety.depressuring` if risk register or safety case needed |
 | ISO 6976, Wobbe index, calorific value, gas spec, AGA, H2 blending gas quality | `@gas.quality` | `@process.model` for upstream conditions |
 | Wall thickness, ASME, API, DNV, mechanical sizing, cost | `@mechanical.design` | `@process.model` for operating conditions |
+| Standards compliance, TR1965, STS0131, TR2237, NORSOK P-002, NORSOK S-001, technical requirements review | `@standards.review` | `@technical.reader` for document extraction; `@process.model` for calculated evidence |
 | Blowdown, depressurization, PSV, relief valve, fire case, source term, HAZOP, SIL | `@safety.depressuring` | `@process.model` for steady-state base |
+| Root cause, failure analysis, trip diagnosis, vibration diagnosis, equipment anomaly, RCA | `@root.cause` | `@plant.data` for historian data; `@process.model` for simulation base |
 | Emissions, CO2 tax, flaring, venting, carbon intensity, GHG, EU ETS | `@emissions.environmental` | `@process.model` for process conditions |
 | CO2 capture, CO2 transport, CO2 storage, CCS, injection well, dense phase CO2 | `@ccs.hydrogen` | `@flow.assurance` for pipeline hydraulics |
 | Hydrogen, H2 blending, electrolysis, green H2, blue H2, SMR, hydrogen pipeline | `@ccs.hydrogen` | `@gas.quality` for Wobbe impact |
@@ -109,6 +112,10 @@ Some requests need multiple agents in sequence. Detect these patterns:
 ### Pattern 2: Process + Flow Assurance
 **Trigger:** "pipeline" + "hydrate" or "wax" or "corrosion"
 **Pipeline:** `@thermo.fluid` (create fluid with water/MEG) then `@flow.assurance` (run analysis)
+
+### Pattern 2b: Process + Water Hammer
+**Trigger:** "water hammer", "liquid hammer", "hydraulic surge", "fast valve closure", "pump trip", "check-valve slam", or "ESD closure"
+**Pipeline:** `@process.model` or `@technical.reader` (establish process/route inputs) then `@flow.assurance` with `neqsim-water-hammer`; add `@plant.data` when tagreader event data is needed
 
 ### Pattern 3: Process + Safety
 **Trigger:** "blowdown" or "depressurization" + equipment description

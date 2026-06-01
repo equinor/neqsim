@@ -15,16 +15,25 @@ Usage:
 Skills are installed to ~/.neqsim/skills/<name>/SKILL.md so they don't
 pollute the core repo. AI tools can be configured to read from that path.
 
+Community catalogs can list individual skills or GitHub repositories to
+discover online. Repository discovery first reads the remote
+community-skills.yaml catalog, then falls back to scanning for SKILL.md files.
+
 Private skills are listed in ~/.neqsim/private-skills.yaml (gitignored,
 never committed). They support local file paths, network shares, and
-private GitHub repos.
+private GitHub repos via GITHUB_TOKEN or an authenticated gh CLI session.
 """""
 
 import argparse
+import fnmatch
 import json
 import os
+import subprocess
 import sys
 import textwrap
+import urllib.error
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 try:
@@ -38,6 +47,15 @@ CATALOG_FILE = REPO_ROOT / "community-skills.yaml"
 PRIVATE_CATALOG_FILE = Path.home() / ".neqsim" / "private-skills.yaml"
 INSTALL_DIR = Path.home() / ".neqsim" / "skills"
 MANIFEST_FILE = INSTALL_DIR / "installed.json"
+GITHUB_TIMEOUT_SECONDS = 20
+DEFAULT_SKILL_PATH_GLOB = "**/SKILL.md"
+
+TAG_PATTERNS = [
+    "thermodynamic", "process", "pvt", "flow assurance", "hydrate",
+    "pipeline", "compressor", "separator", "distillation", "heat exchanger",
+    "ccs", "hydrogen", "subsea", "well", "economics", "safety",
+    "electrolyte", "reaction", "power", "emissions", "corrosion",
+]
 
 # ── Private catalog template ───────────────────────────────────────────
 PRIVATE_CATALOG_TEMPLATE = """\
@@ -50,7 +68,7 @@ PRIVATE_CATALOG_TEMPLATE = """\
 # Skills can be sourced from:
 #   - Local file paths (source: local)
 #   - Network shares (source: local, with UNC path)
-#   - Private GitHub repos (source: github, requires GITHUB_TOKEN)
+#   - Private GitHub repos (source: github, requires GITHUB_TOKEN or gh auth)
 #   - Internal Git servers (source: url, with direct URL)
 #
 # Install with: neqsim skill install <name>
@@ -58,6 +76,19 @@ PRIVATE_CATALOG_TEMPLATE = """\
 catalog_version: "1.0"
 last_updated: "{today}"
 organisation: "your-company"
+
+repositories:
+    # -- Private GitHub repository discovery --
+    # Requires either GITHUB_TOKEN in the shell or `gh auth login` with repo access.
+    # Use catalog_path: "" when the repo has no community-skills.yaml and should
+    # be scanned for SKILL.md files directly.
+    # - repo: "your-org/neqsim-enterprise-skills"
+    #   source: github
+    #   branch: "main"
+    #   catalog_path: ""
+    #   skill_path_glob: "skills/**/SKILL.md"
+    #   name_prefix: "enterprise-"  # optional, avoids public/private name clashes
+    #   tags: [enterprise, private]
 
 skills:
   # ── Local file path ──
@@ -101,25 +132,13 @@ def load_catalog(private_only=False):
 
     # Load community catalog (unless private-only requested)
     if not private_only and CATALOG_FILE.exists():
-        text = CATALOG_FILE.read_text(encoding="utf-8")
-        if yaml is not None:
-            data = yaml.safe_load(text)
-        else:
-            data = _parse_catalog_fallback(text)
-        for s in data.get("skills", []):
-            s["_source"] = "community"
-            skills.append(s)
+        data = _load_catalog_file(CATALOG_FILE)
+        _add_catalog_entries(skills, data, "community")
 
     # Load private catalog if it exists
     if PRIVATE_CATALOG_FILE.exists():
-        text = PRIVATE_CATALOG_FILE.read_text(encoding="utf-8")
-        if yaml is not None:
-            data = yaml.safe_load(text) or {}
-        else:
-            data = _parse_catalog_fallback(text)
-        for s in (data.get("skills") or []):
-            s["_source"] = "private"
-            skills.append(s)
+        data = _load_catalog_file(PRIVATE_CATALOG_FILE)
+        _add_catalog_entries(skills, data, "private")
 
     if not skills:
         if private_only:
@@ -138,31 +157,373 @@ def load_catalog(private_only=False):
     return skills
 
 
+def _load_catalog_file(path):
+    """Load a YAML catalog file from disk."""
+    return _parse_catalog_text(path.read_text(encoding="utf-8"))
+
+
+def _parse_catalog_text(text):
+    """Parse catalog YAML text with PyYAML or the local fallback parser."""
+    if yaml is not None:
+        return yaml.safe_load(text) or {}
+    return _parse_catalog_fallback(text)
+
+
+def _add_catalog_entries(skills, data, source):
+    """Add direct and discovered catalog entries to the skills list."""
+    for skill in (data.get("skills") or []):
+        _append_skill(skills, skill, source)
+
+    for repository in (data.get("repositories") or []):
+        try:
+            for skill in _discover_github_repository_skills(repository):
+                _append_skill(skills, skill, source)
+        except Exception as exc:
+            repo = repository.get("repo", "?") if isinstance(repository, dict) else "?"
+            print(f"  [!!] Could not discover skills from {repo}: {exc}", file=sys.stderr)
+
+
+def _append_skill(skills, skill, source):
+    """Append a skill entry if it is valid and not already present."""
+    if not isinstance(skill, dict):
+        return
+    name = skill.get("name")
+    if not name:
+        return
+    if any(existing.get("name") == name for existing in skills):
+        return
+    normalized = dict(skill)
+    normalized["_source"] = source
+    skills.append(normalized)
+
+
 def _parse_catalog_fallback(text):
     """Fallback parser when PyYAML is not installed.
 
-    Only handles the flat list-of-dicts format used in community-skills.yaml.
+    Handles the simple list-of-dicts format used in community-skills.yaml,
+    including the top-level ``skills`` and ``repositories`` sections.
     """
-    skills = []
+    data = {"skills": [], "repositories": []}
+    section = None
     current = None
     for raw_line in text.splitlines():
         line = raw_line.strip()
         if line.startswith("#") or not line:
             continue
-        if line.startswith("- name:"):
-            if current:
-                skills.append(current)
-            current = {"name": line.split(":", 1)[1].strip().strip('"')}
+        if not raw_line.startswith((" ", "\t")) and line.endswith(":"):
+            if current and section in data:
+                data[section].append(current)
+            section = line[:-1]
+            current = None
+        elif line.startswith("- "):
+            if current and section in data:
+                data[section].append(current)
+            current = {}
+            remainder = line[2:].strip()
+            if ":" in remainder:
+                key, val = remainder.split(":", 1)
+                current[key.strip()] = _parse_scalar_value(val.strip())
         elif current and ":" in line:
             key, val = line.split(":", 1)
-            key = key.strip()
-            val = val.strip().strip('"')
-            if val.startswith("[") and val.endswith("]"):
-                val = [v.strip().strip('"') for v in val[1:-1].split(",")]
-            current[key] = val
-    if current:
-        skills.append(current)
-    return {"skills": skills}
+            current[key.strip()] = _parse_scalar_value(val.strip())
+    if current and section in data:
+        data[section].append(current)
+    return data
+
+
+def _parse_scalar_value(value):
+    """Parse a simple YAML scalar or inline list value."""
+    value = value.strip()
+    if value.startswith("[") and value.endswith("]"):
+        items = value[1:-1].split(",")
+        return [item.strip().strip('"').strip("'") for item in items if item.strip()]
+    return value.strip('"').strip("'")
+
+
+def _extract_frontmatter(content):
+    """Extract YAML frontmatter from a SKILL.md document."""
+    lines = content.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return {}
+    end = None
+    for index, line in enumerate(lines[1:], start=1):
+        if line.strip() == "---":
+            end = index
+            break
+    if end is None:
+        return {}
+    frontmatter = "\n".join(lines[1:end])
+    if yaml is not None:
+        return yaml.safe_load(frontmatter) or {}
+
+    result = {}
+    for raw_line in frontmatter.splitlines():
+        if raw_line.startswith((" ", "\t")):
+            continue
+        line = raw_line.strip()
+        if not line or line.startswith("#") or ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        value = value.strip()
+        if value:
+            result[key.strip()] = _parse_scalar_value(value)
+    return result
+
+
+def _github_request(url, accept="application/vnd.github+json"):
+    """Return bytes from a GitHub URL, adding auth headers when available."""
+    req = urllib.request.Request(url)
+    req.add_header("User-Agent", "neqsim-skill-installer")
+    if accept:
+        req.add_header("Accept", accept)
+    token = os.environ.get("GITHUB_TOKEN", "")
+    if token:
+        req.add_header("Authorization", f"token {token}")
+    with urllib.request.urlopen(req, timeout=GITHUB_TIMEOUT_SECONDS) as resp:
+        return resp.read()
+
+
+def _gh_api_request(endpoint, accept="application/vnd.github+json"):
+    """Return bytes from GitHub CLI using the user's active gh login."""
+    cmd = ["gh", "api", endpoint]
+    if accept:
+        cmd.extend(["--header", f"Accept: {accept}"])
+    return subprocess.check_output(cmd, stderr=subprocess.PIPE)
+
+
+def _github_api_endpoint(repo, path="", query=""):
+    """Build a GitHub API endpoint for use with gh api."""
+    encoded_repo = "/".join(urllib.parse.quote(part, safe="") for part in repo.split("/"))
+    endpoint = f"repos/{encoded_repo}"
+    if path:
+        endpoint = f"{endpoint}/{path}"
+    if query:
+        endpoint = f"{endpoint}?{query}"
+    return endpoint
+
+
+def _github_contents_endpoint(repo, path, branch):
+    """Build a GitHub contents API endpoint for a repository file."""
+    encoded_path = urllib.parse.quote(path, safe="/")
+    encoded_branch = urllib.parse.quote(branch, safe="")
+    return _github_api_endpoint(
+        repo, f"contents/{encoded_path}", f"ref={encoded_branch}")
+
+
+def _fetch_github_contents_with_gh(repo, path, branch):
+    """Fetch repository file bytes using GitHub CLI authentication."""
+    endpoint = _github_contents_endpoint(repo, path, branch)
+    return _gh_api_request(endpoint, accept="application/vnd.github.raw")
+
+
+def _github_access_error(repo, operation, http_error, gh_error):
+    """Return an access error that explains both auth paths."""
+    if gh_error is None:
+        return http_error
+    return RuntimeError(
+        f"Could not {operation} for GitHub repo {repo}. "
+        "Set GITHUB_TOKEN or run `gh auth login` with repo read access. "
+        f"HTTP error: {http_error}. gh error: {gh_error}"
+    )
+
+
+def _get_default_github_branch(repo):
+    """Return the default branch for a GitHub repo, or None if unavailable."""
+    encoded_repo = "/".join(urllib.parse.quote(part, safe="") for part in repo.split("/"))
+    url = f"https://api.github.com/repos/{encoded_repo}"
+    try:
+        data = json.loads(_github_request(url).decode("utf-8"))
+        return data.get("default_branch")
+    except Exception:
+        try:
+            endpoint = _github_api_endpoint(repo)
+            data = json.loads(_gh_api_request(endpoint).decode("utf-8"))
+            return data.get("default_branch")
+        except Exception:
+            return None
+
+
+def _branch_candidates(branch=None):
+    """Return GitHub branch candidates without duplicates."""
+    candidates = []
+    for candidate in [branch, "main", "master"]:
+        if candidate and candidate not in candidates:
+            candidates.append(candidate)
+    return candidates
+
+
+def _raw_github_url(repo, path, branch):
+    """Build a raw.githubusercontent.com URL for a repo path."""
+    encoded_path = urllib.parse.quote(path, safe="/")
+    return f"https://raw.githubusercontent.com/{repo}/{branch}/{encoded_path}"
+
+
+def _fetch_github_bytes(repo, path, branch=None):
+    """Fetch a file from GitHub raw content using branch fallback."""
+    last_error = None
+    last_gh_error = None
+    for candidate in _branch_candidates(branch):
+        raw_url = _raw_github_url(repo, path, candidate)
+        try:
+            content = _github_request(raw_url, accept="text/plain")
+            return content, candidate, raw_url
+        except urllib.error.HTTPError as exc:
+            last_error = exc
+            try:
+                content = _fetch_github_contents_with_gh(repo, path, candidate)
+                source = f"gh api {_github_contents_endpoint(repo, path, candidate)}"
+                return content, candidate, source
+            except Exception as gh_exc:
+                last_gh_error = gh_exc
+    if last_error is not None:
+        raise _github_access_error(repo, f"fetch {path}", last_error, last_gh_error)
+    raise RuntimeError(f"No branch candidates available for {repo}")
+
+
+def _fetch_github_text(repo, path, branch=None):
+    """Fetch a UTF-8 text file from GitHub raw content."""
+    content, _branch, _url = _fetch_github_bytes(repo, path, branch=branch)
+    return content.decode("utf-8", errors="replace")
+
+
+def _list_github_tree_paths(repo, branch=None):
+    """List files in a GitHub repository tree using the online GitHub API."""
+    last_error = None
+    last_gh_error = None
+    for candidate in _branch_candidates(branch):
+        encoded_repo = "/".join(urllib.parse.quote(part, safe="") for part in repo.split("/"))
+        encoded_branch = urllib.parse.quote(candidate, safe="")
+        url = f"https://api.github.com/repos/{encoded_repo}/git/trees/{encoded_branch}?recursive=1"
+        try:
+            data = json.loads(_github_request(url).decode("utf-8"))
+            paths = [item.get("path", "") for item in data.get("tree", [])
+                     if item.get("type") == "blob" and item.get("path")]
+            if data.get("truncated"):
+                print(f"  [!!] GitHub tree for {repo}@{candidate} is truncated.", file=sys.stderr)
+            return candidate, paths
+        except urllib.error.HTTPError as exc:
+            last_error = exc
+            try:
+                endpoint = _github_api_endpoint(
+                    repo, f"git/trees/{encoded_branch}", "recursive=1")
+                data = json.loads(_gh_api_request(endpoint).decode("utf-8"))
+                paths = [item.get("path", "") for item in data.get("tree", [])
+                         if item.get("type") == "blob" and item.get("path")]
+                if data.get("truncated"):
+                    print(f"  [!!] GitHub tree for {repo}@{candidate} is truncated.", file=sys.stderr)
+                return candidate, paths
+            except Exception as gh_exc:
+                last_gh_error = gh_exc
+    if last_error is not None:
+        raise _github_access_error(repo, "list tree paths", last_error, last_gh_error)
+    raise RuntimeError(f"No branch candidates available for {repo}")
+
+
+def _merge_tags(*tag_sets):
+    """Merge tag lists while preserving order and avoiding duplicates."""
+    merged = []
+    for tag_set in tag_sets:
+        if isinstance(tag_set, str):
+            tag_set = [tag_set]
+        for tag in tag_set or []:
+            if tag and tag not in merged:
+                merged.append(tag)
+    return merged
+
+
+def _infer_tags(content, path=""):
+    """Infer searchable tags from skill content and path."""
+    tags = []
+    searchable = f"{path}\n{content}".lower()
+    for tag in TAG_PATTERNS:
+        if tag in searchable:
+            tags.append(tag.replace(" ", "-"))
+    return tags[:5]
+
+
+def _normalize_discovered_skill(skill, repository, default_branch=None, content=""):
+    """Normalize a skill discovered from a repository-level catalog or scan."""
+    normalized = dict(skill)
+    name_prefix = repository.get("name_prefix", "")
+    if name_prefix and normalized.get("name") and not str(normalized["name"]).startswith(name_prefix):
+        normalized["name"] = f"{name_prefix}{normalized['name']}"
+    repo = normalized.get("repo") or repository.get("repo", "")
+    path = normalized.get("path") or repository.get("default_path", "SKILL.md")
+    normalized["repo"] = repo
+    normalized["path"] = path
+    normalized["source"] = normalized.get("source", "github")
+    if default_branch and "branch" not in normalized:
+        normalized["branch"] = default_branch
+    if "author" not in normalized:
+        normalized["author"] = repository.get("author") or repo.split("/", 1)[0]
+    if "min_neqsim_version" not in normalized and repository.get("min_neqsim_version"):
+        normalized["min_neqsim_version"] = repository.get("min_neqsim_version")
+    inferred_tags = _infer_tags(content, path) if content else []
+    normalized["tags"] = _merge_tags(normalized.get("tags"), repository.get("tags"), inferred_tags)
+    normalized["_discovered_from"] = repository.get("repo", repo)
+    return normalized
+
+
+def _discover_skills_from_remote_catalog(repository, branch):
+    """Discover skills from a remote community-skills.yaml file."""
+    repo = repository.get("repo", "")
+    catalog_path = repository.get("catalog_path", "community-skills.yaml")
+    if not catalog_path:
+        return []
+    text = _fetch_github_text(repo, catalog_path, branch=branch)
+    data = _parse_catalog_text(text)
+    discovered = []
+    for skill in (data.get("skills") or []):
+        if not isinstance(skill, dict) or not skill.get("name"):
+            continue
+        discovered.append(_normalize_discovered_skill(skill, repository, branch))
+    return discovered
+
+
+def _discover_skills_by_scanning_repo(repository, branch):
+    """Discover skills by scanning an online GitHub repo for SKILL.md files."""
+    repo = repository.get("repo", "")
+    pattern = repository.get("skill_path_glob") or repository.get("path_glob") or DEFAULT_SKILL_PATH_GLOB
+    used_branch, paths = _list_github_tree_paths(repo, branch=branch)
+    discovered = []
+    for path in sorted(paths):
+        if not fnmatch.fnmatch(path, pattern):
+            continue
+        if not path.endswith("SKILL.md"):
+            continue
+        content = _fetch_github_text(repo, path, branch=used_branch)
+        metadata = _extract_frontmatter(content)
+        name = metadata.get("name")
+        if not name:
+            folder_name = Path(path).parent.name
+            name = folder_name if folder_name.startswith("neqsim-") else f"neqsim-{folder_name}"
+        skill = {
+            "name": name,
+            "version": metadata.get("version", repository.get("version", "")),
+            "description": metadata.get("description", f"Community skill from {repo}/{path}"),
+            "path": path,
+        }
+        discovered.append(_normalize_discovered_skill(skill, repository, used_branch, content))
+    return discovered
+
+
+def _discover_github_repository_skills(repository):
+    """Discover every skill available from an online GitHub repository."""
+    if not isinstance(repository, dict):
+        return []
+    if repository.get("source", "github") != "github":
+        return []
+    repo = repository.get("repo", "")
+    if not repo:
+        return []
+    branch = repository.get("branch") or _get_default_github_branch(repo)
+    try:
+        catalog_skills = _discover_skills_from_remote_catalog(repository, branch)
+        if catalog_skills:
+            return catalog_skills
+    except Exception:
+        pass
+    return _discover_skills_by_scanning_repo(repository, branch)
 
 
 def load_manifest():
@@ -290,36 +651,17 @@ def _install_from_url(skill, dest_file):
 
 def _install_from_github(skill, dest_file):
     """Install a skill from a GitHub repo (public or private)."""
-    import urllib.request
-    import urllib.error
-
     repo = skill.get("repo", "")
     path = skill.get("path", "SKILL.md")
+    branch = skill.get("branch")
     if not repo:
         print(f"  [!!] No repo specified for '{skill.get('name')}'.")
         sys.exit(1)
 
-    raw_url = f"https://raw.githubusercontent.com/{repo}/main/{path}"
+    content, used_branch, raw_url = _fetch_github_bytes(repo, path, branch=branch)
     print(f"  Downloading: {raw_url}")
-
-    req = urllib.request.Request(raw_url)
-    # Private repos need GITHUB_TOKEN
-    token = os.environ.get("GITHUB_TOKEN", "")
-    if token:
-        req.add_header("Authorization", f"token {token}")
-
-    try:
-        with urllib.request.urlopen(req) as resp:
-            dest_file.write_bytes(resp.read())
-    except urllib.error.HTTPError:
-        # Try 'master' branch if 'main' fails
-        raw_url_master = f"https://raw.githubusercontent.com/{repo}/master/{path}"
-        print(f"  Retrying: {raw_url_master}")
-        req2 = urllib.request.Request(raw_url_master)
-        if token:
-            req2.add_header("Authorization", f"token {token}")
-        with urllib.request.urlopen(req2) as resp:
-            dest_file.write_bytes(resp.read())
+    dest_file.write_bytes(content)
+    skill["branch"] = used_branch
 
 
 def cmd_install(skills, args):
@@ -366,6 +708,7 @@ def cmd_install(skills, args):
             "source_type": source_type,
             "repo": skill.get("repo", ""),
             "remote_path": skill.get("path", ""),
+            "branch": skill.get("branch", ""),
             "author": skill.get("author", ""),
         }
         save_manifest(manifest)
@@ -375,7 +718,7 @@ def cmd_install(skills, args):
 
     except Exception as e:
         print(f"  [!!] Download failed: {e}")
-        print(f"  You can manually download from: https://github.com/{repo}\n")
+        print(f"  You can manually download from: https://github.com/{skill.get('repo', '')}\n")
         sys.exit(1)
 
 
@@ -622,7 +965,7 @@ def main():
               neqsim skill list --private   # verify entries
               neqsim skill install <name>   # install from any catalog
 
-            Private repos require GITHUB_TOKEN env var.
+            Private repos require GITHUB_TOKEN or `gh auth login` with repo access.
             Internal URLs can use PRIVATE_SKILL_TOKEN env var.
         """),
     )
