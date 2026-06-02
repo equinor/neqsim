@@ -383,7 +383,7 @@ All features are designed for real-time performance with minimal overhead.
 - [SIS Logic Implementation](../safety/sis_logic_implementation) - Safety systems
 - [HIPPS Safety Logic](../safety/hipps_safety_logic) - Pressure protection
 - [Layered Safety Architecture](../safety/layered_safety_architecture) - Defense in depth
-- [Advanced Process Logic Example](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/util/example/AdvancedProcessLogicExample.java) - Complete code example
+- [Advanced Process Logic Example](https://github.com/equinor/neqsim/blob/master/src/test/java/neqsim/process/util/example/AdvancedProcessLogicExample.java) - Complete code example
 
 ---
 

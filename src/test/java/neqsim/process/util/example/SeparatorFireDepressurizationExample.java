@@ -19,7 +19,8 @@ public class SeparatorFireDepressurizationExample {
   /**
    * Runs a short dynamic blowdown to the flare and evaluates fire effects on the vessel wall.
    *
-   * <p>The example demonstrates how the fire heat-transfer utilities can be paired with a dynamic
+   * <p>
+   * The example demonstrates how the fire heat-transfer utilities can be paired with a dynamic
    * separator depressurization. At each timestep the example calculates fire heat loads, wetted vs.
    * unwetted wall temperatures, and a Scandpower-style rupture margin while routing gas to a flare.
    *
@@ -41,6 +42,9 @@ public class SeparatorFireDepressurizationExample {
     separatorFeed.setTemperature(35.0, "C");
 
     Separator separator = new Separator("HP Separator", separatorFeed);
+    separator.setInternalDiameter(2.0);
+    separator.setSeparatorLength(4.0);
+    separator.setLiquidLevel(0.5);
     separator.setCalculateSteadyState(true);
     Stream separatorGas = new Stream("Separator Gas", separator.getGasOutStream());
 
@@ -75,16 +79,11 @@ public class SeparatorFireDepressurizationExample {
     separator.setCalculateSteadyState(false);
     separatorFeed.setFlowRate(0.1, "kg/hr"); // isolate feed to depressurize
 
-    FireScenarioConfig fireConfig = new FireScenarioConfig()
-        .setFireTemperatureK(1200.0)
-        .setWallThicknessM(0.02)
-        .setThermalConductivityWPerMPerK(45.0)
-        .setAllowableTensileStrengthPa(2.4e8)
-        .setWettedInternalFilmCoefficientWPerM2K(1500.0)
-        .setUnwettedInternalFilmCoefficientWPerM2K(50.0)
-        .setExternalFilmCoefficientWPerM2K(35.0)
-        .setEmissivity(0.35)
-        .setViewFactor(0.7);
+    FireScenarioConfig fireConfig = new FireScenarioConfig().setFireTemperatureK(1200.0)
+        .setWallThicknessM(0.02).setThermalConductivityWPerMPerK(45.0)
+        .setAllowableTensileStrengthPa(2.4e8).setWettedInternalFilmCoefficientWPerM2K(1500.0)
+        .setUnwettedInternalFilmCoefficientWPerM2K(50.0).setExternalFilmCoefficientWPerM2K(35.0)
+        .setEmissivity(0.35).setViewFactor(0.7);
 
     double timeStep = 0.5;
     double duration = 8.0;
@@ -95,8 +94,10 @@ public class SeparatorFireDepressurizationExample {
     System.out.println(
         "--------|--------------|-----------------------|----------|----------|-----------|---------------------");
 
-    FireExposureResult fireState = separator.evaluateFireExposure(fireConfig, flare,
-        flareGroundDistanceM);
+    // Keep a representative liquid holdup so wetted-area fire calculations remain defined.
+    separator.setLiquidLevel(0.5);
+    FireExposureResult fireState =
+        separator.evaluateFireExposure(fireConfig, flare, flareGroundDistanceM);
 
     for (double time = 0.0; time <= duration; time += timeStep) {
       separator.setDuty(fireState.totalFireHeat());
@@ -110,15 +111,17 @@ public class SeparatorFireDepressurizationExample {
       flare.run();
       flare.updateCumulative(timeStep);
 
+      // This example focuses on fire/blowdown coupling and keeps liquid holdup fixed for stability.
+      separator.setLiquidLevel(0.5);
       fireState = separator.evaluateFireExposure(fireConfig, flare, flareGroundDistanceM);
       double separatorTemperatureK = separator.getThermoSystem().getTemperature();
       double separatorPressureBara = separator.getGasOutStream().getPressure("bara");
       double ruptureMarginMpa = fireState.ruptureMarginPa() / 1.0e6;
 
       double flareHeatMw = flare.getHeatDuty("MW");
-      System.out.printf("%7.1f | %12.2f | %21.1f | %8.1f | %8.1f | %9.1f | %19.2f%n",
-          time, separatorPressureBara, toFlare.getFlowRate("kg/hr"),
-          separatorTemperatureK, fireState.wettedWall().outerWallTemperatureK(),
+      System.out.printf("%7.1f | %12.2f | %21.1f | %8.1f | %8.1f | %9.1f | %19.2f%n", time,
+          separatorPressureBara, toFlare.getFlowRate("kg/hr"), separatorTemperatureK,
+          fireState.wettedWall().outerWallTemperatureK(),
           fireState.unwettedWall().outerWallTemperatureK(), ruptureMarginMpa);
 
       if (time == 0.0) {
