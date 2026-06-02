@@ -1482,7 +1482,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public PhaseInterface[] getPhases();
 
   /**
-   * method to return pressure.
+   * Get the pressure of the system.
    *
    * @return pressure in unit bara
    */
@@ -1490,7 +1490,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * method to return pressure of phase.
+   * Get the pressure of a specific phase in the system.
    * </p>
    *
    * @param phaseNumber Number of the phase to get pressure for
@@ -1499,7 +1499,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getPressure(int phaseNumber);
 
   /**
-   * method to return pressure in a specified unit.
+   * Get the pressure of the system in a specified unit.
    *
    * @param unit Supported units are bara, barg, Pa, MPa, psi, psia, psig
    * @return pressure in specified unit
@@ -1515,33 +1515,33 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * <p>
-   * getProperty.
+   * Get a specific physical property of the system.
    * </p>
    *
-   * @param prop a {@link java.lang.String} object
+   * @param prop a {@link java.lang.String} Property to get.
    * @return a double
    */
   public double getProperty(String prop);
 
   /**
    * <p>
-   * getProperty.
+   * Get a specific physical property of a specific phase of the system.
    * </p>
    *
-   * @param prop a {@link java.lang.String} object
-   * @param phaseNum a int
+   * @param prop a {@link java.lang.String} Property to get.
+   * @param phaseNum a int Phase number to get property of
    * @return a double
    */
   public double getProperty(String prop, int phaseNum);
 
   /**
    * <p>
-   * getProperty.
+   * Get a specific physical property of a component in a specific phase in the system.
    * </p>
    *
-   * @param prop a {@link java.lang.String} object
-   * @param compName a {@link java.lang.String} object
-   * @param phaseNum a int
+   * @param prop a {@link java.lang.String} Property to get.
+   * @param compName a {@link java.lang.String} Component name to get property of
+   * @param phaseNum a int Phase number to get property of
    * @return a double
    */
   public double getProperty(String prop, String compName, int phaseNum);
@@ -1564,8 +1564,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getSoundSpeed();
 
   /**
-   * Get the speed of sound of a system. The sound speed is implemented based on a molar average
-   * over the phases
+   * Get the speed of sound of a system in a specific unit. The sound speed is implemented based on
+   * a molar average over the phases
    *
    * @param unit Supported units are m/s, km/h
    * @return speed of sound in m/s
