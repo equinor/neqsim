@@ -4,9 +4,9 @@ import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.process.electricaldesign.pipeline.PipelineElectricalDesign;
-import neqsim.process.instrumentdesign.pipeline.PipelineInstrumentDesign;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.instrumentdesign.pipeline.PipelineInstrumentDesign;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -380,13 +380,6 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
     outStream.setThermoSystem(system);
     outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {
-    system.display();
   }
 
   /** {@inheritDoc} */

@@ -1527,7 +1527,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       systemTemp.setPressure(pressure[i]);
 
       opsTemp.TPflash();
-      systemTemp.display();
+      // systemTemp.display();
       systemTemp = systemTemp.phaseToSystem(0);
     }
 
@@ -1539,7 +1539,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    systemTemp.display();
+    // systemTemp.display();
     return hydTemps;
   }
 
@@ -1560,7 +1560,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    systemTemp.display();
+    // systemTemp.display();
     system.setTemperature(systemTemp.getTemperature());
     TPflash();
     return system.getTemperature();

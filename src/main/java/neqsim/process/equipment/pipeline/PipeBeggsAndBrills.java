@@ -12,7 +12,6 @@ import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Pipeline simulation using Beggs and Brill empirical correlations for multiphase flow.
@@ -2644,13 +2643,6 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     temperatureOut = outletTemperature;
 
     increaseTime(dt);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {
-    system.display();
   }
 
   /**

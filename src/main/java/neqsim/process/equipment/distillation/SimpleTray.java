@@ -182,7 +182,6 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   @Override
   public void run(UUID id) {
     invalidateOutStreamCache();
-    double enthalpy = 0.0;
     // double flowRate = ((Stream)
     // streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
     // ((Stream) streams.get(0)).getThermoSystem().display();
@@ -197,13 +196,13 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     }
     // System.out.println("total number of moles " +
     // thermoSystem2.getTotalNumberOfMoles());
-    if (trayPressure > 0)
-
-    {
+    if (trayPressure > 0) {
       thermoSystem2.setPressure(trayPressure);
     }
     mixedStream.setThermoSystem(thermoSystem2);
     // thermoSystem2.display();
+
+    double enthalpy = 0.0;
     ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
     if (streams.size() > 0) {
       mixedStream.getThermoSystem().setNumberOfPhases(2);
