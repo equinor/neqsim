@@ -40,11 +40,6 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
           cache: 'maven'
-      # Clean Maven cache for critical dependencies to avoid stale class issues
-      - name: Clean dependency cache for EJML
-        run: |
-          rm -rf ~/.m2/repository/org/ejml
-          echo "Cleaned EJML from Maven cache to ensure fresh download"
       # --- Java 8 artifact ---
       - name: Publish package (Java 8)
         run: ./mvnw -f pomJava8.xml -P release --batch-mode clean deploy -Dmaven.deploy.skip=true -DskipTests -Djacoco.skip=true -Drevision=${{ steps.release_version.outputs.version }} -ntp

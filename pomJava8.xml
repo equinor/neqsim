@@ -105,11 +105,6 @@
 			<version>3.6.1</version>
 		</dependency>
 		<dependency>
-			<groupId>org.ejml</groupId>
-			<artifactId>ejml-all</artifactId>
-			<version>0.41</version> <!-- Last version supporting java 8-->
-		</dependency>
-		<dependency>
 			<groupId>org.ojalgo</groupId>
 			<artifactId>ojalgo</artifactId>
 			<version>52.0.0</version>
