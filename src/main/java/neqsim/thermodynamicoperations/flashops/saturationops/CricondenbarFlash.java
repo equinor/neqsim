@@ -110,7 +110,7 @@ public class CricondenbarFlash extends ConstantDutyPressureFlash {
     system.setBeta(0.5);
     system.setTemperature(system.getTemperature() - 20);
     system.init(3);
-    system.display();
+    // system.display();
     double Q1 = 0;
     double Qold = 0.0;
     double dQ1dT = 0;
@@ -214,7 +214,7 @@ public class CricondenbarFlash extends ConstantDutyPressureFlash {
         system.init(3);
         // initMoleFraction();
         localOperation.TPflash();
-        system.display();
+        // system.display();
         Qold = Q1;
         Q1 = 0.0;
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
