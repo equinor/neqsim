@@ -44,7 +44,8 @@ public class CriticalPointFlashTest {
 
   @Test
   public void testCriticalPointFlashRunsWithoutException() {
-       tesSystem.addComponent("methane", 0.1);
+    SystemInterface testSystem = new SystemSrkEos(300.0, 80.01325);
+    testSystem.addComponent("methane", 0.1);
     testSystem.addComponent("propane", 0.1);
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
@@ -64,4 +65,6 @@ public class CriticalPointFlashTest {
 }
 
 
-  
+
+
+
