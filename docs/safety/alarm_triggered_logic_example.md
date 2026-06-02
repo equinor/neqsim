@@ -391,11 +391,8 @@ alarmManager.acknowledgeAll(currentTime);
 ## Running the Example
 
 ```bash
-# Compile
-mvn compile
-
-# Run
-mvn exec:java -Dexec.mainClass="neqsim.process.util.example.ProcessLogicAlarmIntegratedExample"
+# Run example main() from test sources
+./mvnw -Dexec.classpathScope=test -Dexec.mainClass="neqsim.process.util.example.ProcessLogicAlarmIntegratedExample" exec:java
 ```
 
 ## Key Takeaways
