@@ -9,6 +9,33 @@
 
 ---
 
+## 2026-06-02 — CriticalPointFlash robustness fix (no API change)
+
+### Summary
+Fixed `criticalPointFlash()` (via `CriticalPointFlash`) which threw a
+`NullPointerException` ("eigenVector is null") during critical-point
+calculation for some mixtures (e.g. methane/propane SRK).
+
+### What changed (internal only — public API unchanged)
+- The Heidemann &amp; Khalil Q matrix is now explicitly symmetrized after
+  assembly, and the eigenproblem is solved with the dedicated symmetric solver
+  `DecompositionFactory_DDRM.eig(n, true, true)` instead of the generic
+  `SimpleMatrix.eig()` (which returns `null` eigenvectors for eigenvalues it
+  flags as complex).
+- The temperature Newton loop now drives the **smallest eigenvalue** (Rayleigh
+  quotient) to zero instead of the badly-scaled determinant.
+- Added null/NaN guards and Newton step limiting so the search stays physical.
+- Removed dead debug code (`calcMmatrixHeidemann()`, `system.display()`).
+
+### Migration
+None — `ThermodynamicOperations.criticalPointFlash()` signature is unchanged.
+Callers that previously hit the NPE now get a converged critical T/P.
+
+### Agents/skills to update
+None required. Documented in `docs/thermo/flash_calculations_guide.md`.
+
+---
+
 ## 2026-05-30 — Agentic Process Engineering v1.1 (depth, not foundation)
 
 ### Summary

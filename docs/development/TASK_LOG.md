@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-06-02 — Kent-Eisenberg validation: CO₂/H₂S partial pressures over aqueous MDEA
+**Type:** C (PVT/thermo validation)
+**Keywords:** Kent-Eisenberg, MDEA, amine, CO2, H2S, acid gas loading, partial pressure, validation, electrolyte chemistry, SystemKentEisenberg
+**Solution:** task_solve/2026-06-02_kent_eisenberg_model_validation_co2_h2s_amine/step2_analysis/kent_eisenberg_validation.ipynb
+**Notes:** `SystemKentEisenberg` is MDEA-only (protonation + bicarbonate/carbonate + bisulfide, NO carbamate; for MEA/DEA use `AmineSystem`). MUST call `chemicalReactionInit()` + `createDatabase(True)` BEFORE `setMixingRule(4)`, else acid gas is treated as physical Henry-law solubility and pCO₂ is over-predicted by 1–2 orders. Robust partial pressure = liquid-phase fugacity `p_i = x_i·φ_i·P` at a single-liquid TP flash (avoids unstable bubble-point search). Known limitation: CO₂ @ 40 °C (313.15 K) does not converge the electrolyte equilibrium solve in this build (free-CO₂ x→1, pressure-independent) — flagged non-converged and excluded; CO₂ @ 50 °C and H₂S @ 40/50 °C converge. Consistency checks use Spearman ρ≥0.98 for monotonicity (tolerant of ~2% solver noise at top loading). Literature comparison is a labelled PLACEHOLDER (Jou/Mather/Otto 1982 anchors) — deviations illustrative only; NeqSim still over-predicts pCO₂ vs open-literature MDEA range.
+
 ### 2026-05-30 — Agentic dynamics: pluggable integrators + EventScheduler wired into runTransient
 **Type:** E (Feature)
 **Keywords:** dynamic simulation, runTransient, IntegratorStrategy, BDFIntegrator, implicit euler, EventScheduler, ESD trip, setpoint ramp, ProcessSystem, ProcessModel, measurement device, differential pressure transmitter, composition analyzer, flow ratio meter, transient runnable serialization
