@@ -410,6 +410,51 @@ main > .book-cover-page:last-child {{
   letter-spacing: -0.01em;
 }}
 
+.toc-page {{
+  padding: 2rem 0 1rem;
+  page-break-after: always;
+}}
+.toc-page h1 {{
+  font-size: 1.8rem;
+  color: #1a5276;
+  border-bottom: 2px solid #1a5276;
+  padding-bottom: 0.3rem;
+  margin-bottom: 1.2rem;
+}}
+.toc-list {{
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}}
+.toc-list .toc-part {{
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1a5276;
+  margin: 1.1rem 0 0.4rem;
+  font-size: 0.95rem;
+}}
+.toc-list .toc-chapter {{
+  margin: 0.25rem 0;
+}}
+.toc-list .toc-chapter a {{
+  display: flex;
+  align-items: baseline;
+  text-decoration: none;
+  color: #333;
+}}
+.toc-list .toc-chapter a:hover {{
+  color: #1a5276;
+}}
+.toc-list .toc-num {{
+  flex: 0 0 2.2rem;
+  font-weight: bold;
+  color: #1a5276;
+}}
+.toc-list .toc-title {{
+  flex: 1 1 auto;
+}}
+
 .copyright-page {{
   min-height: 80vh;
   display: flex;
@@ -1427,6 +1472,62 @@ def _generate_half_title(cfg):
     )
 
 
+def _generate_toc_page(cfg, include_references=False):
+    """Generate a printable Table of Contents page.
+
+    Lists parts, chapters, and backmatter with in-page anchor links that match
+    the ids used by the chapter, backmatter, and references sections.
+
+    Parameters
+    ----------
+    cfg : dict
+        Loaded book configuration.
+    include_references : bool
+        Whether to append a References entry to the contents.
+
+    Returns
+    -------
+    str
+        HTML string for the contents section.
+    """
+    parts = ['<section id="toc" class="toc-page">']
+    parts.append('<h1>Contents</h1>')
+    parts.append('<ul class="toc-list">')
+
+    prev_part = None
+    for ch_num, ch, part_title in book_builder.iter_chapters(cfg):
+        if part_title and part_title != prev_part:
+            parts.append(
+                f'<li class="toc-part">{_esc(part_title)}</li>')
+            prev_part = part_title
+        ch_title = ch.get("title", f"Chapter {ch_num}")
+        parts.append(
+            f'<li class="toc-chapter">'
+            f'<a href="#chapter-{ch_num}">'
+            f'<span class="toc-num">{ch_num}</span>'
+            f'<span class="toc-title">{_esc(ch_title)}</span>'
+            f'</a></li>')
+
+    for bm in cfg.get("backmatter", []):
+        label = bm.replace("_", " ").title()
+        parts.append(
+            f'<li class="toc-chapter">'
+            f'<a href="#{bm}">'
+            f'<span class="toc-title">{_esc(label)}</span>'
+            f'</a></li>')
+
+    if include_references:
+        parts.append(
+            '<li class="toc-chapter">'
+            '<a href="#references">'
+            '<span class="toc-title">References</span>'
+            '</a></li>')
+
+    parts.append('</ul>')
+    parts.append('</section>')
+    return "\n".join(parts)
+
+
 def _generate_copyright_page(cfg, book_dir):
     """Generate a professional copyright page."""
     title = cfg.get("title", "Untitled")
@@ -1984,6 +2085,11 @@ def render_book_html(book_dir, chapter_filter=None):
                 parts.append(_md_to_html(text))
                 parts.append("</section>")
                 parts.append("<hr/>")
+
+        # Table of Contents page (printable, in addition to the sidebar nav)
+        parts.append(_generate_toc_page(
+            cfg, include_references=include_references))
+        parts.append("<hr/>")
 
     # Chapters
     prev_part = None
