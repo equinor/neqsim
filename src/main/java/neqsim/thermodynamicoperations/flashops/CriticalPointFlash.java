@@ -116,6 +116,46 @@ public class CriticalPointFlash extends Flash {
         // system.getPhase(0).getComponent(j).getz()) *
       }
     }
+    // The M-matrix is symmetric by construction (it derives from second mole-number
+    // derivatives of the Gibbs energy). Small floating-point asymmetry in the EOS
+    // derivatives can otherwise make the eigenvalue decomposition return complex
+    // eigenvalues, for which EJML's getEigenVector(i) yields null. Symmetrizing here
+    // guarantees real eigenvalues (and non-null eigenvectors) across platforms.
+    Mmatrix = Mmatrix.plus(Mmatrix.transpose()).divide(2.0);
+  }
+
+  /**
+   * Returns the first available (real) eigenvector of the current M-matrix.
+   *
+   * <p>
+   * EJML's {@link org.ejml.simple.SimpleEVD#getEigenVector(int)} returns {@code null} for
+   * eigenvalues that are complex. This helper returns the eigenvector at the requested index when
+   * it is real, otherwise it falls back to the first real eigenvector found. If every eigenvalue is
+   * complex (which should not happen for the symmetric M-matrix) a unit vector is returned so that
+   * downstream matrix operations do not throw a {@link NullPointerException}.
+   * </p>
+   *
+   * @param preferredIndex the eigenvalue index to use when its eigenvector is real
+   * @return a non-null eigenvector as a {@link org.ejml.simple.SimpleMatrix} column vector
+   */
+  private SimpleMatrix getRealEigenVector(int preferredIndex) {
+    org.ejml.simple.SimpleEVD<SimpleMatrix> evd = Mmatrix.eig();
+    int count = evd.getNumberOfEigenvalues();
+    if (preferredIndex >= 0 && preferredIndex < count) {
+      SimpleMatrix preferred = evd.getEigenVector(preferredIndex);
+      if (preferred != null) {
+        return preferred;
+      }
+    }
+    for (int idx = 0; idx < count; idx++) {
+      SimpleMatrix candidate = evd.getEigenVector(idx);
+      if (candidate != null) {
+        return candidate;
+      }
+    }
+    SimpleMatrix fallback = new SimpleMatrix(numberOfComponents, 1);
+    fallback.set(0, 0, 1.0);
+    return fallback;
   }
 
   /**
@@ -128,7 +168,7 @@ public class CriticalPointFlash extends Flash {
   public double calcdpd() {
     double[] oldz = system.getMolarRate();
     i = Mmatrix.eig().getNumberOfEigenvalues();
-    SimpleMatrix eigenVector = Mmatrix.eig().getEigenVector(0);
+    SimpleMatrix eigenVector = getRealEigenVector(0);
 
     double[] newz1 = new double[numberOfComponents];
     double[] newz2 = new double[numberOfComponents];
@@ -189,7 +229,7 @@ public class CriticalPointFlash extends Flash {
       double dT = 0.1;
       calcMmatrix();
       // int i = Mmatrix.eig().getNumberOfEigenvalues();
-      SimpleMatrix eigenVector = Mmatrix.eig().getEigenVector(0);
+      SimpleMatrix eigenVector = getRealEigenVector(0);
       SimpleMatrix evalMatrix = eigenVector.transpose().mult(Mmatrix).mult(eigenVector);
       detM = Mmatrix.determinant(); // evalMatrix.get(0, 0);
       int iter = 0;
@@ -203,7 +243,7 @@ public class CriticalPointFlash extends Flash {
         olddetM = detM;
         calcMmatrix();
         i = Mmatrix.eig().getNumberOfEigenvalues();
-        eigenVector = Mmatrix.eig().getEigenVector(0);
+        eigenVector = getRealEigenVector(0);
         evalMatrix = eigenVector.transpose().mult(Mmatrix).mult(eigenVector);
         detM = Mmatrix.determinant(); // evalMatrix.get(0, 0);
         ddetdT = (detM - olddetM) / dT;

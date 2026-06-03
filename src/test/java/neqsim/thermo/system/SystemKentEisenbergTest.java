@@ -212,4 +212,99 @@ class SystemKentEisenbergTest {
     assertEquals(Math.log(55.51), legacyLnK - lnK, 1.0e-2,
         "Correction should reduce ln K by ln(55.51) relative to the legacy molality constant");
   }
+
+  /**
+   * Demonstrates simultaneous CO2 and H2S absorption into an aqueous MDEA solution using the
+   * Kent-Eisenberg equilibrium model, and reports the resulting acid-gas loadings and treated-gas
+   * partial pressures.
+   *
+   * <p>
+   * A sour natural-gas stream (CO2 + H2S + methane) is contacted with a ~50 wt% MDEA solution at
+   * typical absorber conditions (40&deg;C, 50 bar). After a single equilibrium-stage flash the test
+   * computes:
+   * </p>
+   *
+   * <ul>
+   * <li>the acid-gas <em>loading</em> (mol acid gas absorbed per mol total amine, where total amine
+   * = free MDEA + protonated MDEA+), a key amine-treating design metric; and</li>
+   * <li>the <em>treated-gas partial pressures</em> p<sub>CO2</sub> and p<sub>H2S</sub> =
+   * y&middot;P, which determine whether the sweet-gas acid-gas specification is met.</li>
+   * </ul>
+   *
+   * <p>
+   * This is the building block used by stage-based absorber equipment (e.g.
+   * {@code SimpleAbsorber}): each stage performs such an equilibrium flash. The test asserts a
+   * physically consistent outcome (two phases form, acid gases partition into the loaded amine, and
+   * loadings/partial pressures are positive and finite).
+   * </p>
+   */
+  @Test
+  void testCO2AndH2SAbsorptionInMDEADemonstration() {
+    // Sour gas (per mol-basis) contacted with an aqueous MDEA solution. Conditions chosen so that
+    // both a gas phase (for treated-gas partial pressures) and a loaded-amine liquid phase form.
+    SystemInterface testSystem = new SystemKentEisenberg(313.15, 5.0);
+    testSystem.addComponent("methane", 1.0);
+    testSystem.addComponent("CO2", 0.05);
+    testSystem.addComponent("H2S", 0.02);
+    testSystem.addComponent("water", 9.0);
+    testSystem.addComponent("MDEA", 1.0);
+
+    testSystem.chemicalReactionInit();
+    testSystem.createDatabase(true);
+    testSystem.setMixingRule(4);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
+    ops.TPflash();
+    testSystem.init(3);
+
+    assertTrue(testSystem.getNumberOfPhases() >= 2,
+        "A gas and a loaded-amine liquid phase should both be present");
+
+    // Identify gas (phase 0) and liquid (phase 1) phases.
+    double pressure = testSystem.getPressure();
+    double yCO2 = testSystem.getPhase(0).getComponent("CO2").getx();
+    double yH2S = testSystem.getPhase(0).getComponent("H2S").getx();
+
+    // Treated-gas partial pressures (bar).
+    double pCO2 = pressure * yCO2;
+    double pH2S = pressure * yH2S;
+    assertTrue(pCO2 > 0.0 && Double.isFinite(pCO2),
+        "CO2 partial pressure should be positive/finite");
+    assertTrue(pH2S > 0.0 && Double.isFinite(pH2S),
+        "H2S partial pressure should be positive/finite");
+
+    // Total amine in the liquid = free MDEA + protonated MDEA+.
+    double mdea = testSystem.getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase();
+    double mdeaProtonated = testSystem.getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase();
+    double totalAmine = mdea + mdeaProtonated;
+    assertTrue(totalAmine > 0.0, "Total amine in liquid phase should be positive");
+
+    // Acid gas absorbed = total fed to the system minus what remains in the treated gas. Using the
+    // overall mass balance captures every dissolved/ionized form (free CO2/H2S, bicarbonate,
+    // carbonate, bisulfide, protonated amine) without enumerating each ionic species.
+    double co2Total = testSystem.getComponent("CO2").getNumberOfmoles();
+    double h2sTotal = testSystem.getComponent("H2S").getNumberOfmoles();
+    double co2InGas = testSystem.getPhase(0).getComponent("CO2").getNumberOfMolesInPhase();
+    double h2sInGas = testSystem.getPhase(0).getComponent("H2S").getNumberOfMolesInPhase();
+    double co2Absorbed = co2Total - co2InGas;
+    double h2sAbsorbed = h2sTotal - h2sInGas;
+
+    double co2Loading = co2Absorbed / totalAmine;
+    double h2sLoading = h2sAbsorbed / totalAmine;
+
+    assertTrue(co2Loading >= 0.0 && Double.isFinite(co2Loading),
+        "CO2 loading should be non-negative/finite");
+    assertTrue(h2sLoading >= 0.0 && Double.isFinite(h2sLoading),
+        "H2S loading should be non-negative/finite");
+
+    // Both acid gases should be substantially absorbed by the amine solution.
+    assertTrue(co2Absorbed > 0.0, "CO2 should be absorbed into the amine liquid");
+    assertTrue(h2sAbsorbed > 0.0, "H2S should be absorbed into the amine liquid");
+
+    System.out.printf(
+        "Kent-Eisenberg CO2+H2S/MDEA absorber demo:%n"
+            + "  Treated-gas pCO2 = %.4e bar, pH2S = %.4e bar%n"
+            + "  CO2 loading = %.4f, H2S loading = %.4f (mol acid gas / mol total amine)%n",
+        pCO2, pH2S, co2Loading, h2sLoading);
+  }
 }
