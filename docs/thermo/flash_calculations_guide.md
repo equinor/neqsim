@@ -916,6 +916,27 @@ System.out.println("Critical T: " + mix.getTemperature("K") + " K");
 System.out.println("Critical P: " + mix.getPressure("bara") + " bara");
 ```
 
+**Method.** The critical point is located with the Heidemann &amp; Khalil (1980)
+criterion. Using temperature and total volume as independent variables, the
+algorithm builds the symmetric matrix $Q_{ij} = \sqrt{z_i z_j}\, \partial \ln
+f_i / \partial n_j$ (the Hessian of the reduced Helmholtz energy at constant
+$T$ and $V$). Two nested Newton loops are solved:
+
+1. **Temperature loop** &mdash; adjusts $T$ until the smallest eigenvalue of
+   $Q$ vanishes. The smallest eigenvalue (the Rayleigh quotient $v^{T} Q v$
+   along the unit eigenvector $v$) is used as the objective because it is far
+   better scaled than the determinant.
+2. **Volume loop** &mdash; adjusts $V$ until the cubic form along the
+   zero-eigenvalue eigenvector vanishes.
+
+The $Q$ matrix is explicitly symmetrized after assembly and the eigenvalue
+problem is solved with a dedicated symmetric solver, which guarantees real
+eigenvalues and non-null eigenvectors. Newton steps are limited and guarded
+against `NaN`/non-physical excursions so the solver stays in a physical region.
+
+> **Reference:** Heidemann, R. A. and Khalil, A. M. (1980). "The calculation of
+> critical points." *AIChE Journal*, 26(5), 769&ndash;779.
+
 ---
 
 ### Gradient Flash
