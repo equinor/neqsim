@@ -241,9 +241,9 @@ double density = fluid.getPhase(0).getDensity_GERG2008();
 
 ### 5.2 EOS-CG
 
-Extension of GERG-2008 for CCS (Carbon Capture and Storage) applications. Includes combustion gas components.
+Extension of GERG-2008 for CCS (Carbon Capture and Storage) applications. Includes EOS-CG-2021 combustion-gas and amine impurity components.
 
-**Additional components:** SO2, NO, NO2, and others relevant to flue gas.
+**EOS-CG-2021 components:** CO2, H2O, N2, O2, Ar, CO, H2, CH4, H2S, SO2, MEA, DEA, HCl, Cl2, NH3, and MDEA.
 
 ```java
 import neqsim.thermo.system.SystemEOSCGEos;

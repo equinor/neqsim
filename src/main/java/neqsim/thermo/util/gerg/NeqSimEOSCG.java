@@ -25,8 +25,8 @@ public class NeqSimEOSCG {
   private static volatile EOSCG cachedModel = null;
   private static final Object CACHE_LOCK = new Object();
 
-  double[] normalizedComposition = new double[27 + 1];
-  double[] notNormalizedComposition = new double[27 + 1];
+  double[] normalizedComposition = new double[28 + 1];
+  double[] notNormalizedComposition = new double[28 + 1];
   PhaseInterface phase = null;
   EOSCG eosCG;
 
@@ -261,6 +261,11 @@ public class NeqSimEOSCG {
           break;
         case "DEA":
           notNormalizedComposition[27] = phase.getComponent(i).getx();
+          break;
+        case "MDEA":
+        case "methyldiethanolamine":
+        case "methyl diethanolamine":
+          notNormalizedComposition[28] = phase.getComponent(i).getx();
           break;
         default:
           double molarMass = phase.getComponent(i).getMolarMass();

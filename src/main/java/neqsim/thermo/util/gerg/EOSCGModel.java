@@ -16,8 +16,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 public class EOSCGModel {
   // Variables containing the common parameters in the EOS-CG equations
   double REOSCG;
-  int NcEOSCG = 27;
-  int MaxFlds = 27;
+  int NcEOSCG = 28;
+  int MaxFlds = 28;
   int MaxMdl = 10;
   int MaxTrmM = 12;
   int MaxTrmP = 24;
@@ -899,8 +899,8 @@ public class EOSCGModel {
 
     double d0;
     // ThermodynamicConstantsInterface.R
-    REOSCG = 8.314472;
-    Rs = 8.31451;
+    REOSCG = 8.314462618;
+    Rs = 8.314462618;
     Rsr = Rs / REOSCG;
     o13 = 1.0 / 3.0;
 
@@ -2071,6 +2071,102 @@ public class EOSCGModel {
     th0i[27][5] = 1165.0 / 2.0;
     n0i[27][1] = 0.0 + 3.0 * Math.log(736.5) + (4.25 + 37.7) * Math.log(2.0);
     n0i[27][2] = 0.0 * 736.5 - (4.25 * 96.0 + 37.7 * 1165.0) / 2.0;
+
+    // MDEA (28) - Neumann et al. (2022), included in EOS-CG-2021.
+    MMiEOSCG[28] = 119.1622;
+    Dc[28] = 2.720;
+    Tc[28] = 741.0;
+    kpol[28] = 5;
+    kexp[28] = 5;
+    kgauss[28] = 5;
+    noik[28][1] = 0.05001068;
+    doik[28][1] = 4;
+    toik[28][1] = 1.0;
+    coik[28][1] = 0;
+    noik[28][2] = 1.629696;
+    doik[28][2] = 1;
+    toik[28][2] = 0.24;
+    coik[28][2] = 0;
+    noik[28][3] = -2.307822;
+    doik[28][3] = 1;
+    toik[28][3] = 0.98;
+    coik[28][3] = 0;
+    noik[28][4] = -0.6606441;
+    doik[28][4] = 2;
+    toik[28][4] = 1.18;
+    coik[28][4] = 0;
+    noik[28][5] = 0.2677026;
+    doik[28][5] = 3;
+    toik[28][5] = 0.38;
+    coik[28][5] = 0;
+    noik[28][6] = -1.858733;
+    doik[28][6] = 1;
+    toik[28][6] = 2.9;
+    coik[28][6] = 2;
+    noik[28][7] = -1.686275;
+    doik[28][7] = 3;
+    toik[28][7] = 3.03;
+    coik[28][7] = 2;
+    noik[28][8] = 0.3534702;
+    doik[28][8] = 2;
+    toik[28][8] = 0.67;
+    coik[28][8] = 1;
+    noik[28][9] = -2.007864;
+    doik[28][9] = 2;
+    toik[28][9] = 3.0;
+    coik[28][9] = 2;
+    noik[28][10] = -0.03826392;
+    doik[28][10] = 7;
+    toik[28][10] = 0.72;
+    coik[28][10] = 1;
+    k = 11;
+    noik[28][k] = 4.058964;
+    doik[28][k] = 1;
+    toik[28][k] = 1.63;
+    eta_pure[28][k] = 1.22;
+    beta_pure[28][k] = 1.02;
+    gamma_pure[28][k] = 1.4;
+    epsilon_pure[28][k] = 0.846;
+    k++;
+    noik[28][k] = -0.009984452;
+    doik[28][k] = 1;
+    toik[28][k] = 2.1;
+    eta_pure[28][k] = 19.6;
+    beta_pure[28][k] = 1000.0;
+    gamma_pure[28][k] = 1.08;
+    epsilon_pure[28][k] = 0.93;
+    k++;
+    noik[28][k] = -0.2906544;
+    doik[28][k] = 3;
+    toik[28][k] = 1.91;
+    eta_pure[28][k] = 1.5;
+    beta_pure[28][k] = 1.3;
+    gamma_pure[28][k] = 1.38;
+    epsilon_pure[28][k] = 0.98;
+    k++;
+    noik[28][k] = -0.6089361;
+    doik[28][k] = 2;
+    toik[28][k] = 1.92;
+    eta_pure[28][k] = 1.36;
+    beta_pure[28][k] = 1.3;
+    gamma_pure[28][k] = 1.19;
+    epsilon_pure[28][k] = 0.699;
+    k++;
+    noik[28][k] = -0.6822699;
+    doik[28][k] = 2;
+    toik[28][k] = 2.0;
+    eta_pure[28][k] = 1.6;
+    beta_pure[28][k] = 1.19;
+    gamma_pure[28][k] = 1.02;
+    epsilon_pure[28][k] = 0.698;
+    k++;
+    n0i[28][3] = 3.0;
+    n0i[28][4] = 31.94;
+    th0i[28][4] = 800.0 / 2.0;
+    n0i[28][5] = 29.98;
+    th0i[28][5] = 2382.0 / 2.0;
+    n0i[28][1] = 0.0 + 3.0 * Math.log(741.0) + (31.94 + 29.98) * Math.log(2.0);
+    n0i[28][2] = 0.0 * 741.0 - (31.94 * 800.0 + 29.98 * 2382.0) / 2.0;
     // Carbon dioxide
     coik[3][1] = 0;
     doik[3][1] = 1;
@@ -3904,6 +4000,8 @@ public class EOSCGModel {
     btij[20][21] = 1;
     gtij[20][21] = 1; // He-Ar
 
+    applyEOSCG2021ReducingParameters();
+
     for (int i = 1; i <= MaxFlds; ++i) {
       bvij[i][i] = 1;
       btij[i][i] = 1;
@@ -3962,6 +4060,143 @@ public class EOSCGModel {
     // n0i[i][2] = n0i[i][2] - T0;
     // n0i[i][1] = n0i[i][1] - log(d0);
     // }
+  }
+
+  private void applyEOSCG2021ReducingParameters() {
+    // EOS-CG-2021 Table 4: beta_T, gamma_T, beta_v, gamma_v, and F_ij.
+    setReducingParameter( 3, 18,  1.030538,  0.828472,  1.021392,  0.895156,  1.000000); // CO2 + H2O
+    setReducingParameter(27, 21,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + Ar
+    setReducingParameter( 2,  3,  1.005895,  1.107654,  0.977795,  1.047578,  1.000000); // N2 + CO2
+    setReducingParameter(25, 21,  1.000000,  1.074563,  1.000000,  1.001236,  0.000000); // HCl + Ar
+    setReducingParameter( 3, 16,  1.000000,  1.031986,  1.000000,  1.084460,  0.000000); // CO2 + O2
+    setReducingParameter(24, 21,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + Ar
+    setReducingParameter( 3, 21,  0.998705,  1.039675,  1.003766,  1.013833,  1.000000); // CO2 + Ar
+    setReducingParameter(21, 23,  1.146326,  0.998353,  0.756526,  1.041113,  1.000000); // Ar + NH3
+    setReducingParameter( 3, 17,  0.989782,  1.162130,  1.033802,  1.000162,  1.000000); // CO2 + CO
+    setReducingParameter(28, 21,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MDEA + Ar
+    setReducingParameter( 3, 15,  0.979000,  1.961000,  1.198000,  0.842000,  1.000000); // CO2 + H2
+    setReducingParameter(17, 15,  1.078000,  1.105000,  1.037000,  1.040000,  1.000000); // CO + H2
+    setReducingParameter( 1,  3,  1.022624,  0.975665,  0.999518,  1.002807,  1.000000); // CH4 + CO2
+    setReducingParameter( 1, 17,  0.987412,  0.987473,  0.997341,  1.006103,  0.000000); // CH4 + CO
+    setReducingParameter( 3, 19,  1.016035,  0.926019,  0.906631,  1.024086,  0.000000); // CO2 + H2S
+    setReducingParameter(17, 19,  1.025537,  1.022750,  0.795660,  1.101731,  0.000000); // CO + H2S
+    setReducingParameter( 3, 22,  1.020063,  1.007975,  0.889865,  1.005778,  0.000000); // CO2 + SO2
+    setReducingParameter(22, 17,  1.000000,  1.177903,  1.000000,  1.007241,  0.000000); // SO2 + CO
+    setReducingParameter(26,  3,  1.000000,  1.070000,  1.000000,  1.000000,  0.000000); // MEA + CO2
+    setReducingParameter(26, 17,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + CO
+    setReducingParameter(27,  3,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + CO2
+    setReducingParameter(27, 17,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + CO
+    setReducingParameter(25,  3,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // HCl + CO2
+    setReducingParameter(25, 17,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // HCl + CO
+    setReducingParameter(24,  3,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + CO2
+    setReducingParameter(24, 17,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + CO
+    setReducingParameter(23,  3,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // NH3 + CO2
+    setReducingParameter(17, 23,  1.057512,  0.952705,  0.739937,  1.707000,  0.000000); // CO + NH3
+    setReducingParameter(28,  3,  1.081000,  1.386000,  1.000000,  1.000000,  0.000000); // MDEA + CO2
+    setReducingParameter(28, 17,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MDEA + CO
+    setReducingParameter( 2, 18,  1.048054,  0.805147,  0.926245,  0.733443,  1.000000); // N2 + H2O
+    setReducingParameter( 1, 15,  1.010000,  1.440000,  1.086000,  0.804000,  1.000000); // CH4 + H2
+    setReducingParameter(16, 18,  1.253060,  0.807842,  1.028197,  0.873460,  0.601700); // O2 + H2O
+    setReducingParameter(15, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // H2 + H2S
+    setReducingParameter(18, 21,  0.679104,  0.921000,  0.940398,  1.050952,  0.000000); // H2O + Ar
+    setReducingParameter(22, 15,  1.000000,  1.940852,  1.000000,  1.035171,  0.000000); // SO2 + H2
+    setReducingParameter(17, 18,  0.956090,  0.823984,  0.940426,  0.766756,  0.989700); // CO + H2O
+    setReducingParameter(26, 15,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + H2
+    setReducingParameter(15, 18,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // H2 + H2O
+    setReducingParameter(27, 15,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + H2
+    setReducingParameter( 1, 18,  1.263000,  0.748000,  1.176000,  1.038000,  1.000000); // CH4 + H2O
+    setReducingParameter(25, 15,  1.000000,  1.724556,  1.000000,  1.005948,  0.000000); // HCl + H2
+    setReducingParameter(19, 18,  0.960526,  0.924026,  0.945818,  1.189702,  1.000000); // H2S + H2O
+    setReducingParameter(24, 15,  1.000000,  1.914078,  1.000000,  1.035410,  0.000000); // Cl2 + H2
+    setReducingParameter(22, 18,  1.019562,  0.916311,  1.094032,  0.962547,  0.000000); // SO2 + H2O
+    setReducingParameter(15, 23,  0.988240,  1.126600,  1.010300,  0.729800,  1.000000); // H2 + NH3
+    setReducingParameter(26, 18,  1.004000,  0.957300,  1.007600,  1.089160,  1.000000); // MEA + H2O
+    setReducingParameter(28, 15,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MDEA + H2
+    setReducingParameter(27, 18,  0.993200,  0.973400,  1.006000,  1.123000,  1.000000); // DEA + H2O
+    setReducingParameter( 1, 19,  1.011090,  0.961156,  1.012599,  1.040161,  0.000000); // CH4 + H2S
+    setReducingParameter(25, 18,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // HCl + H2O
+    setReducingParameter(22,  1,  0.999432,  1.115714,  1.315534,  1.119543,  0.000000); // SO2 + CH4
+    setReducingParameter(24, 18,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + H2O
+    setReducingParameter(26,  1,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + CH4
+    setReducingParameter(23, 18,  0.933585,  1.015826,  1.044759,  1.189754,  1.000000); // NH3 + H2O
+    setReducingParameter(27,  1,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + CH4
+    setReducingParameter(28, 18,  0.970000,  1.010000,  0.980000,  1.268700,  1.000000); // MDEA + H2O
+    setReducingParameter(25,  1,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // HCl + CH4
+    setReducingParameter( 2, 16,  0.997191,  0.995157,  0.999522,  0.997082,  0.000000); // N2 + O2
+    setReducingParameter(24,  1,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + CH4
+    setReducingParameter( 2, 21,  0.999442,  0.989311,  1.006697,  1.001549,  0.000000); // N2 + Ar
+    setReducingParameter( 1, 23,  1.022371,  0.940156,  1.006058,  1.069834,  0.000000); // CH4 + NH3
+    setReducingParameter( 2, 17,  1.002409,  0.994100,  1.000000,  1.001317,  0.000000); // N2 + CO
+    setReducingParameter(28,  1,  1.000000,  1.625000,  1.074000,  1.000000,  0.000000); // MDEA + CH4
+    setReducingParameter( 2, 15,  1.027000,  1.240000,  0.993000,  0.773000,  1.000000); // N2 + H2
+    setReducingParameter(22, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // SO2 + H2S
+    setReducingParameter( 1,  2,  0.998099,  0.979273,  0.998721,  1.013950,  1.000000); // CH4 + N2
+    setReducingParameter(26, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + H2S
+    setReducingParameter( 2, 19,  1.004692,  0.960174,  0.910394,  1.256844,  0.000000); // N2 + H2S
+    setReducingParameter(27, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + H2S
+    setReducingParameter(22,  2,  1.045874,  1.194659,  0.903625,  1.215581,  0.000000); // SO2 + N2
+    setReducingParameter(25, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // HCl + H2S
+    setReducingParameter(26,  2,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + N2
+    setReducingParameter(24, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + H2S
+    setReducingParameter(27,  2,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + N2
+    setReducingParameter(23, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // NH3 + H2S
+    setReducingParameter(25,  2,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // HCl + N2
+    setReducingParameter(28, 19,  1.000000,  1.059430,  1.000000,  1.140800,  0.000000); // MDEA + H2S
+    setReducingParameter(24,  2,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + N2
+    setReducingParameter(26, 22,  1.021293,  1.200045,  1.000000,  1.000000,  0.000000); // MEA + SO2
+    setReducingParameter( 2, 23,  1.057512,  0.952705,  0.739937,  1.447261,  0.000000); // N2 + NH3
+    setReducingParameter(27, 22,  1.021293,  1.200045,  1.000000,  1.000000,  0.000000); // DEA + SO2
+    setReducingParameter(28,  2,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MDEA + N2
+    setReducingParameter(22, 25,  1.002605,  1.048380,  1.000000,  1.000000,  0.000000); // SO2 + HCl
+    setReducingParameter(16, 21,  0.999039,  0.988822,  1.006502,  1.001341,  0.000000); // O2 + Ar
+    setReducingParameter(24, 22,  1.015678,  0.927820,  1.024354,  1.016621,  0.000000); // Cl2 + SO2
+    setReducingParameter(16, 17,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // O2 + CO
+    setReducingParameter(23, 22,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // NH3 + SO2
+    setReducingParameter(15, 16,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // H2 + O2
+    setReducingParameter(28, 22,  1.000000,  1.037046,  1.000000,  1.097897,  0.000000); // MDEA + SO2
+    setReducingParameter( 1, 16,  1.000000,  0.950000,  1.000000,  1.000000,  0.000000); // CH4 + O2
+    setReducingParameter(27, 26,  1.015703,  1.020484,  0.766762,  0.852448,  0.000000); // DEA + MEA
+    setReducingParameter(16, 19,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // O2 + H2S
+    setReducingParameter(26, 25,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + HCl
+    setReducingParameter(22, 16,  0.927961,  1.035878,  1.219246,  1.660632,  0.000000); // SO2 + O2
+    setReducingParameter(26, 24,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + Cl2
+    setReducingParameter(26, 16,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + O2
+    setReducingParameter(23, 26,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // NH3 + MEA
+    setReducingParameter(27, 16,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + O2
+    setReducingParameter(28, 26,  1.000000,  0.805000,  1.000000,  1.000000,  0.000000); // MDEA + MEA
+    setReducingParameter(25, 16,  1.000000,  1.069638,  1.000000,  1.001592,  0.000000); // HCl + O2
+    setReducingParameter(27, 25,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + HCl
+    setReducingParameter(24, 16,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // Cl2 + O2
+    setReducingParameter(27, 24,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // DEA + Cl2
+    setReducingParameter(23, 16,  1.000000,  1.118566,  1.000000,  1.000002,  0.000000); // NH3 + O2
+    setReducingParameter(23, 27,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // NH3 + DEA
+    setReducingParameter(28, 16,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MDEA + O2
+    setReducingParameter(28, 27,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MDEA + DEA
+    setReducingParameter(17, 21,  1.000000,  0.954216,  1.000000,  1.159721,  0.000000); // CO + Ar
+    setReducingParameter(24, 25,  1.007373,  0.968865,  0.928100,  0.917288,  0.000000); // Cl2 + HCl
+    setReducingParameter(15, 21,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // H2 + Ar
+    setReducingParameter(23, 25,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // NH3 + HCl
+    setReducingParameter( 1, 21,  0.990954,  0.989843,  1.034630,  1.014679,  0.000000); // CH4 + Ar
+    setReducingParameter(28, 25,  1.000000,  1.086325,  1.000000,  1.173873,  0.000000); // MDEA + HCl
+    setReducingParameter(19, 21,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // H2S + Ar
+    setReducingParameter(23, 24,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // NH3 + Cl2
+    setReducingParameter(22, 21,  1.000000,  1.141020,  1.000000,  1.021291,  0.000000); // SO2 + Ar
+    setReducingParameter(28, 24,  1.000000,  1.041648,  1.000000,  1.096224,  0.000000); // MDEA + Cl2
+    setReducingParameter(26, 21,  1.000000,  1.000000,  1.000000,  1.000000,  0.000000); // MEA + Ar
+    setReducingParameter(28, 23,  1.000000,  1.045755,  1.000000,  1.207629,  0.000000); // MDEA + NH3
+  }
+
+
+  private void setReducingParameter(int i, int j, double betaT, double gammaT, double betaV,
+      double gammaV, double departureWeight) {
+    int row = Math.min(i, j);
+    int col = Math.max(i, j);
+    btij[row][col] = betaT;
+    gtij[row][col] = gammaT;
+    bvij[row][col] = betaV;
+    gvij[row][col] = gammaV;
+    fij[row][col] = departureWeight;
+    fij[col][row] = departureWeight;
   }
 
   /**
