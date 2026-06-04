@@ -291,7 +291,7 @@ ops.TPflash();
 ### 5.4 EOS-CG
 
 **Application:** Carbon Capture and Storage (CCS), combustion gases
-**Extension:** Includes SO2, NO, NO2, HCl, Cl2, COS in addition to GERG-2008 components
+**Extension:** EOS-CG-2021 CCS component set, including CO2, H2O, N2, O2, Ar, CO, H2, CH4, H2S, SO2, MEA, DEA, HCl, Cl2, NH3, and MDEA
 
 ```java
 import neqsim.thermo.system.SystemEOSCGEos;

@@ -245,25 +245,16 @@ public class Gerg2008NH3Example {
 
 ## 5. EOS-CG
 
-**Full Name:** EOS-CG: A Helmholtz energy equation of state for combustion gases and CCS mixtures.
-**Authors:** J. Gernert and R. Span (Ruhr-Universität Bochum).
+**Full Name:** EOS-CG-2021: a Helmholtz energy equation of state for CCS mixtures.
+**Authors:** Tobias Neumann, Stefan Herrig, Ian Bell, Robin Beckmüller, Eric W. Lemmon, Monika Thol, and Roland Span.
 
 ### Application
-EOS-CG is an extension of the GERG framework designed for **Carbon Capture and Storage (CCS)** and **combustion gas** applications. It includes additional components found in flue gases and impurities relevant to CO2 transport.
+EOS-CG is an extension of the GERG framework designed for **Carbon Capture and Storage (CCS)** and **combustion gas** applications. It includes additional components found in CO2-rich transport streams and impurities relevant to CCS.
 
-### Supported Components (27)
-Includes all 21 components from GERG-2008, plus:
-*   Sulfur Dioxide (SO₂)
-*   Nitrogen Monoxide (NO)
-*   Nitrogen Dioxide (NO₂)
-*   Hydrogen Chloride (HCl)
-*   Chlorine (Cl₂)
-*   Carbonyl Sulfide (COS)
+### EOS-CG-2021 component coverage
+The EOS-CG-2021 publication defines a 16-component CCS model: CO₂, water, N₂, O₂, Ar, CO, H₂, CH₄, H₂S, SO₂, monoethanolamine (MEA), diethanolamine (DEA), HCl, Cl₂, NH₃, and methyl diethanolamine (MDEA). NeqSim keeps the GERG-style hydrocarbon slots for compatibility while refreshing the EOS-CG reducing-parameter table and adding MDEA as an EOS-CG component.
 
-Recent PRs refreshed the EOS-CG component tables with updated critical properties and binary
-interaction data, improving phase behavior for acid-gas heavy blends. The refresh aligns the
-library with the latest GERG-compatible datasets so CCS mixtures match reference densities and
-sound speed benchmarks more closely.
+Recent updates refreshed the EOS-CG component tables with the EOS-CG-2021 gas constant, MDEA pure-fluid parameters, and binary reducing parameters, improving consistency with the current CCS-mixture model.
 
 ### Usage in NeqSim
 
@@ -303,5 +294,7 @@ public class EosCgExample {
 1.  **GERG-2008:** Kunz, O., & Wagner, W. (2012). *The GERG-2008 Wide-Range Equation of State for Natural Gases and Other Mixtures: An Expansion of GERG-2004*. Journal of Chemical & Engineering Data, 57(11), 3032–3091.
 2.  **GERG-2008-H2:** Beckmüller, R., Thol, M., Sampson, I., Lemmon, E.W., & Span, R. (2022). *Extension of the equation of state for natural gases GERG-2008 with improved hydrogen parameters*. Fluid Phase Equilibria, 557, 113411.
 3.  **EOS-CG:** Gernert, J., & Span, R. (2016). *EOS-CG: A Helmholtz energy equation of state for combustion gases and CCS mixtures*. The Journal of Chemical Thermodynamics, 93, 274–293.
-4.  **GERG-2008-NH3:** Neumann, T., Thol, M., Lemmon, E.W., & Span, R. (2020). *Extension of the equation of state for natural gases (GERG-2008) with ammonia*. Molecular Physics, 118(21–22), e1769856.
-5.  **NH3 Pure-Fluid EOS:** Gao, K., Wu, J., & Lemmon, E.W. (2020). *A Helmholtz Energy Equation of State for Ammonia*. International Journal of Thermophysics, 41, 68.
+4.  **EOS-CG-2021:** Neumann, T., Herrig, S., Bell, I.H., Beckmüller, R., Lemmon, E.W., Thol, M., & Span, R. (2023). *EOS-CG-2021: A Mixture Model for the Calculation of Thermodynamic Properties of CCS Mixtures*. International Journal of Thermophysics, 44, 178.
+5.  **MDEA Pure-Fluid EOS:** Neumann, T., Baumhögger, E., Span, R., Vrabec, J., & Thol, M. (2022). *Thermodynamic Properties of Methyl Diethanolamine*. International Journal of Thermophysics, 43, 10.
+6.  **GERG-2008-NH3:** Neumann, T., Thol, M., Lemmon, E.W., & Span, R. (2020). *Extension of the equation of state for natural gases (GERG-2008) with ammonia*. Molecular Physics, 118(21–22), e1769856.
+7.  **NH3 Pure-Fluid EOS:** Gao, K., Wu, J., & Lemmon, E.W. (2020). *A Helmholtz Energy Equation of State for Ammonia*. International Journal of Thermophysics, 41, 68.
