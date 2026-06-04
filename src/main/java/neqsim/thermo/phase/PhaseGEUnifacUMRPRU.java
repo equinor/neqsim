@@ -215,6 +215,30 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     return QmixdN[0];
   }
 
+  /**
+   * <p>
+   * Returns whether this phase should use the Mathias-Copeman UMR group-interaction parameter
+   * tables (suffix {@code _umrmc}) instead of the original UMR-PRU tables (suffix {@code _umr}).
+   * </p>
+   *
+   * <p>
+   * The temperature-dependent group-interaction parameters <i>A<sub>nm</sub>(T) = a<sub>nm</sub> +
+   * b<sub>nm</sub>T + c<sub>nm</sub>T<sup>2</sup></i> stored in the {@code _umrmc} tables were
+   * regressed together with the 3-parameter Mathias-Copeman pure component alpha function used by
+   * {@code SystemUMRPRUMCEos} (attractive term number 13). The {@code SystemUMRPRUMCEosNew} variant
+   * (attractive term number 19) uses a separate 5-parameter Mathias-Copeman alpha function with its
+   * own pure-component parameters and is paired with the original {@code _umr} group-interaction
+   * set, so it deliberately maps to the {@code else} branch here. Any future variant that should
+   * consume the {@code _umrmc} tables must be added to this single decision point.
+   * </p>
+   *
+   * @return {@code true} when the {@code _umrmc} tables should be queried, {@code false} for the
+   *         original {@code _umr} tables
+   */
+  protected boolean useMcInteractionParameters() {
+    return getPhase().getComponent(0).getAttractiveTermNumber() == 13;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void calcaij() {
@@ -227,7 +251,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
       try (neqsim.util.database.NeqSimDataBase database =
           new neqsim.util.database.NeqSimDataBase()) {
-        if (getPhase().getComponent(0).getAttractiveTermNumber() == 13) {
+        if (useMcInteractionParameters()) {
           dataSet = database.getResultSet(("SELECT * FROM unifacinterparama_umrmc WHERE MainGroup="
               + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
         } else {
@@ -271,7 +295,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
       try (neqsim.util.database.NeqSimDataBase database =
           new neqsim.util.database.NeqSimDataBase()) {
-        if (getPhase().getComponent(0).getAttractiveTermNumber() == 13) {
+        if (useMcInteractionParameters()) {
           dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb_umrmc WHERE MainGroup="
               + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
         } else {
@@ -307,7 +331,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
       try (neqsim.util.database.NeqSimDataBase database =
           new neqsim.util.database.NeqSimDataBase()) {
-        if (getPhase().getComponent(0).getAttractiveTermNumber() == 13) {
+        if (useMcInteractionParameters()) {
           dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc_umrmc WHERE MainGroup="
               + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
         } else {

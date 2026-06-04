@@ -3,7 +3,27 @@ package neqsim.thermo.system;
 import neqsim.thermo.phase.PhasePrEosvolcor;
 
 /**
- * This class defines a thermodynamic system using the UMR-PRU with MC paramters equation of state.
+ * Thermodynamic system using the UMR-PRU equation of state with a 5-parameter Mathias-Copeman
+ * pure-component alpha function (research / extended variant).
+ *
+ * <p>
+ * This variant sets attractive term number 19, which selects a 5-parameter Mathias-Copeman alpha
+ * function with its own set of pure-component parameters (see
+ * {@code neqsim.thermo.component.attractiveeosterm.AtractiveTermMatCopPRUMRNew}). Unlike
+ * {@link SystemUMRPRUMCEos} (term 13, {@code _umrmc} tables), this variant is paired with the
+ * original {@code _umr} group-interaction parameter tables &mdash; the 5-parameter pure-component
+ * fit was developed against that group-interaction set, so the two must not be mixed. The
+ * table-routing decision is centralised in
+ * {@code neqsim.thermo.phase.PhaseGEUnifacUMRPRU.useMcInteractionParameters()}.
+ * </p>
+ *
+ * <p>
+ * The constructor instantiates {@link PhasePrEosvolcor} phases but explicitly disables the Peneloux
+ * volume translation via {@code useVolumeCorrection(false)}. The volume-corrected phase class is
+ * used so that the same code path can later be switched to apply Peneloux translation if needed; it
+ * is disabled here to keep the predicted molar volumes consistent with the parent UMR-PRU-MC model,
+ * which is regressed without volume translation.
+ * </p>
  *
  * @author Even Solbraa
  */
