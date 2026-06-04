@@ -223,20 +223,20 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    *
    * <p>
    * The temperature-dependent group-interaction parameters <i>A<sub>nm</sub>(T) = a<sub>nm</sub> +
-   * b<sub>nm</sub>T + c<sub>nm</sub>T<sup>2</sup></i> stored in the {@code _umrmc} tables were
-   * regressed together with the 3-parameter Mathias-Copeman pure component alpha function used by
-   * {@code SystemUMRPRUMCEos} (attractive term number 13). The {@code SystemUMRPRUMCEosNew} variant
-   * (attractive term number 19) uses a separate 5-parameter Mathias-Copeman alpha function with its
-   * own pure-component parameters and is paired with the original {@code _umr} group-interaction
-   * set, so it deliberately maps to the {@code else} branch here. Any future variant that should
-   * consume the {@code _umrmc} tables must be added to this single decision point.
+   * b<sub>nm</sub>T + c<sub>nm</sub>T<sup>2</sup></i> stored in the {@code _umrmc} tables are shared
+   * by the Mathias-Copeman UMR-PRU variants. Both {@code SystemUMRPRUMCEos} (attractive term number
+   * 13, 3-parameter Mathias-Copeman alpha) and {@code SystemUMRPRUMCEosNew} (attractive term number
+   * 19, 5-parameter Mathias-Copeman alpha) map to the {@code _umrmc} tables here. Any future
+   * variant that should consume the {@code _umrmc} tables must be added to this single decision
+   * point.
    * </p>
    *
    * @return {@code true} when the {@code _umrmc} tables should be queried, {@code false} for the
    *         original {@code _umr} tables
    */
   protected boolean useMcInteractionParameters() {
-    return getPhase().getComponent(0).getAttractiveTermNumber() == 13;
+    int term = getPhase().getComponent(0).getAttractiveTermNumber();
+    return term == 13 || term == 19;
   }
 
   /** {@inheritDoc} */

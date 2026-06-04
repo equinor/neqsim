@@ -9,10 +9,9 @@ import neqsim.thermo.phase.PhasePrEosvolcor;
  * <p>
  * This variant sets attractive term number 19, which selects a 5-parameter Mathias-Copeman alpha
  * function with its own set of pure-component parameters (see
- * {@code neqsim.thermo.component.attractiveeosterm.AtractiveTermMatCopPRUMRNew}). Unlike
- * {@link SystemUMRPRUMCEos} (term 13, {@code _umrmc} tables), this variant is paired with the
- * original {@code _umr} group-interaction parameter tables &mdash; the 5-parameter pure-component
- * fit was developed against that group-interaction set, so the two must not be mixed. The
+ * {@code neqsim.thermo.component.attractiveeosterm.AtractiveTermMatCopPRUMRNew}). Like
+ * {@link SystemUMRPRUMCEos} (term 13), this variant uses the {@code _umrmc} group-interaction
+ * parameter tables; the two variants differ only in the pure-component alpha function. The
  * table-routing decision is centralised in
  * {@code neqsim.thermo.phase.PhaseGEUnifacUMRPRU.useMcInteractionParameters()}.
  * </p>
