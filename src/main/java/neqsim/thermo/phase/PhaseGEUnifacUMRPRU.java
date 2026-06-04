@@ -223,10 +223,10 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    *
    * <p>
    * The temperature-dependent group-interaction parameters <i>A<sub>nm</sub>(T) = a<sub>nm</sub> +
-   * b<sub>nm</sub>T + c<sub>nm</sub>T<sup>2</sup></i> stored in the {@code _umrmc} tables are shared
-   * by the Mathias-Copeman UMR-PRU variants. Both {@code SystemUMRPRUMCEos} (attractive term number
-   * 13, 3-parameter Mathias-Copeman alpha) and {@code SystemUMRPRUMCEosNew} (attractive term number
-   * 19, 5-parameter Mathias-Copeman alpha) map to the {@code _umrmc} tables here. Any future
+   * b<sub>nm</sub>T + c<sub>nm</sub>T<sup>2</sup></i> stored in the {@code _umrmc} tables are
+   * shared by the Mathias-Copeman UMR-PRU variants. Both {@code SystemUMRPRUMCEos} (attractive term
+   * number 13, 3-parameter Mathias-Copeman alpha) and {@code SystemUMRPRUMCEosNew} (attractive term
+   * number 19, 5-parameter Mathias-Copeman alpha) map to the {@code _umrmc} tables here. Any future
    * variant that should consume the {@code _umrmc} tables must be added to this single decision
    * point.
    * </p>
@@ -236,7 +236,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
    */
   protected boolean useMcInteractionParameters() {
     int term = getPhase().getComponent(0).getAttractiveTermNumber();
-    return term == 13 || term == 19;
+    return term == 13 || term == 19 || term == 22;
   }
 
   /** {@inheritDoc} */

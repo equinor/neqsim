@@ -133,6 +133,7 @@ public abstract class Component implements ComponentInterface {
   protected double[] TwuCoonParams = new double[3];
   protected double[] matiascopemanSolidParams = new double[3];
   protected double[] matiascopemanParamsUMRPRU = new double[5];
+  protected double[] matiascopemanParamsUMRCPA = new double[5];
   protected double lennardJonesMolecularDiameter = 0;
   protected double lennardJonesEnergyParameter = 0;
   protected double stokesCationicDiameter = 0;
@@ -382,6 +383,25 @@ public abstract class Component implements ComponentInterface {
         matiascopemanParamsUMRPRU[3] = 0.0;
         matiascopemanParamsUMRPRU[4] = 0.0;
 
+        // Five-parameter Mathias-Copeman coefficients for the UMR-CPA model
+        // (Tasios et al., Fluid Phase Equilibria 2025, doi:10.1016/j.fluid.2024.114241).
+        // These are stored in dedicated columns so that the UMR-CPA fit is kept separate from
+        // the UMR-PRU MCPR1..MCPR3 columns. Wrapped in a guard because not every component
+        // database CSV provides these columns.
+        try {
+          matiascopemanParamsUMRCPA[0] = Double.parseDouble(dataSet.getString("UMRCPA_MC1"));
+          matiascopemanParamsUMRCPA[1] = Double.parseDouble(dataSet.getString("UMRCPA_MC2"));
+          matiascopemanParamsUMRCPA[2] = Double.parseDouble(dataSet.getString("UMRCPA_MC3"));
+          matiascopemanParamsUMRCPA[3] = Double.parseDouble(dataSet.getString("UMRCPA_MC4"));
+          matiascopemanParamsUMRCPA[4] = Double.parseDouble(dataSet.getString("UMRCPA_MC5"));
+        } catch (Exception umrcpaMcEx) {
+          matiascopemanParamsUMRCPA[0] = 0.0;
+          matiascopemanParamsUMRCPA[1] = 0.0;
+          matiascopemanParamsUMRCPA[2] = 0.0;
+          matiascopemanParamsUMRCPA[3] = 0.0;
+          matiascopemanParamsUMRCPA[4] = 0.0;
+        }
+
         matiascopemanSolidParams[0] = Double.parseDouble(dataSet.getString("MC1Solid"));
         matiascopemanSolidParams[1] = Double.parseDouble(dataSet.getString("MC2Solid"));
         matiascopemanSolidParams[2] = Double.parseDouble(dataSet.getString("MC3Solid"));
@@ -442,7 +462,8 @@ public abstract class Component implements ComponentInterface {
         setVolumeCorrectionT_CPA(Double.parseDouble(dataSet.getString("volcorrCPA_T")));
         volumeCorrectionT = Double.parseDouble(dataSet.getString("volcorrSRK_T"));
 
-        if (this.getClass().getName().equals("neqsim.thermo.component.ComponentPrCPA")) {
+        if (this.getClass().getName().equals("neqsim.thermo.component.ComponentPrCPA")
+            || this.getClass().getName().equals("neqsim.thermo.component.ComponentUMRCPA")) {
           // System.out.println("pr-cpa");
           associationVolume = Double.parseDouble(dataSet.getString("associationboundingvolume_PR"));
           aCPA = Double.parseDouble(dataSet.getString("aCPA_PR"));
@@ -2704,6 +2725,15 @@ public abstract class Component implements ComponentInterface {
    */
   public final double[] getMatiascopemanParamsUMRPRU() {
     return matiascopemanParamsUMRPRU;
+  }
+
+  /**
+   * Getter for the five-parameter Mathias-Copeman coefficients of the UMR-CPA model.
+   *
+   * @return array of five doubles with the UMR-CPA Mathias-Copeman coefficients c1..c5
+   */
+  public final double[] getMatiascopemanParamsUMRCPA() {
+    return matiascopemanParamsUMRCPA;
   }
 
   /** {@inheritDoc} */
