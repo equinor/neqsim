@@ -290,8 +290,8 @@ Pick **jar** or **Docker** — both are first-class paths.
 **1. Download the jar + checksum**
 
 ```bash
-# Replace VERSION with the latest release (e.g. 3.12.0)
-VERSION=3.12.0
+# Replace VERSION with the latest release (e.g. 3.12.1)
+VERSION=3.12.1
 curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar"
 curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar.sha256"
 ```
@@ -441,7 +441,7 @@ Edit `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or
       "command": "java",
       "args": [
         "-jar",
-        "/path/to/neqsim-mcp-server-3.12.0-runner.jar"
+        "/path/to/neqsim-mcp-server-3.12.1-runner.jar"
       ]
     }
   }
@@ -488,7 +488,7 @@ Add to `.vscode/mcp.json`:
       "command": "java",
       "args": [
         "-jar",
-        "/path/to/neqsim-mcp-server-3.12.0-runner.jar"
+        "/path/to/neqsim-mcp-server-3.12.1-runner.jar"
       ]
     }
   }
@@ -522,7 +522,7 @@ Restart VS Code.
 Any MCP STDIO client works. Point it at one of:
 
 ```bash
-java -jar /path/to/neqsim-mcp-server-3.12.0-runner.jar         # jar
+java -jar /path/to/neqsim-mcp-server-3.12.1-runner.jar         # jar
 docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest    # docker
 ```
 
@@ -739,7 +739,7 @@ If you want to build from source (for development or to use the latest unrelease
 |---|---|---|
 | JDK | 21+ | Quarkus requires 21+. NeqSim core still compiles with Java 8. |
 | Maven | 3.9+ | Or use the Maven wrapper (`mvnw` / `mvnw.cmd`) from the parent project |
-| NeqSim core | 3.12.0 | Must be installed to local Maven repo first (see below) |
+| NeqSim core | 3.12.1 | Must be installed to local Maven repo first (see below) |
 
 ### Build steps
 
@@ -1001,7 +1001,7 @@ python test_mcp_server.py
 
 ## Troubleshooting
 
-### Build Fails — "Could not find artifact com.equinor.neqsim:neqsim:3.12.0"
+### Build Fails — "Could not find artifact com.equinor.neqsim:neqsim:3.12.1"
 
 The neqsim core library must be installed first:
 

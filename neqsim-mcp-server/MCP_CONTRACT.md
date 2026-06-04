@@ -348,6 +348,23 @@ directory. External storage directories require explicit opt-in with
 `NEQSIM_MCP_ALLOW_EXTERNAL_STATE_DIR=true` or
 `neqsim.mcp.allowExternalStateDir=true`.
 
+### Transport Security & Observability (opt-in)
+
+The HTTP transport supports two enterprise-grade, transport-layer capabilities
+that complement the application-level governance described above. Both are
+**disabled by default** so the server starts with no external dependencies, and
+both activate together under the Quarkus `enterprise` profile
+(`-Dquarkus.profile=enterprise` or `QUARKUS_PROFILE=enterprise`).
+
+| Capability | Default | Enable | Purpose |
+|------------|---------|--------|---------|
+| OIDC bearer-token auth | off (`quarkus.oidc.tenant-enabled=false`) | `enterprise` profile + `quarkus.oidc.auth-server-url` and `quarkus.oidc.client-id` | Authenticate `/mcp` requests against an enterprise identity provider |
+| OpenTelemetry tracing | off (`quarkus.otel.sdk.disabled=true`) | `enterprise` profile + OTLP endpoint (`quarkus.otel.exporter.otlp.traces.endpoint`) | Export distributed traces for governance/observability |
+
+These are transport-level concerns and do **not** change the tool contract,
+response envelope, or governance enforcement. They apply only to the HTTP
+transport; the STDIO transport is unaffected.
+
 ### Industrial Core Toolset
 
 These 21 tools form the approved industrial subset for governed deployments.
