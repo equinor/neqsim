@@ -316,7 +316,7 @@ public class FlowRateOptimizerTest {
 
   /**
    * Test process lift curve generation with a two-stage compression system.
-   * 
+   *
    * <p>
    * This test follows the ProcessOptimizationExampleTest pattern with: HP Separator -> Gas Scrubber
    * -> 1st Stage Compressor -> Cooler -> 2nd Stage Compressor

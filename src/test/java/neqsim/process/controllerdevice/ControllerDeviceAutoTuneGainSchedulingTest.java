@@ -9,6 +9,7 @@ import neqsim.process.measurementdevice.MeasurementDeviceBaseClass;
 
 class ControllerDeviceAutoTuneGainSchedulingTest {
   static class DummyTransmitter extends MeasurementDeviceBaseClass {
+    private static final long serialVersionUID = 1L;
     private double value = 0.0;
 
     DummyTransmitter(String name, String unit) {

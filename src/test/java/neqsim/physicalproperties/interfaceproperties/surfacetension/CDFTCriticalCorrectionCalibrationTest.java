@@ -2,7 +2,6 @@ package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;

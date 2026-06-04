@@ -676,4 +676,4 @@ For sharper fronts, increase $N$. Higher-order schemes (TVD, WENO) are not curre
 - [Adsorption Isotherm Models](../../thermo/adsorption_isotherms.md) — Mathematical details of all isotherm models
 - [Adsorption Cookbook](../../cookbook/adsorption-recipes.md) — Quick-start recipes and common workflows
 - [Adsorbers (SimpleAdsorber)](adsorbers.md) — The simplified chemical absorption model
-- [Process Simulation Fundamentals](../process/) — NeqSim process equipment framework
+- [Process Simulation Fundamentals](../index.md) — NeqSim process equipment framework

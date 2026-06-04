@@ -319,7 +319,7 @@ System.out.println("JT cooling: " + jtCooling + " °C");
 
 ## Related Documentation
 
-- [Flare Systems](flares) - Flare and relief systems
-- [Gas Turbines](power_generation) - Power generation equipment
-- [Measurement Devices](measurement_devices) - CombustionEmissionsCalculator
-- [Emissions Reporting](../../emissions/OFFSHORE_EMISSION_REPORTING) - Emission calculations
+- [Flare Systems](../flares) - Flare and relief systems
+- [Gas Turbines](../power_generation) - Power generation equipment
+- [Measurement Devices](../measurement_devices) - CombustionEmissionsCalculator
+- [Emissions Reporting](../../../emissions/OFFSHORE_EMISSION_REPORTING) - Emission calculations

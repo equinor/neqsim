@@ -64,7 +64,7 @@ A complete **HIPPS (High Integrity Pressure Protection System)** implementation 
 - ✅ SIL requirements table
 
 ### 4. Example Code
-**File:** `src/main/java/neqsim/process/util/example/HIPPSExample.java`
+**File:** `src/test/java/neqsim/process/util/example/HIPPSExample.java`
 - ~300 lines of runnable demonstration code
 - Shows complete blocked outlet scenario
 
@@ -223,8 +223,8 @@ if (hipps.hasTripped()) {
 
 ### Run Example
 ```bash
-# Compile and run
-.\mvnw exec:java -Dexec.mainClass="neqsim.process.util.example.HIPPSExample"
+# Run example main() from test sources
+./mvnw -Dexec.classpathScope=test -Dexec.mainClass="neqsim.process.util.example.HIPPSExample" exec:java
 ```
 
 ## Integration with Existing NeqSim Components

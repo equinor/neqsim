@@ -11,7 +11,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Integration tests validating thermo module integration with process equipment.
- * 
+ *
  * <p>
  * These tests demonstrate how thermodynamic systems couple with process unit operations.
  */

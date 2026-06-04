@@ -1,6 +1,6 @@
 ---
 title: Water Treatment Equipment
-description: "Documentation for produced water treatment equipment in NeqSim: hydrocyclones with physics-based d50, DSD integration, PDR model, liner sizing, OSPAR compliance, ASME VIII mechanical design, gas flotation units (IGF/DGF), treatment trains, and regulatory compliance."
+description: "Documentation for produced water treatment equipment in NeqSim: hydrocyclones with physics-based d50, DSD integration, PDR model, liner sizing, demulsifier dose optimization, OIW analyzer drift, monthly OIW warnings, OSPAR compliance, ASME VIII mechanical design, gas flotation units (IGF/DGF), treatment trains, and regulatory compliance."
 ---
 
 # Water Treatment Equipment
@@ -18,6 +18,7 @@ Documentation for produced water treatment equipment in NeqSim.
   - [Mechanical Design](#mechanical-design)
 - [Gas Flotation Unit](#gas-flotation-unit)
 - [Produced Water Treatment Train](#produced-water-treatment-train)
+    - [Demulsifier Dose Optimization](#demulsifier-dose-optimization)
 - [Design Considerations](#design-considerations)
 - [Regulatory Compliance](#regulatory-compliance)
 
@@ -36,6 +37,10 @@ Produced water treatment is critical for offshore oil and gas operations. NeqSim
 | `Hydrocyclone` | `process.equipment.watertreatment` | Centrifugal oil-water separator with physics-based d50, DSD, PDR model |
 | `GasFlotationUnit` | `process.equipment.watertreatment` | IGF/DGF multi-stage flotation |
 | `ProducedWaterTreatmentTrain` | `process.equipment.watertreatment` | Multi-stage treatment system |
+| `DemulsifierDoseResponseModel` | `process.equipment.watertreatment` | Calibratable demulsifier dose-response and overdose behavior |
+| `ChemicalDoseLagModel` | `process.equipment.watertreatment` | Chemical accumulation and lag after dose setpoint changes |
+| `OilInWaterAnalyzerDriftModel` | `process.equipment.watertreatment` | OIW analyzer bias, drift, uncertainty, and correction |
+| `OilInWaterDoseOptimizer` | `process.equipment.watertreatment` | Monthly weighted OIW warning and demulsifier dose recommendation |
 | `HydrocycloneMechanicalDesign` | `process.mechanicaldesign.watertreatment` | ASME VIII vessel design, nozzle sizing, weight estimation |
 
 ---
@@ -711,6 +716,40 @@ Stream treatedWater = train.getTreatedWaterStream();
 Stream recoveredOil = train.getRecoveredOilStream();
 ```
 
+### Demulsifier Dose Optimization
+
+NeqSim includes decision-support models for optimizing demulsifier dosage around the existing produced-water physics. The workflow combines calibrated field or bottle-test dose response, chemical hold-up lag, analyzer drift, and a monthly weighted OIW budget.
+
+```java
+import neqsim.process.equipment.watertreatment.OilInWaterDoseOptimizer;
+import neqsim.process.equipment.watertreatment.OilInWaterDoseOptimizer.DoseRecommendation;
+
+OilInWaterDoseOptimizer optimizer = train.getOilInWaterDoseOptimizer();
+optimizer.setDoseRange(0.0, 80.0, 1.0);
+optimizer.setSafetyMarginMgL(3.0);
+optimizer.setOptimizationHorizonHours(2.0);
+
+optimizer.getDoseResponseModel().setMaxRemovalFraction(0.85);
+optimizer.getDoseResponseModel().setHalfEffectDosePpm(10.0);
+optimizer.getDoseResponseModel().setOptimumDosePpm(60.0);
+
+optimizer.getChemicalLagModel().setHoldUpVolumeM3(10.0);
+optimizer.getMonthlyMonitor().setProjectedDailyWaterVolumeM3(2400.0);
+optimizer.addMonthlySample(20.0, 2400.0);
+
+DoseRecommendation recommendation = train.recommendDemulsifierDose(
+    120.0,  // untreated OIW, mg/L
+    100.0,  // produced-water rate, m3/h
+    5       // day of month
+);
+
+System.out.println("Dose: " + recommendation.getSetpointDosePpm() + " ppm");
+System.out.println("Predicted OIW: "
+    + recommendation.getPredictedMeasuredOilInWaterMgL() + " mg/L");
+```
+
+The same workflow is exposed through the flow-assurance runner analysis type `demulsifierDoseOptimization`. Typical JSON inputs include `untreatedOIW_mgL`, `waterRate_m3_h`, `halfEffectDosePpm`, `maxRemovalFraction`, `holdUpVolume_m3`, `projectedDailyWater_m3`, and optional `monthlySamples` with `oiw_mgL` and `waterVolume_m3`.
+
 ---
 
 ## Design Considerations
@@ -822,4 +861,4 @@ System.out.println("Compliant: " + pwTrain.isCompliant());
 
 - [Separators](separators) - Three-phase separators
 - [Filters](filters) - Filtration equipment
-- [Membrane Separators](membrane) - Membrane-based separation
+- [Membrane Separators](membranes) - Membrane-based separation

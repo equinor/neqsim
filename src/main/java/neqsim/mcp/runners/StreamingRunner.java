@@ -1,9 +1,10 @@
 package neqsim.mcp.runners;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,6 +47,12 @@ public final class StreamingRunner {
   /** Max concurrent streaming operations. */
   private static final int MAX_OPERATIONS = 20;
 
+  /** Retention time for completed streaming operations. */
+  private static final long OPERATION_RETENTION_MS = 30L * 60L * 1000L;
+
+  /** Cryptographically strong random source for operation identifiers. */
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
   /**
    * Private constructor — all methods are static.
    */
@@ -64,20 +71,27 @@ public final class StreamingRunner {
 
       switch (action) {
         case "startSweep":
+        case "startParametricSweep":
           return startParametricSweep(input);
         case "startDynamic":
+        case "startDynamicStreaming":
           return startDynamicStreaming(input);
         case "startMonteCarlo":
           return startMonteCarlo(input);
         case "poll":
+        case "pollResults":
           return pollResults(input);
         case "cancel":
+        case "cancelOperation":
           return cancelOperation(input);
         case "list":
+        case "listOperations":
           return listOperations();
         default:
           return errorJson("UNKNOWN_ACTION", "Unknown streaming action: " + action,
-              "Use: startSweep, startDynamic, startMonteCarlo, poll, cancel, list");
+              "Use: startSweep/startParametricSweep, startDynamic/startDynamicStreaming, "
+                  + "startMonteCarlo, poll/pollResults, cancel/cancelOperation, "
+                  + "list/listOperations");
       }
     } catch (Exception e) {
       return errorJson("STREAMING_ERROR", "Streaming operation failed: " + e.getMessage(),
@@ -92,11 +106,12 @@ public final class StreamingRunner {
    * @return JSON with operation ID
    */
   private static String startParametricSweep(JsonObject input) {
+    cleanupOperations();
     if (OPERATIONS.size() >= MAX_OPERATIONS) {
       return errorJson("LIMIT_REACHED", "Max streaming operations reached", "Cancel some first");
     }
 
-    String opId = "sweep-" + UUID.randomUUID().toString().substring(0, 8);
+    String opId = newOperationId("sweep");
     StreamingOperation op = new StreamingOperation(opId, "parametric_sweep");
 
     // Parse sweep parameters
@@ -172,9 +187,9 @@ public final class StreamingRunner {
           op.status = "running";
         }
 
-        op.status = op.cancelled ? "cancelled" : "completed";
+        op.markFinished(op.cancelled ? "cancelled" : "completed");
       } catch (Exception e) {
-        op.status = "failed";
+        op.markFinished("failed");
         op.errorMessage = e.getMessage();
       }
     });
@@ -196,11 +211,12 @@ public final class StreamingRunner {
    * @return JSON with operation ID
    */
   private static String startDynamicStreaming(JsonObject input) {
+    cleanupOperations();
     if (OPERATIONS.size() >= MAX_OPERATIONS) {
       return errorJson("LIMIT_REACHED", "Max streaming operations reached", "Cancel some first");
     }
 
-    String opId = "dynamic-" + UUID.randomUUID().toString().substring(0, 8);
+    String opId = newOperationId("dynamic");
     StreamingOperation op = new StreamingOperation(opId, "dynamic_simulation");
 
     String processJson = input.has("processJson") ? GSON.toJson(input.get("processJson")) : "{}";
@@ -240,9 +256,9 @@ public final class StreamingRunner {
           op.completedSteps = i + 1;
         }
 
-        op.status = op.cancelled ? "cancelled" : "completed";
+        op.markFinished(op.cancelled ? "cancelled" : "completed");
       } catch (Exception e) {
-        op.status = "failed";
+        op.markFinished("failed");
         op.errorMessage = e.getMessage();
       }
     });
@@ -263,11 +279,12 @@ public final class StreamingRunner {
    * @return JSON with operation ID
    */
   private static String startMonteCarlo(JsonObject input) {
+    cleanupOperations();
     if (OPERATIONS.size() >= MAX_OPERATIONS) {
       return errorJson("LIMIT_REACHED", "Max streaming operations reached", "Cancel some first");
     }
 
-    String opId = "mc-" + UUID.randomUUID().toString().substring(0, 8);
+    String opId = newOperationId("mc");
     StreamingOperation op = new StreamingOperation(opId, "monte_carlo");
 
     JsonObject baseComponents =
@@ -346,9 +363,9 @@ public final class StreamingRunner {
         summary.addProperty("Z_std", stddev(zFactors));
         op.addResult(summary);
 
-        op.status = op.cancelled ? "cancelled" : "completed";
+        op.markFinished(op.cancelled ? "cancelled" : "completed");
       } catch (Exception e) {
-        op.status = "failed";
+        op.markFinished("failed");
         op.errorMessage = e.getMessage();
       }
     });
@@ -376,6 +393,7 @@ public final class StreamingRunner {
       return errorJson("NOT_FOUND", "Operation not found: " + opId,
           "Use action 'list' to see active operations");
     }
+    op.touch();
 
     int lastIndex = input.has("lastIndex") ? input.get("lastIndex").getAsInt() : 0;
 
@@ -419,6 +437,8 @@ public final class StreamingRunner {
     JsonObject response = new JsonObject();
     if (op != null) {
       op.cancelled = true;
+      op.status = "cancelling";
+      op.touch();
       response.addProperty("status", "cancelling");
       response.addProperty("operationId", opId);
     } else {
@@ -434,6 +454,7 @@ public final class StreamingRunner {
    * @return JSON with operation summaries
    */
   private static String listOperations() {
+    cleanupOperations();
     JsonObject response = new JsonObject();
     response.addProperty("count", OPERATIONS.size());
 
@@ -448,6 +469,9 @@ public final class StreamingRunner {
           op.totalSteps > 0 ? (100.0 * op.completedSteps / op.totalSteps) : 0);
       info.addProperty("completedSteps", op.completedSteps);
       info.addProperty("totalSteps", op.totalSteps);
+      info.addProperty("ageSeconds", (System.currentTimeMillis() - op.createdAt) / 1000);
+      info.addProperty("lastUpdatedSecondsAgo",
+          (System.currentTimeMillis() - op.lastUpdatedAt) / 1000);
       ops.add(info);
     }
     response.add("operations", ops);
@@ -473,6 +497,35 @@ public final class StreamingRunner {
       return (value - 32.0) * 5.0 / 9.0 + 273.15;
     }
     return value + 273.15; // Default: Celsius
+  }
+
+  /**
+   * Generates a globally unique, URL-safe operation identifier.
+   *
+   * @param prefix operation type prefix
+   * @return operation identifier
+   */
+  private static String newOperationId(String prefix) {
+    byte[] bytes = new byte[18];
+    SECURE_RANDOM.nextBytes(bytes);
+    return prefix + "-" + Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+  }
+
+  /**
+   * Removes completed operations after the retention period.
+   */
+  private static void cleanupOperations() {
+    long now = System.currentTimeMillis();
+    List<String> toRemove = new ArrayList<String>();
+    for (Map.Entry<String, StreamingOperation> entry : OPERATIONS.entrySet()) {
+      StreamingOperation op = entry.getValue();
+      if (op.isTerminal() && now - op.lastUpdatedAt > OPERATION_RETENTION_MS) {
+        toRemove.add(entry.getKey());
+      }
+    }
+    for (String operationId : toRemove) {
+      OPERATIONS.remove(operationId);
+    }
   }
 
   /**
@@ -589,6 +642,12 @@ public final class StreamingRunner {
     /** Operation type. */
     final String type;
 
+    /** Creation timestamp. */
+    final long createdAt = System.currentTimeMillis();
+
+    /** Last update or poll timestamp. */
+    volatile long lastUpdatedAt = System.currentTimeMillis();
+
     /** Current status: pending, running, completed, failed, cancelled. */
     volatile String status = "pending";
 
@@ -626,6 +685,33 @@ public final class StreamingRunner {
      */
     void addResult(JsonObject result) {
       results.add(result);
+      touch();
+    }
+
+    /**
+     * Records access or progress on the operation.
+     */
+    void touch() {
+      lastUpdatedAt = System.currentTimeMillis();
+    }
+
+    /**
+     * Marks the operation finished with a terminal status.
+     *
+     * @param finalStatus final status value
+     */
+    void markFinished(String finalStatus) {
+      status = finalStatus;
+      touch();
+    }
+
+    /**
+     * Checks whether this operation has reached a terminal state.
+     *
+     * @return true for completed, failed, or cancelled operations
+     */
+    boolean isTerminal() {
+      return "completed".equals(status) || "failed".equals(status) || "cancelled".equals(status);
     }
 
     /**

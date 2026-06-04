@@ -741,6 +741,7 @@ final class ColumnSolverFactory {
   /**
    * Build an explanatory note for an AUTO candidate probe.
    *
+   * @param candidateSolver solver type being probed
    * @param candidate candidate column after the probe
    * @param result probe result
    * @return note for the AUTO summary, or {@code null} when no note is needed

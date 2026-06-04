@@ -460,4 +460,4 @@ Map<Double, Double> waxAtPressures = calc.calculateAtMultiplePressures(pressures
 
 - [Flow Assurance](../../pvtsimulation/flow_assurance_overview) - Complete flow assurance guide
 - [PVT Characterization](../pvt_fluid_characterization) - Fluid characterization
-- [TBP Fractions](../characterization/tbp_fractions) - Plus fraction handling
+- [TBP Fractions](../../wiki/tbp_fraction_models) - Plus fraction handling

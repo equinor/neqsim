@@ -20,7 +20,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Tests for debottlenecking validation improvements.
- * 
+ *
  * <p>
  * Verifies that:
  * <ul>
@@ -30,7 +30,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Operating envelope validation catches out-of-range conditions</li>
  * </ul>
  * </p>
- * 
+ *
  * @author NeqSim Development Team
  * @version 1.0
  */

@@ -23,6 +23,7 @@ class LogicBlockTest {
    * Simple stub measurement device that returns a configurable value.
    */
   static class StubMeasurement implements MeasurementDeviceInterface {
+    private static final long serialVersionUID = 1L;
     private double value;
     private String name;
 

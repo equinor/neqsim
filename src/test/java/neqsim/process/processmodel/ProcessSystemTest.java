@@ -78,6 +78,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
      *
      * @return singleton list containing the inlet stream
      */
+    @Override
     public List<StreamInterface> getInletStreams() {
       return java.util.Collections.singletonList(inletStream);
     }

@@ -11,7 +11,6 @@ import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.WaterDewPointAnalyser;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.thermo.ThermodynamicModelTest;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkCPAstatoilAndersonMixing;

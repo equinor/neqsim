@@ -3,7 +3,7 @@
 </h1>
 
 <p align="center">
-  <strong>Industrial Agentic Engineering with NeqSim<br>AI Agents for Engineering Task Solving in Industry</strong>
+  <strong>From Simulation Models to AI-Assisted Industrial Workflows</strong>
 </p>
 
 <p align="center">
@@ -53,29 +53,9 @@ See the [full documentation](https://equinor.github.io/neqsim/), [Java Wiki](htt
 
 ### Python - try it in 30 seconds
 
-```bash
-pip install neqsim
-```
+A Python wrapper is available on pip. Install using `pip install neqsim`.
 
-```python
-from neqsim import jneqsim
-
-# Create a natural gas fluid
-fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 60.0)  # 25 C, 60 bara
-fluid.addComponent("methane", 0.85)
-fluid.addComponent("ethane", 0.10)
-fluid.addComponent("propane", 0.05)
-fluid.setMixingRule("classic")
-
-# Run a flash calculation
-ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
-ops.TPflash()
-fluid.initProperties()
-
-print(f"Gas density:    {fluid.getPhase('gas').getDensity('kg/m3'):.2f} kg/m3")
-print(f"Gas viscosity:  {fluid.getPhase('gas').getViscosity('kg/msec'):.6f} kg/(m*s)")
-print(f"Z-factor:       {fluid.getPhase('gas').getZ():.4f}")
-```
+See [neqsim-python](https://github.com/equinor/neqsim-python) for more details.
 
 ### Java - add to your project
 
@@ -85,7 +65,7 @@ print(f"Z-factor:       {fluid.getPhase('gas').getZ():.4f}")
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.10.0</version>
+  <version>3.12.0</version>
 </dependency>
 ```
 
@@ -284,7 +264,7 @@ The agent creates a task folder, runs NeqSim simulations, validates results, and
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.10.0</version>
+  <version>3.12.0</version>
 </dependency>
 ```
 
@@ -395,7 +375,7 @@ graph TB
     subgraph access["Access Layers"]
         PYTHON["Python / Jupyter<br/>pip install neqsim"]
         JAVA["Java / Maven<br/>Direct API"]
-        MCP["MCP Server (Java 17+)<br/>LLM integration"]
+        MCP["MCP Server (Java 21+)<br/>LLM integration"]
         AGENTS["AI Agents<br/>VS Code Copilot"]
     end
 
@@ -413,9 +393,9 @@ graph TB
 
 | I want to... | Use | Requires |
 |---|---|---|
-| Quick property lookup via LLM | [MCP Server](neqsim-mcp-server/) + any LLM client | Java 17+ (or Docker) |
-| Python scripting / Jupyter notebooks | `pip install neqsim` | Python 3.8+, JVM |
-| Embed in a Java application | Maven dependency | Java 8+ |
+| Quick property lookup via LLM | [MCP Server](neqsim-mcp-server/) + any LLM client | Java 21+ (or Docker) |
+| Python scripting / Jupyter notebooks | `pip install neqsim` | Python 3.9+, JVM |
+| Embed in a Java application | Maven dependency | Java 21+ (default) or Java 8+ (use the `-Java8` artifact) |
 | Full engineering study with reports | `@solve.task` agent in VS Code | VS Code + GitHub Copilot |
 | .NET / MATLAB integration | [Language bindings](#other-language-bindings) | See linked repos |
 
@@ -424,9 +404,9 @@ graph TB
 | Component | Java Version | Notes |
 |---|---|---|
 | **NeqSim core library** | 8+ | All thermodynamics, process equipment, PVT |
-| **MCP server** | 17+ | Quarkus-based; thin wrapper around core |
+| **MCP server** | 21+ | Quarkus-based; thin wrapper around core |
 | **Python users** | No Java coding | JVM bundled via jpype |
-| **Running prebuilt MCP jar** | 17+ | Download from [releases](https://github.com/equinor/neqsim/releases) |
+| **Running prebuilt MCP jar** | 21+ | Download from [releases](https://github.com/equinor/neqsim/releases) |
 
 #### Core modules
 
@@ -487,18 +467,55 @@ neqsim doctor              # quick diagnostic if something isn't working
 | 5 | Fix a broken doc link | Easy | Search `docs/**/*.md` for dead links and fix them |
 | 6 | Add a unit test for existing equipment | Medium | Add tests under `src/test/java/neqsim/` |
 
-#### Community Skill Catalog
+#### Community Skill and Agent Catalogs
 
 Browse and install community-contributed skills, or publish your own:
 
 ```bash
-neqsim skill list                    # browse the catalog
+neqsim skill list                    # browse the catalog and discovered repositories
 neqsim skill install <name>          # install a skill
 neqsim skill publish user/repo-name  # publish yours (creates a draft PR)
 ```
 
+Browse and install community-contributed agents separately from skills:
+
+```bash
+neqsim agent list                    # browse installable agent workflows
+neqsim agent search hydrate          # search by name, tag, description, or required skill
+neqsim agent install <name>          # install an agent definition
+neqsim agent validate <name-or-path> # validate an installed or local agent package
+neqsim agent schema                  # show the supported agent.yaml fields
+```
+
+The catalog can list individual skills directly and can also point to public
+multi-skill GitHub repositories. When a repository is listed under
+`repositories:` in `community-skills.yaml`, `neqsim skill list` reads the online
+repo catalog first and falls back to scanning matching `SKILL.md` files, so new
+skills can appear without adding one entry per skill to the NeqSim repo.
+
+Agents follow the same discovery model through `community-agents.yaml`, but they
+are kept as a separate install type. Skills are reusable engineering knowledge;
+agents are role/workflow definitions that can declare `required_skills` and are
+installed to `~/.neqsim/agents/`. Agent packages can include an `agent.yaml`
+manifest with supported domains, inputs, outputs, MCP tool requirements, human
+review policy, and trust level. Installing an agent downloads and validates the
+definition only; execution is an explicit action in the AI tool that uses it.
+
+The shared public home for reusable community skills is
+[equinor/neqsim-community-skills](https://github.com/equinor/neqsim-community-skills).
+The shared public home for reusable community agents is
+[equinor/neqsim-community-agents](https://github.com/equinor/neqsim-community-agents).
+Put skills there when they are public, reproducible, useful beyond one project,
+and do not need to live in NeqSim core. Good candidates include educational
+screening workflows, public validation helpers, open engineering checklists,
+agent guidance around existing NeqSim workflows, and examples with synthetic or
+public data. Keep proprietary methods, plant data, private tag names, internal
+URLs, company standards, and project-specific design bases out of the public
+community repos; use private skill or agent catalogs for those.
+
 See the [Skills Guide](docs/integration/skills_guide.md) for the full walkthrough,
-[community-skills.yaml](community-skills.yaml) for the catalog, and
+[community-skills.yaml](community-skills.yaml) and
+[community-agents.yaml](community-agents.yaml) for the catalogs, and
 [.github/skills/README.md](.github/skills/README.md) for the quick contribution guide.
 
 All tests and `./mvnw checkstyle:check` must pass before a PR is merged.

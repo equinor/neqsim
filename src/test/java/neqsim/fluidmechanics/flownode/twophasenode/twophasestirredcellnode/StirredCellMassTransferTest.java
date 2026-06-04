@@ -9,12 +9,12 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Test class demonstrating mass transfer in a stirred PVT cell.
- * 
+ *
  * <p>
  * Based on the example notebook: masstransferMeOH.ipynb This demonstrates mass transfer between oil
  * and gas in a constant pressure/variable volume stirred PVT cell.
  * </p>
- * 
+ *
  * <p>
  * The test simulates:
  * <ul>
@@ -27,7 +27,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class StirredCellMassTransferTest {
   /**
    * Test basic stirred cell mass transfer calculation.
-   * 
+   *
    * <p>
    * Creates a synthetic hydrocarbon fluid at high pressure and simulates depressurization to
    * atmospheric pressure in a stirred cell.
@@ -82,7 +82,7 @@ public class StirredCellMassTransferTest {
 
   /**
    * Test mass transfer evolution over multiple time steps.
-   * 
+   *
    * <p>
    * Simulates mass transfer in the stirred cell over multiple iterations to verify that the system
    * evolves towards equilibrium.

@@ -59,7 +59,6 @@ public class NeqSimContractDataBase extends NeqSimDataBase {
     }
   }
 
-  /** {@inheritDoc} */
   public static void updateTable(String tableName) {
     updateTable(tableName, "commercial/" + tableName + ".csv");
   }

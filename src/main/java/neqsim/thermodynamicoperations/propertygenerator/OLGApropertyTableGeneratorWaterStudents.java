@@ -353,7 +353,7 @@ public class OLGApropertyTableGeneratorWaterStudents
           logger.info("fail temperature " + thermoSystem.getTemperature() + " fail pressure "
               + thermoSystem.getPressure());
 
-          thermoSystem.display();
+          // thermoSystem.display();
           logger.error(ex.getMessage(), ex);
         }
 

@@ -3,7 +3,6 @@ package neqsim.process.diagnostics;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,8 +40,7 @@ import org.apache.logging.log4j.Logger;
  * TripEventDetector detector = new TripEventDetector(processSystem);
  * detector.addTripCondition("Compressor-1", "outletPressure", 120.0, true,
  *     TripEvent.Severity.HIGH);
- * detector.addTripCondition("Separator-1", "liquidLevel", 0.1, false,
- *     TripEvent.Severity.MEDIUM);
+ * detector.addTripCondition("Separator-1", "liquidLevel", 0.1, false, TripEvent.Severity.MEDIUM);
  *
  * // During dynamic simulation:
  * for (double t = 0; t &lt; 3600; t += dt) {
@@ -175,12 +173,10 @@ public class TripEventDetector implements Serializable {
 
       if (limits.length >= 2) {
         if (!Double.isNaN(limits[0])) {
-          addTripCondition(equipmentName, parameterName, limits[0], false,
-              TripEvent.Severity.HIGH);
+          addTripCondition(equipmentName, parameterName, limits[0], false, TripEvent.Severity.HIGH);
         }
         if (!Double.isNaN(limits[1])) {
-          addTripCondition(equipmentName, parameterName, limits[1], true,
-              TripEvent.Severity.HIGH);
+          addTripCondition(equipmentName, parameterName, limits[1], true, TripEvent.Severity.HIGH);
         }
       }
     }
@@ -248,9 +244,7 @@ public class TripEventDetector implements Serializable {
           }
         }
 
-        boolean tripped = cond.highTrip
-            ? value > effectiveThreshold
-            : value < effectiveThreshold;
+        boolean tripped = cond.highTrip ? value > effectiveThreshold : value < effectiveThreshold;
 
         if (tripped) {
           TripEvent event = new TripEvent(cond.equipmentName, cond.parameterName, cond.threshold,

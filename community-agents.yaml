@@ -1,0 +1,86 @@
+# NeqSim Community Agent Catalog
+#
+# Machine-readable listing of community-contributed agents hosted outside
+# the core repo. Install with: neqsim agent install <name>
+#
+# Agents are workflow/role definitions that may depend on one or more skills.
+# Installing an agent only downloads and validates the definition; it does not
+# execute arbitrary code.
+#
+# Format:
+#   - name: <agent-id>                  # stable CLI/install id
+#     display_name: "Human agent name"   # optional user-facing name
+#     version: "1.0.0"                  # optional: agent version
+#     description: "Short description"
+#     author: "GitHub username or name"
+#     repo: "owner/repo"                # GitHub repo containing the agent
+#     path: "agents/my-agent/AGENT.md"  # main agent file
+#     folder: "agents/my-agent"         # optional: copy whole package folder
+#     required_skills: [neqsim-api-patterns]
+#     supported_domains: [process, flow-assurance]
+#     requires_mcp_tools: [runProcess]
+#     human_review_required: true
+#     trust_level: community            # core | community | private | experimental
+#     tags: [tag1, tag2]
+#
+# Preferred folder packages include agent.yaml with schema-compatible metadata:
+#   agent_manifest_schema_version: "1.0"
+#   name: tie-in-screening-agent
+#   description: Early-stage tie-in screening using NeqSim and community skills
+#   version: "0.1.0"
+#   required_skills: [neqsim-flow-assurance, neqsim-standards-lookup]
+#   supported_domains: [process, flow-assurance]
+#   inputs: [feed_composition, operating_conditions]
+#   outputs: [results_json, report]
+#   requires_mcp_tools: [runProcess]
+#   human_review_required: true
+#   trust_level: community
+#
+# Multi-agent GitHub repositories can be discovered online by uncommenting a
+# repository entry and pointing it at a public community-agents.yaml catalog:
+#
+# repositories:
+#   - repo: "owner/repo"
+#     catalog_path: "community-agents.yaml"
+#     agent_path_glob: ["agents/**/*.agent.md", "agents/**/AGENT.md"]
+
+catalog_version: "1.0"
+last_updated: "2026-05-31"
+
+repositories:
+  # Discover all public community agents from the external community repo.
+  - repo: "equinor/neqsim-community-agents"
+    catalog_path: "community-agents.yaml"
+    agent_path_glob: ["agents/**/*.agent.md", "agents/**/AGENT.md"]
+    author: "neqsim-community"
+    tags: [community]
+
+agents:
+  # -- Example entry that installs a core NeqSim agent as a local package --
+  - name: neqsim-example-agent
+    display_name: "Run NeqSim Flow Assurance Analysis"
+    description: "Example community-agent catalog entry for installing a NeqSim agent definition locally. Replace with real community agents."
+    author: "equinor"
+    repo: "equinor/neqsim"
+    path: ".github/agents/flow.assurance.agent.md"
+    required_skills: [neqsim-flow-assurance, neqsim-water-hammer]
+    supported_domains: [flow-assurance]
+    requires_mcp_tools: []
+    human_review_required: true
+    trust_level: community
+    tags: [example, flow-assurance, template]
+
+  # -- Add community agents below this line --
+  # - name: tie-in-screening-agent
+  #   display_name: "Tie-in Screening Agent"
+  #   description: "Early-stage tie-in screening using NeqSim and community skills"
+  #   author: "your-github-username"
+  #   repo: "your-username/neqsim-community-agents"
+  #   path: "agents/tie-in-screening-agent/AGENT.md"
+  #   folder: "agents/tie-in-screening-agent"
+  #   required_skills: [neqsim-flow-assurance, neqsim-standards-lookup]
+  #   supported_domains: [process, flow-assurance]
+  #   requires_mcp_tools: [runProcess]
+  #   human_review_required: true
+  #   trust_level: community
+  #   tags: [tie-in, screening, flow-assurance]

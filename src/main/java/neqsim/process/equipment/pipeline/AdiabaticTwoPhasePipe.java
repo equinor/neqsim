@@ -5,7 +5,6 @@ import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
@@ -367,13 +366,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     outStream.setThermoSystem(system);
     outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {
-    system.display();
   }
 
   /**

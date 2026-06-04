@@ -107,4 +107,4 @@ We welcome benchmark contributions. To add a new benchmark:
 3. Add a summary row to the relevant table on this page
 4. Submit a PR linking the notebook and this page
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for the PR process.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the PR process.

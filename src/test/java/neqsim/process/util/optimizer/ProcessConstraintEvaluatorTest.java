@@ -17,11 +17,11 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Unit tests for ProcessConstraintEvaluator.
- * 
+ *
  * <p>
  * Tests constraint evaluation, caching, and sensitivity analysis.
  * </p>
- * 
+ *
  * @author NeqSim Development Team
  * @version 1.0
  */

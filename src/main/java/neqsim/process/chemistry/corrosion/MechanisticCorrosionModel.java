@@ -30,13 +30,13 @@ import neqsim.process.corrosion.NorsokM506CorrosionRate;
  * </ol>
  *
  * The mixed-control rate before inhibition is
- * 
+ *
  * <pre>
  * 1 / CR_mixed = 1 / CR_kinetic + 1 / CR_MT
  * </pre>
- * 
+ *
  * and after inhibitor coverage theta:
- * 
+ *
  * <pre>
  * CR_inhibited = CR_mixed * (1 - theta_max * theta)
  * </pre>

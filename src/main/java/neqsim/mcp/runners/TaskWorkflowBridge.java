@@ -350,6 +350,7 @@ public final class TaskWorkflowBridge {
         "Array of {test, expected, actual, tolerance, pass} objects.");
 
     schema.add("fields", fields);
+    schema.add("schema", fields.deepCopy());
     return GSON.toJson(schema);
   }
 

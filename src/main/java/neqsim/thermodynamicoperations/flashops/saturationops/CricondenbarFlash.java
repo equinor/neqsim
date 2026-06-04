@@ -8,13 +8,13 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>
- * cricondebarFlash class.
+ * CricondenbarFlash class.
  * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
-public class CricondebarFlash extends ConstantDutyPressureFlash {
+public class CricondenbarFlash extends ConstantDutyPressureFlash {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -25,12 +25,12 @@ public class CricondebarFlash extends ConstantDutyPressureFlash {
 
   /**
    * <p>
-   * Constructor for cricondebarFlash.
+   * Constructor for CricondenbarFlash.
    * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
-  public CricondebarFlash(SystemInterface system) {
+  public CricondenbarFlash(SystemInterface system) {
     super(system);
     Jac = new Matrix(system.getPhase(0).getNumberOfComponents() + 1,
         system.getPhase(0).getNumberOfComponents() + 1);
@@ -110,7 +110,7 @@ public class CricondebarFlash extends ConstantDutyPressureFlash {
     system.setBeta(0.5);
     system.setTemperature(system.getTemperature() - 20);
     system.init(3);
-    system.display();
+    // system.display();
     double Q1 = 0;
     double Qold = 0.0;
     double dQ1dT = 0;
@@ -214,7 +214,7 @@ public class CricondebarFlash extends ConstantDutyPressureFlash {
         system.init(3);
         // initMoleFraction();
         localOperation.TPflash();
-        system.display();
+        // system.display();
         Qold = Q1;
         Q1 = 0.0;
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {

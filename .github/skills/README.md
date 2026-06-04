@@ -3,9 +3,10 @@
 Skills are reusable knowledge packages that agents load automatically when relevant.
 Each skill folder contains a `SKILL.md` file with verified patterns, rules, and domain knowledge.
 
-> **Full documentation:** See the [Skills Guide](../../docs/integration/skills_guide.md)
-> for the complete walkthrough — creating core, community, and private skills, the
-> SKILL.md format, requirements checklist, CLI commands, and worked examples.
+> **Full documentation:** See the [Skills and Agents Guide](../../docs/integration/skills_guide.md)
+> for the complete walkthrough — creating core, community, and private skills,
+> installing community/private agents, the SKILL.md and agent.yaml formats,
+> requirements checklist, CLI commands, and worked examples.
 
 ## How Skills Work
 
@@ -155,7 +156,8 @@ Every code example must work against NeqSim's actual API. Test by:
 See `VISION_AGENTS.md` for the full policy. Quick rule:
 
 - **Core skill** — references NeqSim Java classes, useful to multiple users, verified
-- **Personal skill** — company-specific workflow, experimental, doesn't need NeqSim internals
+- **Community skill** — public, reusable workflow guidance that does not need to live in core
+- **Private skill** — company-specific workflow, plant data, internal standards, private URLs, or project-specific knowledge
 
 ### Publishing a community skill (hosted in your own repo)
 
@@ -172,6 +174,91 @@ PR to add it to `community-skills.yaml`. Others can then install it with:
 ```bash
 neqsim skill install neqsim-my-skill
 ```
+
+For public multi-skill repositories, add the repo once under `repositories:` in
+`community-skills.yaml`. The skill CLI reads the online repo catalog and falls
+back to scanning matching `SKILL.md` files, so `neqsim skill list` can show all
+skills from that repo without one NeqSim catalog entry per skill.
+
+The recommended public collection is
+[equinor/neqsim-community-skills](https://github.com/equinor/neqsim-community-skills).
+Use it for public, reproducible skills such as educational screening workflows,
+open validation helpers, public engineering checklists, and examples based on
+synthetic or public data. Do not put proprietary methods, plant data, tag names,
+internal URLs, company standards, or project-specific design bases there; those
+belong in a private skill catalog.
+
+### Using private enterprise skills and agents
+
+Company-private skill and agent repositories should be connected through each
+user's local NeqSim catalogs, not through the public `neqsim` repository. This
+keeps proprietary workflows, internal URLs, tag mappings, and company standards
+out of committed files while still making them installable with the same CLI as
+community skills and agents.
+
+Create the local catalogs first:
+
+```powershell
+neqsim skill private-init
+neqsim agent private-init
+```
+
+Then edit `%USERPROFILE%\.neqsim\private-skills.yaml` and add the private skill
+repository under the generated `repositories:` section:
+
+| Field | Value |
+|-------|-------|
+| `repo` | `your-org/your-enterprise-skills-repo` |
+| `source` | `github` |
+| `branch` | `main` |
+| `catalog_path` | `community-skills.yaml` |
+| `skill_path_glob` | `skills/**/SKILL.md` |
+| `tags` | `[enterprise, private]` |
+| `name_prefix` | Optional, for example `enterprise-`, to avoid public/private name clashes |
+
+Edit `%USERPROFILE%\.neqsim\private-agents.yaml` the same way for private agent
+repositories:
+
+| Field | Value |
+|-------|-------|
+| `repo` | `your-org/your-enterprise-agents-repo` |
+| `source` | `github` |
+| `branch` | `main` |
+| `catalog_path` | `community-agents.yaml` |
+| `agent_path_glob` | `["agents/**/*.agent.md", "agents/**/AGENT.md"]` |
+| `tags` | `[enterprise, private]` |
+| `name_prefix` | Optional, for example `enterprise-`, to avoid public/private name clashes |
+
+Private GitHub repositories require either a `GITHUB_TOKEN` in the local shell or
+an authenticated GitHub CLI session from `gh auth login`. Do not store tokens in
+catalog files, prompt files, or this repository. Use `catalog_path: ""` when the
+private repository has no `community-skills.yaml` or `community-agents.yaml` and
+should be scanned directly for `SKILL.md`, `AGENT.md`, or `*.agent.md` files.
+After adding the catalog entries, install and verify locally:
+
+```powershell
+neqsim skill list --private
+neqsim skill install <skill-name>
+
+neqsim agent list --private
+neqsim agent install <agent-name>
+neqsim agent validate <agent-name>
+```
+
+Installed private skills are copied to
+`%USERPROFILE%\.neqsim\skills\<skill-name>\SKILL.md`. VS Code Copilot does not
+automatically discover that folder, so copy the skill to the VS Code user prompts
+folder when you want to invoke it with `#<skill-name>`:
+
+```powershell
+New-Item -ItemType Directory -Path "$env:APPDATA\Code\User\prompts" -Force
+Copy-Item "$env:USERPROFILE\.neqsim\skills\<skill-name>\SKILL.md" `
+   "$env:APPDATA\Code\User\prompts\<skill-name>.prompt.md" -Force
+```
+
+Private agents install to `%USERPROFILE%\.neqsim\agents\<agent-name>\`. Point the
+AI tool at that folder, or copy the main `.agent.md` definition into the VS Code
+user prompts/customizations folder supported by your VS Code version.
 
 ### List existing skills
 

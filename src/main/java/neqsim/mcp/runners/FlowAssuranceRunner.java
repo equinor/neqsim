@@ -11,6 +11,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.mcp.model.ResultProvenance;
+import neqsim.process.equipment.watertreatment.ChemicalDoseLagModel;
+import neqsim.process.equipment.watertreatment.DemulsifierDoseResponseModel;
+import neqsim.process.equipment.watertreatment.OilInWaterAnalyzerDriftModel;
+import neqsim.process.equipment.watertreatment.OilInWaterDoseOptimizer;
+import neqsim.process.equipment.watertreatment.OilInWaterMonthlyComplianceMonitor;
 import neqsim.pvtsimulation.flowassurance.HydrateRiskMapper;
 import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemInterface;
@@ -37,9 +42,10 @@ public class FlowAssuranceRunner {
   private static final Gson GSON =
       new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
-  private static final List<String> SUPPORTED_ANALYSES = Collections
-      .unmodifiableList(Arrays.asList("hydrateRiskMap", "waxAppearance", "asphalteneStability",
-          "CO2Corrosion", "scalePrediction", "erosion", "pipelineCooldown", "emulsionViscosity"));
+  private static final List<String> SUPPORTED_ANALYSES =
+      Collections.unmodifiableList(Arrays.asList("hydrateRiskMap", "waxAppearance",
+          "asphalteneStability", "CO2Corrosion", "scalePrediction", "erosion", "pipelineCooldown",
+          "emulsionViscosity", "demulsifierDoseOptimization"));
 
   /**
    * Private constructor — all methods are static.
@@ -118,6 +124,9 @@ public class FlowAssuranceRunner {
         case "emulsionViscosity":
           data = runEmulsionViscosity(input);
           break;
+        case "demulsifierDoseOptimization":
+          data = runDemulsifierDoseOptimization(input);
+          break;
         default:
           return errorJson("UNKNOWN_ANALYSIS", "Not implemented: " + analysis, "");
       }
@@ -154,6 +163,9 @@ public class FlowAssuranceRunner {
         mapper.addProfilePoint(pt.get("km").getAsDouble(), pt.get("pressure_bara").getAsDouble(),
             pt.get("temperature_C").getAsDouble());
       }
+    } else if (input.has("pressure_bara") && input.has("temperature_C")) {
+      mapper.addProfilePoint(0.0, input.get("pressure_bara").getAsDouble(),
+          input.get("temperature_C").getAsDouble());
     }
     HydrateRiskMapper.RiskProfile riskProfile = mapper.calculate();
     return JsonParser.parseString(riskProfile.toJson()).getAsJsonObject();
@@ -416,6 +428,149 @@ public class FlowAssuranceRunner {
     }
     calc.calculate();
     return JsonParser.parseString(calc.toJson()).getAsJsonObject();
+  }
+
+  /**
+   * Runs demulsifier dose optimization and monthly OIW warning calculation.
+   *
+   * @param input the JSON input with dose-response, lag, analyzer, and monthly budget data
+   * @return JSON object with dose recommendation and optimizer state
+   */
+  private static JsonObject runDemulsifierDoseOptimization(JsonObject input) {
+    OilInWaterDoseOptimizer optimizer = new OilInWaterDoseOptimizer();
+    configureDoseResponseModel(optimizer.getDoseResponseModel(), input);
+    configureLagModel(optimizer.getChemicalLagModel(), input);
+    configureAnalyzerModel(optimizer.getAnalyzerDriftModel(), input);
+    configureMonthlyMonitor(optimizer.getMonthlyMonitor(), input);
+
+    if (input.has("minimumDosePpm") || input.has("maximumDosePpm") || input.has("doseStepPpm")) {
+      optimizer.setDoseRange(getDouble(input, "minimumDosePpm", 0.0),
+          getDouble(input, "maximumDosePpm", 120.0), getDouble(input, "doseStepPpm", 1.0));
+    }
+    optimizer.setSafetyMarginMgL(getDouble(input, "safetyMarginMgL", 3.0));
+    optimizer.setOptimizationHorizonHours(getDouble(input, "optimizationHorizonHours", 1.0));
+    optimizer
+        .setAnalyzerConfidenceMultiplier(getDouble(input, "analyzerConfidenceMultiplier", 0.0));
+
+    double untreatedOilInWaterMgL = getDouble(input, "untreatedOIW_mgL", 100.0);
+    double waterRateM3h = getDouble(input, "waterRate_m3_h", 100.0);
+    double daysSinceCalibration = getDouble(input, "daysSinceAnalyzerCalibration", 0.0);
+    int dayOfMonth = input.has("dayOfMonth") ? input.get("dayOfMonth").getAsInt() : 1;
+    optimizer.recommendDose(untreatedOilInWaterMgL, waterRateM3h, daysSinceCalibration, dayOfMonth);
+    return JsonParser.parseString(optimizer.toJson()).getAsJsonObject();
+  }
+
+  /**
+   * Configures a dose-response model from JSON.
+   *
+   * @param model dose-response model to configure
+   * @param input JSON input
+   */
+  private static void configureDoseResponseModel(DemulsifierDoseResponseModel model,
+      JsonObject input) {
+    if (input.has("maxRemovalFraction")) {
+      model.setMaxRemovalFraction(input.get("maxRemovalFraction").getAsDouble());
+    }
+    if (input.has("halfEffectDosePpm")) {
+      model.setHalfEffectDosePpm(input.get("halfEffectDosePpm").getAsDouble());
+    }
+    if (input.has("hillCoefficient")) {
+      model.setHillCoefficient(input.get("hillCoefficient").getAsDouble());
+    }
+    if (input.has("optimumDosePpm")) {
+      model.setOptimumDosePpm(input.get("optimumDosePpm").getAsDouble());
+    }
+    if (input.has("overdoseSensitivity")) {
+      model.setOverdoseSensitivity(input.get("overdoseSensitivity").getAsDouble());
+    }
+    if (input.has("minimumOIW_mgL")) {
+      model.setMinimumOilInWaterMgL(input.get("minimumOIW_mgL").getAsDouble());
+    }
+  }
+
+  /**
+   * Configures a chemical lag model from JSON.
+   *
+   * @param model chemical lag model to configure
+   * @param input JSON input
+   */
+  private static void configureLagModel(ChemicalDoseLagModel model, JsonObject input) {
+    if (input.has("holdUpVolume_m3")) {
+      model.setHoldUpVolumeM3(input.get("holdUpVolume_m3").getAsDouble());
+    }
+    if (input.has("waterDensity_kg_m3")) {
+      model.setWaterDensityKgm3(input.get("waterDensity_kg_m3").getAsDouble());
+    }
+    if (input.has("decayHalfLife_h")) {
+      model.setDecayHalfLifeHours(input.get("decayHalfLife_h").getAsDouble());
+    }
+    if (input.has("currentEffectiveDosePpm")) {
+      model.resetToSteadyState(input.get("currentEffectiveDosePpm").getAsDouble(),
+          getDouble(input, "waterRate_m3_h", 100.0));
+    }
+  }
+
+  /**
+   * Configures an analyzer drift model from JSON.
+   *
+   * @param model analyzer model to configure
+   * @param input JSON input
+   */
+  private static void configureAnalyzerModel(OilInWaterAnalyzerDriftModel model, JsonObject input) {
+    if (input.has("analyzerZeroOffset_mgL")) {
+      model.setZeroOffsetMgL(input.get("analyzerZeroOffset_mgL").getAsDouble());
+    }
+    if (input.has("analyzerSpanFactor")) {
+      model.setSpanFactor(input.get("analyzerSpanFactor").getAsDouble());
+    }
+    if (input.has("zeroDrift_mgL_per_day")) {
+      model.setZeroDriftMgLPerDay(input.get("zeroDrift_mgL_per_day").getAsDouble());
+    }
+    if (input.has("spanDrift_fraction_per_day")) {
+      model.setSpanDriftFractionPerDay(input.get("spanDrift_fraction_per_day").getAsDouble());
+    }
+    if (input.has("analyzerNoiseStd_mgL")) {
+      model.setNoiseStandardDeviationMgL(input.get("analyzerNoiseStd_mgL").getAsDouble());
+    }
+  }
+
+  /**
+   * Configures a monthly monitor from JSON.
+   *
+   * @param monitor monthly compliance monitor to configure
+   * @param input JSON input
+   */
+  private static void configureMonthlyMonitor(OilInWaterMonthlyComplianceMonitor monitor,
+      JsonObject input) {
+    if (input.has("monthlyLimit_mgL")) {
+      monitor.setMonthlyLimitMgL(input.get("monthlyLimit_mgL").getAsDouble());
+    }
+    if (input.has("daysInMonth")) {
+      monitor.setDaysInMonth(input.get("daysInMonth").getAsInt());
+    }
+    if (input.has("projectedDailyWater_m3")) {
+      monitor.setProjectedDailyWaterVolumeM3(input.get("projectedDailyWater_m3").getAsDouble());
+    }
+    if (input.has("monthlySamples")) {
+      JsonArray samples = input.getAsJsonArray("monthlySamples");
+      for (int index = 0; index < samples.size(); index++) {
+        JsonObject sample = samples.get(index).getAsJsonObject();
+        monitor.addSample(getDouble(sample, "oiw_mgL", 0.0),
+            getDouble(sample, "waterVolume_m3", 0.0));
+      }
+    }
+  }
+
+  /**
+   * Reads a double JSON field with a default.
+   *
+   * @param input JSON object
+   * @param fieldName field name
+   * @param defaultValue default value returned if the field is absent
+   * @return field value or default
+   */
+  private static double getDouble(JsonObject input, String fieldName, double defaultValue) {
+    return input.has(fieldName) ? input.get(fieldName).getAsDouble() : defaultValue;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

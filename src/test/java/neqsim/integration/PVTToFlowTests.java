@@ -11,7 +11,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Integration tests validating PVT calculations with flow equipment.
- * 
+ *
  * <p>
  * These tests verify that PVT flash calculations are consistent when used with separators.
  */

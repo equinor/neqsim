@@ -898,7 +898,7 @@ class TransientPipeTest {
 
   /**
    * Compare TransientPipe pressure drop with PipeBeggsAndBrills for pure gas flow.
-   * 
+   *
    * For single-phase gas flow, both models should give similar steady-state pressure drops since
    * the physics simplifies to standard Darcy-Weisbach friction.
    */
@@ -1028,7 +1028,7 @@ class TransientPipeTest {
 
   /**
    * Compare TransientPipe pressure drop with PipeBeggsAndBrills for pure oil (liquid) flow.
-   * 
+   *
    * For single-phase liquid flow, both models should give similar steady-state pressure drops since
    * the physics simplifies to standard Darcy-Weisbach friction.
    */

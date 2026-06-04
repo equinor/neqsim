@@ -142,13 +142,14 @@ def check_neqsim_jar():
         jar = main_jars[0]
         mod_time = datetime.fromtimestamp(os.path.getmtime(jar))
         age_hours = (datetime.now() - mod_time).total_seconds() / 3600
-        age_str = "{:.1f} hours ago".format(age_hours) if age_hours < 48 else "{:.0f} days ago".format(age_hours / 24)
+        age_str = "{:.1f} hours ago".format(
+            age_hours) if age_hours < 48 else "{:.0f} days ago".format(age_hours / 24)
         _check("JAR built", True, "{name} (built {age})".format(
             name=os.path.basename(jar), age=age_str
         ))
         if age_hours > 168:  # 1 week
             _warn("JAR freshness", "JAR is over a week old",
-                   fix_hint="Rebuild: mvnw.cmd package -DskipTests")
+                  fix_hint="Rebuild: mvnw.cmd package -DskipTests")
     else:
         _check(
             "JAR built", False, "No neqsim-*.jar in target/",
@@ -178,7 +179,8 @@ def check_python_neqsim():
                 if jars:
                     jar = jars[0]
                     mod_time = datetime.fromtimestamp(os.path.getmtime(jar))
-                    age_hours = (datetime.now() - mod_time).total_seconds() / 3600
+                    age_hours = (datetime.now() -
+                                 mod_time).total_seconds() / 3600
                     age_str = "{:.1f}h ago".format(age_hours)
                     _check("Python JAR", True, "{name} ({age})".format(
                         name=os.path.basename(jar), age=age_str
@@ -187,15 +189,48 @@ def check_python_neqsim():
                     _check("Python JAR", False, "No neqsim JAR in {d}".format(d=lib_dir),
                            fix_hint="Copy built JAR to Python package lib/java11/")
             else:
-                _warn("Python JAR dir", "Could not find lib/java11/ in Python package")
+                _warn("Python JAR dir",
+                      "Could not find lib/java11/ in Python package")
         else:
+            # Fallback: local repository runtime via devtools/neqsim_dev_setup.py
+            dev_setup = os.path.join(
+                PROJECT_ROOT, "devtools", "neqsim_dev_setup.py")
+            if os.path.isfile(dev_setup):
+                local_check_code = (
+                    "import sys;"
+                    "sys.path.insert(0, {devtools_path!r});"
+                    "from neqsim_dev_setup import neqsim_init, neqsim_classes;"
+                    "ns = neqsim_init(project_root={project_root!r}, recompile=False, verbose=False);"
+                    "ns = neqsim_classes(ns);"
+                    "fluid = ns.SystemSrkEos(273.15 + 25.0, 60.0);"
+                    "fluid.addComponent('methane', 1.0);"
+                    "fluid.setMixingRule('classic');"
+                    "print('LOCAL_RUNTIME_OK')"
+                ).format(
+                    devtools_path=os.path.join(PROJECT_ROOT, "devtools"),
+                    project_root=PROJECT_ROOT,
+                )
+                local_result = subprocess.run(
+                    [sys.executable, "-c", local_check_code],
+                    capture_output=True, text=True, timeout=90,
+                )
+                if local_result.returncode == 0 and "LOCAL_RUNTIME_OK" in local_result.stdout:
+                    _warn(
+                        "neqsim package", "Not installed (optional in repository development mode)")
+                    _check("Local dev runtime", True,
+                           "Available via devtools/neqsim_dev_setup.py")
+                    return
+
             _check(
                 "neqsim package", False,
                 "Not installed: {err}".format(err=result.stderr.strip()[:100]),
-                fix_hint="pip install neqsim"
+                fix_hint="pip install neqsim or run from the repo with devtools"
             )
     except Exception as e:
-        _check("neqsim package", False, str(e), fix_hint="pip install neqsim")
+        _check(
+            "neqsim package", False, str(e),
+            fix_hint="pip install neqsim or run from the repo with devtools"
+        )
 
 
 def check_agent_files():
@@ -206,7 +241,8 @@ def check_agent_files():
     for name, path in [
         ("AGENTS.md", os.path.join(PROJECT_ROOT, "AGENTS.md")),
         ("CONTEXT.md", os.path.join(PROJECT_ROOT, "CONTEXT.md")),
-        ("copilot-instructions.md", os.path.join(PROJECT_ROOT, ".github", "copilot-instructions.md")),
+        ("copilot-instructions.md", os.path.join(PROJECT_ROOT,
+         ".github", "copilot-instructions.md")),
         ("CLAUDE.md", os.path.join(PROJECT_ROOT, "CLAUDE.md")),
     ]:
         _check(name, os.path.isfile(path),
@@ -305,6 +341,7 @@ def check_devtools():
     scripts = [
         ("new_task.py", "Task scaffolding"),
         ("new_skill.py", "Skill scaffolding"),
+        ("install_agent.py", "Agent installer"),
         ("consistency_checker.py", "Consistency checker"),
         ("neqsim_dev_setup.py", "Dev setup for notebooks"),
     ]

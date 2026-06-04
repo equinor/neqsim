@@ -20,12 +20,12 @@ import neqsim.process.chemistry.util.StandardsRegistry;
  *
  * <p>
  * Governing equations (per cell):
- * 
+ *
  * <pre>
  * dC/dz = - k_eff * (q/q0) * C       (steady-state plug flow; q = remaining capacity)
  * dq/dt = - r * Q * C / V_cell        (scavenger depletion)
  * </pre>
- * 
+ *
  * with stoichiometric ratio {@code r} (mol H2S per mol active sites, typical 1.0 for triazine,
  * 0.5-0.7 for Fe2O3) and volumetric rate constant {@code k_eff} fitted to bed geometry.
  *

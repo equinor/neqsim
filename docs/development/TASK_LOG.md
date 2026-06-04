@@ -36,6 +36,30 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-06-02 — Kent-Eisenberg validation: CO₂/H₂S partial pressures over aqueous MDEA
+**Type:** C (PVT/thermo validation)
+**Keywords:** Kent-Eisenberg, MDEA, amine, CO2, H2S, acid gas loading, partial pressure, validation, electrolyte chemistry, SystemKentEisenberg
+**Solution:** task_solve/2026-06-02_kent_eisenberg_model_validation_co2_h2s_amine/step2_analysis/kent_eisenberg_validation.ipynb
+**Notes:** `SystemKentEisenberg` is MDEA-only (protonation + bicarbonate/carbonate + bisulfide, NO carbamate; for MEA/DEA use `AmineSystem`). MUST call `chemicalReactionInit()` + `createDatabase(True)` BEFORE `setMixingRule(4)`, else acid gas is treated as physical Henry-law solubility and pCO₂ is over-predicted by 1–2 orders. Robust partial pressure = liquid-phase fugacity `p_i = x_i·φ_i·P` at a single-liquid TP flash (avoids unstable bubble-point search). Known limitation: CO₂ @ 40 °C (313.15 K) does not converge the electrolyte equilibrium solve in this build (free-CO₂ x→1, pressure-independent) — flagged non-converged and excluded; CO₂ @ 50 °C and H₂S @ 40/50 °C converge. Consistency checks use Spearman ρ≥0.98 for monotonicity (tolerant of ~2% solver noise at top loading). Literature comparison is a labelled PLACEHOLDER (Jou/Mather/Otto 1982 anchors) — deviations illustrative only; NeqSim still over-predicts pCO₂ vs open-literature MDEA range.
+
+### 2026-05-30 — Agentic dynamics: pluggable integrators + EventScheduler wired into runTransient
+**Type:** E (Feature)
+**Keywords:** dynamic simulation, runTransient, IntegratorStrategy, BDFIntegrator, implicit euler, EventScheduler, ESD trip, setpoint ramp, ProcessSystem, ProcessModel, measurement device, differential pressure transmitter, composition analyzer, flow ratio meter, transient runnable serialization
+**Solution:** `src/main/java/neqsim/process/dynamics/{IntegratorStrategy,ExplicitEulerIntegrator,BDFIntegrator,EventScheduler}.java`; `src/main/java/neqsim/process/measurementdevice/{DifferentialPressureTransmitter,CompositionAnalyzer,FlowRatioMeter}.java`; wiring in `ProcessSystem.runTransient(double,UUID)` and new `ProcessModel.runTransient(double,UUID)` / `setEventScheduler` / `setIntegratorStrategy`; tests in `src/test/java/neqsim/process/processmodel/RunTransientEventSchedulerTest.java`.
+**Notes:** `EventScheduler` must be a `transient` field on `ProcessSystem` because `Runnable` payloads (lambdas, anonymous classes) are not Serializable; otherwise `ProcessSystem.deepCopy` inside `captureInitialState` throws `NotSerializableException` on the first `runTransient` call. Multi-area plants: install scheduler once on `ProcessModel`, it is propagated to every child area. For stiff dynamics use `setIntegratorStrategy(new BDFIntegrator())`; check `lastStepFellBack()` after each step to detect Newton-divergence fallback. Skill `neqsim-dynamic-simulation` updated with three new sections.
+
+### 2026-05-30 — Agentic synthesis: SeparationDuty + FlowsheetSynthesisEngine
+**Type:** E (Feature)
+**Keywords:** flowsheet synthesis, separation duty, candidate topology generation, total annual cost, recovery target, purity target, unit operation selection, agentic process design
+**Solution:** `src/main/java/neqsim/process/synthesis/{SeparationDuty,FlowsheetSynthesisEngine,FlowsheetCandidate}.java`; tests in `src/test/java/neqsim/process/synthesis/`.
+**Notes:** Engine generates candidate flowsheet topologies (separator trains, columns, flash cascades) for a given `SeparationDuty` and scores them on TAC / recovery / energy, returning a ranked `List<FlowsheetCandidate>` with JSON-serializable spec for downstream agents. Reusable lesson: keep the duty spec orthogonal to the synthesis engine so future synthesis strategies (genetic, RL, LLM-guided) plug in cleanly.
+
+### 2026-05-30 — Agentic automation: typed writes with rollback + audit log
+**Type:** E (Feature)
+**Keywords:** ProcessAutomation, typed write validation, setVariableValue, transactional rollback, write history audit, diagnostics taxonomy, VALUE_OUT_OF_BOUNDS, INVALID_TYPE, READ_ONLY_VARIABLE, UNIT_CONVERSION_FAILED
+**Solution:** `src/main/java/neqsim/process/automation/ProcessAutomation.java` plus diagnostics in `AutomationDiagnostics`; tests under `src/test/java/neqsim/process/automation/`.
+**Notes:** `setValuesWithRollback(Map updates, String unit)` reverts every write in the batch if any single update fails validation. `getWriteHistory()` returns a timestamped audit list with old/new value, unit, status, and error category. Reusable lesson: for agentic write paths, validate before mutating and capture the pre-write value for every variable so a single failure does not leave the model in an inconsistent state.
+
 ### 2026-05-08 — Safety-system barrier performance analyzer
 **Type:** E (Feature) / G (Workflow)
 **Keywords:** safety critical systems, barrier performance, major accident risk, deluge, firewater, fire gas detection, passive fire protection, SIS voting, STID, performance standards

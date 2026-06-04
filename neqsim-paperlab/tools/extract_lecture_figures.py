@@ -20,6 +20,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import os
 import re
 import shutil
 import sys
@@ -47,7 +48,7 @@ LECTURE_TO_CHAPTERS = {
         "ch06_intro_oil_gas_processing"],
     "30-01-2026 - Field development case": [
         "ch11_field_development_building_blocks",
-        "ch25_case_studies_aasta_ultima_thule"],
+        "ch25_case_studies_generic_remote_field"],
     "03-02-2026 - Oil and Water Processing and Separator Design": [
         "ch07_oil_water_separator_design"],
     "10-02-2026 - Flow Assurance and Gas Processing": [
@@ -62,17 +63,17 @@ LECTURE_TO_CHAPTERS = {
         "ch22_oil_gas_quality_refining"],
     "03-03-2026 - Computational tools for field development": [
         "ch24_computational_tools_neqsim", "ch10_acid_gas_removal_dehydration"],
-    "06-03-2006 - Aasta Hansteen and Cost Estimation": [
-        "ch25_case_studies_aasta_ultima_thule", "ch17_cost_estimation_scheduling"],
+    "06-03-2006 - Field Development and Cost Estimation": [
+        "ch25_case_studies_generic_remote_field", "ch17_cost_estimation_scheduling"],
     "10-03-2026 - Offshore Structures": ["ch12_offshore_structures"],
     "13-03-2026 - Production scheduling": [
-        "ch19_production_scheduling_snohvit"],
+        "ch19_production_scheduling_gas_field"],
     "17-03-2026 - Reservoir Technology in Field Development": [
         "ch15_reservoir_technology"],
     "20-03-2026 - CO2 in field developemnt and operations": [
         "ch23_co2_field_development"],
     "24-03-2026 - Field development Case study": [
-        "ch25_case_studies_aasta_ultima_thule",
+        "ch25_case_studies_generic_remote_field",
         "ch10_acid_gas_removal_dehydration"],
     "14-04-2026 - Production Optimisation": ["ch20_production_optimisation"],
     "17-04-2026 - Review of subject in field development": [
@@ -471,9 +472,7 @@ def main(lectures_dir: Path, book_dir: Path) -> None:
 
 
 if __name__ == "__main__":
-    lectures = Path(
-        r"C:\Users\ESOL\OneDrive - Equinor\NTNU-LT-112664\TPG4230\2026\lectures"
-    )
+    lectures = Path(os.environ.get("TPG4230_LECTURES_DIR", "lectures"))
     book = Path(__file__).resolve().parents[1] / "books" / (
         "tpg4230_field_development_and_operations_2026")
     main(lectures, book)

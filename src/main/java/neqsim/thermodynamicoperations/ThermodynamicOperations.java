@@ -22,11 +22,11 @@ import neqsim.thermodynamicoperations.flashops.PHflash;
 import neqsim.thermodynamicoperations.flashops.PHflashSingleComp;
 import neqsim.thermodynamicoperations.flashops.PHsolidFlash;
 import neqsim.thermodynamicoperations.flashops.PSFlash;
-import neqsim.thermodynamicoperations.flashops.PVFflash;
 import neqsim.thermodynamicoperations.flashops.PSFlashGERG2008;
 import neqsim.thermodynamicoperations.flashops.PSFlashLeachman;
 import neqsim.thermodynamicoperations.flashops.PSFlashVega;
 import neqsim.thermodynamicoperations.flashops.PSflashSingleComp;
+import neqsim.thermodynamicoperations.flashops.PVFflash;
 import neqsim.thermodynamicoperations.flashops.PVflash;
 import neqsim.thermodynamicoperations.flashops.PVrefluxflash;
 import neqsim.thermodynamicoperations.flashops.SaturateWithWater;
@@ -45,13 +45,13 @@ import neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetTemp
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlashDer;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointTemperatureNoDer;
-import neqsim.thermodynamicoperations.flashops.saturationops.CapillaryDewPointFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.CalcSaltSatauration;
+import neqsim.thermodynamicoperations.flashops.saturationops.CapillaryDewPointFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.CheckScalePotential;
 import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyFlashInterface;
 import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyTemperatureFlash;
-import neqsim.thermodynamicoperations.flashops.saturationops.CricondebarFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.CricondenbarFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.DewPointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlashDer;
 import neqsim.thermodynamicoperations.flashops.saturationops.FreezingPointTemperatureFlash;
@@ -1527,7 +1527,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       systemTemp.setPressure(pressure[i]);
 
       opsTemp.TPflash();
-      systemTemp.display();
+      // systemTemp.display();
       systemTemp = systemTemp.phaseToSystem(0);
     }
 
@@ -1539,7 +1539,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    systemTemp.display();
+    // systemTemp.display();
     return hydTemps;
   }
 
@@ -1560,7 +1560,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    systemTemp.display();
+    // systemTemp.display();
     system.setTemperature(systemTemp.getTemperature());
     TPflash();
     return system.getTemperature();
@@ -1763,17 +1763,14 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
   /**
    * <p>
-   * calcCricondenBar.
+   * Calculate the cricondenbar pressure for the system.
    * </p>
    *
-   * @return a double
+   * @return The cricondenbar pressure in unit bara.
    */
   public double calcCricondenBar() {
     system.init(0);
-    operation = new CricondebarFlash(system);
-    // operation = new CricondenBarFlash(system);
-
-    // operation = new cricondenBarTemp1(system);
+    operation = new CricondenbarFlash(system);
     operation.run();
     return system.getPressure();
   }
@@ -2488,12 +2485,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * <p>
    * Preferred over the flat {@code get("dewT")} / {@code get("bubT")} arrays for plotting and
    * machine-readable export. Each segment is a polyline with a uniform phase type (DEW or BUBBLE)
-   * and contains no NaN. Available after a successful call to any
-   * {@code calcPTphaseEnvelope(...)} overload that uses the Michelsen tracer.
+   * and contains no NaN. Available after a successful call to any {@code calcPTphaseEnvelope(...)}
+   * overload that uses the Michelsen tracer.
    * </p>
    *
-   * @return unmodifiable list of envelope segments, or an empty list if the last-run operation
-   *         does not produce segment data (e.g. legacy envelope implementations)
+   * @return unmodifiable list of envelope segments, or an empty list if the last-run operation does
+   *         not produce segment data (e.g. legacy envelope implementations)
    */
   public java.util.List<neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.EnvelopeSegment> getEnvelopeSegments() {
     OperationInterface op = getOperation();

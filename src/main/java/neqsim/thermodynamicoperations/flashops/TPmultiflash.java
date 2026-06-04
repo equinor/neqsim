@@ -153,8 +153,9 @@ public class TPmultiflash extends TPflash {
         Erow[i] += system.getPhase(k).getBeta()
             / system.getPhase(k).getComponent(i).getFugacityCoefficient();
       }
-      if (Erow[i] < 1e-100)
+      if (Erow[i] < 1e-100) {
         Erow[i] = 1e-100;
+      }
       if (Double.isNaN(Erow[i])) {
         logger.error("Erow is NaN for component " + system.getPhase(0).getComponent(i).getName());
         Erow[i] = 1e-100;

@@ -207,7 +207,7 @@ esdButton.push();  // Activates entire coordinated sequence
 - `src/main/java/neqsim/process/logic/esd/ESDLogic.java`
 
 ### Examples
-- `src/main/java/neqsim/process/util/example/ESDLogicExample.java`
+- `src/test/java/neqsim/process/util/example/ESDLogicExample.java`
 
 ### Documentation
 - `docs/process_logic_framework.md` - Comprehensive design document

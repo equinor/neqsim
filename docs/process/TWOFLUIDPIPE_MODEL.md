@@ -315,6 +315,125 @@ System.out.println(pipe.getThermalSummary());
 | Spatial discretization | Finite volume | AUSM+ flux splitting, MUSCL reconstruction |
 | Mesh | Uniform or non-uniform | `generateRefinedMesh()` or `setSectionLengths()` |
 
+## Steady-State and Dynamic Simulation Workflow
+
+`TwoFluidPipe` supports both steady-state initialization and transient simulation. In normal use,
+call `run()` first to build a physically consistent pressure, holdup, temperature, and flow-regime
+profile. Then change a boundary condition and advance time with `runTransient(dt, id)` until the
+profiles stop changing or match a new steady-state reference.
+
+### Steady-State Simulation
+
+For a fixed inlet stream and a calculated outlet pressure, configure the pipe geometry and call
+`run()`:
+
+```java
+SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(293.15, 70.0);
+fluid.addComponent("methane", 0.90);
+fluid.addComponent("ethane", 0.06);
+fluid.addComponent("propane", 0.04);
+fluid.setMixingRule("classic");
+
+Stream inlet = new Stream("inlet", fluid);
+inlet.setFlowRate(4.0, "kg/sec");
+inlet.setTemperature(20.0, "C");
+inlet.setPressure(70.0, "bara");
+inlet.run();
+
+TwoFluidPipe pipe = new TwoFluidPipe("export line", inlet);
+pipe.setLength(1000.0);
+pipe.setDiameter(0.20);
+pipe.setRoughness(1.0e-5);
+pipe.setNumberOfSections(20);
+pipe.run();
+```
+
+If the downstream pressure is known, set a constant outlet pressure before `run()`. The steady-state
+solver calculates the pressure-gradient shape from flow, friction, gravity, and holdup, then aligns
+the absolute profile to the specified pressure boundary:
+
+```java
+pipe.setOutletPressure(55.0, "bara");
+pipe.run();
+double outletPressure = pipe.getPressureProfile()[pipe.getPressureProfile().length - 1] / 1.0e5;
+```
+
+### Dynamic Simulation After a Boundary Change
+
+Dynamic simulations should start from a steady state. After changing a boundary condition, run the
+transient solver long enough for the new stationary solution to be reached:
+
+```java
+pipe.run();
+pipe.setOutletPressure(52.0, "bara");
+
+UUID id = UUID.randomUUID();
+double elapsedTime = 0.0;
+while (elapsedTime < 60.0) {
+  pipe.runTransient(2.0, id);
+  elapsedTime += 2.0;
+}
+```
+
+For regression tests, compare the transient profile after the boundary change with a second
+`TwoFluidPipe` solved directly at the new boundary condition. A practical pressure-profile metric is
+root-mean-square pressure difference across all sections; for compact tests a limit of 1-2 bar is a
+useful sanity check. For multiphase cases, also compare liquid, oil, and water holdup profiles so
+the dynamic calculation has settled hydraulically, not only acoustically.
+
+### Boundary Conditions
+
+Use `setInletBoundaryCondition(...)` and `setOutletBoundaryCondition(...)` for explicit boundary
+types. Convenience methods such as `closeOutlet()` and `openOutlet(...)` update the type and value
+together.
+
+| Boundary condition | Typical side | Required value | How to set it | Use case |
+|--------------------|--------------|----------------|---------------|----------|
+| `STREAM_CONNECTED` | Inlet | Inlet stream flow, temperature, pressure, and composition | Default inlet; `pipe.openInlet()` | Pipe connected to upstream process equipment |
+| `CONSTANT_FLOW` | Inlet | Mass flow | `pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW); pipe.setInletMassFlow(4.0, "kg/sec");` | Production-rate step or controlled inlet flow |
+| `CONSTANT_PRESSURE` | Inlet or outlet | Pressure | `pipe.setInletPressure(70.0, "bara")` or `pipe.setOutletPressure(55.0, "bara")` | Known upstream pressure or downstream back-pressure |
+| `CLOSED` | Inlet or outlet | None | `pipe.closeInlet()` or `pipe.closeOutlet()` | Shut-in, valve closure, blocked-in pipe |
+| `CHARACTERISTIC` | Inlet or outlet | External pressure/flow state | `pipe.setOutletBoundaryCondition(BoundaryCondition.CHARACTERISTIC)` | Reduced wave reflection in fast transients |
+
+Example with explicit boundary settings:
+
+```java
+pipe.setInletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CONSTANT_FLOW);
+pipe.setInletMassFlow(4.0, "kg/sec");
+pipe.setOutletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CONSTANT_PRESSURE);
+pipe.setOutletPressure(55.0, "bara");
+pipe.run();
+
+pipe.openOutlet(52.0, "bara");
+pipe.runTransient(2.0, UUID.randomUUID());
+```
+
+Avoid over-specifying the same side. For example, a `STREAM_CONNECTED` inlet already gets flow,
+temperature, pressure, and composition from the inlet stream; switch to `CONSTANT_FLOW` only when
+the flow should be independent of the stream flow rate.
+
+### Choosing Time Step, Sections, and Pipeline Length
+
+`runTransient(dt, id)` takes a macro time step in seconds. Internally, the solver sub-steps to
+satisfy the CFL condition, so `dt` is the requested reporting/control interval, not necessarily the
+single numerical step.
+
+Guidelines:
+
+| Choice | Practical guidance |
+|--------|--------------------|
+| Number of sections | Start with 10-20 sections for simple horizontal pipes, 30-100 for long pipelines, and refine around risers, low points, or sharp elevation changes. |
+| Section length | Keep `dx = length / sections` small enough to resolve terrain and holdup changes. A low point or riser should span several sections, not one cell. |
+| Time step | Start with 0.5-2 s for compact regression models and 5-60 s for long slow-flow pipelines when adaptive time stepping is enabled. Reduce it for valve closures, slug fronts, or fast pressure waves. |
+| Adaptive stepping | `setEnableAdaptiveTimestepping(true)` is recommended for difficult multiphase transients. It recomputes the stable internal step as velocities and holdups change. |
+| CFL number | `setCflNumber(0.3-0.8)` is typical. Lower values are more stable; higher values are faster but less conservative. |
+| Settling time | Run until pressure and holdup profiles stop changing or match a new stationary reference. The required physical time scales with pipeline length, flow velocity, compressibility, and liquid inventory. |
+
+For a pressure-boundary step, a compact 300 m regression pipe may settle in a few seconds. A real
+long subsea line can require minutes to hours of simulated time, especially when liquid inventory,
+terrain accumulation, or thermal transients dominate. Always distinguish wall-clock runtime from
+physical simulated time.
+
 ## Spatial Discretization
 
 ### Uniform Mesh (default)

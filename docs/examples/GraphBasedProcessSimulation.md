@@ -8,9 +8,9 @@ nav_order: 1
 
 # GraphBasedProcessSimulation
 
-> **Note:** This is an auto-generated Markdown version of the Jupyter notebook 
+> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`GraphBasedProcessSimulation.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb).
-> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb) 
+> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb).
 
 ---

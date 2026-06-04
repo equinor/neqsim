@@ -285,7 +285,9 @@ public class PropertyTableRunner {
     try {
       switch (property) {
         case "density":
-          row.addProperty("density_kg_m3", fluid.getDensity("kg/m3"));
+          double density = fluid.getDensity("kg/m3");
+          row.addProperty("density", density);
+          row.addProperty("density_kg_m3", density);
           if (fluid.hasPhaseType("gas")) {
             row.addProperty("gasDensity_kg_m3", fluid.getPhase("gas").getDensity("kg/m3"));
           }

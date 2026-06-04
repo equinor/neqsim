@@ -22,6 +22,7 @@ class TransferFunctionBlockTest {
    * Simple stub that returns a configurable value.
    */
   static class StubTransmitter implements MeasurementDeviceInterface {
+    private static final long serialVersionUID = 1L;
     private double value;
     private String name = "stub";
 

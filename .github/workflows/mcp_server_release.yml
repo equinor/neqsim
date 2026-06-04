@@ -29,11 +29,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Set up JDK 17
+      - name: Set up Java 21 environment
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
           cache: 'maven'
 
       - name: Install NeqSim core to local Maven repo
@@ -43,6 +43,9 @@ jobs:
         run: |
           NEQSIM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           cd neqsim-mcp-server && mvn -B package -Dneqsim.version="$NEQSIM_VERSION" -DskipTests -Dmaven.javadoc.skip=true
+
+      - name: Run MCP JSON-RPC integration tests
+        run: cd neqsim-mcp-server && python test_mcp_server.py
 
       - name: Get MCP server version
         id: mcp_version

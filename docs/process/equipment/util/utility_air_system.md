@@ -342,4 +342,4 @@ System.out.println("Specific power: " + specific + " kW per 100 Nm³/hr");
 
 - [Compressors](../compressors) - Compressor equipment
 - [Controllers](../../controllers) - Process controllers
-- [NORSOK Standards](../../standards/) - Design standards
+- [NORSOK Standards](../../../standards/) - Design standards

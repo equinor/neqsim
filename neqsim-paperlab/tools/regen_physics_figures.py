@@ -820,8 +820,8 @@ def fig_ch11_corrosion():
 # Chapter 12 — Case studies (representative figures)
 # ═════════════════════════════════════════════════════════════════════════════
 
-def fig_ch12_kristin():
-    """Kristin HP/HT phase envelope (representative composition)."""
+def fig_ch12_hpht_gas_condensate():
+    """HP/HT gas-condensate phase envelope (representative composition)."""
     setup_style()
     f = jneqsim.thermo.system.SystemSrkEos(298.15, 100.0)
     for c, x in [("methane", 0.78), ("ethane", 0.07), ("propane", 0.04),
@@ -844,12 +844,12 @@ def fig_ch12_kristin():
     fig, ax = plt.subplots(figsize=(6.0, 4.0))
     ax.plot(Tb, Pb, color=BLUE,  lw=1.4, label="Bubble curve")
     ax.plot(Td, Pd, color=ORANGE, lw=1.4, label="Dew curve")
-    # mark reservoir & separator points (typical Kristin numbers)
+    # mark reservoir & separator points (representative HP/HT gas-condensate numbers)
     ax.plot(170, 880, "*", color="#cb2026", markersize=14, label="Reservoir 880 bara / 170 °C")
     ax.plot(80, 90, "s", color=GREEN, markersize=8, label="HP separator 90 bara / 80 °C")
     ax.set_xlabel("Temperature (°C)")
     ax.set_ylabel("Pressure (bara)")
-    ax.set_title("Kristin HP/HT — phase envelope (representative)",
+    ax.set_title("HP/HT gas condensate — phase envelope (representative)",
                  fontsize=10, weight="bold")
     ax.legend(frameon=False, fontsize=8)
     ax.grid(True, lw=0.3, alpha=0.5)
@@ -858,8 +858,8 @@ def fig_ch12_kristin():
     save(fig, out("ch12", "figure_01.png"))
 
 
-def fig_ch12_asgard():
-    """Åsgard A 3-stage compression intercooling performance (representative)."""
+def fig_ch12_export_compression():
+    """Three-stage export compression intercooling performance (representative)."""
     setup_style()
     stage = ["Stage 1", "Stage 2", "Stage 3"]
     p_in    = [70.0, 130.0, 215.0]
@@ -889,14 +889,14 @@ def fig_ch12_asgard():
     axes[1].set_title("Stage shaft power", fontsize=10, weight="bold")
     axes[1].grid(True, axis="y", lw=0.3, alpha=0.5)
     axes[1].set_axisbelow(True)
-    fig.suptitle("Åsgard A export compression — representative performance",
+    fig.suptitle("Three-stage export compression — representative performance",
                  fontsize=10, weight="bold")
     fig.tight_layout()
     save(fig, out("ch12", "figure_02.png"))
 
 
-def fig_ch12_bacalhau():
-    """Bacalhau FPSO — heat-integration sankey-style stacked bar."""
+def fig_ch12_fpso_heat_integration():
+    """FPSO heat-integration sankey-style stacked bar."""
     setup_style()
     fig, ax = plt.subplots(figsize=(6.5, 3.8))
     services = ["Crude\nstabilisation", "Gas\ndehydration", "Gas\ncompression",
@@ -913,7 +913,7 @@ def fig_ch12_bacalhau():
                 fontsize=8, weight="bold")
     ax.set_xticks(x); ax.set_xticklabels(services)
     ax.set_ylabel("Heat duty (MW)")
-    ax.set_title("Bacalhau FPSO — heat integration vs. utility demand",
+    ax.set_title("FPSO heat integration vs. utility demand",
                  fontsize=10, weight="bold")
     ax.legend(frameon=False)
     ax.grid(True, axis="y", lw=0.3, alpha=0.5)
@@ -922,8 +922,8 @@ def fig_ch12_bacalhau():
     save(fig, out("ch12", "figure_03.png"))
 
 
-def fig_ch12_smeaheia():
-    """Smeaheia CO2 injection — wellbore T/P during 48 h shutdown."""
+def fig_ch12_co2_injection_well():
+    """CO2 injection well — wellbore T/P during 48 h shutdown."""
     setup_style()
     t_h = np.linspace(0, 48, 49)
     # Bottom-hole P decay and T rise (representative)
@@ -938,7 +938,7 @@ def fig_ch12_smeaheia():
     ax2.set_ylabel("Temperature (°C)", color=ORANGE)
     ax1.tick_params(axis="y", labelcolor=BLUE)
     ax2.tick_params(axis="y", labelcolor=ORANGE)
-    ax1.set_title("Smeaheia CO₂ injection well — 48 h shut-in transient",
+    ax1.set_title("CO₂ injection well — 48 h shut-in transient",
                   fontsize=10, weight="bold")
     ax1.grid(True, lw=0.3, alpha=0.5)
     ax1.set_axisbelow(True)
@@ -959,7 +959,8 @@ ALL = [
     fig_ch10_compression, fig_ch10_separator, fig_ch10_teg,
     fig_ch10_hx_ua, fig_ch10_recycle,
     fig_ch11_hydrate, fig_ch11_pipeline, fig_ch11_wax, fig_ch11_corrosion,
-    fig_ch12_kristin, fig_ch12_asgard, fig_ch12_bacalhau, fig_ch12_smeaheia,
+    fig_ch12_hpht_gas_condensate, fig_ch12_export_compression,
+    fig_ch12_fpso_heat_integration, fig_ch12_co2_injection_well,
 ]
 
 
