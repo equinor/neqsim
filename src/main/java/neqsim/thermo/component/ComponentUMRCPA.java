@@ -155,10 +155,28 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   /** {@inheritDoc} */
   @Override
   public void setAttractiveTerm(int i) {
+    double[] umrcpaMc = getMatiascopemanParamsUMRCPA();
+    boolean hasUmrcpaMc = false;
+    if (umrcpaMc != null) {
+      for (int k = 0; k < umrcpaMc.length; k++) {
+        if (Math.abs(umrcpaMc[k]) > 1e-20) {
+          hasUmrcpaMc = true;
+          break;
+        }
+      }
+    }
     if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
-      // Associating compounds use the standard PR alpha with the CPA-regressed m parameter.
-      super.setAttractiveTerm(1);
-      getAttractiveTerm().setm(mCPA);
+      // Associating compounds (water, glycols, ...). When a dedicated UMR-CPA Mathias-Copeman
+      // alpha is available (UMRCPA_MC columns, see Tasios et al., Fluid Phase Equilibria 2025),
+      // install the five-parameter Mathias-Copeman term (term 22) so the energy parameter uses
+      // the regressed UMR-CPA alpha. Otherwise fall back to the standard PR alpha with the
+      // CPA-regressed m parameter.
+      if (hasUmrcpaMc) {
+        super.setAttractiveTerm(22);
+      } else {
+        super.setAttractiveTerm(1);
+        getAttractiveTerm().setm(mCPA);
+      }
     } else {
       // Non-associating compounds use the five-parameter Mathias-Copeman alpha of the UMR-CPA
       // model (Tasios et al., Fluid Phase Equilibria 2025) when the dedicated UMRCPA_MC
@@ -168,16 +186,6 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
       // 22) are accepted by the GE reference phase (PhaseGEUnifacUMRPRU), which rebuilds the
       // attractive term from the term number, so consistency between the main and reference
       // phases is preserved in either case.
-      double[] umrcpaMc = getMatiascopemanParamsUMRCPA();
-      boolean hasUmrcpaMc = false;
-      if (umrcpaMc != null) {
-        for (int k = 0; k < umrcpaMc.length; k++) {
-          if (Math.abs(umrcpaMc[k]) > 1e-20) {
-            hasUmrcpaMc = true;
-            break;
-          }
-        }
-      }
       if (hasUmrcpaMc) {
         // Install the five-parameter Mathias-Copeman UMR-CPA term (term 22).
         super.setAttractiveTerm(22);

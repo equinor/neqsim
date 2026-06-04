@@ -53,11 +53,11 @@ class SystemUMRCPAEoSPaperValidationTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Pure water saturation pressure should track the steam tables to within a factor of two and
-   * increase monotonically from ambient to boiling. The model uses NeqSim's CPA-PR water parameters
-   * rather than the paper's pure-water fit, so the low-temperature point is only required to be of
-   * the right order of magnitude; the test still catches the gross single-phase failure that the
-   * earlier wiring regression produced (water frozen at a constant 0.03 bara).
+   * Pure water saturation pressure should track the steam tables closely and increase
+   * monotonically from ambient to boiling. With the dedicated UMR-CPA water parameters wired in
+   * (Tasios et al., Fluid Phase Equilibria 2025: a0, co-volume, association energy/volume and the
+   * Mathias-Copeman alpha), the model reproduces the steam-table saturation pressures to within a
+   * few percent across 298-373 K.
    */
   @Test
   void testPureWaterVaporPressure() {
@@ -70,8 +70,9 @@ class SystemUMRCPAEoSPaperValidationTest extends neqsim.NeqSimTest {
     for (int i = 0; i < temperatures.length; i++) {
       double ps = pureSaturationPressure("water", temperatures[i], guesses[i]);
       double ref = referencePbar[i];
-      assertTrue(ps > 0.5 * ref && ps < 2.0 * ref, "water Psat at " + temperatures[i] + " K was "
-          + ps + " bara, expected within a factor of two of " + ref + " bara");
+      double relErr = Math.abs(ps - ref) / ref;
+      assertTrue(relErr < 0.05, "water Psat at " + temperatures[i] + " K was " + ps
+          + " bara, expected within 5% of steam-table value " + ref + " bara");
       assertTrue(ps > previous, "water Psat should increase with temperature, was " + ps
           + " bara after " + previous + " bara");
       previous = ps;

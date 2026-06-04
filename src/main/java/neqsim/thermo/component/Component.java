@@ -134,6 +134,16 @@ public abstract class Component implements ComponentInterface {
   protected double[] matiascopemanSolidParams = new double[3];
   protected double[] matiascopemanParamsUMRPRU = new double[5];
   protected double[] matiascopemanParamsUMRCPA = new double[5];
+  /** Dedicated UMR-CPA energy parameter a0 [bar*L^2/mol^2] (Tasios et al. 2025). */
+  protected double umrCpaA0 = 0.0;
+  /** Dedicated UMR-CPA co-volume b [L/mol] (Tasios et al. 2025). */
+  protected double umrCpaB = 0.0;
+  /** Dedicated UMR-CPA association energy [bar*L/mol] (Tasios et al. 2025). */
+  protected double umrCpaAssociationEnergy = 0.0;
+  /** Dedicated UMR-CPA association volume (dimensionless beta) (Tasios et al. 2025). */
+  protected double umrCpaAssociationVolume = 0.0;
+  /** Flag (1 = use dedicated UMR-CPA associating parameters) (Tasios et al. 2025). */
+  protected int umrCpaAssociating = 0;
   protected double lennardJonesMolecularDiameter = 0;
   protected double lennardJonesEnergyParameter = 0;
   protected double stokesCationicDiameter = 0;
@@ -402,6 +412,26 @@ public abstract class Component implements ComponentInterface {
           matiascopemanParamsUMRCPA[4] = 0.0;
         }
 
+        // Dedicated UMR-CPA pure-component parameters for associating compounds
+        // (Tasios et al., Fluid Phase Equilibria 2025). a0 is stored in [bar*L^2/mol^2], the
+        // co-volume b in [L/mol] and the association energy in [bar*L/mol]; the association
+        // volume is the dimensionless beta. These are kept in separate columns so the UMR-CPA
+        // water/glycol sub-model is not mixed with the generic PR-CPA aCPA_PR/bCPA_PR columns.
+        // Wrapped in a guard because not every component database CSV provides these columns.
+        try {
+          umrCpaA0 = Double.parseDouble(dataSet.getString("UMRCPA_a0"));
+          umrCpaB = Double.parseDouble(dataSet.getString("UMRCPA_b"));
+          umrCpaAssociationEnergy = Double.parseDouble(dataSet.getString("UMRCPA_assocEnergy"));
+          umrCpaAssociationVolume = Double.parseDouble(dataSet.getString("UMRCPA_assocVolume"));
+          umrCpaAssociating = Integer.parseInt(dataSet.getString("UMRCPA_associating").trim());
+        } catch (Exception umrcpaParamEx) {
+          umrCpaA0 = 0.0;
+          umrCpaB = 0.0;
+          umrCpaAssociationEnergy = 0.0;
+          umrCpaAssociationVolume = 0.0;
+          umrCpaAssociating = 0;
+        }
+
         matiascopemanSolidParams[0] = Double.parseDouble(dataSet.getString("MC1Solid"));
         matiascopemanSolidParams[1] = Double.parseDouble(dataSet.getString("MC2Solid"));
         matiascopemanSolidParams[2] = Double.parseDouble(dataSet.getString("MC3Solid"));
@@ -476,6 +506,22 @@ public abstract class Component implements ComponentInterface {
           aCPA = Double.parseDouble(dataSet.getString("aCPA_SRK"));
           bCPA = Double.parseDouble(dataSet.getString("bCPA_SRK"));
           mCPA = Double.parseDouble(dataSet.getString("mCPA_SRK"));
+        }
+
+        // For the UMR-CPA model, associating compounds (water, glycols, ...) use the dedicated
+        // PR-CPA parameter set regressed in Tasios et al. (Fluid Phase Equilibria 2025) instead
+        // of the legacy generic aCPA_PR/bCPA_PR columns. Unit conversion to NeqSim internal units:
+        // a0 [bar*L^2/mol^2] -> internal (x 1e4, same scale as SRK-CPA a0 in [Pa*m^6/mol^2] x 1e5),
+        // b [L/mol] -> internal (x 1e2), association energy [bar*L/mol] -> [J/mol] (x 1e2, since
+        // 1 bar*L = 100 J); the association volume is the dimensionless beta and is used directly.
+        // The Mathias-Copeman alpha for these compounds is supplied through the UMRCPA_MC columns
+        // and installed as attractive term 22 in ComponentUMRCPA.setAttractiveTerm.
+        if (this.getClass().getName().equals("neqsim.thermo.component.ComponentUMRCPA")
+            && umrCpaAssociating == 1 && Math.abs(umrCpaA0) > 1e-20) {
+          aCPA = umrCpaA0 * 1.0e4;
+          bCPA = umrCpaB * 1.0e2;
+          associationVolume = umrCpaAssociationVolume;
+          associationEnergy = umrCpaAssociationEnergy * 1.0e2;
         }
 
         criticalViscosity = Double.parseDouble(dataSet.getString("criticalViscosity"));
