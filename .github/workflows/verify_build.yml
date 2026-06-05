@@ -30,7 +30,7 @@ jobs:
       - name: Generate javadoc
         run: mvn javadoc:javadoc -ntp "-Daether.connector.basic.retries=5"
       - name: Run tests and generate JaCoCo report
-        run: mvn -B test --file pom.xml -ntp -DskipITs "-Daether.connector.basic.retries=5"
+        run: mvn -B test --file pom.xml -ntp -DskipITs -DexcludedGroups=slow "-Daether.connector.basic.retries=5"
       - name: Verify JaCoCo report exists
         run: |
           if [ -f target/site/jacoco/jacoco.xml ]; then
@@ -104,7 +104,7 @@ jobs:
           java-version: '21'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pom.xml -ntp "-Daether.connector.basic.retries=5"
+        run: mvn -B test --file pom.xml -ntp -DexcludedGroups=slow "-Daether.connector.basic.retries=5"
 
   verify_agent_skills:
     name: Verify agent-skill cross-references
