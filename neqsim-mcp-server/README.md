@@ -88,6 +88,41 @@ decision-support tool. This means:
 This makes it suitable for operator decision support, what-if analysis,
 and monitoring dashboards without introducing control risk.
 
+### Transport Security & Observability (opt-in)
+
+Two enterprise capabilities are wired into the HTTP transport but **disabled by
+default**, so STDIO/desktop and single-user HTTP keep working with zero
+configuration and no external dependencies. Both activate automatically under
+the Quarkus `enterprise` profile (`-Dquarkus.profile=enterprise` or
+`QUARKUS_PROFILE=enterprise`).
+
+- **OIDC authentication** (`quarkus-oidc`) — bearer-token auth for the `/mcp`
+  HTTP endpoints, backing the ENTERPRISE governance gates. The tenant is
+  disabled by default. To enable, point at your IdP:
+
+  ```properties
+  quarkus.oidc.tenant-enabled=true
+  quarkus.oidc.auth-server-url=https://login.microsoftonline.com/<tenant-id>/v2.0
+  quarkus.oidc.client-id=<client-id>
+  ```
+
+  In the `enterprise` profile, the `/mcp` and `/mcp/*` paths require an
+  authenticated principal. STDIO remains unauthenticated.
+
+- **OpenTelemetry tracing** (`quarkus-opentelemetry`) — distributed traces of
+  MCP HTTP tool invocations for governance and observability, exportable to any
+  OTLP collector (Jaeger, Tempo, Honeycomb, Azure Monitor). The SDK is disabled
+  by default. To enable:
+
+  ```properties
+  quarkus.otel.sdk.disabled=false
+  quarkus.otel.exporter.otlp.traces.endpoint=http://localhost:4317
+  ```
+
+These complement the existing application-level governance (`SecurityRunner`
+API keys, audit log, rate limiting) by adding transport-level identity and
+observability for enterprise deployments.
+
 ---
 
 ## Tier 1 — Trusted Core (21 tools)
@@ -255,8 +290,8 @@ Pick **jar** or **Docker** — both are first-class paths.
 **1. Download the jar + checksum**
 
 ```bash
-# Replace VERSION with the latest release (e.g. 3.12.0)
-VERSION=3.12.0
+# Replace VERSION with the latest release (e.g. 3.12.1)
+VERSION=3.12.1
 curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar"
 curl -fLO "https://github.com/equinor/neqsim/releases/download/v${VERSION}/neqsim-mcp-server-${VERSION}-runner.jar.sha256"
 ```
@@ -406,7 +441,7 @@ Edit `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or
       "command": "java",
       "args": [
         "-jar",
-        "/path/to/neqsim-mcp-server-3.12.0-runner.jar"
+        "/path/to/neqsim-mcp-server-3.12.1-runner.jar"
       ]
     }
   }
@@ -453,7 +488,7 @@ Add to `.vscode/mcp.json`:
       "command": "java",
       "args": [
         "-jar",
-        "/path/to/neqsim-mcp-server-3.12.0-runner.jar"
+        "/path/to/neqsim-mcp-server-3.12.1-runner.jar"
       ]
     }
   }
@@ -487,7 +522,7 @@ Restart VS Code.
 Any MCP STDIO client works. Point it at one of:
 
 ```bash
-java -jar /path/to/neqsim-mcp-server-3.12.0-runner.jar         # jar
+java -jar /path/to/neqsim-mcp-server-3.12.1-runner.jar         # jar
 docker run -i --rm ghcr.io/equinor/neqsim-mcp-server:latest    # docker
 ```
 
@@ -704,7 +739,7 @@ If you want to build from source (for development or to use the latest unrelease
 |---|---|---|
 | JDK | 21+ | Quarkus requires 21+. NeqSim core still compiles with Java 8. |
 | Maven | 3.9+ | Or use the Maven wrapper (`mvnw` / `mvnw.cmd`) from the parent project |
-| NeqSim core | 3.12.0 | Must be installed to local Maven repo first (see below) |
+| NeqSim core | 3.12.1 | Must be installed to local Maven repo first (see below) |
 
 ### Build steps
 
@@ -966,7 +1001,7 @@ python test_mcp_server.py
 
 ## Troubleshooting
 
-### Build Fails — "Could not find artifact com.equinor.neqsim:neqsim:3.12.0"
+### Build Fails — "Could not find artifact com.equinor.neqsim:neqsim:3.12.1"
 
 The neqsim core library must be installed first:
 

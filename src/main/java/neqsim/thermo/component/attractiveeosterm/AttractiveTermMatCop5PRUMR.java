@@ -70,11 +70,12 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
   /** {@inheritDoc} */
   @Override
   public AttractiveTermMatCop5PRUMR clone() {
-    AttractiveTermMatCop5PRUMR attractiveTerm = null;
+    AttractiveTermMatCop5PRUMR attractiveTerm;
     try {
       attractiveTerm = (AttractiveTermMatCop5PRUMR) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+      throw new IllegalStateException("Unable to clone AttractiveTermMatCop5PRUMR", ex);
     }
     attractiveTerm.mcParams = this.mcParams.clone();
     return attractiveTerm;
