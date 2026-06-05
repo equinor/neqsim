@@ -2101,14 +2101,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       this.data = ddrm;
     }
 
-    static SimpleMatrix identity(int n) {
-      SimpleMatrix id = new SimpleMatrix(n, n);
-      for (int i = 0; i < n; i++) {
-        id.set(i, i, 1.0);
-      }
-      return id;
-    }
-
     static SimpleMatrix wrap(DMatrixRMaj ddrm) {
       return new SimpleMatrix(ddrm);
     }

@@ -2190,48 +2190,6 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Verify that the Jacobian inverse is correct by multiplying J * J^-1. Should return the identity
-   * matrix if the inverse is correct.
-   *
-   * @return True if the inverse is correct (within tolerance)
-   */
-  public boolean verifyJacobianInverse() {
-    if (jacobianMatrix == null) {
-      calculateJacobian();
-    }
-    if (jacobianMatrix == null) {
-      return false;
-    }
-    if (jacobianInverse == null) {
-      jacobianInverse = calculateJacobianInverse();
-    }
-    if (jacobianInverse == null) {
-      return false;
-    }
-
-    try {
-      double[][] resultMatrix = multiply(jacobianMatrix, jacobianInverse);
-      double tolerance = 1e-10;
-      int n = jacobianMatrix.length;
-      for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-          double value = resultMatrix[i][j];
-          double expected = (i == j) ? 1.0 : 0.0;
-          if (Math.abs(value - expected) > tolerance) {
-            logger.warn("Jacobian inverse verification failed at [" + i + "," + j + "]: "
-                + "expected " + expected + ", got " + value);
-            return false;
-          }
-        }
-      }
-      return true;
-    } catch (RuntimeException e) {
-      logger.warn("Error during Jacobian inverse verification: " + e.getMessage());
-      return false;
-    }
-  }
-
-  /**
    * Perform one Newton-Raphson iteration step to calculate the delta vector (dX). Uses LU
    * decomposition to solve J * dX = -F directly (Nocedal &amp; Wright, 2000), falling back to
    * J^{-1} * F if LU solve is not available. The LU approach is ~3x faster and more numerically
@@ -3208,6 +3166,15 @@ public class GibbsReactor extends TwoPortEquipment {
     return false;
   }
 
+  /**
+   * Solve Gibbs equilibrium using Newton-Raphson iterations with default damping factor.
+   *
+   * @return true if converged, false otherwise
+   */
+  public boolean solveGibbsEquilibrium() {
+    return solveGibbsEquilibrium(dampingComposition); // Use configured damping factor
+  }
+
   // --- Formula alias mapping for user-friendly reaction input ---
   private static final Map<String, String> formulaToComponent = new HashMap<>();
   static {
@@ -3216,14 +3183,5 @@ public class GibbsReactor extends TwoPortEquipment {
     formulaToComponent.put("SO2", "SO2");
     formulaToComponent.put("H2O", "water");
     // Add more mappings as needed
-  }
-
-  /**
-   * Solve Gibbs equilibrium using Newton-Raphson iterations with default damping factor.
-   *
-   * @return true if converged, false otherwise
-   */
-  public boolean solveGibbsEquilibrium() {
-    return solveGibbsEquilibrium(dampingComposition); // Use configured damping factor
   }
 }

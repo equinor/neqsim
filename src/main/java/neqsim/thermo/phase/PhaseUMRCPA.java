@@ -2063,14 +2063,6 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       this.data = ddrm;
     }
 
-    static SimpleMatrix identity(int n) {
-      SimpleMatrix id = new SimpleMatrix(n, n);
-      for (int i = 0; i < n; i++) {
-        id.set(i, i, 1.0);
-      }
-      return id;
-    }
-
     static SimpleMatrix wrap(DMatrixRMaj ddrm) {
       return new SimpleMatrix(ddrm);
     }
@@ -2153,27 +2145,6 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         }
       }
       return result;
-    }
-
-    SimpleMatrix invert() {
-      LU<Double> lu = LU.PRIMITIVE.make(data.numRows, data.numCols);
-      Primitive64Store store = Primitive64Store.FACTORY.make(data.numRows, data.numCols);
-      for (int i = 0; i < data.numRows; i++) {
-        for (int j = 0; j < data.numCols; j++) {
-          store.set(i, j, get(i, j));
-        }
-      }
-      if (!lu.decompose(store)) {
-        throw new RuntimeException("Matrix inversion failed: LU decomposition failed");
-      }
-      MatrixStore<Double> inv = lu.getInverse();
-      DMatrixRMaj out = new DMatrixRMaj(data.numRows, data.numCols);
-      for (int i = 0; i < data.numRows; i++) {
-        for (int j = 0; j < data.numCols; j++) {
-          out.unsafe_set(i, j, inv.get(i, j));
-        }
-      }
-      return new SimpleMatrix(out);
     }
 
     SimpleMatrix extractVector(boolean extractRow, int index) {
