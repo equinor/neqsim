@@ -338,7 +338,6 @@ neqsim.process.sustainability
 neqsim.process.synthesis
 neqsim.process.util
 neqsim.process.util.event
-neqsim.process.util.example
 neqsim.process.util.exergy
 neqsim.process.util.export
 neqsim.process.util.fielddevelopment
