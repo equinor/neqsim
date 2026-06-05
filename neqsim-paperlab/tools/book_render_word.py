@@ -36,10 +36,16 @@ from citation_utils import (parse_bibtex, collect_all_cited_keys_from_chapters,
                             format_bib_entry_plain)
 
 try:
-    from math_utils import latex_to_omml, latex_to_unicode
+    from math_utils import (latex_to_omml, latex_to_unicode,
+                            omml_available, omml_unavailable_reason)
     HAS_MATH = True
 except ImportError:
     HAS_MATH = False
+
+
+# Equation conversion telemetry — lets the renderer report how many equations
+# fell back to plain text so silent degradation is always visible.
+_EQ_STATS = {"total": 0, "fallback": 0}
 
 
 # ---------------------------------------------------------------------------
@@ -261,12 +267,14 @@ def _insert_display_equation(doc, latex_str, eq_label=None):
 
     # Try native OMML equation
     if HAS_MATH:
+        _EQ_STATS["total"] += 1
         omml_el = latex_to_omml(latex_str)
         if omml_el is not None:
             para._element.append(omml_el)
             if eq_label:
                 _add_equation_number(para, eq_label)
             return para
+        _EQ_STATS["fallback"] += 1
 
     # Fallback: Cambria Math formatted text
     clean = latex_str.strip()
@@ -307,10 +315,12 @@ def _add_equation_number(para, label):
 def _insert_inline_math(paragraph, latex_str):
     """Insert inline math into an existing paragraph."""
     if HAS_MATH:
+        _EQ_STATS["total"] += 1
         omml_el = latex_to_omml(latex_str)
         if omml_el is not None:
             paragraph._element.append(omml_el)
             return
+        _EQ_STATS["fallback"] += 1
 
     clean = latex_str.strip()
     if HAS_MATH:
@@ -1012,6 +1022,19 @@ def render_book_word(book_dir, chapter_filter=None):
               "Run: pip install python-docx")
         return None
 
+    # Reset equation telemetry for this render and warn loudly if native
+    # equation rendering is unavailable (equations would degrade to plain text).
+    _EQ_STATS["total"] = 0
+    _EQ_STATS["fallback"] = 0
+    if HAS_MATH and not omml_available():
+        print("=" * 70)
+        print("[book_render_word] WARNING: native equation rendering "
+              "unavailable.")
+        print("  Reason: {}".format(omml_unavailable_reason()))
+        print("  Equations will fall back to plain Cambria Math text and may "
+              "look poor.")
+        print("=" * 70)
+
     book_dir = Path(book_dir)
     cfg = book_builder.load_book_config(book_dir)
 
@@ -1191,7 +1214,7 @@ def render_book_word(book_dir, chapter_filter=None):
 
         # Copyright page
         copyright_md = book_dir / "frontmatter" / "copyright.md"
-        if copyright_md.exists():
+        if copyright_md.exists() and book_builder.include_copyright(cfg):
             text = _strip_html_comments(copyright_md.read_text(encoding="utf-8"))
             _render_md_to_doc(doc, text)
             _add_page_break(doc)
@@ -1296,6 +1319,8 @@ def render_book_word(book_dir, chapter_filter=None):
             text = resolve_citations_numbered_plain(text, key_to_num)
         # Strip empty "## References" placeholder (bibliography at end)
         text = re.sub(r'##\s+References\s*\n?(?:\s*\n)*', '', text)
+        # Optionally drop end-of-chapter sections (e.g. Exercises) per book.yaml
+        text = book_builder.strip_excluded_sections(text, cfg)
 
         figures_dir = ch_dir / "figures"
         _render_md_to_doc(
@@ -1355,4 +1380,15 @@ def render_book_word(book_dir, chapter_filter=None):
     size_kb = out_path.stat().st_size / 1024
     print("[book_render_word] Word document generated: {}  ({:.0f} KB)".format(
         out_path, size_kb))
+
+    # Equation rendering summary — make any degradation impossible to miss.
+    total = _EQ_STATS["total"]
+    fallback = _EQ_STATS["fallback"]
+    rendered = total - fallback
+    if total:
+        print("[book_render_word] Equations: {} native (OMML), {} fell back "
+              "to text.".format(rendered, fallback))
+        if fallback:
+            print("[book_render_word] WARNING: {} equation(s) degraded to "
+                  "plain text. {}".format(fallback, omml_unavailable_reason()))
     return out_path

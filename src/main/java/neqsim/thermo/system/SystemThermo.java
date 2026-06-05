@@ -1266,7 +1266,8 @@ public abstract class SystemThermo implements SystemInterface {
       this.setMixingRule(4);
     } else if (modelName.equals("Kent Eisenberg-model")) {
       this.setMixingRule(4);
-    } else if (modelName.equals("UMR-PRU-EoS") || modelName.equals("UMR-PRU-MC-EoS")) {
+    } else if (modelName.equals("UMR-PRU-EoS") || modelName.equals("UMR-PRU-MC-EoS")
+        || modelName.equals("UMR-CPA")) {
       this.setMixingRule("HV", "UNIFAC_UMRPRU");
     } else if (modelName.equals("GERG-water-EOS")) {
       this.setMixingRule(8);

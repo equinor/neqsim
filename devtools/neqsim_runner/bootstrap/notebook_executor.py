@@ -80,9 +80,10 @@ def main():
         with open(notebook_path, "r", encoding="utf-8") as f:
             nb = nbformat.read(f, as_version=4)
 
+        kernel_name = os.environ.get("NEQSIM_KERNEL_NAME", "python3")
         ep = ExecutePreprocessor(
             timeout=timeout,
-            kernel_name="python3",
+            kernel_name=kernel_name,
         )
         # Run in the notebook's directory so relative paths work
         nb_dir = os.path.dirname(os.path.abspath(notebook_path))

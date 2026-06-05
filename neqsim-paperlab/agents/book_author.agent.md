@@ -104,10 +104,11 @@ for the complete workflow.
 
 When asked to create a new book:
 
-1. Run the scaffold command:
+1. Run the scaffold command (add `--type simple|technical|textbook` to set the
+   content level — defaults to `textbook`; see `book_creation` SKILL §1.1):
    ```bash
    cd neqsim-paperlab
-   python paperflow.py book-new "<title>" --publisher <pub> --chapters <N>
+   python paperflow.py book-new "<title>" --publisher <pub> --chapters <N> --type <type>
    ```
 2. **Immediately rename** the chapter directories to descriptive names
 3. **Edit book.yaml** — set real chapter titles, organize into parts
