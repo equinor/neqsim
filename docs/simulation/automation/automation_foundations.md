@@ -1,3 +1,8 @@
+---
+title: ProcessAutomation Foundations
+description: Core automation patterns for ProcessAutomation — address resolution, reading and writing simulation variables, batch I/O, dirty tracking, and structured reads.
+---
+
 # ProcessAutomation Foundations
 
 This guide consolidates core automation patterns for `ProcessAutomation`.

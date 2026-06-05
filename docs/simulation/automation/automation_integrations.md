@@ -1,3 +1,8 @@
+---
+title: ProcessAutomation Integration Patterns
+description: Model integration patterns for ProcessAutomation — multi-area addressing for ProcessModel, optimizer bridging, and digital twin loops.
+---
+
 # ProcessAutomation Integration Patterns
 
 This guide covers model integration patterns for multi-area systems, optimizers, and digital twins.

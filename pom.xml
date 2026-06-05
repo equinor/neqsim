@@ -320,8 +320,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.15.0</version>
 				<configuration>
-					<release>11</release> <!-- Produce Java 11 compatible bytecode. Can be built
-					with any JDK >= 11 (e.g. JDK 21); the release flag guarantees Java 11 output. -->
+					<release>17</release> <!-- Produce Java 17 compatible bytecode. Requires a
+					JDK >= 17 (e.g. JDK 17 or 21); the release flag guarantees Java 17 output. -->
 					<encoding>${project.build.sourceEncoding}</encoding>
 					<!-- Uncomment below to get compiler warnings
 					<compilerArgs>

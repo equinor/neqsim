@@ -64,7 +64,7 @@ jobs:
           path: staging
 
   compile_java:
-    name: Build Neqsim ${{ needs.get_versions.outputs.version }} with java 11
+    name: Build Neqsim ${{ needs.get_versions.outputs.version }} with java 17
     needs: get_versions
 
     if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
@@ -73,13 +73,13 @@ jobs:
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v6
-      - name: Set up Java 11 environment
+      - name: Set up Java 17 environment
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
           cache: 'maven'
-      - name: Build java 11 version with Maven
+      - name: Build java 17 version with Maven
         run: mvn -B package --file pom.xml -DskipTests -Djacoco.skip=true
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*.jar staging
@@ -169,7 +169,7 @@ jobs:
 
             | Distribution | Asset | Runtime | Use this when |
             |--------------|-------|---------|---------------|
-            | NeqSim core library | `neqsim-${{ needs.get_versions.outputs.version }}.jar` | Java 11+ | You need Java 11 or Python `neqsim-python` compatibility. |
+            | NeqSim core library | `neqsim-${{ needs.get_versions.outputs.version }}.jar` | Java 17+ | You need Java 17 or Python `neqsim-python` compatibility. |
             | NeqSim core library | `neqsim-${{ needs.get_versions.outputs.version }}-Java8.jar` | Java 8+ | You need Java 8 or Python `neqsim-python` compatibility. |
             | NeqSim MCP server | `neqsim-mcp-server-${{ needs.get_versions.outputs.version }}-runner.jar` | Java 21+ | You want VS Code Copilot, Claude Desktop, Cursor, or another MCP client to use NeqSim tools. |
             | NeqSim MCP server checksum | `neqsim-mcp-server-${{ needs.get_versions.outputs.version }}-runner.jar.sha256` | - | You want to verify the downloaded MCP runner jar. |

@@ -395,7 +395,7 @@ graph TB
 |---|---|---|
 | Quick property lookup via LLM | [MCP Server](neqsim-mcp-server/) + any LLM client | Java 21+ (or Docker) |
 | Python scripting / Jupyter notebooks | `pip install neqsim` | Python 3.9+, JVM |
-| Embed in a Java application | Maven dependency | Java 11+ (default) or Java 8+ (use the `-Java8` artifact) |
+| Embed in a Java application | Maven dependency | Java 17+ (default) or Java 8+ (use the `-Java8` artifact) |
 | Full engineering study with reports | `@solve.task` agent in VS Code | VS Code + GitHub Copilot |
 | .NET / MATLAB integration | [Language bindings](#other-language-bindings) | See linked repos |
 
@@ -403,7 +403,8 @@ graph TB
 
 | Component | Java Version | Notes |
 |---|---|---|
-| **NeqSim core library** | 8+ | All thermodynamics, process equipment, PVT |
+| **NeqSim core library** | 17+ (default) | Default `neqsim` artifact targets Java 17 bytecode |
+| **NeqSim core library (`-Java8`)** | 8+ | Java 8 compatible artifact built from `pomJava8.xml` |
 | **MCP server** | 21+ | Quarkus-based; thin wrapper around core |
 | **Python users** | No Java coding | JVM bundled via jpype |
 | **Running prebuilt MCP jar** | 21+ | Download from [releases](https://github.com/equinor/neqsim/releases) |
