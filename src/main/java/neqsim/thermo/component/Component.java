@@ -622,7 +622,13 @@ public abstract class Component implements ComponentInterface {
             + ", -242000, 189, 53, -0.00784, 0, 0, 0, 5.46, 0.305, 647, 0.081, 0, 52100000, 0.32, -0.212, 0.258, 0, 0.999, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'no', "
             + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT()
             + ", 0, 0,0,0,0,0," + isW + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
-            + ", 12.0, 6.0, 0, 0, 0, 0, 0)");
+            + ", 12.0, 6.0, 0, 0, 0, 0, 0"
+            // Trailing values for the UMR-CPA columns appended to COMP.csv
+            // (UMRCPA_MC1..5, UMRCPA_a0, UMRCPA_b, UMRCPA_assocEnergy, UMRCPA_assocVolume,
+            // UMRCPA_assocScheme, UMRCPA_associating). Pseudo-components are non-associating,
+            // so all are zero. These must be present because comptemp is created as
+            // "SELECT * FROM comp" and the positional INSERT must match the full column count.
+            + ", 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0)");
       }
       CASnumber = "00-00-0";
     } catch (Exception ex) {
