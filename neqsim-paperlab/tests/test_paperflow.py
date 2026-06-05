@@ -1813,6 +1813,220 @@ class TestBookBuilder:
         with pytest.raises(FileNotFoundError):
             load_book_config(tmp_path / "nonexistent")
 
+    def test_authors_optional_defaults(self, tmp_path):
+        """authors is optional — load_book_config supplies a default."""
+        from book_builder import load_book_config
+        bd = tmp_path / "book"
+        bd.mkdir()
+        (bd / "book.yaml").write_text(
+            "title: Untitled Book\n"
+            "parts:\n"
+            "- title: Part I\n"
+            "  chapters:\n"
+            "  - dir: ch01\n"
+            "    title: Intro\n",
+            encoding="utf-8",
+        )
+        cfg = load_book_config(bd)
+        assert cfg["authors"]  # non-empty default supplied
+        assert cfg["authors"][0].get("name")
+
+    def test_missing_title_still_raises(self, tmp_path):
+        """title remains mandatory even though authors is now optional."""
+        from book_builder import load_book_config
+        bd = tmp_path / "book"
+        bd.mkdir()
+        (bd / "book.yaml").write_text(
+            "parts:\n- title: Part I\n  chapters:\n  - dir: ch01\n    title: Intro\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(ValueError):
+            load_book_config(bd)
+
+
+class TestExcludeSections:
+    """Tests for yaml-controlled end-of-chapter section exclusion."""
+
+    _SAMPLE = (
+        "# Chapter\n\n"
+        "## Theory\n\nSome body text.\n\n"
+        "## Exercises\n\n1. First question\n2. Second question\n"
+    )
+
+    def test_default_keeps_exercises(self):
+        """With no setting, exercises are retained (backward-compatible)."""
+        from book_builder import strip_excluded_sections
+        out = strip_excluded_sections(self._SAMPLE, {"settings": {}})
+        assert "## Exercises" in out
+        assert "First question" in out
+
+    def test_include_exercises_false_removes_section(self):
+        """include_exercises: false drops the Exercises section."""
+        from book_builder import strip_excluded_sections
+        cfg = {"settings": {"include_exercises": False}}
+        out = strip_excluded_sections(self._SAMPLE, cfg)
+        assert "## Exercises" not in out
+        assert "First question" not in out
+        # Preceding content is untouched
+        assert "## Theory" in out
+        assert "Some body text." in out
+
+    def test_include_exercises_string_false(self):
+        """String 'false' is honored as well as the boolean."""
+        from book_builder import strip_excluded_sections
+        cfg = {"settings": {"include_exercises": "false"}}
+        out = strip_excluded_sections(self._SAMPLE, cfg)
+        assert "## Exercises" not in out
+
+    def test_exclude_sections_custom_title(self):
+        """Arbitrary section titles can be excluded via exclude_sections."""
+        from book_builder import strip_excluded_sections
+        text = (
+            "# Chapter\n\n## Body\n\nx\n\n"
+            "## Review Questions\n\nq\n\n## Summary\n\ndone\n"
+        )
+        cfg = {"settings": {"exclude_sections": ["Review Questions"]}}
+        out = strip_excluded_sections(text, cfg)
+        assert "## Review Questions" not in out
+        assert "## Summary" in out  # section after the removed one survives
+        assert "done" in out
+
+    def test_numbered_heading_match(self):
+        """A section number prefix does not prevent matching."""
+        from book_builder import strip_excluded_sections
+        text = "# Chapter\n\n## 8.9 Exercises\n\n1. q\n"
+        cfg = {"settings": {"include_exercises": False}}
+        out = strip_excluded_sections(text, cfg)
+        assert "Exercises" not in out
+
+    def test_default_keeps_learning_objectives(self):
+        """With no setting, Learning Objectives are retained."""
+        from book_builder import strip_excluded_sections
+        text = (
+            "# Chapter\n\n## Learning Objectives\n\n- learn x\n\n"
+            "## Theory\n\nbody\n"
+        )
+        out = strip_excluded_sections(text, {"settings": {}})
+        assert "## Learning Objectives" in out
+        assert "learn x" in out
+
+    def test_include_learning_objectives_false(self):
+        """include_learning_objectives: false drops the section."""
+        from book_builder import strip_excluded_sections
+        text = (
+            "# Chapter\n\n## Learning Objectives\n\n- learn x\n\n"
+            "## Theory\n\nbody\n"
+        )
+        cfg = {"settings": {"include_learning_objectives": False}}
+        out = strip_excluded_sections(text, cfg)
+        assert "Learning Objectives" not in out
+        assert "learn x" not in out
+        assert "## Theory" in out
+        assert "body" in out
+
+
+class TestIncludeCopyright:
+    """Tests for yaml-controlled copyright/colophon page inclusion."""
+
+    def test_default_includes_copyright(self):
+        """With no setting, the copyright page is included."""
+        from book_builder import include_copyright
+        assert include_copyright({"settings": {}}) is True
+        assert include_copyright({}) is True
+
+    def test_include_copyright_false(self):
+        """include_copyright: false omits the copyright page."""
+        from book_builder import include_copyright
+        assert include_copyright({"settings": {"include_copyright": False}}) is False
+
+    def test_include_copyright_string_false(self):
+        """String 'false'/'no'/'off' are honored."""
+        from book_builder import include_copyright
+        for val in ("false", "No", "OFF", "0"):
+            cfg = {"settings": {"include_copyright": val}}
+            assert include_copyright(cfg) is False
+
+    def test_include_copyright_true_kept(self):
+        """Explicit true keeps the copyright page."""
+        from book_builder import include_copyright
+        assert include_copyright({"settings": {"include_copyright": True}}) is True
+
+class TestBookType:
+    """Tests for the yaml-controlled book_type content profile."""
+
+    def test_default_is_textbook(self):
+        """No book_type resolves to the full textbook profile."""
+        from book_builder import get_book_type
+        assert get_book_type({}) == "textbook"
+        assert get_book_type({"settings": {}}) == "textbook"
+
+    def test_book_type_from_settings_and_toplevel(self):
+        """book_type may be set under settings or at the top level."""
+        from book_builder import get_book_type
+        assert get_book_type({"settings": {"book_type": "simple"}}) == "simple"
+        assert get_book_type({"book_type": "technical"}) == "technical"
+
+    def test_unknown_type_falls_back_to_textbook(self):
+        """An unrecognised type falls back to textbook."""
+        from book_builder import get_book_type
+        assert get_book_type({"settings": {"book_type": "novella"}}) == "textbook"
+
+    def test_textbook_includes_everything(self):
+        """The textbook profile keeps all pedagogical sections + copyright."""
+        from book_builder import include_copyright, get_excluded_section_titles
+        cfg = {"settings": {"book_type": "textbook"}}
+        assert include_copyright(cfg) is True
+        assert get_excluded_section_titles(cfg) == set()
+
+    def test_technical_drops_pedagogy_keeps_copyright(self):
+        """Technical drops learning objectives/exercises/QA but keeps copyright."""
+        from book_builder import include_copyright, get_excluded_section_titles
+        cfg = {"settings": {"book_type": "technical"}}
+        assert include_copyright(cfg) is True
+        excluded = get_excluded_section_titles(cfg)
+        assert "learning objectives" in excluded
+        assert "exercises" in excluded
+        assert "review questions" in excluded
+        assert "problems" in excluded
+
+    def test_simple_drops_everything_and_copyright(self):
+        """Simple drops all pedagogy plus the copyright page."""
+        from book_builder import include_copyright, get_excluded_section_titles
+        cfg = {"settings": {"book_type": "simple"}}
+        assert include_copyright(cfg) is False
+        excluded = get_excluded_section_titles(cfg)
+        assert "learning objectives" in excluded
+        assert "exercises" in excluded
+        assert "further reading" in excluded
+
+    def test_explicit_setting_overrides_profile(self):
+        """An explicit include_* setting overrides the profile default."""
+        from book_builder import include_copyright, get_excluded_section_titles
+        # technical defaults copyright on; override to off
+        cfg = {"settings": {"book_type": "technical",
+                            "include_copyright": False}}
+        assert include_copyright(cfg) is False
+        # textbook defaults exercises on; override to off
+        cfg2 = {"settings": {"book_type": "textbook",
+                            "include_exercises": False}}
+        assert "exercises" in get_excluded_section_titles(cfg2)
+
+    def test_simple_can_re_enable_section(self):
+        """An explicit include_* true overrides a profile that drops it."""
+        from book_builder import get_excluded_section_titles
+        cfg = {"settings": {"book_type": "simple",
+                            "include_learning_objectives": True}}
+        assert "learning objectives" not in get_excluded_section_titles(cfg)
+
+    def test_scaffold_writes_book_type(self, tmp_path):
+        """create_book_project records book_type in book.yaml settings."""
+        from book_builder import create_book_project, load_book_config
+        bd = create_book_project("Tech Ref", n_chapters=2,
+                                 books_dir=tmp_path / "books",
+                                 book_type="technical")
+        cfg = load_book_config(bd)
+        assert cfg["settings"]["book_type"] == "technical"
+
 
 class TestBookAddChapter:
     """Tests for add_chapter."""
