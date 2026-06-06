@@ -15,6 +15,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import neqsim.NeqSimTest;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessModel;
@@ -265,7 +267,10 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
   }
 
   /**
-   * A styled service connection line carries the service line type and weight.
+   * A styled service connection line carries the service line type and weight. The piping run must
+   * be emitted as a {@code <CenterLine>} (not a bare {@code <PolyLine>}) so DEXPI consumers such as
+   * pyDEXPI, which only render {@code <CenterLine>} children of a {@code PipingNetworkSegment},
+   * actually draw the stream line between equipment.
    *
    * @throws Exception if XML construction fails
    */
@@ -278,12 +283,85 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     DexpiLayoutEngine.appendServiceConnectionLine(doc, parent, 80.0, 150.0, 280.0, 150.0,
         DexpiServiceClassifier.ServiceType.UTILITY);
 
-    NodeList polys = parent.getElementsByTagName("PolyLine");
-    assertEquals(1, polys.getLength());
-    Element pres = (Element) ((Element) polys.item(0)).getElementsByTagName("Presentation").item(0);
+    // The renderable piping run is a CenterLine, never a bare PolyLine.
+    NodeList centerLines = parent.getElementsByTagName("CenterLine");
+    assertEquals(1, centerLines.getLength(),
+        "Styled service connection must emit exactly one CenterLine so pyDEXPI renders it");
+    assertEquals(0, parent.getElementsByTagName("PolyLine").getLength(),
+        "Styled service connection must not use a bare PolyLine for the piping run");
+    Element pres =
+        (Element) ((Element) centerLines.item(0)).getElementsByTagName("Presentation").item(0);
     assertEquals("1", pres.getAttribute("LineType"), "Utility line must be dashed");
     assertEquals(String.valueOf(DexpiServiceClassifier.ServiceType.UTILITY.getLineWeight()),
         pres.getAttribute("LineWeight"), "Utility line must use the utility weight");
+  }
+
+  /**
+   * Regression for missing stream lines in pyDEXPI renders: every styled service connection (the
+   * common case for process streams between equipment) must place a renderable {@code <CenterLine>}
+   * inside its {@code PipingNetworkSegment}. A bare {@code <PolyLine>} child of a segment is
+   * silently dropped by pyDEXPI's segment parser, leaving equipment symbols unconnected.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testExportedSegmentsContainRenderableCenterLines() throws IOException {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 60.0, 60.0);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("ethane", 0.08);
+    fluid.addComponent("propane", 0.04);
+    fluid.addComponent("water", 0.03);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("well stream", fluid);
+    feed.setFlowRate(50.0, "MSm3/day");
+    feed.setTemperature(60.0, "C");
+    feed.setPressure(60.0, "bara");
+
+    Cooler cooler = new Cooler("inlet cooler", feed);
+    cooler.setOutTemperature(273.15 + 30.0);
+
+    ThreePhaseSeparator sep = new ThreePhaseSeparator("inlet separator", cooler.getOutletStream());
+
+    Compressor compressor = new Compressor("export compressor", sep.getGasOutStream());
+    compressor.setOutletPressure(120.0, "bara");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(cooler);
+    process.add(sep);
+    process.add(compressor);
+    process.run();
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.writeForPyDexpi(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertNotNull(xml);
+    assertTrue(xml.contains("<PipingNetworkSegment"), "Export must contain piping segments");
+
+    int segmentCount = countOccurrences(xml, "<PipingNetworkSegment");
+    int centerLineCount = countOccurrences(xml, "<CenterLine");
+    assertTrue(centerLineCount >= segmentCount,
+        "Each piping segment must carry at least one renderable CenterLine (segments="
+            + segmentCount + ", centerLines=" + centerLineCount + ")");
+  }
+
+  /**
+   * Counts non-overlapping occurrences of a literal token in a string.
+   *
+   * @param text the text to scan
+   * @param token the literal token to count
+   * @return the number of occurrences
+   */
+  private int countOccurrences(String text, String token) {
+    int count = 0;
+    int idx = text.indexOf(token);
+    while (idx >= 0) {
+      count++;
+      idx = text.indexOf(token, idx + token.length());
+    }
+    return count;
   }
 
   /**
