@@ -2867,36 +2867,38 @@ final class DexpiLayoutEngine {
       String colorG, String colorB) {
     boolean sameY = Math.abs(fromY - toY) < 0.5;
     if (sameY) {
-      // Simple horizontal line
-      Element poly = document.createElement("PolyLine");
-      poly.setAttribute("NumPoints", "2");
+      // Simple horizontal line. Use CenterLine (not PolyLine) so DEXPI consumers such as
+      // pyDEXPI, which only render <CenterLine> children of a PipingNetworkSegment, draw the
+      // piping run. A bare <PolyLine> child of a segment is silently dropped on import.
+      Element centerLine = document.createElement("CenterLine");
+      centerLine.setAttribute("NumPoints", "2");
       Element pres = document.createElement("Presentation");
       pres.setAttribute("LineType", String.valueOf(lineType));
       pres.setAttribute("LineWeight", String.valueOf(lineWeight));
       pres.setAttribute("R", colorR);
       pres.setAttribute("G", colorG);
       pres.setAttribute("B", colorB);
-      poly.appendChild(pres);
-      appendCoordinate(document, poly, fromX, fromY);
-      appendCoordinate(document, poly, toX, toY);
-      parent.appendChild(poly);
+      centerLine.appendChild(pres);
+      appendCoordinate(document, centerLine, fromX, fromY);
+      appendCoordinate(document, centerLine, toX, toY);
+      parent.appendChild(centerLine);
     } else {
       // Orthogonal routing: H-V-H with the vertical riser placed near the target.
       double riserX = computeBranchRiserX(fromX, toX);
-      Element poly = document.createElement("PolyLine");
-      poly.setAttribute("NumPoints", "4");
+      Element centerLine = document.createElement("CenterLine");
+      centerLine.setAttribute("NumPoints", "4");
       Element pres = document.createElement("Presentation");
       pres.setAttribute("LineType", String.valueOf(lineType));
       pres.setAttribute("LineWeight", String.valueOf(lineWeight));
       pres.setAttribute("R", colorR);
       pres.setAttribute("G", colorG);
       pres.setAttribute("B", colorB);
-      poly.appendChild(pres);
-      appendCoordinate(document, poly, fromX, fromY);
-      appendCoordinate(document, poly, riserX, fromY);
-      appendCoordinate(document, poly, riserX, toY);
-      appendCoordinate(document, poly, toX, toY);
-      parent.appendChild(poly);
+      centerLine.appendChild(pres);
+      appendCoordinate(document, centerLine, fromX, fromY);
+      appendCoordinate(document, centerLine, riserX, fromY);
+      appendCoordinate(document, centerLine, riserX, toY);
+      appendCoordinate(document, centerLine, toX, toY);
+      parent.appendChild(centerLine);
     }
   }
 
