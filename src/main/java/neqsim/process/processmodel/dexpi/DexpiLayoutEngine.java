@@ -22,7 +22,9 @@ import org.w3c.dom.Element;
  * <p>
  * Equipment is arranged left-to-right following process flow topology using a topological sort of
  * the process graph. Each column holds one or more equipment items at a fixed X spacing. Multi-
- * outlet equipment (separators) fan out vertically to separate rows.
+ * outlet equipment (separators) fan out vertically: the gas/overhead branch routes to the upper
+ * part of the sheet and the liquid/bottoms branch to the lower part, following ISO 10628 layout
+ * practice. The inlet train and any recombined streams stay on the centre line.
  * </p>
  *
  * <p>
@@ -217,21 +219,34 @@ final class DexpiLayoutEngine {
 
     // Build edges — handle both TwoPortEquipment (getInletStream) and
     // multi-port equipment like Separator/Mixer (getInletStreams)
-    // Also track which equipment is fed by a liquid/water outlet for branch detection.
+    // Also track which equipment is fed by a liquid/water outlet (lower branch) or by the
+    // gas/overhead outlet of a separator (upper branch), per ISO 10628 layout convention.
     Set<String> liquidBranchEquipment = new HashSet<>();
+    Set<String> gasBranchEquipment = new HashSet<>();
     // Build lookup: outlet stream identity -> whether it's a liquid/water stream
     Map<Integer, Boolean> outletIsLiquid = new HashMap<>();
+    // Build lookup: gas-outlet stream identity of a phase-splitting vessel (one that also
+    // produces a liquid or water outlet). Such overhead streams route to the upper part.
+    Map<Integer, Boolean> outletIsGasFork = new HashMap<>();
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Stream || unit instanceof DexpiStream) {
         continue;
       }
       StreamInterface liqOut = DexpiStreamUtils.getLiquidOutletStream(unit);
+      StreamInterface waterOut = DexpiStreamUtils.getWaterOutletStream(unit);
       if (liqOut != null) {
         outletIsLiquid.put(System.identityHashCode(liqOut), Boolean.TRUE);
       }
-      StreamInterface waterOut = DexpiStreamUtils.getWaterOutletStream(unit);
       if (waterOut != null) {
         outletIsLiquid.put(System.identityHashCode(waterOut), Boolean.TRUE);
+      }
+      // A vessel that produces a liquid or water outlet is a phase-splitting separator;
+      // its gas outlet is the overhead branch and is routed to the upper part of the sheet.
+      if (liqOut != null || waterOut != null) {
+        StreamInterface gasOut = DexpiStreamUtils.getGasOutletStream(unit);
+        if (gasOut != null) {
+          outletIsGasFork.put(System.identityHashCode(gasOut), Boolean.TRUE);
+        }
       }
     }
 
@@ -248,6 +263,10 @@ final class DexpiLayoutEngine {
         // If this inlet is a liquid/water outlet from its source, mark as liquid branch
         if (outletIsLiquid.containsKey(System.identityHashCode(inletStream))) {
           liquidBranchEquipment.add(unit.getName());
+        }
+        // If this inlet is the gas (overhead) outlet of a separator, mark as gas branch
+        if (outletIsGasFork.containsKey(System.identityHashCode(inletStream))) {
+          gasBranchEquipment.add(unit.getName());
         }
       }
     }
@@ -299,8 +318,9 @@ final class DexpiLayoutEngine {
       }
     }
 
-    // Propagate liquid branch: if A is on the liquid branch and A -> B, then B
-    // is also on the liquid branch (unless B is also fed by a gas path).
+    // Propagate branch membership downstream: if A is on the liquid (or gas) branch and
+    // A -> B, then B inherits that branch. A unit reached by both branches (e.g. a mixer
+    // recombining gas and liquid) ends up on the centre line.
     boolean changed = true;
     while (changed) {
       changed = false;
@@ -314,16 +334,32 @@ final class DexpiLayoutEngine {
           }
         }
       }
+      for (String name : gasBranchEquipment.toArray(new String[0])) {
+        List<String> downstream = adjacency.get(name);
+        if (downstream != null) {
+          for (String ds : downstream) {
+            if (gasBranchEquipment.add(ds)) {
+              changed = true;
+            }
+          }
+        }
+      }
     }
 
-    // Assign positions: each unit gets its own column. Liquid branch equipment is
-    // shifted downward by Y_BRANCH_OFFSET for visual separation.
+    // Assign positions: each unit gets its own column. Following ISO 10628 layout practice,
+    // the gas/overhead branch is routed to the upper part (+Y_BRANCH_OFFSET) and the
+    // liquid/bottoms branch to the lower part (-Y_BRANCH_OFFSET); the inlet train and any
+    // recombined streams stay on the centre line.
     int col = 0;
     for (String name : topoOrder) {
       double x = X_START + col * X_SPACING;
       double y = Y_BASE;
-      if (liquidBranchEquipment.contains(name)) {
+      boolean onLiquid = liquidBranchEquipment.contains(name);
+      boolean onGas = gasBranchEquipment.contains(name);
+      if (onLiquid && !onGas) {
         y = Y_BASE - Y_BRANCH_OFFSET;
+      } else if (onGas && !onLiquid) {
+        y = Y_BASE + Y_BRANCH_OFFSET;
       }
       positions.put(name, new EquipmentPosition(x, y, DEFAULT_SCALE, DEFAULT_SCALE));
       col++;

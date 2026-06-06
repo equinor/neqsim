@@ -319,8 +319,12 @@ registration number via a `ComponentName` attribute.
 
 ### Auto-layout features
 
-The layout engine automatically arranges equipment left-to-right with liquid branches flowing
-downward and produces the following visual elements:
+The layout engine automatically arranges equipment left-to-right following process flow topology.
+Per ISO 10628 drafting practice, a separator's **gas/overhead branch routes to the upper part** of
+the sheet and the **liquid/bottoms branch to the lower part**, with the inlet train and any
+recombined streams kept on the centre line. This keeps the gas train (compressors, coolers,
+scrubbers) visually above the liquid train (pumps, oil/water treatment) and stops bottoms lines
+from crossing gas equipment. The engine produces the following visual elements:
 
 **Drawing frame and border:**
 - Auto-fit sheet size (A4 to A0) based on process extent

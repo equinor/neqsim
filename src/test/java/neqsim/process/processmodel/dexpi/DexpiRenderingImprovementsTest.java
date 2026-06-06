@@ -677,4 +677,52 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
     Element pres = (Element) line.getElementsByTagName("Presentation").item(0);
     return pres.getAttribute("LineType");
   }
+
+  /**
+   * ISO 10628 layout convention: a separator's gas/overhead branch routes to the upper part of the
+   * sheet and the liquid/bottoms branch to the lower part. With the DEXPI Y axis pointing up, the
+   * gas-fed compressor must end up at a higher Y than the separator while the oil-fed valve ends up
+   * at a lower Y, so the bottoms line no longer crosses the gas equipment.
+   */
+  @Test
+  public void testGasUpLiquidDownLayout() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.7);
+    fluid.addComponent("ethane", 0.1);
+    fluid.addComponent("nC10", 0.1);
+    fluid.addComponent("water", 0.1);
+    fluid.setMixingRule(2);
+    fluid.init(0);
+    Stream feed = new Stream("feed", fluid);
+    feed.setPressure(50.0, "bara");
+    feed.setTemperature(30.0, "C");
+    feed.setFlowRate(1.0, "MSm3/day");
+    ThreePhaseSeparator sep = new ThreePhaseSeparator("Sep", feed);
+    neqsim.process.equipment.compressor.Compressor gasComp =
+        new neqsim.process.equipment.compressor.Compressor("GasComp", sep.getGasOutStream());
+    gasComp.setOutletPressure(80.0, "bara");
+    neqsim.process.equipment.valve.ThrottlingValve oilValve =
+        new neqsim.process.equipment.valve.ThrottlingValve("OilValve", sep.getOilOutStream());
+    oilValve.setOutletPressure(30.0, "bara");
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(sep);
+    process.add(gasComp);
+    process.add(oilValve);
+
+    java.util.Map<String, DexpiLayoutEngine.EquipmentPosition> positions =
+        DexpiLayoutEngine.computeLayout(process);
+
+    DexpiLayoutEngine.EquipmentPosition sepPos = positions.get("Sep");
+    DexpiLayoutEngine.EquipmentPosition gasPos = positions.get("GasComp");
+    DexpiLayoutEngine.EquipmentPosition oilPos = positions.get("OilValve");
+    assertNotNull(sepPos, "Separator must have a layout position");
+    assertNotNull(gasPos, "Gas compressor must have a layout position");
+    assertNotNull(oilPos, "Oil valve must have a layout position");
+
+    assertTrue(gasPos.y > sepPos.y,
+        "Gas/overhead branch must route to the upper part (higher Y than the separator)");
+    assertTrue(oilPos.y < sepPos.y,
+        "Liquid/bottoms branch must route to the lower part (lower Y than the separator)");
+  }
 }
