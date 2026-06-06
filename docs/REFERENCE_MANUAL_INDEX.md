@@ -912,7 +912,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 
 | Document        | Path                                                                           | Description     |
 | --------------- | ------------------------------------------------------------------------------ | --------------- |
-| DEXPI P&ID Import, Export & Visualization | [docs/integration/dexpi-reader.md](integration/dexpi-reader) | DEXPI import/export/round-trip, ISO 10628 shapes, auto-layout, instruments, SIL markers, fail-position, mechanical design, stream table, drawing border, symbol legend, configurable layout, topology, equipment factory, simulation builder |
+| DEXPI P&ID Import, Export & Visualization | [docs/integration/dexpi-reader.md](integration/dexpi-reader) | DEXPI import/export/round-trip, ISO 10628 shapes, auto-layout, instruments, SIL markers, fail-position, mechanical design, stream table, drawing border, symbol legend, configurable layout, topology, equipment factory, simulation builder, multi-area ProcessModel export, pyDEXPI namespace-omitted export, NORSOK Z-003 line numbers, connection line data, off-page boundary connectors, ISA-5.1 tag validation |
 | QRA Integration | [docs/integration/QRA_INTEGRATION_GUIDE.md](integration/QRA_INTEGRATION_GUIDE) | QRA integration |
 
 ### Chapter 47: Process Logic Framework
