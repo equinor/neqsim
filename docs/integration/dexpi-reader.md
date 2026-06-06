@@ -157,6 +157,24 @@ The `examples/notebooks/professional_process_flow_diagrams.ipynb` notebook wraps
 `render_dexpi_pid(process, name)` helper that exports the DEXPI file and renders genuine ISA-5.1
 symbols via `pydexpi.loaders.svg_loader.DrawDiagram`, degrading gracefully when pyDEXPI is absent.
 
+The same notebook also shows the **most compact recipe** — a P&ID figure in four working lines
+(export → load → draw → display):
+
+```python
+from pydexpi.loaders.svg_loader import DrawDiagram
+from IPython.display import SVG, display
+
+DexpiDiagramBridge.exportForPyDexpi(process, JPaths.get("compact.dexpi.xml"))
+model = ProteusSerializer().load(out_dir, "compact.dexpi.xml")
+DrawDiagram(model.diagram, padding=5.0, pretty=True).save_svg("compact", str(out_dir))
+display(SVG(filename=str(out_dir / "compact.svg")))
+```
+
+For a standalone, importable end-to-end pipeline (NeqSim build → DEXPI export → pyDEXPI render),
+see [`examples/neqsim/render_neqsim_dexpi_with_pydexpi.py`](../../examples/neqsim/render_neqsim_dexpi_with_pydexpi.py).
+Its `build_process`, `export_dexpi`, `make_pydexpi_compatible`, and `render` functions can be imported
+directly into a notebook or run as a script via `python render_neqsim_dexpi_with_pydexpi.py`.
+
 ### Round-trip (import, simulate, re-export)
 
 ```java
