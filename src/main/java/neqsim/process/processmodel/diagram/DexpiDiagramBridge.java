@@ -171,6 +171,25 @@ public final class DexpiDiagramBridge implements Serializable {
   }
 
   /**
+   * Exports a ProcessSystem to a pyDEXPI-friendly DEXPI XML file.
+   *
+   * <p>
+   * This variant omits the default XML namespace ({@code xmlns="http://sandbox.dexpi.org/xml"}) so
+   * that the pyDEXPI / Proteus parser — which performs unqualified tag look-ups — can read the file
+   * directly without a separate namespace-stripping step. The content is otherwise identical to
+   * {@link #exportToDexpi(ProcessSystem, Path)}.
+   * </p>
+   *
+   * @param processSystem the process system to export
+   * @param outputFile the output file path
+   * @throws IOException if the file cannot be written
+   */
+  public static void exportForPyDexpi(ProcessSystem processSystem, Path outputFile)
+      throws IOException {
+    DexpiXmlWriter.writeForPyDexpi(processSystem, outputFile.toFile());
+  }
+
+  /**
    * Performs a complete round-trip: import DEXPI, generate diagram, export back to DEXPI.
    *
    * <p>
