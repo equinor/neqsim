@@ -601,11 +601,9 @@ public class DexpiRenderingImprovementsTest extends NeqSimTest {
 
     java.io.File tmp = java.io.File.createTempFile("dexpi-bridge", ".xml");
     tmp.deleteOnExit();
-    neqsim.process.processmodel.diagram.DexpiDiagramBridge.exportForPyDexpi(process,
-        tmp.toPath());
+    neqsim.process.processmodel.diagram.DexpiDiagramBridge.exportForPyDexpi(process, tmp.toPath());
 
-    String xml = new String(java.nio.file.Files.readAllBytes(tmp.toPath()),
-        StandardCharsets.UTF_8);
+    String xml = new String(java.nio.file.Files.readAllBytes(tmp.toPath()), StandardCharsets.UTF_8);
     assertTrue(xml.contains("<PlantModel"), "Bridge export must produce a PlantModel root");
     assertTrue(!xml.contains("xmlns=\"http://sandbox.dexpi.org/xml\""),
         "Bridge export must omit the default DEXPI namespace for pyDEXPI");
