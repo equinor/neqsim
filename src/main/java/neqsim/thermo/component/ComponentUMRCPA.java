@@ -157,7 +157,12 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
       racketZused = getRacketZCPA();
       volumeCorrectionTused = getVolumeCorrectionT_CPA();
     }
-    if ((racketZused < 1.0e-10) && cpaon == 1) {
+    if ((racketZused < 1.0e-10) && cpaon == 1 && numberOfAssociationSites != 0) {
+      // Associating components (water, alcohols, glycols) without a regressed UMR-CPA / SRK-CPA
+      // Rackett Z keep zero translation until their value is regressed. Non-associating components
+      // (hydrocarbons, N2, CO2) fall through to the inherited PR Peneloux shift so that they are
+      // volume-corrected exactly like the standard PR EOS (Z_RA from the acentric-factor
+      // correlation when no tabulated Rackett Z exists).
       return 0.0;
     } else {
       setVolumeCorrectionT(volumeCorrectionTused);
