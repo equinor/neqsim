@@ -289,6 +289,23 @@ Non-associating gases (methane, ethane, propane, CO₂, N₂, …) use the paper
 are read from the component database (`COMP.csv`), and the group-interaction
 parameters from the `UNIFAC*_UMRMC` resource tables.
 
+**Volume correction (liquid density)**
+
+UMR-CPA enables a **density-only Peneloux volume translation** (it does not enter
+the VLE/fugacity calculation). The correction is applied per component according
+to molecular type:
+
+- **Non-associating components** (hydrocarbons, N₂, CO₂) use the same standard
+  Peng-Robinson Peneloux shift as `SystemPrEos`,
+  $c = 0.50033\,(0.25969 - Z_{RA})\,RT_c/P_c$, with the Rackett compressibility
+  $Z_{RA} = 0.29056 - 0.08775\,\omega$ when no tabulated value exists. This brings
+  pure-hydrocarbon saturated-liquid densities to within ~1–2 % of experiment
+  (untranslated PR otherwise under-predicts by ~8–11 %).
+- **Associating components** (water, glycols, alcohols) use a Rackett $Z$ regressed
+  specifically for the UMR-CPA parameter set (`UMRCPA_racketZ` / `UMRCPA_volcorr_T`
+  columns in `COMP.csv`); those without a regressed value keep zero translation
+  because their fitted CPA co-volume $b$ already reproduces the liquid density.
+
 **Typical applications**
 
 - Natural-gas dehydration with TEG (water dew-point, glycol losses).
