@@ -63,8 +63,3 @@ public class CriticalPointFlashTest {
 	"System pressure should remain physically valid after critical point flash calculation");
   }
 }
-
-
-
-
-
