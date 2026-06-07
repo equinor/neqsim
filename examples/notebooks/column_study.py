@@ -448,7 +448,7 @@ def answer_tray_to_ns_stage(answer_tray: int, n_trays: int) -> int:
 def build_column(feed_stream, top_feed_stream):
     n_trays = int(MANUAL_COLUMN["n_trays"])
     col = DistillationColumn(
-        "20VE105_205_standalone",
+        "standalone",
         n_trays,
         bool(MANUAL_COLUMN["has_reboiler"]),
         bool(MANUAL_COLUMN["has_condenser"]),
@@ -889,7 +889,7 @@ def plot_profile(col, out_path: Path, show: bool):
     ax2.grid(True, alpha=0.3)
     ax2.legend(loc="best")
 
-    fig.suptitle(f"20VE105_205 — {n_trays} trays + reboiler, "
+    fig.suptitle(f"standalone— {n_trays} trays + reboiler, "
                  f"reboiler T fixed at {MANUAL_COLUMN['reboiler_temperature_C']:.1f} C",
                  fontsize=11)
     plt.tight_layout()
@@ -1096,7 +1096,7 @@ def compare_product_compositions(col, out_path: Path, show: bool):
     ax_log.set_axisbelow(True)
     ax_log.legend(loc="lower center", ncol=4, framealpha=0.95)
 
-    fig.suptitle("20VE105_205 — answer vs NeqSim product compositions",
+    fig.suptitle("standalone — answer vs NeqSim product compositions",
                  fontsize=13, fontweight="bold")
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1310,7 +1310,7 @@ def compare_component_mass_balance(col, feed_stream, top_feed_stream,
     ax_log.set_axisbelow(True)
     ax_log.legend(loc="lower center", ncol=5, framealpha=0.95)
 
-    fig.suptitle("20VE105_205 — Per-component mass balance "
+    fig.suptitle("standalone — Per-component mass balance "
                  "(kg/hr): Inlet vs TOP vs BOTTOM, answer vs NeqSim",
                  fontsize=13, fontweight="bold")
 

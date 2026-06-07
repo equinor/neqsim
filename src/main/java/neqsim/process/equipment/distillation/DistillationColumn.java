@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -2472,8 +2474,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.distoperations = candidate.distoperations;
     this.feedmixer = candidate.feedmixer;
     this.stream_3 = candidate.stream_3;
-    this.gasOutStream = candidate.gasOutStream;
-    this.liquidOutStream = candidate.liquidOutStream;
+    // Preserve the product-stream object identities so external consumers that captured
+    // getGasOutStream() / getLiquidOutStream() before solving keep observing the accepted solved
+    // product state. Reassigning the field references (the legacy behaviour) orphaned those
+    // caller-held streams at their stale pre-polish flows, removing the stale-to-solved product
+    // flow difference from the surrounding process mass balance.
+    this.gasOutStream = adoptSolvedProductStream(this.gasOutStream, candidate.gasOutStream);
+    this.liquidOutStream = adoptSolvedProductStream(this.liquidOutStream, candidate.liquidOutStream);
     this.stream_3isset = candidate.stream_3isset;
     this.heater = candidate.heater;
     this.separator2 = candidate.separator2;
@@ -2528,6 +2535,36 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         : new ArrayList<String>(candidate.lastAutoSolverHistory);
     this.specificationHomotopySteps = candidate.specificationHomotopySteps;
     this.lastSpecificationHomotopyStepCount = candidate.lastSpecificationHomotopyStepCount;
+  }
+
+  /**
+   * Copy an accepted candidate product stream's solved state into the live product stream while
+   * preserving the live stream's object identity.
+   *
+   * <p>
+   * Downstream equipment that captured {@link #getGasOutStream()} or {@link #getLiquidOutStream()}
+   * before the column solved holds those stream objects by reference. Replacing the field with the
+   * candidate's freshly copied stream orphaned the caller-held objects at their stale (pre-polish)
+   * flows, which dropped the difference between the stale and solved product flows from the overall
+   * process mass balance. Copying the solved thermodynamic system into the existing stream keeps the
+   * caller-held reference live and mass-consistent.
+   * </p>
+   *
+   * @param live the existing product stream whose identity must be preserved
+   * @param solved the accepted candidate product stream carrying the solved state
+   * @return the product stream reference to retain on this column
+   */
+  private static StreamInterface adoptSolvedProductStream(StreamInterface live,
+      StreamInterface solved) {
+    if (live == null) {
+      return solved;
+    }
+    if (solved == null || solved.getThermoSystem() == null) {
+      return live;
+    }
+    live.setThermoSystem(solved.getThermoSystem().clone());
+    live.setCalculationIdentifier(solved.getCalculationIdentifier());
+    return live;
   }
 
   /**
@@ -8840,12 +8877,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Capture named streams added directly to trays before the column connects internal traffic.
    */
   private void captureDirectExternalTrayFeeds() {
+    Set<String> registeredFeedNames = collectRegisteredFeedNames();
     for (int trayIndex = 0; trayIndex < trays.size(); trayIndex++) {
+      pruneClonedDirectExternalFeeds(trayIndex, registeredFeedNames);
       List<StreamInterface> externalFeeds = getExternalFeedStreams(trayIndex);
       SimpleTray tray = trays.get(trayIndex);
       for (int streamIndex = 0; streamIndex < tray.getNumberOfInputStreams(); streamIndex++) {
         StreamInterface stream = tray.getStream(streamIndex);
-        if (isUnregisteredExternalTrayFeed(stream, externalFeeds)) {
+        if (isUnregisteredExternalTrayFeed(stream, externalFeeds, registeredFeedNames)) {
           List<StreamInterface> directFeeds = directExternalFeedStreams.get(trayIndex);
           if (directFeeds == null) {
             directFeeds = new ArrayList<>();
@@ -8855,6 +8894,68 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           externalFeeds.add(stream);
         }
       }
+    }
+  }
+
+  /**
+   * Collect the names of all feeds registered through {@link #addFeedStream(StreamInterface, int)}.
+   *
+   * <p>
+   * Iterative process solving (for example a recycle loop, or the solver's own candidate-copy accept
+   * path) can leave cloned copies of a registered feed on its feed tray. Such clones share the
+   * registered feed name but have a different object identity, so they must never be mistaken for
+   * genuine legacy direct side feeds.
+   * </p>
+   *
+   * @return set of registered feed stream names (non-null, non-empty names only)
+   */
+  private Set<String> collectRegisteredFeedNames() {
+    Set<String> names = new HashSet<>();
+    for (List<StreamInterface> feedList : feedStreams.values()) {
+      if (feedList == null) {
+        continue;
+      }
+      for (StreamInterface feed : feedList) {
+        if (feed == null) {
+          continue;
+        }
+        String name = feed.getName();
+        if (name != null && !name.trim().isEmpty()) {
+          names.add(name);
+        }
+      }
+    }
+    return names;
+  }
+
+  /**
+   * Drop previously captured direct external feeds that are actually clones of registered feeds.
+   *
+   * <p>
+   * A cloned registered feed shares the registered feed name but has a different identity. Keeping
+   * such clones in {@link #directExternalFeedStreams} would inflate
+   * {@link #getExternalFeedStreams(int)} on every solve and make the tray feed inventory grow without
+   * bound across repeated runs.
+   * </p>
+   *
+   * @param trayIndex tray whose captured direct feeds should be pruned
+   * @param registeredFeedNames names of feeds registered through the column API
+   */
+  private void pruneClonedDirectExternalFeeds(int trayIndex, Set<String> registeredFeedNames) {
+    List<StreamInterface> directFeeds = directExternalFeedStreams.get(trayIndex);
+    if (directFeeds == null || directFeeds.isEmpty()) {
+      return;
+    }
+    Iterator<StreamInterface> iterator = directFeeds.iterator();
+    while (iterator.hasNext()) {
+      StreamInterface directFeed = iterator.next();
+      if (directFeed == null
+          || (directFeed.getName() != null && registeredFeedNames.contains(directFeed.getName()))) {
+        iterator.remove();
+      }
+    }
+    if (directFeeds.isEmpty()) {
+      directExternalFeedStreams.remove(trayIndex);
     }
   }
 
@@ -8925,15 +9026,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    *
    * @param stream tray input stream to inspect
    * @param knownExternalFeeds external streams already identified
+   * @param registeredFeedNames names of feeds registered through the column API
    * @return {@code true} if the stream looks like a named direct external feed
    */
   private boolean isUnregisteredExternalTrayFeed(StreamInterface stream,
-      List<StreamInterface> knownExternalFeeds) {
+      List<StreamInterface> knownExternalFeeds, Set<String> registeredFeedNames) {
     if (stream == null || containsStreamByIdentity(knownExternalFeeds, stream)) {
       return false;
     }
     String streamName = stream.getName();
     if (streamName == null || streamName.trim().isEmpty()) {
+      return false;
+    }
+    if (registeredFeedNames.contains(streamName)) {
+      // A tray input that shares a registered feed name but a different identity is a clone left by
+      // iterative solving, not a genuine legacy direct side feed. Capturing it would make the tray
+      // feed inventory grow without bound across repeated solves.
       return false;
     }
     return !isInternalTrayTrafficStreamName(streamName);
