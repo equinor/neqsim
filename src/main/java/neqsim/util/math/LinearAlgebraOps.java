@@ -17,8 +17,77 @@ import org.ojalgo.matrix.store.Primitive64Store;
  * @version 1.0
  */
 public final class LinearAlgebraOps {
+  /** Functional getter for matrix elements. */
+  public interface MatrixElementGetter {
+    /**
+     * Reads one element from a matrix-like structure.
+     *
+     * @param row row index
+     * @param col column index
+     * @return matrix value at {@code (row, col)}
+     */
+    double get(int row, int col);
+  }
+
+  /** Functional setter for matrix elements. */
+  public interface MatrixElementSetter {
+    /**
+     * Writes one element to a matrix-like structure.
+     *
+     * @param row row index
+     * @param col column index
+     * @param value value to write
+     */
+    void set(int row, int col, double value);
+  }
+
   /** Utility class: no instances. */
   private LinearAlgebraOps() {}
+
+  /**
+   * Decomposes a square matrix into a provided LU factorization using callback-based element
+   * access.
+   *
+   * @param solver LU solver instance to populate
+   * @param size matrix dimension
+   * @param matrixGetter callback used to read matrix values
+   * @return {@code true} if decomposition succeeded, {@code false} otherwise
+   */
+  public static boolean decomposeLu(LU<Double> solver, int size, MatrixElementGetter matrixGetter) {
+    Primitive64Store store = Primitive64Store.FACTORY.make(size, size);
+    for (int i = 0; i < size; i++) {
+      for (int j = 0; j < size; j++) {
+        store.set(i, j, matrixGetter.get(i, j));
+      }
+    }
+    return solver.decompose(store);
+  }
+
+  /**
+   * Solves {@code A X = B} from a previously decomposed LU solver using callback-based matrix
+   * access.
+   *
+   * @param solver LU solver with prior successful decomposition
+   * @param rows number of rows in {@code B} and {@code X}
+   * @param cols number of columns in {@code B} and {@code X}
+   * @param rhsGetter callback used to read right-hand-side matrix values
+   * @param outSetter callback used to write solution matrix values
+   */
+  public static void solveLu(LU<Double> solver, int rows, int cols, MatrixElementGetter rhsGetter,
+      MatrixElementSetter outSetter) {
+    Primitive64Store rhsStore = Primitive64Store.FACTORY.make(rows, cols);
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        rhsStore.set(i, j, rhsGetter.get(i, j));
+      }
+    }
+    MatrixStore<Double> sol = solver.getSolution(rhsStore);
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        outSetter.set(i, j, sol.get(i, j));
+      }
+    }
+  }
 
   /**
    * Solves {@code A x = b} using LU decomposition.
