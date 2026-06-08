@@ -269,12 +269,15 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
         A[i][j] = jac[idx1][idx2];
       }
     }
-    normf = norm2(b);
+    normf = LinearAlgebraOps.vectorNorm(b);
     if (normf < this.abstol) {
       return;
     }
 
-    solveLinear(A, b, x);
+    if (!LinearAlgebraOps.solveLinearSystem(A, b, x)
+        && !LinearAlgebraOps.pseudoInverseSolve(A, b, x)) {
+      throw new RuntimeException("Failed to solve linear system");
+    }
     for (i = 1; i < this.ncomp - 1; i++) {
       double xi = x[i];
       if (Double.isNaN(xi)) {
@@ -288,7 +291,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
         c[i] = x[i] / x0[i];
       }
       norm0 = norm;
-      norm = norm2(c);
+      norm = LinearAlgebraOps.vectorNorm(c);
       if (norm < norm0) {
         s = Math.min(0.8, 1.2 * s);
       }
@@ -326,8 +329,11 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
           A[i][j] = jac[idx1][idx2];
         }
       }
-      solveLinear(A, b, x);
-      normf = norm2(b);
+      if (!LinearAlgebraOps.solveLinearSystem(A, b, x)
+          && !LinearAlgebraOps.pseudoInverseSolve(A, b, x)) {
+        throw new RuntimeException("Failed to solve linear system");
+      }
+      normf = LinearAlgebraOps.vectorNorm(b);
     }
     if (iter >= this.maxit) {
       // System.out.printf("norm(f): %e\n", normf);
@@ -363,34 +369,6 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
       for (j = 0; j < this.ncomp; j++) {
         jac[i][j] = scale * (sqrtci * (-dmu_drho[this.refcomp][j]) - sqrtcref * (-dmu_drho[i][j]));
       }
-    }
-  }
-
-  /**
-   * Compute Euclidean norm of a vector.
-   *
-   * @param vector input vector
-   * @return L2 norm
-   */
-  private double norm2(double[] vector) {
-    double sum = 0.0;
-    for (int i = 0; i < vector.length; i++) {
-      sum += vector[i] * vector[i];
-    }
-    return Math.sqrt(sum);
-  }
-
-  /**
-   * Solve linear system $A x = b$.
-   *
-   * @param matrix coefficient matrix
-   * @param rhs right-hand side vector
-   * @param result output vector
-   */
-  private void solveLinear(double[][] matrix, double[] rhs, double[] result) {
-    if (!LinearAlgebraOps.solveLinearSystem(matrix, rhs, result)
-        && !LinearAlgebraOps.pseudoInverseSolve(matrix, rhs, result)) {
-      throw new RuntimeException("Failed to solve linear system");
     }
   }
 

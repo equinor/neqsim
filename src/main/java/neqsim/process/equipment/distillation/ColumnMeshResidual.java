@@ -135,19 +135,6 @@ final class ColumnMeshResidual implements Serializable {
   }
 
   /**
-   * Get the Euclidean norm of all residuals.
-   *
-   * @return L2 norm
-   */
-  double getL2Norm() {
-    double sumSquares = 0.0;
-    for (int i = 0; i < values.length; i++) {
-      sumSquares += values[i] * values[i];
-    }
-    return Math.sqrt(sumSquares);
-  }
-
-  /**
    * Count residuals of a given equation type.
    *
    * @param type equation type to count
