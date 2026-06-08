@@ -231,6 +231,58 @@ public final class LinearAlgebraOps {
   }
 
   /**
+   * Solves {@code A x = b} in place using Gaussian elimination with partial pivoting.
+   *
+   * <p>
+   * The coefficient matrix {@code matrix} and right-hand side {@code rhs} are modified in place,
+   * and {@code rhs} is overwritten with the solution vector on return.
+   * </p>
+   *
+   * @param matrix coefficient matrix (modified in place)
+   * @param rhs right-hand side vector (overwritten with solution)
+   * @param n system dimension
+   */
+  public static void solveLinearSystemInPlace(double[][] matrix, double[] rhs, int n) {
+    for (int col = 0; col < n; col++) {
+      int maxRow = col;
+      double maxVal = Math.abs(matrix[col][col]);
+      for (int row = col + 1; row < n; row++) {
+        double val = Math.abs(matrix[row][col]);
+        if (val > maxVal) {
+          maxVal = val;
+          maxRow = row;
+        }
+      }
+      if (maxRow != col) {
+        double[] tmpRow = matrix[col];
+        matrix[col] = matrix[maxRow];
+        matrix[maxRow] = tmpRow;
+        double tmpVal = rhs[col];
+        rhs[col] = rhs[maxRow];
+        rhs[maxRow] = tmpVal;
+      }
+      double pivot = matrix[col][col];
+      if (Math.abs(pivot) < 1.0e-30) {
+        continue;
+      }
+      for (int row = col + 1; row < n; row++) {
+        double factor = matrix[row][col] / pivot;
+        for (int k = col + 1; k < n; k++) {
+          matrix[row][k] -= factor * matrix[col][k];
+        }
+        rhs[row] -= factor * rhs[col];
+      }
+    }
+    for (int row = n - 1; row >= 0; row--) {
+      double s = rhs[row];
+      for (int k = row + 1; k < n; k++) {
+        s -= matrix[row][k] * rhs[k];
+      }
+      rhs[row] = s / matrix[row][row];
+    }
+  }
+
+  /**
    * Solves {@code A X = B} for matrix right-hand sides using LU decomposition.
    *
    * @param matrix coefficient matrix {@code A}

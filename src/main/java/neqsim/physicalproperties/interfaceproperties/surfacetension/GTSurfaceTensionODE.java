@@ -1,21 +1,18 @@
 package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.DecompositionSolver;
-import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.math.LinearAlgebraOps;
 
 /**
- * <p>
  * GTSurfaceTensionODE class.
  *
+ * <p>
  * ODE-system for integrating the surface tension in cases where the a reference component number
  * mole density can be used as integration variable.
  *
@@ -391,14 +388,9 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
    * @param result output vector
    */
   private void solveLinear(double[][] matrix, double[] rhs, double[] result) {
-    RealMatrix a = new Array2DRowRealMatrix(matrix, false);
-    DecompositionSolver solver = new LUDecomposition(a).getSolver();
-    if (!solver.isNonSingular()) {
-      solver = new SingularValueDecomposition(a).getSolver();
-    }
-    RealVector x = solver.solve(new ArrayRealVector(rhs, false));
-    for (int i = 0; i < result.length; i++) {
-      result[i] = x.getEntry(i);
+    if (!LinearAlgebraOps.solveLinearSystem(matrix, rhs, result)
+        && !LinearAlgebraOps.pseudoInverseSolve(matrix, rhs, result)) {
+      throw new RuntimeException("Failed to solve linear system");
     }
   }
 
