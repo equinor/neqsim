@@ -393,6 +393,9 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
   private void solveLinear(double[][] matrix, double[] rhs, double[] result) {
     RealMatrix a = new Array2DRowRealMatrix(matrix, false);
     DecompositionSolver solver = new LUDecomposition(a).getSolver();
+    if (!solver.isNonSingular()) {
+      solver = new SingularValueDecomposition(a).getSolver();
+    }
     RealVector x = solver.solve(new ArrayRealVector(rhs, false));
     for (int i = 0; i < result.length; i++) {
       result[i] = x.getEntry(i);
