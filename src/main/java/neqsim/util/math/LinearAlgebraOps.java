@@ -17,6 +17,70 @@ import org.ojalgo.matrix.store.Primitive64Store;
  * @version 1.0
  */
 public final class LinearAlgebraOps {
+  /** Lightweight dense matrix container for small internal linear-algebra kernels. */
+  public static final class DenseMatrix {
+    public final int numRows;
+    public final int numCols;
+    private final double[] values;
+
+    /**
+     * Creates a dense matrix with zero-initialized values.
+     *
+     * @param rows number of rows
+     * @param cols number of columns
+     */
+    public DenseMatrix(int rows, int cols) {
+      this.numRows = rows;
+      this.numCols = cols;
+      this.values = new double[rows * cols];
+    }
+
+    /**
+     * Creates a dense matrix by copying a 2D array.
+     *
+     * @param matrix source matrix
+     */
+    public DenseMatrix(double[][] matrix) {
+      this(matrix.length, matrix.length == 0 ? 0 : matrix[0].length);
+      for (int i = 0; i < numRows; i++) {
+        for (int j = 0; j < numCols; j++) {
+          unsafe_set(i, j, matrix[i][j]);
+        }
+      }
+    }
+
+    /**
+     * Reads a matrix value without bounds checking.
+     *
+     * @param row row index
+     * @param col column index
+     * @return value at {@code (row, col)}
+     */
+    public double unsafe_get(int row, int col) {
+      return values[row * numCols + col];
+    }
+
+    /**
+     * Writes a matrix value without bounds checking.
+     *
+     * @param row row index
+     * @param col column index
+     * @param value value to write
+     */
+    public void unsafe_set(int row, int col, double value) {
+      values[row * numCols + col] = value;
+    }
+
+    /**
+     * Gets the packed row-major matrix data.
+     *
+     * @return backing data array
+     */
+    public double[] getData() {
+      return values;
+    }
+  }
+
   /** Functional getter for matrix elements. */
   public interface MatrixElementGetter {
     /**
@@ -87,6 +151,50 @@ public final class LinearAlgebraOps {
         outSetter.set(i, j, sol.get(i, j));
       }
     }
+  }
+
+  /**
+   * Dense matrix multiplication: {@code out = a * b}.
+   *
+   * @param a left matrix
+   * @param b right matrix
+   * @param out output matrix
+   */
+  public static void mult(DenseMatrix a, DenseMatrix b, DenseMatrix out) {
+    for (int i = 0; i < a.numRows; i++) {
+      for (int j = 0; j < b.numCols; j++) {
+        double sum = 0.0;
+        for (int k = 0; k < a.numCols; k++) {
+          sum += a.unsafe_get(i, k) * b.unsafe_get(k, j);
+        }
+        out.unsafe_set(i, j, sum);
+      }
+    }
+  }
+
+  /**
+   * Dense matrix subtraction: {@code out = a - b}.
+   *
+   * @param a left matrix
+   * @param b right matrix
+   * @param out output matrix
+   */
+  public static void subtract(DenseMatrix a, DenseMatrix b, DenseMatrix out) {
+    for (int i = 0; i < a.numRows; i++) {
+      for (int j = 0; j < a.numCols; j++) {
+        out.unsafe_set(i, j, a.unsafe_get(i, j) - b.unsafe_get(i, j));
+      }
+    }
+  }
+
+  /**
+   * Frobenius norm of a dense matrix.
+   *
+   * @param matrix input matrix
+   * @return {@code ||matrix||_F}
+   */
+  public static double normF(DenseMatrix matrix) {
+    return vectorNorm(matrix.getData());
   }
 
   /**

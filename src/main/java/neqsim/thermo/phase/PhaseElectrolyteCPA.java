@@ -9,6 +9,7 @@ import neqsim.thermo.mixingrule.CPAMixingRuleHandler;
 import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.util.math.LinearAlgebraOps;
+import neqsim.util.math.LinearAlgebraOps.DenseMatrix;
 
 /**
  * <p>
@@ -70,13 +71,13 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
   /** Cached LU factorization of {@code hessianMatrix} for repeated Hessian backsolves. */
   private transient LU<Double> hessianLU = null;
   /** Scratch matrix passed to EJML LU because the solver may decompose its input in place. */
-  private transient DMatrixRMaj hessianLUinput = null;
+  private transient DenseMatrix hessianLUinput = null;
   /** Matrix size associated with the cached Hessian LU factorization. */
   private transient int hessianLUSize = -1;
   private SimpleMatrix KlkVMatrix = null;
-  DMatrixRMaj corr2Matrix = null;
-  DMatrixRMaj corr3Matrix = null;
-  DMatrixRMaj corr4Matrix = null;
+  DenseMatrix corr2Matrix = null;
+  DenseMatrix corr3Matrix = null;
+  DenseMatrix corr4Matrix = null;
   private double[] lngi;
 
   /**
@@ -154,9 +155,9 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
             getTotalNumberOfAccociationSites());
         KlkTVMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
             getTotalNumberOfAccociationSites());
-        corr2Matrix = new DMatrixRMaj(getTotalNumberOfAccociationSites(), 1);
-        corr3Matrix = new DMatrixRMaj(getTotalNumberOfAccociationSites(), 1);
-        corr4Matrix = new DMatrixRMaj(getTotalNumberOfAccociationSites(), 1);
+        corr2Matrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
+        corr3Matrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
+        corr4Matrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
         Klkni =
             new double[numberOfComponents][getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
         ksiMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
@@ -663,8 +664,8 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       return hessianInvers.mult(rhs);
     }
     if (hessianLU != null && hessianLUSize == totalNumberOfAccociationSites) {
-      DMatrixRMaj rhsMat = rhs.getDDRM();
-      DMatrixRMaj out = new DMatrixRMaj(rhsMat.numRows, rhsMat.numCols);
+      DenseMatrix rhsMat = rhs.getDDRM();
+      DenseMatrix out = new DenseMatrix(rhsMat.numRows, rhsMat.numCols);
       LinearAlgebraOps.solveLu(hessianLU, rhsMat.numRows, rhsMat.numCols,
           (i, j) -> rhsMat.unsafe_get(i, j), (i, j, value) -> out.unsafe_set(i, j, value));
       return SimpleMatrix.wrap(out);
@@ -686,8 +687,8 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
 
     boolean solvedX = solveX2(15);
 
-    DMatrixRMaj mVectorMat = mVector.getMatrix();
-    DMatrixRMaj ksiMatrixMat = ksiMatrix.getMatrix();
+    DenseMatrix mVectorMat = mVector.getMatrix();
+    DenseMatrix ksiMatrixMat = ksiMatrix.getMatrix();
 
     int temp = 0;
     int iter = 0;
@@ -698,7 +699,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       temp += componentArray[i].getNumberOfAssociationSites();
     }
 
-    DMatrixRMaj mat1 = KlkMatrix.getMatrix();
+    DenseMatrix mat1 = KlkMatrix.getMatrix();
     double Klk = 0.0;
     double totvolume = getTotalVolume();
     double tempVari;
@@ -747,7 +748,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       int n = totalNumberOfAccociationSites;
       if (hessianLU == null || hessianLUSize != n) {
         hessianLU = LU.PRIMITIVE.make(n, n);
-        hessianLUinput = new DMatrixRMaj(n, n);
+        hessianLUinput = new DenseMatrix(n, n);
         hessianLUSize = n;
       }
       System.arraycopy(hessianMatrix.getDDRM().getData(), 0, hessianLUinput.getData(), 0, n * n);
@@ -759,9 +760,9 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         return true;
       }
 
-      DMatrixRMaj mat2 = ksiMatrix.getMatrix();
-      CommonOps_DDRM.mult(mat1, mat2, corr2Matrix);
-      CommonOps_DDRM.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix, corr3Matrix);
+      DenseMatrix mat2 = ksiMatrix.getMatrix();
+      LinearAlgebraOps.mult(mat1, mat2, corr2Matrix);
+      LinearAlgebraOps.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix, corr3Matrix);
       LinearAlgebraOps.solveLu(hessianLU, corr3Matrix.numRows, corr3Matrix.numCols,
           (i, j) -> corr3Matrix.unsafe_get(i, j),
           (i, j, value) -> corr4Matrix.unsafe_set(i, j, value));
@@ -779,7 +780,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         }
         temp += componentArray[i].getNumberOfAssociationSites();
       }
-    } while ((NormOps_DDRM.normF(corr4Matrix) > 1e-12 || !solved) && iter < 100);
+    } while ((LinearAlgebraOps.normF(corr4Matrix) > 1e-12 || !solved) && iter < 100);
 
     return true;
   }
@@ -1490,29 +1491,29 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
    * solves.
    */
   private static final class SimpleMatrix {
-    private final DMatrixRMaj data;
+    private final DenseMatrix data;
 
     SimpleMatrix(int rows, int cols) {
-      this.data = new DMatrixRMaj(rows, cols);
+      this.data = new DenseMatrix(rows, cols);
     }
 
     SimpleMatrix(double[][] values) {
-      this.data = new DMatrixRMaj(values);
+      this.data = new DenseMatrix(values);
     }
 
-    private SimpleMatrix(DMatrixRMaj ddrm) {
+    private SimpleMatrix(DenseMatrix ddrm) {
       this.data = ddrm;
     }
 
-    static SimpleMatrix wrap(DMatrixRMaj ddrm) {
+    static SimpleMatrix wrap(DenseMatrix ddrm) {
       return new SimpleMatrix(ddrm);
     }
 
-    DMatrixRMaj getDDRM() {
+    DenseMatrix getDDRM() {
       return data;
     }
 
-    DMatrixRMaj getMatrix() {
+    DenseMatrix getMatrix() {
       return data;
     }
 
@@ -1601,74 +1602,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         col.set(i, 0, get(i, index));
       }
       return col;
-    }
-  }
-
-  /** Lightweight dense matrix used by CommonOps/NormOps compatibility helpers. */
-  private static final class DMatrixRMaj {
-    final int numRows;
-    final int numCols;
-    private final double[] values;
-
-    DMatrixRMaj(int rows, int cols) {
-      this.numRows = rows;
-      this.numCols = cols;
-      this.values = new double[rows * cols];
-    }
-
-    DMatrixRMaj(double[][] matrix) {
-      this(matrix.length, matrix.length == 0 ? 0 : matrix[0].length);
-      for (int i = 0; i < numRows; i++) {
-        for (int j = 0; j < numCols; j++) {
-          unsafe_set(i, j, matrix[i][j]);
-        }
-      }
-    }
-
-    double unsafe_get(int row, int col) {
-      return values[row * numCols + col];
-    }
-
-    void unsafe_set(int row, int col, double value) {
-      values[row * numCols + col] = value;
-    }
-
-    double[] getData() {
-      return values;
-    }
-  }
-
-  /** Compatibility operations mirroring the subset of EJML ops used here. */
-  private static final class CommonOps_DDRM {
-    private CommonOps_DDRM() {}
-
-    static void mult(DMatrixRMaj a, DMatrixRMaj b, DMatrixRMaj out) {
-      for (int i = 0; i < a.numRows; i++) {
-        for (int j = 0; j < b.numCols; j++) {
-          double sum = 0.0;
-          for (int k = 0; k < a.numCols; k++) {
-            sum += a.unsafe_get(i, k) * b.unsafe_get(k, j);
-          }
-          out.unsafe_set(i, j, sum);
-        }
-      }
-    }
-
-    static void subtract(DMatrixRMaj a, DMatrixRMaj b, DMatrixRMaj out) {
-      for (int i = 0; i < a.numRows; i++) {
-        for (int j = 0; j < a.numCols; j++) {
-          out.unsafe_set(i, j, a.unsafe_get(i, j) - b.unsafe_get(i, j));
-        }
-      }
-    }
-  }
-
-  /** Compatibility norm helper. */
-  private static final class NormOps_DDRM {
-    private NormOps_DDRM() {}
-
-    static double normF(DMatrixRMaj m) {
-      return LinearAlgebraOps.vectorNorm(m.getData());
     }
   }
 

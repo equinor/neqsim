@@ -9,6 +9,7 @@ import neqsim.thermo.mixingrule.CPAMixingRuleHandler;
 import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.util.math.LinearAlgebraOps;
+import neqsim.util.math.LinearAlgebraOps.DenseMatrix;
 
 /**
  * <p>
@@ -80,12 +81,12 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * factories may decompose in place, so we always feed the solver a copy to keep
    * {@code hessianMatrix} readable by other call sites.
    */
-  private transient DMatrixRMaj hessianLUinput = null;
+  private transient DenseMatrix hessianLUinput = null;
   private transient int hessianLUSize = -1;
   private SimpleMatrix KlkVMatrix = null;
-  private DMatrixRMaj corr2Matrix = null;
-  private DMatrixRMaj corr3Matrix = null;
-  private DMatrixRMaj corr4Matrix = null;
+  private DenseMatrix corr2Matrix = null;
+  private DenseMatrix corr3Matrix = null;
+  private DenseMatrix corr4Matrix = null;
 
   /**
    * <p>
@@ -187,9 +188,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             getTotalNumberOfAccociationSites());
         KlkTVMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
             getTotalNumberOfAccociationSites());
-        corr2Matrix = new DMatrixRMaj(getTotalNumberOfAccociationSites(), 1);
-        corr3Matrix = new DMatrixRMaj(getTotalNumberOfAccociationSites(), 1);
-        corr4Matrix = new DMatrixRMaj(getTotalNumberOfAccociationSites(), 1);
+        corr2Matrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
+        corr3Matrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
+        corr4Matrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
         Klkni =
             new double[numberOfComponents][getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
         ksiMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
@@ -733,8 +734,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    */
   private SimpleMatrix applyHessianInv(SimpleMatrix rhs) {
     if (hessianLU != null && hessianLUSize == totalNumberOfAccociationSites) {
-      DMatrixRMaj rhsMat = rhs.getDDRM();
-      DMatrixRMaj out = new DMatrixRMaj(rhsMat.numRows, rhsMat.numCols);
+      DenseMatrix rhsMat = rhs.getDDRM();
+      DenseMatrix out = new DenseMatrix(rhsMat.numRows, rhsMat.numCols);
       LinearAlgebraOps.solveLu(hessianLU, rhsMat.numRows, rhsMat.numCols,
           (i, j) -> rhsMat.unsafe_get(i, j), (i, j, value) -> out.unsafe_set(i, j, value));
       return SimpleMatrix.wrap(out);
@@ -756,8 +757,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
 
     boolean solvedX = solveX2(15);
 
-    DMatrixRMaj mVectorMat = mVector.getMatrix();
-    DMatrixRMaj ksiMatrixMat = ksiMatrix.getMatrix();
+    DenseMatrix mVectorMat = mVector.getMatrix();
+    DenseMatrix ksiMatrixMat = ksiMatrix.getMatrix();
 
     // ksiMatrix.print();
     // second order method not working correctly and not used t the moment b ecause of numerical
@@ -771,7 +772,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       temp += componentArray[i].getNumberOfAssociationSites();
     }
 
-    DMatrixRMaj mat1 = KlkMatrix.getMatrix();
+    DenseMatrix mat1 = KlkMatrix.getMatrix();
     double Klk = 0.0;
     double totvolume = getTotalVolume();
     double tempVari;
@@ -829,7 +830,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       int n = totalNumberOfAccociationSites;
       if (hessianLU == null || hessianLUSize != n) {
         hessianLU = LU.PRIMITIVE.make(n, n);
-        hessianLUinput = new DMatrixRMaj(n, n);
+        hessianLUinput = new DenseMatrix(n, n);
         hessianLUSize = n;
       }
       // Defensive copy: EJML's LU solver may decompose in place, which would corrupt
@@ -845,9 +846,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         return true;
       }
 
-      DMatrixRMaj mat2 = ksiMatrix.getMatrix();
-      CommonOps_DDRM.mult(mat1, mat2, corr2Matrix);
-      CommonOps_DDRM.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix, corr3Matrix);
+      DenseMatrix mat2 = ksiMatrix.getMatrix();
+      LinearAlgebraOps.mult(mat1, mat2, corr2Matrix);
+      LinearAlgebraOps.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix, corr3Matrix);
       LinearAlgebraOps.solveLu(hessianLU, corr3Matrix.numRows, corr3Matrix.numCols,
           (i, j) -> corr3Matrix.unsafe_get(i, j),
           (i, j, value) -> corr4Matrix.unsafe_set(i, j, value));
@@ -874,11 +875,11 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         temp += componentArray[i].getNumberOfAssociationSites();
       }
       // System.out.println("corrmatrix error " );
-      // System.out.println("error " + NormOps_DDRM.normF(corr4Matrix));
-    } while ((NormOps_DDRM.normF(corr4Matrix) > 1e-12 || !solved) && iter < 100);
+      // System.out.println("error " + LinearAlgebraOps.normF(corr4Matrix));
+    } while ((LinearAlgebraOps.normF(corr4Matrix) > 1e-12 || !solved) && iter < 100);
 
     // System.out.println("iter " + iter + " error " +
-    // NormOps_DDRM.normF(corr4Matrix)); // corrMatrix.print(10, 10);
+    // LinearAlgebraOps.normF(corr4Matrix)); // corrMatrix.print(10, 10);
     // ksiMatrix.print(10, 10);
     return true;
   }
@@ -1538,9 +1539,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
           new SimpleMatrix(getTotalNumberOfAccociationSites(), getTotalNumberOfAccociationSites());
       KlkTVMatrix =
           new SimpleMatrix(getTotalNumberOfAccociationSites(), getTotalNumberOfAccociationSites());
-      corr2Matrix = new DMatrixRMaj(getTotalNumberOfAccociationSites(), 1);
-      corr3Matrix = new DMatrixRMaj(getTotalNumberOfAccociationSites(), 1);
-      corr4Matrix = new DMatrixRMaj(getTotalNumberOfAccociationSites(), 1);
+      corr2Matrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
+      corr3Matrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
+      corr4Matrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
       Klkni =
           new double[numberOfComponents][getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
       ksiMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
@@ -1858,8 +1859,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       // return true;
     }
 
-    DMatrixRMaj mat1 = KlkMatrix.getMatrix();
-    DMatrixRMaj mat2 = ksiMatrix.getMatrix();
+    DenseMatrix mat1 = KlkMatrix.getMatrix();
+    DenseMatrix mat2 = ksiMatrix.getMatrix();
     // second order method not working correctly and not used t the moment b ecause of numerical
     // stability
     int temp = 0;
@@ -1918,9 +1919,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         return false;
       }
 
-      CommonOps_DDRM.mult(mat1, mat2, corr2Matrix);
-      CommonOps_DDRM.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix, corr3Matrix);
-      CommonOps_DDRM.mult(hessianInvers.getDDRM(), corr3Matrix, corr4Matrix);
+      LinearAlgebraOps.mult(mat1, mat2, corr2Matrix);
+      LinearAlgebraOps.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix, corr3Matrix);
+      LinearAlgebraOps.mult(hessianInvers.getDDRM(), corr3Matrix, corr4Matrix);
       // SimpleMatrix gMatrix = udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix));
       // corrMatrix =
       // hessianInvers.mult(udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix)));
@@ -1944,7 +1945,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       }
       // System.out.println("corrmatrix error " );
       // System.out.println("error " + corrMatrix.norm1());
-    } while ((NormOps_DDRM.normF(corr4Matrix) > 1e-12 || !solved) && iter < 100);
+    } while ((LinearAlgebraOps.normF(corr4Matrix) > 1e-12 || !solved) && iter < 100);
 
     // System.out.println("iter " + iter + " error " + NormOps.normF(corr4Matrix));
     // // corrMatrix.print(10, 10);
@@ -2149,29 +2150,29 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
    * solves.
    */
   private static final class SimpleMatrix {
-    private final DMatrixRMaj data;
+    private final DenseMatrix data;
 
     SimpleMatrix(int rows, int cols) {
-      this.data = new DMatrixRMaj(rows, cols);
+      this.data = new DenseMatrix(rows, cols);
     }
 
     SimpleMatrix(double[][] values) {
-      this.data = new DMatrixRMaj(values);
+      this.data = new DenseMatrix(values);
     }
 
-    private SimpleMatrix(DMatrixRMaj ddrm) {
+    private SimpleMatrix(DenseMatrix ddrm) {
       this.data = ddrm;
     }
 
-    static SimpleMatrix wrap(DMatrixRMaj ddrm) {
+    static SimpleMatrix wrap(DenseMatrix ddrm) {
       return new SimpleMatrix(ddrm);
     }
 
-    DMatrixRMaj getDDRM() {
+    DenseMatrix getDDRM() {
       return data;
     }
 
-    DMatrixRMaj getMatrix() {
+    DenseMatrix getMatrix() {
       return data;
     }
 
@@ -2255,7 +2256,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         }
       }
       double[][] inv = LinearAlgebraOps.inverse(matrix);
-      DMatrixRMaj out = new DMatrixRMaj(data.numRows, data.numCols);
+      DenseMatrix out = new DenseMatrix(data.numRows, data.numCols);
       for (int i = 0; i < data.numRows; i++) {
         for (int j = 0; j < data.numCols; j++) {
           out.unsafe_set(i, j, inv[i][j]);
@@ -2277,74 +2278,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         col.set(i, 0, get(i, index));
       }
       return col;
-    }
-  }
-
-  /** Lightweight dense matrix used by CommonOps/NormOps compatibility helpers. */
-  private static final class DMatrixRMaj {
-    final int numRows;
-    final int numCols;
-    private final double[] values;
-
-    DMatrixRMaj(int rows, int cols) {
-      this.numRows = rows;
-      this.numCols = cols;
-      this.values = new double[rows * cols];
-    }
-
-    DMatrixRMaj(double[][] matrix) {
-      this(matrix.length, matrix.length == 0 ? 0 : matrix[0].length);
-      for (int i = 0; i < numRows; i++) {
-        for (int j = 0; j < numCols; j++) {
-          unsafe_set(i, j, matrix[i][j]);
-        }
-      }
-    }
-
-    double unsafe_get(int row, int col) {
-      return values[row * numCols + col];
-    }
-
-    void unsafe_set(int row, int col, double value) {
-      values[row * numCols + col] = value;
-    }
-
-    double[] getData() {
-      return values;
-    }
-  }
-
-  /** Compatibility operations mirroring the subset of EJML ops used here. */
-  private static final class CommonOps_DDRM {
-    private CommonOps_DDRM() {}
-
-    static void mult(DMatrixRMaj a, DMatrixRMaj b, DMatrixRMaj out) {
-      for (int i = 0; i < a.numRows; i++) {
-        for (int j = 0; j < b.numCols; j++) {
-          double sum = 0.0;
-          for (int k = 0; k < a.numCols; k++) {
-            sum += a.unsafe_get(i, k) * b.unsafe_get(k, j);
-          }
-          out.unsafe_set(i, j, sum);
-        }
-      }
-    }
-
-    static void subtract(DMatrixRMaj a, DMatrixRMaj b, DMatrixRMaj out) {
-      for (int i = 0; i < a.numRows; i++) {
-        for (int j = 0; j < a.numCols; j++) {
-          out.unsafe_set(i, j, a.unsafe_get(i, j) - b.unsafe_get(i, j));
-        }
-      }
-    }
-  }
-
-  /** Compatibility norm helper. */
-  private static final class NormOps_DDRM {
-    private NormOps_DDRM() {}
-
-    static double normF(DMatrixRMaj m) {
-      return LinearAlgebraOps.vectorNorm(m.getData());
     }
   }
 
