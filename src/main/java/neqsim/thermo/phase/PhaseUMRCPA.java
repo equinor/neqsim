@@ -10,6 +10,7 @@ import neqsim.thermo.component.ComponentUMRCPA;
 import neqsim.thermo.mixingrule.CPAMixingRuleHandler;
 import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
+import neqsim.util.math.LinearAlgebraOps;
 
 /**
  * <p>
@@ -2227,12 +2228,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     private NormOps_DDRM() {}
 
     static double normF(DMatrixRMaj m) {
-      double sum = 0.0;
-      double[] data = m.getData();
-      for (int i = 0; i < data.length; i++) {
-        sum += data[i] * data[i];
-      }
-      return Math.sqrt(sum);
+      return LinearAlgebraOps.vectorNorm(m.getData());
     }
   }
 

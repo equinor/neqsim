@@ -1,9 +1,9 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import org.ojalgo.matrix.decomposition.LU;
-import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.Primitive64Store;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.math.LinearAlgebraOps;
 
 /**
  * Newton-Raphson solver for two-phase TP flash using Michelsen's u-variable formulation.
@@ -51,6 +51,9 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   /** Residual vector (gradient of Q). */
   private double[] fvecVector;
 
+  /** Pre-allocated right-hand-side vector for linear solve. */
+  private Primitive64Store rhsVector;
+
   /** Newton step vector. */
   private double[] dxVector;
 
@@ -84,6 +87,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     // Pre-allocate matrix and vector workspaces
     jacMatrix = Primitive64Store.FACTORY.make(neq, neq);
     fvecVector = new double[neq];
+    rhsVector = Primitive64Store.FACTORY.make(neq, 1);
     dxVector = new double[neq];
     jacWork = Primitive64Store.FACTORY.make(neq, neq);
     uVector = new double[neq];
@@ -296,17 +300,12 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
         jacWork.set(i, j, jacMatrix.get(i, j));
       }
     }
-    Primitive64Store rhsVector = Primitive64Store.FACTORY.make(neq, 1);
     for (int i = 0; i < neq; i++) {
       rhsVector.set(i, 0, fvecVector[i]);
     }
 
-    if (!linearSolver.decompose(jacWork)) {
+    if (!LinearAlgebraOps.solveLinearSystem(jacWork, rhsVector, dxVector, linearSolver)) {
       throw new IllegalStateException("Failed to decompose Jacobian matrix in Newton solver");
-    }
-    MatrixStore<Double> solution = linearSolver.getSolution(rhsVector);
-    for (int i = 0; i < neq; i++) {
-      dxVector[i] = solution.get(i, 0);
     }
 
     // Directional derivative: slope = fvec^T * dx = grad(Q)^T * (Jac^-1 * grad(Q)) > 0

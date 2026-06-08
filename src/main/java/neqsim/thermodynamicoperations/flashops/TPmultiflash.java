@@ -10,13 +10,10 @@ import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.ojalgo.matrix.decomposition.LU;
-import org.ojalgo.matrix.decomposition.SingularValue;
-import org.ojalgo.matrix.store.MatrixStore;
-import org.ojalgo.matrix.store.Primitive64Store;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.math.LinearAlgebraOps;
 
 /**
  * <p>
@@ -240,13 +237,13 @@ public class TPmultiflash extends TPflash {
       }
 
       calcQ();
-      gradResidual = columnNorm(dQdbeta);
+      gradResidual = LinearAlgebraOps.columnNorm(dQdbeta);
       double[] rhs = new double[system.getNumberOfPhases()];
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
         rhs[k] = dQdbeta[k][0];
       }
       try {
-        if (!solveLinearSystemOjAlgo(Qmatrix, rhs, ans)) {
+        if (!LinearAlgebraOps.solveLinearSystem(Qmatrix, rhs, ans)) {
           throw new RuntimeException("LU decomposition failed in solveBeta");
         }
       } catch (Exception ex) {
@@ -255,7 +252,7 @@ public class TPmultiflash extends TPflash {
             Qmatrix[kk][kk] += 1.0e-2;
           }
           try {
-            if (!solveLinearSystemOjAlgo(Qmatrix, rhs, ans)) {
+            if (!LinearAlgebraOps.solveLinearSystem(Qmatrix, rhs, ans)) {
               throw new RuntimeException("Regularized LU decomposition failed in solveBeta");
             }
           } catch (Exception ex2) {
@@ -296,91 +293,10 @@ public class TPmultiflash extends TPflash {
       calcE();
       setXY();
       system.init(1);
-      err = vectorNorm(ans);
+      err = LinearAlgebraOps.vectorNorm(ans);
     } while (((err > 1e-12 || gradResidual > 1e-10) && iter < 50) || iter < 3);
     // logger.info("iterations " + iter);
     return err;
-  }
-
-  /**
-   * Solves J * x = f using ojAlgo LU decomposition.
-   *
-   * @param jacobian coefficient matrix J
-   * @param rhs right-hand side vector f
-   * @param solution output vector x
-   * @return true when the system was solved
-   */
-  private boolean solveLinearSystemOjAlgo(double[][] jacobian, double[] rhs, double[] solution) {
-    int n = rhs.length;
-    Primitive64Store aStore = Primitive64Store.FACTORY.make(n, n);
-    Primitive64Store bStore = Primitive64Store.FACTORY.make(n, 1);
-
-    for (int i = 0; i < n; i++) {
-      bStore.set(i, 0, rhs[i]);
-      for (int j = 0; j < n; j++) {
-        aStore.set(i, j, jacobian[i][j]);
-      }
-    }
-
-    LU<Double> lu = LU.PRIMITIVE.make(n, n);
-    if (!lu.decompose(aStore)) {
-      return false;
-    }
-
-    MatrixStore<Double> sol = lu.getSolution(bStore);
-    for (int i = 0; i < n; i++) {
-      solution[i] = sol.get(i, 0);
-    }
-    return true;
-  }
-
-  /**
-   * Compute determinant using ojAlgo LU decomposition.
-   *
-   * @param matrix square matrix
-   * @return determinant value
-   */
-  private double determinantOjAlgo(double[][] matrix) {
-    int n = matrix.length;
-    Primitive64Store store = Primitive64Store.FACTORY.make(n, n);
-    for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++) {
-        store.set(i, j, matrix[i][j]);
-      }
-    }
-    LU<Double> lu = LU.PRIMITIVE.make(n, n);
-    if (!lu.decompose(store)) {
-      return 0.0;
-    }
-    return lu.getDeterminant();
-  }
-
-  /**
-   * Euclidean norm of a vector.
-   *
-   * @param vector input vector
-   * @return L2 norm
-   */
-  private double vectorNorm(double[] vector) {
-    double sum = 0.0;
-    for (int i = 0; i < vector.length; i++) {
-      sum += vector[i] * vector[i];
-    }
-    return Math.sqrt(sum);
-  }
-
-  /**
-   * Euclidean norm of a single-column matrix represented as a 2D array.
-   *
-   * @param columnVector column vector in shape [n][1]
-   * @return L2 norm
-   */
-  private double columnNorm(double[][] columnVector) {
-    double sum = 0.0;
-    for (int i = 0; i < columnVector.length; i++) {
-      sum += columnVector[i][0] * columnVector[i][0];
-    }
-    return Math.sqrt(sum);
   }
 
   /**
@@ -887,13 +803,13 @@ public class TPmultiflash extends TPflash {
           }
 
           // Solve J·dx = f using ojAlgo LU
-          boolean solved = solveLinearSystemOjAlgo(newtonJ, newtonF, newtonDx);
+          boolean solved = LinearAlgebraOps.solveLinearSystem(newtonJ, newtonF, newtonDx);
           if (!solved) {
             // Regularize: add small diagonal and retry
             for (int i = 0; i < nc; i++) {
               newtonJ[i][i] += 0.1;
             }
-            solved = solveLinearSystemOjAlgo(newtonJ, newtonF, newtonDx);
+            solved = LinearAlgebraOps.solveLinearSystem(newtonJ, newtonF, newtonDx);
           }
 
           if (solved) {
@@ -1530,7 +1446,7 @@ public class TPmultiflash extends TPflash {
           double[] dx = new double[nComp];
           try {
             // Check if the determinant is close to zero
-            double determinant = determinantOjAlgo(df);
+            double determinant = LinearAlgebraOps.determinant(df);
             if (Math.abs(determinant) < 1e-10) {
               logger.warn("Matrix is nearly singular. Determinant: " + determinant);
               // Add a small regularization term to stabilize the solution
@@ -1541,7 +1457,7 @@ public class TPmultiflash extends TPflash {
                 }
                 regularized[r][r] += 1.0e-6;
               }
-              if (!solveLinearSystemOjAlgo(regularized, f, dx)) {
+              if (!LinearAlgebraOps.solveLinearSystem(regularized, f, dx)) {
                 throw new RuntimeException("Regularized LU solve failed");
               }
             } else {
@@ -1552,7 +1468,7 @@ public class TPmultiflash extends TPflash {
                 }
                 regularized[r][r] += 1.0;
               }
-              if (!solveLinearSystemOjAlgo(regularized, f, dx)) {
+              if (!LinearAlgebraOps.solveLinearSystem(regularized, f, dx)) {
                 throw new RuntimeException("LU solve failed");
               }
             }
@@ -1571,7 +1487,7 @@ public class TPmultiflash extends TPflash {
                 }
                 regularized[r][r] += 0.5;
               }
-              if (!solveLinearSystemOjAlgo(regularized, f, dx)) {
+              if (!LinearAlgebraOps.solveLinearSystem(regularized, f, dx)) {
                 throw new RuntimeException("Fallback LU solve failed");
               }
               for (int r = 0; r < nComp; r++) {
@@ -1581,24 +1497,11 @@ public class TPmultiflash extends TPflash {
               logger.error("Fallback matrix solve failed: " + ex.getMessage());
               logger.debug("Attempting pseudo-inverse fallback...");
               try {
-                Primitive64Store jacStore = Primitive64Store.FACTORY.make(nComp, nComp);
-                Primitive64Store rhsStore = Primitive64Store.FACTORY.make(nComp, 1);
-                for (int r = 0; r < nComp; r++) {
-                  rhsStore.set(r, 0, f[r]);
-                  for (int c = 0; c < nComp; c++) {
-                    jacStore.set(r, c, df[r][c]);
-                  }
-                }
-
-                SingularValue<Double> svd = SingularValue.PRIMITIVE.make(nComp, nComp);
-                if (!svd.decompose(jacStore)) {
+                if (!LinearAlgebraOps.pseudoInverseSolve(df, f, dx)) {
                   throw new IllegalStateException("ojAlgo SVD decomposition failed");
                 }
-                MatrixStore<Double> pinv = svd.getInverse();
-                MatrixStore<Double> result = pinv.multiply(rhsStore);
-
                 for (int r = 0; r < nComp; r++) {
-                  dx[r] = -result.get(r, 0);
+                  dx[r] = -dx[r];
                 }
                 logger.warn("Used pseudo-inverse matrix solve.");
               } catch (Exception ex2) {
@@ -1948,7 +1851,7 @@ public class TPmultiflash extends TPflash {
           double[] dx = new double[nComp];
           try {
             // Check if the determinant is close to zero
-            double determinant = determinantOjAlgo(df);
+            double determinant = LinearAlgebraOps.determinant(df);
             if (Math.abs(determinant) < 1e-10) {
               logger.warn("Matrix is nearly singular. Determinant: " + determinant);
               // Add a small regularization term to stabilize the solution
@@ -1959,7 +1862,7 @@ public class TPmultiflash extends TPflash {
                 }
                 regularized[r][r] += 1.0e-6;
               }
-              if (!solveLinearSystemOjAlgo(regularized, f, dx)) {
+              if (!LinearAlgebraOps.solveLinearSystem(regularized, f, dx)) {
                 throw new RuntimeException("Regularized LU solve failed");
               }
             } else {
@@ -1970,7 +1873,7 @@ public class TPmultiflash extends TPflash {
                 }
                 regularized[r][r] += 1.0;
               }
-              if (!solveLinearSystemOjAlgo(regularized, f, dx)) {
+              if (!LinearAlgebraOps.solveLinearSystem(regularized, f, dx)) {
                 throw new RuntimeException("LU solve failed");
               }
             }
@@ -1989,7 +1892,7 @@ public class TPmultiflash extends TPflash {
                 }
                 regularized[r][r] += 0.5;
               }
-              if (!solveLinearSystemOjAlgo(regularized, f, dx)) {
+              if (!LinearAlgebraOps.solveLinearSystem(regularized, f, dx)) {
                 throw new RuntimeException("Fallback LU solve failed");
               }
               for (int r = 0; r < nComp; r++) {

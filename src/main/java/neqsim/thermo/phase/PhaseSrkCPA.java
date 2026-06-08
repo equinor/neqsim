@@ -10,6 +10,7 @@ import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.mixingrule.CPAMixingRuleHandler;
 import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
+import neqsim.util.math.LinearAlgebraOps;
 
 /**
  * <p>
@@ -2186,21 +2187,17 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     }
 
     SimpleMatrix invert() {
-      LU<Double> lu = LU.PRIMITIVE.make(data.numRows, data.numCols);
-      Primitive64Store store = Primitive64Store.FACTORY.make(data.numRows, data.numCols);
+      double[][] matrix = new double[data.numRows][data.numCols];
       for (int i = 0; i < data.numRows; i++) {
         for (int j = 0; j < data.numCols; j++) {
-          store.set(i, j, get(i, j));
+          matrix[i][j] = get(i, j);
         }
       }
-      if (!lu.decompose(store)) {
-        throw new RuntimeException("Matrix inversion failed: LU decomposition failed");
-      }
-      MatrixStore<Double> inv = lu.getInverse();
+      double[][] inv = LinearAlgebraOps.inverse(matrix);
       DMatrixRMaj out = new DMatrixRMaj(data.numRows, data.numCols);
       for (int i = 0; i < data.numRows; i++) {
         for (int j = 0; j < data.numCols; j++) {
-          out.unsafe_set(i, j, inv.get(i, j));
+          out.unsafe_set(i, j, inv[i][j]);
         }
       }
       return new SimpleMatrix(out);
@@ -2286,12 +2283,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     private NormOps_DDRM() {}
 
     static double normF(DMatrixRMaj m) {
-      double sum = 0.0;
-      double[] data = m.getData();
-      for (int i = 0; i < data.length; i++) {
-        sum += data[i] * data[i];
-      }
-      return Math.sqrt(sum);
+      return LinearAlgebraOps.vectorNorm(m.getData());
     }
   }
 

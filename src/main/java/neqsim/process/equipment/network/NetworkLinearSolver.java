@@ -2,9 +2,7 @@ package neqsim.process.equipment.network;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.ojalgo.matrix.decomposition.LU;
-import org.ojalgo.matrix.store.MatrixStore;
-import org.ojalgo.matrix.store.Primitive64Store;
+import neqsim.util.math.LinearAlgebraOps;
 
 /**
  * Sparse and dense linear system solvers for pipeline network equations.
@@ -105,27 +103,10 @@ public class NetworkLinearSolver {
    * @return solution vector x
    */
   public static double[] solveDense(double[][] matA, double[] vecB, int n) {
-    Primitive64Store denseA = Primitive64Store.FACTORY.make(n, n);
-    Primitive64Store denseB = Primitive64Store.FACTORY.make(n, 1);
-
-    // Copy data to dense stores
-    for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++) {
-        denseA.set(i, j, matA[i][j]);
-      }
-      denseB.set(i, 0, vecB[i]);
-    }
-
-    LU<Double> solver = LU.PRIMITIVE.make(n, n);
-    if (!solver.decompose(denseA)) {
+    double[] result = new double[n];
+    if (!LinearAlgebraOps.solveLinearSystem(matA, vecB, result)) {
       logger.warn("Dense LU setA failed (singular?), falling back to Gaussian");
       return solveGaussian(matA, vecB, n);
-    }
-    MatrixStore<Double> denseX = solver.getSolution(denseB);
-
-    double[] result = new double[n];
-    for (int i = 0; i < n; i++) {
-      result[i] = denseX.get(i, 0);
     }
     return result;
   }

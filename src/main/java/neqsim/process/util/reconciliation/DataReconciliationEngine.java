@@ -6,9 +6,9 @@ import java.util.Collections;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.ojalgo.matrix.decomposition.LU;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.Primitive64Store;
+import neqsim.util.math.LinearAlgebraOps;
 
 /**
  * Data reconciliation engine using weighted least squares (WLS) with linear constraints.
@@ -304,7 +304,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
     MatrixStore<Double> avat = aTimesV.multiply(bigA.transpose());
 
     // Step 2: solve(AVAT, A*y) without forming AVAT^-1
-    MatrixStore<Double> lagrangeMultipliers = solveLinearSystem(avat, rBefore);
+    MatrixStore<Double> lagrangeMultipliers = LinearAlgebraOps.solveLinearSystem(avat, rBefore);
 
     // Step 3: correction = V * A^T * solve(AVAT, A*y)
     MatrixStore<Double> vAt = bigV.multiply(bigA.transpose());
@@ -338,7 +338,7 @@ public class DataReconciliationEngine implements java.io.Serializable {
 
     // Gross error detection via normalized residuals
     // Covariance of adjustments: V_adj = V - V * A^T * solve(AVAT, A * V)
-    MatrixStore<Double> solvedAv = solveLinearSystem(avat, aTimesV);
+    MatrixStore<Double> solvedAv = LinearAlgebraOps.solveLinearSystem(avat, aTimesV);
     MatrixStore<Double> projectionM = vAt.multiply(solvedAv);
     Primitive64Store vAdj = Primitive64Store.FACTORY.make(n, n);
     for (int i = 0; i < n; i++) {
@@ -414,23 +414,6 @@ public class DataReconciliationEngine implements java.io.Serializable {
 	    grossErrorThreshold);
       }
     }
-  }
-
-  /**
-   * Solves a linear system A*X = B using an LU decomposition.
-   *
-   * @param a coefficient matrix A
-   * @param b right-hand side matrix B
-   * @return solution matrix X
-   */
-  private MatrixStore<Double> solveLinearSystem(MatrixStore<Double> a, MatrixStore<Double> b) {
-    int rows = (int) a.countRows();
-    int cols = (int) a.countColumns();
-    LU<Double> lu = LU.PRIMITIVE.make(rows, cols);
-    if (!lu.decompose(a)) {
-      throw new IllegalStateException("LU decomposition failed in data reconciliation solve");
-    }
-    return lu.getSolution(b);
   }
 
   /**
