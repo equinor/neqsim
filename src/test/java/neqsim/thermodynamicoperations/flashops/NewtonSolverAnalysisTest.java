@@ -12,6 +12,7 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.math.LinearAlgebraOps;
 
 /**
  * Analysis tests for Newton solver improvements.
@@ -48,7 +49,6 @@ class NewtonSolverAnalysisTest {
         .info(String.format("%-6s %-12s %-12s %-10s", "Size", "JAMA(ns)", "ojAlgo(ns)", "Speedup"));
 
     for (int n : sizes) {
-      // Create random SPD matrix (typical Jacobian is SPD)
       double[][] aData = new double[n][n];
       double[] bData = new double[n];
       for (int i = 0; i < n; i++) {
@@ -56,10 +56,9 @@ class NewtonSolverAnalysisTest {
         for (int j = 0; j < n; j++) {
           aData[i][j] = rng.nextDouble();
         }
-        aData[i][i] += n; // Make diagonally dominant
+        aData[i][i] += n;
       }
 
-      // JAMA warmup
       Matrix jamaMat = new Matrix(aData);
       Matrix jamab = new Matrix(n, 1);
       for (int i = 0; i < n; i++) {
@@ -69,7 +68,6 @@ class NewtonSolverAnalysisTest {
         jamaMat.solve(jamab);
       }
 
-      // ojAlgo warmup
       Primitive64Store ojAlgoMat = Primitive64Store.FACTORY.rows(aData);
       Primitive64Store ojAlgoB = Primitive64Store.FACTORY.make(n, 1);
       for (int i = 0; i < n; i++) {
@@ -78,22 +76,20 @@ class NewtonSolverAnalysisTest {
       Primitive64Store ojAlgoWork = Primitive64Store.FACTORY.make(n, n);
       LU<Double> solver = LU.PRIMITIVE.make(n, n);
       for (int w = 0; w < warmup; w++) {
-        copyDenseStore(ojAlgoMat, ojAlgoWork, n);
+        LinearAlgebraOps.copyDenseStore(ojAlgoMat, ojAlgoWork, n);
         solver.decompose(ojAlgoWork);
         solver.getSolution(ojAlgoB);
       }
 
-      // JAMA benchmark
       long start = System.nanoTime();
       for (int iter = 0; iter < N; iter++) {
         jamaMat.solve(jamab);
       }
       long jamaTime = System.nanoTime() - start;
 
-      // ojAlgo benchmark
       start = System.nanoTime();
       for (int iter = 0; iter < N; iter++) {
-        copyDenseStore(ojAlgoMat, ojAlgoWork, n);
+        LinearAlgebraOps.copyDenseStore(ojAlgoMat, ojAlgoWork, n);
         solver.decompose(ojAlgoWork);
         solver.getSolution(ojAlgoB);
       }
@@ -106,7 +102,6 @@ class NewtonSolverAnalysisTest {
       logger.info(
           String.format("%-6d %-12.0f %-12.0f %-10.2fx", n, jamaPerCall, ojAlgoPerCall, speedup));
 
-      // Just verify both return reasonable values
       assertTrue(jamaPerCall > 0);
       assertTrue(ojAlgoPerCall > 0);
     }
@@ -133,17 +128,15 @@ class NewtonSolverAnalysisTest {
       Primitive64Store ojAlgoWork = Primitive64Store.FACTORY.make(n, n);
       LU<Double> solver2 = LU.PRIMITIVE.make(n, n);
 
-      // Warmup
       for (int w = 0; w < warmup; w++) {
-        copyDenseStore(ojAlgoMat, ojAlgoWork, n);
+        LinearAlgebraOps.copyDenseStore(ojAlgoMat, ojAlgoWork, n);
         solver2.decompose(ojAlgoWork);
         solver2.getSolution(ojAlgoB);
       }
 
-      // With pre-allocated copy
       long start = System.nanoTime();
       for (int iter = 0; iter < N; iter++) {
-        copyDenseStore(ojAlgoMat, ojAlgoWork, n);
+        LinearAlgebraOps.copyDenseStore(ojAlgoMat, ojAlgoWork, n);
         solver2.decompose(ojAlgoWork);
         solver2.getSolution(ojAlgoB);
       }
@@ -354,39 +347,23 @@ class NewtonSolverAnalysisTest {
 
     // Warmup
     for (int w = 0; w < 5000; w++) {
-      copyDenseStore(ojAlgoMat, ojAlgoWork, n);
+      LinearAlgebraOps.copyDenseStore(ojAlgoMat, ojAlgoWork, n);
       solver.decompose(ojAlgoWork);
       solver.getSolution(ojAlgoB);
     }
 
-    start = System.nanoTime();
+    long ojAlgoStart = System.nanoTime();
     for (int iter = 0; iter < N; iter++) {
-      copyDenseStore(ojAlgoMat, ojAlgoWork, n);
+      LinearAlgebraOps.copyDenseStore(ojAlgoMat, ojAlgoWork, n);
       solver.decompose(ojAlgoWork);
       solver.getSolution(ojAlgoB);
     }
-    long ojAlgoTime = System.nanoTime() - start;
+    long ojAlgoTime = System.nanoTime() - ojAlgoStart;
 
     logger.info("=== Allocation Overhead (n=10, " + N + " solves) ===");
     logger.info(String.format("JAMA (new alloc each): %.0f ns/call", (double) jamaTime / N));
     logger.info(String.format("ojAlgo (work-copy):     %.0f ns/call", (double) ojAlgoTime / N));
     logger.info(String.format("Speedup:               %.2fx", (double) jamaTime / ojAlgoTime));
-    System.out.println();
-  }
-
-  /**
-   * Copies a dense square matrix into a reusable ojAlgo work store.
-   *
-   * @param source source dense matrix
-   * @param target target dense matrix
-   * @param size matrix dimension
-   */
-  private void copyDenseStore(Primitive64Store source, Primitive64Store target, int size) {
-    for (int i = 0; i < size; i++) {
-      for (int j = 0; j < size; j++) {
-        target.set(i, j, source.get(i, j));
-      }
-    }
   }
 
   /**

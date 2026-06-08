@@ -8,6 +8,7 @@ import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.Primitive64Store;
 import org.ojalgo.scalar.ComplexNumber;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.math.LinearAlgebraOps;
 
 /**
  * <p>
@@ -42,19 +43,6 @@ public class CriticalPointFlash extends Flash {
   }
 
   /**
-   * Enforces strict symmetry in the Q matrix by averaging mirrored off-diagonal entries.
-   */
-  private void symmetriseMmatrix() {
-    for (int i = 0; i < numberOfComponents; i++) {
-      for (int j = i + 1; j < numberOfComponents; j++) {
-        double average = 0.5 * (Mmatrix.doubleValue(i, j) + Mmatrix.doubleValue(j, i));
-        Mmatrix.set(i, j, average);
-        Mmatrix.set(j, i, average);
-      }
-    }
-  }
-
-  /**
    * <p>
    * Builds the scaled Q matrix used in the Heidemann &amp; Khalil (1980) critical-point criterion.
    * </p>
@@ -84,7 +72,7 @@ public class CriticalPointFlash extends Flash {
             * tempJ);
       }
     }
-    symmetriseMmatrix();
+    LinearAlgebraOps.symmetriseMmatrix(Mmatrix);
   }
 
   /**

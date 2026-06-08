@@ -95,6 +95,37 @@ public final class LinearAlgebraOps {
   }
 
   /**
+   * Copies a dense square matrix into a reusable ojAlgo work store.
+   *
+   * @param source source dense matrix
+   * @param target target dense matrix
+   * @param size matrix dimension
+   */
+  public static void copyDenseStore(Primitive64Store source, Primitive64Store target, int size) {
+    for (int i = 0; i < size; i++) {
+      for (int j = 0; j < size; j++) {
+        target.set(i, j, source.get(i, j));
+      }
+    }
+  }
+
+  /**
+   * Enforces strict symmetry in a square dense matrix by averaging mirrored off-diagonal entries.
+   *
+   * @param matrix square dense matrix to symmetrize in place
+   */
+  public static void symmetriseMmatrix(Primitive64Store matrix) {
+    int size = (int) matrix.countRows();
+    for (int i = 0; i < size; i++) {
+      for (int j = i + 1; j < size; j++) {
+        double average = 0.5 * (matrix.doubleValue(i, j) + matrix.doubleValue(j, i));
+        matrix.set(i, j, average);
+        matrix.set(j, i, average);
+      }
+    }
+  }
+
+  /**
    * Computes determinant of a square matrix from LU decomposition.
    *
    * @param matrix square matrix
