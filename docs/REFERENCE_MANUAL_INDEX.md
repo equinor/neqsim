@@ -834,7 +834,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | ISO 15403                 | [docs/standards/iso15403_cng_quality.md](standards/iso15403_cng_quality)         | ISO 15403 CNG quality                              |
 | Dew Point                 | [docs/standards/dew_point_standards.md](standards/dew_point_standards)           | Dew point standards                                |
 | ASTM D6377                | [docs/standards/astm_d6377_rvp.md](standards/astm_d6377_rvp)                     | ASTM D6377 RVP                                     |
-| **Oil Quality Standards** | [docs/standards/oil_quality_standards.md](standards/oil_quality_standards)       | **ASTM D86, D445, D4052, D4294, D6377, TVP, D4737, D2500, D97, BS&W** |
+| **Oil Quality Standards** | [docs/standards/oil_quality_standards.md](standards/oil_quality_standards)       | **ASTM D86, D445, D4052, D4294, D6377, TVP, D4737, D611, D1322, EN 116, D3230, D2500, D97, BS&W** |
 | Sales Contracts           | [docs/standards/sales_contracts.md](standards/sales_contracts)                   | Sales contracts                                    |
 | **IEC 81346 Reference Designations** | [docs/standards/iec81346-reference-designations.md](standards/iec81346-reference-designations) | **IEC 81346 structured equipment identification — letter codes, automatic designation generation, hierarchical/flat function numbering, ProcessModel integration, lifecycle state persistence, engineering deliverables, ISA-5.1 cross-reference, DEXPI export, ProcessAutomation integration** |
 

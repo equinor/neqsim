@@ -84,6 +84,28 @@ public class OilQualityStandardsTest {
     return oil;
   }
 
+  /**
+   * Creates a waxy oil fluid with an active wax model so a finite cloud point can be calculated.
+   *
+   * @return a SystemInterface representing a waxy oil with the wax model enabled
+   */
+  private SystemInterface createWaxyOil() {
+    neqsim.util.database.NeqSimDataBase.setCreateTemporaryTables(true);
+    SystemInterface oil = new SystemSrkEos(298.0, 5.0);
+    oil.addComponent("methane", 6.78);
+    oil.addTBPfraction("C19", 10.13, 170.0 / 1000.0, 0.7814);
+    oil.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.850871882888);
+    oil.getCharacterization().characterisePlusFraction();
+    oil.getWaxModel().addTBPWax();
+    oil.createDatabase(true);
+    oil.setMixingRule(2);
+    oil.addSolidComplexPhase("wax");
+    oil.setMultiphaseWaxCheck(true);
+    oil.setMultiPhaseCheck(true);
+    neqsim.util.database.NeqSimDataBase.setCreateTemporaryTables(false);
+    return oil;
+  }
+
   // ========== ASTM D86 Tests ==========
 
   @Test
@@ -683,5 +705,221 @@ public class OilQualityStandardsTest {
 
     standard.clearMinCetaneSpec();
     assertTrue(standard.isOnSpec(), "Should pass when no spec limit is set");
+  }
+
+  // ========== ASTM D611 Aniline Point Tests ==========
+
+  @Test
+  void testASTM_D611_basic() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D611 standard = new Standard_ASTM_D611(oil);
+    standard.calculate();
+
+    double anilineC = standard.getValue("anilinePoint", "C");
+    assertTrue(!Double.isNaN(anilineC), "Aniline point should be a finite number");
+    assertTrue(anilineC > 0.0 && anilineC < 120.0,
+        "Aniline point should be physically plausible for a diesel: " + anilineC);
+  }
+
+  @Test
+  void testASTM_D611_unitConversion() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D611 standard = new Standard_ASTM_D611(oil);
+    standard.calculate();
+
+    double anilineC = standard.getValue("anilinePoint", "C");
+    double anilineK = standard.getValue("anilinePoint", "K");
+    double anilineF = standard.getValue("anilinePoint", "F");
+
+    assertEquals(anilineC + 273.15, anilineK, 1.0e-6, "K should be C + 273.15");
+    assertEquals(anilineC * 9.0 / 5.0 + 32.0, anilineF, 1.0e-6, "F conversion should match");
+    assertEquals("C", standard.getUnit("anilinePoint"));
+  }
+
+  @Test
+  void testASTM_D611_coefficientsAffectResult() {
+    SystemInterface oil = createDiesel();
+
+    Standard_ASTM_D611 base = new Standard_ASTM_D611(oil);
+    base.calculate();
+    double baseAniline = base.getValue("anilinePoint");
+
+    Standard_ASTM_D611 shifted = new Standard_ASTM_D611(oil);
+    shifted.setCorrelationCoefficients(70.0, 35.0, 0.083);
+    shifted.calculate();
+    double shiftedAniline = shifted.getValue("anilinePoint");
+
+    assertEquals(baseAniline + 10.0, shiftedAniline, 1.0e-6,
+        "Raising the intercept by 10 should raise the aniline point by 10");
+  }
+
+  @Test
+  void testASTM_D611_minSpecLimit() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D611 standard = new Standard_ASTM_D611(oil);
+    standard.calculate();
+    double anilineC = standard.getValue("anilinePoint", "C");
+
+    standard.setMinAnilineSpec(anilineC - 5.0, "C");
+    assertTrue(standard.isOnSpec(), "Should pass when aniline point exceeds the min limit");
+
+    standard.setMinAnilineSpec(anilineC + 5.0, "C");
+    assertTrue(!standard.isOnSpec(), "Should fail when aniline point is below the min limit");
+
+    standard.clearMinAnilineSpec();
+    assertTrue(standard.isOnSpec(), "Should pass when no spec limit is set");
+  }
+
+  // ========== ASTM D1322 Smoke Point Tests ==========
+
+  @Test
+  void testASTM_D1322_basic() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D1322 standard = new Standard_ASTM_D1322(oil);
+    standard.calculate();
+
+    double smokeMm = standard.getValue("smokePoint", "mm");
+    assertTrue(!Double.isNaN(smokeMm), "Smoke point should be a finite number");
+    assertTrue(smokeMm > 0.0 && smokeMm < 60.0,
+        "Smoke point should be physically plausible: " + smokeMm);
+    assertEquals("mm", standard.getUnit("smokePoint"));
+  }
+
+  @Test
+  void testASTM_D1322_tracksAnilinePoint() {
+    SystemInterface oil = createDiesel();
+
+    Standard_ASTM_D611 d611 = new Standard_ASTM_D611(oil);
+    d611.calculate();
+    double anilineC = d611.getValue("anilinePoint");
+
+    Standard_ASTM_D1322 standard = new Standard_ASTM_D1322(oil);
+    standard.calculate();
+
+    assertEquals(anilineC, standard.getValue("anilinePoint"), 1.0e-6,
+        "Aniline point should pass through from the internal D611 calculation");
+    assertEquals(8.5 + 0.325 * anilineC, standard.getValue("smokePoint"), 1.0e-6,
+        "Smoke point should match the default correlation");
+  }
+
+  @Test
+  void testASTM_D1322_minSpecLimit() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D1322 standard = new Standard_ASTM_D1322(oil);
+    standard.calculate();
+    double smokeMm = standard.getValue("smokePoint");
+
+    standard.setMinSmokeSpec(smokeMm - 2.0);
+    assertTrue(standard.isOnSpec(), "Should pass when smoke point exceeds the min limit");
+
+    standard.setMinSmokeSpec(smokeMm + 2.0);
+    assertTrue(!standard.isOnSpec(), "Should fail when smoke point is below the min limit");
+
+    standard.clearMinSmokeSpec();
+    assertTrue(standard.isOnSpec(), "Should pass when no spec limit is set");
+  }
+
+  // ========== EN 116 CFPP Tests ==========
+
+  @Test
+  void testEN116_basic() {
+    SystemInterface oil = createWaxyOil();
+    Standard_EN116 standard = new Standard_EN116(oil);
+    standard.calculate();
+
+    double cfppC = standard.getValue("CFPP", "C");
+    double cloudC = standard.getValue("cloudPoint", "C");
+    assertTrue(!Double.isNaN(cfppC), "CFPP should be a finite number");
+    assertEquals(cloudC, cfppC, 1.0e-6, "Default CFPP should equal the cloud point");
+    assertEquals("C", standard.getUnit("CFPP"));
+  }
+
+  @Test
+  void testEN116_offsetShiftsResult() {
+    SystemInterface oil = createWaxyOil();
+
+    Standard_EN116 standard = new Standard_EN116(oil);
+    standard.setOffset(-3.0);
+    standard.calculate();
+
+    double cloudC = standard.getValue("cloudPoint", "C");
+    double cfppC = standard.getValue("CFPP", "C");
+    assertTrue(!Double.isNaN(cloudC), "Cloud point basis should be a finite number");
+    assertEquals(-3.0, standard.getOffset(), 1.0e-9, "Offset getter should return what was set");
+    assertEquals(cloudC - 3.0, cfppC, 1.0e-6, "CFPP should be cloud point plus the offset");
+  }
+
+  @Test
+  void testEN116_maxSpecLimit() {
+    SystemInterface oil = createWaxyOil();
+    Standard_EN116 standard = new Standard_EN116(oil);
+    standard.calculate();
+    double cfppC = standard.getValue("CFPP", "C");
+    assertTrue(!Double.isNaN(cfppC), "CFPP should be a finite number");
+
+    standard.setMaxCfppSpec(cfppC + 5.0, "C");
+    assertTrue(standard.isOnSpec(), "Should pass when CFPP is below the max limit");
+
+    standard.setMaxCfppSpec(cfppC - 5.0, "C");
+    assertTrue(!standard.isOnSpec(), "Should fail when CFPP exceeds the max limit");
+
+    standard.clearMaxCfppSpec();
+    assertTrue(standard.isOnSpec(), "Should pass when no spec limit is set");
+  }
+
+  // ========== ASTM D3230 Salt Content Tests ==========
+
+  @Test
+  void testASTM_D3230_requiresInputs() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D3230 standard = new Standard_ASTM_D3230(oil);
+    standard.calculate();
+
+    assertTrue(Double.isNaN(standard.getValue("saltContentPTB")),
+        "Salt content should be NaN without a brine assay");
+    assertTrue(!standard.isOnSpec(), "Should be off-spec when no result is available");
+  }
+
+  @Test
+  void testASTM_D3230_ptbConversion() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D3230 standard = new Standard_ASTM_D3230(oil);
+    standard.setWaterCut(0.005); // 0.5 vol% water
+    standard.setBrineSalinity(35.0, "kg/m3"); // 35 g/L brine
+    standard.calculate();
+
+    double saltMassPerCrudeVolume = 0.005 * 35.0; // kg salt per m3 crude
+    double expectedPtb = saltMassPerCrudeVolume * 158.987 * 2.20462;
+    assertEquals(expectedPtb, standard.getValue("saltContentPTB"), 1.0e-6,
+        "PTB should match the documented conversion");
+    assertEquals("PTB", standard.getUnit("saltContent"));
+
+    double ppmw = standard.getValue("saltContent", "mg/kg");
+    assertTrue(!Double.isNaN(ppmw) && ppmw > 0.0,
+        "mg/kg salt content should be a finite positive number: " + ppmw);
+  }
+
+  @Test
+  void testASTM_D3230_waterCutUnitsAndSpec() {
+    SystemInterface oil = createLightOil();
+
+    Standard_ASTM_D3230 percent = new Standard_ASTM_D3230(oil);
+    percent.setWaterCut(0.5, "vol%");
+    percent.setBrineSalinity(35.0, "kg/m3");
+    percent.calculate();
+
+    Standard_ASTM_D3230 fraction = new Standard_ASTM_D3230(oil);
+    fraction.setWaterCut(0.005);
+    fraction.setBrineSalinity(35.0, "kg/m3");
+    fraction.calculate();
+
+    assertEquals(fraction.getValue("saltContentPTB"), percent.getValue("saltContentPTB"), 1.0e-6,
+        "0.5 vol% should equal a 0.005 volume fraction");
+
+    double ptb = fraction.getValue("saltContentPTB");
+    fraction.setMaxSaltSpec(ptb + 1.0);
+    assertTrue(fraction.isOnSpec(), "Should pass when salt content is below the max limit");
+    fraction.setMaxSaltSpec(ptb - 0.1);
+    assertTrue(!fraction.isOnSpec(), "Should fail when salt content exceeds the max limit");
   }
 }

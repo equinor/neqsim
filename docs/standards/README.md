@@ -24,7 +24,7 @@ The NeqSim standards package implements international standards for gas and oil 
 The standards package provides implementations of:
 
 1. **Gas Quality Standards** - ISO 6976, ISO 6974, ISO 6578, ISO 15403, ISO 18453
-2. **Oil Quality Standards** - ASTM D86 (distillation), D445 (viscosity), D4052 (density/API gravity), D4294 (sulfur), D2500 (cloud point), D97 (pour point), D6377 (RVP), TVP (true vapor pressure), D4737 (cetane index), BS&W
+2. **Oil Quality Standards** - ASTM D86 (distillation), D445 (viscosity), D4052 (density/API gravity), D4294 (sulfur), D2500 (cloud point), D97 (pour point), D6377 (RVP), TVP (true vapor pressure), D4737 (cetane index), D611 (aniline point), D1322 (smoke point), EN 116 (CFPP), D3230 (salt content), BS&W
 3. **Sales Contracts** - Specification verification against contractual limits
 
 **Key Applications:**
@@ -64,6 +64,10 @@ standards/
 │   ├── Standard_ASTM_D4294.java     # Total sulfur content
 │   ├── Standard_TVP.java            # True vapor pressure (API MPMS 19)
 │   ├── Standard_ASTM_D4737.java     # Calculated cetane index
+│   ├── Standard_ASTM_D611.java      # Aniline point (estimate)
+│   ├── Standard_ASTM_D1322.java     # Smoke point (estimate)
+│   ├── Standard_EN116.java          # Cold filter plugging point (estimate)
+│   ├── Standard_ASTM_D3230.java     # Salt content (input-driven)
 │   ├── Standard_ASTM_D2500.java     # Cloud point (WAT)
 │   ├── Standard_ASTM_D97.java       # Pour point
 │   └── Standard_BSW.java            # Basic sediment & water
@@ -87,7 +91,7 @@ Detailed guides for each major standard:
 | [ISO 15403 - CNG Quality](iso15403_cng_quality) | Methane number and MON for vehicle fuel |
 | [Dew Point Standards](dew_point_standards) | Water and hydrocarbon dew point methods |
 | [ASTM D6377 - RVP](astm_d6377_rvp) | Reid vapor pressure for crude and condensate |
-| [Oil Quality Standards](oil_quality_standards) | ASTM D86, D445, D4052, D4294, D6377, TVP, D4737, D2500, D97, BS&W |
+| [Oil Quality Standards](oil_quality_standards) | ASTM D86, D445, D4052, D4294, D6377, TVP, D4737, D611, D1322, EN 116, D3230, D2500, D97, BS&W |
 | [Sales Contracts](sales_contracts) | Contract specification and compliance checking |
 
 ---

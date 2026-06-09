@@ -18,6 +18,10 @@ NeqSim provides thermodynamics-based implementations of key ASTM standards used 
 | ASTM D6377 | `Standard_ASTM_D6377` | Reid vapor pressure (RVP) | RVP at 37.8 &deg;C |
 | TVP (API MPMS 19) | `Standard_TVP` | True vapor pressure | Bubble-point pressure at any reference temperature |
 | ASTM D4737 | `Standard_ASTM_D4737` | Calculated cetane index | CCI (4-variable) + D976 (2-variable) |
+| ASTM D611 | `Standard_ASTM_D611` | Aniline point (estimate) | Estimated aniline point from Watson K + MeABP |
+| ASTM D1322 | `Standard_ASTM_D1322` | Smoke point (estimate) | Estimated jet/kerosene smoke point |
+| EN 116 | `Standard_EN116` | Cold filter plugging point (estimate) | CFPP from cloud point + offset |
+| ASTM D3230 | `Standard_ASTM_D3230` | Salt content (input-driven) | PTB and mg/kg from water cut + brine salinity |
 | ASTM D2500 | `Standard_ASTM_D2500` | Cloud point | Wax appearance temperature |
 | ASTM D97 | `Standard_ASTM_D97` | Pour point | Lowest flow temperature |
 | BS&W | `Standard_BSW` | Basic sediment & water | Water vol%, on-spec check |
@@ -372,6 +376,175 @@ System.out.printf("Cetane index D4737=%.1f, D976=%.1f%n", cci, cciD976);
 cetane.setMinCetaneSpec(51.0);
 System.out.println("On spec: " + cetane.isOnSpec());
 ```
+
+---
+
+## ASTM D611 - Aniline Point (estimate)
+
+The **aniline point** is the lowest temperature at which equal volumes of the oil and aniline are completely miscible. It is an inverse measure of aromatic content: paraffinic stocks have high aniline points, aromatic stocks have low aniline points. It feeds the Diesel Index and supports jet-fuel and solvent quality control.
+
+> **Estimate, not a measurement.** The aniline point is governed by paraffinicity and boiling range, so it is estimated from the Watson (UOP) characterization factor and the mean average boiling point (MeABP), both obtained internally from `Standard_ASTM_D86`. The default coefficients reproduce typical middle-distillate behaviour and are configurable for calibration against measured ASTM D611 / API Procedure 2B8.1 (Walsh&ndash;Mortimer) data.
+
+### Parameters
+
+| Parameter | Description | Unit |
+|-----------|-------------|------|
+| `anilinePoint` / `AP` | Estimated aniline point | C (K, F, R via `getValue(name, unit)`) |
+| `MeABP` | Mean average boiling point (passthrough from D86) | C |
+| `watsonK` | Watson characterization factor | &ndash; |
+
+### Formula
+
+$$
+\mathrm{AP}[^{\circ}\mathrm{C}] = c_0 + c_1\,(K_w - 12.0) + c_2\,(\mathrm{MeABP}[^{\circ}\mathrm{C}] - 190.0)
+$$
+
+with defaults $c_0 = 60.0$, $c_1 = 35.0$, $c_2 = 0.083$.
+
+### Example
+
+```java
+Standard_ASTM_D611 aniline = new Standard_ASTM_D611(dieselFluid);
+aniline.calculate();
+double anilinePointC = aniline.getValue("anilinePoint", "C");
+
+// Optional minimum aniline-point specification
+aniline.setMinAnilineSpec(70.0, "C");
+System.out.println("On spec: " + aniline.isOnSpec());
+```
+
+---
+
+## ASTM D1322 - Smoke Point (estimate)
+
+The **smoke point** is the maximum flame height in millimetres at which a kerosene / jet fuel burns without smoking. It controls aviation turbine fuel burning quality (e.g. Jet A-1 requires a smoke point of at least 25 mm). A high smoke point indicates a paraffinic, low-aromatic fuel.
+
+> **Estimate, not a measurement.** The smoke point tracks aromaticity, captured here through the estimated aniline point from `Standard_ASTM_D611`. The default coefficients are configurable for calibration against measured ASTM D1322 data.
+
+### Parameters
+
+| Parameter | Description | Unit |
+|-----------|-------------|------|
+| `smokePoint` / `SP` | Estimated smoke point | mm |
+| `anilinePoint` / `AP` | Aniline point (passthrough from D611) | C |
+
+### Formula
+
+$$
+\mathrm{SmokePoint}[\mathrm{mm}] = sp_0 + sp_1\,\mathrm{AP}[^{\circ}\mathrm{C}]
+$$
+
+with defaults $sp_0 = 8.5$, $sp_1 = 0.325$.
+
+### Example
+
+```java
+Standard_ASTM_D1322 smoke = new Standard_ASTM_D1322(jetFluid);
+smoke.calculate();
+double smokePointMm = smoke.getValue("smokePoint", "mm");
+
+// Optional minimum smoke-point specification (e.g. 25 mm for Jet A-1)
+smoke.setMinSmokeSpec(25.0);
+System.out.println("On spec: " + smoke.isOnSpec());
+```
+
+---
+
+## EN 116 - Cold Filter Plugging Point (estimate)
+
+The **cold filter plugging point (CFPP)** is the highest temperature at which a given volume of fuel fails to pass through a standardised filtration device when cooled. It characterises the low-temperature operability of diesel and heating oils and is widely used in European specifications.
+
+> **Estimate, not a measurement.** For untreated middle distillates the CFPP closely tracks the cloud point (wax appearance temperature), obtained internally from `Standard_ASTM_D2500`. The default offset is 0 &deg;C (CFPP equal to cloud point); cold-flow additives can depress the CFPP below the cloud point, in which case set the offset from response testing.
+
+### Parameters
+
+| Parameter | Description | Unit |
+|-----------|-------------|------|
+| `CFPP` | Estimated cold filter plugging point | C (K, F, R via `getValue(name, unit)`) |
+| `cloudPoint` / `CP` | Cloud point basis (passthrough from D2500) | C |
+
+### Formula
+
+$$
+\mathrm{CFPP}[^{\circ}\mathrm{C}] = \mathrm{cloudPoint}[^{\circ}\mathrm{C}] + \mathrm{offset}
+$$
+
+### Example
+
+```java
+Standard_EN116 cfpp = new Standard_EN116(dieselFluid);
+cfpp.setOffset(-2.0); // optional additive response
+cfpp.calculate();
+double cfppC = cfpp.getValue("CFPP", "C");
+
+// Optional maximum CFPP specification (e.g. -10 C winter grade)
+cfpp.setMaxCfppSpec(-10.0, "C");
+System.out.println("On spec: " + cfpp.isOnSpec());
+```
+
+> **Note:** the cloud point basis requires an active wax model on the fluid (e.g. `fluid.getWaxModel().addTBPWax()` plus `addSolidComplexPhase("wax")`); without it the cloud point and therefore the CFPP return `NaN`.
+
+---
+
+## ASTM D3230 - Salt Content in Crude Oil (input-driven)
+
+The **salt content** of crude oil is reported as PTB (pounds of NaCl-equivalent per thousand barrels) or as a mass concentration (mg/kg, i.e. ppmw). It is a key desalter performance and corrosion-control parameter. The salt is dissolved in the entrained brine, so it **cannot be predicted from the hydrocarbon equation of state** &ndash; it must be supplied from the produced-water cut and the brine salinity.
+
+> **Input-driven.** Provide the water cut (volume fraction of crude that is water) and the brine salinity (mass of salt per unit volume of brine). The class converts to PTB and mg/kg. If either input is missing, the result is `NaN` and a brine assay is required.
+
+### Parameters
+
+| Parameter | Description | Unit |
+|-----------|-------------|------|
+| `saltContentPTB` / `saltContent` | Salt content | PTB |
+| `saltContentPpmw` / `saltContent` (with `"mg/kg"`) | Salt content | mg/kg |
+
+### Formula
+
+$$
+\mathrm{PTB} = w_{\mathrm{water}} \cdot S_{\mathrm{brine}}[\mathrm{kg/m^3}] \cdot 350.51
+$$
+
+$$
+\mathrm{ppmw} = \frac{w_{\mathrm{water}} \cdot S_{\mathrm{brine}}[\mathrm{kg/m^3}]}{\rho_{\mathrm{crude}}[\mathrm{kg/m^3}]} \cdot 10^6
+$$
+
+where the PTB factor $350.51 = 158.987\ \mathrm{m^3/1000\,bbl} \cdot 2.20462\ \mathrm{lb/kg}$, and the crude density is obtained internally from `Standard_ASTM_D4052`.
+
+### Example
+
+```java
+Standard_ASTM_D3230 salt = new Standard_ASTM_D3230(crudeFluid);
+salt.setWaterCut(0.005);              // 0.5 vol% water (or setWaterCut(0.5, "vol%"))
+salt.setBrineSalinity(35.0, "kg/m3"); // 35 g/L brine
+salt.calculate();
+
+double ptb = salt.getValue("saltContentPTB");
+double ppmw = salt.getValue("saltContent", "mg/kg");
+
+// Optional maximum salt-content specification
+salt.setMaxSaltSpec(10.0); // PTB
+System.out.println("On spec: " + salt.isOnSpec());
+```
+
+---
+
+## Properties NeqSim cannot predict from composition
+
+Some oil-quality properties depend on molecular features (acidic groups, coke-forming
+tendency, optical absorption) that are **not represented in a cubic equation-of-state
+composition**. NeqSim does not predict these from an EOS fluid, and attempting to do so would
+produce misleading numbers. Supply them from laboratory assay data instead.
+
+| Property | Standard | Why it cannot be predicted from an EOS composition |
+|----------|----------|----------------------------------------------------|
+| Total Acid Number (TAN) | ASTM D664 | Set by naphthenic-acid and other carboxylic-acid concentrations. A cubic EOS pseudo-component carries no acid-group information, so TAN can only be a stoichiometric passthrough **if** acidic pseudo-components with known acid numbers are explicitly defined. |
+| Conradson / Micro Carbon Residue (MCR) | ASTM D189 / D4530 | Measures coke left after pyrolysis of the heavy ends &ndash; a thermal-cracking outcome, not a phase-equilibrium property. At best a rough, heavily caveated correlation from residue yield and density; not a thermodynamic prediction. |
+| Color | ASTM D1500 | An optical (visible-light absorption) property driven by trace chromophores. There is no thermodynamic basis to derive it from composition. |
+
+For TAN and MCR, if an assay value is available it should be attached to the fluid as
+metadata and carried through mass-balance mixing rather than computed from the EOS. Color must
+always be taken from measurement.
 
 ---
 
