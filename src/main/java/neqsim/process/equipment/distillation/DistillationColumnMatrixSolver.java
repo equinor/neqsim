@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -581,6 +582,13 @@ public class DistillationColumnMatrixSolver {
   private StreamInterface createOutletStream(SystemInterface template, int phaseIndex,
       double[] componentFlows, UUID id) {
     SystemInterface outletSystem = createOutletSystemTemplate(template, phaseIndex);
+    // Capture the intended single-phase designation BEFORE any re-init. A later init(0)
+    // re-expands the system to its maximum number of phases and resets slot 0 to the
+    // default (gas) type, which would evaluate a liquid outlet on the vapour EOS root and
+    // corrupt its enthalpy. The phase type is restored after init below.
+    PhaseType outletPhaseType = (phaseIndex >= 0 && phaseIndex < template.getNumberOfPhases())
+        ? template.getPhase(phaseIndex).getType()
+        : outletSystem.getPhase(0).getType();
     double totalFlow = sum(componentFlows);
     outletSystem.setNumberOfPhases(1);
     for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
@@ -598,7 +606,12 @@ public class DistillationColumnMatrixSolver {
     outletSystem.setPressure(template.getPressure());
     try {
       outletSystem.init(0);
-      outletSystem.init(1);
+      // Restore the single-phase state and re-apply the captured phase type so the correct
+      // EOS root is used, then initialise residual properties. init(2) is sufficient because
+      // only enthalpy/entropy/Cp are read from the outlet stream for the energy balance.
+      outletSystem.setNumberOfPhases(1);
+      outletSystem.setPhaseType(0, outletPhaseType);
+      outletSystem.init(2);
     } catch (RuntimeException exception) {
       logger.debug("Matrix inside-out outlet init failed", exception);
     }
