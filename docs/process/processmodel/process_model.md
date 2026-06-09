@@ -104,6 +104,31 @@ model.setRunStep(true);
 model.run();  // Runs one step for each process
 ```
 
+#### Per-area control: fully solve selected areas in step mode
+
+By default every `ProcessSystem` advances a single pass per model step when the
+model is in step mode. You can override this for individual areas so that a
+selected area is solved to full convergence on each model step while the others
+still advance only one pass. This is useful for fast inner loops (for example an
+anti-surge recycle) that should settle within each step.
+
+```java
+ProcessModel model = new ProcessModel();
+model.add("Compression", compressionSystem); // contains an anti-surge recycle
+model.add("Export", exportSystem);
+
+// Fully solve the compression area on every model step; Export still single-steps
+compressionSystem.setSolveFullyInModelStep(true);
+
+model.setRunStep(true);
+model.run();  // Compression converges fully, Export advances one pass
+```
+
+The flag is read by `ProcessModel` when it runs each child area: areas with
+`isSolveFullyInModelStep() == true` are executed with `run()` (run to
+convergence), all others with `run_step()` (single pass). The setting is
+preserved across `ProcessSystem.copy()`.
+
 ### Optimized Execution
 
 ```java
@@ -200,7 +225,7 @@ Map<String, ValidationResult> allResults = model.validateAll();
 for (Map.Entry<String, ValidationResult> entry : allResults.entrySet()) {
     String processName = entry.getKey();
     ValidationResult processResult = entry.getValue();
-    
+
     if (!processResult.isValid()) {
         System.out.println(processName + " has issues:");
         processResult.getErrors().forEach(System.out::println);
@@ -245,11 +270,11 @@ Ready to run: NO
 
 ```java
 // Get mass balance for all processes
-Map<String, Map<String, ProcessSystem.MassBalanceResult>> results = 
+Map<String, Map<String, ProcessSystem.MassBalanceResult>> results =
     model.checkMassBalance("kg/hr");
 
 // Get failed mass balance checks
-Map<String, Map<String, ProcessSystem.MassBalanceResult>> failed = 
+Map<String, Map<String, ProcessSystem.MassBalanceResult>> failed =
     model.getFailedMassBalance(0.1);  // 0.1% threshold
 
 // Get formatted reports
@@ -273,7 +298,7 @@ gasProcess.add(gasIn);
 gasProcess.add(scrubber);
 gasProcess.add(comp);
 
-// Create oil processing system  
+// Create oil processing system
 ProcessSystem oilProcess = new ProcessSystem("Oil Train");
 Stream oilIn = new Stream("Oil Feed", oilFluid);
 Heater heater = new Heater("Oil Heater", oilIn);
@@ -290,7 +315,7 @@ model.add("Oil Train", oilProcess);
 // Validate before running
 if (model.isReadyToRun()) {
     model.run();
-    
+
     if (model.isModelConverged()) {
         System.out.println("Model converged!");
         System.out.println(model.getConvergenceSummary());
