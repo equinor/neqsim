@@ -407,6 +407,111 @@ public final class LinearAlgebraOps {
   }
 
   /**
+   * Computes Moore-Penrose pseudo-inverse of a matrix using SVD.
+   *
+   * @param matrix input matrix
+   * @return pseudo-inverse matrix
+   * @throws IllegalStateException if SVD decomposition fails
+   */
+  public static double[][] pseudoInverse(double[][] matrix) {
+    int nRows = matrix.length;
+    int nCols = matrix[0].length;
+    Primitive64Store store = Primitive64Store.FACTORY.make(nRows, nCols);
+    for (int i = 0; i < nRows; i++) {
+      for (int j = 0; j < nCols; j++) {
+        store.set(i, j, matrix[i][j]);
+      }
+    }
+
+    SingularValue<Double> svd = SingularValue.PRIMITIVE.make(nRows, nCols);
+    if (!svd.decompose(store)) {
+      throw new IllegalStateException("Pseudo-inverse failed: SVD decomposition failed");
+    }
+
+    MatrixStore<Double> inv = svd.getInverse();
+    double[][] out = new double[(int) inv.countRows()][(int) inv.countColumns()];
+    for (int i = 0; i < out.length; i++) {
+      for (int j = 0; j < out[i].length; j++) {
+        out[i][j] = inv.get(i, j);
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Estimates the 2-norm condition number from SVD singular values.
+   *
+   * @param matrix input matrix
+   * @return estimated condition number, or {@code Double.POSITIVE_INFINITY} if decomposition fails
+   *         or the minimum singular value is effectively zero
+   */
+  public static double conditionP2(double[][] matrix) {
+    int nRows = matrix.length;
+    int nCols = matrix[0].length;
+    Primitive64Store store = Primitive64Store.FACTORY.make(nRows, nCols);
+    for (int i = 0; i < nRows; i++) {
+      for (int j = 0; j < nCols; j++) {
+        store.set(i, j, matrix[i][j]);
+      }
+    }
+
+    SingularValue<Double> svd = SingularValue.PRIMITIVE.make(nRows, nCols);
+    if (!svd.decompose(store)) {
+      return Double.POSITIVE_INFINITY;
+    }
+    double maxSingular = svd.getOperatorNorm();
+    double minSingular = svd.getFrobeniusNorm() / Math.max(1.0, svd.getRank());
+    if (Math.abs(minSingular) < 1.0e-30) {
+      return Double.POSITIVE_INFINITY;
+    }
+    return maxSingular / minSingular;
+  }
+
+  /**
+   * Multiplies two primitive matrices.
+   *
+   * @param left left matrix
+   * @param right right matrix
+   * @return product matrix
+   */
+  public static double[][] multiply(double[][] left, double[][] right) {
+    Primitive64Store leftStore = Primitive64Store.FACTORY.rows(left);
+    Primitive64Store rightStore = Primitive64Store.FACTORY.rows(right);
+    MatrixStore<Double> product = leftStore.multiply(rightStore);
+    int nRows = (int) product.countRows();
+    int nCols = (int) product.countColumns();
+    double[][] out = new double[nRows][nCols];
+    for (int i = 0; i < nRows; i++) {
+      for (int j = 0; j < nCols; j++) {
+        out[i][j] = product.get(i, j);
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Multiplies a primitive matrix and vector and scales the result.
+   *
+   * @param matrix coefficient matrix
+   * @param vector right-hand side vector
+   * @param scale scaling factor applied to the product
+   * @return scaled product vector
+   */
+  public static double[] multiply(double[][] matrix, double[] vector, double scale) {
+    Primitive64Store matrixStore = Primitive64Store.FACTORY.rows(matrix);
+    Primitive64Store vectorStore = Primitive64Store.FACTORY.make(vector.length, 1);
+    for (int i = 0; i < vector.length; i++) {
+      vectorStore.set(i, 0, vector[i]);
+    }
+    MatrixStore<Double> product = matrixStore.multiply(vectorStore);
+    double[] out = new double[(int) product.countRows()];
+    for (int i = 0; i < out.length; i++) {
+      out[i] = product.get(i, 0) * scale;
+    }
+    return out;
+  }
+
+  /**
    * Calculates Euclidean norm of a vector.
    *
    * @param vector input vector

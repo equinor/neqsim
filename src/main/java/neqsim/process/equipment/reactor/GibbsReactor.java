@@ -1,5 +1,10 @@
 package neqsim.process.equipment.reactor;
 
+import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.util.math.LinearAlgebraOps;
+
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,16 +14,9 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
 import java.util.regex.Pattern;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.ojalgo.matrix.Primitive64Matrix;
-import org.ojalgo.matrix.decomposition.LU;
-import org.ojalgo.matrix.decomposition.SingularValue;
-import org.ojalgo.matrix.store.MatrixStore;
-import org.ojalgo.matrix.store.Primitive64Store;
-import neqsim.process.equipment.TwoPortEquipment;
-import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
 
 /**
  * Gibbs reactor for chemical equilibrium calculations using Gibbs free energy minimization.
@@ -1797,63 +1795,6 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Convert a primitive matrix to an ojAlgo store.
-   *
-   * @param matrix primitive matrix
-   * @return ojAlgo matrix store
-   */
-  private Primitive64Store toStore(double[][] matrix) {
-    return Primitive64Store.FACTORY.rows(matrix);
-  }
-
-  /**
-   * Convert a primitive vector to an ojAlgo column store.
-   *
-   * @param vector primitive vector
-   * @return ojAlgo column matrix
-   */
-  private Primitive64Store toColumnStore(double[] vector) {
-    Primitive64Store store = Primitive64Store.FACTORY.make(vector.length, 1);
-    for (int i = 0; i < vector.length; i++) {
-      store.set(i, 0, vector[i]);
-    }
-    return store;
-  }
-
-  /**
-   * Convert an ojAlgo matrix store to a primitive matrix.
-   *
-   * @param store ojAlgo matrix store
-   * @return primitive matrix
-   */
-  private double[][] toArray2D(MatrixStore<Double> store) {
-    int nRows = (int) store.countRows();
-    int nCols = (int) store.countColumns();
-    double[][] result = new double[nRows][nCols];
-    for (int i = 0; i < nRows; i++) {
-      for (int j = 0; j < nCols; j++) {
-        result[i][j] = store.get(i, j);
-      }
-    }
-    return result;
-  }
-
-  /**
-   * Convert an ojAlgo column store to a primitive vector.
-   *
-   * @param store ojAlgo column matrix
-   * @return primitive vector
-   */
-  private double[] toArray1D(MatrixStore<Double> store) {
-    int nRows = (int) store.countRows();
-    double[] result = new double[nRows];
-    for (int i = 0; i < nRows; i++) {
-      result[i] = store.get(i, 0);
-    }
-    return result;
-  }
-
-  /**
    * Solve a linear system with LU decomposition.
    *
    * @param matrix coefficient matrix
@@ -1861,77 +1802,11 @@ public class GibbsReactor extends TwoPortEquipment {
    * @return solution column vector as primitive array
    */
   private double[] solveWithLU(double[][] matrix, double[] rhs) {
-    Primitive64Store matrixStore = toStore(matrix);
-    LU<Double> lu = LU.PRIMITIVE.make(matrixStore);
-    if (!lu.decompose(matrixStore)) {
+    double[] solution = new double[rhs.length];
+    if (!LinearAlgebraOps.solveLinearSystem(matrix, rhs, solution)) {
       throw new RuntimeException("LU decomposition failed");
     }
-    MatrixStore<Double> solution = lu.getSolution(toColumnStore(rhs));
-    return toArray1D(solution);
-  }
-
-  /**
-   * Compute Moore-Penrose pseudo-inverse with SVD.
-   *
-   * @param matrix matrix to invert
-   * @return pseudo-inverse matrix
-   */
-  private double[][] pseudoInverse(double[][] matrix) {
-    Primitive64Store matrixStore = toStore(matrix);
-    SingularValue<Double> svd = SingularValue.PRIMITIVE.make(matrixStore);
-    if (!svd.decompose(matrixStore)) {
-      throw new RuntimeException("SVD decomposition failed");
-    }
-    return toArray2D(svd.getInverse());
-  }
-
-  /**
-   * Estimate 2-norm condition number via singular values.
-   *
-   * @param matrix matrix to evaluate
-   * @return condition number
-   */
-  private double conditionP2(double[][] matrix) {
-    Primitive64Store matrixStore = toStore(matrix);
-    SingularValue<Double> svd = SingularValue.PRIMITIVE.make(matrixStore);
-    if (!svd.decompose(matrixStore)) {
-      return Double.POSITIVE_INFINITY;
-    }
-    double maxSingular = svd.getOperatorNorm();
-    double minSingular = svd.getFrobeniusNorm() / Math.max(1.0, svd.getRank());
-    if (Math.abs(minSingular) < 1.0e-30) {
-      return Double.POSITIVE_INFINITY;
-    }
-    return maxSingular / minSingular;
-  }
-
-  /**
-   * Multiply two primitive matrices.
-   *
-   * @param left left matrix
-   * @param right right matrix
-   * @return product matrix
-   */
-  private double[][] multiply(double[][] left, double[][] right) {
-    MatrixStore<Double> product = toStore(left).multiply(toStore(right));
-    return toArray2D(product);
-  }
-
-  /**
-   * Multiply a primitive matrix by a vector.
-   *
-   * @param matrix coefficient matrix
-   * @param vector right-hand vector
-   * @param scale scale factor applied to product
-   * @return resulting vector
-   */
-  private double[] multiply(double[][] matrix, double[] vector, double scale) {
-    MatrixStore<Double> product = toStore(matrix).multiply(toColumnStore(vector));
-    double[] result = toArray1D(product);
-    for (int i = 0; i < result.length; i++) {
-      result[i] *= scale;
-    }
-    return result;
+    return solution;
   }
 
   /**
@@ -1944,15 +1819,13 @@ public class GibbsReactor extends TwoPortEquipment {
       return null;
     }
     try {
-      Primitive64Matrix matrix = Primitive64Matrix.FACTORY.rows(jacobianMatrix);
-      Primitive64Matrix inverse = matrix.invert();
-      return inverse.toRawCopy2D();
+      return LinearAlgebraOps.inverse(jacobianMatrix);
     } catch (RuntimeException e) {
       logger.warn(
           "Jacobian matrix inversion failed: " + e.getMessage() + ". Trying pseudo-inverse...");
       // Fallback to pseudo-inverse
       try {
-        double[][] result = pseudoInverse(jacobianMatrix);
+        double[][] result = LinearAlgebraOps.pseudoInverse(jacobianMatrix);
         logger.info("Successfully computed pseudo-inverse");
         return result;
       } catch (RuntimeException e2) {
@@ -1991,8 +1864,14 @@ public class GibbsReactor extends TwoPortEquipment {
     } catch (RuntimeException e) {
       logger.warn("LU solve failed: " + e.getMessage() + ". Trying pseudo-inverse fallback...");
       try {
-        double[][] jInv = pseudoInverse(jacobianMatrix);
-        double[] result = multiply(jInv, objectiveVector, -1.0);
+        double[] rhs = objectiveVector.clone();
+        for (int i = 0; i < rhs.length; i++) {
+          rhs[i] *= -1.0;
+        }
+        double[] result = new double[rhs.length];
+        if (!LinearAlgebraOps.pseudoInverseSolve(jacobianMatrix, rhs, result)) {
+          throw new RuntimeException("SVD decomposition failed");
+        }
         unscaleNewtonStep(result);
         return result;
       } catch (RuntimeException e2) {
@@ -2222,7 +2101,7 @@ public class GibbsReactor extends TwoPortEquipment {
     // Fallback to explicit inverse multiplication if LU solve failed
     if (jacobianInverse != null) {
       try {
-        double[] fallbackResult = multiply(jacobianInverse, objectiveVector, -1.0);
+        double[] fallbackResult = LinearAlgebraOps.multiply(jacobianInverse, objectiveVector, -1.0);
         return fallbackResult;
       } catch (RuntimeException e) {
         logger.warn("Error during Newton-Raphson iteration calculation: " + e.getMessage());
@@ -2851,7 +2730,7 @@ public class GibbsReactor extends TwoPortEquipment {
       return Double.NaN;
     }
 
-    double condNum = conditionP2(jacobianMatrix);
+    double condNum = LinearAlgebraOps.conditionP2(jacobianMatrix);
 
     if (useRegularization && condNum > regularizationThreshold) {
       int numComp = variableComponents.size();
@@ -2871,7 +2750,7 @@ public class GibbsReactor extends TwoPortEquipment {
       }
 
       // Recompute condition number after regularization
-      condNum = conditionP2(jacobianMatrix);
+      condNum = LinearAlgebraOps.conditionP2(jacobianMatrix);
       logger.info("After regularization: condNum={}", condNum);
     }
 

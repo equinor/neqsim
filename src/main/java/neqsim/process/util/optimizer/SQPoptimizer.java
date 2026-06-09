@@ -592,7 +592,15 @@ public class SQPoptimizer implements Serializable {
     // d = H^{-1} * (-gradF + A^T * lambda)
     // A * H^{-1} * A^T * lambda = A * H^{-1} * gradF + c
     double[] dUnconstrained = solveLinearSystem(hessian, negateVector(gradF));
-    double[][] hInv = invertMatrix(hessian);
+    double[][] hInv;
+    try {
+      hInv = LinearAlgebraOps.inverse(hessian);
+    } catch (RuntimeException e) {
+      hInv = new double[n][n];
+      for (int i = 0; i < n; i++) {
+        hInv[i][i] = 1.0;
+      }
+    }
 
     // S = A * H^{-1} * A^T (Schur complement)
     double[][] hInvAt = new double[n][mActive];
@@ -728,7 +736,7 @@ public class SQPoptimizer implements Serializable {
     }
 
     double sy = dotProduct(s, y);
-    double[] hs = matVecMult(hessian, s);
+    double[] hs = LinearAlgebraOps.multiply(hessian, s, 1.0);
     double shs = dotProduct(s, hs);
 
     // Powell's damped BFGS: ensure positive definiteness
@@ -776,64 +784,6 @@ public class SQPoptimizer implements Serializable {
   }
 
   /**
-   * Invert a matrix using Gauss-Jordan elimination.
-   *
-   * @param matrix square matrix to invert
-   * @return inverse matrix
-   */
-  private double[][] invertMatrix(double[][] matrix) {
-    int dim = matrix.length;
-    double[][] aug = new double[dim][2 * dim];
-
-    for (int i = 0; i < dim; i++) {
-      System.arraycopy(matrix[i], 0, aug[i], 0, dim);
-      aug[i][dim + i] = 1.0;
-    }
-
-    for (int col = 0; col < dim; col++) {
-      // Pivot
-      int maxRow = col;
-      for (int row = col + 1; row < dim; row++) {
-        if (Math.abs(aug[row][col]) > Math.abs(aug[maxRow][col])) {
-          maxRow = row;
-        }
-      }
-      double[] temp = aug[col];
-      aug[col] = aug[maxRow];
-      aug[maxRow] = temp;
-
-      double pivot = aug[col][col];
-      if (Math.abs(pivot) < 1e-14) {
-        // Return identity for near-singular
-        double[][] identity = new double[dim][dim];
-        for (int i = 0; i < dim; i++) {
-          identity[i][i] = 1.0;
-        }
-        return identity;
-      }
-
-      for (int k = 0; k < 2 * dim; k++) {
-        aug[col][k] /= pivot;
-      }
-
-      for (int row = 0; row < dim; row++) {
-        if (row != col) {
-          double factor = aug[row][col];
-          for (int k = 0; k < 2 * dim; k++) {
-            aug[row][k] -= factor * aug[col][k];
-          }
-        }
-      }
-    }
-
-    double[][] inv = new double[dim][dim];
-    for (int i = 0; i < dim; i++) {
-      System.arraycopy(aug[i], dim, inv[i], 0, dim);
-    }
-    return inv;
-  }
-
-  /**
    * Negate a vector.
    *
    * @param v input vector
@@ -860,26 +810,6 @@ public class SQPoptimizer implements Serializable {
       sum += a[i] * b[i];
     }
     return sum;
-  }
-
-  /**
-   * Matrix-vector multiplication.
-   *
-   * @param matrix the matrix
-   * @param vec the vector
-   * @return result vector
-   */
-  private double[] matVecMult(double[][] matrix, double[] vec) {
-    int rows = matrix.length;
-    double[] result = new double[rows];
-    for (int i = 0; i < rows; i++) {
-      double sum = 0.0;
-      for (int j = 0; j < vec.length; j++) {
-        sum += matrix[i][j] * vec[j];
-      }
-      result[i] = sum;
-    }
-    return result;
   }
 
   /**
