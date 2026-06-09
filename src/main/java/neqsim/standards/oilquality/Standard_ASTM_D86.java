@@ -56,7 +56,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   private static final Logger logger = LogManager.getLogger(Standard_ASTM_D86.class);
 
   /** Number of distillation points to calculate. */
-  private int numberOfPoints = 19;
+  private int numberOfPoints = 20;
 
   /** Volume fractions to evaluate (0 to 1). */
   private double[] volumeFractions;
@@ -91,13 +91,13 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
    * Initializes the default volume fraction points for the distillation curve.
    */
   private void initVolumeFractions() {
-    numberOfPoints = 19;
+    numberOfPoints = 20;
     volumeFractions = new double[numberOfPoints];
     temperatures = new double[numberOfPoints];
     // IBP(~0.5%), 5%, 10%, 15%, 20%, 25%, 30%, 35%, 40%, 45%, 50%,
     // 55%, 60%, 65%, 70%, 75%, 80%, 85%, 90%, 95%
     double[] fracs = {0.005, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60,
-        0.65, 0.70, 0.75, 0.80, 0.85, 0.90};
+        0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95};
     for (int i = 0; i < numberOfPoints; i++) {
       volumeFractions[i] = fracs[i];
       temperatures[i] = Double.NaN;
@@ -107,43 +107,53 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   /** {@inheritDoc} */
   @Override
   public void calculate() {
-    SystemInterface fluid = thermoSystem.clone();
-    fluid.setPressure(distillationPressure);
+    // The distillation curve maps the recovered (distilled) fraction to the temperature at which
+    // that fraction has evaporated, all at constant atmospheric pressure. The correct flash is
+    // therefore a Pressure-Vapor-Fraction (PVF) flash that holds pressure fixed and solves for the
+    // temperature giving the target vapor fraction. The recovered fraction is interpreted as the
+    // molar vapor fraction (the standard simplification used for boiling-point curves).
 
-    thermoOps = new ThermodynamicOperations(fluid);
-
-    // Calculate IBP via bubble point temperature
+    // Calculate IBP via bubble point (vapor fraction -> 0) at atmospheric pressure.
     try {
-      fluid.setTemperature(273.15 + 20.0);
+      SystemInterface ibpFluid = thermoSystem.clone();
+      ibpFluid.setPressure(distillationPressure);
+      ibpFluid.setTemperature(273.15 + 20.0);
+      thermoOps = new ThermodynamicOperations(ibpFluid);
       thermoOps.bubblePointTemperatureFlash();
-      IBP = fluid.getTemperature();
+      IBP = ibpFluid.getTemperature();
       temperatures[0] = IBP;
     } catch (Exception ex) {
       logger.error("Failed to calculate IBP: {}", ex.getMessage());
       return;
     }
 
-    // Calculate temperatures at each volume fraction via TV fraction flash
+    // Calculate temperatures at each recovered fraction via a Pressure-Vapor-Fraction flash.
+    // Reuse a single fluid and march upward in fraction so each solve warm-starts from the
+    // previous (lower-temperature) solution.
+    SystemInterface flashFluid = thermoSystem.clone();
+    flashFluid.setPressure(distillationPressure);
+    flashFluid.setTemperature(IBP);
+    ThermodynamicOperations flashOps = new ThermodynamicOperations(flashFluid);
     for (int i = 1; i < numberOfPoints; i++) {
       try {
-        SystemInterface flashFluid = thermoSystem.clone();
-        flashFluid.setPressure(distillationPressure);
-        flashFluid.setTemperature(IBP);
-        ThermodynamicOperations flashOps = new ThermodynamicOperations(flashFluid);
-        flashOps.TVfractionFlash(volumeFractions[i]);
-        temperatures[i] = flashFluid.getTemperature();
+        flashOps.PVFflash(volumeFractions[i]);
+        double t = flashFluid.getTemperature();
+        if (Double.isNaN(t) || Double.isInfinite(t)) {
+          temperatures[i] = Double.NaN;
+        } else {
+          temperatures[i] = t;
+        }
       } catch (Exception ex) {
-        logger.debug("TV fraction flash failed at {}%: {}", volumeFractions[i] * 100.0,
-            ex.getMessage());
+        logger.debug("PVF flash failed at {}%: {}", volumeFractions[i] * 100.0, ex.getMessage());
         temperatures[i] = Double.NaN;
       }
     }
 
-    // Calculate FBP via dew point temperature
+    // Calculate FBP via dew point (vapor fraction -> 1) at atmospheric pressure.
     try {
       SystemInterface dewFluid = thermoSystem.clone();
       dewFluid.setPressure(distillationPressure);
-      dewFluid.setTemperature(273.15 + 400.0);
+      dewFluid.setTemperature(273.15 + 200.0);
       ThermodynamicOperations dewOps = new ThermodynamicOperations(dewFluid);
       dewOps.dewPointTemperatureFlash();
       FBP = dewFluid.getTemperature();
@@ -152,10 +162,9 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
       FBP = Double.NaN;
     }
 
-    // Estimate residue fraction (fraction that doesn't boil at atmospheric pressure)
-    if (!Double.isNaN(temperatures[numberOfPoints - 1]) && !Double.isNaN(FBP)) {
-      residueFraction = Math.max(0.0, 1.0 - 0.95);
-    }
+    // Residue is the fraction not recovered up to the highest evaluated point.
+    double maxFraction = volumeFractions[numberOfPoints - 1];
+    residueFraction = Math.max(0.0, 1.0 - maxFraction);
   }
 
   /** {@inheritDoc} */
@@ -173,7 +182,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
       case "T90":
         return getTemperatureAtFraction(0.90) - 273.15;
       case "T95":
-        return temperatures.length > 0 ? temperatures[numberOfPoints - 1] - 273.15 : Double.NaN;
+        return getTemperatureAtFraction(0.95) - 273.15;
       case "FBP":
         return Double.isNaN(FBP) ? Double.NaN : FBP - 273.15;
       case "residue":

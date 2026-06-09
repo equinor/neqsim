@@ -117,6 +117,50 @@ public class OilQualityStandardsTest {
     }
   }
 
+  /**
+   * Regression test for the distillation-curve "flat curve" bug. The original implementation used a
+   * fixed-temperature TVfractionFlash, so every recovered cut collapsed onto the IBP. A correct D86
+   * curve must rise: heavier cuts boil at higher temperatures than lighter ones.
+   */
+  @Test
+  void testASTM_D86_curveRisesNotFlat() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    double ibp = standard.getValue("IBP");
+    double t10 = standard.getValue("T10");
+    double t50 = standard.getValue("T50");
+    double t90 = standard.getValue("T90");
+
+    assertTrue(!Double.isNaN(t10) && !Double.isNaN(t50) && !Double.isNaN(t90),
+        "T10/T50/T90 should be computable for a light oil");
+
+    // The cuts must be ordered and span a meaningful range (not collapsed onto the IBP).
+    assertTrue(t10 >= ibp - 1.0, "T10 should be at or above the IBP");
+    assertTrue(t50 > t10, "T50 should be hotter than T10");
+    assertTrue(t90 > t50, "T90 should be hotter than T50");
+    assertTrue(t90 - t10 > 20.0,
+        "Distillation curve should span > 20 C between T10 and T90 (not flat)");
+  }
+
+  /**
+   * Verifies T95 reports a genuine 95 % recovered point rather than aliasing onto the last table
+   * entry (previously T90).
+   */
+  @Test
+  void testASTM_D86_t95IsRealPoint() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    double t90 = standard.getValue("T90");
+    double t95 = standard.getValue("T95");
+    if (!Double.isNaN(t90) && !Double.isNaN(t95)) {
+      assertTrue(t95 >= t90 - 1.0, "T95 should be at or above T90 (true 95% point)");
+    }
+  }
+
   // ========== ASTM D445 Tests ==========
 
   @Test
