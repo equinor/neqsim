@@ -123,9 +123,13 @@ public class Calculator extends ProcessEquipmentBaseClass {
     if (inletFlow > 1.2 * surgeFlow) {
       double minRecycle = Math.max(inletFlow / 1.0e6, 1.0e-6);
       antiSurgeSplitter.setFlowRates(new double[] {-1, minRecycle}, "m3/hr");
-      antiSurgeSplitter.getSplitStream(1).setFlowRate(minRecycle, "m3/hr");
-      antiSurgeSplitter.getSplitStream(1).run();
-      antiSurgeSplitter.setCalculationIdentifier(id);
+      // Re-run the FULL splitter (not just the recycle leg). Running only
+      // splitStream(1) leaves the forward/remainder leg (splitStream(0), the
+      // -1 entry) with a stale split factor from the previous pass, since
+      // calcSplitFactors() only executes inside Splitter.run(id). The full run
+      // recomputes the remainder against the current inlet so the splitter is
+      // internally mass-consistent every pass.
+      antiSurgeSplitter.run(id);
       return;
     }
 
@@ -140,9 +144,13 @@ public class Calculator extends ProcessEquipmentBaseClass {
     double flowAntiSurge = Math.max(currentRecycle + cappedStep, inletFlow / 1.0e6);
 
     antiSurgeSplitter.setFlowRates(new double[] {-1, flowAntiSurge}, "m3/hr");
-    antiSurgeSplitter.getSplitStream(1).setFlowRate(flowAntiSurge, "m3/hr");
-    antiSurgeSplitter.getSplitStream(1).run();
-    antiSurgeSplitter.setCalculationIdentifier(id);
+    // Re-run the FULL splitter so both the recycle leg and the forward/remainder
+    // leg are recomputed against the current inlet (see note above). Running
+    // only splitStream(1) made the apparent mass-balance error scale with the
+    // recycle magnitude when the compressor was deep in anti-surge (large
+    // recycle), because the remainder leg kept a lagged inlet. The full run
+    // keeps the splitter internally mass-consistent every pass.
+    antiSurgeSplitter.run(id);
 
     // Diagnostic: if (inletFlow + flowAntiSurge) is still well below surge
     // after this update, the loop is likely stuck (e.g. recycle path is not
