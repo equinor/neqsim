@@ -54,12 +54,12 @@ public class SystemUMRCPAEoS extends SystemPrEos {
     // group-interaction tables, matching the UMR-PRU-MC physical term.
     attractiveTermNumber = 13;
 
-    useVolumeCorrection(false);
+    // Recreates phases created in super constructor SystemPrEos.
     for (int i = 0; i < numberOfPhases; i++) {
       phaseArray[i] = new PhaseUMRCPA();
       phaseArray[i].setTemperature(T);
       phaseArray[i].setPressure(P);
-      phaseArray[i].useVolumeCorrection(false);
     }
+    this.useVolumeCorrection(true);
   }
 }

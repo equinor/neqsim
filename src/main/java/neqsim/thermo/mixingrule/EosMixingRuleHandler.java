@@ -381,6 +381,12 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                 // +component_name2 + " and " +
                 // component_name+ " to " +
                 // intparam[k][l]);
+              } else if (BIPEstimator.canEstimateMercuryHydrocarbonKij(phase.getComponent(k),
+                  phase.getComponent(l))) {
+                boolean usePR = phase.getClass().getName().toLowerCase().contains("phasepr");
+                intparam[k][l] = BIPEstimator.estimateMercuryHydrocarbonKij(phase.getComponent(k),
+                    phase.getComponent(l), usePR);
+                intparamT[k][l] = 0.0;
               } else if ((component_name.equals("CO2") && phase.getComponent(l).isIsTBPfraction())
                   || (component_name2.equals("CO2") && phase.getComponent(k).isIsTBPfraction())) {
                 intparam[k][l] = 0.1;

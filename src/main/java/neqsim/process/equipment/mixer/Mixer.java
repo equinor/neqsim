@@ -251,7 +251,22 @@ public class Mixer extends ProcessEquipmentBaseClass
           mixedStream.getThermoSystem().addComponent(index, molesToAdd);
         } else {
           hasAddedNewComponent = true;
-          mixedStream.getThermoSystem().addComponent(componentName, moles);
+          // Component present in this inlet but absent from the mixed-stream template
+          // (stream 0). Adding it by name only routes through the component database, which
+          // (a) throws for pseudo/TBP fractions that are not in the database and (b) assigns
+          // the database default molar mass instead of the inlet's characterized value,
+          // breaking mass conservation. For TBP/plus fractions, re-create the fraction with
+          // its characterized molar mass and density so the added mass (moles * MW) is
+          // preserved; otherwise fall back to the database lookup for real components.
+          neqsim.thermo.component.ComponentInterface srcComponent =
+              streams.get(k).getThermoSystem().getPhase(0).getComponent(i);
+          if (srcComponent.isIsTBPfraction() || srcComponent.isIsPlusFraction()) {
+            String rawName = componentName.replaceFirst("_PC$", "");
+            mixedStream.getThermoSystem().addTBPfraction(rawName, moles,
+                srcComponent.getMolarMass(), srcComponent.getNormalLiquidDensity());
+          } else {
+            mixedStream.getThermoSystem().addComponent(componentName, moles);
+          }
         }
       }
     }

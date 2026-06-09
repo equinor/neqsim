@@ -144,6 +144,17 @@ public abstract class Component implements ComponentInterface {
   protected double umrCpaAssociationVolume = 0.0;
   /** Flag (1 = use dedicated UMR-CPA associating parameters) (Tasios et al. 2025). */
   protected int umrCpaAssociating = 0;
+  /**
+   * Dedicated UMR-CPA Rackett Z used by the PR-based Peneloux volume translation (Tasios et al.
+   * 2025). Kept separate from the SRK-CPA {@code racketZCPA} because the Peneloux shift constants
+   * differ between the PR and SRK volume-translation relations.
+   */
+  protected double umrCpaRacketZ = 0.0;
+  /**
+   * Dedicated UMR-CPA temperature-dependent volume-correction term [1/K] used together with
+   * {@code umrCpaRacketZ} (Tasios et al. 2025).
+   */
+  protected double umrCpaVolumeCorrectionT = 0.0;
   protected double lennardJonesMolecularDiameter = 0;
   protected double lennardJonesEnergyParameter = 0;
   protected double stokesCationicDiameter = 0;
@@ -432,6 +443,19 @@ public abstract class Component implements ComponentInterface {
           umrCpaAssociating = 0;
         }
 
+        // Dedicated UMR-CPA Rackett Z and temperature-dependent volume-correction term for the
+        // PR-based Peneloux volume translation (Tasios et al., Fluid Phase Equilibria 2025). These
+        // live in separate columns from the SRK-CPA racketZCPA/volcorrCPA_T because the PR and SRK
+        // Peneloux shift relations differ. Wrapped in its own guard so that a database CSV without
+        // these columns (e.g. COMP_EXT.csv) simply falls back to the SRK-CPA racketZCPA.
+        try {
+          umrCpaRacketZ = Double.parseDouble(dataSet.getString("UMRCPA_racketZ"));
+          umrCpaVolumeCorrectionT = Double.parseDouble(dataSet.getString("UMRCPA_volcorr_T"));
+        } catch (Exception umrcpaVolEx) {
+          umrCpaRacketZ = 0.0;
+          umrCpaVolumeCorrectionT = 0.0;
+        }
+
         matiascopemanSolidParams[0] = Double.parseDouble(dataSet.getString("MC1Solid"));
         matiascopemanSolidParams[1] = Double.parseDouble(dataSet.getString("MC2Solid"));
         matiascopemanSolidParams[2] = Double.parseDouble(dataSet.getString("MC3Solid"));
@@ -625,10 +649,11 @@ public abstract class Component implements ComponentInterface {
             + ", 12.0, 6.0, 0, 0, 0, 0, 0"
             // Trailing values for the UMR-CPA columns appended to COMP.csv
             // (UMRCPA_MC1..5, UMRCPA_a0, UMRCPA_b, UMRCPA_assocEnergy, UMRCPA_assocVolume,
-            // UMRCPA_assocScheme, UMRCPA_associating). Pseudo-components are non-associating,
-            // so all are zero. These must be present because comptemp is created as
-            // "SELECT * FROM comp" and the positional INSERT must match the full column count.
-            + ", 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0)");
+            // UMRCPA_assocScheme, UMRCPA_associating, UMRCPA_racketZ, UMRCPA_volcorr_T).
+            // Pseudo-components are non-associating, so all are zero. These must be present
+            // because comptemp is created as "SELECT * FROM comp" and the positional INSERT must
+            // match the full column count.
+            + ", 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0)");
       }
       CASnumber = "00-00-0";
     } catch (Exception ex) {

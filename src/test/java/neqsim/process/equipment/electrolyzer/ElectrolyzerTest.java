@@ -108,4 +108,135 @@ class ElectrolyzerTest extends neqsim.NeqSimTest {
     assertNotNull(el.getEnergyStream());
     assertEquals(el.getStackPower(), el.getEnergyStream().getDuty(), 1.0);
   }
+
+  /** Helper building a 1 MW PEM electrolyzer sized at 80 C with an I-V model. */
+  private static Electrolyzer megawattPemStack() {
+    Stream inlet = waterFeed();
+    inlet.setTemperature(353.15, "K");
+    inlet.run();
+    Electrolyzer el = new Electrolyzer("el", inlet);
+    el.setTechnology(ElectrolyzerTechnology.PEM);
+    el.setIVCharacteristic(new ElectrolyzerIVCharacteristic(ElectrolyzerTechnology.PEM));
+    el.sizeStack(1.0e6);
+    return el;
+  }
+
+  @Test
+  void testSizeStackSetsGeometryAndRatedPower() {
+    Electrolyzer el = megawattPemStack();
+    assertEquals(1.0e6, el.getRatedPower(), 1e-6);
+    assertTrue(el.getStackActiveArea() > 0.0, "stack area should be sized");
+    assertEquals(2.0, el.getNominalCurrentDensity(), 1e-9);
+  }
+
+  @Test
+  void testPowerModeProducesHydrogen() {
+    Electrolyzer el = megawattPemStack();
+    el.setAvailablePower(0.5e6);
+    el.run();
+    assertEquals(Electrolyzer.OperationMode.POWER, el.getOperationMode());
+    assertTrue(el.getHydrogenOutStream().getFlowRate("mole/sec") > 0.0);
+    // Rectifier=1, aux=0 => stack power tracks the available power.
+    assertEquals(0.5e6, el.getStackPower(), 0.5e6 * 0.03);
+    assertTrue(el.getStackCurrent() > 0.0);
+  }
+
+  @Test
+  void testPowerModeRequiresGeometry() {
+    Stream inlet = waterFeed();
+    Electrolyzer el = new Electrolyzer("el", inlet);
+    el.setAvailablePower(1.0e5);
+    assertThrows(IllegalStateException.class, el::run);
+  }
+
+  @Test
+  void testStandbyBelowMinimumLoad() {
+    Electrolyzer el = megawattPemStack();
+    el.setMinimumLoadFraction(0.2);
+    el.setAvailablePower(0.1e6); // 10% < 20% minimum
+    el.run();
+    assertTrue(el.isStandby());
+    assertEquals(0.0, el.getHydrogenOutStream().getFlowRate("mole/sec"), 1e-9);
+    assertEquals(0.0, el.getStackPower(), 1e-9);
+  }
+
+  @Test
+  void testCurtailmentAboveRatedPower() {
+    Electrolyzer el = megawattPemStack();
+    el.setAvailablePower(1.5e6); // 50% above 1 MW rated
+    el.run();
+    assertTrue(!el.isStandby());
+    assertEquals(0.5e6, el.getCurtailedPower(), 1.0e6 * 0.03);
+    assertEquals(1.0e6, el.getStackPower(), 1.0e6 * 0.03);
+  }
+
+  @Test
+  void testRampRateLimitInTransient() {
+    Electrolyzer el = megawattPemStack();
+    el.setMaxRampRate(0.1); // 10% of rated per second => 100 kW/s
+    el.setCalculateSteadyState(false);
+    el.setAvailablePower(1.0e6);
+    java.util.UUID id = java.util.UUID.randomUUID();
+
+    el.runTransient(1.0, id);
+    assertEquals(0.1e6, el.getOperatingPower(), 1.0);
+    double h2Step1 = el.getHydrogenOutStream().getFlowRate("mole/sec");
+
+    el.runTransient(1.0, id);
+    assertEquals(0.2e6, el.getOperatingPower(), 1.0);
+    double h2Step2 = el.getHydrogenOutStream().getFlowRate("mole/sec");
+
+    assertTrue(h2Step2 > h2Step1, "hydrogen output should rise as the stack ramps up");
+  }
+
+  @Test
+  void testBalanceOfPlantRaisesSystemEnergy() {
+    Electrolyzer el = megawattPemStack();
+    el.setRectifierEfficiency(0.95);
+    el.setAuxiliaryLoadFraction(0.05);
+    el.setAvailablePower(0.5e6);
+    el.run();
+    double stackSec = el.getSpecificEnergyConsumption_kWh_per_kg_H2();
+    double systemSec = el.getSystemSpecificEnergyConsumption_kWh_per_kg_H2();
+    assertTrue(systemSec > stackSec, "system SEC must exceed stack SEC with BoP losses");
+    assertTrue(el.getSystemPower() > el.getStackPower());
+    // The system power budget should match the available power.
+    assertEquals(0.5e6, el.getSystemPower(), 0.5e6 * 0.02);
+  }
+
+  @Test
+  void testWasteHeatAndWaterConsumption() {
+    Electrolyzer el = megawattPemStack();
+    el.setAvailablePower(0.5e6);
+    el.run();
+    // Operating voltage above thermoneutral => positive waste heat.
+    assertTrue(el.getWasteHeat() > 0.0);
+    double h2 = el.getHydrogenOutStream().getFlowRate("mole/sec");
+    assertEquals(h2, el.getWaterConsumption("mole/sec"), 1e-9);
+    assertEquals(h2 * 0.018015, el.getWaterConsumption("kg/sec"), 1e-9);
+    assertEquals(h2 * 0.018015 * 3600.0, el.getWaterConsumption("kg/hr"), 1e-6);
+  }
+
+  @Test
+  void testHydrogenDeliveryPressureAndCompression() {
+    Electrolyzer el = megawattPemStack();
+    el.setAvailablePower(0.5e6);
+    el.setHydrogenDeliveryPressure(30.0); // inlet at 1 bara
+    el.run();
+    assertEquals(30.0, el.getHydrogenOutStream().getPressure("bara"), 1e-6);
+    assertTrue(el.getHydrogenCompressionPower() > 0.0);
+    // Oxygen stays at inlet pressure.
+    assertEquals(1.0, el.getOxygenOutStream().getPressure("bara"), 1e-6);
+  }
+
+  @Test
+  void testBackwardCompatibleDefaults() {
+    Stream inlet = waterFeed();
+    Electrolyzer el = new Electrolyzer("el", inlet);
+    el.run();
+    // Default water-feed mode and no BoP losses => system power equals stack power.
+    assertEquals(Electrolyzer.OperationMode.WATER_FEED, el.getOperationMode());
+    assertEquals(el.getStackPower(), el.getSystemPower(), 1e-6);
+    assertTrue(!el.isStandby());
+  }
 }

@@ -143,11 +143,30 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   /** {@inheritDoc} */
   @Override
   public double getVolumeCorrection() {
-    if ((getRacketZCPA() < 1.0e-10) && cpaon == 1) {
+    // The Peneloux volume translation for the PR-based UMR-CPA model uses a Rackett Z that is
+    // regressed specifically for this model (UMRCPA_racketZ / UMRCPA_volcorr_T columns), because
+    // the PR Peneloux shift constants differ from the SRK ones used by SRK-CPA. When no dedicated
+    // UMR-CPA value is available the model falls back to the SRK-CPA racketZCPA so that existing
+    // behaviour is preserved until the UMR-CPA values are regressed (Tasios et al. 2025).
+    double racketZused;
+    double volumeCorrectionTused;
+    if (Math.abs(umrCpaRacketZ) > 1.0e-10) {
+      racketZused = umrCpaRacketZ;
+      volumeCorrectionTused = umrCpaVolumeCorrectionT;
+    } else {
+      racketZused = getRacketZCPA();
+      volumeCorrectionTused = getVolumeCorrectionT_CPA();
+    }
+    if ((racketZused < 1.0e-10) && cpaon == 1 && numberOfAssociationSites != 0) {
+      // Associating components (water, alcohols, glycols) without a regressed UMR-CPA / SRK-CPA
+      // Rackett Z keep zero translation until their value is regressed. Non-associating components
+      // (hydrocarbons, N2, CO2) fall through to the inherited PR Peneloux shift so that they are
+      // volume-corrected exactly like the standard PR EOS (Z_RA from the acentric-factor
+      // correlation when no tabulated Rackett Z exists).
       return 0.0;
     } else {
-      setVolumeCorrectionT(getVolumeCorrectionT_CPA());
-      setRacketZ(getRacketZCPA());
+      setVolumeCorrectionT(volumeCorrectionTused);
+      setRacketZ(racketZused);
       return super.getVolumeCorrection();
     }
   }

@@ -88,6 +88,14 @@ public class TurboExpanderCompressor extends Expander {
   /** Expander isentropic efficiency (actual, result). */
   private double expanderIsentropicEfficiency = 1.0;
   private double expanderDesignIsentropicEfficiency = 1.0;
+  /**
+   * Flag indicating that the expander outlet temperature is specified. When {@code true} the base
+   * (design) isentropic efficiency is back-calculated so the actual outlet temperature matches
+   * {@link #expanderOutTemperatureSpec}.
+   */
+  private boolean useOutTemperatureSpec = false;
+  /** Target expander outlet temperature [K] used when {@link #useOutTemperatureSpec} is true. */
+  private double expanderOutTemperatureSpec = 0.0;
   /** Expander shaft power [W]. */
   private double powerExpander = 0.0;
   /** Compressor shaft power [W]. */
@@ -178,6 +186,14 @@ public class TurboExpanderCompressor extends Expander {
     boolean applyExpanderQnCorrection = designExpanderQn > 0.0;
     double designQnExp = designExpanderQn;
     double h_s = 0.0;
+    double CF_total_converged = 0.0;
+    // When the outlet temperature is specified, compute the actual isentropic efficiency that
+    // lands the fluid at the target outlet temperature. This value is held fixed while the speed
+    // is matched, and the base (design) efficiency is back-calculated after convergence.
+    double eta_s_required = -1.0;
+    if (useOutTemperatureSpec) {
+      eta_s_required = calcRequiredExpanderEfficiencyForOutletT(expanderOutTemperatureSpec);
+    }
     do {
       double outPress = expanderOutPressure;
       SystemInterface fluid2 = expanderFeedStream.getThermoSystem().clone();
@@ -209,7 +225,11 @@ public class TurboExpanderCompressor extends Expander {
       if (CF_total < 0.0) {
         CF_total = 0.0;
       }
+      CF_total_converged = CF_total;
       eta_s = eta_s_design * CF_total;
+      if (useOutTemperatureSpec && eta_s_required > 0.0) {
+        eta_s = eta_s_required;
+      }
       W_expander = m1 * h_s * eta_s;
       m_comp = compressorFeedStream.getFluid().getFlowRate("kg/sec");
       Q_comp = compressorFeedStream.getFluid().getFlowRate("m3/sec");
@@ -244,6 +264,9 @@ public class TurboExpanderCompressor extends Expander {
         CF_total2 = 0.0;
       }
       eta_s2 = eta_s_design * CF_total2;
+      if (useOutTemperatureSpec && eta_s_required > 0.0) {
+        eta_s2 = eta_s_required;
+      }
       double W_expander2 = m1 * h_s * eta_s2;
       qn_ratio2 = (Q_comp * 60.0 / N2) / designQn;
       double CF_eff_comp2 = getEfficiencyFromQN(qn_ratio2);
@@ -277,6 +300,12 @@ public class TurboExpanderCompressor extends Expander {
     }
     // System.out.println("speed: " + N + " iter: " + iter);
     expanderIsentropicEfficiency = eta_s;
+    // When the outlet temperature is specified, back-calculate the base (design) isentropic
+    // efficiency so that eta_s_design * CF_total reproduces the actual efficiency required to hit
+    // the target outlet temperature.
+    if (useOutTemperatureSpec && eta_s_required > 0.0 && CF_total_converged > 1e-9) {
+      expanderDesignIsentropicEfficiency = eta_s_required / CF_total_converged;
+    }
     compressorPolytropicHead = Hp;
     compressorPolytropicEfficiency = eta_p;
     expanderSpeed = N;
@@ -304,6 +333,47 @@ public class TurboExpanderCompressor extends Expander {
     tempCompressor.run();
     compressorOutletStream.setFluid(tempCompressor.getOutletStream().getFluid());
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Calculate the actual isentropic efficiency required for the expander to reach a given outlet
+   * temperature at the configured {@link #expanderOutPressure}.
+   *
+   * <p>
+   * The efficiency is defined as the ratio of the actual enthalpy drop (from inlet to the target
+   * outlet temperature at the outlet pressure) to the isentropic enthalpy drop (from inlet to the
+   * outlet pressure at constant entropy):
+   * </p>
+   *
+   * <pre>
+   * eta_s = (h_in - h_out_target) / (h_in - h_out_isentropic)
+   * </pre>
+   *
+   * @param targetTemperature the desired expander outlet temperature [K]
+   * @return the required actual isentropic efficiency (dimensionless), or {@code -1.0} if the
+   *         isentropic enthalpy drop is non-positive
+   */
+  private double calcRequiredExpanderEfficiencyForOutletT(double targetTemperature) {
+    SystemInterface fluid = expanderFeedStream.getThermoSystem().clone();
+    fluid.initThermoProperties();
+    double s1 = fluid.getEntropy("kJ/kgK");
+    double h_in = fluid.getEnthalpy("kJ/kg");
+    fluid.setPressure(expanderOutPressure, "bara");
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.PSflash(s1, "kJ/kgK");
+    fluid.init(3);
+    double h_out_isentropic = fluid.getEnthalpy("kJ/kg");
+    double isentropicDrop = h_in - h_out_isentropic;
+    if (isentropicDrop <= 0.0) {
+      return -1.0;
+    }
+    fluid.setTemperature(targetTemperature);
+    fluid.setPressure(expanderOutPressure, "bara");
+    ops.TPflash();
+    fluid.init(3);
+    double h_out_target = fluid.getEnthalpy("kJ/kg");
+    double actualDrop = h_in - h_out_target;
+    return actualDrop / isentropicDrop;
   }
 
   // --- Getters and Setters for all configuration and result fields ---
@@ -1343,6 +1413,49 @@ public class TurboExpanderCompressor extends Expander {
    */
   public void setExpanderDesignIsentropicEfficiency(double expanderDesignIsentropicEfficiency) {
     this.expanderDesignIsentropicEfficiency = expanderDesignIsentropicEfficiency;
+  }
+
+  /**
+   * Specify the desired expander outlet temperature. When set, the base (design) isentropic
+   * efficiency is automatically back-calculated during {@link #run(UUID)} so that the actual
+   * expander outlet temperature matches this target at the configured expander outlet pressure.
+   *
+   * @param temperature the target expander outlet temperature
+   * @param unit the temperature unit ("K", "C", "F" or "R")
+   */
+  public void setExpanderOutTemperature(double temperature, String unit) {
+    this.expanderOutTemperatureSpec =
+        new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
+    this.useOutTemperatureSpec = true;
+  }
+
+  /**
+   * Get the specified expander outlet temperature target.
+   *
+   * @param unit the temperature unit ("K", "C", "F" or "R")
+   * @return the target expander outlet temperature in the requested unit
+   */
+  public double getExpanderOutTemperature(String unit) {
+    return new neqsim.util.unit.TemperatureUnit(expanderOutTemperatureSpec, "K").getValue(unit);
+  }
+
+  /**
+   * Check whether the expander outlet temperature is being used as a specification.
+   *
+   * @return {@code true} if the outlet temperature specification is active
+   */
+  public boolean isUseOutTemperatureSpec() {
+    return useOutTemperatureSpec;
+  }
+
+  /**
+   * Enable or disable the expander outlet temperature specification. When disabled, the expander
+   * uses the configured design isentropic efficiency directly.
+   *
+   * @param useOutTemperatureSpec {@code true} to activate the outlet temperature specification
+   */
+  public void setUseOutTemperatureSpec(boolean useOutTemperatureSpec) {
+    this.useOutTemperatureSpec = useOutTemperatureSpec;
   }
 
   /** {@inheritDoc} */
