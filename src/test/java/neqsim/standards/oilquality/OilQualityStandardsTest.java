@@ -161,6 +161,155 @@ public class OilQualityStandardsTest {
     }
   }
 
+  /**
+   * Verifies the component-based average boiling points are ordered correctly (MABP &le; MeABP &le;
+   * CABP &le; WABP) and the Watson (UOP) characterization factor falls in the physically expected
+   * band for a light paraffinic oil.
+   */
+  @Test
+  void testASTM_D86_averageBoilingPointsAndWatsonK() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    double mabp = standard.getMABP();
+    double wabp = standard.getWABP();
+    double cabp = standard.getCABP();
+    double meabp = standard.getMeABP();
+    double vabp = standard.getVABP();
+
+    assertTrue(!Double.isNaN(mabp) && !Double.isNaN(wabp) && !Double.isNaN(cabp),
+        "Average boiling points should be computable");
+    // Molal is the lowest, weight the highest; mean and cubic sit in between.
+    assertTrue(mabp <= cabp, "MABP should be at or below CABP");
+    assertTrue(cabp <= wabp, "CABP should be at or below WABP");
+    assertEquals((mabp + cabp) / 2.0, meabp, 0.01, "MeABP should be the mean of MABP and CABP");
+    // VABP comes from the curve and should sit inside the T10..T90 window.
+    assertTrue(vabp > standard.getValue("T10") && vabp < standard.getValue("T90"),
+        "VABP should fall between T10 and T90");
+
+    double sg = standard.getSpecificGravity();
+    assertTrue(sg > 0.6 && sg < 1.0, "Specific gravity should be in a plausible petroleum range");
+
+    double watsonK = standard.getWatsonK();
+    assertTrue(watsonK > 10.0 && watsonK < 14.0,
+        "Watson K should be in the typical petroleum range (10-14), was " + watsonK);
+  }
+
+  /**
+   * Verifies the D86 slope is positive and that recovery + loss + residue conserve to 100 %.
+   */
+  @Test
+  void testASTM_D86_slopeAndRecoveryBalance() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    assertTrue(standard.getSlope() > 0.0, "D86 slope (T90-T10)/80 should be positive");
+
+    double total =
+        standard.getPercentRecovered() + standard.getPercentLoss() + standard.getPercentResidue();
+    assertEquals(100.0, total, 0.01, "Recovery + loss + residue should conserve to 100%");
+    assertTrue(standard.getPercentLoss() >= 0.0, "Loss should be non-negative");
+    assertTrue(standard.getPercentResidue() >= 0.0, "Residue should be non-negative");
+  }
+
+  /**
+   * Verifies the Riazi-Daubert TBP&rarr;D86 conversion produces a distinct curve from the simulated
+   * (TBP-like) curve and that selecting the TBP_CONVERTED basis changes the reported temperatures.
+   */
+  @Test
+  void testASTM_D86_tbpToD86Conversion() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    double[][] tbp = standard.getTBPCurve();
+    double[][] d86 = standard.getD86Curve();
+    assertEquals(tbp.length, d86.length, "TBP and D86 curves should have the same length");
+
+    boolean anyDifferent = false;
+    for (int i = 0; i < tbp.length; i++) {
+      if (!Double.isNaN(tbp[i][1]) && !Double.isNaN(d86[i][1])
+          && Math.abs(tbp[i][1] - d86[i][1]) > 1.0) {
+        anyDifferent = true;
+        break;
+      }
+    }
+    assertTrue(anyDifferent, "TBP and D86 curves should differ (conversion applied)");
+
+    double molarT50 = standard.getValue("T50");
+    standard.setBasis(Standard_ASTM_D86.D86Basis.TBP_CONVERTED);
+    double convertedT50 = standard.getValue("T50");
+    assertTrue(Math.abs(convertedT50 - molarT50) > 0.1,
+        "TBP_CONVERTED basis should change the reported T50");
+    standard.setBasis(Standard_ASTM_D86.D86Basis.MOLAR);
+  }
+
+  /**
+   * Verifies the liquid-volume reporting basis yields a different curve from the molar basis.
+   */
+  @Test
+  void testASTM_D86_liquidVolumeBasis() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    double molarT50 = standard.getValue("T50");
+    standard.setBasis(Standard_ASTM_D86.D86Basis.LIQUID_VOLUME);
+    double liquidVolT50 = standard.getValue("T50");
+    standard.setBasis(Standard_ASTM_D86.D86Basis.MOLAR);
+
+    assertTrue(!Double.isNaN(liquidVolT50), "Liquid-volume T50 should be computable");
+    assertTrue(Math.abs(liquidVolT50 - molarT50) > 0.1,
+        "Liquid-volume basis should differ from molar basis");
+  }
+
+  /**
+   * Verifies the Sydney Young barometric-pressure correction shifts reported temperatures: a
+   * sub-760 mmHg pressure raises the equivalent 760 mmHg temperature.
+   */
+  @Test
+  void testASTM_D86_barometricCorrection() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    double t50at760 = standard.getValue("T50");
+    standard.setBarometricPressure(700.0, "mmHg");
+    double t50at700 = standard.getValue("T50");
+    standard.setBarometricPressure(760.0, "mmHg");
+
+    assertTrue(t50at700 > t50at760,
+        "Lower barometric pressure should raise the corrected (760 mmHg-equivalent) temperature");
+    // Unit handling: 1 atm == 760 mmHg, so the correction should vanish.
+    standard.setBarometricPressure(1.0, "atm");
+    assertEquals(t50at760, standard.getValue("T50"), 0.01,
+        "1 atm should be equivalent to 760 mmHg (no correction)");
+    standard.setBarometricPressure(760.0, "mmHg");
+  }
+
+  /**
+   * Verifies product specification limits drive {@link Standard_ASTM_D86#isOnSpec()}.
+   */
+  @Test
+  void testASTM_D86_specLimits() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    double t90 = standard.getValue("T90");
+
+    standard.setSpecLimit("T90", t90 + 20.0);
+    assertTrue(standard.isOnSpec(), "Should pass when T90 is below the limit");
+
+    standard.setSpecLimit("T90", t90 - 20.0);
+    assertTrue(!standard.isOnSpec(), "Should fail when T90 exceeds the limit");
+
+    standard.clearSpecLimits();
+    assertTrue(standard.isOnSpec(), "Should fall back to default on-spec check when no limits set");
+  }
+
   // ========== ASTM D445 Tests ==========
 
   @Test

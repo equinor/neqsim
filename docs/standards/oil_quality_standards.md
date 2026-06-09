@@ -11,7 +11,7 @@ NeqSim provides thermodynamics-based implementations of key ASTM standards used 
 
 | Standard | Class | Property | Key Output |
 |----------|-------|----------|------------|
-| ASTM D86 | `Standard_ASTM_D86` | Atmospheric distillation | IBP, T10-T90, FBP |
+| ASTM D86 | `Standard_ASTM_D86` | Atmospheric distillation | IBP, T10-T90, FBP, VABP/MeABP, Watson K |
 | ASTM D445 | `Standard_ASTM_D445` | Kinematic viscosity | KV40, KV100, Viscosity Index |
 | ASTM D4052 | `Standard_ASTM_D4052` | Density / API gravity | Density, SG, API, classification |
 | ASTM D4294 | `Standard_ASTM_D4294` | Total sulfur content | Sulfur wt%, sweet/sour class |
@@ -64,15 +64,42 @@ Determines the boiling range distribution of petroleum products at atmospheric p
 
 ### Parameters
 
+Available via `getValue(param)` (or `getValue(param, unit)` for temperatures):
+
 | Parameter | Description |
 |-----------|-------------|
 | `IBP` | Initial boiling point |
-| `T5` - `T95` | Temperature at 5%-95% volume distilled |
+| `T5` - `T95` (any `Txx`) | Temperature at xx% distilled |
 | `FBP` | Final boiling point |
+| `VABP` | Volume average boiling point (from the curve) |
+| `MABP` | Molal average boiling point |
+| `WABP` | Weight average boiling point |
+| `CABP` | Cubic average boiling point |
+| `MeABP` | Mean average boiling point = (MABP + CABP) / 2 |
+| `slope` | D86 slope = (T90 - T10) / 80 |
+| `WatsonK` (or `UOPK`) | Watson (UOP) characterization factor |
+| `recovery`, `loss`, `residue` | Recovery/loss/residue volume fractions |
+
+> Average boiling points, the Watson factor, the slope, `residue` and `loss`
+> are dimensionless or fixed-basis values and are returned unconverted by
+> `getValue(param, unit)`.
 
 ### Temperature Units
 
 Supported via `getValue(param, unit)`: `"C"`, `"K"`, `"F"`, `"R"`
+
+### Reporting Basis
+
+The recovered fraction can be reported on three bases via `setBasis(...)`:
+
+| Basis | Meaning |
+|-------|---------|
+| `D86Basis.MOLAR` (default) | Recovered fraction = molar vapor fraction |
+| `D86Basis.LIQUID_VOLUME` | Recovered fraction = distilled liquid-volume fraction |
+| `D86Basis.TBP_CONVERTED` | Simulated TBP curve converted to D86 (Riazi&ndash;Daubert) |
+
+The default (`MOLAR`, 760 mmHg) reproduces the legacy behaviour, and
+`getDistillationCurve()` always returns `[vol%, temperature_C]`.
 
 ### Example
 
@@ -85,18 +112,44 @@ double ibp = d86.getValue("IBP", "C");
 double t50 = d86.getValue("T50", "C");
 double fbp = d86.getValue("FBP", "C");
 
-// Full distillation curve as double[N][2] (fraction, temperature_K)
+// Characterization properties
+double watsonK = d86.getWatsonK();         // UOP K factor
+double meabp = d86.getMeABP();             // mean average boiling point (C)
+double slope = d86.getSlope();             // D86 slope (C / vol%)
+double sg = d86.getSpecificGravity();      // 60/60 F specific gravity
+
+// Recovery / loss / residue (sum to 100%)
+double recovered = d86.getPercentRecovered();
+double loss = d86.getPercentLoss();
+double residue = d86.getPercentResidue();
+
+// Full distillation curve as double[N][2] (vol%, temperature_C)
 double[][] curve = d86.getDistillationCurve();
 for (double[] point : curve) {
-    System.out.printf("%.0f%% -> %.1f C%n", point[0] * 100, point[1] - 273.15);
+    System.out.printf("%.1f%% -> %.1f C%n", point[0], point[1]);
 }
+
+// Compare simulated TBP curve to the converted D86 curve
+double[][] tbpCurve = d86.getTBPCurve();   // [vol%, temperature_C]
+double[][] d86Curve = d86.getD86Curve();   // Riazi-Daubert converted
+
+// Barometric (Sydney Young) correction and product spec limits
+d86.setBarometricPressure(740.0, "mmHg");
+d86.setSpecLimit("T90", 360.0);            // C
+boolean onSpec = d86.isOnSpec();
 ```
 
 ### How It Works
 
-1. **IBP** - Bubble point temperature flash at system pressure
-2. **Intermediate points** (T5-T95) - TV fraction flash at specified volume fractions
+1. **IBP** - Bubble point temperature flash at atmospheric pressure
+2. **Intermediate points** (T5-T95) - Pressure-Vapor-Fraction (PVF) flash at each
+   target recovered fraction: pressure is held fixed and temperature is solved,
+   producing a rising boiling curve
 3. **FBP** - Dew point temperature flash
+4. **Average boiling points** (MABP, WABP, CABP, MeABP) are computed from the
+   component normal boiling points; VABP and the slope come from the curve
+5. **Watson K** = &#8731;(1.8 &middot; MeABP_K) / SG, with SG from an ideal-mixture
+   density
 
 ---
 
