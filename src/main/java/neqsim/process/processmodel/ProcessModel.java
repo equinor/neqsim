@@ -1454,11 +1454,21 @@ public class ProcessModel implements Runnable, Serializable {
   /**
    * Runs a single ProcessSystem once in step mode.
    *
+   * <p>
+   * Areas flagged with {@link ProcessSystem#setSolveFullyInModelStep(boolean)} are fully converged
+   * (recycles included) instead of advancing a single pass, allowing selected sub-processes to
+   * reach a consistent state on every model step while the rest of the plant single-steps.
+   * </p>
+   *
    * @param process the process to run in step mode
    */
   private void runSingleProcessStep(ProcessSystem process) {
     try {
-      process.run_step();
+      if (process.isSolveFullyInModelStep()) {
+        process.run();
+      } else {
+        process.run_step();
+      }
     } catch (Exception e) {
       logger.error("Error running process step " + process.getName() + ": " + e.getMessage(), e);
     }
@@ -1485,7 +1495,11 @@ public class ProcessModel implements Runnable, Serializable {
         }
         notifyBeforeProcessArea(entry.getKey(), entry.getValue(), areaIdx, totalAreas,
             iterationNumber);
-        entry.getValue().run_step();
+        if (entry.getValue().isSolveFullyInModelStep()) {
+          entry.getValue().run();
+        } else {
+          entry.getValue().run_step();
+        }
         notifyProcessAreaComplete(entry.getKey(), entry.getValue(), areaIdx, totalAreas,
             iterationNumber);
       } catch (Exception e) {

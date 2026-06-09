@@ -98,6 +98,7 @@ public class ProcessSystem extends SimulationBaseClass {
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
   private boolean runStep = false;
+  private boolean solveFullyInModelStep = false;
 
   private final Map<String, Integer> equipmentCounter = new HashMap<>();
   private ProcessEquipmentInterface lastAddedUnit = null;
@@ -4659,6 +4660,7 @@ public class ProcessSystem extends SimulationBaseClass {
     recycleController = source.recycleController;
     timeStep = source.timeStep;
     runStep = source.runStep;
+    solveFullyInModelStep = source.solveFullyInModelStep;
     equipmentCounter.clear();
     equipmentCounter.putAll(source.equipmentCounter);
     lastAddedUnit = source.lastAddedUnit;
@@ -4717,6 +4719,35 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public boolean isRunStep() {
     return runStep;
+  }
+
+  /**
+   * Controls how this process area behaves when its owning {@link ProcessModel} is run in step mode
+   * ({@code ProcessModel.setRunStep(true)}).
+   *
+   * <p>
+   * By default ({@code false}) every area advances exactly one pass per model step. When set to
+   * {@code true} this specific area is fully converged (recycles included) on each model step,
+   * while other areas still single-step. This is useful when one sub-process (for example an
+   * anti-surge recycle loop) must reach a consistent state every step while the rest of the plant
+   * is advanced incrementally.
+   * </p>
+   *
+   * @param solveFullyInModelStep {@code true} to fully solve this area on each model step,
+   *        {@code false} to advance only a single pass
+   */
+  public void setSolveFullyInModelStep(boolean solveFullyInModelStep) {
+    this.solveFullyInModelStep = solveFullyInModelStep;
+  }
+
+  /**
+   * Returns whether this process area is fully converged on each step when its owning
+   * {@link ProcessModel} is run in step mode.
+   *
+   * @return {@code true} if this area fully solves on each model step, otherwise {@code false}
+   */
+  public boolean isSolveFullyInModelStep() {
+    return solveFullyInModelStep;
   }
 
   /**
