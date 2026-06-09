@@ -53,28 +53,28 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
   private double[][] deltadT = null;
   private double[][] deltadTdT = null;
   private double[][][] Klkni = null;
-  private SimpleMatrix KlkTVMatrix = null;
-  private SimpleMatrix KlkTTMatrix = null;
-  private SimpleMatrix KlkTMatrix = null;
-  private SimpleMatrix udotTimesmMatrix = null;
-  private SimpleMatrix mVector = null;
-  private SimpleMatrix udotMatrix = null;
-  private SimpleMatrix uMatrix = null;
-  private SimpleMatrix QMatksiksiksi = null;
-  private SimpleMatrix KlkVVVMatrix = null;
-  private SimpleMatrix KlkVVMatrix = null;
-  private SimpleMatrix udotTimesmiMatrix = null;
-  private SimpleMatrix ksiMatrix = null;
-  private SimpleMatrix KlkMatrix = null;
-  private SimpleMatrix hessianMatrix = null;
-  private SimpleMatrix hessianInvers = null;
+  private DenseMatrix KlkTVMatrix = null;
+  private DenseMatrix KlkTTMatrix = null;
+  private DenseMatrix KlkTMatrix = null;
+  private DenseMatrix udotTimesmMatrix = null;
+  private DenseMatrix mVector = null;
+  private DenseMatrix udotMatrix = null;
+  private DenseMatrix uMatrix = null;
+  private DenseMatrix QMatksiksiksi = null;
+  private DenseMatrix KlkVVVMatrix = null;
+  private DenseMatrix KlkVVMatrix = null;
+  private DenseMatrix udotTimesmiMatrix = null;
+  private DenseMatrix ksiMatrix = null;
+  private DenseMatrix KlkMatrix = null;
+  private DenseMatrix hessianMatrix = null;
+  private DenseMatrix hessianInvers = null;
   /** Cached LU factorization of {@code hessianMatrix} for repeated Hessian backsolves. */
   private transient LU<Double> hessianLU = null;
   /** Scratch matrix passed to EJML LU because the solver may decompose its input in place. */
   private transient DenseMatrix hessianLUinput = null;
   /** Matrix size associated with the cached Hessian LU factorization. */
   private transient int hessianLUSize = -1;
-  private SimpleMatrix KlkVMatrix = null;
+  private DenseMatrix KlkVMatrix = null;
   DenseMatrix corr2Matrix = null;
   DenseMatrix corr3Matrix = null;
   DenseMatrix corr4Matrix = null;
@@ -138,37 +138,37 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       }
 
       if (getTotalNumberOfAccociationSites() != oldTotalNumberOfAccociationSites) {
-        mVector = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
-        KlkMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
-        KlkVMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
-        KlkVVMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
-        KlkVVVMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
-        hessianMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
-        KlkTMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
-        KlkTTMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
-        KlkTVMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(),
-            getTotalNumberOfAccociationSites());
+        mVector = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
+        KlkMatrix =
+            new DenseMatrix(getTotalNumberOfAccociationSites(), getTotalNumberOfAccociationSites());
+        KlkVMatrix =
+            new DenseMatrix(getTotalNumberOfAccociationSites(), getTotalNumberOfAccociationSites());
+        KlkVVMatrix =
+            new DenseMatrix(getTotalNumberOfAccociationSites(), getTotalNumberOfAccociationSites());
+        KlkVVVMatrix =
+            new DenseMatrix(getTotalNumberOfAccociationSites(), getTotalNumberOfAccociationSites());
+        hessianMatrix =
+            new DenseMatrix(getTotalNumberOfAccociationSites(), getTotalNumberOfAccociationSites());
+        KlkTMatrix =
+            new DenseMatrix(getTotalNumberOfAccociationSites(), getTotalNumberOfAccociationSites());
+        KlkTTMatrix =
+            new DenseMatrix(getTotalNumberOfAccociationSites(), getTotalNumberOfAccociationSites());
+        KlkTVMatrix =
+            new DenseMatrix(getTotalNumberOfAccociationSites(), getTotalNumberOfAccociationSites());
         corr2Matrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
         corr3Matrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
         corr4Matrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
         Klkni =
             new double[numberOfComponents][getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
-        ksiMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
-        uMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
-        udotMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
+        ksiMatrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
+        uMatrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
+        udotMatrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
         moleculeNumber = new int[getTotalNumberOfAccociationSites()];
         assSiteNumber = new int[getTotalNumberOfAccociationSites()];
         gvector = new double[getTotalNumberOfAccociationSites()][1];
-        udotTimesmMatrix = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
+        udotTimesmMatrix = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
         udotTimesmiMatrix =
-            new SimpleMatrix(getNumberOfComponents(), getTotalNumberOfAccociationSites());
+            new DenseMatrix(getNumberOfComponents(), getTotalNumberOfAccociationSites());
         delta = new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
         deltaNog =
             new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
@@ -176,7 +176,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
             new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
         deltadTdT =
             new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
-        QMatksiksiksi = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
+        QMatksiksiksi = new DenseMatrix(getTotalNumberOfAccociationSites(), 1);
         lngi = new double[numberOfComponents];
       }
       oldTotalNumberOfAccociationSites = getTotalNumberOfAccociationSites();
@@ -261,15 +261,15 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     double tempVar2;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-        tempVar1 = ksiMatrix.get(temp + j, 0);
-        tempVar2 = udotMatrix.get(temp + j, 0);
-        uMatrix.set(temp + j, 0, Math.log(tempVar1) - tempVar1 + 1.0);
-        gvector[temp + j][0] = mVector.get(temp + j, 0) * tempVar2;
+        tempVar1 = ksiMatrix.unsafe_get(temp + j, 0);
+        tempVar2 = udotMatrix.unsafe_get(temp + j, 0);
+        uMatrix.unsafe_set(temp + j, 0, Math.log(tempVar1) - tempVar1 + 1.0);
+        gvector[temp + j][0] = mVector.unsafe_get(temp + j, 0) * tempVar2;
 
         if (moleculeNumber[temp + j] == i) {
-          udotTimesmiMatrix.set(i, temp + j, tempVar2);
+          udotTimesmiMatrix.unsafe_set(i, temp + j, tempVar2);
         } else {
-          udotTimesmiMatrix.set(i, temp + j, 0.0);
+          udotTimesmiMatrix.unsafe_set(i, temp + j, 0.0);
         }
       }
       temp += componentArray[i].getNumberOfAssociationSites();
@@ -309,20 +309,20 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     double tempKsiRead = 0.0;
     for (int i = 0; i < totalNumberOfAccociationSites; i++) {
       for (int j = i; j < totalNumberOfAccociationSites; j++) {
-        Klk = KlkMatrix.get(i, j);
+        Klk = KlkMatrix.unsafe_get(i, j);
         tempVar = Klk * gdv1;
-        KlkVMatrix.set(i, j, tempVar);
-        KlkVMatrix.set(j, i, tempVar);
+        KlkVMatrix.unsafe_set(i, j, tempVar);
+        KlkVMatrix.unsafe_set(j, i, tempVar);
 
         tempVar = Klk * gdv2 + Klk * (gcpavv + 1.0 / totalVolume2);
-        KlkVVMatrix.set(i, j, tempVar);
-        KlkVVMatrix.set(j, i, tempVar);
+        KlkVVMatrix.unsafe_set(i, j, tempVar);
+        KlkVVMatrix.unsafe_set(j, i, tempVar);
 
         tempVar =
             Klk * gdv3 + 3.0 * Klk * (gcpav - 1.0 / totalVolume) * (gcpavv + 1.0 / totalVolume2)
                 + Klk * (gcpavvv - 2.0 / totalVolume3);
-        KlkVVVMatrix.set(i, j, tempVar);
-        KlkVVVMatrix.set(j, i, tempVar);
+        KlkVVVMatrix.unsafe_set(i, j, tempVar);
+        KlkVVVMatrix.unsafe_set(j, i, tempVar);
 
         if (type > 1) {
           tempVar = deltadT[i][j] / delta[i][j];
@@ -332,16 +332,16 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
                 - (deltadT[i][j] * deltadT[i][j]) / (delta[i][j] * delta[i][j]);
 
             tempVar2 = Klk * tempVar;
-            KlkTMatrix.set(i, j, tempVar2);
-            KlkTMatrix.set(j, i, tempVar2);
+            KlkTMatrix.unsafe_set(i, j, tempVar2);
+            KlkTMatrix.unsafe_set(j, i, tempVar2);
 
             tempVar2 = Klk * tempVar * (gcpav - 1.0 / totalVolume);
-            KlkTVMatrix.set(i, j, tempVar2);
-            KlkTVMatrix.set(j, i, tempVar2);
+            KlkTVMatrix.unsafe_set(i, j, tempVar2);
+            KlkTVMatrix.unsafe_set(j, i, tempVar2);
 
             tempVar2 = Klk * (tempVar * tempVar + tempVardT);
-            KlkTTMatrix.set(i, j, tempVar2);
-            KlkTTMatrix.set(j, i, tempVar2);
+            KlkTTMatrix.unsafe_set(i, j, tempVar2);
+            KlkTTMatrix.unsafe_set(j, i, tempVar2);
           }
 
           if (type > 2) {
@@ -349,10 +349,10 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
               double t1 = 0.0;
               double t2 = 0.0;
               if (moleculeNumber[i] == p) {
-                t1 = 1.0 / mVector.get(i, 0);
+                t1 = 1.0 / mVector.unsafe_get(i, 0);
               }
               if (moleculeNumber[j] == p) {
-                t2 = 1.0 / mVector.get(j, 0);
+                t2 = 1.0 / mVector.unsafe_get(j, 0);
               }
               Klkni[p][i][j] = Klk * (t1 + t2 + lngi[p]);
               Klkni[p][j][i] = Klkni[p][i][j];
@@ -360,38 +360,40 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
           }
         }
       }
-      tempKsiRead = ksiMatrix.get(i, 0);
-      QMatksiksiksi.set(i, 0, 2.0 * mVector.get(i, 0) / (tempKsiRead * tempKsiRead * tempKsiRead));
+      tempKsiRead = ksiMatrix.unsafe_get(i, 0);
+      QMatksiksiksi.unsafe_set(i, 0,
+          2.0 * mVector.unsafe_get(i, 0) / (tempKsiRead * tempKsiRead * tempKsiRead));
     }
 
-    SimpleMatrix ksiMatrixTranspose = ksiMatrix.transpose();
+    DenseMatrix ksiMatrixTranspose = transpose(ksiMatrix);
 
     // dXdV
-    SimpleMatrix KlkVMatrixksi = KlkVMatrix.mult(ksiMatrix);
-    SimpleMatrix XV = applyHessianInv(KlkVMatrixksi);
-    SimpleMatrix XVtranspose = XV.transpose();
+    DenseMatrix KlkVMatrixksi = multiply(KlkVMatrix, ksiMatrix);
+    DenseMatrix XV = applyHessianInv(KlkVMatrixksi);
+    DenseMatrix XVtranspose = transpose(XV);
 
-    SimpleMatrix QCPA =
-        mVector.transpose().mult(uMatrix.minus(ksiMatrix.elementMult(udotMatrix).scale(0.5)));
-    FCPA = QCPA.get(0, 0);
+    DenseMatrix qCpa = multiply(transpose(mVector),
+        subtract(uMatrix, scale(elementMult(ksiMatrix, udotMatrix), 0.5)));
+    FCPA = qCpa.unsafe_get(0, 0);
 
-    SimpleMatrix tempMatrix = ksiMatrixTranspose.mult(KlkVMatrixksi).scale(-0.5);
-    dFCPAdV = tempMatrix.get(0, 0);
-    SimpleMatrix KlkVVMatrixTImesKsi = KlkVVMatrix.mult(ksiMatrix);
-    SimpleMatrix tempMatrixVV = ksiMatrixTranspose.mult(KlkVVMatrixTImesKsi).scale(-0.5)
-        .minus(KlkVMatrixksi.transpose().mult(XV));
-    dFCPAdVdV = tempMatrixVV.get(0, 0);
+    DenseMatrix tempMatrix = scale(multiply(ksiMatrixTranspose, KlkVMatrixksi), -0.5);
+    dFCPAdV = tempMatrix.unsafe_get(0, 0);
+    DenseMatrix klkVvMatrixTimesKsi = multiply(KlkVVMatrix, ksiMatrix);
+    DenseMatrix tempMatrixVV =
+        subtract(scale(multiply(ksiMatrixTranspose, klkVvMatrixTimesKsi), -0.5),
+            multiply(transpose(KlkVMatrixksi), XV));
+    dFCPAdVdV = tempMatrixVV.unsafe_get(0, 0);
 
-    SimpleMatrix QVVV = ksiMatrixTranspose.mult(KlkVVVMatrix.mult(ksiMatrix)).scale(-0.5);
-    SimpleMatrix QVVksi = KlkVVMatrixTImesKsi.scale(-1.0);
-    SimpleMatrix QksiVksi = KlkVMatrix.scale(-1.0);
+    DenseMatrix qVvv = scale(multiply(ksiMatrixTranspose, multiply(KlkVVVMatrix, ksiMatrix)), -0.5);
+    DenseMatrix qVvksi = scale(klkVvMatrixTimesKsi, -1.0);
+    DenseMatrix qKsiVksi = scale(KlkVMatrix, -1.0);
 
-    SimpleMatrix mat1 = QVVksi.transpose().mult(XV).scale(3.0);
-    SimpleMatrix mat2 = XVtranspose.mult(QksiVksi.mult(XV)).scale(3.0);
-    SimpleMatrix mat4 = XVtranspose.mult(QMatksiksiksi.mult(XVtranspose)).mult(XV);
+    DenseMatrix mat1 = scale(multiply(transpose(qVvksi), XV), 3.0);
+    DenseMatrix mat2 = scale(multiply(XVtranspose, multiply(qKsiVksi, XV)), 3.0);
+    DenseMatrix mat4 = multiply(multiply(XVtranspose, multiply(QMatksiksiksi, XVtranspose)), XV);
 
-    SimpleMatrix dFCPAdVdVdVMatrix = QVVV.plus(mat1).plus(mat2).plus(mat2).plus(mat4);
-    dFCPAdVdVdV = dFCPAdVdVdVMatrix.get(0, 0);
+    DenseMatrix dFCPAdVdVdVMatrix = add(add(add(add(qVvv, mat1), mat2), mat2), mat4);
+    dFCPAdVdVdV = dFCPAdVdVdVMatrix.unsafe_get(0, 0);
     temp = 0;
 
     if (type == 1) {
@@ -399,36 +401,38 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     }
     for (int p = 0; p < numberOfComponents; p++) {
       for (int kk = 0; kk < getComponent(p).getNumberOfAssociationSites(); kk++) {
-        ((ComponentCPAInterface) getComponent(p)).setXsitedV(kk, XV.get(temp + kk, 0));
+        ((ComponentCPAInterface) getComponent(p)).setXsitedV(kk, XV.unsafe_get(temp + kk, 0));
       }
       temp += getComponent(p).getNumberOfAssociationSites();
     }
 
-    // KlkTMatrix = new SimpleMatrix(KlkdT);
-    SimpleMatrix KlkTMatrixTImesKsi = KlkTMatrix.mult(ksiMatrix);
+    // KlkTMatrix corresponds to dKlk/dT
+    DenseMatrix klkTMatrixTimesKsi = multiply(KlkTMatrix, ksiMatrix);
     // dQdT
-    SimpleMatrix tempMatrix2 = ksiMatrixTranspose.mult(KlkTMatrixTImesKsi).scale(-0.5);
-    dFCPAdT = tempMatrix2.get(0, 0);
+    DenseMatrix tempMatrix2 = scale(multiply(ksiMatrixTranspose, klkTMatrixTimesKsi), -0.5);
+    dFCPAdT = tempMatrix2.unsafe_get(0, 0);
 
-    // SimpleMatrix KlkTVMatrix = new SimpleMatrix(KlkdTdV);
-    // SimpleMatrix tempMatrixTV =
+    // KlkTVMatrix corresponds to d2Klk/(dTdV)
+    // tempMatrixTV =
     // ksiMatrixTranspose.mult(KlkTVMatrix.mult(ksiMatrix)).scale(-0.5).minus(KlkTMatrixTImesKsi.transpose().mult(XV));
     // dFCPAdTdV = tempMatrixTV.get(0, 0);
     // dXdT
-    SimpleMatrix XT = applyHessianInv(KlkTMatrixTImesKsi);
+    DenseMatrix XT = applyHessianInv(klkTMatrixTimesKsi);
     // dQdTdT
-    SimpleMatrix tempMatrixTT = ksiMatrixTranspose.mult(KlkTTMatrix.mult(ksiMatrix)).scale(-0.5)
-        .minus(KlkTMatrixTImesKsi.transpose().mult(XT));
-    dFCPAdTdT = tempMatrixTT.get(0, 0);
+    DenseMatrix tempMatrixTT =
+        subtract(scale(multiply(ksiMatrixTranspose, multiply(KlkTTMatrix, ksiMatrix)), -0.5),
+            multiply(transpose(klkTMatrixTimesKsi), XT));
+    dFCPAdTdT = tempMatrixTT.unsafe_get(0, 0);
 
-    SimpleMatrix tempMatrixTV = ksiMatrixTranspose.mult(KlkTVMatrix.mult(ksiMatrix)).scale(-0.5)
-        .minus(KlkTMatrixTImesKsi.transpose().mult(XV));
-    dFCPAdTdV = tempMatrixTV.get(0, 0);
+    DenseMatrix tempMatrixTV =
+        subtract(scale(multiply(ksiMatrixTranspose, multiply(KlkTVMatrix, ksiMatrix)), -0.5),
+            multiply(transpose(klkTMatrixTimesKsi), XV));
+    dFCPAdTdV = tempMatrixTV.unsafe_get(0, 0);
 
     temp = 0;
     for (int p = 0; p < numberOfComponents; p++) {
       for (int kk = 0; kk < getComponent(p).getNumberOfAssociationSites(); kk++) {
-        ((ComponentCPAInterface) getComponent(p)).setXsitedT(kk, XT.get(temp + kk, 0));
+        ((ComponentCPAInterface) getComponent(p)).setXsitedT(kk, XT.unsafe_get(temp + kk, 0));
       }
       temp += getComponent(p).getNumberOfAssociationSites();
     }
@@ -439,7 +443,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
 
     // if(true) return;
     for (int p = 0; p < numberOfComponents; p++) {
-      SimpleMatrix KiMatrix = new SimpleMatrix(Klkni[p]);
+      DenseMatrix kiMatrix = new DenseMatrix(Klkni[p]);
       // KiMatrix.print(10,10);
       // Matrix dQdniMatrix =
       // (ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5)); // this
@@ -454,11 +458,11 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       // ksiMatrix.transpose().times(KlkTMatrix.times(ksiMatrix)).times(-0.5);
       // System.out.println("dQdn ");
       // tempMatrix20.print(10, 10);
-      SimpleMatrix tempMatrix4 = KiMatrix.mult(ksiMatrix);
+      DenseMatrix tempMatrix4 = multiply(kiMatrix, ksiMatrix);
       // udotTimesmiMatrix.getMatrix(assSites, assSites, 0,
       // totalNumberOfAccociationSites - 1).print(10, 10);
-      SimpleMatrix tempMatrix5 =
-          udotTimesmiMatrix.extractVector(true, p).transpose().minus(tempMatrix4);
+      DenseMatrix tempMatrix5 =
+          subtract(transpose(extractVector(udotTimesmiMatrix, true, p)), tempMatrix4);
       // tempMki[0] = mki[p];
       // Matrix amatrix = new Matrix(croeneckerProduct(tempMki,
       // udotMatrix.getArray()));
@@ -467,7 +471,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       // System.out.println("temp4 matrix");
       // tempMatrix4.print(10, 10);
       // Matrix tempMatrix5 = amatrix.minus(tempMatrix4);
-      SimpleMatrix tempMatrix6 = applyHessianInv(tempMatrix5); // .scale(-1.0);
+      DenseMatrix tempMatrix6 = applyHessianInv(tempMatrix5); // .scale(-1.0);
       // System.out.println("dXdni");
       // tempMatrix4.print(10, 10);
       // tempMatrix5.print(10, 10);
@@ -477,7 +481,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       for (int compp = 0; compp < numberOfComponents; compp++) {
         for (int kk = 0; kk < getComponent(compp).getNumberOfAssociationSites(); kk++) {
           ((ComponentCPAInterface) getComponent(compp)).setXsitedni(kk, p,
-              -1.0 * tempMatrix6.get(temp2 + kk, 0));
+              -1.0 * tempMatrix6.unsafe_get(temp2 + kk, 0));
         }
         temp2 += getComponent(compp).getNumberOfAssociationSites();
       }
@@ -659,16 +663,15 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
    * @param rhs right-hand-side matrix with one row per association site
    * @return solution of {@code hessianMatrix * x = rhs}
    */
-  private SimpleMatrix applyHessianInv(SimpleMatrix rhs) {
+  private DenseMatrix applyHessianInv(DenseMatrix rhs) {
     if (hessianInvers != null) {
-      return hessianInvers.mult(rhs);
+      return multiply(hessianInvers, rhs);
     }
     if (hessianLU != null && hessianLUSize == totalNumberOfAccociationSites) {
-      DenseMatrix rhsMat = rhs.getDDRM();
-      DenseMatrix out = new DenseMatrix(rhsMat.numRows, rhsMat.numCols);
-      LinearAlgebraOps.solveLu(hessianLU, rhsMat.numRows, rhsMat.numCols,
-          (i, j) -> rhsMat.unsafe_get(i, j), (i, j, value) -> out.unsafe_set(i, j, value));
-      return SimpleMatrix.wrap(out);
+      DenseMatrix out = new DenseMatrix(rhs.numRows, rhs.numCols);
+      LinearAlgebraOps.solveLu(hessianLU, rhs.numRows, rhs.numCols, (i, j) -> rhs.unsafe_get(i, j),
+          (i, j, value) -> out.unsafe_set(i, j, value));
+      return out;
     }
     throw new IllegalStateException("Hessian factorization has not been initialized");
   }
@@ -687,8 +690,8 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
 
     boolean solvedX = solveX2(15);
 
-    DenseMatrix mVectorMat = mVector.getMatrix();
-    DenseMatrix ksiMatrixMat = ksiMatrix.getMatrix();
+    DenseMatrix mVectorMat = mVector;
+    DenseMatrix ksiMatrixMat = ksiMatrix;
 
     int temp = 0;
     int iter = 0;
@@ -699,7 +702,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       temp += componentArray[i].getNumberOfAssociationSites();
     }
 
-    DenseMatrix mat1 = KlkMatrix.getMatrix();
+    DenseMatrix mat1 = KlkMatrix;
     double Klk = 0.0;
     double totvolume = getTotalVolume();
     double tempVari;
@@ -727,8 +730,8 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
           ksi = ((ComponentCPAInterface) componentArray[i]).getXsite()[j];
           ksiMatrixMat.unsafe_set(temp + j, 0, ksi);
           tempVari = 1.0 / ksi - 1.0;
-          udotMatrix.set(temp + j, 0, tempVari);
-          udotTimesmMatrix.set(temp + j, 0, temp1 * tempVari);
+          udotMatrix.unsafe_set(temp + j, 0, tempVari);
+          udotTimesmMatrix.unsafe_set(temp + j, 0, temp1 * tempVari);
         }
         temp += componentArray[i].getNumberOfAssociationSites();
       }
@@ -736,12 +739,12 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       int krondelt;
       for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
         temp1 = mVectorMat.unsafe_get(i, 0);
-        temp2 = ksiMatrix.get(i, 0);
+        temp2 = ksiMatrix.unsafe_get(i, 0);
         for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
           krondelt = (i == j) ? 1 : 0;
           tempVari = -temp1 / (temp2 * temp2) * krondelt - mat1.unsafe_get(i, j);
-          hessianMatrix.set(i, j, tempVari);
-          hessianMatrix.set(j, i, tempVari);
+          hessianMatrix.unsafe_set(i, j, tempVari);
+          hessianMatrix.unsafe_set(j, i, tempVari);
         }
       }
 
@@ -751,7 +754,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         hessianLUinput = new DenseMatrix(n, n);
         hessianLUSize = n;
       }
-      System.arraycopy(hessianMatrix.getDDRM().getData(), 0, hessianLUinput.getData(), 0, n * n);
+      System.arraycopy(hessianMatrix.getData(), 0, hessianLUinput.getData(), 0, n * n);
       if (!LinearAlgebraOps.decomposeLu(hessianLU, n, (i, j) -> hessianLUinput.unsafe_get(i, j))) {
         return false;
       }
@@ -760,9 +763,9 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         return true;
       }
 
-      DenseMatrix mat2 = ksiMatrix.getMatrix();
+      DenseMatrix mat2 = ksiMatrix;
       LinearAlgebraOps.mult(mat1, mat2, corr2Matrix);
-      LinearAlgebraOps.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix, corr3Matrix);
+      LinearAlgebraOps.subtract(udotTimesmMatrix, corr2Matrix, corr3Matrix);
       LinearAlgebraOps.solveLu(hessianLU, corr3Matrix.numRows, corr3Matrix.numCols,
           (i, j) -> corr3Matrix.unsafe_get(i, j),
           (i, j, value) -> corr4Matrix.unsafe_set(i, j, value));
@@ -771,7 +774,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       double newX;
       for (int i = 0; i < numberOfComponents; i++) {
         for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-          newX = ksiMatrix.get(temp + j, 0) - corr4Matrix.unsafe_get((temp + j), 0);
+          newX = ksiMatrix.unsafe_get(temp + j, 0) - corr4Matrix.unsafe_get((temp + j), 0);
           if (newX < 0) {
             newX = 1e-10;
             solved = false;
@@ -1487,122 +1490,119 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * Minimal matrix wrapper used during EJML migration, backed by primitive arrays and ojAlgo LU
-   * solves.
+   * Returns the transpose of a dense matrix.
+   *
+   * @param matrix input matrix
+   * @return transposed matrix
    */
-  private static final class SimpleMatrix {
-    private final DenseMatrix data;
-
-    SimpleMatrix(int rows, int cols) {
-      this.data = new DenseMatrix(rows, cols);
-    }
-
-    SimpleMatrix(double[][] values) {
-      this.data = new DenseMatrix(values);
-    }
-
-    private SimpleMatrix(DenseMatrix ddrm) {
-      this.data = ddrm;
-    }
-
-    static SimpleMatrix wrap(DenseMatrix ddrm) {
-      return new SimpleMatrix(ddrm);
-    }
-
-    DenseMatrix getDDRM() {
-      return data;
-    }
-
-    DenseMatrix getMatrix() {
-      return data;
-    }
-
-    double get(int row, int col) {
-      return data.unsafe_get(row, col);
-    }
-
-    void set(int row, int col, double value) {
-      data.unsafe_set(row, col, value);
-    }
-
-    SimpleMatrix transpose() {
-      SimpleMatrix t = new SimpleMatrix(data.numCols, data.numRows);
-      for (int i = 0; i < data.numRows; i++) {
-        for (int j = 0; j < data.numCols; j++) {
-          t.set(j, i, get(i, j));
-        }
+  private static DenseMatrix transpose(DenseMatrix matrix) {
+    DenseMatrix out = new DenseMatrix(matrix.numCols, matrix.numRows);
+    for (int i = 0; i < matrix.numRows; i++) {
+      for (int j = 0; j < matrix.numCols; j++) {
+        out.unsafe_set(j, i, matrix.unsafe_get(i, j));
       }
-      return t;
     }
+    return out;
+  }
 
-    SimpleMatrix mult(SimpleMatrix other) {
-      SimpleMatrix result = new SimpleMatrix(data.numRows, other.data.numCols);
-      for (int i = 0; i < data.numRows; i++) {
-        for (int j = 0; j < other.data.numCols; j++) {
-          double sum = 0.0;
-          for (int k = 0; k < data.numCols; k++) {
-            sum += get(i, k) * other.get(k, j);
-          }
-          result.set(i, j, sum);
-        }
-      }
-      return result;
-    }
+  /**
+   * Multiplies two dense matrices.
+   *
+   * @param left left matrix
+   * @param right right matrix
+   * @return matrix product
+   */
+  private static DenseMatrix multiply(DenseMatrix left, DenseMatrix right) {
+    DenseMatrix out = new DenseMatrix(left.numRows, right.numCols);
+    LinearAlgebraOps.mult(left, right, out);
+    return out;
+  }
 
-    SimpleMatrix plus(SimpleMatrix other) {
-      SimpleMatrix result = new SimpleMatrix(data.numRows, data.numCols);
-      for (int i = 0; i < data.numRows; i++) {
-        for (int j = 0; j < data.numCols; j++) {
-          result.set(i, j, get(i, j) + other.get(i, j));
-        }
+  /**
+   * Adds two dense matrices.
+   *
+   * @param left left matrix
+   * @param right right matrix
+   * @return sum matrix
+   */
+  private static DenseMatrix add(DenseMatrix left, DenseMatrix right) {
+    DenseMatrix out = new DenseMatrix(left.numRows, left.numCols);
+    for (int i = 0; i < left.numRows; i++) {
+      for (int j = 0; j < left.numCols; j++) {
+        out.unsafe_set(i, j, left.unsafe_get(i, j) + right.unsafe_get(i, j));
       }
-      return result;
     }
+    return out;
+  }
 
-    SimpleMatrix minus(SimpleMatrix other) {
-      SimpleMatrix result = new SimpleMatrix(data.numRows, data.numCols);
-      for (int i = 0; i < data.numRows; i++) {
-        for (int j = 0; j < data.numCols; j++) {
-          result.set(i, j, get(i, j) - other.get(i, j));
-        }
-      }
-      return result;
-    }
+  /**
+   * Subtracts two dense matrices.
+   *
+   * @param left left matrix
+   * @param right right matrix
+   * @return difference matrix
+   */
+  private static DenseMatrix subtract(DenseMatrix left, DenseMatrix right) {
+    DenseMatrix out = new DenseMatrix(left.numRows, left.numCols);
+    LinearAlgebraOps.subtract(left, right, out);
+    return out;
+  }
 
-    SimpleMatrix scale(double factor) {
-      SimpleMatrix result = new SimpleMatrix(data.numRows, data.numCols);
-      for (int i = 0; i < data.numRows; i++) {
-        for (int j = 0; j < data.numCols; j++) {
-          result.set(i, j, get(i, j) * factor);
-        }
+  /**
+   * Scales all elements in a dense matrix.
+   *
+   * @param matrix input matrix
+   * @param factor scale factor
+   * @return scaled matrix
+   */
+  private static DenseMatrix scale(DenseMatrix matrix, double factor) {
+    DenseMatrix out = new DenseMatrix(matrix.numRows, matrix.numCols);
+    for (int i = 0; i < matrix.numRows; i++) {
+      for (int j = 0; j < matrix.numCols; j++) {
+        out.unsafe_set(i, j, matrix.unsafe_get(i, j) * factor);
       }
-      return result;
     }
+    return out;
+  }
 
-    SimpleMatrix elementMult(SimpleMatrix other) {
-      SimpleMatrix result = new SimpleMatrix(data.numRows, data.numCols);
-      for (int i = 0; i < data.numRows; i++) {
-        for (int j = 0; j < data.numCols; j++) {
-          result.set(i, j, get(i, j) * other.get(i, j));
-        }
+  /**
+   * Element-wise multiplication of two dense matrices.
+   *
+   * @param left left matrix
+   * @param right right matrix
+   * @return Hadamard product
+   */
+  private static DenseMatrix elementMult(DenseMatrix left, DenseMatrix right) {
+    DenseMatrix out = new DenseMatrix(left.numRows, left.numCols);
+    for (int i = 0; i < left.numRows; i++) {
+      for (int j = 0; j < left.numCols; j++) {
+        out.unsafe_set(i, j, left.unsafe_get(i, j) * right.unsafe_get(i, j));
       }
-      return result;
     }
+    return out;
+  }
 
-    SimpleMatrix extractVector(boolean extractRow, int index) {
-      if (extractRow) {
-        SimpleMatrix row = new SimpleMatrix(1, data.numCols);
-        for (int j = 0; j < data.numCols; j++) {
-          row.set(0, j, get(index, j));
-        }
-        return row;
+  /**
+   * Extracts one row or column as a matrix view copy.
+   *
+   * @param matrix source matrix
+   * @param extractRow true to extract a row, false to extract a column
+   * @param index row/column index
+   * @return extracted row/column matrix
+   */
+  private static DenseMatrix extractVector(DenseMatrix matrix, boolean extractRow, int index) {
+    if (extractRow) {
+      DenseMatrix row = new DenseMatrix(1, matrix.numCols);
+      for (int j = 0; j < matrix.numCols; j++) {
+        row.unsafe_set(0, j, matrix.unsafe_get(index, j));
       }
-      SimpleMatrix col = new SimpleMatrix(data.numRows, 1);
-      for (int i = 0; i < data.numRows; i++) {
-        col.set(i, 0, get(i, index));
-      }
-      return col;
+      return row;
     }
+    DenseMatrix col = new DenseMatrix(matrix.numRows, 1);
+    for (int i = 0; i < matrix.numRows; i++) {
+      col.unsafe_set(i, 0, matrix.unsafe_get(i, index));
+    }
+    return col;
   }
 
 }
