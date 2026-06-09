@@ -635,12 +635,14 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     // slot and relies on a single-phase designation (see SystemThermo.phaseToSystem).
     // The preceding init(0) re-expands the system to its maximum number of phases, so
     // restore the single-phase state, re-apply the captured phase type so the correct
-    // EOS root is used, and fully initialise properties; otherwise getEnthalpy() sums a
+    // EOS root is used, and initialise residual properties; otherwise getEnthalpy() sums a
     // spurious second phase (or evaluates the wrong root) and returns an inconsistent
-    // value that breaks reboiler/condenser duty and column energy balances.
+    // value that breaks reboiler/condenser duty and column energy balances. init(2) is
+    // sufficient here because only the residual thermodynamic properties (enthalpy,
+    // entropy, Cp) are read from the out-stream; composition derivatives are not needed.
     phaseSystem.setNumberOfPhases(1);
     phaseSystem.setPhaseType(0, extractedPhaseType);
-    phaseSystem.init(3);
+    phaseSystem.init(2);
   }
 
   /** {@inheritDoc} */
