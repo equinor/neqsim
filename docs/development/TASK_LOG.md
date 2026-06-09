@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-06-09 — Distillation column energy-balance bug: phase-split out-stream enthalpy
+**Type:** E (Feature / bug fix)
+**Keywords:** distillation, DistillationColumn, SimpleTray, reboiler duty, energy balance, phaseToSystem, getEnthalpy, single phase, phase type, TEG regeneration
+**Solution:** Fix in `src/main/java/neqsim/process/equipment/distillation/SimpleTray.java` (`scalePhaseSystemToNormalizedMoles`); regression test `src/test/java/neqsim/process/equipment/distillation/TegRegenerationEnergyBalanceTest.java`
+**Notes:** Single-stage TEG regeneration column reported reboiler duty ~6 kW and global energy imbalance ~ -20 kW (reference rig value 24.38 kW). Root cause: `SystemThermo.phaseToSystem` builds a single-phase out-stream by copying the selected phase's moles into every phase slot, relying on `setNumberOfPhases(1)` + `setPhaseType`. `SimpleTray.scalePhaseSystemToNormalizedMoles` then re-scaled all slots and ended with `init(0); init(1)`, which re-expanded the system to its max phases AND reset slot 0 to the default (gas) type — so `getEnthalpy()` summed a spurious second phase and evaluated a liquid outlet on the vapour EOS root. Gas outlets "accidentally" worked (default slot-0 type is gas). Fix: capture `PhaseType getType()` at method entry, then after scaling do `setNumberOfPhases(1); setPhaseType(0, extractedType); init(3)`. Note `setPhaseType(int, String)` rejects names like "aqueous" via byName, so use the `PhaseType` enum overload. After fix: Qreb=24.57 kW, global imbalance 0.008 kW, all 90 existing distillation tests still pass.
+
 ### 2026-06-04 — Gravity dump-flood seawater injection: choke cavitation, free-fall & flow-assurance screen
 **Type:** B (Process / Flow assurance) + E (Feature)
 **Keywords:** gravity injection, dump flood, seawater injection, depleted reservoir, hydrostatic head, choke cavitation, ISA-75, IEC 60534, vapour pressure, free-fall, vapour cavity, downhole choke, ICD, water hammer, Joukowsky, API 14E erosional velocity, FIV, sulphate scale, BaSO4, SrSO4, ElectrolyteScaleCalculator, subsea water treatment, GravityDumpFloodInjectionAnalyzer
