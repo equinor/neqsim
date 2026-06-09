@@ -1,6 +1,6 @@
 ---
 title: "Oil Quality Standards"
-description: "Comprehensive guide to oil quality standards in NeqSim including ASTM D86 distillation, D445 viscosity, D4052 density/API gravity, D4294 sulfur, D2500 cloud point, D97 pour point, and BS&W."
+description: "Comprehensive guide to oil quality standards in NeqSim including ASTM D86 distillation, D445 viscosity, D4052 density/API gravity, D4294 sulfur, D2500 cloud point, D97 pour point, TVP (true vapor pressure), D4737 cetane index, and BS&W."
 ---
 
 # Oil Quality Standards
@@ -15,6 +15,9 @@ NeqSim provides thermodynamics-based implementations of key ASTM standards used 
 | ASTM D445 | `Standard_ASTM_D445` | Kinematic viscosity | KV40, KV100, Viscosity Index |
 | ASTM D4052 | `Standard_ASTM_D4052` | Density / API gravity | Density, SG, API, classification |
 | ASTM D4294 | `Standard_ASTM_D4294` | Total sulfur content | Sulfur wt%, sweet/sour class |
+| ASTM D6377 | `Standard_ASTM_D6377` | Reid vapor pressure (RVP) | RVP at 37.8 &deg;C |
+| TVP (API MPMS 19) | `Standard_TVP` | True vapor pressure | Bubble-point pressure at any reference temperature |
+| ASTM D4737 | `Standard_ASTM_D4737` | Calculated cetane index | CCI (4-variable) + D976 (2-variable) |
 | ASTM D2500 | `Standard_ASTM_D2500` | Cloud point | Wax appearance temperature |
 | ASTM D97 | `Standard_ASTM_D97` | Pour point | Lowest flow temperature |
 | BS&W | `Standard_BSW` | Basic sediment & water | Water vol%, on-spec check |
@@ -282,6 +285,92 @@ String sweetSour = d4294.getSulfurClassification();
 
 System.out.printf("Sulfur: %.3f wt%% (%.0f ppmw) - %s%n",
     sulfurWtPct, sulfurPpmw, sweetSour);
+```
+
+---
+
+## TVP - True Vapor Pressure (API MPMS Chapter 19)
+
+The **True Vapor Pressure** is the equilibrium (bubble-point) pressure of the bulk liquid at a specified reference temperature. Unlike the Reid Vapor Pressure (`Standard_ASTM_D6377`), which is fixed at 37.8 &deg;C and a 4:1 vapor-to-liquid ratio, the TVP is the thermodynamic bubble-point pressure and can be reported at any storage or transport temperature.
+
+TVP is the controlling parameter for storage-tank breathing losses, low-pressure separator and stabiliser design, crude custody-transfer vapour-pressure limits, and pressure/vacuum relief set points on atmospheric and low-pressure tanks.
+
+### Parameters
+
+| Parameter | Description | Unit |
+|-----------|-------------|------|
+| `TVP` | True vapor pressure at the reference temperature | bara (convertible) |
+| `referenceTemperature` | Reference temperature | as configured |
+
+The `TVP` value can be returned in any pressure unit supported by `PressureUnit` (`bara`, `barg`, `psia`, `psig`, `kPa`, `MPa`, `atm`, ...).
+
+### How It Works
+
+`calculate()` clones the fluid, sets it to the reference temperature (default 37.8 &deg;C / 100 &deg;F), and performs a bubble-point pressure flash. The resulting pressure is the TVP. No empirical correlation is used &ndash; the value comes directly from the equation of state.
+
+### Example
+
+```java
+Standard_TVP tvp = new Standard_TVP(oil);
+tvp.setReferenceTemperature(50.0, "C");   // any storage temperature
+tvp.calculate();
+
+double tvpBara = tvp.getValue("TVP", "bara");
+double tvpPsia = tvp.getValue("TVP", "psia");
+System.out.printf("TVP at 50 C: %.3f bara (%.2f psia)%n", tvpBara, tvpPsia);
+
+// Optional sales-specification check (e.g. TVP <= 1.01325 bara at max storage temp)
+tvp.setMaxTvpSpec(1.01325, "bara");
+System.out.println("On spec: " + tvp.isOnSpec());
+```
+
+The TVP increases with reference temperature, so always evaluate it at the maximum expected storage or transport temperature for conservative design.
+
+---
+
+## ASTM D4737 - Calculated Cetane Index
+
+The **calculated cetane index** estimates the cetane number of a middle-distillate fuel (kerosene, jet, diesel) from its density and distillation recovery temperatures. It is used as a sales-specification surrogate for the engine-measured cetane number (ASTM D613) when an engine test is not available.
+
+Two correlations are evaluated:
+
+- **ASTM D4737** (primary, four-variable) &ndash; uses the 10 %, 50 % and 90 % recovered temperatures and the density at 15 &deg;C.
+- **ASTM D976** (two-variable) &ndash; uses the 50 % recovered temperature and the density at 15 &deg;C, provided as a cross-check.
+
+The required inputs are obtained internally from `Standard_ASTM_D86` (distillation curve) and `Standard_ASTM_D4052` (density), so only the fluid is required.
+
+### Parameters
+
+| Parameter | Description | Unit |
+|-----------|-------------|------|
+| `cetaneIndex` / `CCI` / `cetaneIndexD4737` | Calculated cetane index (ASTM D4737, four-variable) | &ndash; |
+| `cetaneIndexD976` | Calculated cetane index (ASTM D976, two-variable) | &ndash; |
+| `T10`, `T50`, `T90` | Recovered temperatures (passthrough from D86) | C |
+| `density` / `density15C` | Density at 15 &deg;C | kg/m3 |
+
+### Formula (ASTM D4737)
+
+$$
+\mathrm{CCI} = 45.2 + 0.0892\,T_{10N} + (0.131 + 0.901\,B)\,T_{50N}
+            + (0.0523 - 0.420\,B)\,T_{90N}
+            + 0.00049\,(T_{10N}^2 - T_{90N}^2) + 107\,B + 60\,B^2
+$$
+
+where $T_{10N} = T_{10} - 215$, $T_{50N} = T_{50} - 260$, $T_{90N} = T_{90} - 310$ (temperatures in &deg;C), $B = e^{-3.5\,(D - 0.85)} - 1$, and $D$ is the density at 15 &deg;C in g/mL.
+
+### Example
+
+```java
+Standard_ASTM_D4737 cetane = new Standard_ASTM_D4737(dieselFluid);
+cetane.calculate();
+
+double cci = cetane.getValue("cetaneIndex");      // ASTM D4737
+double cciD976 = cetane.getValue("cetaneIndexD976"); // ASTM D976 cross-check
+System.out.printf("Cetane index D4737=%.1f, D976=%.1f%n", cci, cciD976);
+
+// Optional minimum cetane specification (e.g. 51 for EN 590 automotive diesel)
+cetane.setMinCetaneSpec(51.0);
+System.out.println("On spec: " + cetane.isOnSpec());
 ```
 
 ---

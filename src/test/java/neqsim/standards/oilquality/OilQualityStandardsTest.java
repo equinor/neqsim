@@ -66,6 +66,24 @@ public class OilQualityStandardsTest {
     return oil;
   }
 
+  /**
+   * Creates a representative middle-distillate (diesel-like) fluid for cetane index testing.
+   *
+   * @return a SystemInterface representing a diesel-range distillate
+   */
+  private SystemInterface createDiesel() {
+    SystemInterface oil = new SystemSrkEos(273.15 + 25.0, 1.01325);
+    oil.addComponent("nC10", 0.05);
+    oil.addTBPfraction("C12", 0.20, 170.0 / 1000.0, 0.78);
+    oil.addTBPfraction("C14", 0.25, 198.0 / 1000.0, 0.80);
+    oil.addTBPfraction("C16", 0.25, 226.0 / 1000.0, 0.82);
+    oil.addTBPfraction("C18", 0.15, 254.0 / 1000.0, 0.83);
+    oil.addTBPfraction("C20", 0.10, 282.0 / 1000.0, 0.85);
+    oil.setMixingRule(2);
+    oil.init(0);
+    return oil;
+  }
+
   // ========== ASTM D86 Tests ==========
 
   @Test
@@ -528,5 +546,142 @@ public class OilQualityStandardsTest {
     standard.setNonFlowViscosityThreshold(20000.0);
     assertEquals("C", standard.getUnit("pourPoint"));
     assertEquals(20000.0, standard.getNonFlowViscosityThreshold(), 0.1);
+  }
+
+  // ========== TVP (True Vapor Pressure) Tests ==========
+
+  @Test
+  void testTVP_basic() {
+    SystemInterface oil = createLightOil();
+    Standard_TVP standard = new Standard_TVP(oil);
+    standard.calculate();
+
+    double tvp = standard.getValue("TVP");
+    assertTrue(tvp > 0.0, "TVP should be positive for a live oil");
+    assertEquals("bara", standard.getUnit("TVP"));
+    assertEquals(37.8, standard.getReferenceTemperature(), 1.0e-6,
+        "Default reference temperature should be 37.8 C");
+  }
+
+  @Test
+  void testTVP_referenceTemperatureIncreasesPressure() {
+    SystemInterface oil = createLightOil();
+
+    Standard_TVP cold = new Standard_TVP(oil);
+    cold.setReferenceTemperature(20.0, "C");
+    cold.calculate();
+    double tvpCold = cold.getValue("TVP");
+
+    Standard_TVP hot = new Standard_TVP(oil);
+    hot.setReferenceTemperature(60.0, "C");
+    hot.calculate();
+    double tvpHot = hot.getValue("TVP");
+
+    assertTrue(tvpHot > tvpCold,
+        "TVP should increase with reference temperature (" + tvpHot + " > " + tvpCold + ")");
+  }
+
+  @Test
+  void testTVP_unitConversion() {
+    SystemInterface oil = createLightOil();
+    Standard_TVP standard = new Standard_TVP(oil);
+    standard.calculate();
+
+    double tvpBara = standard.getValue("TVP", "bara");
+    double tvpPsia = standard.getValue("TVP", "psia");
+    assertEquals(tvpBara / 0.0689475729317831, tvpPsia, 1.0e-6,
+        "psia conversion should match the bara value");
+  }
+
+  @Test
+  void testTVP_maxSpecLimit() {
+    SystemInterface oil = createLightOil();
+    Standard_TVP standard = new Standard_TVP(oil);
+    standard.calculate();
+    double tvp = standard.getValue("TVP");
+
+    standard.setMaxTvpSpec(tvp + 0.5, "bara");
+    assertTrue(standard.isOnSpec(), "Should pass when TVP is below the max limit");
+
+    standard.setMaxTvpSpec(tvp - 0.5, "bara");
+    assertTrue(!standard.isOnSpec(), "Should fail when TVP exceeds the max limit");
+
+    standard.clearMaxTvpSpec();
+    assertTrue(standard.isOnSpec(), "Should pass when no spec limit is set");
+  }
+
+  // ========== ASTM D4737 (Calculated Cetane Index) Tests ==========
+
+  @Test
+  void testASTM_D4737_basic() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D4737 standard = new Standard_ASTM_D4737(oil);
+    standard.calculate();
+
+    double cci = standard.getValue("cetaneIndex");
+    assertTrue(!Double.isNaN(cci), "Cetane index should be a finite number");
+    assertTrue(cci > 0.0 && cci < 120.0, "Cetane index should be physically plausible: " + cci);
+    assertEquals("-", standard.getUnit("cetaneIndex"));
+  }
+
+  @Test
+  void testASTM_D4737_aliasesMatch() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D4737 standard = new Standard_ASTM_D4737(oil);
+    standard.calculate();
+
+    double cci = standard.getValue("cetaneIndex");
+    assertEquals(cci, standard.getValue("CCI"), 1.0e-9, "CCI alias should match cetaneIndex");
+    assertEquals(cci, standard.getValue("cetaneIndexD4737"), 1.0e-9,
+        "cetaneIndexD4737 alias should match cetaneIndex");
+  }
+
+  @Test
+  void testASTM_D4737_d976CrossCheck() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D4737 standard = new Standard_ASTM_D4737(oil);
+    standard.calculate();
+
+    double cciD976 = standard.getValue("cetaneIndexD976");
+    assertTrue(!Double.isNaN(cciD976), "D976 cetane index should be a finite number");
+    assertTrue(cciD976 > 0.0 && cciD976 < 120.0,
+        "D976 cetane index should be physically plausible: " + cciD976);
+  }
+
+  @Test
+  void testASTM_D4737_inputPassthrough() {
+    SystemInterface oil = createDiesel();
+
+    Standard_ASTM_D86 d86 = new Standard_ASTM_D86(oil);
+    d86.calculate();
+
+    Standard_ASTM_D4737 standard = new Standard_ASTM_D4737(oil);
+    standard.calculate();
+
+    assertEquals(d86.getValue("T10", "C"), standard.getValue("T10"), 1.0e-6,
+        "T10 should pass through from the internal D86 calculation");
+    assertEquals(d86.getValue("T50", "C"), standard.getValue("T50"), 1.0e-6,
+        "T50 should pass through from the internal D86 calculation");
+    assertEquals(d86.getValue("T90", "C"), standard.getValue("T90"), 1.0e-6,
+        "T90 should pass through from the internal D86 calculation");
+    assertEquals("C", standard.getUnit("T50"));
+    assertEquals("kg/m3", standard.getUnit("density"));
+  }
+
+  @Test
+  void testASTM_D4737_minSpecLimit() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D4737 standard = new Standard_ASTM_D4737(oil);
+    standard.calculate();
+    double cci = standard.getValue("cetaneIndex");
+
+    standard.setMinCetaneSpec(cci - 5.0);
+    assertTrue(standard.isOnSpec(), "Should pass when cetane index exceeds the min limit");
+
+    standard.setMinCetaneSpec(cci + 5.0);
+    assertTrue(!standard.isOnSpec(), "Should fail when cetane index is below the min limit");
+
+    standard.clearMinCetaneSpec();
+    assertTrue(standard.isOnSpec(), "Should pass when no spec limit is set");
   }
 }
