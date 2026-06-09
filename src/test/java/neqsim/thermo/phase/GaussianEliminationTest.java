@@ -3,11 +3,14 @@ package neqsim.thermo.phase;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.ojalgo.matrix.decomposition.LU;
-import org.ojalgo.matrix.store.MatrixStore;
-import org.ojalgo.matrix.store.Primitive64Store;
+import neqsim.util.math.LinearAlgebraOps;
 
+/**
+ * Test Gaussian elimination solver against ojAlgo for matrix inversion.
+ */
+@Tag("LinearAlgebra")
 public class GaussianEliminationTest {
   private static final Logger logger = LogManager.getLogger(GaussianEliminationTest.class);
 
@@ -79,21 +82,9 @@ public class GaussianEliminationTest {
    * Solve Ax=b using ojAlgo LU decomposition.
    */
   private static double[] solveOjAlgo(double[][] a, double[] b, int n) {
-    Primitive64Store matrix = Primitive64Store.FACTORY.rows(a);
-    Primitive64Store rhs = Primitive64Store.FACTORY.make(n, 1);
-    for (int i = 0; i < n; i++) {
-      rhs.set(i, 0, b[i]);
-    }
-
-    LU<Double> lu = LU.PRIMITIVE.make(n, n);
-    if (!lu.decompose(matrix)) {
-      throw new IllegalStateException("ojAlgo LU decomposition failed");
-    }
-    MatrixStore<Double> solution = lu.getSolution(rhs);
-
     double[] x = new double[n];
-    for (int i = 0; i < n; i++) {
-      x[i] = solution.get(i, 0);
+    if (!LinearAlgebraOps.solveLinearSystem(a, b, x)) {
+      throw new IllegalStateException("ojAlgo LU decomposition failed");
     }
     return x;
   }
