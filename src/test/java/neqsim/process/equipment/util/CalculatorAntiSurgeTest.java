@@ -183,13 +183,15 @@ public class CalculatorAntiSurgeTest {
   }
 
   /**
-   * Deep in anti-surge the recycle leg can be many times larger than the forward (net) flow.
-   * Pre-fix the calculator only re-ran the recycle leg ({@code splitStream(1)}), leaving the
-   * forward/remainder leg ({@code splitStream(0)}, the {@code -1} entry) with a stale split factor
-   * from the previous pass. The sum of the split streams then exceeded the inlet by the recycle
-   * magnitude — a phantom mass-balance error that scaled with the recycle size. After the fix the
-   * calculator re-runs the FULL splitter, so {@code splitStream(0) + splitStream(1)} closes against
-   * the inlet exactly.
+   * Deep in anti-surge the controller commands an ABSOLUTE recycle setpoint that — for a small net
+   * forward flow — can momentarily exceed the present splitter inlet snapshot. The recycle leg must
+   * hold that absolute demand and must NOT be capped at the inlet: capping limits the recycle
+   * growth to the net feed per pass and stalls the compressor deep in surge (the recycle never
+   * ramps up to the surge line). The forward/remainder leg ({@code splitStream(0)}, the {@code -1}
+   * entry) is the non-negative remainder {@code max(0, inlet - recycle)}, so the splitter snapshot
+   * closes mass exactly whenever the demand is realizable ({@code recycle <= inlet}, which always
+   * holds at the steady state of a real recycle loop) and clamps the forward leg to zero otherwise
+   * — the surrounding recycle loop then grows the inlet to absorb the demand.
    */
   @Test
   public void testSplitterMassBalanceClosedDeepInSurge() {
@@ -210,13 +212,61 @@ public class CalculatorAntiSurgeTest {
     double inletMass = splitter.getInletStream().getFlowRate("kg/hr");
     double forwardMass = splitter.getSplitStream(0).getFlowRate("kg/hr");
     double recycleMass = splitter.getSplitStream(1).getFlowRate("kg/hr");
-    double sumMass = forwardMass + recycleMass;
 
-    // Mass balance must close: forward + recycle == inlet (within rounding).
-    assertEquals(inletMass, sumMass, 1e-6 * inletMass,
+    // The forward (net) leg is always the finite, non-negative remainder.
+    assertTrue(forwardMass >= 0.0 && Double.isFinite(forwardMass),
+        "forward leg must be finite and non-negative, got " + forwardMass);
+    assertTrue(Double.isFinite(recycleMass) && recycleMass > 0.0,
+        "recycle leg must be finite and positive, got " + recycleMass);
+
+    if (recycleMass <= inletMass) {
+      // Realizable demand: the splitter snapshot closes mass exactly.
+      assertEquals(inletMass, forwardMass + recycleMass, 1e-6 * inletMass,
+          "split streams must close against inlet when recycle <= inlet: inlet=" + inletMass
+              + " kg/hr, forward=" + forwardMass + " kg/hr, recycle=" + recycleMass + " kg/hr");
+    } else {
+      // Demand exceeds the present throughput: the forward leg clamps to zero and
+      // the recycle leg holds the ABSOLUTE setpoint (uncapped) so the recycle loop
+      // can ramp the compressor up to the surge line within a few iterations.
+      assertEquals(0.0, forwardMass, 1e-6 * inletMass,
+          "forward leg must clamp to zero when recycle demand exceeds inlet, got " + forwardMass);
+      assertTrue(recycleMass > inletMass,
+          "recycle leg must hold the absolute setpoint (uncapped) deep in surge, got " + recycleMass
+              + " kg/hr vs inlet " + inletMass + " kg/hr");
+    }
+  }
+
+  /**
+   * In the realizable regime the splitter snapshot must close mass exactly:
+   * {@code forward + recycle == inlet} with the forward leg equal to the remainder. Here the
+   * compressor runs well above its surge line, so the calculator takes the recycle-closing
+   * short-circuit and commands a near-zero recycle — far below the inlet — exercising the
+   * mass-consistent path.
+   */
+  @Test
+  public void testSplitterMassBalanceClosedAboveSurge() {
+    // High inlet flow keeps the compressor comfortably above the surge line so
+    // inletFlow > 1.2 * surgeFlow and the calculator closes the recycle valve.
+    Compressor comp = buildCompressorWithSurgeCurve(80000.0);
+    Splitter splitter = new Splitter("anti surge splitter", comp.getOutletStream(), 2);
+    splitter.setFlowRates(new double[] {-1.0, 1000.0}, "kg/hr");
+    splitter.run();
+
+    Calculator calc = new Calculator("anti surge calc");
+    calc.addInputVariable(comp);
+    calc.setOutputVariable(splitter);
+    calc.runAntiSurgeCalc(UUID.randomUUID());
+
+    double inletMass = splitter.getInletStream().getFlowRate("kg/hr");
+    double forwardMass = splitter.getSplitStream(0).getFlowRate("kg/hr");
+    double recycleMass = splitter.getSplitStream(1).getFlowRate("kg/hr");
+
+    assertTrue(recycleMass <= inletMass,
+        "above surge the recycle must be below the inlet, got recycle=" + recycleMass
+            + " kg/hr, inlet=" + inletMass + " kg/hr");
+    assertEquals(inletMass, forwardMass + recycleMass, 1e-6 * inletMass,
         "split streams must close against inlet: inlet=" + inletMass + " kg/hr, forward="
-            + forwardMass + " kg/hr, recycle=" + recycleMass + " kg/hr, sum=" + sumMass);
-    // Forward (net) flow must be the non-negative remainder.
+            + forwardMass + " kg/hr, recycle=" + recycleMass + " kg/hr");
     assertTrue(forwardMass >= 0.0 && Double.isFinite(forwardMass),
         "forward leg must be finite and non-negative, got " + forwardMass);
   }

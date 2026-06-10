@@ -9,6 +9,7 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.StreamInterface;
 
 /**
  * <p>
@@ -122,14 +123,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
     // overshooting when the compressor is operating far from surge.
     if (inletFlow > 1.2 * surgeFlow) {
       double minRecycle = Math.max(inletFlow / 1.0e6, 1.0e-6);
-      antiSurgeSplitter.setFlowRates(new double[] {-1, minRecycle}, "m3/hr");
-      // Re-run the FULL splitter (not just the recycle leg). Running only
-      // splitStream(1) leaves the forward/remainder leg (splitStream(0), the
-      // -1 entry) with a stale split factor from the previous pass, since
-      // calcSplitFactors() only executes inside Splitter.run(id). The full run
-      // recomputes the remainder against the current inlet so the splitter is
-      // internally mass-consistent every pass.
-      antiSurgeSplitter.run(id);
+      applyAntiSurgeRecycle(antiSurgeSplitter, minRecycle, id);
       return;
     }
 
@@ -143,14 +137,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
     double cappedStep = Math.max(-maxStep, Math.min(maxStep, rawStep));
     double flowAntiSurge = Math.max(currentRecycle + cappedStep, inletFlow / 1.0e6);
 
-    antiSurgeSplitter.setFlowRates(new double[] {-1, flowAntiSurge}, "m3/hr");
-    // Re-run the FULL splitter so both the recycle leg and the forward/remainder
-    // leg are recomputed against the current inlet (see note above). Running
-    // only splitStream(1) made the apparent mass-balance error scale with the
-    // recycle magnitude when the compressor was deep in anti-surge (large
-    // recycle), because the remainder leg kept a lagged inlet. The full run
-    // keeps the splitter internally mass-consistent every pass.
-    antiSurgeSplitter.run(id);
+    applyAntiSurgeRecycle(antiSurgeSplitter, flowAntiSurge, id);
 
     // Diagnostic: if (inletFlow + flowAntiSurge) is still well below surge
     // after this update, the loop is likely stuck (e.g. recycle path is not
@@ -163,6 +150,56 @@ public class Calculator extends ProcessEquipmentBaseClass {
           + " m3/hr). Check that the recycle stream feeds back into the compressor "
           + "inlet and that the outer recycle iteration cap is sufficient.");
     }
+  }
+
+  /**
+   * Commands an absolute recycle setpoint on the anti-surge splitter.
+   *
+   * <p>
+   * The recycle leg ({@code splitStream(1)}) is driven DIRECTLY to the requested flow instead of
+   * going through {@link Splitter#run(UUID)} / {@code calcSplitFactors()}. The latter caps the
+   * recycle leg at the present splitter-inlet snapshot, which is fatal for an anti-surge recycle:
+   * when the net forward flow is small the recycle must be allowed to momentarily exceed the
+   * current inlet so the feedback loop can ramp the compressor up to the surge line within a few
+   * iterations (growth per pass &asymp; 0.5&middot;(surge-inlet)) instead of growing by only the
+   * net feed each pass (which stalls the compressor deep in surge).
+   * </p>
+   *
+   * <p>
+   * The forward/remainder leg ({@code splitStream(0)}) is then set to {@code max(0, inlet-recycle)}
+   * so the splitter snapshot is mass-consistent (forward + recycle == inlet) whenever the demand is
+   * physically realizable (recycle &le; inlet, which always holds at convergence). The forward leg
+   * never feeds the recycle loop, so recomputing it does not affect convergence.
+   * </p>
+   *
+   * @param antiSurgeSplitter the splitter whose recycle leg is the anti-surge bypass
+   * @param recycleFlow the absolute recycle setpoint in m3/hr (must be finite and non-negative)
+   * @param id the calculation identifier propagated to the updated streams
+   */
+  private void applyAntiSurgeRecycle(Splitter antiSurgeSplitter, double recycleFlow, UUID id) {
+    // Keep the configured flow-rate spec in sync so a later FULL splitter run in
+    // the recycle loop commands the same absolute recycle setpoint.
+    antiSurgeSplitter.setFlowRates(new double[] {-1, recycleFlow}, "m3/hr");
+
+    // Drive the recycle leg directly to the absolute setpoint (bypasses the
+    // calcSplitFactors() cap so the loop can ramp to the surge line quickly).
+    StreamInterface recycleLeg = antiSurgeSplitter.getSplitStream(1);
+    recycleLeg.setFlowRate(recycleFlow, "m3/hr");
+    recycleLeg.run();
+
+    // Recompute the forward/remainder leg so the splitter snapshot closes mass
+    // whenever the demand is realizable (recycle <= inlet). When the controller
+    // is transiently demanding more recycle than the present throughput (e.g. a
+    // standalone splitter, or early ramp), the forward leg clamps to zero; the
+    // recycle loop then grows the inlet to absorb the demand.
+    StreamInterface forwardLeg = antiSurgeSplitter.getSplitStream(0);
+    double inletMass = antiSurgeSplitter.getInletStream().getFlowRate("kg/hr");
+    double recycleMass = recycleLeg.getFlowRate("kg/hr");
+    double forwardMass = Math.max(0.0, inletMass - recycleMass);
+    forwardLeg.setFlowRate(forwardMass, "kg/hr");
+    forwardLeg.run();
+
+    antiSurgeSplitter.setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */
