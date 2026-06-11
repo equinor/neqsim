@@ -3,7 +3,14 @@ layout: null
 permalink: /search-index.json
 ---
 [
-{%- assign all_pages = site.pages | where_exp: "page", "page.url != '/search-index.json'" -%}
+{%- comment -%}
+  Build the search corpus from BOTH regular pages (site.pages) AND collection
+  documents (site.documents, e.g. the `wiki` collection). Collection docs are
+  NOT part of site.pages, so iterating site.pages alone silently dropped every
+  wiki page from search. Concatenate both sources, then filter out assets and
+  non-content files.
+{%- endcomment -%}
+{%- assign all_pages = site.pages | concat: site.documents | where_exp: "page", "page.url != '/search-index.json'" -%}
 {%- assign filtered_pages = "" | split: "" -%}
 {%- for page in all_pages -%}
   {%- unless page.url contains '/assets/' or page.url contains '.xml' or page.url contains '.json' -%}

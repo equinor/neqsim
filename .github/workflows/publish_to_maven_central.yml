@@ -32,7 +32,7 @@ jobs:
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v5
         with:
-          java-version: '21'
+          java-version: '17'
           distribution: 'temurin'
           server-id: central
           server-username: MAVEN_USERNAME
@@ -52,7 +52,7 @@ jobs:
           MAVEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
-      # --- Java 21 artifact ---
+      # --- Java 17 artifact ---
       - name: Publish package
         run: ./mvnw -P release --batch-mode clean deploy -Dmaven.deploy.skip=true -DskipTests -Djacoco.skip=true -Drevision=${{ steps.release_version.outputs.version }}
         env:

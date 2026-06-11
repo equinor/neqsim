@@ -64,12 +64,18 @@ publisher: "springer"        # springer | wiley | crc | self
 language: "en"
 
 settings:
+  book_type: "textbook"      # simple | technical | textbook (see §1.1)
   page_size: "b5"            # b5 | a4
   font_size: 10
   line_spacing: 1.2
   two_sided: true
   chapter_numbering: true
   equation_numbering: "chapter"  # chapter-scoped: Eq. 3.1, 3.2, ...
+  # Optional content toggles (override the book_type profile, see §1.1):
+  # include_copyright: true
+  # include_learning_objectives: true
+  # include_exercises: true
+  # exclude_sections: ["Review Questions", "Problems"]
 
 frontmatter:
   - title_page
@@ -114,6 +120,61 @@ bibliography:
 4. **Publisher profiles** in `books/_publisher_profiles/` define page size,
    margins, and fonts. The `publisher` key selects which profile to load.
 
+### Optional metadata
+
+The following top-level keys are **optional**. Omit or leave them blank and the
+renderers degrade gracefully (no author line, no publisher imprint, etc.):
+`authors`, `publisher`, `year`, `language`, `isbn`.
+
+---
+
+## 1.1 Book Type Profiles (content level)
+
+`settings.book_type` selects **how much pedagogical scaffolding is included** so
+the same manuscript can be published at three different levels. It controls
+whether the copyright page, learning objectives, exercises, and review sections
+are rendered.
+
+| `book_type`   | Audience / purpose            | Learning Objectives | Exercises | Review Questions / Problems | Further Reading | Copyright page |
+| ------------- | ----------------------------- | :-----------------: | :-------: | :-------------------------: | :-------------: | :------------: |
+| `simple`      | Concise reference / handout   |          ✗          |     ✗     |              ✗              |        ✗        |       ✗        |
+| `technical`   | Engineering description       |          ✗          |     ✗     |              ✗              |        ✓        |       ✓        |
+| `textbook`    | Full university textbook      |          ✓          |     ✓     |              ✓              |        ✓        |       ✓        |
+
+- **Default** is `textbook` (everything included). Omitting `book_type`
+  reproduces the historic full-content behaviour, so existing books are
+  unaffected.
+- The profile decides which `## <Heading>` sections are stripped from each
+  `chapter.md` at render time. The chapter source files are never modified —
+  authors can keep all sections in the source and switch the output level from
+  `book.yaml` alone.
+
+### Overriding a profile
+
+Explicit `settings.include_*` and `settings.exclude_sections` keys **always win**
+over the `book_type` profile. This lets you start from a profile and tweak a
+single aspect:
+
+```yaml
+settings:
+  book_type: technical        # baseline: no pedagogy, keeps copyright
+  include_copyright: false    # …but drop the copyright page anyway
+```
+
+```yaml
+settings:
+  book_type: simple                 # baseline: strip everything
+  include_learning_objectives: true # …but keep Learning Objectives
+```
+
+Resolution order for each toggle: **explicit `settings` key → `book_type`
+profile default → built-in default (include)**. Accepted boolean strings are
+case-insensitive: `true/yes/1/on` and `false/no/0/off`.
+
+`exclude_sections` is **additive** — the titles you list are removed *in
+addition to* whatever the profile already strips. Matching is case-insensitive
+and ignores leading numbers (`## 5.3 Problems` matches `Problems`).
+
 ---
 
 ## 2. Creating a New Book
@@ -126,6 +187,14 @@ python paperflow.py book-new "Book Title" --publisher springer --chapters 12
 ```
 
 This creates the scaffold with empty chapters (`ch01` through `ch12`).
+
+Use `--type` to pick the content level (writes `settings.book_type` into the
+generated `book.yaml`, see §1.1). Defaults to `textbook`:
+
+```bash
+python paperflow.py book-new "Field Handbook" --type technical --chapters 8
+python paperflow.py book-new "Quick Reference" --type simple --chapters 4
+```
 
 ### Post-Scaffold Steps (MANDATORY)
 

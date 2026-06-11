@@ -1079,4 +1079,87 @@ public class DistillationColumnTest {
     assertEquals(topGasTemperature, column.getGasOutStream().getTemperature("K"), 1.0e-6);
     assertEquals(bottomLiquidTemperature, column.getLiquidOutStream().getTemperature("K"), 1.0e-6);
   }
+
+  /**
+   * Regression test for PR #2261: re-solving the same column with a changed feed inside a process
+   * must not accumulate cloned feeds (product flows doubling on every run) and must keep
+   * caller-held product-stream references live and mass-consistent.
+   *
+   * <p>
+   * Two distinct defects are covered: (1) cloned copies of a registered feed left on the feed tray
+   * by iterative solving were mistaken for legacy direct side feeds and accumulated without bound,
+   * inflating the products on each re-solve; (2) {@code acceptSolvedStateCandidate} reassigned the
+   * product-stream field references, orphaning any downstream consumer that captured
+   * {@code getGasOutStream()} / {@code getLiquidOutStream()} before the column solved.
+   * </p>
+   */
+  @Test
+  public void reSolveWithChangedFeedKeepsMassBalanceClosedAndProductIdentity() {
+    SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(273.15 + 30.0, 30.0);
+    fluid.addComponent("methane", 5.14168E-1);
+    fluid.addComponent("ethane", 1.92528E-1);
+    fluid.addComponent("propane", 1.70001E-1);
+    fluid.addComponent("i-butane", 3.14561E-2);
+    fluid.addComponent("n-butane", 5.58678E-2);
+    fluid.addComponent("i-pentane", 1.29573E-2);
+    fluid.addComponent("n-pentane", 1.23719E-2);
+    fluid.addComponent("n-hexane", 1.0E-2);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("changedFeed", fluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.setTemperature(273.15 + 30.0);
+    feed.setPressure(30.0, "bara");
+    feed.run();
+
+    DistillationColumn column = new DistillationColumn("reSolveColumn", 5, true, true);
+    column.addFeedStream(feed, 3);
+    column.setTopPressure(30.0);
+    column.setBottomPressure(32.0);
+    column.getReboiler().setOutTemperature(273.15 + 105.0);
+    column.getCondenser().setOutTemperature(273.15 - 20.0);
+    column.getCondenser().setTotalCondenser(false);
+    column.setTemperatureTolerance(2.0e-2);
+    column.setMassBalanceTolerance(1.0e-1);
+    column.setEnthalpyBalanceTolerance(1.0e-1);
+    column.setMaxNumberOfIterations(100);
+
+    neqsim.process.processmodel.ProcessSystem process =
+        new neqsim.process.processmodel.ProcessSystem();
+    process.add(feed);
+    process.add(column);
+    process.run();
+
+    // Capture product-stream references the way a downstream consumer would, before re-solving.
+    StreamInterface capturedGas = column.getGasOutStream();
+    StreamInterface capturedLiquid = column.getLiquidOutStream();
+
+    double[] feedRamp = {120.0, 150.0, 150.0, 150.0, 150.0};
+    for (int i = 0; i < feedRamp.length; i++) {
+      feed.setFlowRate(feedRamp[i], "kg/hr");
+      process.run();
+
+      double feedFlow = feed.getFlowRate("kg/hr");
+      double gas = column.getGasOutStream().getFlowRate("kg/hr");
+      double liquid = column.getLiquidOutStream().getFlowRate("kg/hr");
+      double products = gas + liquid;
+
+      // Products must track the feed (no unbounded doubling) and the balance must stay closed.
+      assertTrue(Double.isFinite(products), column.getConvergenceDiagnostics());
+      assertEquals(feedFlow, products, feedFlow * 5.0e-2, "Iteration " + i + ": products ("
+          + products + " kg/hr) must track feed (" + feedFlow + " kg/hr)");
+      assertEquals(0.0, column.getMassBalance("kg/hr"), feedFlow * 5.0e-2,
+          "Iteration " + i + ": public mass-balance API must report a closed balance");
+
+      // The caller-held references must remain the live product streams and observe solved flows.
+      assertTrue(capturedGas == column.getGasOutStream(),
+          "Iteration " + i + ": gas product-stream identity must be preserved across re-solve");
+      assertTrue(capturedLiquid == column.getLiquidOutStream(),
+          "Iteration " + i + ": liquid product-stream identity must be preserved across re-solve");
+      assertEquals(gas, capturedGas.getFlowRate("kg/hr"), gas * 1.0e-9,
+          "Iteration " + i + ": caller-held gas stream must observe the solved flow");
+      assertEquals(liquid, capturedLiquid.getFlowRate("kg/hr"), liquid * 1.0e-9,
+          "Iteration " + i + ": caller-held liquid stream must observe the solved flow");
+    }
+  }
 }

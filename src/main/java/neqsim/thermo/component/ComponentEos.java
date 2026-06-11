@@ -14,6 +14,7 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermCPAstatoil;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermGERG;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermMatCop;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermMatCop5PRUMR;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermMatCopPR;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermMatCopPRUMR;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermMollerup;
@@ -58,7 +59,10 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   public double aT = 1;
 
-  /** Cached {@code Math.sqrt(aT)} for use by mixing-rule inner loops. Kept in sync with aT by init(). */
+  /**
+   * Cached {@code Math.sqrt(aT)} for use by mixing-rule inner loops. Kept in sync with aT by
+   * init().
+   */
   public double sqrtAT = 1;
 
   public double aDiffT = 0;
@@ -229,6 +233,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       setAttractiveParameter(new AttractiveTermSoreideWhitson(this));
     } else if (i == 21) {
       setAttractiveParameter(new AttractiveTermPrLeeKesler(this));
+    } else if (i == 22) {
+      setAttractiveParameter(new AttractiveTermMatCop5PRUMR(this, getMatiascopemanParamsUMRCPA()));
     } else {
       logger.error("error selecting an alpha formulation term");
       logger.info("ok setting alpha function");

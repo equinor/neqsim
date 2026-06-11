@@ -155,6 +155,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Document                  | Path                                                               | Description                                                                                                          |
 | ------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
 | Thermodynamic Models      | [docs/thermo/thermodynamic_models.md](thermo/thermodynamic_models) | **Comprehensive guide** to all thermodynamic models (EoS, CPA, GERG, electrolytes, GE models) with theory and usage  |
+| Mercury Thermodynamics    | [docs/thermo/mercury_thermodynamics.md](thermo/mercury_thermodynamics) | Mercury-focused SRK-TwuCoon-Statoil-EOS usage, TPflash setup, and thesis-linked BIP/correlation guidance |
 | **Søreide-Whitson Model** | [docs/thermo/SoreideWhitsonModel.md](thermo/SoreideWhitsonModel)   | **Gas solubility in brine** - Modified PR EoS with salinity effects, used in NeqSimLive for produced water emissions |
 | GERG-2008                 | [docs/thermo/gerg2008_eoscg.md](thermo/gerg2008_eoscg)             | GERG-2008, GERG-2008-H2, GERG-2008-NH3, and EOS-CG equations of state                                               |
 | GERG-2008-NH3 Notebook    | [docs/examples/GERG2008_NH3_Ammonia_Properties.ipynb](examples/GERG2008_NH3_Ammonia_Properties.ipynb) | Ammonia properties with Gao EOS — density validation, mixture properties, isotherms |
@@ -833,7 +834,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | ISO 15403                 | [docs/standards/iso15403_cng_quality.md](standards/iso15403_cng_quality)         | ISO 15403 CNG quality                              |
 | Dew Point                 | [docs/standards/dew_point_standards.md](standards/dew_point_standards)           | Dew point standards                                |
 | ASTM D6377                | [docs/standards/astm_d6377_rvp.md](standards/astm_d6377_rvp)                     | ASTM D6377 RVP                                     |
-| **Oil Quality Standards** | [docs/standards/oil_quality_standards.md](standards/oil_quality_standards)       | **ASTM D86, D445, D4052, D4294, D2500, D97, BS&W** |
+| **Oil Quality Standards** | [docs/standards/oil_quality_standards.md](standards/oil_quality_standards)       | **ASTM D86, D445, D4052, D4294, D6377, TVP, D4737, D611, D1322, EN 116, D3230, D2500, D97, BS&W** |
 | Sales Contracts           | [docs/standards/sales_contracts.md](standards/sales_contracts)                   | Sales contracts                                    |
 | **IEC 81346 Reference Designations** | [docs/standards/iec81346-reference-designations.md](standards/iec81346-reference-designations) | **IEC 81346 structured equipment identification — letter codes, automatic designation generation, hierarchical/flat function numbering, ProcessModel integration, lifecycle state persistence, engineering deliverables, ISA-5.1 cross-reference, DEXPI export, ProcessAutomation integration** |
 
@@ -912,7 +913,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 
 | Document        | Path                                                                           | Description     |
 | --------------- | ------------------------------------------------------------------------------ | --------------- |
-| DEXPI P&ID Import, Export & Visualization | [docs/integration/dexpi-reader.md](integration/dexpi-reader) | DEXPI import/export/round-trip, ISO 10628 shapes, auto-layout, instruments, SIL markers, fail-position, mechanical design, stream table, drawing border, symbol legend, configurable layout, topology, equipment factory, simulation builder |
+| DEXPI P&ID Import, Export & Visualization | [docs/integration/dexpi-reader.md](integration/dexpi-reader) | DEXPI import/export/round-trip, ISO 10628 shapes, auto-layout, instruments, SIL markers, fail-position, mechanical design, stream table, drawing border, symbol legend, configurable layout, topology, equipment factory, simulation builder, multi-area ProcessModel export, pyDEXPI namespace-omitted export, NORSOK Z-003 line numbers, connection line data, off-page boundary connectors, ISA-5.1 tag validation |
 | QRA Integration | [docs/integration/QRA_INTEGRATION_GUIDE.md](integration/QRA_INTEGRATION_GUIDE) | QRA integration |
 
 ### Chapter 47: Process Logic Framework

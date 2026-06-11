@@ -133,6 +133,28 @@ public abstract class Component implements ComponentInterface {
   protected double[] TwuCoonParams = new double[3];
   protected double[] matiascopemanSolidParams = new double[3];
   protected double[] matiascopemanParamsUMRPRU = new double[5];
+  protected double[] matiascopemanParamsUMRCPA = new double[5];
+  /** Dedicated UMR-CPA energy parameter a0 [bar*L^2/mol^2] (Tasios et al. 2025). */
+  protected double umrCpaA0 = 0.0;
+  /** Dedicated UMR-CPA co-volume b [L/mol] (Tasios et al. 2025). */
+  protected double umrCpaB = 0.0;
+  /** Dedicated UMR-CPA association energy [bar*L/mol] (Tasios et al. 2025). */
+  protected double umrCpaAssociationEnergy = 0.0;
+  /** Dedicated UMR-CPA association volume (dimensionless beta) (Tasios et al. 2025). */
+  protected double umrCpaAssociationVolume = 0.0;
+  /** Flag (1 = use dedicated UMR-CPA associating parameters) (Tasios et al. 2025). */
+  protected int umrCpaAssociating = 0;
+  /**
+   * Dedicated UMR-CPA Rackett Z used by the PR-based Peneloux volume translation (Tasios et al.
+   * 2025). Kept separate from the SRK-CPA {@code racketZCPA} because the Peneloux shift constants
+   * differ between the PR and SRK volume-translation relations.
+   */
+  protected double umrCpaRacketZ = 0.0;
+  /**
+   * Dedicated UMR-CPA temperature-dependent volume-correction term [1/K] used together with
+   * {@code umrCpaRacketZ} (Tasios et al. 2025).
+   */
+  protected double umrCpaVolumeCorrectionT = 0.0;
   protected double lennardJonesMolecularDiameter = 0;
   protected double lennardJonesEnergyParameter = 0;
   protected double stokesCationicDiameter = 0;
@@ -382,6 +404,58 @@ public abstract class Component implements ComponentInterface {
         matiascopemanParamsUMRPRU[3] = 0.0;
         matiascopemanParamsUMRPRU[4] = 0.0;
 
+        // Five-parameter Mathias-Copeman coefficients for the UMR-CPA model
+        // (Tasios et al., Fluid Phase Equilibria 2025, doi:10.1016/j.fluid.2024.114241).
+        // These are stored in dedicated columns so that the UMR-CPA fit is kept separate from
+        // the UMR-PRU MCPR1..MCPR3 columns. Wrapped in a guard because not every component
+        // database CSV provides these columns.
+        try {
+          matiascopemanParamsUMRCPA[0] = Double.parseDouble(dataSet.getString("UMRCPA_MC1"));
+          matiascopemanParamsUMRCPA[1] = Double.parseDouble(dataSet.getString("UMRCPA_MC2"));
+          matiascopemanParamsUMRCPA[2] = Double.parseDouble(dataSet.getString("UMRCPA_MC3"));
+          matiascopemanParamsUMRCPA[3] = Double.parseDouble(dataSet.getString("UMRCPA_MC4"));
+          matiascopemanParamsUMRCPA[4] = Double.parseDouble(dataSet.getString("UMRCPA_MC5"));
+        } catch (Exception umrcpaMcEx) {
+          matiascopemanParamsUMRCPA[0] = 0.0;
+          matiascopemanParamsUMRCPA[1] = 0.0;
+          matiascopemanParamsUMRCPA[2] = 0.0;
+          matiascopemanParamsUMRCPA[3] = 0.0;
+          matiascopemanParamsUMRCPA[4] = 0.0;
+        }
+
+        // Dedicated UMR-CPA pure-component parameters for associating compounds
+        // (Tasios et al., Fluid Phase Equilibria 2025). a0 is stored in [bar*L^2/mol^2], the
+        // co-volume b in [L/mol] and the association energy in [bar*L/mol]; the association
+        // volume is the dimensionless beta. These are kept in separate columns so the UMR-CPA
+        // water/glycol sub-model is not mixed with the generic PR-CPA aCPA_PR/bCPA_PR columns.
+        // Wrapped in a guard because not every component database CSV provides these columns.
+        try {
+          umrCpaA0 = Double.parseDouble(dataSet.getString("UMRCPA_a0"));
+          umrCpaB = Double.parseDouble(dataSet.getString("UMRCPA_b"));
+          umrCpaAssociationEnergy = Double.parseDouble(dataSet.getString("UMRCPA_assocEnergy"));
+          umrCpaAssociationVolume = Double.parseDouble(dataSet.getString("UMRCPA_assocVolume"));
+          umrCpaAssociating = Integer.parseInt(dataSet.getString("UMRCPA_associating").trim());
+        } catch (Exception umrcpaParamEx) {
+          umrCpaA0 = 0.0;
+          umrCpaB = 0.0;
+          umrCpaAssociationEnergy = 0.0;
+          umrCpaAssociationVolume = 0.0;
+          umrCpaAssociating = 0;
+        }
+
+        // Dedicated UMR-CPA Rackett Z and temperature-dependent volume-correction term for the
+        // PR-based Peneloux volume translation (Tasios et al., Fluid Phase Equilibria 2025). These
+        // live in separate columns from the SRK-CPA racketZCPA/volcorrCPA_T because the PR and SRK
+        // Peneloux shift relations differ. Wrapped in its own guard so that a database CSV without
+        // these columns (e.g. COMP_EXT.csv) simply falls back to the SRK-CPA racketZCPA.
+        try {
+          umrCpaRacketZ = Double.parseDouble(dataSet.getString("UMRCPA_racketZ"));
+          umrCpaVolumeCorrectionT = Double.parseDouble(dataSet.getString("UMRCPA_volcorr_T"));
+        } catch (Exception umrcpaVolEx) {
+          umrCpaRacketZ = 0.0;
+          umrCpaVolumeCorrectionT = 0.0;
+        }
+
         matiascopemanSolidParams[0] = Double.parseDouble(dataSet.getString("MC1Solid"));
         matiascopemanSolidParams[1] = Double.parseDouble(dataSet.getString("MC2Solid"));
         matiascopemanSolidParams[2] = Double.parseDouble(dataSet.getString("MC3Solid"));
@@ -442,7 +516,8 @@ public abstract class Component implements ComponentInterface {
         setVolumeCorrectionT_CPA(Double.parseDouble(dataSet.getString("volcorrCPA_T")));
         volumeCorrectionT = Double.parseDouble(dataSet.getString("volcorrSRK_T"));
 
-        if (this.getClass().getName().equals("neqsim.thermo.component.ComponentPrCPA")) {
+        if (this.getClass().getName().equals("neqsim.thermo.component.ComponentPrCPA")
+            || this.getClass().getName().equals("neqsim.thermo.component.ComponentUMRCPA")) {
           // System.out.println("pr-cpa");
           associationVolume = Double.parseDouble(dataSet.getString("associationboundingvolume_PR"));
           aCPA = Double.parseDouble(dataSet.getString("aCPA_PR"));
@@ -455,6 +530,22 @@ public abstract class Component implements ComponentInterface {
           aCPA = Double.parseDouble(dataSet.getString("aCPA_SRK"));
           bCPA = Double.parseDouble(dataSet.getString("bCPA_SRK"));
           mCPA = Double.parseDouble(dataSet.getString("mCPA_SRK"));
+        }
+
+        // For the UMR-CPA model, associating compounds (water, glycols, ...) use the dedicated
+        // PR-CPA parameter set regressed in Tasios et al. (Fluid Phase Equilibria 2025) instead
+        // of the legacy generic aCPA_PR/bCPA_PR columns. Unit conversion to NeqSim internal units:
+        // a0 [bar*L^2/mol^2] -> internal (x 1e4, same scale as SRK-CPA a0 in [Pa*m^6/mol^2] x 1e5),
+        // b [L/mol] -> internal (x 1e2), association energy [bar*L/mol] -> [J/mol] (x 1e2, since
+        // 1 bar*L = 100 J); the association volume is the dimensionless beta and is used directly.
+        // The Mathias-Copeman alpha for these compounds is supplied through the UMRCPA_MC columns
+        // and installed as attractive term 22 in ComponentUMRCPA.setAttractiveTerm.
+        if (this.getClass().getName().equals("neqsim.thermo.component.ComponentUMRCPA")
+            && umrCpaAssociating == 1 && Math.abs(umrCpaA0) > 1e-20) {
+          aCPA = umrCpaA0 * 1.0e4;
+          bCPA = umrCpaB * 1.0e2;
+          associationVolume = umrCpaAssociationVolume;
+          associationEnergy = umrCpaAssociationEnergy * 1.0e2;
         }
 
         criticalViscosity = Double.parseDouble(dataSet.getString("criticalViscosity"));
@@ -555,7 +646,14 @@ public abstract class Component implements ComponentInterface {
             + ", -242000, 189, 53, -0.00784, 0, 0, 0, 5.46, 0.305, 647, 0.081, 0, 52100000, 0.32, -0.212, 0.258, 0, 0.999, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'no', "
             + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT()
             + ", 0, 0,0,0,0,0," + isW + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
-            + ", 12.0, 6.0, 0, 0, 0, 0, 0)");
+            + ", 12.0, 6.0, 0, 0, 0, 0, 0"
+            // Trailing values for the UMR-CPA columns appended to COMP.csv
+            // (UMRCPA_MC1..5, UMRCPA_a0, UMRCPA_b, UMRCPA_assocEnergy, UMRCPA_assocVolume,
+            // UMRCPA_assocScheme, UMRCPA_associating, UMRCPA_racketZ, UMRCPA_volcorr_T).
+            // Pseudo-components are non-associating, so all are zero. These must be present
+            // because comptemp is created as "SELECT * FROM comp" and the positional INSERT must
+            // match the full column count.
+            + ", 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0)");
       }
       CASnumber = "00-00-0";
     } catch (Exception ex) {
@@ -2704,6 +2802,15 @@ public abstract class Component implements ComponentInterface {
    */
   public final double[] getMatiascopemanParamsUMRPRU() {
     return matiascopemanParamsUMRPRU;
+  }
+
+  /**
+   * Getter for the five-parameter Mathias-Copeman coefficients of the UMR-CPA model.
+   *
+   * @return array of five doubles with the UMR-CPA Mathias-Copeman coefficients c1..c5
+   */
+  public final double[] getMatiascopemanParamsUMRCPA() {
+    return matiascopemanParamsUMRCPA;
   }
 
   /** {@inheritDoc} */

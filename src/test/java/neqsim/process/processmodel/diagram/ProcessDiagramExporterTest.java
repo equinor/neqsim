@@ -166,6 +166,37 @@ class ProcessDiagramExporterTest {
     // The label format includes conditions
   }
 
+  /**
+   * Regression test: multi-line stream/node labels must emit the Graphviz newline directive
+   * {@code \n} (a single backslash followed by 'n'), NOT a double-escaped {@code \\n} that Graphviz
+   * renders as a literal "\n" in the diagram.
+   */
+  @Test
+  void testEngineeringLabelsUseProperNewlineDirective() {
+    Stream feed = new Stream("Feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(50.0, "bara");
+    process.add(feed);
+
+    Separator separator = new Separator("HP Separator", feed);
+    process.add(separator);
+
+    process.run();
+
+    String dot =
+        new ProcessDiagramExporter(process).setDetailLevel(DiagramDetailLevel.ENGINEERING).toDOT();
+
+    // ENGINEERING detail level annotates streams with T/P/flow on separate lines.
+    assertTrue(dot.contains("kg/hr"), "ENGINEERING labels should include flow rate annotation");
+    // The DOT newline directive must be present (single backslash + n).
+    assertTrue(dot.contains("\\n"), "Multi-line labels should use the Graphviz \\n directive");
+    // The corrupted double-escaped form (backslash + backslash + n) must NOT appear, otherwise
+    // Graphviz renders a literal "\\n" in the diagram instead of a line break.
+    assertFalse(dot.contains("\\\\n"),
+        "Labels must not contain double-escaped newlines that render as literal \\n");
+  }
+
   @Test
   void testProcessSystemConvenienceMethods() {
     Stream feed = new Stream("Feed", fluid);

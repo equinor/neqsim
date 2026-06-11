@@ -530,6 +530,8 @@ def render_book_odf(book_dir, chapter_filter=None):
         text = ch_md.read_text(encoding="utf-8")
         text = _strip_html_comments(text)
         text = book_builder.strip_heading_numbers(text)
+        # Optionally drop end-of-chapter sections (e.g. Exercises) per book.yaml
+        text = book_builder.strip_excluded_sections(text, cfg)
 
         figures_dir = ch_dir / "figures"
         _render_md_to_odf(doc, text, styles, chapter_num=ch_num,

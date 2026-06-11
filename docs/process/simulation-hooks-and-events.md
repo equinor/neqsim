@@ -260,6 +260,15 @@ plant.setRunStep(true);  // Single pass, still fires all hooks
 plant.run();
 ```
 
+To let a specific area solve to full convergence on each model step (while the
+rest still advance one pass), set `setSolveFullyInModelStep(true)` on that area:
+
+```java
+plant.setRunStep(true);
+compressionSystem.setSolveFullyInModelStep(true); // converges fully each step
+plant.run();
+```
+
 ---
 
 ## 3. ProcessEventBus — Decoupled Event Delivery

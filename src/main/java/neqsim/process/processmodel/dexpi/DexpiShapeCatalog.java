@@ -33,6 +33,10 @@ final class DexpiShapeCatalog {
   static final String HEATER_SHAPE = "FIRED_HEATER_SHAPE";
   /** Shape name for shell-and-tube heat exchangers. */
   static final String HEAT_EXCHANGER_SHAPE = "SHELL_AND_TUBE_HEAT_EXCHANGER_SHAPE";
+  /** Shape name for storage tanks / atmospheric vessels (ISO 10628:2012-2002-A). */
+  static final String TANK_SHAPE = "STORAGE_TANK_SHAPE";
+  /** Shape name for filters / strainers (ISO 10628:2012-2702-A). */
+  static final String FILTER_SHAPE = "FILTER_SHAPE";
   /** Shape name for globe valves. */
   static final String GLOBE_VALVE_SHAPE = "GLOBE_VALVE_SHAPE";
   /** Shape name for gate valves (ISO 10628:2012-X8062-A). */
@@ -103,6 +107,8 @@ final class DexpiShapeCatalog {
     appendCoolerShape(document, catalogue);
     appendHeaterShape(document, catalogue);
     appendHeatExchangerShape(document, catalogue);
+    appendTankShape(document, catalogue);
+    appendFilterShape(document, catalogue);
     appendGlobeValveShape(document, catalogue);
     appendGateValveShape(document, catalogue);
     appendBallValveShape(document, catalogue);
@@ -148,6 +154,10 @@ final class DexpiShapeCatalog {
         return HEATER_SHAPE;
       case "ShellAndTubeHeatExchanger":
         return HEAT_EXCHANGER_SHAPE;
+      case "Tank":
+        return TANK_SHAPE;
+      case "Filter":
+        return FILTER_SHAPE;
       case "GlobeValve":
         return GLOBE_VALVE_SHAPE;
       case "GateValve":
@@ -271,6 +281,34 @@ final class DexpiShapeCatalog {
     // Floating head
     appendPolyLine(document, shape,
         new double[][] {{10, 3.75}, {12.5, 3.75}, {12.5, -3.75}, {10, -3.75}, {10, 3.75}});
+    catalogue.appendChild(shape);
+  }
+
+  // --- Storage tank / atmospheric vessel (ISO 10628:2012-2002-A: cylinder, flat top + bottom) ---
+
+  private static void appendTankShape(Document document, Element catalogue) {
+    Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-Tank",
+        TANK_SHAPE, "ISO10628:2012-2002-A");
+    // Flat-bottom cylindrical storage tank: straight sides, flat base, shallow dished roof
+    appendPolyLine(document, shape,
+        new double[][] {{-12.5, 12}, {-12.5, -12}, {12.5, -12}, {12.5, 12}});
+    // Shallow curved roof
+    appendTrimmedCurve(document, shape, 20.0, 160.0, 36.55, 0, -22.34);
+    // Liquid level line
+    appendPolyLine(document, shape, new double[][] {{-12.5, -2}, {12.5, -2}});
+    catalogue.appendChild(shape);
+  }
+
+  // --- Filter / strainer (ISO 10628:2012-2702-A: rectangle with diagonal mesh) ---
+
+  private static void appendFilterShape(Document document, Element catalogue) {
+    Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-Filter",
+        FILTER_SHAPE, "ISO10628:2012-2702-A");
+    // Rectangular body
+    appendPolyLine(document, shape,
+        new double[][] {{-8, 10}, {8, 10}, {8, -10}, {-8, -10}, {-8, 10}});
+    // Diagonal filter element (mesh) line across the body
+    appendPolyLine(document, shape, new double[][] {{-8, 10}, {8, -10}});
     catalogue.appendChild(shape);
   }
 

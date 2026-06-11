@@ -78,18 +78,91 @@ def latex_to_omml(latex_str):
 
 
 def _clean_latex_for_mathml(latex_str):
-    """Pre-process LaTeX for better latex2mathml compatibility."""
+    """Pre-process LaTeX for better latex2mathml compatibility.
+
+    Authors frequently write multi-line display equations and use alignment
+    environments or spacing macros that ``latex2mathml`` does not support.
+    Without normalisation these silently fail to convert and the Word renderer
+    falls back to ugly plain text. This routine flattens such constructs so the
+    equation still converts to native OMML.
+    """
     s = latex_str.strip()
+    # Flatten multi-line display equations: collapse newlines and runs of
+    # whitespace to a single space so the LaTeX is a single logical line.
+    s = re.sub(r"\s*\n\s*", " ", s)
+    # Drop alignment environments that latex2mathml cannot parse
+    # (\begin{aligned}...\end{aligned}, align, gathered, split, ...).
+    s = re.sub(r"\\begin\{(aligned|align\*?|gathered|gather\*?|split|cases|array)\}"
+               r"(?:\{[^}]*\})?", "", s)
+    s = re.sub(r"\\end\{(aligned|align\*?|gathered|gather\*?|split|cases|array)\}", "", s)
+    # Alignment tab markers and line breaks become spacing in a flat equation.
+    s = s.replace("&", " ")
+    s = re.sub(r"\\\\(?:\[[^\]]*\])?", r" \\quad ", s)
     # Remove \left and \right (latex2mathml handles bare delimiters)
     s = s.replace(r"\left(", "(").replace(r"\right)", ")")
     s = s.replace(r"\left[", "[").replace(r"\right]", "]")
     s = s.replace(r"\left\{", r"\{").replace(r"\right\}", r"\}")
     s = s.replace(r"\left.", "").replace(r"\right.", "")
+    s = s.replace(r"\left|", "|").replace(r"\right|", "|")
     # Replace \text{} with \mathrm{} for latex2mathml
     s = re.sub(r"\\text\{([^}]*)\}", r"\\mathrm{\1}", s)
+    # \displaystyle / \textstyle / \scriptstyle are sizing hints latex2mathml
+    # does not need; strip them so they don't leak into the output as literals.
+    s = re.sub(r"\\(displaystyle|textstyle|scriptstyle|scriptscriptstyle)\s*", "", s)
     # Replace \tag{...} — latex2mathml doesn't support it
     s = re.sub(r"\\tag\{[^}]*\}", "", s)
-    return s
+    return s.strip()
+
+
+# ---------------------------------------------------------------------------
+# Capability self-test
+# ---------------------------------------------------------------------------
+
+_OMML_AVAILABLE = None
+
+
+def omml_available():
+    """Return True if native LaTeX -> OMML conversion is fully operational.
+
+    Performs a one-off conversion of a trivial equation and caches the result.
+    This catches the common silent-degradation cases where the ``latex2mathml``
+    package is missing or Microsoft's ``MML2OMML.XSL`` cannot be located, in
+    which all equations would otherwise fall back to plain text without warning.
+
+    Returns
+    -------
+    bool
+        True when a probe equation converts to an OMML element, else False.
+    """
+    global _OMML_AVAILABLE
+    if _OMML_AVAILABLE is not None:
+        return _OMML_AVAILABLE
+    try:
+        _OMML_AVAILABLE = latex_to_omml(r"a = b") is not None
+    except Exception:
+        _OMML_AVAILABLE = False
+    return _OMML_AVAILABLE
+
+
+def omml_unavailable_reason():
+    """Return a human-readable reason why OMML conversion is unavailable.
+
+    Returns
+    -------
+    str
+        Empty string when OMML is available; otherwise a remediation hint.
+    """
+    if omml_available():
+        return ""
+    try:
+        import latex2mathml.converter  # noqa: F401
+    except ImportError:
+        return ("the 'latex2mathml' package is not installed "
+                "(run: pip install latex2mathml lxml)")
+    if not _find_mml2omml_xsl():
+        return ("Microsoft's MML2OMML.XSL stylesheet was not found "
+                "(requires Microsoft Office, or set the stylesheet path)")
+    return "LaTeX -> OMML conversion failed for an unknown reason"
 
 
 # ---------------------------------------------------------------------------

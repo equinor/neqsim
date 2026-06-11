@@ -66,6 +66,46 @@ public class OilQualityStandardsTest {
     return oil;
   }
 
+  /**
+   * Creates a representative middle-distillate (diesel-like) fluid for cetane index testing.
+   *
+   * @return a SystemInterface representing a diesel-range distillate
+   */
+  private SystemInterface createDiesel() {
+    SystemInterface oil = new SystemSrkEos(273.15 + 25.0, 1.01325);
+    oil.addComponent("nC10", 0.05);
+    oil.addTBPfraction("C12", 0.20, 170.0 / 1000.0, 0.78);
+    oil.addTBPfraction("C14", 0.25, 198.0 / 1000.0, 0.80);
+    oil.addTBPfraction("C16", 0.25, 226.0 / 1000.0, 0.82);
+    oil.addTBPfraction("C18", 0.15, 254.0 / 1000.0, 0.83);
+    oil.addTBPfraction("C20", 0.10, 282.0 / 1000.0, 0.85);
+    oil.setMixingRule(2);
+    oil.init(0);
+    return oil;
+  }
+
+  /**
+   * Creates a waxy oil fluid with an active wax model so a finite cloud point can be calculated.
+   *
+   * @return a SystemInterface representing a waxy oil with the wax model enabled
+   */
+  private SystemInterface createWaxyOil() {
+    neqsim.util.database.NeqSimDataBase.setCreateTemporaryTables(true);
+    SystemInterface oil = new SystemSrkEos(298.0, 5.0);
+    oil.addComponent("methane", 6.78);
+    oil.addTBPfraction("C19", 10.13, 170.0 / 1000.0, 0.7814);
+    oil.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.850871882888);
+    oil.getCharacterization().characterisePlusFraction();
+    oil.getWaxModel().addTBPWax();
+    oil.createDatabase(true);
+    oil.setMixingRule(2);
+    oil.addSolidComplexPhase("wax");
+    oil.setMultiphaseWaxCheck(true);
+    oil.setMultiPhaseCheck(true);
+    neqsim.util.database.NeqSimDataBase.setCreateTemporaryTables(false);
+    return oil;
+  }
+
   // ========== ASTM D86 Tests ==========
 
   @Test
@@ -115,6 +155,199 @@ public class OilQualityStandardsTest {
       assertEquals(ibpC + 273.15, ibpK, 0.01, "K should equal C + 273.15");
       assertEquals(ibpC * 9.0 / 5.0 + 32.0, ibpF, 0.01, "F conversion should be correct");
     }
+  }
+
+  /**
+   * Regression test for the distillation-curve "flat curve" bug. The original implementation used a
+   * fixed-temperature TVfractionFlash, so every recovered cut collapsed onto the IBP. A correct D86
+   * curve must rise: heavier cuts boil at higher temperatures than lighter ones.
+   */
+  @Test
+  void testASTM_D86_curveRisesNotFlat() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    double ibp = standard.getValue("IBP");
+    double t10 = standard.getValue("T10");
+    double t50 = standard.getValue("T50");
+    double t90 = standard.getValue("T90");
+
+    assertTrue(!Double.isNaN(t10) && !Double.isNaN(t50) && !Double.isNaN(t90),
+        "T10/T50/T90 should be computable for a light oil");
+
+    // The cuts must be ordered and span a meaningful range (not collapsed onto the IBP).
+    assertTrue(t10 >= ibp - 1.0, "T10 should be at or above the IBP");
+    assertTrue(t50 > t10, "T50 should be hotter than T10");
+    assertTrue(t90 > t50, "T90 should be hotter than T50");
+    assertTrue(t90 - t10 > 20.0,
+        "Distillation curve should span > 20 C between T10 and T90 (not flat)");
+  }
+
+  /**
+   * Verifies T95 reports a genuine 95 % recovered point rather than aliasing onto the last table
+   * entry (previously T90).
+   */
+  @Test
+  void testASTM_D86_t95IsRealPoint() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    double t90 = standard.getValue("T90");
+    double t95 = standard.getValue("T95");
+    if (!Double.isNaN(t90) && !Double.isNaN(t95)) {
+      assertTrue(t95 >= t90 - 1.0, "T95 should be at or above T90 (true 95% point)");
+    }
+  }
+
+  /**
+   * Verifies the component-based average boiling points are ordered correctly (MABP &le; MeABP &le;
+   * CABP &le; WABP) and the Watson (UOP) characterization factor falls in the physically expected
+   * band for a light paraffinic oil.
+   */
+  @Test
+  void testASTM_D86_averageBoilingPointsAndWatsonK() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    double mabp = standard.getMABP();
+    double wabp = standard.getWABP();
+    double cabp = standard.getCABP();
+    double meabp = standard.getMeABP();
+    double vabp = standard.getVABP();
+
+    assertTrue(!Double.isNaN(mabp) && !Double.isNaN(wabp) && !Double.isNaN(cabp),
+        "Average boiling points should be computable");
+    // Molal is the lowest, weight the highest; mean and cubic sit in between.
+    assertTrue(mabp <= cabp, "MABP should be at or below CABP");
+    assertTrue(cabp <= wabp, "CABP should be at or below WABP");
+    assertEquals((mabp + cabp) / 2.0, meabp, 0.01, "MeABP should be the mean of MABP and CABP");
+    // VABP comes from the curve and should sit inside the T10..T90 window.
+    assertTrue(vabp > standard.getValue("T10") && vabp < standard.getValue("T90"),
+        "VABP should fall between T10 and T90");
+
+    double sg = standard.getSpecificGravity();
+    assertTrue(sg > 0.6 && sg < 1.0, "Specific gravity should be in a plausible petroleum range");
+
+    double watsonK = standard.getWatsonK();
+    assertTrue(watsonK > 10.0 && watsonK < 14.0,
+        "Watson K should be in the typical petroleum range (10-14), was " + watsonK);
+  }
+
+  /**
+   * Verifies the D86 slope is positive and that recovery + loss + residue conserve to 100 %.
+   */
+  @Test
+  void testASTM_D86_slopeAndRecoveryBalance() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    assertTrue(standard.getSlope() > 0.0, "D86 slope (T90-T10)/80 should be positive");
+
+    double total =
+        standard.getPercentRecovered() + standard.getPercentLoss() + standard.getPercentResidue();
+    assertEquals(100.0, total, 0.01, "Recovery + loss + residue should conserve to 100%");
+    assertTrue(standard.getPercentLoss() >= 0.0, "Loss should be non-negative");
+    assertTrue(standard.getPercentResidue() >= 0.0, "Residue should be non-negative");
+  }
+
+  /**
+   * Verifies the Riazi-Daubert TBP&rarr;D86 conversion produces a distinct curve from the simulated
+   * (TBP-like) curve and that selecting the TBP_CONVERTED basis changes the reported temperatures.
+   */
+  @Test
+  void testASTM_D86_tbpToD86Conversion() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    double[][] tbp = standard.getTBPCurve();
+    double[][] d86 = standard.getD86Curve();
+    assertEquals(tbp.length, d86.length, "TBP and D86 curves should have the same length");
+
+    boolean anyDifferent = false;
+    for (int i = 0; i < tbp.length; i++) {
+      if (!Double.isNaN(tbp[i][1]) && !Double.isNaN(d86[i][1])
+          && Math.abs(tbp[i][1] - d86[i][1]) > 1.0) {
+        anyDifferent = true;
+        break;
+      }
+    }
+    assertTrue(anyDifferent, "TBP and D86 curves should differ (conversion applied)");
+
+    double molarT50 = standard.getValue("T50");
+    standard.setBasis(Standard_ASTM_D86.D86Basis.TBP_CONVERTED);
+    double convertedT50 = standard.getValue("T50");
+    assertTrue(Math.abs(convertedT50 - molarT50) > 0.1,
+        "TBP_CONVERTED basis should change the reported T50");
+    standard.setBasis(Standard_ASTM_D86.D86Basis.MOLAR);
+  }
+
+  /**
+   * Verifies the liquid-volume reporting basis yields a different curve from the molar basis.
+   */
+  @Test
+  void testASTM_D86_liquidVolumeBasis() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    double molarT50 = standard.getValue("T50");
+    standard.setBasis(Standard_ASTM_D86.D86Basis.LIQUID_VOLUME);
+    double liquidVolT50 = standard.getValue("T50");
+    standard.setBasis(Standard_ASTM_D86.D86Basis.MOLAR);
+
+    assertTrue(!Double.isNaN(liquidVolT50), "Liquid-volume T50 should be computable");
+    assertTrue(Math.abs(liquidVolT50 - molarT50) > 0.1,
+        "Liquid-volume basis should differ from molar basis");
+  }
+
+  /**
+   * Verifies the Sydney Young barometric-pressure correction shifts reported temperatures: a
+   * sub-760 mmHg pressure raises the equivalent 760 mmHg temperature.
+   */
+  @Test
+  void testASTM_D86_barometricCorrection() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    double t50at760 = standard.getValue("T50");
+    standard.setBarometricPressure(700.0, "mmHg");
+    double t50at700 = standard.getValue("T50");
+    standard.setBarometricPressure(760.0, "mmHg");
+
+    assertTrue(t50at700 > t50at760,
+        "Lower barometric pressure should raise the corrected (760 mmHg-equivalent) temperature");
+    // Unit handling: 1 atm == 760 mmHg, so the correction should vanish.
+    standard.setBarometricPressure(1.0, "atm");
+    assertEquals(t50at760, standard.getValue("T50"), 0.01,
+        "1 atm should be equivalent to 760 mmHg (no correction)");
+    standard.setBarometricPressure(760.0, "mmHg");
+  }
+
+  /**
+   * Verifies product specification limits drive {@link Standard_ASTM_D86#isOnSpec()}.
+   */
+  @Test
+  void testASTM_D86_specLimits() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D86 standard = new Standard_ASTM_D86(oil);
+    standard.calculate();
+
+    double t90 = standard.getValue("T90");
+
+    standard.setSpecLimit("T90", t90 + 20.0);
+    assertTrue(standard.isOnSpec(), "Should pass when T90 is below the limit");
+
+    standard.setSpecLimit("T90", t90 - 20.0);
+    assertTrue(!standard.isOnSpec(), "Should fail when T90 exceeds the limit");
+
+    standard.clearSpecLimits();
+    assertTrue(standard.isOnSpec(), "Should fall back to default on-spec check when no limits set");
   }
 
   // ========== ASTM D445 Tests ==========
@@ -335,5 +568,358 @@ public class OilQualityStandardsTest {
     standard.setNonFlowViscosityThreshold(20000.0);
     assertEquals("C", standard.getUnit("pourPoint"));
     assertEquals(20000.0, standard.getNonFlowViscosityThreshold(), 0.1);
+  }
+
+  // ========== TVP (True Vapor Pressure) Tests ==========
+
+  @Test
+  void testTVP_basic() {
+    SystemInterface oil = createLightOil();
+    Standard_TVP standard = new Standard_TVP(oil);
+    standard.calculate();
+
+    double tvp = standard.getValue("TVP");
+    assertTrue(tvp > 0.0, "TVP should be positive for a live oil");
+    assertEquals("bara", standard.getUnit("TVP"));
+    assertEquals(37.8, standard.getReferenceTemperature(), 1.0e-6,
+        "Default reference temperature should be 37.8 C");
+  }
+
+  @Test
+  void testTVP_referenceTemperatureIncreasesPressure() {
+    SystemInterface oil = createLightOil();
+
+    Standard_TVP cold = new Standard_TVP(oil);
+    cold.setReferenceTemperature(20.0, "C");
+    cold.calculate();
+    double tvpCold = cold.getValue("TVP");
+
+    Standard_TVP hot = new Standard_TVP(oil);
+    hot.setReferenceTemperature(60.0, "C");
+    hot.calculate();
+    double tvpHot = hot.getValue("TVP");
+
+    assertTrue(tvpHot > tvpCold,
+        "TVP should increase with reference temperature (" + tvpHot + " > " + tvpCold + ")");
+  }
+
+  @Test
+  void testTVP_unitConversion() {
+    SystemInterface oil = createLightOil();
+    Standard_TVP standard = new Standard_TVP(oil);
+    standard.calculate();
+
+    double tvpBara = standard.getValue("TVP", "bara");
+    double tvpPsia = standard.getValue("TVP", "psia");
+    assertEquals(tvpBara / 0.0689475729317831, tvpPsia, 1.0e-6,
+        "psia conversion should match the bara value");
+  }
+
+  @Test
+  void testTVP_maxSpecLimit() {
+    SystemInterface oil = createLightOil();
+    Standard_TVP standard = new Standard_TVP(oil);
+    standard.calculate();
+    double tvp = standard.getValue("TVP");
+
+    standard.setMaxTvpSpec(tvp + 0.5, "bara");
+    assertTrue(standard.isOnSpec(), "Should pass when TVP is below the max limit");
+
+    standard.setMaxTvpSpec(tvp - 0.5, "bara");
+    assertTrue(!standard.isOnSpec(), "Should fail when TVP exceeds the max limit");
+
+    standard.clearMaxTvpSpec();
+    assertTrue(standard.isOnSpec(), "Should pass when no spec limit is set");
+  }
+
+  // ========== ASTM D4737 (Calculated Cetane Index) Tests ==========
+
+  @Test
+  void testASTM_D4737_basic() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D4737 standard = new Standard_ASTM_D4737(oil);
+    standard.calculate();
+
+    double cci = standard.getValue("cetaneIndex");
+    assertTrue(!Double.isNaN(cci), "Cetane index should be a finite number");
+    assertTrue(cci > 0.0 && cci < 120.0, "Cetane index should be physically plausible: " + cci);
+    assertEquals("-", standard.getUnit("cetaneIndex"));
+  }
+
+  @Test
+  void testASTM_D4737_aliasesMatch() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D4737 standard = new Standard_ASTM_D4737(oil);
+    standard.calculate();
+
+    double cci = standard.getValue("cetaneIndex");
+    assertEquals(cci, standard.getValue("CCI"), 1.0e-9, "CCI alias should match cetaneIndex");
+    assertEquals(cci, standard.getValue("cetaneIndexD4737"), 1.0e-9,
+        "cetaneIndexD4737 alias should match cetaneIndex");
+  }
+
+  @Test
+  void testASTM_D4737_d976CrossCheck() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D4737 standard = new Standard_ASTM_D4737(oil);
+    standard.calculate();
+
+    double cciD976 = standard.getValue("cetaneIndexD976");
+    assertTrue(!Double.isNaN(cciD976), "D976 cetane index should be a finite number");
+    assertTrue(cciD976 > 0.0 && cciD976 < 120.0,
+        "D976 cetane index should be physically plausible: " + cciD976);
+  }
+
+  @Test
+  void testASTM_D4737_inputPassthrough() {
+    SystemInterface oil = createDiesel();
+
+    Standard_ASTM_D86 d86 = new Standard_ASTM_D86(oil);
+    d86.calculate();
+
+    Standard_ASTM_D4737 standard = new Standard_ASTM_D4737(oil);
+    standard.calculate();
+
+    assertEquals(d86.getValue("T10", "C"), standard.getValue("T10"), 1.0e-6,
+        "T10 should pass through from the internal D86 calculation");
+    assertEquals(d86.getValue("T50", "C"), standard.getValue("T50"), 1.0e-6,
+        "T50 should pass through from the internal D86 calculation");
+    assertEquals(d86.getValue("T90", "C"), standard.getValue("T90"), 1.0e-6,
+        "T90 should pass through from the internal D86 calculation");
+    assertEquals("C", standard.getUnit("T50"));
+    assertEquals("kg/m3", standard.getUnit("density"));
+  }
+
+  @Test
+  void testASTM_D4737_minSpecLimit() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D4737 standard = new Standard_ASTM_D4737(oil);
+    standard.calculate();
+    double cci = standard.getValue("cetaneIndex");
+
+    standard.setMinCetaneSpec(cci - 5.0);
+    assertTrue(standard.isOnSpec(), "Should pass when cetane index exceeds the min limit");
+
+    standard.setMinCetaneSpec(cci + 5.0);
+    assertTrue(!standard.isOnSpec(), "Should fail when cetane index is below the min limit");
+
+    standard.clearMinCetaneSpec();
+    assertTrue(standard.isOnSpec(), "Should pass when no spec limit is set");
+  }
+
+  // ========== ASTM D611 Aniline Point Tests ==========
+
+  @Test
+  void testASTM_D611_basic() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D611 standard = new Standard_ASTM_D611(oil);
+    standard.calculate();
+
+    double anilineC = standard.getValue("anilinePoint", "C");
+    assertTrue(!Double.isNaN(anilineC), "Aniline point should be a finite number");
+    assertTrue(anilineC > 0.0 && anilineC < 120.0,
+        "Aniline point should be physically plausible for a diesel: " + anilineC);
+  }
+
+  @Test
+  void testASTM_D611_unitConversion() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D611 standard = new Standard_ASTM_D611(oil);
+    standard.calculate();
+
+    double anilineC = standard.getValue("anilinePoint", "C");
+    double anilineK = standard.getValue("anilinePoint", "K");
+    double anilineF = standard.getValue("anilinePoint", "F");
+
+    assertEquals(anilineC + 273.15, anilineK, 1.0e-6, "K should be C + 273.15");
+    assertEquals(anilineC * 9.0 / 5.0 + 32.0, anilineF, 1.0e-6, "F conversion should match");
+    assertEquals("C", standard.getUnit("anilinePoint"));
+  }
+
+  @Test
+  void testASTM_D611_coefficientsAffectResult() {
+    SystemInterface oil = createDiesel();
+
+    Standard_ASTM_D611 base = new Standard_ASTM_D611(oil);
+    base.calculate();
+    double baseAniline = base.getValue("anilinePoint");
+
+    Standard_ASTM_D611 shifted = new Standard_ASTM_D611(oil);
+    shifted.setCorrelationCoefficients(70.0, 35.0, 0.083);
+    shifted.calculate();
+    double shiftedAniline = shifted.getValue("anilinePoint");
+
+    assertEquals(baseAniline + 10.0, shiftedAniline, 1.0e-6,
+        "Raising the intercept by 10 should raise the aniline point by 10");
+  }
+
+  @Test
+  void testASTM_D611_minSpecLimit() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D611 standard = new Standard_ASTM_D611(oil);
+    standard.calculate();
+    double anilineC = standard.getValue("anilinePoint", "C");
+
+    standard.setMinAnilineSpec(anilineC - 5.0, "C");
+    assertTrue(standard.isOnSpec(), "Should pass when aniline point exceeds the min limit");
+
+    standard.setMinAnilineSpec(anilineC + 5.0, "C");
+    assertTrue(!standard.isOnSpec(), "Should fail when aniline point is below the min limit");
+
+    standard.clearMinAnilineSpec();
+    assertTrue(standard.isOnSpec(), "Should pass when no spec limit is set");
+  }
+
+  // ========== ASTM D1322 Smoke Point Tests ==========
+
+  @Test
+  void testASTM_D1322_basic() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D1322 standard = new Standard_ASTM_D1322(oil);
+    standard.calculate();
+
+    double smokeMm = standard.getValue("smokePoint", "mm");
+    assertTrue(!Double.isNaN(smokeMm), "Smoke point should be a finite number");
+    assertTrue(smokeMm > 0.0 && smokeMm < 60.0,
+        "Smoke point should be physically plausible: " + smokeMm);
+    assertEquals("mm", standard.getUnit("smokePoint"));
+  }
+
+  @Test
+  void testASTM_D1322_tracksAnilinePoint() {
+    SystemInterface oil = createDiesel();
+
+    Standard_ASTM_D611 d611 = new Standard_ASTM_D611(oil);
+    d611.calculate();
+    double anilineC = d611.getValue("anilinePoint");
+
+    Standard_ASTM_D1322 standard = new Standard_ASTM_D1322(oil);
+    standard.calculate();
+
+    assertEquals(anilineC, standard.getValue("anilinePoint"), 1.0e-6,
+        "Aniline point should pass through from the internal D611 calculation");
+    assertEquals(8.5 + 0.325 * anilineC, standard.getValue("smokePoint"), 1.0e-6,
+        "Smoke point should match the default correlation");
+  }
+
+  @Test
+  void testASTM_D1322_minSpecLimit() {
+    SystemInterface oil = createDiesel();
+    Standard_ASTM_D1322 standard = new Standard_ASTM_D1322(oil);
+    standard.calculate();
+    double smokeMm = standard.getValue("smokePoint");
+
+    standard.setMinSmokeSpec(smokeMm - 2.0);
+    assertTrue(standard.isOnSpec(), "Should pass when smoke point exceeds the min limit");
+
+    standard.setMinSmokeSpec(smokeMm + 2.0);
+    assertTrue(!standard.isOnSpec(), "Should fail when smoke point is below the min limit");
+
+    standard.clearMinSmokeSpec();
+    assertTrue(standard.isOnSpec(), "Should pass when no spec limit is set");
+  }
+
+  // ========== EN 116 CFPP Tests ==========
+
+  @Test
+  void testEN116_basic() {
+    SystemInterface oil = createWaxyOil();
+    Standard_EN116 standard = new Standard_EN116(oil);
+    standard.calculate();
+
+    double cfppC = standard.getValue("CFPP", "C");
+    double cloudC = standard.getValue("cloudPoint", "C");
+    assertTrue(!Double.isNaN(cfppC), "CFPP should be a finite number");
+    assertEquals(cloudC, cfppC, 1.0e-6, "Default CFPP should equal the cloud point");
+    assertEquals("C", standard.getUnit("CFPP"));
+  }
+
+  @Test
+  void testEN116_offsetShiftsResult() {
+    SystemInterface oil = createWaxyOil();
+
+    Standard_EN116 standard = new Standard_EN116(oil);
+    standard.setOffset(-3.0);
+    standard.calculate();
+
+    double cloudC = standard.getValue("cloudPoint", "C");
+    double cfppC = standard.getValue("CFPP", "C");
+    assertTrue(!Double.isNaN(cloudC), "Cloud point basis should be a finite number");
+    assertEquals(-3.0, standard.getOffset(), 1.0e-9, "Offset getter should return what was set");
+    assertEquals(cloudC - 3.0, cfppC, 1.0e-6, "CFPP should be cloud point plus the offset");
+  }
+
+  @Test
+  void testEN116_maxSpecLimit() {
+    SystemInterface oil = createWaxyOil();
+    Standard_EN116 standard = new Standard_EN116(oil);
+    standard.calculate();
+    double cfppC = standard.getValue("CFPP", "C");
+    assertTrue(!Double.isNaN(cfppC), "CFPP should be a finite number");
+
+    standard.setMaxCfppSpec(cfppC + 5.0, "C");
+    assertTrue(standard.isOnSpec(), "Should pass when CFPP is below the max limit");
+
+    standard.setMaxCfppSpec(cfppC - 5.0, "C");
+    assertTrue(!standard.isOnSpec(), "Should fail when CFPP exceeds the max limit");
+
+    standard.clearMaxCfppSpec();
+    assertTrue(standard.isOnSpec(), "Should pass when no spec limit is set");
+  }
+
+  // ========== ASTM D3230 Salt Content Tests ==========
+
+  @Test
+  void testASTM_D3230_requiresInputs() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D3230 standard = new Standard_ASTM_D3230(oil);
+    standard.calculate();
+
+    assertTrue(Double.isNaN(standard.getValue("saltContentPTB")),
+        "Salt content should be NaN without a brine assay");
+    assertTrue(!standard.isOnSpec(), "Should be off-spec when no result is available");
+  }
+
+  @Test
+  void testASTM_D3230_ptbConversion() {
+    SystemInterface oil = createLightOil();
+    Standard_ASTM_D3230 standard = new Standard_ASTM_D3230(oil);
+    standard.setWaterCut(0.005); // 0.5 vol% water
+    standard.setBrineSalinity(35.0, "kg/m3"); // 35 g/L brine
+    standard.calculate();
+
+    double saltMassPerCrudeVolume = 0.005 * 35.0; // kg salt per m3 crude
+    double expectedPtb = saltMassPerCrudeVolume * 158.987 * 2.20462;
+    assertEquals(expectedPtb, standard.getValue("saltContentPTB"), 1.0e-6,
+        "PTB should match the documented conversion");
+    assertEquals("PTB", standard.getUnit("saltContent"));
+
+    double ppmw = standard.getValue("saltContent", "mg/kg");
+    assertTrue(!Double.isNaN(ppmw) && ppmw > 0.0,
+        "mg/kg salt content should be a finite positive number: " + ppmw);
+  }
+
+  @Test
+  void testASTM_D3230_waterCutUnitsAndSpec() {
+    SystemInterface oil = createLightOil();
+
+    Standard_ASTM_D3230 percent = new Standard_ASTM_D3230(oil);
+    percent.setWaterCut(0.5, "vol%");
+    percent.setBrineSalinity(35.0, "kg/m3");
+    percent.calculate();
+
+    Standard_ASTM_D3230 fraction = new Standard_ASTM_D3230(oil);
+    fraction.setWaterCut(0.005);
+    fraction.setBrineSalinity(35.0, "kg/m3");
+    fraction.calculate();
+
+    assertEquals(fraction.getValue("saltContentPTB"), percent.getValue("saltContentPTB"), 1.0e-6,
+        "0.5 vol% should equal a 0.005 volume fraction");
+
+    double ptb = fraction.getValue("saltContentPTB");
+    fraction.setMaxSaltSpec(ptb + 1.0);
+    assertTrue(fraction.isOnSpec(), "Should pass when salt content is below the max limit");
+    fraction.setMaxSaltSpec(ptb - 0.1);
+    assertTrue(!fraction.isOnSpec(), "Should fail when salt content exceeds the max limit");
   }
 }

@@ -34,6 +34,158 @@ TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
 
 
 # ---------------------------------------------------------------------------
+# Book-type profiles
+# ---------------------------------------------------------------------------
+#
+# A book's *type* selects a coherent bundle of content defaults so an author
+# can switch a manuscript between a lean reference, an engineering description
+# and a full university textbook from a single ``book.yaml`` key. Each profile
+# supplies defaults for the ``include_*`` toggles and a list of pedagogical
+# section titles to drop. Explicit ``settings.include_*`` / ``exclude_sections``
+# values always override the profile, and an unknown type falls back to
+# ``textbook`` (the historical "include everything" behaviour).
+#
+#   simple     — concise reference: core prose + figures only. No learning
+#                objectives, exercises, review questions, problems, further
+#                reading; no copyright/colophon page.
+#   technical  — engineering / technical description: core prose, figures,
+#                tables, derivations. No learning objectives, exercises, review
+#                questions or problems; keeps the copyright page.
+#   textbook   — full university textbook: every pedagogical element kept
+#                (learning objectives, exercises, review questions, problems,
+#                further reading) and the copyright page.
+
+DEFAULT_BOOK_TYPE = "textbook"
+
+BOOK_TYPE_PROFILES = {
+    "simple": {
+        "include_copyright": False,
+        "include_exercises": False,
+        "include_learning_objectives": False,
+        "exclude_sections": ["Review Questions", "Problems", "Further Reading"],
+    },
+    "technical": {
+        "include_copyright": True,
+        "include_exercises": False,
+        "include_learning_objectives": False,
+        "exclude_sections": ["Review Questions", "Problems"],
+    },
+    "textbook": {
+        "include_copyright": True,
+        "include_exercises": True,
+        "include_learning_objectives": True,
+        "exclude_sections": [],
+    },
+}
+
+_FALSE_STRINGS = ("false", "no", "0", "off")
+_TRUE_STRINGS = ("true", "yes", "1", "on")
+
+
+def _is_falsey(value):
+    """Return ``True`` if *value* represents an explicit off/false flag.
+
+    Parameters
+    ----------
+    value : object
+        A boolean or string flag value from ``book.yaml``.
+
+    Returns
+    -------
+    bool
+        ``True`` for ``False`` or the strings ``false``/``no``/``0``/``off``
+        (case-insensitive, whitespace-stripped); ``False`` otherwise.
+    """
+    return value is False or (
+        isinstance(value, str) and value.strip().lower() in _FALSE_STRINGS
+    )
+
+
+def _is_truthy(value):
+    """Return ``True`` if *value* represents an explicit on/true flag.
+
+    Parameters
+    ----------
+    value : object
+        A boolean or string flag value from ``book.yaml``.
+
+    Returns
+    -------
+    bool
+        ``True`` for ``True`` or the strings ``true``/``yes``/``1``/``on``
+        (case-insensitive, whitespace-stripped); ``False`` otherwise.
+    """
+    return value is True or (
+        isinstance(value, str) and value.strip().lower() in _TRUE_STRINGS
+    )
+
+
+def get_book_type(cfg):
+    """Return the normalized book type selected in *cfg*.
+
+    The type is read from ``settings.book_type`` first, then a top-level
+    ``book_type`` key, defaulting to :data:`DEFAULT_BOOK_TYPE`. An unrecognised
+    value falls back to :data:`DEFAULT_BOOK_TYPE`.
+
+    Parameters
+    ----------
+    cfg : dict
+        Parsed ``book.yaml`` configuration.
+
+    Returns
+    -------
+    str
+        One of the keys of :data:`BOOK_TYPE_PROFILES`.
+    """
+    cfg = cfg or {}
+    settings = cfg.get("settings", {}) or {}
+    raw = settings.get("book_type", cfg.get("book_type")) or DEFAULT_BOOK_TYPE
+    book_type = str(raw).strip().lower()
+    if book_type not in BOOK_TYPE_PROFILES:
+        return DEFAULT_BOOK_TYPE
+    return book_type
+
+
+def resolve_include(cfg, key, hard_default=True):
+    """Resolve an ``include_*`` toggle from settings, book type, then default.
+
+    Resolution order (first match wins):
+
+    1. An explicit ``settings[key]`` value in ``book.yaml``.
+    2. The selected book type's profile default (see
+       :data:`BOOK_TYPE_PROFILES`).
+    3. The supplied *hard_default*.
+
+    Parameters
+    ----------
+    cfg : dict
+        Parsed ``book.yaml`` configuration.
+    key : str
+        The toggle name, e.g. ``"include_exercises"``.
+    hard_default : bool, optional
+        Value used when neither settings nor the profile specify *key*.
+
+    Returns
+    -------
+    bool
+        The resolved include flag.
+    """
+    settings = (cfg or {}).get("settings", {}) or {}
+    if key in settings:
+        value = settings[key]
+        if _is_falsey(value):
+            return False
+        if _is_truthy(value):
+            return True
+        return bool(value)
+    profile = BOOK_TYPE_PROFILES.get(get_book_type(cfg), {})
+    if key in profile:
+        return bool(profile[key])
+    return hard_default
+
+
+
+# ---------------------------------------------------------------------------
 # YAML helpers
 # ---------------------------------------------------------------------------
 
@@ -53,14 +205,180 @@ def load_book_config(book_dir):
     if not cfg:
         raise ValueError("book.yaml is empty")
 
-    # Minimal validation
-    for key in ("title", "authors", "parts"):
+    # Minimal validation — only title and parts are mandatory.
+    for key in ("title", "parts"):
         if key not in cfg:
             raise ValueError(f"book.yaml missing required key: '{key}'")
     if not isinstance(cfg["parts"], list) or len(cfg["parts"]) == 0:
         raise ValueError("book.yaml 'parts' must be a non-empty list")
 
+    # ``authors`` is optional; default to the NeqSim project when omitted so
+    # renderers always have a value to display.
+    if not cfg.get("authors"):
+        cfg["authors"] = [{
+            "name": "The NeqSim Project",
+            "affiliation": "NeqSim",
+        }]
+
     return cfg
+
+
+def include_copyright(cfg):
+    """Return whether the copyright / colophon page should be rendered.
+
+    Controlled by ``book.yaml`` ``settings.include_copyright`` when present,
+    otherwise by the selected ``book_type`` profile (``simple`` omits it;
+    ``technical`` and ``textbook`` include it). The hard default is ``True``.
+    Set ``include_copyright: false`` to omit the "Copyright (c) ... All rights
+    reserved ... Typeset using NeqSim PaperLab" page from every rendered format
+    (pdf, docx, html, odf, epub).
+
+    Parameters
+    ----------
+    cfg : dict
+        Parsed ``book.yaml`` configuration.
+
+    Returns
+    -------
+    bool
+        ``True`` if the copyright page should be rendered, ``False`` otherwise.
+    """
+    return resolve_include(cfg, "include_copyright", True)
+
+
+def _normalize_section_title(title):
+    """Return a comparable form of a section *title* for matching.
+
+    Strips Markdown heading hashes, surrounding whitespace, a leading section
+    number such as ``8.9`` or ``8.9.1``, and lowercases the result.
+
+    Parameters
+    ----------
+    title : str
+        Raw heading text (may include leading ``#`` characters and a number).
+
+    Returns
+    -------
+    str
+        Normalized lowercase title with no number prefix.
+    """
+    t = title.lstrip("#").strip()
+    t = re.sub(r"^\d+(?:\.\d+)*\s+", "", t)
+    return t.strip().lower()
+
+
+def get_excluded_section_titles(cfg):
+    """Return the set of normalized section titles to exclude when rendering.
+
+    The exclusion set is the union of three sources (later sources add to,
+    never remove from, earlier ones):
+
+    1. The selected ``book_type`` profile's ``exclude_sections`` list (e.g.
+       ``simple`` and ``technical`` drop "Review Questions" and "Problems").
+    2. The resolved ``include_*`` toggles — when
+       :func:`resolve_include` reports a pedagogical block as excluded,
+       its heading is added:
+
+       * ``include_exercises`` false → ``exercises``
+       * ``include_learning_objectives`` false → ``learning objectives``
+
+    3. Any author-supplied ``settings.exclude_sections`` titles (matched
+       case-insensitively, ignoring a leading section number).
+
+    Parameters
+    ----------
+    cfg : dict
+        Parsed ``book.yaml`` configuration.
+
+    Returns
+    -------
+    set of str
+        Normalized lowercase section titles to strip from chapter text.
+    """
+    settings = (cfg or {}).get("settings", {}) or {}
+    excluded = set()
+
+    # 1. Book-type profile section exclusions.
+    profile = BOOK_TYPE_PROFILES.get(get_book_type(cfg), {})
+    for title in profile.get("exclude_sections", []) or []:
+        excluded.add(_normalize_section_title(str(title)))
+
+    # 2. Resolved include_* toggles (explicit setting > profile > hard default).
+    if not resolve_include(cfg, "include_exercises", True):
+        excluded.add("exercises")
+    if not resolve_include(cfg, "include_learning_objectives", True):
+        excluded.add("learning objectives")
+
+    # 3. Author-supplied arbitrary exclusions (always applied on top).
+    for title in settings.get("exclude_sections", []) or []:
+        excluded.add(_normalize_section_title(str(title)))
+
+    return excluded
+
+
+def strip_sections_by_title(text, excluded_titles):
+    """Remove level-2 Markdown sections whose title is in *excluded_titles*.
+
+    A section runs from its ``## Heading`` line up to (but not including) the
+    next level-1 or level-2 heading, or the end of the document.
+
+    Parameters
+    ----------
+    text : str
+        Chapter Markdown text.
+    excluded_titles : set of str
+        Normalized lowercase titles (see :func:`_normalize_section_title`).
+
+    Returns
+    -------
+    str
+        Chapter text with the matching sections removed.
+    """
+    if not excluded_titles:
+        return text
+
+    lines = text.split("\n")
+    out = []
+    skipping = False
+    for line in lines:
+        heading = re.match(r"^(#{1,2})\s+(.*)$", line)
+        if heading:
+            level = len(heading.group(1))
+            if level == 2 and _normalize_section_title(
+                    heading.group(2)) in excluded_titles:
+                skipping = True
+                continue
+            # Any new level-1 or level-2 heading ends a skipped section.
+            if skipping:
+                skipping = False
+        if not skipping:
+            out.append(line)
+
+    result = "\n".join(out)
+    # Collapse runs of 3+ blank lines left behind by removal.
+    result = re.sub(r"\n{3,}", "\n\n", result)
+    return result
+
+
+def strip_excluded_sections(text, cfg):
+    """Strip end-of-chapter sections disabled in *cfg* from chapter *text*.
+
+    Convenience wrapper combining :func:`get_excluded_section_titles` and
+    :func:`strip_sections_by_title`.
+
+    Parameters
+    ----------
+    text : str
+        Chapter Markdown text.
+    cfg : dict
+        Parsed ``book.yaml`` configuration.
+
+    Returns
+    -------
+    str
+        Chapter text with excluded sections removed.
+    """
+    return strip_sections_by_title(text, get_excluded_section_titles(cfg))
 
 
 def _load_publisher_profile(publisher_name):
@@ -77,11 +395,34 @@ def _load_publisher_profile(publisher_name):
 # Scaffolding
 # ---------------------------------------------------------------------------
 
-def create_book_project(title, publisher="self", n_chapters=8, books_dir=None):
+def create_book_project(title, publisher="self", n_chapters=8, books_dir=None,
+                        book_type=DEFAULT_BOOK_TYPE):
     """Scaffold a new book project directory.
 
-    Returns the *Path* to the created book directory.
+    Parameters
+    ----------
+    title : str
+        Book title (also used to derive the directory slug).
+    publisher : str, optional
+        Publisher profile name (default ``"self"``).
+    n_chapters : int, optional
+        Number of initial chapter stubs to create (default ``8``).
+    books_dir : str or Path, optional
+        Parent directory for the new book; defaults to ``../books``.
+    book_type : str, optional
+        Content profile written to ``settings.book_type``; one of
+        ``simple``, ``technical`` or ``textbook`` (default
+        :data:`DEFAULT_BOOK_TYPE`). Controls which pedagogical sections and
+        the copyright page are included at render time.
+
+    Returns
+    -------
+    pathlib.Path
+        The created book directory.
     """
+    book_type = str(book_type).strip().lower()
+    if book_type not in BOOK_TYPE_PROFILES:
+        book_type = DEFAULT_BOOK_TYPE
     if books_dir is None:
         books_dir = Path(__file__).parent.parent / "books"
     books_dir = Path(books_dir)
@@ -185,6 +526,7 @@ def create_book_project(title, publisher="self", n_chapters=8, books_dir=None):
         "language": "en",
         "isbn": "",
         "settings": {
+            "book_type": book_type,
             "page_size": "a4",
             "font_size": profile.get("font", {}).get("size", "11pt")
             if isinstance(profile.get("font"), dict) else 11,

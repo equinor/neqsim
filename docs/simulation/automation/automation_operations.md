@@ -1,3 +1,8 @@
+---
+title: ProcessAutomation Operations and Troubleshooting
+description: Diagnostics, validation, and troubleshooting practices for ProcessAutomation — AutomationDiagnostics playbook, safe-access responses, and error recovery.
+---
+
 # ProcessAutomation Operations and Troubleshooting
 
 This guide consolidates diagnostics, validation, and troubleshooting practices.

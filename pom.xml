@@ -19,7 +19,7 @@
 	</scm>
 
 	<properties>
-		<revision>3.12.1</revision>
+		<revision>3.13.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
@@ -320,8 +320,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.15.0</version>
 				<configuration>
-					<release>21</release> <!-- Upgrade jdk version to 21 if you are having issues
-					compiling -->
+					<release>17</release> <!-- Produce Java 17 compatible bytecode. Requires a
+					JDK >= 17 (e.g. JDK 17 or 21); the release flag guarantees Java 17 output. -->
 					<encoding>${project.build.sourceEncoding}</encoding>
 					<!-- Uncomment below to get compiler warnings
 					<compilerArgs>
@@ -411,7 +411,7 @@
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.14</version>
+				<version>0.8.15</version>
 				<configuration>
 					<excludes>
 						<exclude>neqsim/physicalproperties/util/parameterfitting/**/*</exclude>

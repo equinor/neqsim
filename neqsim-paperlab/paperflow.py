@@ -1823,9 +1823,11 @@ def cmd_book_new(args):
             publisher=args.publisher,
             n_chapters=args.chapters,
             books_dir=BOOKS_DIR,
+            book_type=args.type,
         )
         print(f"Book project created: {book_dir}")
         print(f"  Publisher: {args.publisher}")
+        print(f"  Type:      {args.type}")
         print(f"  Chapters:  {args.chapters}")
         print(f"\nNext steps:")
         print(f"  1. Edit book.yaml to set authors, titles, parts")
@@ -1859,6 +1861,14 @@ def cmd_book_render(args):
 
     fmt = args.out_format
     chapter = getattr(args, "chapter", None)
+
+    # Make sure equation/rendering dependencies are present so output never
+    # silently degrades (e.g. equations falling back to plain text in Word).
+    try:
+        from ensure_deps import ensure_render_deps
+        ensure_render_deps()
+    except Exception as exc:
+        print("[paperlab] Dependency check skipped: {}".format(exc))
 
     if fmt == "pdf":
         from book_render_pdf import render_book_pdf
@@ -2538,6 +2548,13 @@ Examples:
     p_bnew.add_argument("--publisher", default="self",
                         choices=["springer", "wiley", "crc", "self", "ntnu"],
                         help="Publisher profile (default: self)")
+    p_bnew.add_argument("--type", default="textbook",
+                        choices=["simple", "technical", "textbook"],
+                        help="Book content profile: 'simple' (concise "
+                             "reference), 'technical' (engineering "
+                             "description), or 'textbook' (full university "
+                             "textbook with learning objectives and "
+                             "exercises). Default: textbook")
     p_bnew.add_argument("--chapters", type=int, default=8,
                         help="Number of initial chapters (default: 8)")
 

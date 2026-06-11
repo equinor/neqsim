@@ -22,7 +22,9 @@ import org.w3c.dom.Element;
  * <p>
  * Equipment is arranged left-to-right following process flow topology using a topological sort of
  * the process graph. Each column holds one or more equipment items at a fixed X spacing. Multi-
- * outlet equipment (separators) fan out vertically to separate rows.
+ * outlet equipment (separators) fan out vertically: the gas/overhead branch routes to the upper
+ * part of the sheet and the liquid/bottoms branch to the lower part, following ISO 10628 layout
+ * practice. The inlet train and any recombined streams stay on the centre line.
  * </p>
  *
  * <p>
@@ -99,6 +101,15 @@ final class DexpiLayoutEngine {
   private static final double ARROW_LENGTH = 3.0;
   /** Half-width of flow direction arrow heads. */
   private static final double ARROW_HALF_WIDTH = 1.5;
+
+  // ---- Orthogonal routing constants ----
+  /**
+   * Horizontal approach distance (mm) kept between a vertical riser and the target. Placing the
+   * riser near the target (rather than at the segment midpoint) keeps the long horizontal run on
+   * the source line and drops branches at the target column, which reduces line crossings on
+   * multi-branch diagrams.
+   */
+  private static final double BRANCH_APPROACH = 18.0;
 
   // ---- Stream table constants ----
   /** Height of the stream data table header row. */
@@ -208,21 +219,34 @@ final class DexpiLayoutEngine {
 
     // Build edges — handle both TwoPortEquipment (getInletStream) and
     // multi-port equipment like Separator/Mixer (getInletStreams)
-    // Also track which equipment is fed by a liquid/water outlet for branch detection.
+    // Also track which equipment is fed by a liquid/water outlet (lower branch) or by the
+    // gas/overhead outlet of a separator (upper branch), per ISO 10628 layout convention.
     Set<String> liquidBranchEquipment = new HashSet<>();
+    Set<String> gasBranchEquipment = new HashSet<>();
     // Build lookup: outlet stream identity -> whether it's a liquid/water stream
     Map<Integer, Boolean> outletIsLiquid = new HashMap<>();
+    // Build lookup: gas-outlet stream identity of a phase-splitting vessel (one that also
+    // produces a liquid or water outlet). Such overhead streams route to the upper part.
+    Map<Integer, Boolean> outletIsGasFork = new HashMap<>();
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Stream || unit instanceof DexpiStream) {
         continue;
       }
       StreamInterface liqOut = DexpiStreamUtils.getLiquidOutletStream(unit);
+      StreamInterface waterOut = DexpiStreamUtils.getWaterOutletStream(unit);
       if (liqOut != null) {
         outletIsLiquid.put(System.identityHashCode(liqOut), Boolean.TRUE);
       }
-      StreamInterface waterOut = DexpiStreamUtils.getWaterOutletStream(unit);
       if (waterOut != null) {
         outletIsLiquid.put(System.identityHashCode(waterOut), Boolean.TRUE);
+      }
+      // A vessel that produces a liquid or water outlet is a phase-splitting separator;
+      // its gas outlet is the overhead branch and is routed to the upper part of the sheet.
+      if (liqOut != null || waterOut != null) {
+        StreamInterface gasOut = DexpiStreamUtils.getGasOutletStream(unit);
+        if (gasOut != null) {
+          outletIsGasFork.put(System.identityHashCode(gasOut), Boolean.TRUE);
+        }
       }
     }
 
@@ -239,6 +263,10 @@ final class DexpiLayoutEngine {
         // If this inlet is a liquid/water outlet from its source, mark as liquid branch
         if (outletIsLiquid.containsKey(System.identityHashCode(inletStream))) {
           liquidBranchEquipment.add(unit.getName());
+        }
+        // If this inlet is the gas (overhead) outlet of a separator, mark as gas branch
+        if (outletIsGasFork.containsKey(System.identityHashCode(inletStream))) {
+          gasBranchEquipment.add(unit.getName());
         }
       }
     }
@@ -290,8 +318,9 @@ final class DexpiLayoutEngine {
       }
     }
 
-    // Propagate liquid branch: if A is on the liquid branch and A -> B, then B
-    // is also on the liquid branch (unless B is also fed by a gas path).
+    // Propagate branch membership downstream: if A is on the liquid (or gas) branch and
+    // A -> B, then B inherits that branch. A unit reached by both branches (e.g. a mixer
+    // recombining gas and liquid) ends up on the centre line.
     boolean changed = true;
     while (changed) {
       changed = false;
@@ -305,16 +334,32 @@ final class DexpiLayoutEngine {
           }
         }
       }
+      for (String name : gasBranchEquipment.toArray(new String[0])) {
+        List<String> downstream = adjacency.get(name);
+        if (downstream != null) {
+          for (String ds : downstream) {
+            if (gasBranchEquipment.add(ds)) {
+              changed = true;
+            }
+          }
+        }
+      }
     }
 
-    // Assign positions: each unit gets its own column. Liquid branch equipment is
-    // shifted downward by Y_BRANCH_OFFSET for visual separation.
+    // Assign positions: each unit gets its own column. Following ISO 10628 layout practice,
+    // the gas/overhead branch is routed to the upper part (+Y_BRANCH_OFFSET) and the
+    // liquid/bottoms branch to the lower part (-Y_BRANCH_OFFSET); the inlet train and any
+    // recombined streams stay on the centre line.
     int col = 0;
     for (String name : topoOrder) {
       double x = X_START + col * X_SPACING;
       double y = Y_BASE;
-      if (liquidBranchEquipment.contains(name)) {
+      boolean onLiquid = liquidBranchEquipment.contains(name);
+      boolean onGas = gasBranchEquipment.contains(name);
+      if (onLiquid && !onGas) {
         y = Y_BASE - Y_BRANCH_OFFSET;
+      } else if (onGas && !onLiquid) {
+        y = Y_BASE + Y_BRANCH_OFFSET;
       }
       positions.put(name, new EquipmentPosition(x, y, DEFAULT_SCALE, DEFAULT_SCALE));
       col++;
@@ -474,17 +519,40 @@ final class DexpiLayoutEngine {
       appendCoordinate(document, centerLine, toX, toY);
       parent.appendChild(centerLine);
     } else {
-      // Orthogonal routing: horizontal to midpoint, vertical, horizontal to target
-      double midX = (fromX + toX) / 2.0;
+      // Orthogonal routing: horizontal along source line, vertical riser near the target,
+      // then a short horizontal approach into the target (fewer crossings on branched lines).
+      double riserX = computeBranchRiserX(fromX, toX);
       Element centerLine = document.createElement("CenterLine");
       centerLine.setAttribute("NumPoints", "4");
       centerLine.appendChild(presentation);
       appendCoordinate(document, centerLine, fromX, fromY);
-      appendCoordinate(document, centerLine, midX, fromY);
-      appendCoordinate(document, centerLine, midX, toY);
+      appendCoordinate(document, centerLine, riserX, fromY);
+      appendCoordinate(document, centerLine, riserX, toY);
       appendCoordinate(document, centerLine, toX, toY);
       parent.appendChild(centerLine);
     }
+  }
+
+  /**
+   * Computes the orthogonal routing points for a connection between two nozzles, using the same
+   * H-V-H geometry as {@code appendConnectionLine} but returning the points instead of drawing
+   * them. This lets the caller analyse all routes together (for example to draw line-crossing hops)
+   * before the segments are serialised.
+   *
+   * @param fromX source X coordinate
+   * @param fromY source Y coordinate
+   * @param toX target X coordinate
+   * @param toY target Y coordinate
+   * @return an array of {x, y} points describing the routed centre line (2 points for a straight
+   *         horizontal run, 4 points for an H-V-H route)
+   */
+  static double[][] routeConnection(double fromX, double fromY, double toX, double toY) {
+    boolean sameY = Math.abs(fromY - toY) < 0.5;
+    if (sameY) {
+      return new double[][] {{fromX, fromY}, {toX, toY}};
+    }
+    double riserX = computeBranchRiserX(fromX, toX);
+    return new double[][] {{fromX, fromY}, {riserX, fromY}, {riserX, toY}, {toX, toY}};
   }
 
   /**
@@ -500,6 +568,28 @@ final class DexpiLayoutEngine {
     coord.setAttribute("X", String.valueOf(x));
     coord.setAttribute("Y", String.valueOf(y));
     parent.appendChild(coord);
+  }
+
+  /**
+   * Computes the X coordinate of the vertical riser for an orthogonal (H-V-H) connection.
+   *
+   * <p>
+   * For normal forward flow with enough horizontal room, the riser is placed a short
+   * {@link #BRANCH_APPROACH} distance to the left of the target so the long horizontal run stays on
+   * the source line and the branch drops at the target column. This keeps risers for different
+   * targets in distinct X channels and reduces line crossings. Short or backward (recycle)
+   * connections fall back to the segment midpoint.
+   * </p>
+   *
+   * @param fromX source X coordinate
+   * @param toX target X coordinate
+   * @return the X coordinate at which the vertical riser is drawn
+   */
+  private static double computeBranchRiserX(double fromX, double toX) {
+    if (toX > fromX + 2.0 * BRANCH_APPROACH) {
+      return toX - BRANCH_APPROACH;
+    }
+    return (fromX + toX) / 2.0;
   }
 
   /**
@@ -859,7 +949,52 @@ final class DexpiLayoutEngine {
   }
 
   /**
-   * Appends a signal conveying line (dashed, blue) between two instrument bubbles.
+   * ISA-5.1 signal / connecting line kinds, each rendered with a distinct line type so the
+   * measurement (sensor&rarr;controller) and command (controller&rarr;final element) sides of a
+   * loop are visually distinguishable, as required by ANSI/ISA-5.1-2009.
+   */
+  enum SignalLineKind {
+    /** Undefined instrument signal — dashed (legacy default). */
+    GENERIC(2),
+    /** Electrical signal (e.g. 4-20&nbsp;mA transmitter output) — dashed with dots. */
+    ELECTRIC(2),
+    /** Pneumatic signal (e.g. control-valve actuation) — single slash hatch (dash-dot). */
+    PNEUMATIC(3),
+    /** Software / data link (e.g. fieldbus, internal system link) — long dash with circles. */
+    SOFTWARE(4),
+    /** Capillary tube (filled thermal system) — cross-hatched (dotted). */
+    CAPILLARY(1);
+
+    /** DEXPI line type code for this signal kind. */
+    private final int lineType;
+
+    /**
+     * Creates a signal line kind.
+     *
+     * @param lineType DEXPI line type code
+     */
+    SignalLineKind(int lineType) {
+      this.lineType = lineType;
+    }
+
+    /**
+     * Returns the DEXPI line type code for this signal kind.
+     *
+     * @return the line type code
+     */
+    int getLineType() {
+      return lineType;
+    }
+  }
+
+  /**
+   * Appends a generic dashed-blue signal conveying line between two instrument bubbles.
+   *
+   * <p>
+   * Backward-compatible overload that delegates to
+   * {@link #appendSignalLine(Document, Element, double, double, double, double, SignalLineKind)}
+   * using {@link SignalLineKind#GENERIC}.
+   * </p>
    *
    * @param document the XML document
    * @param parent the InformationFlow element
@@ -870,13 +1005,30 @@ final class DexpiLayoutEngine {
    */
   static void appendSignalLine(Document document, Element parent, double fromX, double fromY,
       double toX, double toY) {
+    appendSignalLine(document, parent, fromX, fromY, toX, toY, SignalLineKind.GENERIC);
+  }
+
+  /**
+   * Appends a signal conveying line between two instrument bubbles, encoding the ISA-5.1 signal
+   * kind as the DEXPI line type.
+   *
+   * @param document the XML document
+   * @param parent the InformationFlow element
+   * @param fromX source bubble center X
+   * @param fromY source bubble center Y
+   * @param toX target bubble center X
+   * @param toY target bubble center Y
+   * @param kind the ISA-5.1 signal line kind (must not be null)
+   */
+  static void appendSignalLine(Document document, Element parent, double fromX, double fromY,
+      double toX, double toY, SignalLineKind kind) {
     Element centerLine = document.createElement("CenterLine");
 
     double departY = fromY - INSTRUMENT_BUBBLE_RADIUS;
     double arriveY = toY + INSTRUMENT_BUBBLE_RADIUS;
 
     Element presentation = document.createElement("Presentation");
-    presentation.setAttribute("LineType", "2");
+    presentation.setAttribute("LineType", String.valueOf(kind.getLineType()));
     presentation.setAttribute("LineWeight", String.valueOf(SIGNAL_LINE_WEIGHT));
     presentation.setAttribute("R", "0");
     presentation.setAttribute("G", "0");
@@ -898,6 +1050,135 @@ final class DexpiLayoutEngine {
     }
 
     parent.appendChild(centerLine);
+  }
+
+  // ---- Off-page connectors (ISA-5.1 / ISO 10628) ----
+
+  /**
+   * Appends an off-page (off-sheet) connector pentagon with a cross-reference label.
+   *
+   * <p>
+   * Per ISA-5.1 and ISO 10628, a stream that leaves the drawing boundary is terminated with a
+   * pentagon (a "home plate" / flag symbol) pointing in the flow direction and carrying a reference
+   * to the continuation sheet or tag. The pentagon points right for streams leaving to the right
+   * and left for streams entering from the left.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the parent element to append to
+   * @param x the connector tip X coordinate (boundary crossing point)
+   * @param y the connector center Y coordinate
+   * @param reference the cross-reference text (e.g. continuation drawing number / stream tag)
+   * @param pointingRight true to point the pentagon right (outgoing), false to point left
+   *        (incoming)
+   */
+  static void appendOffPageConnector(Document document, Element parent, double x, double y,
+      String reference, boolean pointingRight) {
+    double h = 4.0; // half-height of the pentagon
+    double bodyLen = 6.0; // rectangular body length
+    double tipLen = 4.0; // triangular tip length
+    int dir = pointingRight ? 1 : -1;
+
+    double backX = x - dir * (bodyLen + tipLen);
+    double shoulderX = x - dir * tipLen;
+
+    Element poly = document.createElement("PolyLine");
+    poly.setAttribute("NumPoints", "6");
+    Element pres = document.createElement("Presentation");
+    pres.setAttribute("LineType", "0");
+    pres.setAttribute("LineWeight", String.valueOf(PROCESS_LINE_WEIGHT));
+    pres.setAttribute("R", LINE_COLOR_R);
+    pres.setAttribute("G", LINE_COLOR_G);
+    pres.setAttribute("B", LINE_COLOR_B);
+    poly.appendChild(pres);
+    // Closed pentagon: back-bottom, shoulder-bottom, tip, shoulder-top, back-top, back-bottom
+    appendCoordinate(document, poly, backX, y - h);
+    appendCoordinate(document, poly, shoulderX, y - h);
+    appendCoordinate(document, poly, x, y);
+    appendCoordinate(document, poly, shoulderX, y + h);
+    appendCoordinate(document, poly, backX, y + h);
+    appendCoordinate(document, poly, backX, y - h);
+    parent.appendChild(poly);
+
+    if (reference != null && !reference.trim().isEmpty()) {
+      double textX = (backX + shoulderX) / 2.0;
+      appendBarText(document, parent, reference.trim(), textX, y - 1.0, "CenterBottom");
+    }
+  }
+
+  // ---- Line-crossing jumps (ISO 10628) ----
+
+  /**
+   * Determines whether a horizontal segment and a vertical segment cross, and if so appends a small
+   * semicircular "jump" (hop) arc on the horizontal line at the crossing point. Per ISO 10628 the
+   * line that hops indicates no connection at the crossing.
+   *
+   * <p>
+   * The horizontal segment runs at {@code hY} from {@code hX1} to {@code hX2}; the vertical segment
+   * runs at {@code vX} from {@code vY1} to {@code vY2}. A jump is only drawn when the vertical line
+   * genuinely crosses the interior of the horizontal line (endpoints excluded), so connected
+   * tee-junctions are not given a hop.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the parent element to append the arc to
+   * @param hX1 horizontal segment start X
+   * @param hX2 horizontal segment end X
+   * @param hY horizontal segment Y
+   * @param vX vertical segment X
+   * @param vY1 vertical segment start Y
+   * @param vY2 vertical segment end Y
+   * @return true if a crossing was found and a hop was drawn
+   */
+  static boolean appendCrossingHop(Document document, Element parent, double hX1, double hX2,
+      double hY, double vX, double vY1, double vY2) {
+    double hLeft = Math.min(hX1, hX2);
+    double hRight = Math.max(hX1, hX2);
+    double vBottom = Math.min(vY1, vY2);
+    double vTop = Math.max(vY1, vY2);
+    double eps = 0.5;
+    boolean crossesInteriorX = vX > hLeft + eps && vX < hRight - eps;
+    boolean crossesInteriorY = hY > vBottom + eps && hY < vTop - eps;
+    if (!crossesInteriorX || !crossesInteriorY) {
+      return false;
+    }
+
+    double radius = 1.6;
+    Element arc = document.createElement("TrimmedCurve");
+    Element pres = document.createElement("Presentation");
+    pres.setAttribute("LineType", "0");
+    pres.setAttribute("LineWeight", String.valueOf(PROCESS_LINE_WEIGHT));
+    pres.setAttribute("R", LINE_COLOR_R);
+    pres.setAttribute("G", LINE_COLOR_G);
+    pres.setAttribute("B", LINE_COLOR_B);
+    arc.appendChild(pres);
+
+    Element circle = document.createElement("Circle");
+    circle.setAttribute("Radius", String.valueOf(radius));
+    Element pos = document.createElement("Position");
+    Element loc = document.createElement("Location");
+    loc.setAttribute("X", String.valueOf(vX));
+    loc.setAttribute("Y", String.valueOf(hY));
+    loc.setAttribute("Z", "0");
+    pos.appendChild(loc);
+    Element axis = document.createElement("Axis");
+    axis.setAttribute("X", "0");
+    axis.setAttribute("Y", "0");
+    axis.setAttribute("Z", "1");
+    pos.appendChild(axis);
+    Element ref = document.createElement("Reference");
+    ref.setAttribute("X", "1");
+    ref.setAttribute("Y", "0");
+    ref.setAttribute("Z", "0");
+    pos.appendChild(ref);
+    circle.appendChild(pos);
+    arc.appendChild(circle);
+
+    // Upper half arc (0 to 180 degrees) forms the hop over the vertical line.
+    arc.setAttribute("StartAngle", "0");
+    arc.setAttribute("EndAngle", "180");
+    parent.appendChild(arc);
+    return true;
   }
 
   // ---- Drawing border & title block ----
@@ -1336,13 +1617,16 @@ final class DexpiLayoutEngine {
     appendBorderRect(document, label, blockLeft, titleBottom, blockRight, blockTop, 0.28);
     // Centred title text
     double titleCenterX = (blockLeft + blockRight) / 2.0;
-    double titleCenterY = (titleBottom + blockTop) / 2.0 + 3.0;
+    double titleCenterY = (titleBottom + blockTop) / 2.0 + 4.0;
     appendTitleText(document, label,
         drawingName != null ? drawingName : "Process & Instrument Diagram", titleCenterX,
         titleCenterY, TITLE_MAIN_FONT_HEIGHT, "CenterCenter");
-    // Application label
-    appendTitleText(document, label, "Generated by NeqSim", titleCenterX, titleCenterY - 5.0,
-        TITLE_FONT_HEIGHT, "CenterCenter");
+    // ISO 7200 legal owner / originator line
+    appendTitleText(document, label, "Owner: NeqSim  |  Originator: NeqSim DEXPI Export",
+        titleCenterX, titleCenterY - 4.5, TITLE_FONT_HEIGHT, "CenterCenter");
+    // ISO 7200 document-type / scale / sheet line
+    appendTitleText(document, label, "Type: P&ID   Scale: NTS   Sheet: 1 of 1   Lang: EN",
+        titleCenterX, titleCenterY - 8.5, TITLE_FONT_HEIGHT, "CenterCenter");
 
     drawing.appendChild(label);
   }
@@ -2553,39 +2837,97 @@ final class DexpiLayoutEngine {
   static void appendStyledConnectionLine(Document document, Element parent, double fromX,
       double fromY, double toX, double toY, int lineType, String colorR, String colorG,
       String colorB) {
+    appendStyledConnectionLine(document, parent, fromX, fromY, toX, toY, lineType,
+        PROCESS_LINE_WEIGHT, colorR, colorG, colorB);
+  }
+
+  /**
+   * Appends a connection line with an explicit line type, line weight and colour.
+   *
+   * <p>
+   * This overload supports the ISO 15519-1 line-weight hierarchy (main process &gt; secondary &gt;
+   * utility) together with the ISO 10628-2 service line styles, so a stream's service category
+   * fully determines its appearance.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the PipingNetworkSegment element
+   * @param fromX source X
+   * @param fromY source Y
+   * @param toX destination X
+   * @param toY destination Y
+   * @param lineType ISO/DEXPI line type (0=solid, 1=dashed, 2=dotted, 3=dash-dot)
+   * @param lineWeight line weight in mm (ISO 15519-1 hierarchy)
+   * @param colorR red component (0-1)
+   * @param colorG green component (0-1)
+   * @param colorB blue component (0-1)
+   */
+  static void appendStyledConnectionLine(Document document, Element parent, double fromX,
+      double fromY, double toX, double toY, int lineType, double lineWeight, String colorR,
+      String colorG, String colorB) {
     boolean sameY = Math.abs(fromY - toY) < 0.5;
     if (sameY) {
-      // Simple horizontal line
-      Element poly = document.createElement("PolyLine");
-      poly.setAttribute("NumPoints", "2");
+      // Simple horizontal line. Use CenterLine (not PolyLine) so DEXPI consumers such as
+      // pyDEXPI, which only render <CenterLine> children of a PipingNetworkSegment, draw the
+      // piping run. A bare <PolyLine> child of a segment is silently dropped on import.
+      Element centerLine = document.createElement("CenterLine");
+      centerLine.setAttribute("NumPoints", "2");
       Element pres = document.createElement("Presentation");
       pres.setAttribute("LineType", String.valueOf(lineType));
-      pres.setAttribute("LineWeight", String.valueOf(PROCESS_LINE_WEIGHT));
+      pres.setAttribute("LineWeight", String.valueOf(lineWeight));
       pres.setAttribute("R", colorR);
       pres.setAttribute("G", colorG);
       pres.setAttribute("B", colorB);
-      poly.appendChild(pres);
-      appendCoordinate(document, poly, fromX, fromY);
-      appendCoordinate(document, poly, toX, toY);
-      parent.appendChild(poly);
+      centerLine.appendChild(pres);
+      appendCoordinate(document, centerLine, fromX, fromY);
+      appendCoordinate(document, centerLine, toX, toY);
+      parent.appendChild(centerLine);
     } else {
-      // Orthogonal routing: H-V-H
-      double midX = (fromX + toX) / 2.0;
-      Element poly = document.createElement("PolyLine");
-      poly.setAttribute("NumPoints", "4");
+      // Orthogonal routing: H-V-H with the vertical riser placed near the target.
+      double riserX = computeBranchRiserX(fromX, toX);
+      Element centerLine = document.createElement("CenterLine");
+      centerLine.setAttribute("NumPoints", "4");
       Element pres = document.createElement("Presentation");
       pres.setAttribute("LineType", String.valueOf(lineType));
-      pres.setAttribute("LineWeight", String.valueOf(PROCESS_LINE_WEIGHT));
+      pres.setAttribute("LineWeight", String.valueOf(lineWeight));
       pres.setAttribute("R", colorR);
       pres.setAttribute("G", colorG);
       pres.setAttribute("B", colorB);
-      poly.appendChild(pres);
-      appendCoordinate(document, poly, fromX, fromY);
-      appendCoordinate(document, poly, midX, fromY);
-      appendCoordinate(document, poly, midX, toY);
-      appendCoordinate(document, poly, toX, toY);
-      parent.appendChild(poly);
+      centerLine.appendChild(pres);
+      appendCoordinate(document, centerLine, fromX, fromY);
+      appendCoordinate(document, centerLine, riserX, fromY);
+      appendCoordinate(document, centerLine, riserX, toY);
+      appendCoordinate(document, centerLine, toX, toY);
+      parent.appendChild(centerLine);
     }
+  }
+
+  /**
+   * Appends a connection line styled according to a stream's service category.
+   *
+   * <p>
+   * The {@link DexpiServiceClassifier.ServiceType} supplies the ISO 15519-1 line weight, the ISO
+   * 10628-2 line type and the service colour, so main process, secondary process, utility, flare,
+   * drain and fuel-gas lines are each drawn distinctly. A {@code null} service falls back to the
+   * default process style.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the PipingNetworkSegment element
+   * @param fromX source X
+   * @param fromY source Y
+   * @param toX destination X
+   * @param toY destination Y
+   * @param service the classified service type (may be null)
+   */
+  static void appendServiceConnectionLine(Document document, Element parent, double fromX,
+      double fromY, double toX, double toY, DexpiServiceClassifier.ServiceType service) {
+    if (service == null) {
+      appendConnectionLine(document, parent, fromX, fromY, toX, toY);
+      return;
+    }
+    appendStyledConnectionLine(document, parent, fromX, fromY, toX, toY, service.getLineType(),
+        service.getLineWeight(), service.getColorR(), service.getColorG(), service.getColorB());
   }
 
   // ==== Utility supply connection points (ISO 10628) ====
@@ -2699,6 +3041,58 @@ final class DexpiLayoutEngine {
 
     Element text = document.createElement("Text");
     text.setAttribute("String", sb.toString());
+    text.setAttribute("Font", FONT_NAME);
+    text.setAttribute("Height", "2.2");
+    text.setAttribute("Width", "0");
+    text.setAttribute("Justification", "CenterBottom");
+    Element pres = document.createElement("Presentation");
+    pres.setAttribute("R", "0");
+    pres.setAttribute("G", "0");
+    pres.setAttribute("B", "0.501960784");
+    text.appendChild(pres);
+    Element position = document.createElement("Position");
+    Element location = document.createElement("Location");
+    location.setAttribute("X", String.valueOf(midX));
+    location.setAttribute("Y", String.valueOf(labelY));
+    location.setAttribute("Z", "0");
+    position.appendChild(location);
+    Element axis = document.createElement("Axis");
+    axis.setAttribute("X", "0");
+    axis.setAttribute("Y", "0");
+    axis.setAttribute("Z", "1");
+    position.appendChild(axis);
+    Element ref = document.createElement("Reference");
+    ref.setAttribute("X", "1");
+    ref.setAttribute("Y", "0");
+    ref.setAttribute("Z", "0");
+    position.appendChild(ref);
+    text.appendChild(position);
+    parent.appendChild(text);
+  }
+
+  /**
+   * Appends a prebuilt line-identification label (for example one produced by
+   * {@code NorsokLineNumber.build()}) above the pipe midpoint.
+   *
+   * @param document the XML document
+   * @param parent the PipingNetworkSegment element
+   * @param lineId the complete, already-formatted line identifier (skipped when null or blank)
+   * @param fromX source X
+   * @param fromY source Y
+   * @param toX destination X
+   * @param toY destination Y
+   */
+  static void appendLineIdLabel(Document document, Element parent, String lineId, double fromX,
+      double fromY, double toX, double toY) {
+    if (lineId == null || lineId.trim().isEmpty()) {
+      return;
+    }
+    double midX = (fromX + toX) / 2.0;
+    double midY = (fromY + toY) / 2.0;
+    double labelY = midY + 6.0;
+
+    Element text = document.createElement("Text");
+    text.setAttribute("String", lineId.trim());
     text.setAttribute("Font", FONT_NAME);
     text.setAttribute("Height", "2.2");
     text.setAttribute("Width", "0");

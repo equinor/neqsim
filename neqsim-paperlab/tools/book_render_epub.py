@@ -34,7 +34,10 @@ def _collect_chapter_md(book_dir: Path, cfg: dict) -> list[Path]:
     parts: list[Path] = []
 
     fm_dir = book_dir / "frontmatter"
+    keep_copyright = book_builder.include_copyright(cfg)
     for entry in cfg.get("frontmatter", []) or []:
+        if entry == "copyright" and not keep_copyright:
+            continue
         cand = fm_dir / f"{entry}.md"
         if cand.exists():
             parts.append(cand)
@@ -112,6 +115,9 @@ def render_book_epub(book_dir, chapter_filter: str | None = None):
             for src in md_files:
                 # Rewrite figure paths to absolute for pandoc resource resolution
                 txt = src.read_text(encoding="utf-8")
+                # Optionally drop end-of-chapter sections (e.g. Exercises)
+                if src.name == "chapter.md":
+                    txt = book_builder.strip_excluded_sections(txt, cfg)
                 fh.write(f"\n\n<!-- source: {src.relative_to(book_dir)} -->\n\n")
                 fh.write(txt)
                 fh.write("\n")

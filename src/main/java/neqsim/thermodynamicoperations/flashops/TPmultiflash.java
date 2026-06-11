@@ -309,6 +309,26 @@ public class TPmultiflash extends TPflash {
     }
   }
 
+  /**
+   * Remove a duplicate phase while conserving its mass by merging its phase fraction into the
+   * surviving (near-identical) phase before removal. Two phases flagged as numerical duplicates
+   * have essentially identical mole-fraction vectors, so the merged phase fraction is simply the
+   * sum of the two betas. Without this merge the removed phase's mass leaks into the remaining
+   * phases through {@code normalizeBeta()}, which halves trace liquid dropout (see UMR-PRU trace
+   * oil regression).
+   *
+   * @param keepPhase index of the phase to keep
+   * @param removePhase2 index of the duplicate phase to remove
+   */
+  private void mergeAndRemoveDuplicatePhase(int keepPhase, int removePhase2) {
+    double mergedBeta = system.getBeta(keepPhase) + system.getBeta(removePhase2);
+    system.removePhaseKeepTotalComposition(removePhase2);
+    // After removing removePhase2, indices above it shift down by one.
+    int newKeepIndex = keepPhase > removePhase2 ? keepPhase - 1 : keepPhase;
+    system.setBeta(newKeepIndex, mergedBeta);
+    system.normalizeBeta();
+  }
+
   /** {@inheritDoc} */
   @Override
   public void stabilityAnalysis() {
@@ -2557,10 +2577,44 @@ public class TPmultiflash extends TPflash {
           for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
             if (Math
                 .abs(system.getPhase(i).getDensity() - system.getPhase(j).getDensity()) < 1.1e-5) {
+              // Determine whether the two near-equal-density phases are genuine numerical
+              // duplicates (identical composition) or a legitimate near-critical V/L pair that
+              // merely shares a similar density. Only genuine duplicates may have their phase
+              // fractions merged; merging a real V/L pair would collapse the flash to a single
+              // phase (e.g. TPFlashTest.testRun5).
+              double maxCompDiffDup = 0.0;
+              for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
+                maxCompDiffDup =
+                    Math.max(maxCompDiffDup, Math.abs(system.getPhase(i).getComponent(k).getx()
+                        - system.getPhase(j).getComponent(k).getx()));
+              }
+              // Merge the phase fractions (mass-conserving) only when the two phases are genuine
+              // composition duplicates AND the system still contains a genuine vapour (GAS) phase.
+              // A redundant duplicate that appears alongside a dominant vapour phase (e.g. the
+              // trace oil at a dew point in the UMR-PR-UMC trace oil-dropout regression) must have
+              // its mass merged back into its twin so the trace liquid is not halved. When NO gas
+              // phase is present the multiphase flash has collapsed to a vapour-less trivial
+              // solution (e.g. three identical liquid phases in TPFlashTest.testRun5); in that
+              // case discard one duplicate and let the bounded rerun re-separate the genuine
+              // phases.
+              boolean systemHasGasPhase = false;
+              for (int p = 0; p < system.getNumberOfPhases(); p++) {
+                if (system.getPhase(p).getType() == PhaseType.GAS) {
+                  systemHasGasPhase = true;
+                  break;
+                }
+              }
+              boolean genuineDuplicate = maxCompDiffDup < 1.0e-4 && systemHasGasPhase;
               // Protect aqueous phase in ionic systems from trivial-solution removal
               if (hasIons && system.getPhase(j).getType() == PhaseType.AQUEOUS) {
-                // Remove the non-aqueous duplicate instead
-                system.removePhaseKeepTotalComposition(i);
+                if (genuineDuplicate) {
+                  // Remove the non-aqueous duplicate, merging its mass into the aqueous phase
+                  mergeAndRemoveDuplicatePhase(j, i);
+                } else {
+                  system.removePhaseKeepTotalComposition(i);
+                }
+              } else if (genuineDuplicate) {
+                mergeAndRemoveDuplicatePhase(i, j);
               } else {
                 system.removePhaseKeepTotalComposition(j);
               }
@@ -2597,7 +2651,7 @@ public class TPmultiflash extends TPflash {
                   - system.getPhase(j).getComponent(k).getx()));
             }
             if (maxCompDiff < 1.0e-6) {
-              system.removePhaseKeepTotalComposition(j);
+              mergeAndRemoveDuplicatePhase(i, j);
               doStabilityAnalysis = false;
               hasRemovedPhase = true;
               j--; // adjust index after removal

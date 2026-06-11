@@ -2058,7 +2058,8 @@ def render_book_html(book_dir, chapter_filter=None):
             cfg, None if front_cover_name else book_dir))
 
         # Copyright page
-        parts.append(_generate_copyright_page(cfg, book_dir))
+        if book_builder.include_copyright(cfg):
+            parts.append(_generate_copyright_page(cfg, book_dir))
 
         # Dedication page
         ded_html = _generate_dedication_page(book_dir)
@@ -2167,6 +2168,8 @@ def render_book_html(book_dir, chapter_filter=None):
             # Strip empty "## References" sections (will be rendered at end)
             text = re.sub(
                 r'##\s+References\s*\n?(?:\s*\n)*', '', text)
+            # Optionally drop end-of-chapter sections (e.g. Exercises) per book.yaml
+            text = book_builder.strip_excluded_sections(text, cfg)
             # Optionally inject auto-extracted lecture figures inline between
             # sections, each wrapped in a <figure> with a discussion caption
             # tied to the surrounding heading. This is off by default for

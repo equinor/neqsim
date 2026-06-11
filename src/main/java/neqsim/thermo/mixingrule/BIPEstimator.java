@@ -42,8 +42,63 @@ import neqsim.thermo.system.SystemInterface;
  */
 public final class BIPEstimator {
 
+  /** Hydrocarbon classification used by Hg-hydrocarbon Tb/MW kij correlations. */
+  public enum MercuryHydrocarbonType {
+    /** Paraffinic hydrocarbons. */
+    PARAFFINIC,
+    /** Naphthenic hydrocarbons. */
+    NAPHTHENIC,
+    /** Aromatic hydrocarbons. */
+    AROMATIC
+  }
+
   /** Default exponent for Chueh-Prausnitz correlation. */
   public static final double DEFAULT_CHUEH_PRAUSNITZ_EXPONENT = 3.0;
+
+  /** Ethane molecular weight in g/mol used as lower bound for Hg-hydrocarbon correlation. */
+  private static final double ETHANE_MW_G_PER_MOL = 30.07;
+
+  /** SRK-Twu paraffinic A coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_SRK_A_PARAFFINIC = -0.00041;
+  /** SRK-Twu paraffinic B coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_SRK_B_PARAFFINIC = -0.00025;
+  /** SRK-Twu paraffinic C coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_SRK_C_PARAFFINIC = 0.17611;
+
+  /** SRK-Twu naphthenic A coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_SRK_A_NAPHTHENIC = 0.00140;
+  /** SRK-Twu naphthenic B coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_SRK_B_NAPHTHENIC = -0.00452;
+  /** SRK-Twu naphthenic C coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_SRK_C_NAPHTHENIC = -0.06382;
+
+  /** SRK-Twu aromatic A coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_SRK_A_AROMATIC = 0.00313;
+  /** SRK-Twu aromatic B coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_SRK_B_AROMATIC = -0.00693;
+  /** SRK-Twu aromatic C coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_SRK_C_AROMATIC = -0.48925;
+
+  /** PR-MC paraffinic A coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_PR_A_PARAFFINIC = -0.00041;
+  /** PR-MC paraffinic B coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_PR_B_PARAFFINIC = -0.00038;
+  /** PR-MC paraffinic C coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_PR_C_PARAFFINIC = 0.17513;
+
+  /** PR-MC naphthenic A coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_PR_A_NAPHTHENIC = 0.00117;
+  /** PR-MC naphthenic B coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_PR_B_NAPHTHENIC = -0.00432;
+  /** PR-MC naphthenic C coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_PR_C_NAPHTHENIC = -0.00973;
+
+  /** PR-MC aromatic A coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_PR_A_AROMATIC = 0.00296;
+  /** PR-MC aromatic B coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_PR_B_AROMATIC = -0.00666;
+  /** PR-MC aromatic C coefficient in kij = A*Tb + B*MW + C. */
+  private static final double HG_PR_C_AROMATIC = -0.46288;
 
   /** Katz-Firoozabadi coefficient A for methane BIPs with C7+. */
   private static final double KATZ_FIROOZABADI_A = 0.0289;
@@ -160,6 +215,119 @@ public final class BIPEstimator {
     }
 
     return KATZ_FIROOZABADI_A + KATZ_FIROOZABADI_B * Math.sqrt(molarMass - 86.0);
+  }
+
+  /**
+   * Check if a component pair can use Hg-hydrocarbon/pseudo Tb/MW correlation.
+   *
+   * @param comp1 first component
+   * @param comp2 second component
+   * @return true if one component is mercury and the other is hydrocarbon with available Tb/MW
+   */
+  public static boolean canEstimateMercuryHydrocarbonKij(ComponentInterface comp1,
+      ComponentInterface comp2) {
+    if (comp1 == null || comp2 == null) {
+      return false;
+    }
+
+    ComponentInterface mercury = null;
+    ComponentInterface hydrocarbon = null;
+    if (isMercury(comp1)) {
+      mercury = comp1;
+      hydrocarbon = comp2;
+    } else if (isMercury(comp2)) {
+      mercury = comp2;
+      hydrocarbon = comp1;
+    }
+
+    if (mercury == null || hydrocarbon == null || !hydrocarbon.isHydrocarbon()) {
+      return false;
+    }
+
+    double molarMass = hydrocarbon.getMolarMass() * 1000.0;
+    double tb = hydrocarbon.getNormalBoilingPoint();
+    return molarMass > ETHANE_MW_G_PER_MOL && tb > 0.0;
+  }
+
+  /**
+   * Estimate Hg-hydrocarbon kij from Tb/MW correlation.
+   *
+   * <p>
+   * Implements Eq. 7.2 from the mercury-solubility thesis: kij = A*Tb + B*MW + C, with separate
+   * coefficients for paraffinic, naphthenic, and aromatic hydrocarbons, and separate coefficient
+   * sets for SRK-Twu and PR-MC.
+   * </p>
+   *
+   * @param comp1 first component (mercury or hydrocarbon)
+   * @param comp2 second component (mercury or hydrocarbon)
+   * @param usePR true for PR-MC coefficients, false for SRK-Twu coefficients
+   * @return estimated temperature-independent kij, or 0.0 if pair is unsupported
+   */
+  public static double estimateMercuryHydrocarbonKij(ComponentInterface comp1,
+      ComponentInterface comp2, boolean usePR) {
+    if (!canEstimateMercuryHydrocarbonKij(comp1, comp2)) {
+      return 0.0;
+    }
+
+    ComponentInterface hydrocarbon = isMercury(comp1) ? comp2 : comp1;
+    MercuryHydrocarbonType type = classifyHydrocarbonType(hydrocarbon);
+    double tb = hydrocarbon.getNormalBoilingPoint();
+    double molarMass = hydrocarbon.getMolarMass() * 1000.0;
+
+    if (usePR) {
+      if (type == MercuryHydrocarbonType.PARAFFINIC) {
+        return HG_PR_A_PARAFFINIC * tb + HG_PR_B_PARAFFINIC * molarMass + HG_PR_C_PARAFFINIC;
+      } else if (type == MercuryHydrocarbonType.NAPHTHENIC) {
+        return HG_PR_A_NAPHTHENIC * tb + HG_PR_B_NAPHTHENIC * molarMass + HG_PR_C_NAPHTHENIC;
+      }
+      return HG_PR_A_AROMATIC * tb + HG_PR_B_AROMATIC * molarMass + HG_PR_C_AROMATIC;
+    }
+
+    if (type == MercuryHydrocarbonType.PARAFFINIC) {
+      return HG_SRK_A_PARAFFINIC * tb + HG_SRK_B_PARAFFINIC * molarMass + HG_SRK_C_PARAFFINIC;
+    } else if (type == MercuryHydrocarbonType.NAPHTHENIC) {
+      return HG_SRK_A_NAPHTHENIC * tb + HG_SRK_B_NAPHTHENIC * molarMass + HG_SRK_C_NAPHTHENIC;
+    }
+    return HG_SRK_A_AROMATIC * tb + HG_SRK_B_AROMATIC * molarMass + HG_SRK_C_AROMATIC;
+  }
+
+  /**
+   * Classify hydrocarbon type for Hg-hydrocarbon correlation.
+   *
+   * @param hydrocarbon component to classify
+   * @return paraffinic, naphthenic, or aromatic category
+   */
+  public static MercuryHydrocarbonType classifyHydrocarbonType(ComponentInterface hydrocarbon) {
+    if (hydrocarbon == null) {
+      return MercuryHydrocarbonType.PARAFFINIC;
+    }
+
+    String name = hydrocarbon.getComponentName().toLowerCase().replace(" ", "");
+    if (name.contains("benz") || name.contains("xylene") || name.contains("toluene")
+        || name.contains("naphth") || name.contains("phenyl") || name.contains("arom")) {
+      return MercuryHydrocarbonType.AROMATIC;
+    }
+
+    if (name.contains("cyclo") || name.contains("cy") || name.contains("m-c") || name.contains("c-")
+        || name.contains("dm-cy")) {
+      return MercuryHydrocarbonType.NAPHTHENIC;
+    }
+
+    return MercuryHydrocarbonType.PARAFFINIC;
+  }
+
+  /**
+   * Check whether component is elemental mercury.
+   *
+   * @param comp component to check
+   * @return true if component is elemental mercury
+   */
+  private static boolean isMercury(ComponentInterface comp) {
+    if (comp == null) {
+      return false;
+    }
+    String name = comp.getComponentName().toLowerCase().trim();
+    return name.equals("mercury") || name.equals("hg") || name.equals("hg0");
   }
 
   /**

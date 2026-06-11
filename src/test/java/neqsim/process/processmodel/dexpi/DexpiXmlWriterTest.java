@@ -10,11 +10,13 @@ import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.filter.Filter;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
@@ -170,6 +172,52 @@ public class DexpiXmlWriterTest extends NeqSimTest {
 
     assertTrue(xml.contains("ComponentClass=\"AirCoolingSystem\""),
         "Should map Cooler to AirCoolingSystem");
+  }
+
+  /**
+   * Tests that a Tank is reverse-mapped to Tank and that its symbol is in the ShapeCatalogue.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testTankReverseMapping() throws IOException {
+    Stream feed = createFeedStream();
+    Tank tank = new Tank("T-101", feed);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(tank);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(xml.contains("ComponentClass=\"Tank\""), "Should map Tank to Tank");
+    assertTrue(xml.contains("STORAGE_TANK_SHAPE"),
+        "Tank symbol should be present in the ShapeCatalogue");
+  }
+
+  /**
+   * Tests that a Filter is reverse-mapped to Filter and that its symbol is in the ShapeCatalogue.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testFilterReverseMapping() throws IOException {
+    Stream feed = createFeedStream();
+    Filter filter = new Filter("F-101", feed);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(filter);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(xml.contains("ComponentClass=\"Filter\""), "Should map Filter to Filter");
+    assertTrue(xml.contains("FILTER_SHAPE"),
+        "Filter symbol should be present in the ShapeCatalogue");
   }
 
   /**

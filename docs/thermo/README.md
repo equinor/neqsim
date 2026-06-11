@@ -39,6 +39,7 @@ thermo/
 ### Core Guides
 
 - [Thermodynamic Models Guide](thermodynamic_models): **Comprehensive overview** of all thermodynamic models in NeqSim, including equations of state, CPA, reference equations (GERG-2008, EOS-CG), activity coefficient models, electrolyte models, and the auto-select feature. Covers theory, usage, and model selection guidelines.
+- [Mercury Thermodynamics](mercury_thermodynamics): **Mercury-focused workflow** for SRK-TwuCoon-Statoil-EOS, TPflash setup, INTER-table usage, and thesis-linked correlation guidance.
 - [Søreide-Whitson Model](SoreideWhitsonModel): **Gas solubility in brine** - Modified Peng-Robinson EoS with salinity-dependent alpha function for water. Essential for produced water emission calculations and used in **NeqSimLive**. Includes mathematical formulation, salt type coefficients, validation data, and literature references.
 - [Fluid Creation Guide](fluid_creation_guide): **Comprehensive guide** to creating fluids in NeqSim, including all available equations of state, mixing rules, and model selection guidelines.
 - [Mixing Rules Guide](mixing_rules_guide): **Detailed documentation** on mixing rules, including mathematical formulations, binary interaction parameters, and usage examples for different applications.
