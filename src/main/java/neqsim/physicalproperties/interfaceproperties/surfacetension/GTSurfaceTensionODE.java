@@ -1,8 +1,5 @@
 package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -160,20 +157,17 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     double[] p = new double[1];
     double[] f = new double[this.ncomp];
     double[][] jac = new double[this.ncomp][this.ncomp];
-    double[] rho = new double[this.ncomp];
     double delta_omega;
     double dsigma;
-    double cij;
-    double rho0;
 
     double[] dn_dnref;
 
-    int j;
     if (!this.initialized) {
       this.initmu();
     }
 
-    rho0 = this.rho_ph1[this.refcomp];
+    double rho0 = this.rho_ph1[this.refcomp];
+    double[] rho = new double[this.ncomp];
     rho[this.refcomp] = t * this.rhoref_span + rho0;
     for (int i = 0; i < this.ncomp - 1; i++) {
       rho[this.algidx[i]] = this.rho_k[this.algidx[i]];
@@ -184,7 +178,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
       this.rho_k[i] = rho[i];
     }
 
-    dn_dnref = calcNullVector(jac);
+    dn_dnref = LinearAlgebraOps.calcNullVector(jac);
     double refScale = dn_dnref[this.refcomp];
     if (Math.abs(refScale) < 1.0e-30) {
       throw new RuntimeException("Null vector reference component is zero");
@@ -199,8 +193,8 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
 
     dsigma = 0.0;
     for (int i = 0; i < this.ncomp; i++) {
-      for (j = 0; j < this.ncomp; j++) {
-        cij = Math.sqrt(this.ci[i] * this.ci[j]);
+      for (int j = 0; j < this.ncomp; j++) {
+        double cij = Math.sqrt(this.ci[i] * this.ci[j]);
         dsigma += cij * dn_dnref[i] * dn_dnref[j];
       }
     }
@@ -353,36 +347,16 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
    * @param jac an array of type double
    */
   public void fjacfun(double[] mu, double[][] dmu_drho, double[] f, double[][] jac) {
-    int i;
-    int j;
-    double delta_muref;
-    double sqrtcref;
-
-    double sqrtci;
-    double scale;
-    delta_muref = (this.mueq[this.refcomp] - mu[this.refcomp]);
-    sqrtcref = Math.sqrt(this.ci[this.refcomp]);
-    scale = 1.0 / sqrtcref;
-    for (i = 0; i < this.ncomp; i++) {
-      sqrtci = Math.sqrt(this.ci[i]);
+    double delta_muref = (this.mueq[this.refcomp] - mu[this.refcomp]);
+    double sqrtcref = Math.sqrt(this.ci[this.refcomp]);
+    double scale = 1.0 / sqrtcref;
+    for (int i = 0; i < this.ncomp; i++) {
+      double sqrtci = Math.sqrt(this.ci[i]);
       f[i] = scale * (sqrtci * delta_muref - sqrtcref * (this.mueq[i] - mu[i]));
-      for (j = 0; j < this.ncomp; j++) {
+      for (int j = 0; j < this.ncomp; j++) {
         jac[i][j] = scale * (sqrtci * (-dmu_drho[this.refcomp][j]) - sqrtcref * (-dmu_drho[i][j]));
       }
     }
   }
 
-  /**
-   * Compute a null-space vector from the Jacobian using SVD.
-   *
-   * @param matrix Jacobian matrix
-   * @return vector spanning the null-space approximation
-   */
-  private double[] calcNullVector(double[][] matrix) {
-    RealMatrix jacobian = new Array2DRowRealMatrix(matrix, false);
-    SingularValueDecomposition svd = new SingularValueDecomposition(jacobian);
-    RealMatrix v = svd.getV();
-    int lastCol = v.getColumnDimension() - 1;
-    return v.getColumn(lastCol);
-  }
 }

@@ -1,5 +1,8 @@
 package neqsim.util.math;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.ojalgo.matrix.decomposition.LU;
 import org.ojalgo.matrix.decomposition.SingularValue;
 import org.ojalgo.matrix.store.MatrixStore;
@@ -571,5 +574,65 @@ public final class LinearAlgebraOps {
       solution[i] = result.get(i, 0);
     }
     return true;
+  }
+
+  /**
+   * Solves a least-squares system {@code A X ≈ B} using the SVD pseudo-inverse.
+   *
+   * <p>
+   * This method supports one or more right-hand sides in {@code B} and is robust for rank-deficient
+   * or ill-conditioned systems.
+   * </p>
+   *
+   * @param matrix coefficient matrix {@code A} with dimensions {@code m x n}
+   * @param rhs right-hand side matrix {@code B} with dimensions {@code m x k}
+   * @return solution matrix {@code X} with dimensions {@code n x k}
+   * @throws IllegalStateException if SVD decomposition fails
+   */
+  public static double[][] solveLeastSquares(double[][] matrix, double[][] rhs) {
+    int nRows = matrix.length;
+    int nCols = matrix[0].length;
+    int rhsCols = rhs[0].length;
+
+    Primitive64Store aStore = Primitive64Store.FACTORY.make(nRows, nCols);
+    Primitive64Store bStore = Primitive64Store.FACTORY.make(nRows, rhsCols);
+
+    for (int i = 0; i < nRows; i++) {
+      for (int j = 0; j < nCols; j++) {
+        aStore.set(i, j, matrix[i][j]);
+      }
+      for (int j = 0; j < rhsCols; j++) {
+        bStore.set(i, j, rhs[i][j]);
+      }
+    }
+
+    SingularValue<Double> svd = SingularValue.PRIMITIVE.make(nRows, nCols);
+    if (!svd.decompose(aStore)) {
+      throw new IllegalStateException("Least-squares failed: SVD decomposition failed");
+    }
+
+    MatrixStore<Double> result = svd.getInverse().multiply(bStore);
+    double[][] out = new double[(int) result.countRows()][(int) result.countColumns()];
+    for (int i = 0; i < out.length; i++) {
+      for (int j = 0; j < out[i].length; j++) {
+        out[i][j] = result.get(i, j);
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Computes an approximate null-space vector from the right singular vector associated with the
+   * smallest singular value.
+   *
+   * @param matrix input Jacobian or coefficient matrix
+   * @return right singular vector spanning the approximate null-space
+   */
+  public static double[] calcNullVector(double[][] matrix) {
+    RealMatrix jacobian = new Array2DRowRealMatrix(matrix, false);
+    SingularValueDecomposition svd = new SingularValueDecomposition(jacobian);
+    RealMatrix v = svd.getV();
+    int lastCol = v.getColumnDimension() - 1;
+    return v.getColumn(lastCol);
   }
 }
