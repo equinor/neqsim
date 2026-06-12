@@ -400,10 +400,10 @@ public final class AgenticEngineeringKernel implements Serializable {
    * @return readiness level
    */
   private static String readinessLevel(double score, int missingCritical) {
-    if (missingCritical > 0 || score < 60.0) {
+    if (score < 60.0 || missingCritical > 2) {
       return "NOT_READY";
     }
-    if (score < 75.0) {
+    if (missingCritical > 0 || score < 75.0) {
       return "READY_FOR_SIMULATION";
     }
     if (score < 85.0) {
