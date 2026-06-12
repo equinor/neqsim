@@ -135,6 +135,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
       RVP_ASTM_D323_73_79 = VPCR4_no_water;
     } catch (Exception ex) {
       logger.debug("RVP calculation without water failed: {}", ex.getMessage());
+      VPCR4_no_water = Double.NaN;
+      RVP_ASTM_D323_73_79 = Double.NaN;
     }
   }
 
