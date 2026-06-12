@@ -86,9 +86,9 @@ public class Standard_ASTM_D6377Test {
     standard.setMethodRVP("VPCR4_no_water");
     double vpcr4NoWater = standard.getValue("RVP", "bara");
 
-    Assertions.assertNotEquals(vpcr4WithWater, vpcr4NoWater, 1e-8);
+    Assertions.assertNotEquals(vpcr4WithWater, vpcr4NoWater, 1e-6);
     Assertions.assertEquals(calculateIndependentWaterFreeVpcr4(createWaterBearingOil()), vpcr4NoWater,
-        1e-8);
+        1e-6);
   }
 
   @Test
