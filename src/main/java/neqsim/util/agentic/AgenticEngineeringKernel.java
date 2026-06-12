@@ -283,6 +283,23 @@ public final class AgenticEngineeringKernel implements Serializable {
           !quick, "Cross-notebook consistency report exists",
           "Run devtools/consistency_checker.py and fix critical inconsistencies.");
 
+      if (quick) {
+        readiness.score = 0.0;
+        readiness.maxScore = 0.0;
+        readiness.nextActions.clear();
+        for (int i = 0; i < readiness.checklist.size(); i++) {
+          JsonObject item = readiness.checklist.get(i).getAsJsonObject();
+          boolean critical = item.get("critical").getAsBoolean();
+          if (critical) {
+            readiness.score += item.get("points").getAsDouble();
+            readiness.maxScore += item.get("maxPoints").getAsDouble();
+            if (!"PASS".equals(item.get("status").getAsString()) && item.has("remediation")) {
+              readiness.nextActions.add(item.get("remediation").getAsString());
+            }
+          }
+        }
+      }
+
       JsonObject summary = buildReadinessSummary(readiness);
       JsonObject response = successBase("agentic task readiness assessed");
       response.add("readiness", summary);
