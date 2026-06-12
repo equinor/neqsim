@@ -334,6 +334,49 @@ happen simultaneously. When an agent discovers a missing capability:
 
 Every solved task makes NeqSim more capable for the next task.
 
+### Readiness Gate for Agentic Task Packages
+
+NeqSim also exposes a deterministic readiness action in the
+`runAgenticEngineering` kernel. Agents can call `action: "readiness"` before
+long simulations, report generation, or design review to avoid proceeding with
+missing scope, benchmark, uncertainty, risk, or consistency evidence.
+
+The readiness gate accepts a JSON artifact inventory and/or embedded
+`results.json` sections, then returns:
+
+- a weighted score and readiness level (`NOT_READY`, `READY_FOR_SIMULATION`,
+  `READY_FOR_REPORT`, or `READY_FOR_DESIGN_REVIEW`),
+- a checklist with `PASS`, `WARN`, and `FAIL` items,
+- critical gaps that block design decisions, and
+- next actions that an agent can execute to close the gaps.
+
+Minimal example:
+
+```json
+{
+  "action": "readiness",
+  "scale": "standard",
+  "artifacts": [
+    {"path": "step1_scope_and_research/task_spec.md"},
+    {"path": "step1_scope_and_research/capability_assessment.md"},
+    {"path": "results.json"},
+    {"path": "consistency_report.json"}
+  ],
+  "result": {
+    "key_results": {"pressure_drop_bar": 3.2},
+    "validation": {"acceptance_criteria_met": true},
+    "benchmark_validation": {"status": "PASS"},
+    "uncertainty": {"p50": 1.0},
+    "risk_evaluation": {"overall_risk_level": "Medium"}
+  }
+}
+```
+
+This turns the task folder into an auditable engineering package instead of a
+collection of notebooks. The gate is intentionally side-effect free, so MCP
+servers, notebooks, and CI jobs can run it repeatedly while a task is being
+developed.
+
 ---
 
 ## 7. Getting Started: Your First Agent Interaction

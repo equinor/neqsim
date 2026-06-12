@@ -78,6 +78,45 @@ class AgenticEngineeringKernelTest {
   }
 
   /**
+   * Verifies readiness assessment flags missing critical task artifacts and accepts complete
+   * evidence packages.
+   */
+  @Test
+  void testAssessReadinessReportsCriticalGapsAndDesignReadiness() {
+    String incompleteJson = "{\"action\":\"readiness\",\"scale\":\"standard\","
+        + "\"artifacts\":[{\"path\":\"step1_scope_and_research/task_spec.md\"}],"
+        + "\"result\":{\"key_results\":{\"pressure_drop_bar\":3.2}}}";
+    JsonObject incomplete =
+        JsonParser.parseString(AgenticEngineeringKernel.run(incompleteJson)).getAsJsonObject();
+    assertEquals("success", incomplete.get("status").getAsString());
+    JsonObject incompleteReadiness = incomplete.getAsJsonObject("readiness");
+    assertEquals("NOT_READY", incompleteReadiness.get("level").getAsString());
+    assertTrue(incomplete.getAsJsonArray("missingCritical").size() > 0);
+
+    String completeJson = "{\"action\":\"readiness\",\"scale\":\"standard\","
+        + "\"workflowPlan\":{\"steps\":[]},"
+        + "\"artifacts\":["
+        + "{\"path\":\"step1_scope_and_research/task_spec.md\"},"
+        + "{\"path\":\"step1_scope_and_research/capability_assessment.md\"},"
+        + "{\"path\":\"step1_scope_and_research/analysis.md\"},"
+        + "{\"path\":\"step1_scope_and_research/neqsim_improvements.md\"},"
+        + "{\"path\":\"results.json\"},"
+        + "{\"path\":\"step2_analysis/02_benchmark_validation.ipynb\"},"
+        + "{\"path\":\"consistency_report.json\"}],"
+        + "\"result\":{\"key_results\":{\"pressure_drop_bar\":3.2},"
+        + "\"figure_discussion\":[{\"figure\":\"profile.png\"}],"
+        + "\"validation\":{\"acceptance_criteria_met\":true},"
+        + "\"benchmark_validation\":{\"status\":\"PASS\"},"
+        + "\"uncertainty\":{\"p50\":1.0},"
+        + "\"risk_evaluation\":{\"overall_risk_level\":\"Medium\"}}}";
+    JsonObject complete =
+        JsonParser.parseString(AgenticEngineeringKernel.run(completeJson)).getAsJsonObject();
+    JsonObject completeReadiness = complete.getAsJsonObject("readiness");
+    assertEquals("READY_FOR_DESIGN_REVIEW", completeReadiness.get("level").getAsString());
+    assertTrue(completeReadiness.get("designDecisionAllowed").getAsBoolean());
+  }
+
+  /**
    * Checks whether a workflow step id exists.
    *
    * @param steps workflow step array
