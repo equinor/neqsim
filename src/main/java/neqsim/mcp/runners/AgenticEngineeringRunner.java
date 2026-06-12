@@ -12,10 +12,10 @@ import neqsim.util.agentic.AgenticEngineeringKernel;
  * MCP runner for the agentic engineering kernel.
  *
  * <p>
- * Exposes the Engineering Intent Graph and Workflow Compiler, Evidence Graph and Trust Engine, and
- * Autonomous Study Engine through one JSON action contract. The runner standardizes the kernel
- * output with MCP envelope fields so clients can consume provenance, validation, and quality-gate
- * metadata consistently.
+ * Exposes the Engineering Intent Graph and Workflow Compiler, Evidence Graph and Trust Engine,
+ * Autonomous Study Engine, and Task Readiness Gate through one JSON action contract. The runner
+ * standardizes the kernel output with MCP envelope fields so clients can consume provenance,
+ * validation, and quality-gate metadata consistently.
  * </p>
  *
  * @author Even Solbraa
@@ -33,7 +33,8 @@ public final class AgenticEngineeringRunner {
   /**
    * Runs the requested agentic engineering action.
    *
-   * @param json input JSON with action {@code plan}, {@code trust}, or {@code study}
+   * @param json input JSON with action {@code plan}, {@code trust}, {@code study}, or
+   *        {@code readiness}
    * @return standardized MCP JSON response
    */
   public static String run(String json) {

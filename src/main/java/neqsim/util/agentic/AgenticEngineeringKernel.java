@@ -22,12 +22,13 @@ import com.google.gson.JsonParser;
  * Agentic engineering kernel for planning, trust assessment, and autonomous study ranking.
  *
  * <p>
- * The kernel provides three reusable, JSON-contract actions for agents and MCP runners:
+ * The kernel provides four reusable, JSON-contract actions for agents and MCP runners:
  * </p>
  * <ul>
  * <li><b>plan</b> builds an engineering intent graph and compiles it to a reviewable workflow.</li>
  * <li><b>trust</b> builds an evidence graph and scores result credibility.</li>
  * <li><b>study</b> ranks candidate designs against objectives and constraints.</li>
+ * <li><b>readiness</b> checks task-package completeness before execution or reporting.</li>
  * </ul>
  *
  * <p>
@@ -62,7 +63,7 @@ public final class AgenticEngineeringKernel implements Serializable {
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("INPUT_ERROR", "Input JSON is null or empty",
-          "Provide an object with action: plan, trust, or study.");
+          "Provide an object with action: plan, trust, study, or readiness.");
     }
     try {
       JsonObject input = JsonParser.parseString(json).getAsJsonObject();
@@ -76,8 +77,11 @@ public final class AgenticEngineeringKernel implements Serializable {
       if ("study".equals(action) || "optimize".equals(action) || "rank".equals(action)) {
         return runStudy(json);
       }
+      if ("readiness".equals(action) || "gate".equals(action) || "audit".equals(action)) {
+        return assessReadiness(json);
+      }
       return errorJson("UNKNOWN_ACTION", "Unknown agentic engineering action: " + action,
-          "Use action 'plan', 'trust', or 'study'.");
+          "Use action 'plan', 'trust', 'study', or 'readiness'.");
     } catch (Exception e) {
       return errorJson("AGENTIC_KERNEL_ERROR", e.getMessage(), "Check that the input is JSON.");
     }
@@ -197,6 +201,243 @@ public final class AgenticEngineeringKernel implements Serializable {
       return errorJson("STUDY_ERROR", "Failed to run autonomous study: " + e.getMessage(),
           "Provide candidates with metrics plus objectives and optional constraints.");
     }
+  }
+
+  /**
+   * Assesses whether an agentic task package is ready for execution, reporting, or design use.
+   *
+   * <p>
+   * This gate is designed for agents that incrementally build task folders and result packages. It
+   * accepts either a filesystem-neutral {@code artifacts} list with paths/statuses or embedded
+   * result sections such as {@code validation}, {@code benchmark_validation}, {@code uncertainty},
+   * and {@code risk_evaluation}. The response is deterministic JSON with weighted checklist items,
+   * missing critical items, and next actions.
+   * </p>
+   *
+   * @param json input JSON with optional scale, artifacts, results, workflowPlan, and evidence
+   *        sections
+   * @return JSON readiness report with score, level, checklist, and recommended next actions
+   */
+  public static String assessReadiness(String json) {
+    try {
+      JsonObject input = JsonParser.parseString(json).getAsJsonObject();
+      JsonObject result = objectValue(input, "result", input);
+      JsonArray artifacts = arrayValue(input, "artifacts");
+      String scale = stringValue(input, "scale", stringValue(result, "scale", "standard"))
+          .toLowerCase(Locale.ROOT);
+      boolean quick = "quick".equals(scale);
+
+      ReadinessAccumulator readiness = new ReadinessAccumulator();
+      addReadinessItem(readiness, "task_spec", "scope", 10.0,
+          hasArtifact(artifacts, "task_spec.md") || input.has("task_spec")
+              || result.has("task_spec"),
+          true, "Task specification defines scope, standards, deliverables, and "
+              + "acceptance criteria",
+          "Create or complete step1_scope_and_research/task_spec.md before simulations.");
+      addReadinessItem(readiness, "capability_assessment", "scope", 8.0,
+          hasArtifact(artifacts, "capability_assessment.md") || input.has("capability_assessment")
+              || result.has("capability_assessment"),
+          !quick, "Capability scout output records available NeqSim tools and gaps",
+          "Run capability scouting and save step1_scope_and_research/capability_assessment.md.");
+      addReadinessItem(readiness, "deep_analysis", "scope", 8.0,
+          hasArtifact(artifacts, "analysis.md") || input.has("analysis") || result.has("analysis"),
+          !quick, "Deep analysis records physics, alternatives, assumptions, and estimates",
+          "Write step1_scope_and_research/analysis.md with order-of-magnitude checks.");
+      addReadinessItem(readiness, "neqsim_improvements", "scope", 6.0,
+          hasArtifact(artifacts, "neqsim_improvements.md") || input.has("neqsim_improvements")
+              || result.has("neqsim_improvements"),
+          false, "NeqSim gaps and proposed reusable improvements are captured",
+          "Document gaps and concrete reusable improvements in neqsim_improvements.md.");
+      addReadinessItem(readiness, "workflow_plan", "planning", 8.0,
+          input.has("workflowPlan") || result.has("workflowPlan") || input.has("compiledWorkflow")
+              || result.has("compiledWorkflow"),
+          true, "Executable workflow plan or compiled workflow is available",
+          "Call action=plan and review workflowPlan dependencies before running tools.");
+      addReadinessItem(readiness, "simulation_results", "analysis", 12.0,
+          hasArtifact(artifacts, "results.json") || result.has("key_results"), true,
+          "Numerical results are captured in results.json/key_results",
+          "Run the analysis notebook and save key_results to results.json.");
+      addReadinessItem(readiness, "figures_discussed", "analysis", 8.0,
+          result.has("figure_discussion") && arrayValue(result, "figure_discussion").size() > 0,
+          !quick, "Figures include engineering discussion and traceability",
+          "Add observation, mechanism, implication, and recommendation after every figure.");
+      addReadinessItem(readiness, "validation", "validation", 10.0,
+          result.has("validation") || input.has("validation"), true,
+          "Acceptance criteria and simulation validation are documented",
+          "Populate the validation section with acceptance_criteria_met and checks.");
+      addReadinessItem(readiness, "benchmark_validation", "validation", 10.0,
+          result.has("benchmark_validation") || input.has("benchmark_validation")
+              || hasArtifact(artifacts, "benchmark_validation"),
+          !quick, "Independent benchmark comparison is included",
+          "Create a benchmark validation notebook with at least three reference points.");
+      addReadinessItem(readiness, "uncertainty", "risk", 8.0,
+          result.has("uncertainty") || input.has("uncertainty"), !quick,
+          "Parameter uncertainty and P10/P50/P90 outputs are available",
+          "Run uncertainty analysis with NeqSim simulations for technical drivers.");
+      addReadinessItem(readiness, "risk_register", "risk", 6.0,
+          result.has("risk_evaluation") || input.has("risk_evaluation"), !quick,
+          "Risk register and mitigations are available", "Add ISO 31000-style risk_evaluation.");
+      addReadinessItem(readiness, "consistency_check", "reporting", 6.0,
+          hasArtifact(artifacts, "consistency_report.json") || input.has("consistency_report")
+              || result.has("consistency_report"),
+          !quick, "Cross-notebook consistency report exists",
+          "Run devtools/consistency_checker.py and fix critical inconsistencies.");
+
+      JsonObject summary = buildReadinessSummary(readiness);
+      JsonObject response = successBase("agentic task readiness assessed");
+      response.add("readiness", summary);
+      response.add("checklist", readiness.checklist);
+      response.add("missingCritical", stringArray(readiness.missingCritical));
+      response.add("nextActions", stringArray(readiness.nextActions));
+      response.add("reviewPolicy", readinessReviewPolicy(summary));
+      response.add("data", response.deepCopy());
+      return GSON.toJson(response);
+    } catch (Exception e) {
+      return errorJson("READINESS_ERROR", "Failed to assess readiness: " + e.getMessage(),
+          "Provide task artifacts and/or results sections as JSON.");
+    }
+  }
+
+  /**
+   * Adds one weighted readiness checklist item.
+   *
+   * @param readiness mutable readiness accumulator
+   * @param id checklist id
+   * @param category checklist category
+   * @param maxPoints item weight
+   * @param present whether evidence is present
+   * @param critical whether failure should block design use
+   * @param evidence description of accepted evidence
+   * @param remediation recommended remediation when missing
+   */
+  private static void addReadinessItem(ReadinessAccumulator readiness, String id,
+      String category, double maxPoints, boolean present, boolean critical, String evidence,
+      String remediation) {
+    JsonObject item = new JsonObject();
+    item.addProperty("id", id);
+    item.addProperty("category", category);
+    item.addProperty("status", present ? "PASS" : (critical ? "FAIL" : "WARN"));
+    item.addProperty("critical", critical);
+    item.addProperty("points", present ? maxPoints : 0.0);
+    item.addProperty("maxPoints", maxPoints);
+    item.addProperty("evidence", evidence);
+    if (!present) {
+      item.addProperty("remediation", remediation);
+      readiness.nextActions.add(remediation);
+      if (critical) {
+        readiness.missingCritical.add(id);
+      }
+    }
+    readiness.score += present ? maxPoints : 0.0;
+    readiness.maxScore += maxPoints;
+    readiness.checklist.add(item);
+  }
+
+  /**
+   * Builds the readiness summary object.
+   *
+   * @param readiness readiness accumulator
+   * @return readiness summary JSON
+   */
+  private static JsonObject buildReadinessSummary(ReadinessAccumulator readiness) {
+    double score = readiness.maxScore > 0.0 ? 100.0 * readiness.score / readiness.maxScore : 0.0;
+    JsonObject summary = new JsonObject();
+    summary.addProperty("score", round(score, 1));
+    summary.addProperty("level", readinessLevel(score, readiness.missingCritical.size()));
+    summary.addProperty("passedItems", countChecklistStatus(readiness.checklist, "PASS"));
+    summary.addProperty("warningItems", countChecklistStatus(readiness.checklist, "WARN"));
+    summary.addProperty("failedItems", countChecklistStatus(readiness.checklist, "FAIL"));
+    summary.addProperty("criticalMissing", readiness.missingCritical.size());
+    summary.addProperty("executionAllowed",
+        score >= 60.0 && readiness.missingCritical.size() <= 2);
+    summary.addProperty("reportAllowed",
+        score >= 75.0 && readiness.missingCritical.size() == 0);
+    summary.addProperty("designDecisionAllowed",
+        score >= 85.0 && readiness.missingCritical.size() == 0);
+    return summary;
+  }
+
+  /**
+   * Builds review policy for readiness output.
+   *
+   * @param summary readiness summary
+   * @return review policy object
+   */
+  private static JsonObject readinessReviewPolicy(JsonObject summary) {
+    JsonObject policy = new JsonObject();
+    boolean designDecisionAllowed = summary.get("designDecisionAllowed").getAsBoolean();
+    policy.addProperty("engineeringReviewRequired", true);
+    policy.addProperty("minimumAction", designDecisionAllowed ? "discipline approval"
+        : "close missing critical readiness items before design use");
+    policy.addProperty("canExecuteSimulations", summary.get("executionAllowed").getAsBoolean());
+    policy.addProperty("canGenerateReport", summary.get("reportAllowed").getAsBoolean());
+    policy.addProperty("canUseForDesignDecision", designDecisionAllowed);
+    return policy;
+  }
+
+  /**
+   * Returns a readiness level string from score and missing critical count.
+   *
+   * @param score readiness score
+   * @param missingCritical number of missing critical items
+   * @return readiness level
+   */
+  private static String readinessLevel(double score, int missingCritical) {
+    if (missingCritical > 0 || score < 60.0) {
+      return "NOT_READY";
+    }
+    if (score < 75.0) {
+      return "READY_FOR_SIMULATION";
+    }
+    if (score < 85.0) {
+      return "READY_FOR_REPORT";
+    }
+    return "READY_FOR_DESIGN_REVIEW";
+  }
+
+  /**
+   * Counts checklist entries by status.
+   *
+   * @param checklist checklist array
+   * @param status target status
+   * @return count of matching entries
+   */
+  private static int countChecklistStatus(JsonArray checklist, String status) {
+    int count = 0;
+    for (int i = 0; i < checklist.size(); i++) {
+      JsonObject item = checklist.get(i).getAsJsonObject();
+      if (status.equals(item.get("status").getAsString())) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Checks whether an artifacts list contains a path fragment with completed-like status.
+   *
+   * @param artifacts artifact objects or path strings
+   * @param pathFragment path fragment to find
+   * @return true when a matching artifact exists and is not marked missing/failed
+   */
+  private static boolean hasArtifact(JsonArray artifacts, String pathFragment) {
+    String needle = pathFragment.toLowerCase(Locale.ROOT);
+    for (int i = 0; i < artifacts.size(); i++) {
+      JsonElement element = artifacts.get(i);
+      String path = valueLabel(element).toLowerCase(Locale.ROOT);
+      String status = "present";
+      if (element.isJsonObject()) {
+        JsonObject object = element.getAsJsonObject();
+        path = stringValue(object, "path", stringValue(object, "name", valueLabel(element)))
+            .toLowerCase(Locale.ROOT);
+        status = stringValue(object, "status", "present").toLowerCase(Locale.ROOT);
+      }
+      if (path.contains(needle) && !"missing".equals(status) && !"failed".equals(status)
+          && !"error".equals(status)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -1650,6 +1891,17 @@ public final class AgenticEngineeringKernel implements Serializable {
   private static double round(double value, int decimals) {
     double factor = Math.pow(10.0, decimals);
     return Math.round(value * factor) / factor;
+  }
+
+  /**
+   * Mutable readiness score accumulator.
+   */
+  private static class ReadinessAccumulator {
+    double score;
+    double maxScore;
+    final JsonArray checklist = new JsonArray();
+    final List<String> missingCritical = new ArrayList<String>();
+    final List<String> nextActions = new ArrayList<String>();
   }
 
   /**
