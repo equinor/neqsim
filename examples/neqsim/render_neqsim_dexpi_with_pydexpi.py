@@ -4,11 +4,9 @@ This example shows the full **NeqSim -> DEXPI/Proteus -> pyDEXPI -> image**
 pipeline:
 
 1. Build and run a small NeqSim gas-processing flowsheet.
-2. Export it to a DEXPI (Proteus 4.1) XML P&ID with ``DexpiXmlWriter``.
-3. Make the XML consumable by pyDEXPI's strict pydantic Proteus parser
-   (strip the default XML namespace and fill the mandatory
-   ``PlantInformation`` fields pyDEXPI requires).
-4. Load it with pyDEXPI, convert to a NetworkX process graph, and render
+2. Export pyDEXPI-ready DEXPI (Proteus 4.1) XML with
+   ``DexpiXmlWriter.writeForPyDexpi``.
+3. Load it with pyDEXPI, convert to a NetworkX process graph, and render
    it to PNG/SVG with a clean left-to-right (Graphviz ``dot``) layout,
    falling back to pyDEXPI's built-in renderer if Graphviz is unavailable.
 
@@ -30,7 +28,6 @@ Run
 
 import os
 import sys
-import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -100,45 +97,12 @@ def build_process(ns):
 
 
 def export_dexpi(ns, process, xml_path):
-    """Export a NeqSim ``ProcessSystem`` to a DEXPI/Proteus XML file."""
+    """Export a pyDEXPI-ready NeqSim ``ProcessSystem`` to DEXPI/Proteus XML."""
     DexpiXmlWriter = ns.JClass("neqsim.process.processmodel.dexpi.DexpiXmlWriter")
     JFile = ns.JClass("java.io.File")
     xml_path.parent.mkdir(parents=True, exist_ok=True)
-    DexpiXmlWriter.write(process, JFile(str(xml_path)))
+    DexpiXmlWriter.writeForPyDexpi(process, JFile(str(xml_path)))
     return xml_path
-
-
-# --------------------------------------------------------------------------- #
-# 2. Make NeqSim's DEXPI XML consumable by pyDEXPI's strict parser
-# --------------------------------------------------------------------------- #
-def make_pydexpi_compatible(src_xml, dst_xml):
-    """Strip the default namespace and fill mandatory PlantInformation fields.
-
-    pyDEXPI's Proteus parser searches for un-namespaced tags (e.g.
-    ``find("PlantInformation")``) and requires the ``OriginatingSystem*``
-    attributes. NeqSim writes a default ``xmlns`` and omits those fields, so we
-    normalise the document here without touching the NeqSim writer.
-    """
-    tree = ET.parse(str(src_xml))
-    root = tree.getroot()
-    for element in root.iter():
-        if isinstance(element.tag, str) and element.tag.startswith("{"):
-            element.tag = element.tag.split("}", 1)[1]
-
-    plant_info = root.find("PlantInformation")
-    if plant_info is not None:
-        plant_info.set("Application", "Dexpi")
-        plant_info.set("ApplicationVersion", "1.3.0")
-        plant_info.set("Discipline", "PID")
-        plant_info.set("Is3D", "no")
-        plant_info.set("SchemaVersion", "4.1.1")
-        plant_info.set("OriginatingSystem", "NeqSim")
-        plant_info.set("OriginatingSystemVendor", "Equinor / NeqSim")
-        plant_info.set("OriginatingSystemVersion", "1.0")
-
-    ET.register_namespace("", "")
-    tree.write(str(dst_xml), encoding="utf-8", xml_declaration=True)
-    return dst_xml
 
 
 # --------------------------------------------------------------------------- #
@@ -224,12 +188,8 @@ def main():
     print("Building and running NeqSim flowsheet...")
     process = build_process(ns)
 
-    raw_xml = export_dexpi(ns, process, out_dir / "neqsim_process.xml")
-    print("Exported DEXPI XML:", raw_xml)
-
-    compat_xml = make_pydexpi_compatible(
-        raw_xml, out_dir / "neqsim_process_pydexpi.xml")
-    print("pyDEXPI-ready XML:", compat_xml)
+    compat_xml = export_dexpi(ns, process, out_dir / "neqsim_process_pydexpi.xml")
+    print("Exported pyDEXPI-ready DEXPI XML:", compat_xml)
 
     render(out_dir, compat_xml.name,
            out_dir / "neqsim_pydexpi_pid.png",

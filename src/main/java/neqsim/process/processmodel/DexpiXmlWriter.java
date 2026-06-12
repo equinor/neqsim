@@ -137,10 +137,14 @@ public final class DexpiXmlWriter {
 
   private static Element createPlantInformation(Document document) {
     Element plantInformation = document.createElement("PlantInformation");
+    String applicationVersion = ProcessSystem.class.getPackage().getImplementationVersion() == null
+        ? "1.0"
+        : ProcessSystem.class.getPackage().getImplementationVersion();
     plantInformation.setAttribute("Application", "NeqSim");
-    plantInformation.setAttribute("ApplicationVersion",
-        ProcessSystem.class.getPackage().getImplementationVersion() == null ? "1.0"
-            : ProcessSystem.class.getPackage().getImplementationVersion());
+    plantInformation.setAttribute("ApplicationVersion", applicationVersion);
+    plantInformation.setAttribute("OriginatingSystem", "NeqSim");
+    plantInformation.setAttribute("OriginatingSystemVendor", "Equinor / NeqSim");
+    plantInformation.setAttribute("OriginatingSystemVersion", applicationVersion);
     LocalDate date = LocalDate.now();
     LocalTime time = LocalTime.now();
     plantInformation.setAttribute("Date", date.toString());

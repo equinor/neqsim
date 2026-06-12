@@ -369,6 +369,53 @@ public class DexpiXmlWriterTest extends NeqSimTest {
   }
 
   /**
+   * Tests that the standard writer declares the DEXPI namespace and exports originating-system
+   * metadata required by Proteus consumers.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testStandardExportMetadata() throws IOException {
+    ProcessSystem process = new ProcessSystem();
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(xml.contains("xmlns=\"http://sandbox.dexpi.org/xml\""),
+        "Standard export should include the DEXPI default namespace");
+    assertTrue(xml.contains("OriginatingSystem=\"NeqSim\""),
+        "PlantInformation should identify NeqSim as the originating system");
+    assertTrue(xml.contains("OriginatingSystemVendor=\"Equinor / NeqSim\""),
+        "PlantInformation should identify the originating system vendor");
+    assertTrue(xml.contains("OriginatingSystemVersion="),
+        "PlantInformation should include originating system version metadata");
+  }
+
+  /**
+   * Tests that pyDEXPI-friendly export omits only the default namespace while retaining the
+   * originating-system metadata needed by pyDEXPI/Proteus loaders.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testPyDexpiExportOmitsNamespaceButKeepsMetadata() throws IOException {
+    ProcessSystem process = new ProcessSystem();
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.writeForPyDexpi(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertFalse(xml.contains("xmlns=\"http://sandbox.dexpi.org/xml\""),
+        "pyDEXPI export should omit the DEXPI default namespace");
+    assertFalse(xml.contains("xmlns:xsi="), "pyDEXPI export should omit namespace declarations");
+    assertTrue(xml.contains("OriginatingSystem=\"NeqSim\""),
+        "pyDEXPI export should keep originating system metadata");
+    assertTrue(xml.contains("PlantInformation"),
+        "pyDEXPI export should keep unqualified PlantInformation elements");
+  }
+
+  /**
    * Tests that a separator produces multiple nozzles for gas and liquid outlets, and that stream
    * identity-based connection building correctly wires downstream equipment to the right nozzles.
    *
