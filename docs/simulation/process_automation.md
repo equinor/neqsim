@@ -218,7 +218,100 @@ List<SimulationVariable> outputVars =
 For multi-area models, pass area-qualified names where needed (for example
 `"Compression::Compressor"`).
 
+## Adjustable Parameters
+
+For optimization and agentic workflows you often need the full list of
+**degrees of freedom** — the inputs that may be changed to influence the process —
+without having to enumerate every unit and filter its variables yourself.
+`getAdjustableParameters()` returns this registry directly.
+
+```java
+ProcessAutomation auto = process.getAutomation();
+
+List<AdjustableParameter> dof = auto.getAdjustableParameters();
+for (AdjustableParameter p : dof) {
+  System.out.println(p.getName()
+      + " @ " + p.getAddress()
+      + " [" + p.getUnit() + "]"
+      + " bounds=[" + p.getLowerBound() + ", " + p.getUpperBound() + "]"
+      + " -> " + p.getTargetUnitName() + "." + p.getTargetProperty()
+      + " (" + p.getSource() + ")");
+}
+```
+
+The registry combines two sources:
+
+| Source | Origin | Bounds / unit |
+|--------|--------|---------------|
+| `INPUT_VARIABLE` | Every writable `SimulationVariable` of type `INPUT` | Variable's own min/max and default unit |
+| `ADJUSTER` | Each `Adjuster` unit operation | Adjuster's min/max adjusted value and unit |
+
+### AdjustableParameter Descriptor
+
+Each entry is an `AdjustableParameter` describing one degree of freedom:
+
+| Method | Description |
+|--------|-------------|
+| `getName()` | Short, human-readable parameter name |
+| `getAddress()` | Stable dot-notation address for `setVariableValue(...)` |
+| `getUnit()` | Unit of measure (e.g. `bara`, `C`, `kg/hr`) |
+| `getLowerBound()` | Lower bound as a `Double`, or `null` if unbounded |
+| `getUpperBound()` | Upper bound as a `Double`, or `null` if unbounded |
+| `getTargetUnitName()` | The unit operation the parameter actually affects |
+| `getTargetProperty()` | The property the parameter actually drives |
+| `getSource()` | `Source.INPUT_VARIABLE` or `Source.ADJUSTER` |
+
+For an `Adjuster`-sourced parameter, `getTargetUnitName()` / `getTargetProperty()` make
+explicit what the handle actually controls. This removes the ambiguity that arises when an
+adjuster's name does not match the variable it drives — so an optimizer can map the
+parameter straight onto the variable it should perturb.
+
+> **Unbounded sentinel:** Adjusters default to ±1e10. Any bound with magnitude at or
+> beyond 1e9 (or non-finite) is reported as `null` (no bound).
+
+### JSON Form
+
+`getAdjustableParametersJson()` returns a schema-versioned payload suitable for handing to
+an external optimizer or agent:
+
+```java
+String json = auto.getAdjustableParametersJson();
+```
+
+```json
+{
+  "schemaVersion": "1.0",
+  "count": 2,
+  "parameters": [
+    {
+      "name": "outletPressure",
+      "address": "Compressor.outletPressure",
+      "unit": "bara",
+      "lowerBound": null,
+      "upperBound": null,
+      "targetUnitName": "Compressor",
+      "targetProperty": "outletPressure",
+      "source": "INPUT_VARIABLE"
+    },
+    {
+      "name": "feedRateAdjuster",
+      "address": "HP Sep.gasOutStream.flowRate",
+      "unit": "kg/hr",
+      "lowerBound": 1000.0,
+      "upperBound": 50000.0,
+      "targetUnitName": "HP Sep",
+      "targetProperty": "gasOutStream.flowRate",
+      "source": "ADJUSTER"
+    }
+  ]
+}
+```
+
+Use the `address` field directly with `setVariableValue(address, value, unit)` to apply a
+candidate solution back to the process.
+
 ## Unit Conversion
+
 
 The API handles unit conversion for common properties:
 

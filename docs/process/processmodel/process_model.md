@@ -188,6 +188,67 @@ double maxErr = model.getError();
 System.out.println(model.getConvergenceSummary());
 ```
 
+### Run Until Converged (Agent-Friendly)
+
+`runUntilConverged(maxIterations, tolerance)` is an explicit wrapper around `run()` that
+guarantees iterating (multi-area) mode and applies the iteration limit and tolerance in one
+call — so you do not need to manually configure `setRunStep(false)`, `setMaxIterations(...)`,
+`setTolerance(...)` and write your own outer loop.
+
+```java
+boolean converged = model.runUntilConverged(100, 1e-5);
+if (!converged) {
+  System.out.println("Model did not converge: " + model.getConvergenceReportJson());
+}
+```
+
+It throws `IllegalArgumentException` if `maxIterations < 1` or `tolerance` is not a finite
+positive number.
+
+### Structured Convergence Report (JSON)
+
+`getConvergenceReportJson()` is the machine-readable counterpart to `getConvergenceSummary()`.
+It is schema-versioned and includes the per-area solved status and the names of any unsolved
+units, so an agent can pinpoint exactly where a large multi-area model failed to converge.
+
+```java
+String json = model.getConvergenceReportJson();
+```
+
+```json
+{
+  "schemaVersion": "1.0",
+  "converged": false,
+  "iterations": 100,
+  "maxIterations": 100,
+  "boundaryStreamCount": 2,
+  "boundaryValuesConverged": false,
+  "allProcessesSolved": false,
+  "maxError": 0.0042,
+  "errors": {
+    "flow":        { "value": 0.0042, "tolerance": 1e-5, "converged": false },
+    "temperature": { "value": 8.0e-6, "tolerance": 1e-5, "converged": true },
+    "pressure":    { "value": 1.2e-6, "tolerance": 1e-5, "converged": true }
+  },
+  "areas": [
+    { "name": "Separation",  "solved": true,  "unsolvedUnits": [] },
+    { "name": "Compression", "solved": false, "unsolvedUnits": ["Recycle"] }
+  ]
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `schemaVersion` | JSON schema version (`"1.0"`) |
+| `converged` | Whether the model converged on the last run |
+| `iterations` / `maxIterations` | Outer iterations performed / the configured limit |
+| `boundaryStreamCount` | Number of cross-area boundary (tear) streams |
+| `boundaryValuesConverged` | Whether all boundary stream values converged |
+| `allProcessesSolved` | Whether every contained process reported solved |
+| `maxError` | Largest relative error across flow/temperature/pressure |
+| `errors` | Per-variable `value` / `tolerance` / `converged` for flow, temperature, pressure |
+| `areas` | One entry per area with `name`, `solved`, and `unsolvedUnits` |
+
 ---
 
 ## Validation

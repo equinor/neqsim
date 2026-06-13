@@ -615,6 +615,51 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Returns the equipment whose variable is adjusted by this adjuster.
+   *
+   * @return the adjusted equipment, or null if not configured
+   */
+  public ProcessEquipmentInterface getAdjustedEquipment() {
+    return adjustedEquipment;
+  }
+
+  /**
+   * Returns the name of the adjusted variable, e.g. "pressure" or "temperature".
+   *
+   * @return the adjusted variable name (may be empty if not configured)
+   */
+  public String getAdjustedVariable() {
+    return adjustedVariable;
+  }
+
+  /**
+   * Returns the unit of measure used for the adjusted variable.
+   *
+   * @return the adjusted variable unit (may be empty if not configured)
+   */
+  public String getAdjustedVariableUnit() {
+    return adjustedVariableUnit;
+  }
+
+  /**
+   * Returns the equipment that holds the target variable this adjuster drives toward.
+   *
+   * @return the target equipment, or null if not configured
+   */
+  public ProcessEquipmentInterface getTargetEquipment() {
+    return targetEquipment;
+  }
+
+  /**
+   * Returns the name of the target variable the adjuster drives toward, e.g. "temperature".
+   *
+   * @return the target variable name (may be empty if not configured)
+   */
+  public String getTargetVariable() {
+    return targetVariable;
+  }
+
+  /**
    * <p>
    * Setter for the field <code>targetValueCalculator</code>.
    * </p>

@@ -790,6 +790,47 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Returns the aggregated structured outcome of the most recent run across all process areas.
+   *
+   * <p>
+   * The returned {@link RunStatus} merges the per-unit outcomes of every area (each unit tagged
+   * with its area name) and reports overall success only if every area ran without a unit failure.
+   * This lets agents detect which area and unit failed in a multi-area plant without catching a
+   * {@link RuntimeException}.
+   * </p>
+   *
+   * @return an aggregated run status across all areas
+   */
+  public RunStatus getRunStatus() {
+    RunStatus aggregate = new RunStatus();
+    boolean anyFailure = false;
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      String areaName = entry.getKey();
+      ProcessSystem area = entry.getValue();
+      RunStatus areaStatus = area.getRunStatus();
+      for (UnitRunStatus u : areaStatus.getUnits()) {
+        if (u.isSuccess()) {
+          aggregate.recordSuccess(u.getUnitName(), u.getUnitType(), areaName);
+        } else {
+          aggregate.recordFailure(u.getUnitName(), u.getUnitType(), u.getErrorMessage(), areaName);
+          anyFailure = true;
+        }
+      }
+    }
+    aggregate.markComplete(!anyFailure);
+    return aggregate;
+  }
+
+  /**
+   * Returns the aggregated structured outcome of the most recent run as a JSON string.
+   *
+   * @return schema-versioned JSON describing the last run outcome across all areas
+   */
+  public String getRunStatusJson() {
+    return getRunStatus().toJson();
+  }
+
+  /**
    * Returns the number of process systems in this model.
    *
    * @return the number of process systems
@@ -2244,6 +2285,115 @@ public class ProcessModel implements Runnable, Serializable {
       }
     }
     return sb.toString();
+  }
+
+  /**
+   * Runs the model in continuous (multi-area) mode until convergence or the iteration limit.
+   *
+   * <p>
+   * This is an explicit, agent-friendly convenience wrapper around {@link #run()}. It guarantees the
+   * model runs in iterating mode (not step mode) and applies the supplied iteration limit and
+   * tolerance before running. Use this instead of manually configuring {@link #setRunStep(boolean)},
+   * {@link #setMaxIterations(int)} and {@link #setTolerance(double)} and hard-coding an outer loop.
+   * </p>
+   *
+   * <p>
+   * After this call returns, inspect {@link #isModelConverged()}, {@link #getLastIterationCount()},
+   * {@link #getError()} or {@link #getConvergenceReportJson()} for the outcome.
+   * </p>
+   *
+   * @param maxIterations maximum number of outer iterations to attempt; must be at least 1
+   * @param tolerance relative convergence tolerance applied to flow, temperature and pressure; must
+   *        be a finite positive value
+   * @return true if the model converged within the iteration limit, false otherwise
+   * @throws IllegalArgumentException if maxIterations is less than 1 or tolerance is not a finite
+   *         positive number
+   */
+  public boolean runUntilConverged(int maxIterations, double tolerance) {
+    if (maxIterations < 1) {
+      throw new IllegalArgumentException(
+          "maxIterations must be at least 1, was " + maxIterations);
+    }
+    if (Double.isNaN(tolerance) || Double.isInfinite(tolerance) || tolerance <= 0.0) {
+      throw new IllegalArgumentException(
+          "tolerance must be a finite positive number, was " + tolerance);
+    }
+    setRunStep(false);
+    setMaxIterations(maxIterations);
+    setTolerance(tolerance);
+    run();
+    return modelConverged;
+  }
+
+  /**
+   * Builds a machine-readable JSON convergence report for the last model run.
+   *
+   * <p>
+   * This is the structured counterpart to {@link #getConvergenceSummary()}, intended for agentic
+   * workflows that need to parse the convergence outcome rather than read a formatted string. The
+   * report is schema-versioned and includes the per-area solved status and the names of any unsolved
+   * units, so an agent can pinpoint where a large multi-area model failed to converge.
+   * </p>
+   *
+   * <p>
+   * Top-level fields: {@code schemaVersion}, {@code converged}, {@code iterations},
+   * {@code maxIterations}, {@code boundaryStreamCount}, {@code boundaryValuesConverged},
+   * {@code allProcessesSolved}, {@code maxError}, an {@code errors} object (flow/temperature/pressure
+   * value, tolerance and converged flag) and an {@code areas} array (one object per process area
+   * with {@code name}, {@code solved} and {@code unsolvedUnits}).
+   * </p>
+   *
+   * @return a JSON string describing the convergence outcome of the last run
+   */
+  public String getConvergenceReportJson() {
+    JsonObject root = new JsonObject();
+    root.addProperty("schemaVersion", "1.0");
+    root.addProperty("converged", modelConverged);
+    root.addProperty("iterations", lastIterationCount);
+    root.addProperty("maxIterations", maxIterations);
+    root.addProperty("boundaryStreamCount", lastBoundaryStreamCount);
+    root.addProperty("boundaryValuesConverged", lastBoundaryValuesConverged);
+    root.addProperty("allProcessesSolved", lastAllProcessesSolved);
+    root.addProperty("maxError", getError());
+
+    JsonObject errors = new JsonObject();
+    errors.add("flow", buildErrorEntry(lastMaxFlowError, flowTolerance));
+    errors.add("temperature", buildErrorEntry(lastMaxTemperatureError, temperatureTolerance));
+    errors.add("pressure", buildErrorEntry(lastMaxPressureError, pressureTolerance));
+    root.add("errors", errors);
+
+    JsonArray areas = new JsonArray();
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      JsonObject area = new JsonObject();
+      area.addProperty("name", entry.getKey());
+      boolean processSolved = entry.getValue().solved();
+      area.addProperty("solved", processSolved);
+      JsonArray unsolved = new JsonArray();
+      if (!processSolved) {
+        for (String unitName : getUnsolvedUnitNames(entry.getValue())) {
+          unsolved.add(unitName);
+        }
+      }
+      area.add("unsolvedUnits", unsolved);
+      areas.add(area);
+    }
+    root.add("areas", areas);
+    return root.toString();
+  }
+
+  /**
+   * Builds a single error entry for {@link #getConvergenceReportJson()}.
+   *
+   * @param error the relative error value for the variable
+   * @param tolerance the convergence tolerance for the variable
+   * @return a JSON object with {@code value}, {@code tolerance} and {@code converged} fields
+   */
+  private JsonObject buildErrorEntry(double error, double tolerance) {
+    JsonObject entry = new JsonObject();
+    entry.addProperty("value", error);
+    entry.addProperty("tolerance", tolerance);
+    entry.addProperty("converged", error < tolerance);
+    return entry;
   }
 
   /**

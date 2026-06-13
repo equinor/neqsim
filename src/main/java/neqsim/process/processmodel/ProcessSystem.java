@@ -278,6 +278,12 @@ public class ProcessSystem extends SimulationBaseClass {
   private transient long lastRunElapsedNanos = 0;
 
   /**
+   * Structured per-unit outcome of the most recent {@link #run(UUID)} call. Populated during the
+   * run and queryable via {@link #getRunStatus()} and {@link #getRunStatusJson()}.
+   */
+  private transient RunStatus lastRunStatus = new RunStatus();
+
+  /**
    * Interface for monitoring simulation progress during execution. Implementations receive
    * callbacks after each unit operation completes, enabling real-time visualization, progress
    * tracking, and early termination detection.
@@ -1253,6 +1259,10 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   private RuntimeException createUnitRunException(ProcessEquipmentInterface unit, Exception cause) {
     String unitName = unit == null ? "<unknown>" : unit.getName();
+    String unitType = unit == null ? null : unit.getClass().getSimpleName();
+    if (lastRunStatus != null) {
+      lastRunStatus.recordFailure(unitName, unitType, cause.getMessage());
+    }
     logger.error("equipment: " + unitName + " error: " + cause.getMessage(), cause);
     publishEvent(new ProcessEvent(ProcessEvent.generateId(), ProcessEvent.EventType.ERROR, unitName,
         "Unit error: " + cause.getMessage(), ProcessEvent.Severity.ERROR));
@@ -2469,6 +2479,11 @@ public class ProcessSystem extends SimulationBaseClass {
   @Override
   public synchronized void run(UUID id) {
     enterRunScope();
+    if (lastRunStatus == null) {
+      lastRunStatus = new RunStatus();
+    }
+    lastRunStatus.reset();
+    boolean runThrew = false;
     try {
       resetExecutionProfile();
       resetActiveStates();
@@ -2491,9 +2506,71 @@ public class ProcessSystem extends SimulationBaseClass {
         }
         lastRunElapsedNanos = System.nanoTime() - wallStart;
       }
+    } catch (RuntimeException ex) {
+      runThrew = true;
+      throw ex;
     } finally {
+      finalizeRunStatus(runThrew);
       exitRunScope();
     }
+  }
+
+  /**
+   * Finalizes the {@link #lastRunStatus} after a run completes. On a clean run, records a success
+   * entry for every unit operation that has no prior failure entry; on a thrown run, marks the
+   * overall status as failed (the failed unit was already captured by
+   * {@link #createUnitRunException(ProcessEquipmentInterface, Exception)}).
+   *
+   * @param runThrew true if the run propagated a {@link RuntimeException}
+   */
+  private void finalizeRunStatus(boolean runThrew) {
+    if (lastRunStatus == null) {
+      return;
+    }
+    if (!runThrew) {
+      java.util.Set<String> failedNames = new java.util.HashSet<String>();
+      for (UnitRunStatus u : lastRunStatus.getUnits()) {
+        if (!u.isSuccess()) {
+          failedNames.add(u.getUnitName());
+        }
+      }
+      for (ProcessEquipmentInterface unit : unitOperations) {
+        if (unit == null) {
+          continue;
+        }
+        if (!failedNames.contains(unit.getName())) {
+          lastRunStatus.recordSuccess(unit.getName(), unit.getClass().getSimpleName());
+        }
+      }
+    }
+    lastRunStatus.markComplete(!runThrew);
+  }
+
+  /**
+   * Returns the structured outcome of the most recent {@link #run(UUID)} call.
+   *
+   * <p>
+   * The returned {@link RunStatus} reports whether the run succeeded and, on failure, the first
+   * unit that failed and its error message &mdash; allowing agents to react to a failed run without
+   * catching and parsing a {@link RuntimeException}.
+   * </p>
+   *
+   * @return the last run status (never null; reports {@code completed=false} before the first run)
+   */
+  public RunStatus getRunStatus() {
+    if (lastRunStatus == null) {
+      lastRunStatus = new RunStatus();
+    }
+    return lastRunStatus;
+  }
+
+  /**
+   * Returns the structured outcome of the most recent run as a JSON string.
+   *
+   * @return schema-versioned JSON describing the last run outcome
+   */
+  public String getRunStatusJson() {
+    return getRunStatus().toJson();
   }
 
   /**

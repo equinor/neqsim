@@ -19,6 +19,7 @@ This folder contains documentation for process system and flowsheet management i
 | [Architecture & DEXPI](DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY) | Diagram architecture and DEXPI integration |
 | [Low-Flow Section Bypass](low_flow_bypass) | Auto-bypass / manual deactivation of low-flow sections and feed-flow configuration patterns |
 | [Parallel Scenario Sweeps](parallel_scenario_sweeps) | Safe clone-and-run pattern for running parameter sweeps / DoE scenarios in parallel |
+| [Run Status](run_status) | Detect failed runs and identify the failing unit via structured RunStatus / UnitRunStatus |
 | [Process Serialization](../../simulation/process_serialization) | Saving and loading process models |
 
 ---

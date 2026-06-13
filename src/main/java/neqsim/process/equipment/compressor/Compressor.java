@@ -2412,6 +2412,142 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   }
 
   /**
+   * Safely evaluate a {@code double}-valued supplier, returning {@link Double#NaN} when the
+   * underlying calculation throws or is not yet initialised.
+   *
+   * <p>
+   * This is intended for the machine-readable operating-point accessors, which are frequently
+   * called by automation/AI agents before every quantity has been initialised. Returning
+   * {@code NaN} instead of propagating an exception keeps the result object usable.
+   * </p>
+   *
+   * @param supplier the calculation to evaluate
+   * @return the evaluated value, or {@link Double#NaN} if evaluation fails
+   */
+  private double safeDouble(java.util.function.DoubleSupplier supplier) {
+    try {
+      return supplier.getAsDouble();
+    } catch (Exception | StackOverflowError ex) {
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Safely evaluate a {@code boolean}-valued supplier, returning {@code false} when the underlying
+   * calculation throws.
+   *
+   * @param supplier the calculation to evaluate
+   * @return the evaluated value, or {@code false} if evaluation fails
+   */
+  private boolean safeBoolean(java.util.function.BooleanSupplier supplier) {
+    try {
+      return supplier.getAsBoolean();
+    } catch (Exception | StackOverflowError ex) {
+      return false;
+    }
+  }
+
+  /**
+   * Return a structured, machine-readable snapshot of the compressor operating point.
+   *
+   * <p>
+   * This is a single aggregation of the quantities an analyst or AI agent normally extracts one
+   * call at a time (flow, head, speed, efficiency, power) together with the compressor-map
+   * constraint picture ({@link #getDistanceToSurge()}, {@link #getDistanceToStoneWall()},
+   * {@link #isSurge()}, {@link #isStoneWall()}). The intent is that the question "is this machine
+   * feasible at this operating point?" becomes a field ({@code withinChart} /
+   * {@code limitingConstraint}) instead of a re-implementation in client code.
+   * </p>
+   *
+   * <p>
+   * Keys carry their unit in the name (for example {@code flow_m3hr}, {@code head_kJkg},
+   * {@code power_MW}). Values that cannot be evaluated are returned as {@link Double#NaN}. When no
+   * compressor chart is in use the chart-related fields are still present:
+   * {@code chartActive} is {@code false}, {@code withinChart} is {@code true} (no map limit to
+   * violate) and {@code limitingConstraint} is {@code "no_chart"}.
+   * </p>
+   *
+   * <table>
+   * <caption>Operating-point keys</caption>
+   * <tr><th>Key</th><th>Meaning</th></tr>
+   * <tr><td>flow_m3hr</td><td>Actual inlet volumetric flow rate</td></tr>
+   * <tr><td>head_kJkg</td><td>Polytropic fluid head</td></tr>
+   * <tr><td>speed_rpm</td><td>Shaft speed</td></tr>
+   * <tr><td>polytropicEfficiency</td><td>Polytropic efficiency (fraction)</td></tr>
+   * <tr><td>power_MW / power_kW</td><td>Shaft power</td></tr>
+   * <tr><td>outletPressure_bara</td><td>Discharge pressure</td></tr>
+   * <tr><td>outletTemperature_C</td><td>Discharge temperature</td></tr>
+   * <tr><td>distanceToSurge</td><td>(flow/surgeFlow - 1); negative means in surge</td></tr>
+   * <tr><td>distanceToStoneWall</td><td>(stoneWallFlow/flow - 1); negative means choked</td></tr>
+   * <tr><td>surgeFlowRate_m3hr</td><td>Surge flow at current head</td></tr>
+   * <tr><td>surgeFlowRateMargin_m3hr</td><td>flow - surgeFlow</td></tr>
+   * <tr><td>chartActive</td><td>Whether a compressor chart is in use</td></tr>
+   * <tr><td>withinChart</td><td>True when not in surge and not in stone wall</td></tr>
+   * <tr><td>limitingConstraint</td><td>"surge", "stonewall", "none" or "no_chart"</td></tr>
+   * </table>
+   *
+   * @return an ordered map describing the operating point (never {@code null})
+   */
+  public Map<String, Object> getOperatingPoint() {
+    Map<String, Object> point = new LinkedHashMap<String, Object>();
+    point.put("schemaVersion", "1.0");
+    point.put("name", getName());
+
+    final StreamInterface in = getInletStream();
+    point.put("flow_m3hr", in == null ? Double.NaN : safeDouble(() -> in.getFlowRate("m3/hr")));
+    point.put("head_kJkg", safeDouble(this::getPolytropicFluidHead));
+    point.put("speed_rpm", safeDouble(this::getSpeed));
+    point.put("polytropicEfficiency", safeDouble(this::getPolytropicEfficiency));
+    point.put("power_MW", safeDouble(() -> getPower("MW")));
+    point.put("power_kW", safeDouble(() -> getPower("kW")));
+    point.put("outletPressure_bara", safeDouble(this::getOutletPressure));
+    point.put("outletTemperature_C", safeDouble(() -> getOutTemperature() - 273.15));
+
+    boolean chartActive = safeBoolean(() -> getCompressorChart() != null
+        && getCompressorChart().isUseCompressorChart());
+    point.put("chartActive", chartActive);
+
+    double distanceToSurge = safeDouble(this::getDistanceToSurge);
+    double distanceToStoneWall = safeDouble(this::getDistanceToStoneWall);
+    point.put("distanceToSurge", distanceToSurge);
+    point.put("distanceToStoneWall", distanceToStoneWall);
+    point.put("surgeFlowRate_m3hr", safeDouble(this::getSurgeFlowRate));
+    point.put("surgeFlowRateMargin_m3hr", safeDouble(this::getSurgeFlowRateMargin));
+
+    if (!chartActive) {
+      point.put("withinChart", true);
+      point.put("limitingConstraint", "no_chart");
+    } else {
+      boolean inSurge = safeBoolean(this::isSurge);
+      boolean inStoneWall = safeBoolean(this::isStoneWall);
+      point.put("withinChart", !inSurge && !inStoneWall);
+      if (inSurge) {
+        point.put("limitingConstraint", "surge");
+      } else if (inStoneWall) {
+        point.put("limitingConstraint", "stonewall");
+      } else {
+        point.put("limitingConstraint", "none");
+      }
+    }
+    return point;
+  }
+
+  /**
+   * Return {@link #getOperatingPoint()} serialised as a JSON string.
+   *
+   * <p>
+   * {@link Double#NaN} and infinite values are serialised (rather than rejected) so the response is
+   * always valid for an agent to parse.
+   * </p>
+   *
+   * @return a JSON document describing the compressor operating point
+   */
+  public String getOperatingPointJson() {
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(getOperatingPoint());
+  }
+
+  /**
    * <p>
    * Setter for the field <code>antiSurge</code>.
    * </p>
