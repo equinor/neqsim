@@ -28,6 +28,7 @@ import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.tank.Tank;
+import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessModel;
@@ -352,6 +353,123 @@ public class ProcessAutomation {
       }
     }
     return Collections.unmodifiableList(filtered);
+  }
+
+  // ------------------------- Adjustable parameters -------------------------
+
+  /**
+   * Sentinel threshold above which an adjuster bound is treated as unbounded. Adjusters default to
+   * +/-1e10, so any magnitude at or beyond 1e9 is reported as {@code null} (no bound).
+   */
+  private static final double UNBOUNDED_THRESHOLD = 1.0e9;
+
+  /**
+   * Returns the registry of adjustable parameters (degrees of freedom) for the underlying process.
+   *
+   * <p>
+   * The registry combines two sources:
+   * </p>
+   * <ul>
+   * <li><strong>Writable INPUT variables</strong> &mdash; every {@link SimulationVariable} of type
+   * {@link VariableType#INPUT} that is writable, with its existing bounds and default unit.</li>
+   * <li><strong>Adjuster unit operations</strong> &mdash; each
+   * {@link neqsim.process.equipment.util.Adjuster} is reported with the unit operation and property
+   * it actually drives ({@link AdjustableParameter#getTargetUnitName()} and
+   * {@link AdjustableParameter#getTargetProperty()}). This removes the ambiguity that arises when
+   * an adjuster's name does not match the variable it controls.</li>
+   * </ul>
+   *
+   * @return an unmodifiable list of adjustable parameter descriptors
+   */
+  public List<AdjustableParameter> getAdjustableParameters() {
+    List<AdjustableParameter> params = new ArrayList<AdjustableParameter>();
+    for (String unitName : getUnitList()) {
+      ProcessEquipmentInterface unit;
+      try {
+        unit = resolveUnit(unitName).unit;
+      } catch (RuntimeException e) {
+        continue;
+      }
+      if (unit instanceof Adjuster) {
+        Adjuster adj = (Adjuster) unit;
+        ProcessEquipmentInterface adjusted = adj.getAdjustedEquipment();
+        String targetUnitName = adjusted == null ? null : adjusted.getName();
+        String adjustedVar = emptyToNull(adj.getAdjustedVariable());
+        String unitStr = adj.getAdjustedVariableUnit();
+        Double lo = sanitizeBound(adj.getMinAdjustedValue());
+        Double hi = sanitizeBound(adj.getMaxAdjustedValue());
+        String address;
+        if (targetUnitName != null && adjustedVar != null) {
+          address = targetUnitName + "." + adjustedVar;
+        } else {
+          address = unitName;
+        }
+        params.add(new AdjustableParameter(unitName, address, unitStr, lo, hi, targetUnitName,
+            adjustedVar, AdjustableParameter.Source.ADJUSTER));
+      } else {
+        List<SimulationVariable> inputs;
+        try {
+          inputs = getVariableList(unitName, VariableType.INPUT);
+        } catch (RuntimeException e) {
+          continue;
+        }
+        for (SimulationVariable v : inputs) {
+          if (!v.isWritable()) {
+            continue;
+          }
+          params.add(new AdjustableParameter(v.getName(), v.getAddress(), v.getDefaultUnit(),
+              v.getMinimumValue(), v.getMaximumValue(), unitName, v.getName(),
+              AdjustableParameter.Source.INPUT_VARIABLE));
+        }
+      }
+    }
+    return Collections.unmodifiableList(params);
+  }
+
+  /**
+   * Returns the registry of adjustable parameters as a JSON string.
+   *
+   * @return JSON string {@code {schemaVersion, count, parameters:[{name, address, unit, lowerBound,
+   *         upperBound, targetUnitName, targetProperty, source}]}}
+   */
+  public String getAdjustableParametersJson() {
+    List<AdjustableParameter> params = getAdjustableParameters();
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+    root.addProperty("count", params.size());
+    com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+    for (AdjustableParameter p : params) {
+      arr.add(p.toJsonObject());
+    }
+    root.add("parameters", arr);
+    return root.toString();
+  }
+
+  /**
+   * Converts an adjuster bound to a nullable {@link Double}, mapping sentinel "unbounded" values
+   * (magnitude at or beyond {@link #UNBOUNDED_THRESHOLD}) and non-finite values to {@code null}.
+   *
+   * @param value the raw bound value
+   * @return the bound, or {@code null} if effectively unbounded
+   */
+  private static Double sanitizeBound(double value) {
+    if (Double.isNaN(value) || Double.isInfinite(value) || Math.abs(value) >= UNBOUNDED_THRESHOLD) {
+      return null;
+    }
+    return Double.valueOf(value);
+  }
+
+  /**
+   * Returns {@code null} for a null or empty string, otherwise the original string.
+   *
+   * @param s the string to check
+   * @return {@code null} if empty, otherwise {@code s}
+   */
+  private static String emptyToNull(String s) {
+    if (s == null || s.trim().isEmpty()) {
+      return null;
+    }
+    return s;
   }
 
   /**
