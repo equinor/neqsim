@@ -139,4 +139,76 @@ public class Standard_ASTM_D6377Test {
     return waterFreeFluid.getPressure();
   }
 
+  @Test
+  void testRvpMethodEnumMatchesStringApi() {
+    SystemInterface testSystem = new SystemSrkEos(273.15 + 2.0, 1.0);
+    testSystem.addComponent("methane", 0.0006538);
+    testSystem.addComponent("ethane", 0.006538);
+    testSystem.addComponent("propane", 0.06538);
+    testSystem.addComponent("n-pentane", 0.1545);
+    testSystem.addComponent("nC10", 0.545);
+    testSystem.setMixingRule(2);
+    testSystem.init(0);
+
+    Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(testSystem);
+    standard.setReferenceTemperature(37.8, "C");
+    standard.calculate();
+
+    // The enum setter and the legacy string setter must agree.
+    standard.setMethodRVP(Standard_ASTM_D6377.RvpMethod.RVP_ASTM_D6377);
+    double viaEnum = standard.getValue("RVP", "bara");
+    standard.setMethodRVP("RVP_ASTM_D6377");
+    double viaString = standard.getValue("RVP", "bara");
+    Assertions.assertEquals(viaString, viaEnum, 1e-9);
+
+    // fromLabel resolves both the legacy label and the enum name.
+    Assertions.assertEquals(Standard_ASTM_D6377.RvpMethod.VPCR4,
+        Standard_ASTM_D6377.RvpMethod.fromLabel("VPCR4"));
+    Assertions.assertEquals(Standard_ASTM_D6377.RvpMethod.VPCR4_NO_WATER,
+        Standard_ASTM_D6377.RvpMethod.fromLabel("VPCR4_no_water"));
+    Assertions.assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
+      @Override
+      public void execute() {
+        Standard_ASTM_D6377.RvpMethod.fromLabel("not_a_method");
+      }
+    });
+  }
+
+  @Test
+  void testStructuredRvpResult() {
+    SystemInterface testSystem = new SystemSrkEos(273.15 + 2.0, 1.0);
+    testSystem.addComponent("methane", 0.0006538);
+    testSystem.addComponent("ethane", 0.006538);
+    testSystem.addComponent("propane", 0.06538);
+    testSystem.addComponent("n-pentane", 0.1545);
+    testSystem.addComponent("nC10", 0.545);
+    testSystem.setMixingRule(2);
+    testSystem.init(0);
+
+    Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(testSystem);
+    standard.setReferenceTemperature(37.8, "C");
+    standard.setMethodRVP(Standard_ASTM_D6377.RvpMethod.VPCR4);
+    standard.calculate();
+
+    Standard_ASTM_D6377.RvpResult result = standard.getRvpResult();
+    Assertions.assertTrue(result.isValid(), "Result should be valid for a normal oil");
+    Assertions.assertEquals(Standard_ASTM_D6377.RvpMethod.VPCR4, result.getMethod());
+    Assertions.assertEquals(37.8, result.getReferenceTemperatureC(), 1e-9);
+    Assertions.assertEquals(standard.getValue("RVP", "bara"), result.getValue(), 1e-9);
+
+    // JSON serializes and carries the expected fields.
+    String json = result.toJson();
+    com.google.gson.JsonObject obj =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    Assertions.assertEquals("VPCR4", obj.get("method").getAsString());
+    Assertions.assertEquals("bara", obj.get("unit").getAsString());
+    Assertions.assertTrue(obj.get("valid").getAsBoolean());
+
+    // Specific-method overload returns each populated value without recalculating.
+    Standard_ASTM_D6377.RvpResult d6377 =
+        standard.getRvpResult(Standard_ASTM_D6377.RvpMethod.RVP_ASTM_D6377);
+    Assertions.assertEquals(Standard_ASTM_D6377.RvpMethod.RVP_ASTM_D6377, d6377.getMethod());
+  }
+
 }
+
