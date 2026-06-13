@@ -50,7 +50,8 @@ from neqsim import jneqsim   # or devtools `ns` (see §8)
 import json
 
 auto = plant.getAutomation()                      # plant = ProcessModel
-params = json.loads(auto.getAdjustableParametersJson())
+# NOTE: jpype returns java.lang.String, not Python str — json.loads needs str(...).
+params = json.loads(str(auto.getAdjustableParametersJson()))
 for p in params["parameters"]:
     print(p["name"], p["address"], p["unit"], p["lowerBound"], p["upperBound"], p["source"])
 ```
@@ -75,15 +76,30 @@ Always gate on convergence **and** run status. A trial that diverges or throws i
 one unit must return a large penalty, never a misleading objective.
 
 ```python
-def converge(plant, max_iter=15, tol=1e-4):
-    """Run the coupled ProcessModel until boundary streams stop moving."""
+def converge(plant, max_iter=30, tol=5e-3, settle_passes=2, soft_maxerr=0.05):
+    """Run the coupled ProcessModel until boundary streams stop moving.
+
+    Recycle-heavy plants have near-zero-flow anti-surge recycles that inflate
+    the *relative* boundary-error metric (a tiny stream gives a large % error
+    even when physically settled), so a strict `tol=1e-4` rarely passes. Accept
+    a trial when NO unit threw AND the model either strictly converged or
+    reached a relaxed boundary band; keep genuine unit failures infeasible.
+    """
     converged = bool(plant.runUntilConverged(int(max_iter), float(tol)))
-    report = json.loads(plant.getConvergenceReportJson())
-    status = json.loads(plant.getRunStatusJson())
-    ok = converged and status.get("success", False)
+    for _ in range(settle_passes):                # settle slow recompression loops
+        try:
+            plant.run()
+        except Exception:
+            break
+    report = json.loads(str(plant.getConvergenceReportJson()))   # str() — jpype String
+    status = json.loads(str(plant.getRunStatusJson()))           # str() — jpype String
+    failed = status.get("failedUnitName") not in (None, "", "null")
+    max_err = report.get("maxError", float("inf"))
+    soft_ok = (max_err == max_err) and (max_err < soft_maxerr)   # not NaN and small
+    ok = (not failed) and (converged or soft_ok)
     return ok, report, status
 
-def evaluate(plant, setpoints, *, max_iter=15, tol=1e-4):
+def evaluate(plant, setpoints, *, max_iter=30, tol=5e-3):
     """Apply setpoints, converge, score. Returns (objective, record)."""
     try:
         apply_setpoints(plant, setpoints)          # see §4
@@ -99,10 +115,20 @@ def evaluate(plant, setpoints, *, max_iter=15, tol=1e-4):
 
 Key rules:
 - **Penalty, not crash.** Optimizers must keep exploring after a bad trial.
-- **Twice-run is obsolete.** `runUntilConverged` replaces the manual double
-  `plant.run()`; if you still see recycle drift, raise `max_iter`, not hacks.
+- **`maxError` is a *relative* boundary error.** Near-zero anti-surge recycles
+  inflate it to ~0.8 even when settled — don't demand `tol=1e-4`. Gate on
+  *unit failure* (`failedUnitName`) plus a relaxed `maxError` band, and add a
+  couple of settling `run()` passes.
+- **Twice-run is obsolete as a *gate*** — `runUntilConverged` drives convergence;
+  the extra passes only damp slow recompression loops. Raise `max_iter`, not hacks.
 - **Record everything.** Keep a list of `record` dicts → tornado/trace plots and
-  `results.json` later.
+  `results.json` later. Report the **best feasible trial** (min objective among
+  `feasible=True`), never the last `evaluate()` result — the final call can land
+  on a non-converged retry and write `null` power/RVP/surge into `results.json`.
+- **One lever may be infeasible.** If a single setpoint (e.g. oil-heater T) can't
+  satisfy two coupled constraints (RVP *and* compressor surge), say so and add
+  the relieving lever (recompression suction pressure) to `DECISION_VARS`; switch
+  the optimizer from `minimize_scalar` to `scipy.minimize(Nelder-Mead, bounds=…)`.
 
 ---
 
@@ -149,7 +175,7 @@ def compressor_metrics(plant):
         for u in area.getUnitOperations():
             if u.getClass().getSimpleName() != "Compressor":
                 continue
-            op = json.loads(u.getOperatingPointJson())
+            op = json.loads(str(u.getOperatingPointJson()))   # str() — jpype String
             p = op.get("power_MW")
             if p == p:                              # not NaN
                 total_power_MW += p
@@ -175,7 +201,7 @@ def export_oil_rvp_bara(stream, ref_T_C=37.8):
     std = D6377(stream.getFluid())
     std.setReferenceTemperature(ref_T_C, "C")      # if available on the build
     res = std.getRvpResult(D6377.RvpMethod.RVP_ASTM_D6377)
-    r = json.loads(res.toJson())                   # {value, unit:"bara", method, referenceTemperatureC, valid}
+    r = json.loads(str(res.toJson()))              # str() — jpype String; {value, unit, method, referenceTemperatureC, valid}
     return r["value"], r["valid"]
 ```
 
@@ -322,8 +348,22 @@ figure (observation → mechanism → implication → recommendation).
 
 ## 10. Pitfalls checklist
 
+- [ ] **`json.loads(str(...))` ALWAYS.** jpype returns `java.lang.String`, not Python
+      `str`. `json.loads(comp.getOperatingPointJson())` raises *"the JSON object must
+      be str, bytes or bytearray, not java.lang.String"*. If that error is swallowed by
+      a bare `except`, every trial silently reports `power_MW=0.0` and `surge_margin=NaN`
+      — the objective collapses to the RVP/spec penalty and the optimizer "succeeds" on
+      a meaningless metric. Wrap **every** `getXxxJson()` in `str(...)`.
 - [ ] Did you `runUntilConverged` (not a single `.run()`) before reading the objective?
-- [ ] Did you gate on `getRunStatus().success` and the convergence report?
+- [ ] Did you gate on *unit failure* (`failedUnitName`) plus a **relaxed** `maxError`
+      band — not a strict `tol=1e-4`? Near-zero anti-surge recycles inflate the
+      relative boundary error; demand convergence too tightly and every trial is
+      "non-converged" even though the plant is physically settled.
+- [ ] Does `results.json` report the **best feasible trial** from the trace, not the
+      last `evaluate()` call? The final call can hit a non-converged retry → `null`
+      power/RVP/surge in `key_results`.
+- [ ] If one lever can't satisfy two coupled constraints (RVP *and* surge), did you
+      add the relieving lever and switch to a multivariate optimizer?
 - [ ] Did you test compressor margins for `NaN` before comparing?
 - [ ] Are ADJUSTER-sourced knobs left to the model (not also optimized)?
 - [ ] Did you supply real bounds for any `UNBOUNDED_THRESHOLD` parameter?
