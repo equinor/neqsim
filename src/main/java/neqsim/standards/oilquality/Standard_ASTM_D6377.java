@@ -38,6 +38,162 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   private double RVP_ASTM_D323_82 = 0.0;
 
   /**
+   * Enumeration of the supported Reid Vapor Pressure (RVP) / vapor-pressure correlation methods.
+   *
+   * <p>
+   * Each constant carries the legacy string label used by the string-based
+   * {@link Standard_ASTM_D6377#setMethodRVP(String)} API so the two APIs stay interchangeable.
+   * </p>
+   *
+   * @author NeqSim
+   * @version 1.0
+   */
+  public enum RvpMethod {
+    /** ASTM D6377 RVPE (RVP equivalent), derived from VPCR4. */
+    RVP_ASTM_D6377("RVP_ASTM_D6377"),
+    /** ASTM D323-73/79 dry method (water removed before flash). */
+    RVP_ASTM_D323_73_79("RVP_ASTM_D323_73_79"),
+    /** ASTM D323-82 correlation. */
+    RVP_ASTM_D323_82("RVP_ASTM_D323_82"),
+    /** Vapor pressure at vapor/liquid ratio 4:1 (default). */
+    VPCR4("VPCR4"),
+    /** Vapor pressure at vapor/liquid ratio 4:1 with water removed. */
+    VPCR4_NO_WATER("VPCR4_no_water");
+
+    /** Legacy string label associated with this method. */
+    private final String label;
+
+    /**
+     * Creates a method constant with its legacy string label.
+     *
+     * @param label the legacy string label used by the string-based API
+     */
+    RvpMethod(String label) {
+      this.label = label;
+    }
+
+    /**
+     * Gets the legacy string label for this method.
+     *
+     * @return the legacy string label
+     */
+    public String getLabel() {
+      return label;
+    }
+
+    /**
+     * Resolves an {@link RvpMethod} from its legacy string label or enum name.
+     *
+     * @param label the legacy string label (for example {@code "VPCR4"}) or the enum constant name
+     * @return the matching {@link RvpMethod}
+     * @throws IllegalArgumentException if no method matches the supplied label
+     */
+    public static RvpMethod fromLabel(String label) {
+      if (label != null) {
+        for (RvpMethod method : values()) {
+          if (method.label.equals(label) || method.name().equals(label)) {
+            return method;
+          }
+        }
+      }
+      throw new IllegalArgumentException("Unknown RVP method: " + label);
+    }
+  }
+
+  /**
+   * Immutable structured result of an RVP calculation.
+   *
+   * <p>
+   * Bundles the computed value with the method, reference temperature and a validity flag so callers
+   * (especially agentic workflows) can detect a failed calculation instead of silently receiving a
+   * zero or {@link Double#NaN}. A result is considered valid when its value is a finite positive
+   * number.
+   * </p>
+   *
+   * @author NeqSim
+   * @version 1.0
+   */
+  public static final class RvpResult {
+    /** Computed RVP value in bara. */
+    private final double value;
+
+    /** Method used to compute the value. */
+    private final RvpMethod method;
+
+    /** Reference temperature in degrees Celsius. */
+    private final double referenceTemperatureC;
+
+    /** Whether the value is a finite positive number. */
+    private final boolean valid;
+
+    /**
+     * Creates an RVP result.
+     *
+     * @param value computed RVP value in bara
+     * @param method method used to compute the value
+     * @param referenceTemperatureC reference temperature in degrees Celsius
+     */
+    public RvpResult(double value, RvpMethod method, double referenceTemperatureC) {
+      this.value = value;
+      this.method = method;
+      this.referenceTemperatureC = referenceTemperatureC;
+      this.valid = !Double.isNaN(value) && !Double.isInfinite(value) && value > 0.0;
+    }
+
+    /**
+     * Gets the computed RVP value.
+     *
+     * @return the RVP value in bara
+     */
+    public double getValue() {
+      return value;
+    }
+
+    /**
+     * Gets the method used to compute the value.
+     *
+     * @return the RVP method
+     */
+    public RvpMethod getMethod() {
+      return method;
+    }
+
+    /**
+     * Gets the reference temperature.
+     *
+     * @return the reference temperature in degrees Celsius
+     */
+    public double getReferenceTemperatureC() {
+      return referenceTemperatureC;
+    }
+
+    /**
+     * Indicates whether the result represents a successful calculation.
+     *
+     * @return true if the value is a finite positive number, false otherwise
+     */
+    public boolean isValid() {
+      return valid;
+    }
+
+    /**
+     * Serializes this result to a compact JSON string.
+     *
+     * @return a JSON representation with {@code value}, {@code method}, {@code referenceTemperatureC}
+     *         and {@code valid} fields
+     */
+    public String toJson() {
+      com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+      root.addProperty("value", value);
+      root.addProperty("unit", "bara");
+      root.addProperty("method", method.getLabel());
+      root.addProperty("referenceTemperatureC", referenceTemperatureC);
+      root.addProperty("valid", valid);
+      return root.toString();
+    }
+  }
+
+  /**
    * Gets the method used for measuring Reid Vapor Pressure (RVP).
    *
    * <p>
@@ -73,6 +229,76 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    */
   public void setMethodRVP(String methodRVP) {
     this.methodRVP = methodRVP;
+  }
+
+  /**
+   * Sets the method used for measuring Reid Vapor Pressure (RVP) using the type-safe enum.
+   *
+   * @param method the {@link RvpMethod} to use; must not be null
+   * @throws IllegalArgumentException if {@code method} is null
+   */
+  public void setMethodRVP(RvpMethod method) {
+    if (method == null) {
+      throw new IllegalArgumentException("RVP method must not be null");
+    }
+    this.methodRVP = method.getLabel();
+  }
+
+  /**
+   * Returns the RVP value (in bara) computed for the supplied method during the last
+   * {@link #calculate()} call.
+   *
+   * @param method the method whose value should be returned
+   * @return the RVP value in bara for the requested method
+   */
+  private double valueForMethod(RvpMethod method) {
+    switch (method) {
+      case RVP_ASTM_D6377:
+        return RVP_ASTM_D6377;
+      case RVP_ASTM_D323_73_79:
+        return RVP_ASTM_D323_73_79;
+      case RVP_ASTM_D323_82:
+        return RVP_ASTM_D323_82;
+      case VPCR4_NO_WATER:
+        return VPCR4_no_water;
+      case VPCR4:
+      default:
+        return VPCR4;
+    }
+  }
+
+  /**
+   * Returns a structured RVP result for the currently configured method.
+   *
+   * <p>
+   * Call {@link #calculate()} first. The returned {@link RvpResult} carries the value, the method,
+   * the reference temperature and a validity flag so a failed calculation (which historically left
+   * the value at zero) is detectable via {@link RvpResult#isValid()}.
+   * </p>
+   *
+   * @return the structured RVP result for the configured method
+   */
+  public RvpResult getRvpResult() {
+    return getRvpResult(RvpMethod.fromLabel(methodRVP));
+  }
+
+  /**
+   * Returns a structured RVP result for a specific method.
+   *
+   * <p>
+   * Call {@link #calculate()} first. All method values are populated by a single
+   * {@link #calculate()} call, so this does not trigger a recalculation.
+   * </p>
+   *
+   * @param method the method whose result should be returned; must not be null
+   * @return the structured RVP result for the requested method
+   * @throws IllegalArgumentException if {@code method} is null
+   */
+  public RvpResult getRvpResult(RvpMethod method) {
+    if (method == null) {
+      throw new IllegalArgumentException("RVP method must not be null");
+    }
+    return new RvpResult(valueForMethod(method), method, referenceTemperature);
   }
 
   /**
