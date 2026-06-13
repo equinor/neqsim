@@ -256,20 +256,20 @@ def test_protocol():
     r = recv()
     tools = r.get("result", {}).get("tools", [])
     tool_names = sorted([t["name"] for t in tools])
-    check("64 tools registered", len(tools) == 64, f"got {len(tools)}: {tool_names}")
+    check("66 tools registered", len(tools) == 66, f"got {len(tools)}: {tool_names}")
 
-    # Tier 1 — Trusted Core (21 tools)
+    # Tier 1 — Trusted Core (22 tools)
     tier1 = ["runFlash", "runProcess", "validateInput", "searchComponents",
              "getExample", "getSchema", "getPropertyTable", "getPhaseEnvelope",
              "getCapabilities", "runBatch", "listSimulationUnits",
              "listUnitVariables", "getSimulationVariable", "setSimulationVariable",
              "saveSimulationState", "compareSimulationStates", "diagnoseAutomation",
              "getAutomationLearningReport", "manageIndustrialProfile",
-             "getBenchmarkTrust", "checkToolAccess"]
+             "getBenchmarkTrust", "checkToolAccess", "getAdjustableParameters"]
     for name in tier1:
         check(f"tier1 tool '{name}'", name in tool_names)
 
-    # Tier 2 — Engineering Advanced (29 tools)
+    # Tier 2 — Engineering Advanced (30 tools)
     tier2 = ["crossValidateModels", "runParametricStudy", "runPVT",
              "runFlowAssurance", "calculateStandard", "runPipeline",
              "runChemistry", "runMaterialsReview", "runOpenDrainReview",
@@ -280,7 +280,7 @@ def test_protocol():
              "runRelief", "runLOPA", "runSIL", "runRiskMatrix",
              "runFlareNetwork", "runHAZOP", "runBarrierRegister",
              "runSafetySystemPerformance", "runOperationalStudy",
-             "runRootCauseAnalysis"]
+             "runRootCauseAnalysis", "runProcessLoop"]
     for name in tier2:
         check(f"tier2 tool '{name}'", name in tool_names)
 
