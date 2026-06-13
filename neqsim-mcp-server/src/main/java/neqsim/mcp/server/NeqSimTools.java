@@ -1255,13 +1255,22 @@ public class NeqSimTools {
       + "Sessions persist across multiple calls with automatic 30-minute TTL. "
       + "Actions: 'create' (new session with fluid), 'addEquipment' (add equipment to "
       + "session), 'run' (execute simulation), 'modify' (change a parameter and re-run), "
+      + "'evaluate' (closed-loop optimization step: apply a batch of setpoints, re-converge "
+      + "the cached process in place, and read back objectives with a feasible flag — no "
+      + "rebuild), 'getValues' (batch-read variables), 'setValues' (batch-write inputs, "
+      + "optional re-run), 'adjustables' (enumerate the bounded decision space), "
       + "'getState' (inspect session), 'list' (all sessions), 'close' (delete session).")
   public String manageSession(
-      @ToolArg(description = "JSON with 'action' (create|addEquipment|run|modify|getState|"
-          + "list|close). For create: 'fluid' (composition) or 'processJson' (full process). "
+      @ToolArg(description = "JSON with 'action' (create|addEquipment|run|modify|evaluate|"
+          + "getValues|setValues|adjustables|getState|list|close). For create: 'fluid' "
+          + "(composition) or 'processJson' (full process). "
           + "For addEquipment: 'sessionId', 'equipment' ({type, name, inlet, properties}). "
           + "For modify: 'sessionId', 'address' (e.g. 'Compressor.outletPressure'), "
-          + "'value', 'unit'. For run/getState/close: 'sessionId'.") String sessionJson) {
+          + "'value', 'unit'. For evaluate: 'sessionId', 'setpoints' (object of address->value), "
+          + "optional 'readbacks' (array), 'setpointUnit', 'readbackUnit', 'maxIterations', "
+          + "'tolerance'. For getValues: 'sessionId', 'addresses' (array), optional 'unit'. "
+          + "For setValues: 'sessionId', 'updates' (object), optional 'unit', 'runAfter'. "
+          + "For run/getState/close/adjustables: 'sessionId'.") String sessionJson) {
     String policyBlocked = enforceToolAccess("manageSession");
     if (policyBlocked != null) {
       return policyBlocked;
@@ -1270,6 +1279,72 @@ public class NeqSimTools {
       return standardizeResponse("manageSession", SessionRunner.run(sessionJson), "general");
     } catch (Exception e) {
       return errorJson("Session operation failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Enumerate the bounded decision space (adjustable parameters and adjusters) of a process.
+   *
+   * @param processJson JSON process definition
+   * @return JSON with the adjustable-parameter registry (address, bounds, unit, source)
+   */
+  @Tool(description = "Enumerate the bounded decision space of a process flowsheet — the "
+      + "adjustable parameters and adjusters an optimizer may perturb. Builds and runs the "
+      + "process once, then returns each parameter's address, lower/upper bounds, unit, and "
+      + "source. Use this to discover decision variables before driving a runProcessLoop sweep.")
+  public String getAdjustableParameters(@ToolArg(
+      description = "JSON process definition (same schema as runProcess).") String processJson) {
+    String policyBlocked = enforceToolAccess("getAdjustableParameters");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("getAdjustableParameters",
+          AutomationRunner.getAdjustableParameters(processJson), "general");
+    } catch (Exception e) {
+      return errorJson("Adjustable-parameter enumeration failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Run a build-once / sweep-many closed-loop parametric study on a process.
+   *
+   * @param processJson JSON process definition
+   * @param trials JSON array of setpoint batches (each an address-&gt;value object)
+   * @param readbacks JSON array of objective/constraint addresses to read after each trial
+   * @param setpointUnit unit applied to every setpoint, or empty for per-variable defaults
+   * @param readbackUnit unit applied to every read-back, or empty for per-variable defaults
+   * @return JSON with one schema-versioned trial result per batch and a feasible-trial count
+   */
+  @Tool(description = "Run a closed-loop parametric / optimization sweep on a process. The "
+      + "flowsheet is built and run exactly once, then each trial batch of setpoints is applied "
+      + "in place and re-converged (reusing the previous converged state) — far cheaper than "
+      + "one setSimulationVariable-and-run call per trial. Each trial returns a schema-versioned "
+      + "result with a 'feasible' flag, rejected setpoints, and read-back errors, so a malformed "
+      + "candidate degrades one trial instead of crashing the sweep. Pair with "
+      + "getAdjustableParameters to discover decision variables.")
+  public String runProcessLoop(
+      @ToolArg(
+          description = "JSON process definition (same schema as runProcess).") String processJson,
+      @ToolArg(description = "JSON array of setpoint batches; each batch is an object mapping a "
+          + "dot-notation address to a numeric value, e.g. "
+          + "[{\"Compressor.outletPressure\":150},{\"Compressor.outletPressure\":160}].") String trials,
+      @ToolArg(description = "JSON array of objective/constraint addresses to read after each "
+          + "trial, e.g. [\"Compressor.power\"]. May be empty.") String readbacks,
+      @ToolArg(description = "Unit applied to every setpoint (e.g. 'bara'), or empty for "
+          + "per-variable defaults.") String setpointUnit,
+      @ToolArg(description = "Unit applied to every read-back (e.g. 'kW'), or empty for "
+          + "per-variable defaults.") String readbackUnit) {
+    String policyBlocked = enforceToolAccess("runProcessLoop");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("runProcessLoop",
+          AutomationRunner.runLoop(processJson, trials, readbacks, setpointUnit, readbackUnit),
+          "general");
+    } catch (Exception e) {
+      return errorJson("Process loop failed: " + e.getMessage());
     }
   }
 

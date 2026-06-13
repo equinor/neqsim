@@ -6,8 +6,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import neqsim.mcp.model.ApiEnvelope;
 import neqsim.mcp.model.ResultProvenance;
 import neqsim.process.automation.AutomationDiagnostics;
@@ -467,6 +469,134 @@ public class AutomationRunner {
       return errorJson("getAutomationLearningReport", "ERROR",
           "Failed to get learning report: " + e.getMessage());
     }
+  }
+
+  /**
+   * Runs a closed-loop parametric / optimization sweep on a process. The flowsheet is built and run
+   * exactly once, then each trial batch of setpoints is applied in place and the process is
+   * re-converged via {@link ProcessAutomation#evaluate(Map, String, List, String, int, double)},
+   * reusing the converged state from the previous trial. This is far cheaper than issuing one
+   * {@code setVariableAndRun} call per trial (which rebuilds and re-runs the whole flowsheet every
+   * time).
+   *
+   * @param processJson the JSON process definition
+   * @param trialsJson JSON array of setpoint batches; each batch is a JSON object mapping a
+   *        dot-notation address to a numeric value, e.g.
+   *        {@code [{"Comp.outletPressure":150},{"Comp.outletPressure":160}]}
+   * @param readbacksJson JSON array of objective / constraint addresses to read after each trial;
+   *        may be null or empty
+   * @param setpointUnit unit applied to every setpoint, or null/empty for per-variable defaults
+   * @param readbackUnit unit applied to every read-back, or null/empty for per-variable defaults
+   * @return JSON string with one schema-versioned trial result per batch and a feasible-trial count
+   */
+  public static String runLoop(String processJson, String trialsJson, String readbacksJson,
+      String setpointUnit, String readbackUnit) {
+    if (processJson == null || processJson.trim().isEmpty()) {
+      return errorJson("runProcessLoop", "INPUT_ERROR", "JSON input is null or empty");
+    }
+    if (trialsJson == null || trialsJson.trim().isEmpty()) {
+      return errorJson("runProcessLoop", "INPUT_ERROR", "Trials JSON is null or empty");
+    }
+    try {
+      SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
+      if (simResult.isError()) {
+        return errorJson("runProcessLoop", "SIMULATION_ERROR",
+            "Initial run failed: " + simResult.getErrors().toString());
+      }
+      ProcessSystem process = simResult.getProcessSystem();
+      ProcessAutomation auto = process.getAutomation();
+
+      JsonArray trials = JsonParser.parseString(trialsJson).getAsJsonArray();
+      List<String> readbacks = parseStringArray(readbacksJson);
+      String spUnit = emptyToNull(setpointUnit);
+      String rbUnit = emptyToNull(readbackUnit);
+
+      JsonArray trialResults = new JsonArray();
+      int feasibleCount = 0;
+      for (int i = 0; i < trials.size(); i++) {
+        JsonObject batch = trials.get(i).getAsJsonObject();
+        Map<String, Double> setpoints = new LinkedHashMap<String, Double>();
+        for (Map.Entry<String, JsonElement> e : batch.entrySet()) {
+          setpoints.put(e.getKey(), e.getValue().getAsDouble());
+        }
+        // evaluate(...) never throws and returns schema-versioned JSON with a 'feasible' flag.
+        String evalJson = auto.evaluate(setpoints, spUnit, readbacks, rbUnit, 30, 5.0e-3);
+        JsonObject trialResult = JsonParser.parseString(evalJson).getAsJsonObject();
+        trialResult.addProperty("trialIndex", i);
+        if (trialResult.has("feasible") && trialResult.get("feasible").getAsBoolean()) {
+          feasibleCount++;
+        }
+        trialResults.add(trialResult);
+      }
+
+      JsonObject result = new JsonObject();
+      result.addProperty("status", "success");
+      result.addProperty("schemaVersion", ProcessAutomation.SCHEMA_VERSION);
+      result.addProperty("trialCount", trials.size());
+      result.addProperty("feasibleCount", feasibleCount);
+      result.add("trials", trialResults);
+      return standardResponse(result, "runProcessLoop", "automation optimization loop",
+          "Process loop completed with " + feasibleCount + "/" + trials.size()
+              + " feasible trials");
+    } catch (Exception e) {
+      return errorJson("runProcessLoop", "ERROR", "Process loop failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Runs a process from JSON and enumerates the bounded decision space (adjustable parameters and
+   * adjusters) via {@link ProcessAutomation#getAdjustableParametersJson()}. Agents use this to
+   * discover what they may perturb before driving a {@code runProcessLoop} sweep.
+   *
+   * @param processJson the JSON process definition
+   * @return JSON string with the adjustable-parameter registry (address, bounds, unit, source)
+   */
+  public static String getAdjustableParameters(String processJson) {
+    if (processJson == null || processJson.trim().isEmpty()) {
+      return errorJson("getAdjustableParameters", "INPUT_ERROR", "JSON input is null or empty");
+    }
+    try {
+      SimulationResult simResult = ProcessSystem.fromJsonAndRun(processJson);
+      if (simResult.isError()) {
+        return errorJson("getAdjustableParameters", "SIMULATION_ERROR",
+            "Process failed: " + simResult.getErrors().toString());
+      }
+      ProcessSystem process = simResult.getProcessSystem();
+      ProcessAutomation auto = process.getAutomation();
+      return standardResponse(auto.getAdjustableParametersJson(), "getAdjustableParameters",
+          "automation decision space", "Adjustable parameters enumerated");
+    } catch (Exception e) {
+      return errorJson("getAdjustableParameters", "ERROR",
+          "Failed to enumerate adjustable parameters: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Parses a JSON array string into a list of strings. Null or blank input yields an empty list.
+   *
+   * @param jsonArray the JSON array string, e.g. {@code ["Comp.power","Sep.pressure"]}
+   * @return list of string values (never null)
+   */
+  private static List<String> parseStringArray(String jsonArray) {
+    List<String> out = new ArrayList<String>();
+    if (jsonArray == null || jsonArray.trim().isEmpty()) {
+      return out;
+    }
+    JsonArray arr = JsonParser.parseString(jsonArray).getAsJsonArray();
+    for (int i = 0; i < arr.size(); i++) {
+      out.add(arr.get(i).getAsString());
+    }
+    return out;
+  }
+
+  /**
+   * Returns {@code null} for a null or blank string, otherwise the trimmed original.
+   *
+   * @param s the string to normalize
+   * @return {@code null} if blank, otherwise {@code s}
+   */
+  private static String emptyToNull(String s) {
+    return (s == null || s.trim().isEmpty()) ? null : s;
   }
 
   /**
