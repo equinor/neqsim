@@ -411,6 +411,39 @@
   "optimize": [
     "neqsim-optimization-and-doe"
   ],
+  "agentic optimization": [
+    "neqsim-agentic-process-optimization"
+  ],
+  "process model optimization": [
+    "neqsim-agentic-process-optimization"
+  ],
+  "plant optimization": [
+    "neqsim-agentic-process-optimization"
+  ],
+  "multi-year optimization": [
+    "neqsim-agentic-process-optimization"
+  ],
+  "operating setpoint optimization": [
+    "neqsim-agentic-process-optimization"
+  ],
+  "rununtilconverged": [
+    "neqsim-agentic-process-optimization"
+  ],
+  "getadjustableparameters": [
+    "neqsim-agentic-process-optimization"
+  ],
+  "getoperatingpoint": [
+    "neqsim-agentic-process-optimization"
+  ],
+  "surge margin constraint": [
+    "neqsim-agentic-process-optimization"
+  ],
+  "rvp constraint": [
+    "neqsim-agentic-process-optimization"
+  ],
+  "convergence gating": [
+    "neqsim-agentic-process-optimization"
+  ],
   "minimize": [
     "neqsim-optimization-and-doe"
   ],
