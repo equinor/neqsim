@@ -1388,4 +1388,143 @@ class ProcessAutomationTest {
     assertNotNull(report);
     assertTrue(report.contains("totalOperations"));
   }
+
+  // ===================================================================================
+  // Agentic run gating & evaluation
+  // ===================================================================================
+
+  @Test
+  void testGetRunStatusJsonReportsSuccess() {
+    String json = automation.getRunStatusJson();
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    assertEquals("1.0", root.get("schemaVersion").getAsString());
+    assertTrue(root.get("success").getAsBoolean(), "Healthy process should report success");
+  }
+
+  @Test
+  void testRunJsonNeverThrowsAndClearsDirty() {
+    automation.setVariableValue("Compressor.outletPressure", 130.0, "bara");
+    assertTrue(automation.isDirty());
+    String json = automation.runJson();
+    assertFalse(automation.isDirty(), "runJson must clear the dirty flag");
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    assertTrue(root.get("success").getAsBoolean());
+  }
+
+  @Test
+  void testRunUntilConvergedJsonSingleArea() {
+    String json = automation.runUntilConvergedJson(30, 5.0e-3);
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    assertEquals("1.0", root.get("schemaVersion").getAsString());
+    assertTrue(root.get("runSucceeded").getAsBoolean());
+    assertTrue(root.has("converged"));
+    assertTrue(root.has("failedUnitName"));
+  }
+
+  @Test
+  void testRunUntilConvergedJsonRejectsBadArgs() {
+    assertThrows(IllegalArgumentException.class, () -> automation.runUntilConvergedJson(0, 1e-3));
+    assertThrows(IllegalArgumentException.class, () -> automation.runUntilConvergedJson(10, 0.0));
+  }
+
+  @Test
+  void testEvaluateAppliesSetpointsAndReadsBack() {
+    // Two pressure setpoints share a single "bara" batch unit. (Mixed-unit batches should pass
+    // null and use each variable's default unit; see testEvaluateMixedUnitsViaDefaultUnit.)
+    java.util.Map<String, Double> setpoints = new java.util.LinkedHashMap<String, Double>();
+    setpoints.put("Compressor.outletPressure", 140.0);
+    setpoints.put("Valve.outletPressure", 45.0);
+    java.util.List<String> readbacks = java.util.Arrays.asList("Compressor.outletStream.pressure",
+        "Valve.outletStream.pressure", "Compressor.power");
+
+    String json = automation.evaluate(setpoints, "bara", readbacks, "bara", 30, 5.0e-3);
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+
+    assertEquals("1.0", root.get("schemaVersion").getAsString());
+    assertTrue(root.get("feasible").getAsBoolean(), "Reasonable setpoints should be feasible");
+    assertTrue(root.get("converged").getAsBoolean());
+    assertEquals(2, root.getAsJsonObject("setpointsApplied").size());
+    assertEquals(0, root.getAsJsonObject("setpointsRejected").size());
+    com.google.gson.JsonObject reads = root.getAsJsonObject("readbacks");
+    assertEquals(140.0, reads.get("Compressor.outletStream.pressure").getAsDouble(), 1.0);
+    assertFalse(automation.isDirty(), "evaluate must leave the facade clean");
+  }
+
+  @Test
+  void testEvaluateMixedUnitsViaDefaultUnit() {
+    // A pressure and a temperature setpoint in one batch: pass null so each variable uses its
+    // own default unit (bara for pressure, K for temperature).
+    java.util.Map<String, Double> setpoints = new java.util.LinkedHashMap<String, Double>();
+    setpoints.put("Compressor.outletPressure", 140.0);
+    setpoints.put("Cooler.outletTemperature", 273.15 + 25.0);
+    String json = automation.evaluate(setpoints, null,
+        java.util.Arrays.asList("Cooler.outletStream.temperature"), null, 30, 5.0e-3);
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    assertEquals(2, root.getAsJsonObject("setpointsApplied").size());
+    assertEquals(0, root.getAsJsonObject("setpointsRejected").size());
+    assertTrue(root.get("feasible").getAsBoolean(), "Mixed-unit default batch should be feasible");
+    assertEquals(273.15 + 25.0,
+        root.getAsJsonObject("readbacks").get("Cooler.outletStream.temperature").getAsDouble(),
+        1.0);
+  }
+
+  @Test
+  void testEvaluateConvenienceOverload() {
+    java.util.Map<String, Double> setpoints = new java.util.LinkedHashMap<String, Double>();
+    setpoints.put("Compressor.outletPressure", 110.0);
+    String json = automation.evaluate(setpoints, "bara",
+        java.util.Arrays.asList("Compressor.outletStream.pressure"));
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    assertTrue(root.get("feasible").getAsBoolean());
+    assertEquals(110.0,
+        root.getAsJsonObject("readbacks").get("Compressor.outletStream.pressure").getAsDouble(),
+        1.0);
+  }
+
+  @Test
+  void testEvaluateRejectsBadSetpointWithoutThrowing() {
+    java.util.Map<String, Double> setpoints = new java.util.LinkedHashMap<String, Double>();
+    setpoints.put("NoSuchUnit.foo", 1.0);
+    setpoints.put("Compressor.outletPressure", 120.0);
+    String json = automation.evaluate(setpoints, "bara", null, null, 30, 5.0e-3);
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    // Bad setpoint recorded, good setpoint applied; trial marked infeasible but no exception.
+    assertEquals(1, root.getAsJsonObject("setpointsApplied").size());
+    assertEquals(1, root.getAsJsonObject("setpointsRejected").size());
+    assertFalse(root.get("feasible").getAsBoolean(),
+        "Trial with a rejected setpoint must be infeasible");
+  }
+
+  @Test
+  void testEvaluateReadbackErrorCaptured() {
+    String json = automation.evaluate(null, null, java.util.Arrays.asList("NoSuchUnit.bar"), null,
+        30, 5.0e-3);
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    assertEquals(0, root.getAsJsonObject("readbacks").size());
+    assertEquals(1, root.getAsJsonObject("readbackErrors").size());
+  }
+
+  @Test
+  void testEvaluateMultiArea() {
+    ProcessModel model = buildTwoAreaModel();
+    model.run();
+    ProcessAutomation auto = new ProcessAutomation(model);
+    java.util.Map<String, Double> setpoints = new java.util.LinkedHashMap<String, Double>();
+    setpoints.put("Compression::Export Compressor.outletPressure", 150.0);
+    String json = auto.evaluate(setpoints, "bara",
+        java.util.Arrays.asList("Compression::Export Compressor.power"), "kW", 30, 5.0e-3);
+    com.google.gson.JsonObject root =
+        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    assertTrue(root.has("converged"));
+    assertTrue(root.has("iterations"), "Multi-area evaluate should report iteration count");
+    assertEquals(1, root.getAsJsonObject("setpointsApplied").size());
+  }
 }

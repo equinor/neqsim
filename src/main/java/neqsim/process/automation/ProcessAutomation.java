@@ -2098,6 +2098,289 @@ public class ProcessAutomation {
     run();
   }
 
+  // ----------------------------- Agentic run gating & evaluation ------------------------------
+
+  /**
+   * Returns the structured outcome of the most recent run as a JSON string. Lets agents inspect
+   * whether the last run succeeded and, if not, which unit failed, without catching and parsing a
+   * {@link RuntimeException}.
+   *
+   * @return schema-versioned JSON describing the last run outcome (see
+   *         {@link neqsim.process.processmodel.RunStatus#toJson()})
+   */
+  public String getRunStatusJson() {
+    if (processModel != null) {
+      return processModel.getRunStatusJson();
+    }
+    return processSystem.getRunStatusJson();
+  }
+
+  /**
+   * Runs the underlying process and returns the structured
+   * {@link neqsim.process.processmodel.RunStatus RunStatus} as JSON, <strong>never
+   * throwing</strong> on a solver failure. This is the run primitive recommended for agentic loops:
+   * a diverging or failing trial is reported as {@code "success": false} with the offending unit
+   * named, instead of crashing the agent's control loop with an exception.
+   *
+   * <p>
+   * The dirty flag is cleared whether or not the run succeeded, so a subsequent
+   * {@link #runIfDirty()} will not re-run a known-failing configuration.
+   * </p>
+   *
+   * @return schema-versioned run-status JSON, with {@code success}, {@code failedUnitName} and
+   *         {@code failedUnitError} fields
+   */
+  public String runJson() {
+    try {
+      run();
+    } catch (RuntimeException e) {
+      // The run status is still recorded by the process; the dirty flag is cleared below so the
+      // agent does not silently re-run a known-failing setpoint.
+      this.dirty = false;
+    }
+    return getRunStatusJson();
+  }
+
+  /**
+   * Runs the process until convergence (or an iteration limit) and returns a unified JSON report
+   * suitable for per-trial feasibility gating in agentic optimization. Never throws on a solver
+   * failure.
+   *
+   * <p>
+   * For a multi-area {@link ProcessModel}, this delegates to
+   * {@link ProcessModel#runUntilConverged(int, double)} and merges
+   * {@link ProcessModel#getConvergenceReportJson()} with the run status. For a single
+   * {@link ProcessSystem}, a normal {@link ProcessSystem#run()} already iterates internal recycles;
+   * the {@code converged} flag then reflects whether the run completed without a failed unit (the
+   * {@link neqsim.process.processmodel.RunStatus RunStatus} success flag).
+   * </p>
+   *
+   * <p>
+   * Top-level fields: {@code schemaVersion}, {@code converged}, {@code runSucceeded},
+   * {@code failedUnitName}, {@code failedUnitError}, {@code iterations}, {@code maxIterations},
+   * {@code maxError}, and (multi-area only) the nested {@code convergence} report and {@code areas}
+   * array.
+   * </p>
+   *
+   * @param maxIterations maximum outer iterations (multi-area only); must be at least 1
+   * @param tolerance relative convergence tolerance (multi-area only); must be finite and positive
+   * @return schema-versioned convergence/run JSON
+   * @throws IllegalArgumentException if {@code maxIterations < 1} or {@code tolerance} is not a
+   *         finite positive number
+   */
+  public String runUntilConvergedJson(int maxIterations, double tolerance) {
+    if (maxIterations < 1) {
+      throw new IllegalArgumentException("maxIterations must be at least 1, was " + maxIterations);
+    }
+    if (Double.isNaN(tolerance) || Double.isInfinite(tolerance) || tolerance <= 0.0) {
+      throw new IllegalArgumentException(
+          "tolerance must be a finite positive number, was " + tolerance);
+    }
+
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+    root.addProperty("maxIterations", maxIterations);
+
+    boolean runSucceeded = true;
+    boolean converged;
+    if (processModel != null) {
+      try {
+        converged = processModel.runUntilConverged(maxIterations, tolerance);
+      } catch (RuntimeException e) {
+        runSucceeded = false;
+        converged = false;
+      }
+      root.addProperty("converged", converged);
+      root.addProperty("iterations", processModel.getLastIterationCount());
+      root.addProperty("maxError", processModel.getError());
+      // Embed the full structured convergence report for area-level diagnostics.
+      try {
+        com.google.gson.JsonElement report =
+            com.google.gson.JsonParser.parseString(processModel.getConvergenceReportJson());
+        root.add("convergence", report);
+        if (report.isJsonObject() && report.getAsJsonObject().has("areas")) {
+          root.add("areas", report.getAsJsonObject().get("areas"));
+        }
+      } catch (RuntimeException e) {
+        // convergence report unavailable; primary fields above are sufficient
+      }
+    } else {
+      try {
+        processSystem.run();
+      } catch (RuntimeException e) {
+        runSucceeded = false;
+      }
+      converged = runSucceeded && processSystem.getRunStatus().isSuccess();
+      root.addProperty("converged", converged);
+    }
+    this.dirty = false;
+
+    root.addProperty("runSucceeded", runSucceeded);
+    mergeRunStatus(root);
+    return root.toString();
+  }
+
+  /**
+   * Atomic <em>evaluate</em> step for closed-loop agentic optimization: applies a batch of decision
+   * variables, runs the process until convergence, gates the result on the run status, and reads
+   * back the requested objective / constraint variables &mdash; all returned as a single JSON
+   * document. This method <strong>never throws</strong>; an infeasible trial (rejected setpoint,
+   * diverged solver, or failed unit) is reported as {@code "feasible": false} so the optimizer can
+   * penalise it instead of crashing.
+   *
+   * <p>
+   * This is the recommended one-call primitive for SQP / particle-swarm / grid sweeps over a
+   * flowsheet. It removes the boilerplate of set &rarr; run &rarr; try/catch &rarr; read and avoids
+   * the common jpype pitfall of mixing {@code java.lang.String} JSON with Python parsing, because
+   * the entire trial outcome is returned as one ready-to-parse string.
+   * </p>
+   *
+   * <p>
+   * Returned fields:
+   * </p>
+   * <ul>
+   * <li>{@code schemaVersion} &mdash; stable schema version</li>
+   * <li>{@code feasible} &mdash; {@code true} only when every setpoint was applied, the run did not
+   * fail, and the model converged</li>
+   * <li>{@code converged}, {@code runSucceeded}, {@code failedUnitName}, {@code failedUnitError},
+   * {@code iterations}, {@code maxError}</li>
+   * <li>{@code setpointsApplied} &mdash; map of address &rarr; value that were set</li>
+   * <li>{@code setpointsRejected} &mdash; map of address &rarr; rejection reason</li>
+   * <li>{@code readbacks} &mdash; map of address &rarr; value for successfully read outputs</li>
+   * <li>{@code readbackErrors} &mdash; map of address &rarr; reason for unreadable outputs</li>
+   * </ul>
+   *
+   * @param setpoints ordered map of decision-variable address &rarr; value to apply; may be null or
+   *        empty to evaluate the current configuration
+   * @param setpointUnit unit applied to every setpoint, or null for default units
+   * @param readbacks objective / constraint addresses to read after the run; may be null or empty
+   * @param readbackUnit unit applied to every read-back, or null for default units
+   * @param maxIterations maximum outer iterations for the convergence run; must be at least 1
+   * @param tolerance relative convergence tolerance; must be finite and positive
+   * @return schema-versioned JSON describing the trial outcome
+   * @throws IllegalArgumentException if {@code maxIterations < 1} or {@code tolerance} is not a
+   *         finite positive number
+   */
+  public String evaluate(Map<String, Double> setpoints, String setpointUnit, List<String> readbacks,
+      String readbackUnit, int maxIterations, double tolerance) {
+    if (maxIterations < 1) {
+      throw new IllegalArgumentException("maxIterations must be at least 1, was " + maxIterations);
+    }
+    if (Double.isNaN(tolerance) || Double.isInfinite(tolerance) || tolerance <= 0.0) {
+      throw new IllegalArgumentException(
+          "tolerance must be a finite positive number, was " + tolerance);
+    }
+
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+
+    // 1) Apply decision variables, capturing per-address rejections.
+    com.google.gson.JsonObject applied = new com.google.gson.JsonObject();
+    com.google.gson.JsonObject rejected = new com.google.gson.JsonObject();
+    if (setpoints != null) {
+      for (Map.Entry<String, Double> e : setpoints.entrySet()) {
+        try {
+          setVariableValue(e.getKey(), e.getValue(), setpointUnit);
+          applied.addProperty(e.getKey(), e.getValue());
+        } catch (RuntimeException ex) {
+          rejected.addProperty(e.getKey(), ex.getMessage());
+          diagnostics.recordFailure("set", e.getKey(),
+              AutomationDiagnostics.ErrorCategory.INVALID_ADDRESS_FORMAT, null);
+        }
+      }
+    }
+    root.add("setpointsApplied", applied);
+    root.add("setpointsRejected", rejected);
+
+    // 2) Run until converged (never throws here).
+    boolean runSucceeded = true;
+    boolean converged;
+    if (processModel != null) {
+      try {
+        converged = processModel.runUntilConverged(maxIterations, tolerance);
+      } catch (RuntimeException ex) {
+        runSucceeded = false;
+        converged = false;
+      }
+      root.addProperty("iterations", processModel.getLastIterationCount());
+      root.addProperty("maxError", processModel.getError());
+    } else {
+      try {
+        processSystem.run();
+      } catch (RuntimeException ex) {
+        runSucceeded = false;
+      }
+      converged = runSucceeded && processSystem.getRunStatus().isSuccess();
+    }
+    this.dirty = false;
+    root.addProperty("runSucceeded", runSucceeded);
+    root.addProperty("converged", converged);
+    mergeRunStatus(root);
+
+    boolean runFailed = root.has("failedUnitName") && !root.get("failedUnitName").isJsonNull();
+    boolean feasible = runSucceeded && converged && !runFailed && rejected.size() == 0;
+    root.addProperty("feasible", feasible);
+
+    // 3) Read back objectives / constraints, capturing per-address failures.
+    com.google.gson.JsonObject reads = new com.google.gson.JsonObject();
+    com.google.gson.JsonObject readErrors = new com.google.gson.JsonObject();
+    if (readbacks != null) {
+      for (String addr : readbacks) {
+        try {
+          reads.addProperty(addr, getVariableValue(addr, readbackUnit));
+        } catch (RuntimeException ex) {
+          readErrors.addProperty(addr, ex.getMessage());
+        }
+      }
+    }
+    root.add("readbacks", reads);
+    root.add("readbackErrors", readErrors);
+
+    return root.toString();
+  }
+
+  /**
+   * Convenience overload of {@link #evaluate(Map, String, List, String, int, double)} that uses the
+   * same unit for setpoints and read-backs and sensible default convergence settings (30
+   * iterations, relative tolerance 5e-3, which is robust for plants with near-zero-flow anti-surge
+   * recycles).
+   *
+   * @param setpoints decision-variable address &rarr; value map; may be null or empty
+   * @param unitOfMeasure unit applied to setpoints and read-backs, or null for default units
+   * @param readbacks objective / constraint addresses to read after the run; may be null or empty
+   * @return schema-versioned JSON describing the trial outcome
+   */
+  public String evaluate(Map<String, Double> setpoints, String unitOfMeasure,
+      List<String> readbacks) {
+    return evaluate(setpoints, unitOfMeasure, readbacks, unitOfMeasure, 30, 5.0e-3);
+  }
+
+  /**
+   * Merges the most recent {@link neqsim.process.processmodel.RunStatus RunStatus} fields
+   * ({@code success}, {@code failedUnitName}, {@code failedUnitError}) into the supplied JSON
+   * object. Used by {@link #runUntilConvergedJson(int, double)} and
+   * {@link #evaluate(Map, String, List, String, int, double)}.
+   *
+   * @param root the JSON object to enrich with run-status fields
+   */
+  private void mergeRunStatus(com.google.gson.JsonObject root) {
+    neqsim.process.processmodel.RunStatus status =
+        processModel != null ? processModel.getRunStatus() : processSystem.getRunStatus();
+    if (status == null) {
+      return;
+    }
+    if (status.getFailedUnitName() != null) {
+      root.addProperty("failedUnitName", status.getFailedUnitName());
+    } else {
+      root.add("failedUnitName", com.google.gson.JsonNull.INSTANCE);
+    }
+    if (status.getFailedUnitError() != null) {
+      root.addProperty("failedUnitError", status.getFailedUnitError());
+    } else {
+      root.add("failedUnitError", com.google.gson.JsonNull.INSTANCE);
+    }
+  }
+
   // ----------------------------- Batch get / set ------------------------------
 
   /**
