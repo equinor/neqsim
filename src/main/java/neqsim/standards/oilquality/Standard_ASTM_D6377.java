@@ -116,21 +116,28 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     RVP_ASTM_D323_82 = (0.752 * (100.0 * this.thermoSystem.getPressure()) + 6.07) / 100.0;
 
     SystemInterface fluid1 = this.thermoSystem.clone();
-    this.thermoSystem.setPressure(TVP * 0.9);
     if (fluid1.hasComponent("water")) {
       fluid1.removeComponent("water");
-      fluid1.init(0);
     }
+    fluid1.setTemperature(referenceTemperature, "C");
+    fluid1.setPressure(ThermodynamicConstantsInterface.referencePressure);
+    fluid1.init(0);
+    ThermodynamicOperations opsNoWater = new ThermodynamicOperations(fluid1);
     try {
+      opsNoWater.bubblePointPressureFlash(false);
+      double tvpNoWater = fluid1.getPressure();
+      fluid1.setPressure(tvpNoWater * 0.9);
       // ASTM D323 -08 method is used for this property calculation. It is defined at
       // the pressure
       // at 100°F (37.8°C) at which 80% of the stream by volume is vapor at 100°F. In
-      this.thermoOps.TVfractionFlash(0.8);
+      opsNoWater.TVfractionFlash(0.8);
+      VPCR4_no_water = fluid1.getPressure();
+      RVP_ASTM_D323_73_79 = VPCR4_no_water;
     } catch (Exception ex) {
       logger.debug("RVP calculation without water failed: {}", ex.getMessage());
+      VPCR4_no_water = Double.NaN;
+      RVP_ASTM_D323_73_79 = Double.NaN;
     }
-    VPCR4_no_water = this.thermoSystem.getPressure();
-    RVP_ASTM_D323_73_79 = VPCR4_no_water;
   }
 
   /** {@inheritDoc} */
