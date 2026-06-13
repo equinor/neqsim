@@ -790,6 +790,47 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Returns the aggregated structured outcome of the most recent run across all process areas.
+   *
+   * <p>
+   * The returned {@link RunStatus} merges the per-unit outcomes of every area (each unit tagged
+   * with its area name) and reports overall success only if every area ran without a unit failure.
+   * This lets agents detect which area and unit failed in a multi-area plant without catching a
+   * {@link RuntimeException}.
+   * </p>
+   *
+   * @return an aggregated run status across all areas
+   */
+  public RunStatus getRunStatus() {
+    RunStatus aggregate = new RunStatus();
+    boolean anyFailure = false;
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      String areaName = entry.getKey();
+      ProcessSystem area = entry.getValue();
+      RunStatus areaStatus = area.getRunStatus();
+      for (UnitRunStatus u : areaStatus.getUnits()) {
+        if (u.isSuccess()) {
+          aggregate.recordSuccess(u.getUnitName(), u.getUnitType(), areaName);
+        } else {
+          aggregate.recordFailure(u.getUnitName(), u.getUnitType(), u.getErrorMessage(), areaName);
+          anyFailure = true;
+        }
+      }
+    }
+    aggregate.markComplete(!anyFailure);
+    return aggregate;
+  }
+
+  /**
+   * Returns the aggregated structured outcome of the most recent run as a JSON string.
+   *
+   * @return schema-versioned JSON describing the last run outcome across all areas
+   */
+  public String getRunStatusJson() {
+    return getRunStatus().toJson();
+  }
+
+  /**
    * Returns the number of process systems in this model.
    *
    * @return the number of process systems
