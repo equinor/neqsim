@@ -589,6 +589,55 @@ plantAuto.setVariableValue("Compression::Compressor.outletPressure", 170.0, "bar
 plant.run();
 ```
 
+### Closed-loop optimization: `evaluate()` (PREFERRED for agent loops)
+
+`run()` returns `void`, so an agent that calls it must separately inspect `RunStatus`,
+`solved()`, and the convergence report to decide whether a trial is usable. The agentic run
+primitives collapse that into **one schema-versioned JSON object that never throws** — the single
+most important addition for closed-loop work. **Use `evaluate()` as the atomic optimizer step**:
+it applies a batch of setpoints, runs to convergence, gates feasibility, and reads back objectives.
+
+```java
+ProcessAutomation auto = plant.getAutomation();
+
+Map<String, Double> setpoints = new LinkedHashMap<String, Double>();
+setpoints.put("Compression::Export Compressor.outletPressure", 150.0);
+setpoints.put("Separation::Oil Heater.outletTemperature", 78.0);
+List<String> readbacks = Arrays.asList("Compression::Export Compressor.power");
+
+// Mixed-unit batch → pass null to use each variable's default unit (bara, K, kg/hr).
+// Single-unit batch → pass the shared unit (e.g. "bara") for setpoints and read-backs.
+String json = auto.evaluate(setpoints, null, readbacks, "kW", 30, 5.0e-3);
+// {"schemaVersion":"1.0","setpointsApplied":{...},"setpointsRejected":{},
+//  "runSucceeded":true,"converged":true,"iterations":7,"maxError":0.0021,
+//  "failedUnitName":null,"feasible":true,"readbacks":{...},"readbackErrors":{}}
+
+// Convenience overload: same unit for setpoints+readbacks, defaults (30 iter, tol 5e-3)
+String quick = auto.evaluate(setpoints, "bara", readbacks);
+```
+
+Gate optimizer trials on the single **`feasible`** flag — it is `true` only when the run did not
+throw, the model converged, no unit failed, and **every** setpoint was accepted. A bad address or
+out-of-bounds value lands in `setpointsRejected` (good setpoints still applied); a bad read-back
+lands in `readbackErrors` — both without throwing, so one malformed candidate degrades a single
+trial instead of crashing the loop. Through jpype, wrap as `json.loads(str(result))`.
+
+Lower-level gated runs (when you set values yourself):
+
+```java
+String conv = auto.runUntilConvergedJson(30, 5.0e-3); // convergence report + run status (never throws)
+String run  = auto.runJson();                          // single run() with structured outcome
+String last = auto.getRunStatusJson();                 // last run status without re-running
+```
+
+For a multi-area `ProcessModel`, `runUntilConvergedJson()` / `evaluate()` delegate to
+`ProcessModel.runUntilConverged(...)` and embed the nested `convergence` report plus a per-area
+`areas` array. For a single `ProcessSystem`, `run()` already iterates internal recycles and
+`converged` reflects the `RunStatus` success flag. All three primitives clear the dirty flag even
+on failure. Default tolerance `5e-3` is robust for plants with near-zero-flow anti-surge recycles
+(strict `1e-4` rarely converges there). Pair with `getAdjustableParameters()` to enumerate the
+bounded decision space the agent may perturb.
+
 ### Self-healing automation (PREFERRED for agents)
 
 The automation API includes self-diagnosis and auto-correction. When an address

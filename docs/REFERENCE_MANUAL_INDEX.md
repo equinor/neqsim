@@ -235,6 +235,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Document             | Path                                                                                           | Description                               |
 | -------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------- |
 | Process Overview     | [docs/process/README.md](process/)                                                             | Process simulation module                 |
+| NeqSim Studio (Python) | [docs/process/neqsim-studio.md](process/neqsim-studio)                                        | Newcomer-friendly Python process builder (natural language, templates, wizard, edit-by-chat, gallery) |
 | Process Guide        | [docs/wiki/process_simulation.md](wiki/process_simulation)                                     | Process simulation guide                  |
 | Advanced Process     | [docs/wiki/advanced_process_simulation.md](wiki/advanced_process_simulation)                   | Advanced techniques                       |
 | Logical Operations   | [docs/wiki/logical_unit_operations.md](wiki/logical_unit_operations)                           | Logical unit operations                   |

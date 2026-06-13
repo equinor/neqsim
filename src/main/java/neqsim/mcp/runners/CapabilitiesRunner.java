@@ -503,6 +503,13 @@ public class CapabilitiesRunner {
         "Fetch per-tool benchmark trust and validation maturity metadata", "benchmark-registry");
     addGenericToolCapability(tools, "checkToolAccess", "check_tool_access", "governance",
         "Check whether a tool is allowed in the active deployment profile", "safety-governance");
+    addGenericToolCapability(tools, "getAdjustableParameters", "get_adjustable_parameters",
+        "automation",
+        "Discover bounded decision variables (setpoints) before driving an optimization loop",
+        "optimization-uncertainty");
+    addGenericToolCapability(tools, "runProcessLoop", "run_process_loop", "uncertainty",
+        "Build a process once and sweep many setpoint trials via cached automation evaluate",
+        "optimization-uncertainty");
   }
 
   /**

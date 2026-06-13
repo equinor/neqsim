@@ -146,13 +146,13 @@ public final class IndustrialProfile {
    * Tier 1 — Trusted core. Validated against NIST/experimental data, documented accuracy bounds,
    * clear error behavior. This is the smallest credible surface for enterprise adoption.
    */
-  private static final Set<String> INDUSTRIAL_CORE =
-      Collections.unmodifiableSet(new HashSet<>(Arrays.asList("runFlash", "runProcess",
-          "validateInput", "validateResults", "calculateStandard", "searchComponents",
-          "getCapabilities", "getExample", "getSchema", "getPropertyTable", "getPhaseEnvelope",
-          "getBenchmarkTrust", "checkToolAccess", "manageIndustrialProfile", "listSimulationUnits",
-          "listUnitVariables", "getSimulationVariable", "compareSimulationStates",
-          "diagnoseAutomation", "getAutomationLearningReport", "getProgress")));
+  private static final Set<String> INDUSTRIAL_CORE = Collections
+      .unmodifiableSet(new HashSet<>(Arrays.asList("runFlash", "runProcess", "validateInput",
+          "validateResults", "calculateStandard", "searchComponents", "getCapabilities",
+          "getExample", "getSchema", "getPropertyTable", "getPhaseEnvelope", "getBenchmarkTrust",
+          "checkToolAccess", "manageIndustrialProfile", "listSimulationUnits", "listUnitVariables",
+          "getSimulationVariable", "compareSimulationStates", "diagnoseAutomation",
+          "getAutomationLearningReport", "getProgress", "getAdjustableParameters")));
 
   /**
    * Tier 2 — Engineering advanced. Tested against literature/industry cases, suitable for screening
@@ -166,7 +166,7 @@ public final class IndustrialProfile {
           "setSimulationVariable", "saveSimulationState", "runMaterialsReview",
           "runOpenDrainReview", "runNorsokS001Clause10Review", "runOperationalStudy", "runRelief",
           "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork", "runHAZOP", "runBarrierRegister",
-          "runSafetySystemPerformance", "runAgenticEngineering")));
+          "runSafetySystemPerformance", "runAgenticEngineering", "runProcessLoop")));
 
   /**
    * Tier 3 — Experimental/research. Functional but limited validation, or high-autonomy tools that
@@ -205,6 +205,7 @@ public final class IndustrialProfile {
     map.put("queryDataCatalog", ToolCategory.ADVISORY);
     map.put("generateReport", ToolCategory.ADVISORY);
     map.put("bridgeTaskWorkflow", ToolCategory.ADVISORY);
+    map.put("getAdjustableParameters", ToolCategory.ADVISORY);
 
     // Calculation tools — compute results, no persistent state changes
     map.put("runFlash", ToolCategory.CALCULATION);
@@ -228,6 +229,7 @@ public final class IndustrialProfile {
     map.put("runBioprocess", ToolCategory.CALCULATION);
     map.put("crossValidateModels", ToolCategory.CALCULATION);
     map.put("runParametricStudy", ToolCategory.CALCULATION);
+    map.put("runProcessLoop", ToolCategory.CALCULATION);
     map.put("runAgenticEngineering", ToolCategory.CALCULATION);
     map.put("sizeEquipment", ToolCategory.CALCULATION);
     map.put("compareProcesses", ToolCategory.CALCULATION);
