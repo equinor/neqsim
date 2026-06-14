@@ -118,7 +118,7 @@ public class ProcessModelOptimizationView extends ProcessSystem {
    * @param id calculation identifier (unused; convergence is managed by the model)
    */
   @Override
-  public void run(UUID id) {
+  public synchronized void run(UUID id) {
     boolean converged = model.runUntilConverged(maxIterations, tolerance);
     if (!converged) {
       logger.warn(
