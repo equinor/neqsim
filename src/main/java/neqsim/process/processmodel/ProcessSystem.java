@@ -7600,7 +7600,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public int applyMechanicalDesignCapacityConstraints() {
     int count = 0;
-    for (ProcessEquipmentInterface equipment : unitOperations) {
+    for (ProcessEquipmentInterface equipment : getUnitOperations()) {
       count += equipment.applyMechanicalDesignCapacityConstraints();
     }
     return count;
