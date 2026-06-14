@@ -220,17 +220,3 @@ public class ProcessModelOptimizationView extends ProcessSystem {
     return model.getUtilizationSnapshotJson();
   }
 }
-      String unitName = name.substring(idx + AREA_SEPARATOR.length());
-      ProcessSystem area = model.get(areaName);
-      return area != null ? area.getUnit(unitName) : null;
-    }
-
-    for (ProcessSystem area : model.getAllProcesses()) {
-      ProcessEquipmentInterface unit = area.getUnit(name);
-      if (unit != null) {
-        return unit;
-      }
-    }
-    return null;
-  }
-}
