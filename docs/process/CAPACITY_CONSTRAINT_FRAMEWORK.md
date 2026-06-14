@@ -210,11 +210,10 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 
 // Create a constraint with fluent builder pattern
-CapacityConstraint speedConstraint = new CapacityConstraint("speed", ConstraintType.HARD)
+CapacityConstraint speedConstraint = new CapacityConstraint("speed", "RPM", ConstraintType.HARD)
     .setDesignValue(10000.0)           // Design operating point (RPM)
     .setMaxValue(11000.0)              // Absolute maximum (trip point)
     .setMinValue(5000.0)               // Minimum stable operation
-    .setUnit("RPM")
     .setValueSupplier(() -> compressor.getSpeed());  // Live value getter
 ```
 
@@ -297,6 +296,124 @@ if (!result.isEmpty()) {
     System.out.println("Utilization: " + result.getUtilizationPercent() + "%");
 }
 ```
+
+## Adding & Configuring Custom Constraints
+
+There are three ways to give an equipment new constraint functionality, ordered from the
+quickest (runtime, no subclassing) to the most reusable (built into an equipment type). All
+three produce ordinary `CapacityConstraint` objects, so they surface identically in
+`getMaxUtilization()`, `getBottleneckConstraint()`, `findBottleneck()`, and the utilization
+snapshot.
+
+### The constraint anatomy (what you configure)
+
+Every constraint is built with the fluent `CapacityConstraint` API. The two constructors are:
+
+```java
+new CapacityConstraint("name", "unit", ConstraintType.HARD);  // explicit unit + type
+new CapacityConstraint("name");                                // defaults: unit "", type SOFT
+```
+
+Configurable properties (all are optional fluent setters returning `this`):
+
+| Setter | Purpose | Default |
+|--------|---------|---------|
+| `setDesignValue(double)` | Limit used for utilization = current / design | required |
+| `setValueSupplier(DoubleSupplier)` | **Live** current value, re-evaluated each query | none |
+| `setCurrentValue(double)` | Static current value (use when there is no live source) | NaN |
+| `setMaxValue(double)` | Absolute trip point for `HARD` constraints | none |
+| `setMinValue(double)` | Minimum stable operating point | none |
+| `setWarningThreshold(double)` | Near-limit early warning (fraction, e.g. 0.9) | 0.9 |
+| `setUnit(String)` | Unit label (when the 1-arg constructor was used) | "" |
+| `setDescription(String)` | Human-readable description | "" |
+| `setDataSource(String)` | Provenance tag (e.g. `"mechanicalDesign"`, `"user"`) | "not_set" |
+| `setEnabled(boolean)` | Whether the optimizer/analysis counts it | `true` |
+
+> **Live vs. static value:** prefer `setValueSupplier(...)` so the constraint tracks the
+> simulation. A manually built constraint is **enabled by default**, so it counts as soon as
+> you add it (unlike the auto-generated strategy constraints, which start disabled).
+
+### Level 1 — Add a custom constraint to one equipment instance (no subclassing)
+
+The fastest path: build a constraint with a live supplier and register it on the equipment.
+Use this for one-off or study-specific limits.
+
+```java
+// Example: cap a heater on its outlet temperature
+Heater heater = new Heater("H-100", feed);
+// ... add to process and run ...
+
+CapacityConstraint tempLimit =
+    new CapacityConstraint("outletTemperature", "C", ConstraintType.SOFT)
+        .setDesignValue(120.0)                                  // design limit
+        .setWarningThreshold(0.9)                               // warn at 90%
+        .setDescription("Metallurgical limit on tube wall")
+        .setValueSupplier(() -> heater.getOutletStream()
+            .getTemperature("C"));                              // live value
+
+heater.addCapacityConstraint(tempLimit);                        // active immediately
+double util = heater.getMaxUtilization();                       // includes the new limit
+```
+
+Reconfigure or remove it at any time:
+
+```java
+heater.getCapacityConstraints().get("outletTemperature").setDesignValue(110.0);
+heater.getCapacityConstraints().get("outletTemperature").setEnabled(false); // what-if
+heater.removeCapacityConstraint("outletTemperature");                       // remove
+```
+
+### Level 2 — Give an equipment type built-in default constraints (subclass)
+
+To make a constraint part of every instance of an equipment type, override the
+`initializeDefaultConstraints()` hook on `ProcessEquipmentBaseClass`. It is called lazily the
+first time constraints are accessed (and after deserialization), so it is the right place to
+register type-specific constraints.
+
+```java
+public class MyReactor extends ProcessEquipmentBaseClass {
+
+  // ... constructors, run(), etc. ...
+
+  @Override
+  protected void initializeDefaultConstraints() {
+    addCapacityConstraint(
+        new CapacityConstraint("catalystBedDP", "bara", ConstraintType.DESIGN)
+            .setDesignValue(1.5)
+            .setDataSource("default")
+            .setValueSupplier(() -> getInletStreams().get(0).getPressure("bara")
+                - getOutletStreams().get(0).getPressure("bara")));
+  }
+}
+```
+
+Follow the framework convention: if your equipment should preserve backward compatibility,
+create the constraints **disabled** (`setEnabled(false)`) and provide a `useXxxConstraints()` /
+`enableConstraints()` method so users opt in (see how `Separator` exposes
+`useEquinorConstraints()`).
+
+### Level 3 — Derive constraints from the mechanical-design envelope
+
+When the limit is a property of the equipment's design envelope (max design power, flow,
+pressure drop, velocity, Cv, duty), configure it on the `MechanicalDesign` and let the bridge
+build the constraint for you. No `CapacityConstraint` object is needed. To support a **new**
+design-derived metric, override the matching protected `getOperating*` hook on a
+`MechanicalDesign` subclass. This path is documented in full in
+[Equipment Utilization via Mechanical Design](equipment_utilization_via_mechanical_design.md):
+
+```java
+equipment.getMechanicalDesign().setMaxDesignPower(6000.0);     // kW
+equipment.applyMechanicalDesignCapacityConstraints();          // opt-in bridge
+double util = equipment.getMaxUtilization();                   // now includes design power
+```
+
+### Which level should I use?
+
+| Need | Use |
+|------|-----|
+| A one-off limit for a single run/study | **Level 1** (instance `addCapacityConstraint`) |
+| A limit that every instance of a new equipment type should have | **Level 2** (`initializeDefaultConstraints`) |
+| A limit that is part of the design envelope (power, flow, dP, velocity, Cv, duty) | **Level 3** (mechanical design + bridge) |
 
 ## Integration with AutoSizing and Mechanical Design
 
@@ -427,9 +544,8 @@ compressor.setMaximumPower(6000.0);       // Override constraint limit (kW)
 compressor.setMaximumSpeed(12000.0);      // Override speed limit (RPM)
 
 // 3. Manually set constraint on existing equipment
-CapacityConstraint customPower = new CapacityConstraint("powerLimit", ConstraintType.HARD)
+CapacityConstraint customPower = new CapacityConstraint("powerLimit", "kW", ConstraintType.HARD)
     .setDesignValue(5000.0)
-    .setUnit("kW")
     .setValueSupplier(() -> compressor.getPower("kW"));
 compressor.addCapacityConstraint(customPower);
 
