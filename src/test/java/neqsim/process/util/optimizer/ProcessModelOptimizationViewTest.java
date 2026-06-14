@@ -1,6 +1,8 @@
 package neqsim.process.util.optimizer;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
@@ -9,8 +11,6 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
-import java.util.Arrays;
-import java.util.List;
 import neqsim.process.util.optimizer.ProductionOptimizer.ObjectiveType;
 import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
 import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConstraint;
