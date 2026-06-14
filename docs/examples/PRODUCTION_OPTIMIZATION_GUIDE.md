@@ -30,6 +30,8 @@ This guide provides comprehensive examples for setting up and running production
 - **Infeasibility Diagnostics**: `result.getInfeasibilityDiagnosis()` for detailed violation reports
 - **Batch Constraint Control**: `equipment.disableAllConstraints()` and `enableAllConstraints()` for what-if analysis
 - **Process-Wide Constraint Control**: `processSystem.disableAllConstraints()` and `processModule.disableAllConstraints()` to control all equipment at once
+- **Whole-Plant Capacity Analysis (ProcessModel)**: Multi-area plants expose the same capacity API as `ProcessSystem` — `getBottleneck()`, `getBottleneckUtilization()`, `findBottleneck()`, `getConstrainedEquipment()`, `isAnyEquipmentOverloaded()`, `isAnyHardLimitExceeded()`, `getCapacityUtilizationSummary()`, `getEquipmentNearCapacityLimit()`, `disableAllConstraints()`, `enableAllConstraints()` — aggregated across all areas
+- **Multi-Area Optimization**: `ProductionOptimizer.optimize(...)`, `optimizePareto(...)`, and `ScenarioRequest` all accept a `ProcessModel` directly — single/multi-variable, multi-objective (Pareto), and scenario comparison run on whole multi-area plants and report the plant-wide bottleneck
 - **Full Equipment Exclusion**: Equipment with `setCapacityAnalysisEnabled(false)` is now fully excluded from optimization feasibility checks
 
 ---
@@ -58,6 +60,7 @@ NeqSim provides a powerful production optimization framework that combines:
 | **CapacityConstrainedEquipment** | Multi-constraint interface for equipment limits |
 | **ProcessSystem.getBottleneck()** | Unified bottleneck detection (single & multi-constraint) |
 | **ProcessSystem.findBottleneck()** | Detailed constraint analysis with remediation hints |
+| **ProcessModel** (multi-area) | Same whole-flowsheet capacity API as `ProcessSystem`, aggregated across all process areas |
 
 ### Key Features
 
@@ -164,7 +167,7 @@ ProcessEquipmentInterface bottleneck = result.getBottleneck();
 if (bottleneck instanceof CapacityConstrainedEquipment) {
     CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) bottleneck;
     CapacityConstraint active = constrained.getBottleneckConstraint();
-    
+
     System.out.println("=== ACTIVE CONSTRAINT ===");
     System.out.println("Equipment: " + bottleneck.getName());
     System.out.println("Constraint: " + active.getName());
@@ -312,7 +315,7 @@ System.out.println("Disabled " + disabled + " constraints on compressor");
 int enabled = compressor.enableAllConstraints();
 ```
 
-#### 3. Disable All Constraints in ProcessSystem or ProcessModule
+#### 3. Disable All Constraints in ProcessSystem, ProcessModule, or ProcessModel
 
 ```java
 // Disable all constraints on ALL equipment in the process
@@ -325,7 +328,16 @@ processSystem.enableAllConstraints();
 // For process modules (same API)
 processModule.disableAllConstraints();
 processModule.enableAllConstraints();
+
+// For multi-area plants, ProcessModel exposes the same API and aggregates
+// the action across every process area it contains
+int totalPlant = processModel.disableAllConstraints();
+processModel.enableAllConstraints();
 ```
+
+> **Multi-area plants:** `ProcessModel` mirrors the whole-flowsheet capacity API of
+> `ProcessSystem`, delegating each call across all of its process areas. See
+> [Whole-Plant Capacity Analysis (ProcessModel)](#whole-plant-capacity-analysis-processmodel).
 
 #### 4. Exclude Equipment from Optimization Entirely
 
@@ -424,16 +436,16 @@ System.out.println("=== CONSTRAINT STATUS FOR ALL EQUIPMENT ===\n");
 for (CapacityConstrainedEquipment equip : process.getConstrainedEquipment()) {
     ProcessEquipmentInterface unit = (ProcessEquipmentInterface) equip;
     boolean isBottleneck = unit.equals(result.getBottleneck());
-    
+
     System.out.println(unit.getName() + (isBottleneck ? " ⭐ BOTTLENECK" : "") + ":");
-    
+
     CapacityConstraint limitingConstraint = equip.getBottleneckConstraint();
-    
+
     for (CapacityConstraint c : equip.getCapacityConstraints().values()) {
         boolean isActive = c.equals(limitingConstraint) && isBottleneck;
         String marker = isActive ? " ◀ ACTIVE" : "";
         String status = c.isViolated() ? "⚠️" : c.isNearLimit() ? "⚡" : "✓";
-        
+
         System.out.printf("  %s %-18s: %7.2f / %7.2f %-6s (%5.1f%%)%s%n",
             status,
             c.getName(),
@@ -482,6 +494,81 @@ Feasible: true
 ```
 
 In this example, the **Gas Compressor** is the bottleneck with **speed** as the active constraint at 98% utilization.
+
+---
+
+## Whole-Plant Capacity Analysis (ProcessModel)
+
+Large plants are typically split into several `ProcessSystem` areas (separation, recompression,
+export, etc.) and combined into a `ProcessModel`. `ProcessModel` now exposes the **same
+whole-flowsheet capacity API as `ProcessSystem`**, aggregating each call across every process area
+it contains. This lets you analyse capacity and bottlenecks for the entire plant without manually
+looping over areas.
+
+```java
+import neqsim.process.processmodel.ProcessModel;
+import neqsim.process.equipment.capacity.BottleneckResult;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
+
+ProcessModel plant = new ProcessModel();
+plant.add("separation", separationArea);   // a ProcessSystem
+plant.add("compression", compressionArea); // a ProcessSystem
+plant.run();
+
+// Plant-wide bottleneck (most-utilized unit across ALL areas)
+ProcessEquipmentInterface bottleneck = plant.getBottleneck();
+double util = plant.getBottleneckUtilization();
+System.out.println("Plant bottleneck: " + bottleneck.getName()
+    + " at " + (util * 100) + "%");
+
+// Detailed bottleneck with the limiting constraint
+BottleneckResult detail = plant.findBottleneck();
+System.out.println("Limiting unit: " + detail.getEquipment().getName()
+    + " (" + (detail.getUtilization() * 100) + "%)");
+
+// Whole-plant overload / hard-limit checks
+boolean overloaded = plant.isAnyEquipmentOverloaded();
+boolean hardLimit = plant.isAnyHardLimitExceeded();
+
+// All constrained equipment, flattened across areas
+for (CapacityConstrainedEquipment equip : plant.getConstrainedEquipment()) {
+    System.out.println(((ProcessEquipmentInterface) equip).getName()
+        + ": " + (equip.getMaxUtilization() * 100) + "%");
+}
+
+// Capacity summary and near-limit list use area-qualified "Area::Unit" keys
+Map<String, Double> summary = plant.getCapacityUtilizationSummary();
+// e.g. {"separation::inlet separator": 93.3, "compression::export compressor": 98.0}
+List<String> nearLimit = plant.getEquipmentNearCapacityLimit();
+// e.g. ["compression::export compressor"]
+
+// What-if: disable / enable all constraints across the whole plant
+int disabled = plant.disableAllConstraints();
+plant.enableAllConstraints();
+```
+
+### ProcessModel capacity API
+
+| Method | Returns | Aggregation across areas |
+|--------|---------|--------------------------|
+| `getBottleneck()` | `ProcessEquipmentInterface` | Most-utilized unit plant-wide |
+| `getBottleneckUtilization()` | `double` | Highest area bottleneck utilization (fraction) |
+| `findBottleneck()` | `BottleneckResult` | Detailed result with the highest utilization |
+| `getConstrainedEquipment()` | `List<CapacityConstrainedEquipment>` | Flattened, area then unit order |
+| `isAnyEquipmentOverloaded()` | `boolean` | OR across areas (>100%) |
+| `isAnyHardLimitExceeded()` | `boolean` | OR across areas (HARD limits) |
+| `getCapacityUtilizationSummary()` | `Map<String, Double>` | `Area::Unit` keys → utilization % |
+| `getEquipmentNearCapacityLimit()` | `List<String>` | `Area::Unit` names above warning threshold |
+| `disableAllConstraints()` | `int` | Summed disabled-constraint count |
+| `enableAllConstraints()` | `int` | Summed enabled-constraint count |
+
+> **Naming:** Summary and near-limit entries are prefixed with the area name using the
+> `Area::Unit` convention so names stay unique across areas (the same convention used by
+> `ProcessAutomation` for area-qualified variable addresses).
+
+> **Optimizing a ProcessModel:** `ProductionOptimizer.optimize(...)` also accepts a `ProcessModel`
+> directly — it adapts the multi-area plant to a single optimization view internally. See
+> [Optimizing Multi-Area Plants](#optimizing-multi-area-plants-processmodel) below.
 
 ---
 
@@ -543,8 +630,8 @@ import java.util.List;
 
 // Define objectives
 List<OptimizationObjective> objectives = Arrays.asList(
-    new OptimizationObjective("Production", 
-        ps -> ((Stream) ps.getUnit("Well Feed")).getFlowRate("kg/hr"), 
+    new OptimizationObjective("Production",
+        ps -> ((Stream) ps.getUnit("Well Feed")).getFlowRate("kg/hr"),
         1.0, ObjectiveType.MAXIMIZE),
     new OptimizationObjective("Efficiency",
         ps -> ((Compressor) ps.getUnit("Gas Compressor")).getPolytropicEfficiency(),
@@ -572,6 +659,100 @@ for (ConstraintStatus status : result.getConstraintStatuses()) {
 }
 ```
 
+### Optimizing Multi-Area Plants (ProcessModel)
+
+`ProductionOptimizer.optimize(...)` accepts a multi-area `ProcessModel` directly. The plant is
+adapted to a single optimization view internally, so the existing search algorithms are reused
+unchanged and no manual flattening of areas is required. Inside the manipulated-variable setters and
+objectives, `proc.getUnit("Unit")` resolves units across **all** areas, and area-qualified
+`"Area::Unit"` addresses are also supported.
+
+```java
+import neqsim.process.processmodel.ProcessModel;
+
+ProcessModel plant = new ProcessModel();
+plant.add("separation", separationArea);   // a ProcessSystem
+plant.add("compression", compressionArea); // a ProcessSystem
+plant.run();
+
+// The feed stream lives in one of the areas
+Stream feed = (Stream) plant.get("separation").getUnit("feed");
+
+ProductionOptimizer optimizer = new ProductionOptimizer();
+OptimizationConfig config = new OptimizationConfig(500.0, 12_000.0)
+    .rateUnit("kg/hr")
+    .defaultUtilizationLimit(0.95);
+
+// Single feed-rate optimization across the whole plant
+OptimizationResult result = optimizer.optimize(plant, feed, config, objectives, constraints);
+
+System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
+System.out.println("Plant bottleneck: " + result.getBottleneck().getName());
+System.out.println("Feasible: " + result.isFeasible());
+```
+
+The full optimizer surface provided for `ProcessSystem` is available for `ProcessModel` — single
+and multi-variable optimization, multi-objective (Pareto) optimization, and scenario comparison:
+
+| Overload | Use case |
+|----------|----------|
+| `optimize(ProcessModel, StreamInterface feed, OptimizationConfig, objectives, constraints)` | Optimize a single feed rate for the whole plant |
+| `optimize(ProcessModel, List<ManipulatedVariable>, OptimizationConfig, objectives, constraints)` | Optimize multiple setpoints (pressures, temperatures, split fractions) across areas |
+| `optimizePareto(ProcessModel, StreamInterface feed, OptimizationConfig, objectives, constraints)` | Multi-objective Pareto front by varying the feed rate |
+| `optimizePareto(ProcessModel, List<ManipulatedVariable>, OptimizationConfig, objectives, constraints)` | Multi-objective Pareto front across multiple setpoints |
+| `new ScenarioRequest(name, ProcessModel, StreamInterface feed, OptimizationConfig, objectives, constraints)` | Whole-plant scenario in a `optimizeScenarios(...)` comparison |
+| `new ScenarioRequest(name, ProcessModel, List<ManipulatedVariable>, OptimizationConfig, objectives, constraints)` | Multi-variable whole-plant scenario in a comparison |
+
+> The bottleneck reported in the result is the plant-wide bottleneck — the most-utilized unit
+> across every area — consistent with `ProcessModel.getBottleneck()`.
+
+#### Multi-objective (Pareto) optimization of a plant
+
+Provide **two or more** objectives (for example, maximize throughput while minimizing compression
+power) and the optimizer returns a Pareto front of non-dominated trade-off points. The `ProcessModel`
+is adapted to a single optimization view internally, exactly like the single-objective overloads.
+
+```java
+import java.util.Arrays;
+import neqsim.process.util.optimizer.ProductionOptimizer.ObjectiveType;
+
+OptimizationConfig paretoConfig = new OptimizationConfig(500.0, 12_000.0)
+    .rateUnit("kg/hr")
+    .defaultUtilizationLimit(0.95)
+    .paretoGridSize(8); // weight granularity along the front
+
+OptimizationObjective maxFeed = new OptimizationObjective(
+    "feed throughput", proc -> feed.getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+OptimizationObjective minPower = new OptimizationObjective(
+    "compression power", proc -> compressor.getPower(), 1.0, ObjectiveType.MINIMIZE);
+
+ParetoResult pareto = optimizer.optimizePareto(plant, feed, paretoConfig,
+    Arrays.asList(maxFeed, minPower), constraints);
+
+System.out.println("Pareto front size: " + pareto.getParetoFrontSize());
+```
+
+#### Whole-plant scenario comparison
+
+Use the `ProcessModel` `ScenarioRequest` constructors to compare what-if cases (different limits,
+fluids, or setpoints) where each scenario is its own multi-area plant:
+
+```java
+ScenarioRequest baseCase = new ScenarioRequest("base case", plantA, feedA, config,
+    objectives, constraints);
+ScenarioRequest highLimit = new ScenarioRequest("high limit", plantB, feedB, config,
+    objectives, constraints);
+
+List<ScenarioResult> results =
+    optimizer.optimizeScenarios(Arrays.asList(baseCase, highLimit));
+
+for (ScenarioResult sr : results) {
+    System.out.printf("%s: %.0f kg/hr (bottleneck: %s)%n",
+        sr.getName(), sr.getResult().getOptimalRate(),
+        sr.getResult().getBottleneck().getName());
+}
+```
+
 ### Scenario Comparison
 
 ```java
@@ -580,7 +761,7 @@ import java.util.List;
 
 // Define scenarios
 List<ScenarioRequest> scenarios = Arrays.asList(
-    new ScenarioRequest("Summer", process.copy(), feed, 
+    new ScenarioRequest("Summer", process.copy(), feed,
         new OptimizationConfig(1000.0, 20000.0).rateUnit("kg/hr"),
         objectives, constraints),
     new ScenarioRequest("Winter", processWinter.copy(), feedWinter,
@@ -600,7 +781,7 @@ ScenarioComparisonResult comparison = ProductionOptimizer.compareScenarios(scena
 // Print results
 for (ScenarioResult sr : comparison.getResults()) {
     System.out.printf("Scenario '%s': %.0f kg/hr (bottleneck: %s)%n",
-        sr.getName(), sr.getResult().getOptimalRate(), 
+        sr.getName(), sr.getResult().getOptimalRate(),
         sr.getResult().getBottleneck().getName());
 }
 ```
@@ -656,7 +837,7 @@ System.out.printf("Utilization: %.1f%%%n", bottleneckResult.getUtilization() * 1
 
 // Iterate all constraints on bottleneck
 for (CapacityConstraint c : bottleneckResult.getAllConstraints()) {
-    System.out.printf("  - %s: %.1f%% (%s)%n", 
+    System.out.printf("  - %s: %.1f%% (%s)%n",
         c.getName(), c.getUtilization() * 100, c.getConstraintType());
 }
 ```
@@ -719,7 +900,7 @@ import neqsim
 # Import Java classes directly
 from neqsim.thermo.system import SystemSrkEos
 from neqsim.process.equipment.stream import Stream
-from neqsim.process.equipment.separator import Separator  
+from neqsim.process.equipment.separator import Separator
 from neqsim.process.equipment.compressor import Compressor
 from neqsim.process.processmodel import ProcessSystem
 from neqsim.process.util.optimizer import ProductionOptimizer
@@ -1025,31 +1206,31 @@ while True:
     # Update feed conditions from real-time data
     feed.setTemperature(get_realtime_temp(), "C")
     feed.setPressure(get_realtime_pressure(), "bara")
-    
+
     # Re-run process
     process.run()
-    
+
     # Check constraints
     if process.isAnyHardLimitExceeded():
         print("🛑 ALARM: Hard limit exceeded!")
         trigger_alarm()
-    
+
     # Get current bottleneck
     bottleneck = process.getBottleneck()
     util = process.getBottleneckUtilization()
-    
+
     # Log to historian
     log_to_historian({
         "bottleneck": bottleneck.getName(),
         "utilization": util,
         "timestamp": time.time()
     })
-    
+
     # Run periodic optimization
     if should_optimize():
         result = ProductionOptimizer.optimize(process, feed, config)
         recommend_setpoint(result.getOptimalRate())
-    
+
     time.sleep(60)  # 1-minute interval
 ```
 

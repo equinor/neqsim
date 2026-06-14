@@ -22,6 +22,7 @@ import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -1584,6 +1585,61 @@ public class ProductionOptimizer {
           constraints == null ? Collections.emptyList() : new ArrayList<>(constraints);
     }
 
+    /**
+     * Creates a feed-rate scenario over a multi-area {@link ProcessModel} plant. The model is
+     * wrapped in a {@link ProcessModelOptimizationView} so it is optimized as a single whole-plant
+     * flowsheet; objectives and constraints resolve {@code getUnit(...)} across all areas and
+     * support area-qualified {@code "Area::Unit"} addresses.
+     *
+     * @param name unique scenario name (must not be null)
+     * @param model the multi-area plant to optimize (must not be null)
+     * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
+     * @param config optimizer configuration (must not be null)
+     * @param objectives list of objectives (may be null or empty)
+     * @param constraints list of constraints (may be null or empty)
+     */
+    public ScenarioRequest(String name, ProcessModel model, StreamInterface feedStream,
+        OptimizationConfig config, List<OptimizationObjective> objectives,
+        List<OptimizationConstraint> constraints) {
+      this.name = Objects.requireNonNull(name, "Scenario name is required");
+      Objects.requireNonNull(model, "Scenario model is required");
+      this.process = new ProcessModelOptimizationView(model);
+      this.feedStream = Objects.requireNonNull(feedStream, "Scenario feed stream is required");
+      this.variables = Collections.emptyList();
+      this.config = Objects.requireNonNull(config, "Scenario config is required");
+      this.objectives = objectives == null ? Collections.emptyList() : new ArrayList<>(objectives);
+      this.constraints =
+          constraints == null ? Collections.emptyList() : new ArrayList<>(constraints);
+    }
+
+    /**
+     * Creates a multi-variable scenario over a multi-area {@link ProcessModel} plant. The model is
+     * wrapped in a {@link ProcessModelOptimizationView} so it is optimized as a single whole-plant
+     * flowsheet; manipulated-variable setters, objectives, and constraints resolve
+     * {@code getUnit(...)} across all areas and support area-qualified {@code "Area::Unit"}
+     * addresses.
+     *
+     * @param name unique scenario name (must not be null)
+     * @param model the multi-area plant to optimize (must not be null)
+     * @param variables list of manipulated variables with bounds and setters (may be null or empty)
+     * @param config optimizer configuration (must not be null)
+     * @param objectives list of objectives (may be null or empty)
+     * @param constraints list of constraints (may be null or empty)
+     */
+    public ScenarioRequest(String name, ProcessModel model, List<ManipulatedVariable> variables,
+        OptimizationConfig config, List<OptimizationObjective> objectives,
+        List<OptimizationConstraint> constraints) {
+      this.name = Objects.requireNonNull(name, "Scenario name is required");
+      Objects.requireNonNull(model, "Scenario model is required");
+      this.process = new ProcessModelOptimizationView(model);
+      this.feedStream = null;
+      this.variables = variables == null ? Collections.emptyList() : new ArrayList<>(variables);
+      this.config = Objects.requireNonNull(config, "Scenario config is required");
+      this.objectives = objectives == null ? Collections.emptyList() : new ArrayList<>(objectives);
+      this.constraints =
+          constraints == null ? Collections.emptyList() : new ArrayList<>(constraints);
+    }
+
     public String getName() {
       return name;
     }
@@ -2324,6 +2380,73 @@ public class ProductionOptimizer {
   }
 
   /**
+   * Optimize a single feed stream rate for a multi-area {@link ProcessModel} plant.
+   *
+   * <p>
+   * This is the whole-plant counterpart of
+   * {@link #optimize(ProcessSystem, StreamInterface, OptimizationConfig, List, List)}. The model is
+   * wrapped in a {@link ProcessModelOptimizationView} so the existing single-{@code ProcessSystem}
+   * optimizer engine is reused unchanged. The key difference is that each candidate evaluation runs
+   * the whole plant to cross-area convergence via
+   * {@link ProcessModel#runUntilConverged(int, double)} (default 50 iterations, tolerance 5e-3) and
+   * the capacity / bottleneck scan covers equipment in every area.
+   * </p>
+   *
+   * <p>
+   * Objectives and constraints written against the {@code ProcessSystem} API work unchanged: the
+   * view they receive resolves {@code getUnit(...)} across all areas and supports area-qualified
+   * {@code "Area::Unit"} addresses.
+   * </p>
+   *
+   * @param model the multi-area plant to evaluate (must not be null)
+   * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
+   * @param config optimizer configuration including bounds and algorithm (must not be null)
+   * @param objectives list of objectives to compute weighted scores (may be null or empty)
+   * @param constraints list of constraints with optional penalties (may be null or empty)
+   * @return optimization result containing optimal rate, bottleneck, and diagnostics
+   * @throws NullPointerException if model, feedStream, or config is null
+   * @throws IllegalArgumentException if config is invalid
+   */
+  public OptimizationResult optimize(ProcessModel model, StreamInterface feedStream,
+      OptimizationConfig config, List<OptimizationObjective> objectives,
+      List<OptimizationConstraint> constraints) {
+    Objects.requireNonNull(model, "ProcessModel is required");
+    ProcessModelOptimizationView view = new ProcessModelOptimizationView(model);
+    return optimize(view, feedStream, config, objectives, constraints);
+  }
+
+  /**
+   * Optimize multiple manipulated variables for a multi-area {@link ProcessModel} plant.
+   *
+   * <p>
+   * This is the whole-plant counterpart of
+   * {@link #optimize(ProcessSystem, List, OptimizationConfig, List, List)}. The model is wrapped in
+   * a {@link ProcessModelOptimizationView} so the existing multi-dimensional search algorithms
+   * (Nelder-Mead, particle swarm, gradient descent) are reused unchanged. Manipulated-variable
+   * setters receive the view as a {@code ProcessSystem}; calling {@code proc.getUnit("Unit")}
+   * resolves the unit across all areas, and area-qualified {@code "Area::Unit"} addresses are also
+   * supported.
+   * </p>
+   *
+   * @param model the multi-area plant to evaluate (must not be null)
+   * @param variables list of manipulated variables with bounds and setters (must not be empty)
+   * @param config optimizer configuration (must not be null)
+   * @param objectives list of objectives (may be null or empty)
+   * @param constraints list of constraints (may be null or empty)
+   * @return optimization result with optimal variable values in {@code getDecisionVariables()}
+   * @throws NullPointerException if model, variables, or config is null
+   * @throws IllegalArgumentException if variables is empty or algorithm doesn't support
+   *         multi-variable
+   */
+  public OptimizationResult optimize(ProcessModel model, List<ManipulatedVariable> variables,
+      OptimizationConfig config, List<OptimizationObjective> objectives,
+      List<OptimizationConstraint> constraints) {
+    Objects.requireNonNull(model, "ProcessModel is required");
+    ProcessModelOptimizationView view = new ProcessModelOptimizationView(model);
+    return optimize(view, variables, config, objectives, constraints);
+  }
+
+  /**
    * Optimize a collection of named scenarios and return results for side-by-side comparison.
    *
    * <p>
@@ -2609,6 +2732,69 @@ public class ProductionOptimizer {
 
     return new ParetoResult(paretoFront, allPoints, objectiveNames, objectiveTypes,
         totalIterations);
+  }
+
+  /**
+   * Perform multi-objective Pareto optimization on a multi-area {@link ProcessModel} plant by
+   * varying a single feed-stream flow rate.
+   *
+   * <p>
+   * This is the whole-plant counterpart of
+   * {@link #optimizePareto(ProcessSystem, StreamInterface, OptimizationConfig, List, List)}. The
+   * model is wrapped in a {@link ProcessModelOptimizationView} so the existing weighted-sum Pareto
+   * engine is reused unchanged. Objectives and constraints written against the
+   * {@code ProcessSystem} API resolve {@code getUnit(...)} across all areas and support
+   * area-qualified {@code "Area::Unit"} addresses.
+   * </p>
+   *
+   * @param model the multi-area plant to evaluate (must not be null)
+   * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
+   * @param config optimizer configuration; {@code paretoGridSize} controls weight granularity
+   * @param objectives list of objectives (must have at least 2 for Pareto optimization)
+   * @param constraints list of constraints (may be null or empty)
+   * @return Pareto result containing the Pareto front, utopia/nadir points, and all evaluated
+   *         points
+   * @throws NullPointerException if model, feedStream, config, or objectives is null
+   * @throws IllegalArgumentException if fewer than 2 objectives are provided
+   */
+  public ParetoResult optimizePareto(ProcessModel model, StreamInterface feedStream,
+      OptimizationConfig config, List<OptimizationObjective> objectives,
+      List<OptimizationConstraint> constraints) {
+    Objects.requireNonNull(model, "ProcessModel is required");
+    ProcessModelOptimizationView view = new ProcessModelOptimizationView(model);
+    return optimizePareto(view, feedStream, config, objectives, constraints);
+  }
+
+  /**
+   * Perform multi-objective Pareto optimization on a multi-area {@link ProcessModel} plant with
+   * multiple manipulated variables.
+   *
+   * <p>
+   * This is the whole-plant counterpart of
+   * {@link #optimizePareto(ProcessSystem, List, OptimizationConfig, List, List)}. The model is
+   * wrapped in a {@link ProcessModelOptimizationView} so the existing multi-dimensional Pareto
+   * engine (Nelder-Mead / particle swarm at each weight combination) is reused unchanged.
+   * Manipulated-variable setters receive the view as a {@code ProcessSystem}; calling
+   * {@code proc.getUnit("Unit")} resolves the unit across all areas, and area-qualified
+   * {@code "Area::Unit"} addresses are also supported.
+   * </p>
+   *
+   * @param model the multi-area plant to evaluate (must not be null)
+   * @param variables list of manipulated variables with bounds and setters (must not be empty)
+   * @param config optimizer configuration; {@code paretoGridSize} controls weight granularity
+   * @param objectives list of objectives (must have at least 2 for Pareto optimization)
+   * @param constraints list of constraints (may be null or empty)
+   * @return Pareto result containing the Pareto front, utopia/nadir points, and all evaluated
+   *         points
+   * @throws NullPointerException if model, variables, config, or objectives is null
+   * @throws IllegalArgumentException if fewer than 2 objectives or no variables are provided
+   */
+  public ParetoResult optimizePareto(ProcessModel model, List<ManipulatedVariable> variables,
+      OptimizationConfig config, List<OptimizationObjective> objectives,
+      List<OptimizationConstraint> constraints) {
+    Objects.requireNonNull(model, "ProcessModel is required");
+    ProcessModelOptimizationView view = new ProcessModelOptimizationView(model);
+    return optimizePareto(view, variables, config, objectives, constraints);
   }
 
   /**
