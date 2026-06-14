@@ -128,9 +128,9 @@ public class MechanicalDesignUtilizationTest {
   }
 
   /**
-   * Regression guard for the separator design volume-flow unit fix. After auto-sizing with a
-   * safety factor, {@link SeparatorMechanicalDesign} must store {@code maxDesignVolumeFlow} in
-   * m3/hr (consistent with {@code getOperatingVolumeFlow()}), so the derived "design volume flow"
+   * Regression guard for the separator design volume-flow unit fix. After auto-sizing with a safety
+   * factor, {@link SeparatorMechanicalDesign} must store {@code maxDesignVolumeFlow} in m3/hr
+   * (consistent with {@code getOperatingVolumeFlow()}), so the derived "design volume flow"
    * utilization stays well below 100% rather than the ~999% seen when the field held an m3/s
    * intermediate. Also confirms the gas design volume flow matches the design volume flow.
    */
@@ -155,8 +155,7 @@ public class MechanicalDesignUtilizationTest {
     process.add(separator);
     process.run();
 
-    SeparatorMechanicalDesign design =
-        (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+    SeparatorMechanicalDesign design = (SeparatorMechanicalDesign) separator.getMechanicalDesign();
     design.calcDesign();
 
     double designVolFlow = design.getMaxDesignVolumeFlow();
