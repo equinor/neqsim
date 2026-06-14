@@ -1,7 +1,7 @@
 ---
 layout: default
-title: "Oil & Gas Production and Energy Optimization"
-description: "Optimize an oil & gas production process for throughput and energy efficiency in NeqSim, balancing production rate against compression power and CO2 emissions with Pareto trade-off analysis."
+title: "oilgas production energy optimization"
+description: "Jupyter notebook tutorial for NeqSim"
 parent: Examples
 nav_order: 1
 ---
