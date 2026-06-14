@@ -3,7 +3,7 @@ title: "Equipment Utilization via Mechanical Design"
 description: "How to set design limits through the MechanicalDesign object so that capacity utilization can be calculated and reported for any NeqSim equipment type."
 ---
 
-# Equipment Utilization via Mechanical Design
+## Overview
 
 This guide explains how to make **capacity utilization** available for *any* piece of
 NeqSim equipment by setting design limits on its
