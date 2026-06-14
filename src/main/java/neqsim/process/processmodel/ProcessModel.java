@@ -3844,6 +3844,45 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Applies mechanical-design-derived capacity constraints to every equipment item in every process
+   * area of this model.
+   *
+   * <p>
+   * This is the multi-area counterpart of
+   * {@link ProcessSystem#applyMechanicalDesignCapacityConstraints()}. It iterates over all process
+   * areas and, for each equipment, derives capacity constraints from the limits configured on its
+   * {@link neqsim.process.mechanicaldesign.MechanicalDesign}. After this call the limits surface in
+   * {@link #getUtilizationSnapshotJson()} (per-area, with {@code area} labels) and in each
+   * equipment's {@link neqsim.process.equipment.ProcessEquipmentInterface#getMaxUtilization()}.
+   * </p>
+   *
+   * <p>
+   * Typical out-of-the-box workflow for a large multi-area plant:
+   * </p>
+   *
+   * <pre>
+   * model.run();
+   * model.autoSizeEquipment(); // populate maxDesign* limits from flow conditions
+   * model.applyMechanicalDesignCapacityConstraints(); // surface them as utilization
+   * String snapshot = model.getUtilizationSnapshotJson();
+   * </pre>
+   *
+   * <p>
+   * The method is idempotent and never throws. Call it again whenever design limits or operating
+   * conditions change.
+   * </p>
+   *
+   * @return the total number of mechanical-design-derived constraints registered across all areas
+   */
+  public int applyMechanicalDesignCapacityConstraints() {
+    int count = 0;
+    for (ProcessSystem processSystem : processes.values()) {
+      count += processSystem.applyMechanicalDesignCapacityConstraints();
+    }
+    return count;
+  }
+
+  /**
    * Enables or disables capacity analysis for all equipment in all process systems.
    *
    * <p>

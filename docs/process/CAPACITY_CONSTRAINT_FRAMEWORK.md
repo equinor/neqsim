@@ -407,6 +407,24 @@ equipment.applyMechanicalDesignCapacityConstraints();          // opt-in bridge
 double util = equipment.getMaxUtilization();                   // now includes design power
 ```
 
+#### Plant-wide one-call activation
+
+After auto-sizing a whole flowsheet, you do not need to loop over every unit. `ProcessSystem`
+and `ProcessModel` both expose a bulk helper that calls
+`applyMechanicalDesignCapacityConstraints()` on every contained piece of equipment and returns
+the number of units that registered at least one design-derived constraint. The call is
+**idempotent** (constraints use stable names) and safe to re-run after re-sizing:
+
+```java
+plant.autoSizeEquipment(1.20);                 // size every unit with a 20% margin
+int n = plant.applyMechanicalDesignCapacityConstraints();   // activate utilization plant-wide
+// n == number of units that now expose design-envelope constraints
+String snapshot = plant.getUtilizationSnapshotJson();        // side-effect-free read
+```
+
+For a multi-area `ProcessModel` the same method walks every area's `ProcessSystem`, so a single
+call activates utilization tracking across the entire plant.
+
 ### Which level should I use?
 
 | Need | Use |

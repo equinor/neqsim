@@ -6,7 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -123,5 +125,58 @@ public class MechanicalDesignUtilizationTest {
             .filter(c -> "mechanicalDesign".equals(c.getDataSource())).count(),
         "exactly one mechanical-design constraint should remain");
     assertFalse(heater.getCapacityConstraints().isEmpty());
+  }
+
+  /**
+   * Regression guard for the separator design volume-flow unit fix. After auto-sizing with a
+   * safety factor, {@link SeparatorMechanicalDesign} must store {@code maxDesignVolumeFlow} in
+   * m3/hr (consistent with {@code getOperatingVolumeFlow()}), so the derived "design volume flow"
+   * utilization stays well below 100% rather than the ~999% seen when the field held an m3/s
+   * intermediate. Also confirms the gas design volume flow matches the design volume flow.
+   */
+  @Test
+  void separatorDesignVolumeFlowUtilizationIsSensible() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 0.7);
+    fluid.addComponent("ethane", 0.1);
+    fluid.addComponent("propane", 0.1);
+    fluid.addComponent("n-pentane", 0.1);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(10000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(20.0, "bara");
+
+    Separator separator = new Separator("V-100", feed);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(separator);
+    process.run();
+
+    SeparatorMechanicalDesign design =
+        (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+    design.calcDesign();
+
+    double designVolFlow = design.getMaxDesignVolumeFlow();
+    double designGasVolFlow = design.getMaxDesignGassVolumeFlow();
+    double operatingVolFlow = design.getOperatingVolumeFlow();
+
+    assertTrue(designVolFlow > 0.0, "design volume flow should be positive");
+    assertTrue(operatingVolFlow > 0.0, "operating volume flow should be positive");
+    // Both the stored design flow and the gas-velocity-derived gas flow are now m3/hr and equal.
+    assertEquals(designGasVolFlow, designVolFlow, designVolFlow * 1.0e-3,
+        "design volume flow (m3/hr) should match the gas design volume flow");
+
+    Map<String, Double> utilization = design.getDesignUtilization();
+    assertTrue(utilization.containsKey("design volume flow"),
+        "design volume flow utilization should be present");
+    double util = utilization.get("design volume flow");
+    // With the default safety factor the design flow tracks the operating gas flow, so
+    // utilization sits near 1.0. The unit bug stored an m3/s intermediate in an m3/hr field,
+    // inflating this to ~10 (999%); the guard confirms we are back in the sensible O(1) range.
+    assertTrue(util > 0.0 && util < 2.0,
+        "separator design volume flow utilization should be O(1), was " + util);
   }
 }

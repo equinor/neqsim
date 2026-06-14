@@ -822,6 +822,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    *
    * @return the number of mechanical-design-derived constraints that were registered
    */
+  @Override
   public int applyMechanicalDesignCapacityConstraints() {
     int added = 0;
     try {

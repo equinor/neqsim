@@ -7564,6 +7564,49 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Applies mechanical-design-derived capacity constraints to every equipment item in this process
+   * system.
+   *
+   * <p>
+   * This is the bulk counterpart of
+   * {@link neqsim.process.equipment.ProcessEquipmentInterface#applyMechanicalDesignCapacityConstraints()}.
+   * It iterates over all unit operations and, for each, derives capacity constraints from the
+   * limits configured on its {@link neqsim.process.mechanicaldesign.MechanicalDesign} (for example
+   * {@code setMaxDesignPower}, {@code setMaxDesignVolumeFlow}, {@code setMaxDesignDuty}). After
+   * this call the limits surface in
+   * {@link neqsim.process.equipment.ProcessEquipmentInterface#getMaxUtilization()} and in
+   * {@link #getUtilizationSnapshotJson()}.
+   * </p>
+   *
+   * <p>
+   * Typical workflow &mdash; size automatically, then light up utilization in one call:
+   * </p>
+   *
+   * <pre>
+   * processSystem.run();
+   * processSystem.autoSizeEquipment(); // populate maxDesign* limits from flow conditions
+   * processSystem.applyMechanicalDesignCapacityConstraints(); // surface them as utilization
+   * String snapshot = processSystem.getUtilizationSnapshotJson();
+   * </pre>
+   *
+   * <p>
+   * The method is idempotent (derived constraints use stable names) and never throws &mdash; an
+   * equipment whose mechanical design cannot be read simply contributes no derived constraints.
+   * Call it again whenever design limits or operating conditions change.
+   * </p>
+   *
+   * @return the total number of mechanical-design-derived constraints registered across all
+   *         equipment
+   */
+  public int applyMechanicalDesignCapacityConstraints() {
+    int count = 0;
+    for (ProcessEquipmentInterface equipment : unitOperations) {
+      count += equipment.applyMechanicalDesignCapacityConstraints();
+    }
+    return count;
+  }
+
+  /**
    * Gets the design report for all auto-sized equipment in JSON format.
    *
    * <p>
