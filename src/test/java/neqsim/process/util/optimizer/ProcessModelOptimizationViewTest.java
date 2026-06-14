@@ -180,8 +180,7 @@ public class ProcessModelOptimizationViewTest {
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig config = new OptimizationConfig(500.0, 12_000.0).rateUnit("kg/hr")
-        .tolerance(50.0).defaultUtilizationLimit(95.0);
-
+        .tolerance(50.0).defaultUtilizationLimit(0.95);
     OptimizationObjective objA =
         new OptimizationObjective("throughput", proc -> feedA.getFlowRate("kg/hr"), 1.0);
     OptimizationObjective objB =
