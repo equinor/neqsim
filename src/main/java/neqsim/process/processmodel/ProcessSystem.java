@@ -7333,8 +7333,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   com.google.gson.JsonArray buildUtilizationUnitsJson(String areaLabel) {
     com.google.gson.JsonArray unitsArr = new com.google.gson.JsonArray();
-    for (ProcessEquipmentInterface unit : unitOperations) {
-      com.google.gson.JsonObject u = new com.google.gson.JsonObject();
+    for (ProcessEquipmentInterface unit : getUnitOperations()) {
       if (areaLabel != null) {
         u.addProperty("area", areaLabel);
       }
