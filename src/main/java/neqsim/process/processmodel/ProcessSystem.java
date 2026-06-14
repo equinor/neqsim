@@ -7316,7 +7316,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Builds a stable, machine-readable utilization observation for this process system as a
-   * {@link com.google.gson.JsonObject}.
+   * {@link com.google.gson.JsonArray}.
    *
    * <p>
    * The snapshot is <b>side-effect free</b> &mdash; it does not call {@link #run()} and only reads
