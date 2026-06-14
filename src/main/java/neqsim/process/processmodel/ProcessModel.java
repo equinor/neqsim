@@ -3918,10 +3918,10 @@ public class ProcessModel implements Runnable, Serializable {
    *
    * @return list of capacity-constrained equipment aggregated across all areas
    */
-  public java.util.List<neqsim.process.equipment.capacity.CapacityConstrainedEquipment>
-      getConstrainedEquipment() {
+  public java.util.List<neqsim.process.equipment.capacity.CapacityConstrainedEquipment> getConstrainedEquipment() {
     java.util.List<neqsim.process.equipment.capacity.CapacityConstrainedEquipment> result =
         new java.util.ArrayList<neqsim.process.equipment.capacity.CapacityConstrainedEquipment>();
+    for (ProcessSystem processSystem : processes.values()) {
       result.addAll(processSystem.getConstrainedEquipment());
     }
     return result;
