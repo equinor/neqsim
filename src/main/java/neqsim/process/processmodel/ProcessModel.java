@@ -1115,6 +1115,62 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Total mechanical power consumed by every compressor and pump in every process area.
+   *
+   * @param unit power unit of the returned value (W, kW or MW)
+   * @return total shaft power in the requested unit, summed over all areas
+   */
+  public double getPower(String unit) {
+    double power = 0.0;
+    for (ProcessSystem ps : processes.values()) {
+      power += ps.getPower(unit);
+    }
+    return power;
+  }
+
+  /**
+   * Total cooling duty of every cooler in every process area.
+   *
+   * @param unit power unit of the returned value (W, kW or MW)
+   * @return total cooler duty in the requested unit, summed over all areas
+   */
+  public double getCoolerDuty(String unit) {
+    double duty = 0.0;
+    for (ProcessSystem ps : processes.values()) {
+      duty += ps.getCoolerDuty(unit);
+    }
+    return duty;
+  }
+
+  /**
+   * Total heating duty of every heater in every process area.
+   *
+   * @param unit power unit of the returned value (W, kW or MW)
+   * @return total heater duty in the requested unit, summed over all areas
+   */
+  public double getHeaterDuty(String unit) {
+    double duty = 0.0;
+    for (ProcessSystem ps : processes.values()) {
+      duty += ps.getHeaterDuty(unit);
+    }
+    return duty;
+  }
+
+  /**
+   * Total entropy production aggregated over every unit operation in every process area.
+   *
+   * @param unit entropy-rate unit of the returned value (e.g. "J/K")
+   * @return total entropy production in the requested unit, summed over all areas
+   */
+  public double getEntropyProduction(String unit) {
+    double entropyProduction = 0.0;
+    for (ProcessSystem ps : processes.values()) {
+      entropyProduction += ps.getEntropyProduction(unit);
+    }
+    return entropyProduction;
+  }
+
+  /**
    * Build a structured {@link neqsim.process.util.exergy.ExergyAnalysisReport} covering every unit
    * operation in every process area, with each entry tagged by its area name. The surrounding
    * temperature of the report is taken from the first registered area (or 288.15 K if the model is
