@@ -4054,6 +4054,55 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Returns a stable, side-effect-free JSON utilization snapshot of every unit across all process
+   * areas in this plant.
+   *
+   * <p>
+   * This is the multi-area counterpart of {@link ProcessSystem#getUtilizationSnapshotJson()} and
+   * the recommended observation endpoint for machine-learning / reinforcement-learning optimization
+   * loops on a full plant. Each unit entry carries an {@code "area"} property, and the plant-wide
+   * {@code bottleneck}, {@code anyOverloaded}, and {@code anyHardLimitExceeded} flags summarise the
+   * whole model. Schema is versioned by {@code schemaVersion} ("1.0").
+   * </p>
+   *
+   * <p>
+   * The method does <b>not</b> run the model; call {@link #run()} (or
+   * {@link neqsim.process.automation.ProcessAutomation#evaluate}) first so the reported utilization
+   * reflects the latest setpoints.
+   * </p>
+   *
+   * @return JSON string {@code {schemaVersion, name, units:[...], bottleneck:{...}, anyOverloaded,
+   *         anyHardLimitExceeded}}
+   */
+  public String getUtilizationSnapshotJson() {
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", "1.0");
+    com.google.gson.JsonArray unitsArr = new com.google.gson.JsonArray();
+    for (java.util.Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      String areaName = entry.getKey();
+      unitsArr.addAll(entry.getValue().buildUtilizationUnitsJson(areaName));
+    }
+    root.add("units", unitsArr);
+
+    neqsim.process.equipment.capacity.BottleneckResult bottleneck = findBottleneck();
+    if (bottleneck != null && bottleneck.getEquipment() != null) {
+      com.google.gson.JsonObject bn = new com.google.gson.JsonObject();
+      bn.addProperty("name", bottleneck.getEquipment().getName());
+      bn.addProperty("utilization", bottleneck.getUtilization());
+      bn.addProperty("utilizationPercent", bottleneck.getUtilization() * 100.0);
+      if (bottleneck.getConstraint() != null) {
+        bn.addProperty("limitingConstraint", bottleneck.getConstraint().getName());
+      }
+      root.add("bottleneck", bn);
+    } else {
+      root.add("bottleneck", com.google.gson.JsonNull.INSTANCE);
+    }
+    root.addProperty("anyOverloaded", isAnyEquipmentOverloaded());
+    root.addProperty("anyHardLimitExceeded", isAnyHardLimitExceeded());
+    return root.toString();
+  }
+
+  /**
    * Disables all capacity constraints on all equipment in every area (what-if analysis).
    *
    * <p>

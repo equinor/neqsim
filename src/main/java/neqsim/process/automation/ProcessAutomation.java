@@ -2775,6 +2775,37 @@ public class ProcessAutomation {
   }
 
   /**
+   * Returns a stable, side-effect-free JSON utilization snapshot of every unit in the flowsheet.
+   *
+   * <p>
+   * This is the recommended observation endpoint for machine-learning / reinforcement-learning
+   * optimization loops. Whereas {@link #snapshot(String)} reports raw process variables, this
+   * method reports capacity <i>utilization</i> &mdash; for every unit the maximum constraint
+   * utilization, the limiting constraint, a per-constraint breakdown, feasibility, and (for
+   * compressors and pumps) shaft power, plus the plant-wide {@code bottleneck} and
+   * {@code anyOverloaded} flags. Pair it with
+   * {@link #evaluate(java.util.Map, String, java.util.List, String, int, double) evaluate(...)}
+   * (action + reward) to close an optimization loop: {@code evaluate} applies setpoints and runs
+   * the model; {@code getUtilizationSnapshot} reads back the resulting capacity observation.
+   * </p>
+   *
+   * <p>
+   * The method does <b>not</b> run the model; call {@link #evaluate} or {@link #run()} first so the
+   * reported utilization reflects the latest setpoints. For a multi-area model each unit entry
+   * carries an {@code "area"} property.
+   * </p>
+   *
+   * @return JSON string {@code {schemaVersion, units:[...], bottleneck:{...}, anyOverloaded,
+   *         anyHardLimitExceeded}}
+   */
+  public String getUtilizationSnapshot() {
+    if (processModel != null) {
+      return processModel.getUtilizationSnapshotJson();
+    }
+    return processSystem.getUtilizationSnapshotJson();
+  }
+
+  /**
    * Resolves a snapshot scope string to a list of (possibly area-qualified) unit names.
    *
    * @param scope unit, area, area::unit, "*", or null

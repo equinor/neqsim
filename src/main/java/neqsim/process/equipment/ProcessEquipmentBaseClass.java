@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -793,6 +794,53 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     if (constraint != null) {
       capacityConstraints.put(constraint.getName(), constraint);
     }
+  }
+
+  /**
+   * Derives capacity constraints from this equipment's mechanical-design limits and registers them
+   * for capacity/utilization analysis.
+   *
+   * <p>
+   * This is the opt-in bridge that makes the limits configured on the equipment's
+   * {@link neqsim.process.mechanicaldesign.MechanicalDesign} (for example
+   * {@code getMechanicalDesign().setMaxDesignPower(kW)} or {@code setMaxDesignVolumeFlow(...)})
+   * surface in {@link #getMaxUtilization()}, {@link #getBottleneckConstraint()} and the utilization
+   * snapshot. Call it after the design limits have been set and after the process has run, since
+   * the derived metrics depend on live stream conditions.
+   * </p>
+   *
+   * <p>
+   * The constraints are added through the polymorphic
+   * {@link #addCapacityConstraint(CapacityConstraint)} method so they are registered in the correct
+   * constraint map even for equipment types (such as heat exchangers, valves and compressors) that
+   * maintain their own capacity-constraint storage. The derived constraints use stable names (for
+   * example {@code "design pressure drop"}), so the method is idempotent: re-invoking it overwrites
+   * the previous values rather than creating duplicates. Call it again whenever design limits or
+   * operating conditions change. It never throws — failures to read the mechanical design are
+   * treated as "no derived constraints".
+   * </p>
+   *
+   * @return the number of mechanical-design-derived constraints that were registered
+   */
+  public int applyMechanicalDesignCapacityConstraints() {
+    int added = 0;
+    try {
+      MechanicalDesign design = getMechanicalDesign();
+      if (design != null) {
+        List<CapacityConstraint> derived = design.getDesignCapacityConstraints();
+        if (derived != null) {
+          for (CapacityConstraint constraint : derived) {
+            if (constraint != null) {
+              addCapacityConstraint(constraint);
+              added++;
+            }
+          }
+        }
+      }
+    } catch (RuntimeException ex) {
+      logger.debug("Could not derive mechanical-design capacity constraints", ex);
+    }
+    return added;
   }
 
   /** {@inheritDoc} */

@@ -7314,6 +7314,178 @@ public class ProcessSystem extends SimulationBaseClass {
     return totalCount;
   }
 
+  /**
+   * Builds a stable, machine-readable utilization observation for this process system as a
+   * {@link com.google.gson.JsonObject}.
+   *
+   * <p>
+   * The snapshot is <b>side-effect free</b> &mdash; it does not call {@link #run()} and only reads
+   * already-computed capacity utilization from each unit's
+   * {@link neqsim.process.equipment.capacity.CapacityConstraint constraints}. It is intended as the
+   * observation vector for machine-learning / reinforcement-learning optimization loops, paired
+   * with {@link neqsim.process.automation.ProcessAutomation#evaluate} (action + reward). Units are
+   * emitted in insertion order so the observation vector is deterministic across calls.
+   * </p>
+   *
+   * @param areaLabel optional area name to attach to each unit (use {@code null} for a single,
+   *        non-area-qualified process system)
+   * @return a JSON array of per-unit utilization objects
+   */
+  com.google.gson.JsonArray buildUtilizationUnitsJson(String areaLabel) {
+    com.google.gson.JsonArray unitsArr = new com.google.gson.JsonArray();
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      com.google.gson.JsonObject u = new com.google.gson.JsonObject();
+      if (areaLabel != null) {
+        u.addProperty("area", areaLabel);
+      }
+      u.addProperty("name", unit.getName());
+      u.addProperty("type", unit.getClass().getSimpleName());
+
+      boolean analysisEnabled = !(unit instanceof ProcessEquipmentBaseClass)
+          || ((ProcessEquipmentBaseClass) unit).isCapacityAnalysisEnabled();
+      u.addProperty("capacityAnalysisEnabled", analysisEnabled);
+
+      double maxUtil = 0.0;
+      String limitingConstraint = null;
+      boolean feasible = true;
+      boolean hardLimitExceeded = false;
+      com.google.gson.JsonArray constraintsArr = new com.google.gson.JsonArray();
+      if (analysisEnabled) {
+        try {
+          maxUtil = unit.getMaxUtilization();
+        } catch (Exception e) {
+          maxUtil = 0.0;
+        }
+        try {
+          neqsim.process.equipment.capacity.CapacityConstraint bottleneck =
+              unit.getBottleneckConstraint();
+          if (bottleneck != null) {
+            limitingConstraint = bottleneck.getName();
+          }
+        } catch (Exception e) {
+          // no limiting constraint available
+        }
+        try {
+          feasible = !unit.isCapacityExceeded();
+        } catch (Exception e) {
+          feasible = true;
+        }
+        try {
+          hardLimitExceeded = unit.isHardLimitExceeded();
+        } catch (Exception e) {
+          hardLimitExceeded = false;
+        }
+        try {
+          for (neqsim.process.equipment.capacity.CapacityConstraint c : unit
+              .getCapacityConstraints().values()) {
+            com.google.gson.JsonObject co = new com.google.gson.JsonObject();
+            co.addProperty("name", c.getName());
+            double cu = c.getUtilization();
+            co.addProperty("utilization", cu);
+            co.addProperty("utilizationPercent", cu * 100.0);
+            co.addProperty("current", c.getCurrentValue());
+            co.addProperty("design", c.getDisplayDesignValue());
+            if (c.getUnit() != null) {
+              co.addProperty("unit", c.getUnit());
+            }
+            co.addProperty("enabled", c.isEnabled());
+            co.addProperty("violated", c.isViolated());
+            constraintsArr.add(co);
+          }
+        } catch (Exception e) {
+          // skip constraint detail on failure
+        }
+      }
+
+      u.addProperty("maxUtilization", Double.isNaN(maxUtil) ? 0.0 : maxUtil);
+      u.addProperty("maxUtilizationPercent", Double.isNaN(maxUtil) ? 0.0 : maxUtil * 100.0);
+      if (limitingConstraint != null) {
+        u.addProperty("limitingConstraint", limitingConstraint);
+      } else {
+        u.add("limitingConstraint", com.google.gson.JsonNull.INSTANCE);
+      }
+      u.addProperty("feasible", feasible);
+      u.addProperty("hardLimitExceeded", hardLimitExceeded);
+
+      Double powerKw = readPowerKwSafe(unit);
+      if (powerKw != null) {
+        u.addProperty("power_kW", powerKw.doubleValue());
+      }
+      u.add("constraints", constraintsArr);
+      unitsArr.add(u);
+    }
+    return unitsArr;
+  }
+
+  /**
+   * Reads the shaft power of a unit in kW without throwing, returning {@code null} when the unit
+   * has no meaningful power reading.
+   *
+   * @param unit the equipment to read power from
+   * @return power in kW, or {@code null} if not applicable / unavailable
+   */
+  private Double readPowerKwSafe(ProcessEquipmentInterface unit) {
+    try {
+      if (unit instanceof neqsim.process.equipment.compressor.Compressor) {
+        return Double
+            .valueOf(((neqsim.process.equipment.compressor.Compressor) unit).getPower("kW"));
+      }
+      if (unit instanceof neqsim.process.equipment.pump.Pump) {
+        return Double.valueOf(((neqsim.process.equipment.pump.Pump) unit).getPower("kW"));
+      }
+    } catch (Exception e) {
+      return null;
+    }
+    return null;
+  }
+
+  /**
+   * Returns a stable, side-effect-free JSON utilization snapshot of every unit in this process
+   * system.
+   *
+   * <p>
+   * This is the recommended observation endpoint for machine-learning / reinforcement-learning
+   * optimization loops. It reports, for every unit, the maximum capacity utilization, the limiting
+   * constraint name, a per-constraint breakdown, feasibility, and (for compressors and pumps) the
+   * shaft power. The process-wide {@code bottleneck} and {@code anyOverloaded} flags summarise the
+   * whole flowsheet. Schema is versioned by {@code schemaVersion} ("1.0").
+   * </p>
+   *
+   * <p>
+   * The method does <b>not</b> run the flowsheet; call {@link #run()} (or
+   * {@link neqsim.process.automation.ProcessAutomation#evaluate}) first so the reported utilization
+   * reflects the latest setpoints.
+   * </p>
+   *
+   * @return JSON string {@code {schemaVersion, name, units:[...], bottleneck:{...}, anyOverloaded,
+   *         anyHardLimitExceeded}}
+   */
+  public String getUtilizationSnapshotJson() {
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", "1.0");
+    if (getName() != null) {
+      root.addProperty("name", getName());
+    }
+    root.add("units", buildUtilizationUnitsJson(null));
+
+    neqsim.process.equipment.capacity.BottleneckResult bottleneck = findBottleneck();
+    com.google.gson.JsonObject bn = new com.google.gson.JsonObject();
+    if (bottleneck != null && bottleneck.getEquipment() != null) {
+      bn.addProperty("name", bottleneck.getEquipment().getName());
+      bn.addProperty("utilization", bottleneck.getUtilization());
+      bn.addProperty("utilizationPercent", bottleneck.getUtilization() * 100.0);
+      if (bottleneck.getConstraint() != null) {
+        bn.addProperty("limitingConstraint", bottleneck.getConstraint().getName());
+      }
+      root.add("bottleneck", bn);
+    } else {
+      root.add("bottleneck", com.google.gson.JsonNull.INSTANCE);
+    }
+    root.addProperty("anyOverloaded", isAnyEquipmentOverloaded());
+    root.addProperty("anyHardLimitExceeded", isAnyHardLimitExceeded());
+    return root.toString();
+  }
+
   // ==========================================================================
   // AUTO-SIZING METHODS
   // ==========================================================================

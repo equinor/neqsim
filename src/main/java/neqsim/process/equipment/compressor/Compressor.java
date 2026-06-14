@@ -2462,28 +2462,73 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * <p>
    * Keys carry their unit in the name (for example {@code flow_m3hr}, {@code head_kJkg},
    * {@code power_MW}). Values that cannot be evaluated are returned as {@link Double#NaN}. When no
-   * compressor chart is in use the chart-related fields are still present:
-   * {@code chartActive} is {@code false}, {@code withinChart} is {@code true} (no map limit to
-   * violate) and {@code limitingConstraint} is {@code "no_chart"}.
+   * compressor chart is in use the chart-related fields are still present: {@code chartActive} is
+   * {@code false}, {@code withinChart} is {@code true} (no map limit to violate) and
+   * {@code limitingConstraint} is {@code "no_chart"}.
    * </p>
    *
    * <table>
    * <caption>Operating-point keys</caption>
-   * <tr><th>Key</th><th>Meaning</th></tr>
-   * <tr><td>flow_m3hr</td><td>Actual inlet volumetric flow rate</td></tr>
-   * <tr><td>head_kJkg</td><td>Polytropic fluid head</td></tr>
-   * <tr><td>speed_rpm</td><td>Shaft speed</td></tr>
-   * <tr><td>polytropicEfficiency</td><td>Polytropic efficiency (fraction)</td></tr>
-   * <tr><td>power_MW / power_kW</td><td>Shaft power</td></tr>
-   * <tr><td>outletPressure_bara</td><td>Discharge pressure</td></tr>
-   * <tr><td>outletTemperature_C</td><td>Discharge temperature</td></tr>
-   * <tr><td>distanceToSurge</td><td>(flow/surgeFlow - 1); negative means in surge</td></tr>
-   * <tr><td>distanceToStoneWall</td><td>(stoneWallFlow/flow - 1); negative means choked</td></tr>
-   * <tr><td>surgeFlowRate_m3hr</td><td>Surge flow at current head</td></tr>
-   * <tr><td>surgeFlowRateMargin_m3hr</td><td>flow - surgeFlow</td></tr>
-   * <tr><td>chartActive</td><td>Whether a compressor chart is in use</td></tr>
-   * <tr><td>withinChart</td><td>True when not in surge and not in stone wall</td></tr>
-   * <tr><td>limitingConstraint</td><td>"surge", "stonewall", "none" or "no_chart"</td></tr>
+   * <tr>
+   * <th>Key</th>
+   * <th>Meaning</th>
+   * </tr>
+   * <tr>
+   * <td>flow_m3hr</td>
+   * <td>Actual inlet volumetric flow rate</td>
+   * </tr>
+   * <tr>
+   * <td>head_kJkg</td>
+   * <td>Polytropic fluid head</td>
+   * </tr>
+   * <tr>
+   * <td>speed_rpm</td>
+   * <td>Shaft speed</td>
+   * </tr>
+   * <tr>
+   * <td>polytropicEfficiency</td>
+   * <td>Polytropic efficiency (fraction)</td>
+   * </tr>
+   * <tr>
+   * <td>power_MW / power_kW</td>
+   * <td>Shaft power</td>
+   * </tr>
+   * <tr>
+   * <td>outletPressure_bara</td>
+   * <td>Discharge pressure</td>
+   * </tr>
+   * <tr>
+   * <td>outletTemperature_C</td>
+   * <td>Discharge temperature</td>
+   * </tr>
+   * <tr>
+   * <td>distanceToSurge</td>
+   * <td>(flow/surgeFlow - 1); negative means in surge</td>
+   * </tr>
+   * <tr>
+   * <td>distanceToStoneWall</td>
+   * <td>(stoneWallFlow/flow - 1); negative means choked</td>
+   * </tr>
+   * <tr>
+   * <td>surgeFlowRate_m3hr</td>
+   * <td>Surge flow at current head</td>
+   * </tr>
+   * <tr>
+   * <td>surgeFlowRateMargin_m3hr</td>
+   * <td>flow - surgeFlow</td>
+   * </tr>
+   * <tr>
+   * <td>chartActive</td>
+   * <td>Whether a compressor chart is in use</td>
+   * </tr>
+   * <tr>
+   * <td>withinChart</td>
+   * <td>True when not in surge and not in stone wall</td>
+   * </tr>
+   * <tr>
+   * <td>limitingConstraint</td>
+   * <td>"surge", "stonewall", "none" or "no_chart"</td>
+   * </tr>
    * </table>
    *
    * @return an ordered map describing the operating point (never {@code null})
@@ -2503,8 +2548,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     point.put("outletPressure_bara", safeDouble(this::getOutletPressure));
     point.put("outletTemperature_C", safeDouble(() -> getOutTemperature() - 273.15));
 
-    boolean chartActive = safeBoolean(() -> getCompressorChart() != null
-        && getCompressorChart().isUseCompressorChart());
+    boolean chartActive = safeBoolean(
+        () -> getCompressorChart() != null && getCompressorChart().isUseCompressorChart());
     point.put("chartActive", chartActive);
 
     double distanceToSurge = safeDouble(this::getDistanceToSurge);
@@ -4538,7 +4583,15 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     // max
     double effectiveMaxSpeed = maxspeed;
     double effectiveMinSpeed = minspeed;
-    if (getCompressorChart() != null && getCompressorChart().isUseCompressorChart()) {
+    // Speed, surge and stonewall constraints are only physically meaningful when a compressor
+    // performance chart is active. Without a chart the compressor runs on a fixed
+    // outlet-pressure/polytropic-efficiency model where speed is not used and surge/stonewall
+    // distances are undefined (getDistanceToSurge() returns +Infinity, pinning utilization at a
+    // degenerate flat 100%). Gate those constraints on chart availability so the utilization
+    // observation stays smooth and power-driven for chartless compressors.
+    final boolean chartActive =
+        getCompressorChart() != null && getCompressorChart().isUseCompressorChart();
+    if (chartActive) {
       double curveMaxSpeed = getCompressorChart().getMaxSpeedCurve();
       double curveMinSpeed = getCompressorChart().getMinSpeedCurve();
       if (!Double.isNaN(curveMaxSpeed) && curveMaxSpeed > 0) {
@@ -4565,7 +4618,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     final double maxSpeedLimit = effectiveMaxSpeed;
     addCapacityConstraint(StandardConstraintType.COMPRESSOR_SPEED.createConstraint()
         .setDesignValue(maxSpeedLimit).setMaxValue(maxSpeedLimit).setWarningThreshold(0.9)
-        .setValueSupplier(() -> this.speed));
+        .setValueSupplier(() -> this.speed).setEnabled(chartActive));
 
     // Min speed constraint (from curve minimum)
     // This constraint tracks if the compressor speed is above the minimum allowable
@@ -4578,7 +4631,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       addCapacityConstraint(StandardConstraintType.COMPRESSOR_MIN_SPEED.createConstraint()
           .setDesignValue(Double.MAX_VALUE) // MAX_VALUE signals this is a min constraint
           .setMinValue(minSpeedLimit).setWarningThreshold(0.95) // Warning when within 5% of minimum
-          .setValueSupplier(() -> this.speed));
+          .setValueSupplier(() -> this.speed).setEnabled(chartActive));
     }
 
     // Power constraint - dynamically evaluates against speed-dependent max power
@@ -4658,7 +4711,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           // Convert ratio to utilization: utilization = 1 / (1 + marginRatio)
           // e.g., margin=0.5 -> utilization = 1/1.5 = 66.7%
           return 100.0 / (1.0 + marginRatio);
-        }));
+        }).setEnabled(chartActive));
 
     // Stonewall margin constraint
     // getDistanceToStoneWall() returns a ratio: (stoneWallFlow / currentFlow) - 1
@@ -4673,7 +4726,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           }
           // Convert ratio to utilization: utilization = 1 / (1 + marginRatio)
           return 100.0 / (1.0 + marginRatio);
-        }));
+        }).setEnabled(chartActive));
 
     // Discharge temperature constraint
     // Track actual discharge temperature vs maximum allowable
@@ -4731,6 +4784,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     CapacityConstraint bottleneck = null;
     double maxUtil = 0.0;
     for (CapacityConstraint constraint : capacityConstraints.values()) {
+      if (!constraint.isEnabled()) {
+        continue;
+      }
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
         maxUtil = util;
@@ -4745,7 +4801,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   public boolean isCapacityExceeded() {
     ensureCapacityConstraintsInitialized();
     for (CapacityConstraint constraint : capacityConstraints.values()) {
-      if (constraint.isViolated()) {
+      if (constraint.isEnabled() && constraint.isViolated()) {
         return true;
       }
     }
@@ -4757,7 +4813,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   public boolean isHardLimitExceeded() {
     ensureCapacityConstraintsInitialized();
     for (CapacityConstraint constraint : capacityConstraints.values()) {
-      if (constraint.isHardLimitExceeded()) {
+      if (constraint.isEnabled() && constraint.isHardLimitExceeded()) {
         return true;
       }
     }

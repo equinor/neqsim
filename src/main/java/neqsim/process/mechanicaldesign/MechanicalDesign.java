@@ -5,14 +5,19 @@ import java.awt.Container;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.DoubleSupplier;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import neqsim.process.costestimation.UnitCostEstimateBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.data.DatabaseMechanicalDesignDataSource;
 import neqsim.process.mechanicaldesign.data.MechanicalDesignDataSource;
 import neqsim.process.mechanicaldesign.designstandards.AdsorptionDehydrationDesignStandard;
@@ -205,6 +210,336 @@ public class MechanicalDesign implements java.io.Serializable {
    */
   public double getMaxDesignPressureDrop() {
     return maxDesignPressureDrop;
+  }
+
+  // ============================================================
+  // Design-limit utilization (universal "via mechanical design")
+  // ============================================================
+
+  /**
+   * Builds capacity constraints from the mechanical-design limits that have been explicitly set on
+   * this design.
+   *
+   * <p>
+   * A constraint is created for every {@code maxDesign*} limit that has been set to a positive
+   * value <em>and</em> for which a finite current operating value is currently available. Each
+   * constraint uses {@code dataSource = "mechanicalDesign"}, constraint type
+   * {@link CapacityConstraint.ConstraintType#DESIGN}, a warning threshold of 0.9, and a live value
+   * supplier so the utilization tracks the simulation. This is the single, equipment-agnostic place
+   * that maps mechanical-design limits to capacity utilization.
+   * </p>
+   *
+   * <p>
+   * The following metrics are derived universally from the attached equipment's inlet/outlet
+   * streams and therefore work for every equipment type:
+   * </p>
+   * <ul>
+   * <li>total inlet volumetric flow vs {@code maxDesignVolumeFlow} (actual m3/hr)</li>
+   * <li>pressure drop |Pin - Pout| vs {@code maxDesignPressureDrop} (bara)</li>
+   * </ul>
+   *
+   * <p>
+   * The remaining metrics (phase volumetric flows, power, duty, Cv, velocity) are read through the
+   * protected {@code getOperating*} hooks. These return {@link Double#NaN} by default and are
+   * overridden by equipment-specific mechanical-design subclasses (e.g. compressor power, pipe
+   * velocity) so that the matching unit convention is used.
+   * </p>
+   *
+   * @return a list of capacity constraints (possibly empty, never {@code null})
+   */
+  public List<CapacityConstraint> getDesignCapacityConstraints() {
+    List<CapacityConstraint> constraints = new ArrayList<CapacityConstraint>();
+    addDesignConstraint(constraints, "design volume flow", "m3/hr", maxDesignVolumeFlow,
+        getOperatingVolumeFlow(), new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getOperatingVolumeFlow();
+          }
+        });
+    addDesignConstraint(constraints, "design gas volume flow", "m3/hr", maxDesignGassVolumeFlow,
+        getOperatingGasVolumeFlow(), new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getOperatingGasVolumeFlow();
+          }
+        });
+    addDesignConstraint(constraints, "design oil volume flow", "m3/hr", maxDesignOilVolumeFlow,
+        getOperatingOilVolumeFlow(), new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getOperatingOilVolumeFlow();
+          }
+        });
+    addDesignConstraint(constraints, "design water volume flow", "m3/hr", maxDesignWaterVolumeFlow,
+        getOperatingWaterVolumeFlow(), new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getOperatingWaterVolumeFlow();
+          }
+        });
+    addDesignConstraint(constraints, "design power", "kW", maxDesignPower, getOperatingPower(),
+        new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getOperatingPower();
+          }
+        });
+    addDesignConstraint(constraints, "design duty", "kW", maxDesignDuty, getOperatingDuty(),
+        new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getOperatingDuty();
+          }
+        });
+    addDesignConstraint(constraints, "design Cv", "", maxDesignCv, getOperatingCv(),
+        new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getOperatingCv();
+          }
+        });
+    addDesignConstraint(constraints, "design velocity", "m/s", maxDesignVelocity,
+        getOperatingVelocity(), new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getOperatingVelocity();
+          }
+        });
+    addDesignConstraint(constraints, "design pressure drop", "bara", maxDesignPressureDrop,
+        getOperatingPressureDrop(), new DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getOperatingPressureDrop();
+          }
+        });
+    return constraints;
+  }
+
+  /**
+   * Adds a single design-derived capacity constraint when the limit is set and the current value is
+   * finite.
+   *
+   * @param constraints the list to add to
+   * @param name the constraint name (e.g. "design power")
+   * @param unit the unit of measurement (e.g. "kW")
+   * @param designLimit the design limit value; only used when greater than zero
+   * @param currentValue the current operating value evaluated once for the set/finite check
+   * @param supplier a live supplier used to track the current value during simulation
+   */
+  private void addDesignConstraint(List<CapacityConstraint> constraints, String name, String unit,
+      double designLimit, double currentValue, DoubleSupplier supplier) {
+    if (designLimit > 0.0 && !Double.isNaN(currentValue)) {
+      CapacityConstraint constraint =
+          new CapacityConstraint(name, unit, CapacityConstraint.ConstraintType.DESIGN)
+              .setDesignValue(designLimit).setWarningThreshold(0.9)
+              .setDataSource("mechanicalDesign")
+              .setDescription("Derived from mechanical design limit").setValueSupplier(supplier)
+              .setCurrentValue(currentValue);
+      constraint.setEnabled(true);
+      constraints.add(constraint);
+    }
+  }
+
+  /**
+   * Computes equipment utilization from the explicitly set mechanical-design limits.
+   *
+   * <p>
+   * Utilization is the current operating value divided by the design limit (1.0 == 100% of design).
+   * Only metrics with a positive design limit and a finite current operating value are returned.
+   * See {@link #getDesignCapacityConstraints()} for the set of supported metrics.
+   * </p>
+   *
+   * @return a map from metric name to utilization fraction (possibly empty, never {@code null})
+   */
+  public Map<String, Double> getDesignUtilization() {
+    Map<String, Double> utilization = new LinkedHashMap<String, Double>();
+    for (CapacityConstraint constraint : getDesignCapacityConstraints()) {
+      double value = constraint.getUtilization();
+      if (!Double.isNaN(value)) {
+        utilization.put(constraint.getName(), value);
+      }
+    }
+    return utilization;
+  }
+
+  /**
+   * Returns the highest utilization across all mechanical-design-derived metrics.
+   *
+   * @return the maximum utilization fraction (1.0 == 100% of design), or 0.0 when no design limit
+   *         is set or no operating value is available
+   */
+  public double getMaxDesignUtilization() {
+    double max = 0.0;
+    for (Double value : getDesignUtilization().values()) {
+      if (value != null && !Double.isNaN(value) && value > max) {
+        max = value;
+      }
+    }
+    return max;
+  }
+
+  /**
+   * Returns the pressure drop across the attached equipment in bara.
+   *
+   * <p>
+   * Computed universally as |Pin - Pout| from the first inlet and first outlet stream. Returns
+   * {@link Double#NaN} when the equipment, an inlet, or an outlet stream is unavailable.
+   * </p>
+   *
+   * @return pressure drop in bara, or {@link Double#NaN} if it cannot be determined
+   */
+  protected double getOperatingPressureDrop() {
+    if (processEquipment == null) {
+      return Double.NaN;
+    }
+    try {
+      List<StreamInterface> inlets = processEquipment.getInletStreams();
+      List<StreamInterface> outlets = processEquipment.getOutletStreams();
+      if (inlets.isEmpty() || outlets.isEmpty()) {
+        return Double.NaN;
+      }
+      double pin = inlets.get(0).getPressure("bara");
+      double pout = outlets.get(0).getPressure("bara");
+      if (Double.isNaN(pin) || Double.isNaN(pout)) {
+        return Double.NaN;
+      }
+      return Math.abs(pin - pout);
+    } catch (RuntimeException ex) {
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Returns the total actual inlet volumetric flow in m3/hr.
+   *
+   * <p>
+   * Computed universally as the sum of the actual volumetric flow of all inlet streams. Returns
+   * {@link Double#NaN} when the equipment has no inlet streams or the flow cannot be determined.
+   * </p>
+   *
+   * @return total inlet volumetric flow in m3/hr, or {@link Double#NaN} if it cannot be determined
+   */
+  protected double getOperatingVolumeFlow() {
+    if (processEquipment == null) {
+      return Double.NaN;
+    }
+    try {
+      List<StreamInterface> inlets = processEquipment.getInletStreams();
+      if (inlets.isEmpty()) {
+        return Double.NaN;
+      }
+      double total = 0.0;
+      boolean any = false;
+      for (StreamInterface stream : inlets) {
+        double flow = stream.getFlowRate("m3/hr");
+        if (!Double.isNaN(flow)) {
+          total += flow;
+          any = true;
+        }
+      }
+      return any ? total : Double.NaN;
+    } catch (RuntimeException ex) {
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Returns the actual gas-phase volumetric flow in m3/hr.
+   *
+   * <p>
+   * Default implementation returns {@link Double#NaN}. Equipment-specific mechanical-design
+   * subclasses (e.g. separators) override this to supply the gas volumetric flow in the unit that
+   * matches {@code maxDesignGassVolumeFlow}.
+   * </p>
+   *
+   * @return gas volumetric flow in m3/hr, or {@link Double#NaN} if not applicable
+   */
+  protected double getOperatingGasVolumeFlow() {
+    return Double.NaN;
+  }
+
+  /**
+   * Returns the actual oil-phase volumetric flow in m3/hr.
+   *
+   * <p>
+   * Default implementation returns {@link Double#NaN}. Override in equipment-specific subclasses.
+   * </p>
+   *
+   * @return oil volumetric flow in m3/hr, or {@link Double#NaN} if not applicable
+   */
+  protected double getOperatingOilVolumeFlow() {
+    return Double.NaN;
+  }
+
+  /**
+   * Returns the actual water-phase volumetric flow in m3/hr.
+   *
+   * <p>
+   * Default implementation returns {@link Double#NaN}. Override in equipment-specific subclasses.
+   * </p>
+   *
+   * @return water volumetric flow in m3/hr, or {@link Double#NaN} if not applicable
+   */
+  protected double getOperatingWaterVolumeFlow() {
+    return Double.NaN;
+  }
+
+  /**
+   * Returns the operating shaft power in kW.
+   *
+   * <p>
+   * Default implementation returns {@link Double#NaN}. Equipment-specific mechanical-design
+   * subclasses for rotating equipment (compressors, pumps, expanders) override this to supply the
+   * operating power.
+   * </p>
+   *
+   * @return operating power in kW, or {@link Double#NaN} if not applicable
+   */
+  protected double getOperatingPower() {
+    return Double.NaN;
+  }
+
+  /**
+   * Returns the operating thermal duty in kW.
+   *
+   * <p>
+   * Default implementation returns {@link Double#NaN}. Equipment-specific mechanical-design
+   * subclasses for thermal equipment (heaters, coolers, heat exchangers) override this to supply
+   * the operating duty.
+   * </p>
+   *
+   * @return operating duty in kW, or {@link Double#NaN} if not applicable
+   */
+  protected double getOperatingDuty() {
+    return Double.NaN;
+  }
+
+  /**
+   * Returns the operating valve flow coefficient (Cv).
+   *
+   * <p>
+   * Default implementation returns {@link Double#NaN}. Valve mechanical-design subclasses override
+   * this to supply the operating Cv.
+   * </p>
+   *
+   * @return operating Cv, or {@link Double#NaN} if not applicable
+   */
+  protected double getOperatingCv() {
+    return Double.NaN;
+  }
+
+  /**
+   * Returns the operating fluid velocity in m/s.
+   *
+   * <p>
+   * Default implementation returns {@link Double#NaN}. Pipe and pipeline mechanical-design
+   * subclasses override this to supply the operating velocity.
+   * </p>
+   *
+   * @return operating velocity in m/s, or {@link Double#NaN} if not applicable
+   */
+  protected double getOperatingVelocity() {
+    return Double.NaN;
   }
 
   private String companySpecificDesignStandards = "Statoil";

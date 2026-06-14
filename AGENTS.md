@@ -638,6 +638,48 @@ on failure. Default tolerance `5e-3` is robust for plants with near-zero-flow an
 (strict `1e-4` rarely converges there). Pair with `getAdjustableParameters()` to enumerate the
 bounded decision space the agent may perturb.
 
+### Capacity observation snapshot: `getUtilizationSnapshot()` (the observation vector)
+
+`evaluate()` is the **action + reward** step; `getUtilizationSnapshot()` is the matching
+**observation** step. Both `ProcessSystem` and `ProcessModel` expose
+`getUtilizationSnapshotJson()`, and `ProcessAutomation.getUtilizationSnapshot()` delegates to
+whichever it wraps. The snapshot is **side-effect-free** — it never calls `run()`, only reads the
+capacity utilization already computed by each unit's `CapacityConstraint`s. Units are emitted in
+insertion order so the observation vector is deterministic across calls.
+
+```java
+ProcessAutomation auto = plant.getAutomation();
+plant.run();                                   // (or auto.evaluate(...)) — snapshot reflects last solve
+String json = auto.getUtilizationSnapshot();
+// {"schemaVersion":"1.0",
+//  "units":[{"area":"Compression","name":"Export Compressor","type":"Compressor",
+//            "capacityAnalysisEnabled":true,"maxUtilization":0.83,"maxUtilizationPercent":83.0,
+//            "limitingConstraint":"power","feasible":true,"hardLimitExceeded":false,
+//            "power_kW":1240.5,"constraints":[{"name":"power","utilization":0.83,...},...]}, ...],
+//  "bottleneck":{"name":"Export Compressor","utilization":0.83,"utilizationPercent":83.0,
+//                "limitingConstraint":"power"},
+//  "anyOverloaded":false,"anyHardLimitExceeded":false}
+```
+
+Per unit: `name`, `type`, `capacityAnalysisEnabled`, `maxUtilization` (0–1, NaN→0),
+`maxUtilizationPercent`, `limitingConstraint` (or `null`), `feasible`, `hardLimitExceeded`,
+`power_kW` (compressors/pumps only), and a `constraints[]` breakdown (`name`, `utilization`,
+`current`, `design`, `unit`, `enabled`, `violated`). For a `ProcessModel`, every unit also carries
+its `area` label. Plant-wide: `bottleneck` (highest-utilization unit, or `null`), `anyOverloaded`,
+`anyHardLimitExceeded`.
+
+**Closed-loop RL pattern:** observation = `getUtilizationSnapshot()`; action = setpoints passed to
+`evaluate()`; reward = an objective read-back from `evaluate()` (e.g. negative compression power)
+**penalized when** `anyOverloaded` is `true` or any unit's `maxUtilization > 1`. Because the
+snapshot reads constraints rather than re-solving, it is cheap to call on every step.
+
+> **Compressors without a performance chart**: the chart-dependent constraints (surge, stonewall,
+> speed) are now **present but disabled** for chartless compressors (their distance-to-surge is
+> undefined and would otherwise pin utilization at a degenerate flat 100%). Such a compressor
+> reports smooth, power-driven utilization. Set an installed shaft power via
+> `comp.getMechanicalDesign().setMaxDesignPower(kW)` to give the `power` constraint a basis. When a
+> chart is later attached, `reinitializeCapacityConstraints()` re-enables the chart metrics.
+
 ### Self-healing automation (PREFERRED for agents)
 
 The automation API includes self-diagnosis and auto-correction. When an address

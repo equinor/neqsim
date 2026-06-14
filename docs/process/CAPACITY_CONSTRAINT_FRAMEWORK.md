@@ -17,6 +17,10 @@ The Capacity Constraint Framework extends NeqSim's existing bottleneck analysis 
 - **Integration with ProductionOptimizer**: Works seamlessly with existing optimization tools
 - **ProcessSystem-wide analysis**: `findBottleneck()`, `getCapacityUtilizationSummary()`, and related methods iterate over ALL equipment
 
+> **Setting limits through mechanical design:** To derive capacity constraints directly from an
+> equipment's design envelope (max design pressure drop, volume flow, power, etc.), see
+> [Equipment Utilization via Mechanical Design](equipment_utilization_via_mechanical_design.md).
+
 ## Important: Constraints Disabled by Default
 
 > **⚠️ Key Behavior**: All separator, valve, pipeline, pump, and manifold constraints are **disabled by default** for backward compatibility. The optimizer checks whether any constraints are enabled before using the `CapacityConstrainedEquipment` interface.
@@ -1771,6 +1775,94 @@ if (results.isAnyCompressorOverspeed()) {
 ProcessSystem process = simulation.getProcess();
 BottleneckResult bottleneck = process.findBottleneck();
 ```
+
+## Capacity Utilization Snapshot (ML / RL Observation Vector)
+
+Both `ProcessSystem` and `ProcessModel` expose `getUtilizationSnapshotJson()`, and the
+`ProcessAutomation` facade exposes `getUtilizationSnapshot()` which delegates to whichever it wraps.
+The snapshot is a **side-effect-free** JSON view of every unit's capacity utilization — it never
+calls `run()`, it only reads the utilization already computed by each unit's constraints. This makes
+it the canonical **observation vector** for closed-loop and reinforcement-learning optimization,
+paired with `ProcessAutomation.evaluate(...)` (the action + reward step).
+
+```java
+ProcessAutomation auto = plant.getAutomation();
+plant.run(); // or auto.evaluate(...) — the snapshot reflects the most recent solve
+String json = auto.getUtilizationSnapshot();
+```
+
+The returned JSON (schema `"1.0"`) has the shape:
+
+```json
+{
+  "schemaVersion": "1.0",
+  "units": [
+    {
+      "area": "Export compression",
+      "name": "30-KA-01",
+      "type": "Compressor",
+      "capacityAnalysisEnabled": true,
+      "maxUtilization": 0.83,
+      "maxUtilizationPercent": 83.0,
+      "limitingConstraint": "power",
+      "feasible": true,
+      "hardLimitExceeded": false,
+      "power_kW": 1240.5,
+      "constraints": [
+        {"name": "power", "utilization": 0.83, "utilizationPercent": 83.0,
+         "current": 83.0, "design": 100.0, "unit": "%", "enabled": true, "violated": false}
+      ]
+    }
+  ],
+  "bottleneck": {"name": "30-KA-01", "utilization": 0.83,
+                 "utilizationPercent": 83.0, "limitingConstraint": "power"},
+  "anyOverloaded": false,
+  "anyHardLimitExceeded": false
+}
+```
+
+<table>
+<caption>Per-unit snapshot fields</caption>
+<tr><th>Field</th><th>Meaning</th></tr>
+<tr><td><code>area</code></td><td>Process-area name (only present in a <code>ProcessModel</code> snapshot)</td></tr>
+<tr><td><code>name</code> / <code>type</code></td><td>Unit name and simple class name</td></tr>
+<tr><td><code>maxUtilization</code></td><td>Highest enabled-constraint utilization (0–1; <code>NaN</code> reported as 0)</td></tr>
+<tr><td><code>limitingConstraint</code></td><td>Name of the constraint driving <code>maxUtilization</code> (or <code>null</code>)</td></tr>
+<tr><td><code>feasible</code></td><td><code>true</code> when no enabled constraint is exceeded</td></tr>
+<tr><td><code>power_kW</code></td><td>Shaft power, present for compressors and pumps only</td></tr>
+<tr><td><code>constraints[]</code></td><td>Per-constraint breakdown (utilization, current, design, unit, enabled, violated)</td></tr>
+</table>
+
+The plant-wide `bottleneck`, `anyOverloaded`, and `anyHardLimitExceeded` fields summarise the whole
+flowsheet. Because the snapshot reads constraints rather than re-solving, it is cheap to call on
+every optimization step.
+
+**Closed-loop RL pattern:**
+
+- **observation** = `getUtilizationSnapshot()`
+- **action** = setpoints passed to `ProcessAutomation.evaluate(...)`
+- **reward** = an objective read-back from `evaluate(...)` (e.g. negative compression power),
+  **penalized when** `anyOverloaded` is `true` or any unit's `maxUtilization > 1`.
+
+### Compressors Without a Performance Chart
+
+A compressor's surge, stonewall, and speed constraints are only physically meaningful when a
+performance chart is active. Without a chart the compressor runs on a fixed
+outlet-pressure/polytropic-efficiency model where distance-to-surge is undefined
+(`getDistanceToSurge()` returns positive infinity), which would otherwise pin the surge utilization
+at a degenerate flat 100% that never responds to feed rate.
+
+NeqSim therefore creates those chart-dependent constraints **present but disabled** for chartless
+compressors. The constraint objects still exist (so existence checks pass), but they are excluded
+from `getMaxUtilization()` and `getBottleneckConstraint()`. A chartless compressor consequently
+reports smooth, **power-driven** utilization. Give the `power` constraint a basis with:
+
+```java
+compressor.getMechanicalDesign().setMaxDesignPower(installedKw); // kW
+```
+
+When a performance chart is later attached, call `reinitializeCapacityConstraints()` to re-enable
+the chart-dependent metrics.
 
 ## See Also
 
