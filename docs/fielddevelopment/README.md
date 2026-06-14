@@ -18,6 +18,7 @@ This folder contains comprehensive documentation for NeqSim's field development 
 | [API_GUIDE.md](API_GUIDE) | Detailed usage examples for every class and method |
 | [DECISION_ENGINE_WORKFLOWS.md](DECISION_ENGINE_WORKFLOWS) | Decision-engine workflows for tiebacks, greenfield concepts, portfolios, process coupling, reservoir exports, and report-ready tables |
 | [HOST_TIE_IN_CAPACITY.md](HOST_TIE_IN_CAPACITY) | Host capacity, holdback, process-equipment bottlenecks, and debottleneck decisions for brownfield tiebacks |
+| [INTEGRATED_PRODUCTION_MODELLING.md](INTEGRATED_PRODUCTION_MODELLING) | **Reservoir-to-market IPM** &mdash; reservoir drives, well deliverability curves, network solver, gas-lift allocation, well-test matching, artificial-lift pumps, and choke optimisation (GAP/PROSPER/MBAL + Pipesim style) |
 
 ---
 
