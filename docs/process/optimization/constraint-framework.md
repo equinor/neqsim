@@ -207,7 +207,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.*;
 // Less-than constraint: value <= limit
 OptimizationConstraint powerLimit = OptimizationConstraint.lessThan(
     "MaxPower",
-    (process, rate) -> getTotalPower(process),
+    process -> getTotalPower(process),
     5000.0,
     ConstraintSeverity.HARD,
     100.0  // penalty weight
@@ -216,7 +216,7 @@ OptimizationConstraint powerLimit = OptimizationConstraint.lessThan(
 // Greater-than constraint: value >= limit
 OptimizationConstraint minExport = OptimizationConstraint.greaterThan(
     "MinExport",
-    (process, rate) -> getGasExport(process),
+    process -> getGasExport(process),
     10.0e6,
     ConstraintSeverity.SOFT,
     50.0
@@ -409,7 +409,7 @@ OptimizationConfig config = new OptimizationConfig(1000.0, 20000.0)
     .defaultUtilizationLimit(0.95);
 
 // Equipment constraints are automatically discovered and enforced
-OptimizationResult result = optimizer.optimize(process, feed, config);
+OptimizationResult result = optimizer.optimize(process, feed, config, null, null);
 ```
 
 ### Example 2: Standalone Constraint Checking
@@ -463,7 +463,7 @@ calc.addEquipmentCapacityConstraints(process);
 // Custom internal optimizer constraint
 calc.addConstraint(
     OptimizationConstraint.lessThan("MaxPower",
-        (proc, rate) -> getTotalPower(proc),
+        proc -> getTotalPower(proc),
         5000.0, ConstraintSeverity.HARD, 100.0));
 
 // All constraints are treated uniformly

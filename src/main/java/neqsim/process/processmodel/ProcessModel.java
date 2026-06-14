@@ -849,6 +849,37 @@ public class ProcessModel implements Runnable, Serializable {
     return processes.containsKey(name);
   }
 
+  // ================================================================
+  // Plant-wide capacity / bottleneck analysis (multi-area aware)
+  // ================================================================
+
+  /**
+   * Returns a ranked list of all constrained units across the plant, highest utilization first.
+   *
+   * <p>
+   * Each entry is formatted as {@code "area::unit = NN.N%"}. This supports debottlenecking
+   * sequencing: after relieving the top bottleneck, the next binding constraint is already known.
+   * The underlying utilization data comes from {@link #getCapacityUtilizationSummary()}.
+   * </p>
+   *
+   * @return list of {@code "area::unit = NN.N%"} entries sorted by descending utilization
+   */
+  public List<String> getBottleneckRanking() {
+    List<Map.Entry<String, Double>> entries =
+        new ArrayList<Map.Entry<String, Double>>(getCapacityUtilizationSummary().entrySet());
+    entries.sort(new java.util.Comparator<Map.Entry<String, Double>>() {
+      @Override
+      public int compare(Map.Entry<String, Double> a, Map.Entry<String, Double> b) {
+        return Double.compare(b.getValue(), a.getValue());
+      }
+    });
+    List<String> ranking = new ArrayList<String>();
+    for (Map.Entry<String, Double> e : entries) {
+      ranking.add(String.format(java.util.Locale.ROOT, "%s = %.1f%%", e.getKey(), e.getValue()));
+    }
+    return ranking;
+  }
+
   /**
    * Propagates a low-flow bypass threshold to every equipment in every area of this model.
    *
@@ -3981,56 +4012,6 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
-   * Finds the plant-wide bottleneck with detailed limiting-constraint information.
-   *
-   * <p>
-   * This is the multi-area counterpart of {@link ProcessSystem#findBottleneck()}. Each area's
-   * detailed bottleneck is evaluated and the result with the highest utilization is returned.
-   * </p>
-   *
-   * @return a {@link neqsim.process.equipment.capacity.BottleneckResult} for the most utilized
-   *         area; an empty result if no constrained equipment is found in any area
-   */
-  public neqsim.process.equipment.capacity.BottleneckResult findBottleneck() {
-    neqsim.process.equipment.capacity.BottleneckResult best = null;
-    double maxUtil = 0.0;
-    for (ProcessSystem processSystem : processes.values()) {
-      neqsim.process.equipment.capacity.BottleneckResult areaResult =
-          processSystem.findBottleneck();
-      if (areaResult == null || areaResult.getEquipment() == null) {
-        continue;
-      }
-      double util = areaResult.getUtilization();
-      if (!Double.isNaN(util) && util > maxUtil) {
-        maxUtil = util;
-        best = areaResult;
-      }
-    }
-    if (best == null) {
-      return neqsim.process.equipment.capacity.BottleneckResult.empty();
-    }
-    return best;
-  }
-
-  /**
-   * Checks whether any equipment in any area exceeds its design capacity.
-   *
-   * <p>
-   * This is the multi-area counterpart of {@link ProcessSystem#isAnyEquipmentOverloaded()}.
-   * </p>
-   *
-   * @return true if any equipment in any area has capacity utilization above 100%
-   */
-  public boolean isAnyEquipmentOverloaded() {
-    for (ProcessSystem processSystem : processes.values()) {
-      if (processSystem.isAnyEquipmentOverloaded()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
    * Checks whether any equipment in any area exceeds a HARD capacity limit.
    *
    * <p>
@@ -4049,47 +4030,117 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
-   * Gets a plant-wide capacity utilization summary for all constrained equipment.
+   * Finds the global capacity bottleneck across every process area in this model.
    *
    * <p>
-   * This is the multi-area counterpart of {@link ProcessSystem#getCapacityUtilizationSummary()}.
-   * Equipment names are prefixed with their area name using the {@code "Area::Unit"} convention to
-   * keep entries unique across areas.
+   * Each area's most-constrained unit is evaluated via {@link ProcessSystem#findBottleneck()} and
+   * the unit with the highest utilization across the whole plant is returned. This makes the
+   * reservoir / subsurface, midstream and topside areas compete on a single ranking so the true
+   * field-wide limiting constraint is surfaced rather than the bottleneck of a single area.
    * </p>
    *
-   * @return map of area-qualified equipment name to utilization percentage
+   * @return the plant-wide {@link neqsim.process.equipment.capacity.BottleneckResult}; an empty
+   *         result if no enabled constraints are found in any area
    */
-  public java.util.Map<String, Double> getCapacityUtilizationSummary() {
-    java.util.Map<String, Double> summary = new java.util.LinkedHashMap<String, Double>();
-    for (java.util.Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
-      String areaName = entry.getKey();
-      for (java.util.Map.Entry<String, Double> areaEntry : entry.getValue()
-          .getCapacityUtilizationSummary().entrySet()) {
-        summary.put(areaName + "::" + areaEntry.getKey(), areaEntry.getValue());
+  public neqsim.process.equipment.capacity.BottleneckResult findBottleneck() {
+    neqsim.process.equipment.capacity.BottleneckResult best =
+        neqsim.process.equipment.capacity.BottleneckResult.empty();
+    double maxUtil = -1.0;
+    for (ProcessSystem ps : processes.values()) {
+      neqsim.process.equipment.capacity.BottleneckResult areaResult = ps.findBottleneck();
+      if (areaResult != null && areaResult.hasBottleneck()) {
+        double util = areaResult.getUtilizationPercent();
+        if (util > maxUtil) {
+          maxUtil = util;
+          best = areaResult;
+        }
+      }
+    }
+    return best;
+  }
+
+  /**
+   * Checks whether any unit in any area is overloaded (utilization above 100%).
+   *
+   * @return true if any enabled constraint in any area is exceeded
+   */
+  public boolean isAnyEquipmentOverloaded() {
+    for (ProcessSystem ps : processes.values()) {
+      if (ps.isAnyEquipmentOverloaded()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Builds an area-qualified capacity-utilization summary across the whole plant.
+   *
+   * <p>
+   * Keys use the {@code "area::unit"} convention so units with the same name in different areas do
+   * not collide. Values are maximum constraint utilization in percent.
+   * </p>
+   *
+   * @return ordered map of {@code "area::unit"} to utilization percentage
+   */
+  public Map<String, Double> getCapacityUtilizationSummary() {
+    Map<String, Double> summary = new LinkedHashMap<>();
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      String area = entry.getKey();
+      Map<String, Double> areaSummary = entry.getValue().getCapacityUtilizationSummary();
+      for (Map.Entry<String, Double> u : areaSummary.entrySet()) {
+        summary.put(area + "::" + u.getKey(), u.getValue());
       }
     }
     return summary;
   }
 
   /**
-   * Gets the names of equipment that are near their capacity limit across the whole plant.
+   * Returns the area-qualified names of units that are near their capacity limit (above the warning
+   * threshold) in any area.
    *
-   * <p>
-   * This is the multi-area counterpart of {@link ProcessSystem#getEquipmentNearCapacityLimit()}.
-   * Names are prefixed with their area name using the {@code "Area::Unit"} convention.
-   * </p>
-   *
-   * @return list of area-qualified equipment names that are near capacity limits
+   * @return list of {@code "area::unit"} names near a capacity limit
    */
-  public java.util.List<String> getEquipmentNearCapacityLimit() {
-    java.util.List<String> nearLimit = new java.util.ArrayList<String>();
-    for (java.util.Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
-      String areaName = entry.getKey();
+  public List<String> getEquipmentNearCapacityLimit() {
+    List<String> nearLimit = new ArrayList<String>();
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      String area = entry.getKey();
       for (String unitName : entry.getValue().getEquipmentNearCapacityLimit()) {
-        nearLimit.add(areaName + "::" + unitName);
+        nearLimit.add(area + "::" + unitName);
       }
     }
     return nearLimit;
+  }
+
+  /**
+   * Disables all capacity constraints on every unit in every area of this model (what-if analysis).
+   *
+   * @return the total number of constraints disabled across all areas
+   */
+  public int disableAllConstraints() {
+    int total = 0;
+    for (ProcessSystem ps : processes.values()) {
+      total += ps.disableAllConstraints();
+    }
+    return total;
+  }
+
+  /**
+   * Enables all capacity constraints on every unit in every area of this model.
+   *
+   * <p>
+   * This is the plant-wide preset that switches subsurface, midstream and topside constraints on in
+   * one call, mirroring {@link ProcessSystem#enableAllConstraints()} at the multi-area level.
+   * </p>
+   *
+   * @return the total number of constraints enabled across all areas
+   */
+  public int enableAllConstraints() {
+    int total = 0;
+    for (ProcessSystem ps : processes.values()) {
+      total += ps.enableAllConstraints();
+    }
+    return total;
   }
 
   /**
@@ -4139,41 +4190,6 @@ public class ProcessModel implements Runnable, Serializable {
     root.addProperty("anyOverloaded", isAnyEquipmentOverloaded());
     root.addProperty("anyHardLimitExceeded", isAnyHardLimitExceeded());
     return root.toString();
-  }
-
-  /**
-   * Disables all capacity constraints on all equipment in every area (what-if analysis).
-   *
-   * <p>
-   * This is the multi-area counterpart of {@link ProcessSystem#disableAllConstraints()}. To
-   * re-enable, call {@link #enableAllConstraints()}.
-   * </p>
-   *
-   * @return the total number of constraints that were disabled across all areas
-   */
-  public int disableAllConstraints() {
-    int totalCount = 0;
-    for (ProcessSystem processSystem : processes.values()) {
-      totalCount += processSystem.disableAllConstraints();
-    }
-    return totalCount;
-  }
-
-  /**
-   * Enables all capacity constraints on all equipment in every area.
-   *
-   * <p>
-   * This is the multi-area counterpart of {@link ProcessSystem#enableAllConstraints()}.
-   * </p>
-   *
-   * @return the total number of constraints that were enabled across all areas
-   */
-  public int enableAllConstraints() {
-    int totalCount = 0;
-    for (ProcessSystem processSystem : processes.values()) {
-      totalCount += processSystem.enableAllConstraints();
-    }
-    return totalCount;
   }
 
   // ============ PRIVATE HOOK / EVENT HELPER METHODS ============

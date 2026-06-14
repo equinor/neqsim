@@ -107,15 +107,15 @@ process.add(feed);
 
 Separator separator = new Separator("HP Separator");
 separator.setInletStream(feed);
-separator.initMechanicalDesign();
-separator.getMechanicalDesign().setMaxDesignGassVolFlow(2000.0); // Sm3/hr limit
+separator.setDesignGasLoadFactor(0.107); // Souders-Brown K-factor gas load limit [m/s]
 process.add(separator);
 
 Compressor compressor = new Compressor("Gas Compressor");
 compressor.setInletStream(separator.getGasOutStream());
 compressor.setOutletPressure(100.0, "bara");
 compressor.setMaximumSpeed(11000.0);  // RPM limit
-compressor.setMaximumPower(500.0);    // kW limit
+compressor.initMechanicalDesign();
+compressor.getMechanicalDesign().setMaxDesignPower(500.0);  // kW power limit
 process.add(compressor);
 
 process.run();
@@ -129,8 +129,9 @@ OptimizationConfig config = new OptimizationConfig(1000.0, 20000.0)  // kg/hr ra
     .utilizationLimitForType(Compressor.class, 0.90)  // 90% for compressors
     .searchMode(SearchMode.BINARY_FEASIBILITY);
 
-// 4. Run optimization
-OptimizationResult result = ProductionOptimizer.optimize(process, feed, config);
+// 4. Run optimization (optimize() is an instance method; objectives/constraints may be null)
+ProductionOptimizer optimizer = new ProductionOptimizer();
+OptimizationResult result = optimizer.optimize(process, feed, config, null, null);
 
 // 5. Report results
 System.out.println("Optimal production rate: " + result.getOptimalRate() + " " + result.getRateUnit());
@@ -174,7 +175,8 @@ if (bottleneck instanceof CapacityConstrainedEquipment) {
     System.out.println("Current value: " + active.getCurrentValue() + " " + active.getUnit());
     System.out.println("Design limit: " + active.getDesignValue() + " " + active.getUnit());
     System.out.println("Utilization: " + active.getUtilizationPercent() + "%");
-    System.out.println("Type: " + active.getConstraintType());  // HARD, SOFT, or DESIGN
+    System.out.println("Type: " + active.getType());      // e.g. POWER, SPEED, SURGE_MARGIN
+    System.out.println("Severity: " + active.getSeverity());  // HARD, SOFT, or DESIGN
 }
 ```
 
@@ -222,17 +224,20 @@ Set limits directly on equipment:
 // Compressor limits
 Compressor comp = new Compressor("K-100", stream);
 comp.setMaximumSpeed(11000.0);    // Creates HARD speed constraint
-comp.setMaximumPower(2000.0);     // Creates HARD power constraint
-comp.setSurgeMargin(10.0);        // Creates SOFT surge margin constraint
+comp.initMechanicalDesign();
+comp.getMechanicalDesign().setMaxDesignPower(2000.0);  // Creates HARD power constraint (kW)
+// Surge / stonewall margin constraints are created from the performance curve
+// (call comp.autoSize(...) or comp.setCompressorChart(...) to populate them)
 
 // Separator limits
 Separator sep = new Separator("V-100", feed);
 sep.setDesignGasLoadFactor(0.08);  // Creates DESIGN gasLoadFactor constraint
 
-// Pipeline limits
-Pipeline pipe = new PipeBeggsAndBrills("L-100", stream);
-pipe.setMaxLOF(1.0);               // Creates SOFT FIV_LOF constraint
-pipe.setMaxFRMS(100000.0);         // Creates SOFT FIV_FRMS constraint
+// Pipeline limits (velocity + FIV LOF/FRMS constraints are created by autoSize)
+PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("L-100", stream);
+pipe.setLength(2000.0);
+pipe.setDiameter(0.5);
+pipe.autoSize(1.2);                // Creates velocity + FIV (LOF, FRMS) constraints
 ```
 
 #### 3. Mechanical Design Integration
@@ -242,8 +247,8 @@ When `initMechanicalDesign()` is called, constraints use design values:
 ```java
 Separator sep = new Separator("HP-Sep", feed);
 sep.initMechanicalDesign();
-sep.getMechanicalDesign().setMaxDesignGassVolFlow(5000.0);  // m³/hr
-sep.getMechanicalDesign().setMaxDesignPressure(100.0);      // bara
+sep.getMechanicalDesign().setMaxDesignVolumeFlow(5000.0);  // m³/hr
+sep.getMechanicalDesign().setMaxOperationPressure(100.0); // bara
 // These values feed into constraint limits
 ```
 
@@ -428,7 +433,8 @@ OptimizationConfig config = new OptimizationConfig(5000.0, 50000.0)
     .rateUnit("kg/hr")
     .defaultUtilizationLimit(0.95);
 
-OptimizationResult result = ProductionOptimizer.optimize(process, wellFeed, config);
+ProductionOptimizer optimizer = new ProductionOptimizer();
+OptimizationResult result = optimizer.optimize(process, wellFeed, config, null, null);
 
 // Report ALL equipment constraints and identify the active one
 System.out.println("=== CONSTRAINT STATUS FOR ALL EQUIPMENT ===\n");
@@ -583,19 +589,19 @@ Equipment implementing `CapacityConstrainedEquipment` can have multiple constrai
 Separator separator = new Separator("HP Separator");
 separator.setDesignGasLoadFactor(0.15);  // K-factor limit
 
-// Access constraints
-for (CapacityConstraint constraint : separator.getCapacityConstraints()) {
+// Access constraints (getCapacityConstraints() returns a Map keyed by constraint name)
+for (CapacityConstraint constraint : separator.getCapacityConstraints().values()) {
     System.out.println("Constraint: " + constraint.getName());
-    System.out.println("  Type: " + constraint.getConstraintType());
+    System.out.println("  Type: " + constraint.getType());
     System.out.println("  Current: " + constraint.getCurrentValue());
-    System.out.println("  Limit: " + constraint.getLimitValue());
+    System.out.println("  Limit: " + constraint.getDesignValue());
     System.out.println("  Utilization: " + (constraint.getUtilization() * 100) + "%");
     System.out.println("  Is Violated: " + constraint.isViolated());
 }
 
 // Check overall utilization
 double maxUtil = separator.getMaxUtilization();
-CapacityConstraint limiting = separator.getLimitingConstraint();
+CapacityConstraint limiting = separator.getBottleneckConstraint();
 System.out.println("Limiting constraint: " + limiting.getName() + " at " + (maxUtil * 100) + "%");
 ```
 
@@ -604,16 +610,18 @@ System.out.println("Limiting constraint: " + limiting.getName() + " at " + (maxU
 ```java
 Compressor compressor = new Compressor("Export Compressor");
 compressor.setMaximumSpeed(11000.0);      // HARD constraint - RPM
-compressor.setMaximumPower(2000.0);       // HARD constraint - kW
-compressor.setSurgeMargin(10.0);          // SOFT constraint - %
+compressor.initMechanicalDesign();
+compressor.getMechanicalDesign().setMaxDesignPower(2000.0);  // HARD constraint - kW
+// Surge / stonewall margin constraints are created from the performance curve
+// (call compressor.autoSize(...) or compressor.setCompressorChart(...) to populate them)
 
 // After running, check all constraints
 process.run();
 
-for (CapacityConstraint c : compressor.getCapacityConstraints()) {
+for (CapacityConstraint c : compressor.getCapacityConstraints().values()) {
     String status = c.isViolated() ? "⚠️ EXCEEDED" : "✓ OK";
     System.out.printf("%s: %.1f / %.1f (%.0f%%) %s%n",
-        c.getName(), c.getCurrentValue(), c.getLimitValue(),
+        c.getName(), c.getCurrentValue(), c.getDesignValue(),
         c.getUtilization() * 100, status);
 }
 ```
@@ -649,7 +657,8 @@ List<OptimizationConstraint> constraints = Arrays.asList(
 );
 
 // Run with objectives and constraints
-OptimizationResult result = ProductionOptimizer.optimize(
+ProductionOptimizer optimizer = new ProductionOptimizer();
+OptimizationResult result = optimizer.optimize(
     process, feed, config, objectives, constraints);
 
 // Check constraint statuses
@@ -775,8 +784,9 @@ List<ScenarioKpi> kpis = Arrays.asList(
     new ScenarioKpi("Bottleneck Util", "%", r -> r.getBottleneckUtilization() * 100)
 );
 
-// Run comparison
-ScenarioComparisonResult comparison = ProductionOptimizer.compareScenarios(scenarios, kpis);
+// Run comparison (compareScenarios is an instance method)
+ProductionOptimizer optimizer = new ProductionOptimizer();
+ScenarioComparisonResult comparison = optimizer.compareScenarios(scenarios, kpis);
 
 // Print results
 for (ScenarioResult sr : comparison.getResults()) {
@@ -832,13 +842,14 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
 BottleneckResult bottleneckResult = process.findBottleneck();
 
 System.out.println("Bottleneck Equipment: " + bottleneckResult.getEquipmentName());
-System.out.println("Limiting Constraint: " + bottleneckResult.getLimitingConstraintName());
+System.out.println("Limiting Constraint: " + bottleneckResult.getConstraintName());
 System.out.printf("Utilization: %.1f%%%n", bottleneckResult.getUtilization() * 100);
 
-// Iterate all constraints on bottleneck
-for (CapacityConstraint c : bottleneckResult.getAllConstraints()) {
+// Inspect the limiting constraint on the bottleneck equipment
+CapacityConstraint c = bottleneckResult.getConstraint();
+if (c != null) {
     System.out.printf("  - %s: %.1f%% (%s)%n",
-        c.getName(), c.getUtilization() * 100, c.getConstraintType());
+        c.getName(), c.getUtilization() * 100, c.getType());
 }
 ```
 
@@ -856,10 +867,9 @@ for (Map.Entry<String, Double> entry : utilizations.entrySet()) {
     System.out.printf("%s: %s %.0f%%%n", entry.getKey(), bar, entry.getValue() * 100);
 }
 
-// Check for equipment near limits
-double threshold = 0.85; // 85%
-for (ProcessEquipmentInterface equip : process.getEquipmentNearCapacityLimit(threshold)) {
-    System.out.println("⚠️ Near limit: " + equip.getName());
+// Check for equipment near limits (returns Area::Unit / unit names above the warning threshold)
+for (String equipName : process.getEquipmentNearCapacityLimit()) {
+    System.out.println("⚠️ Near limit: " + equipName);
 }
 
 // Check for any overloaded equipment
@@ -928,7 +938,8 @@ comp = Compressor("Gas Compressor")
 comp.setInletStream(sep.getGasOutStream())
 comp.setOutletPressure(100.0, "bara")
 comp.setMaximumSpeed(11000.0)
-comp.setMaximumPower(500.0)
+comp.initMechanicalDesign()
+comp.getMechanicalDesign().setMaxDesignPower(500.0)  # kW power limit
 process.add(comp)
 
 process.run()
@@ -944,8 +955,9 @@ config = OptConfig(1000.0, 20000.0) \
     .defaultUtilizationLimit(0.95) \
     .searchMode(SearchMode.BINARY_FEASIBILITY)
 
-# Run optimization
-result = ProductionOptimizer.optimize(process, feed, config)
+# Run optimization (optimize() is an instance method; objectives/constraints may be None)
+optimizer = ProductionOptimizer()
+result = optimizer.optimize(process, feed, config, None, None)
 
 # Print results
 print(f"Optimal rate: {result.getOptimalRate():.0f} {result.getRateUnit()}")
@@ -976,6 +988,7 @@ config = OptConfig(1000.0, 50000.0) \
 
 ```python
 # Import equipment classes for type-based limits
+from neqsim import jneqsim
 Compressor = jneqsim.process.equipment.compressor.Compressor
 Separator = jneqsim.process.equipment.separator.Separator
 Pump = jneqsim.process.equipment.pump.Pump
@@ -1001,7 +1014,8 @@ manifold = process.getUnit("Production Manifold")
 manifold.setCapacityAnalysisEnabled(False)
 
 # Now these won't be considered as bottlenecks
-result = ProductionOptimizer.optimize(process, feed, config)
+optimizer = ProductionOptimizer()
+result = optimizer.optimize(process, feed, config, None, None)
 ```
 
 #### Adding Custom Constraints
@@ -1053,7 +1067,8 @@ from java.util import Arrays
 constraints = Arrays.asList(power_constraint, margin_constraint)
 
 # Run optimization with constraints
-result = ProductionOptimizer.optimize(process, feed, config, None, constraints)
+optimizer = ProductionOptimizer()
+result = optimizer.optimize(process, feed, config, None, constraints)
 ```
 
 #### Common Restriction Configuration Patterns
@@ -1095,11 +1110,12 @@ from neqsim.process.equipment.capacity import BottleneckResult, CapacityConstrai
 bottleneck_result = process.findBottleneck()
 
 print(f"Bottleneck: {bottleneck_result.getEquipmentName()}")
-print(f"Limiting: {bottleneck_result.getLimitingConstraintName()}")
+print(f"Limiting: {bottleneck_result.getConstraintName()}")
 print(f"Utilization: {bottleneck_result.getUtilization() * 100:.1f}%")
 
-# Check all constraints
-for constraint in bottleneck_result.getAllConstraints():
+# Inspect the limiting constraint on the bottleneck equipment
+constraint = bottleneck_result.getConstraint()
+if constraint is not None:
     status = "⚠️ VIOLATED" if constraint.isViolated() else "✓ OK"
     print(f"  {constraint.getName()}: {constraint.getUtilization()*100:.0f}% {status}")
 ```
@@ -1115,11 +1131,10 @@ for name, util in utilizations.items():
     bar = "█" * int(util * 20) + "░" * (20 - int(util * 20))
     print(f"{name}: [{bar}] {util*100:.0f}%")
 
-# Check near-limit equipment
-threshold = 0.85
-near_limit = process.getEquipmentNearCapacityLimit(threshold)
-for equip in near_limit:
-    print(f"⚠️ Near limit: {equip.getName()}")
+# Check near-limit equipment (returns Area::Unit / unit names above the warning threshold)
+near_limit = process.getEquipmentNearCapacityLimit()
+for equip_name in near_limit:
+    print(f"⚠️ Near limit: {equip_name}")
 ```
 
 ### Scenario Comparison in Python
@@ -1150,8 +1165,9 @@ kpis = ArrayList()
 kpis.add(ScenarioKpi("Max Rate", "kg/hr", lambda r: r.getOptimalRate()))
 kpis.add(ScenarioKpi("Bottleneck Util", "%", lambda r: r.getBottleneckUtilization() * 100))
 
-# Compare
-comparison = ProductionOptimizer.compareScenarios(scenarios, kpis)
+# Compare (compareScenarios is an instance method)
+optimizer = ProductionOptimizer()
+comparison = optimizer.compareScenarios(scenarios, kpis)
 
 for sr in comparison.getResults():
     print(f"{sr.getName()}: {sr.getResult().getOptimalRate():.0f} kg/hr")
@@ -1164,8 +1180,8 @@ for sr in comparison.getResults():
 ### JSON Export for Dashboards
 
 ```java
-// Get optimization summary as structured data
-OptimizationSummary summary = ProductionOptimizer.optimizeSummary(process, feed, config);
+// Get a lightweight optimization summary as structured data
+OptimizationSummary summary = new ProductionOptimizer().quickOptimize(process, feed, config);
 
 // Convert to JSON using Gson
 import com.google.gson.Gson;
@@ -1180,7 +1196,7 @@ System.out.println(json);
 
 ```java
 // Get full result with history
-OptimizationResult result = ProductionOptimizer.optimize(process, feed, config);
+OptimizationResult result = new ProductionOptimizer().optimize(process, feed, config, null, null);
 
 // Export iteration history for plotting
 List<IterationRecord> history = result.getIterationHistory();
@@ -1228,7 +1244,7 @@ while True:
 
     # Run periodic optimization
     if should_optimize():
-        result = ProductionOptimizer.optimize(process, feed, config)
+        result = ProductionOptimizer().optimize(process, feed, config, None, None)
         recommend_setpoint(result.getOptimalRate())
 
     time.sleep(60)  # 1-minute interval
@@ -1263,15 +1279,16 @@ while True:
 
 ```java
 // Always set mechanical design limits
-separator.initMechanicalDesign();
-separator.getMechanicalDesign().setMaxDesignGassVolFlow(2000.0);
+separator.setDesignGasLoadFactor(0.107);  // Souders-Brown K-factor [m/s]
 
-// Or use K-factor approach
-separator.setDesignGasLoadFactor(0.15);
+// Or use the mechanical-design volume-flow limit
+separator.initMechanicalDesign();
+separator.getMechanicalDesign().setMaxDesignVolumeFlow(2000.0);  // m³/hr
 
 // Set compressor limits
 compressor.setMaximumSpeed(11000.0);
-compressor.setMaximumPower(500.0);
+compressor.initMechanicalDesign();
+compressor.getMechanicalDesign().setMaxDesignPower(500.0);  // kW
 ```
 
 ### 2. Use Appropriate Utilization Margins
@@ -1396,7 +1413,7 @@ for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
 }
 
 // Use infeasibility diagnostics (New)
-OptimizationResult result = optimizer.optimize(process, feed, config);
+OptimizationResult result = optimizer.optimize(process, feed, config, null, null);
 if (!result.isFeasible()) {
     System.out.println(result.getInfeasibilityDiagnosis());
 }
@@ -1463,9 +1480,8 @@ try {
 
 | Method | Description |
 |--------|-------------|
-| `optimize(ProcessSystem, StreamInterface, OptimizationConfig)` | Find optimal feed rate |
-| `optimize(ProcessSystem, StreamInterface, OptimizationConfig, List<Objective>, List<Constraint>)` | With objectives/constraints |
-| `optimizeSummary(...)` | Returns lightweight summary |
+| `optimize(ProcessSystem, StreamInterface, OptimizationConfig, List<Objective>, List<Constraint>)` | Find optimal feed rate (instance method; objectives/constraints may be `null`) |
+| `quickOptimize(ProcessSystem, StreamInterface[, OptimizationConfig])` | Returns lightweight `OptimizationSummary` |
 | `compareScenarios(List<ScenarioRequest>, List<ScenarioKpi>)` | Compare multiple scenarios |
 
 ### OptimizationConfig (New Methods)
@@ -1494,14 +1510,14 @@ try {
 | `isAnyEquipmentOverloaded()` | Check if any utilization > 100% |
 | `isAnyHardLimitExceeded()` | Check if any HARD constraint violated |
 | `getCapacityUtilizationSummary()` | Map of equipment name → utilization |
-| `getEquipmentNearCapacityLimit(threshold)` | Equipment above threshold |
+| `getEquipmentNearCapacityLimit()` | Equipment names above the warning threshold |
 
 ### CapacityConstrainedEquipment
 
 | Method | Description |
 |--------|-------------|
-| `getCapacityConstraints()` | List all constraints |
-| `getLimitingConstraint()` | Get highest-utilization constraint |
+| `getCapacityConstraints()` | Map of constraint name → constraint |
+| `getBottleneckConstraint()` | Get highest-utilization constraint |
 | `getMaxUtilization()` | Get maximum utilization across constraints |
 | `isOverloaded()` | Any constraint > 100% |
 | `isHardLimitExceeded()` | Any HARD constraint violated |

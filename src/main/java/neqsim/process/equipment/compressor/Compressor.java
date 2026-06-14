@@ -128,6 +128,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   // Dynamic simulation fields
   private CompressorState operatingState = CompressorState.STOPPED;
   private CompressorDriver driver = null;
+  private neqsim.process.equipment.compressor.driver.DriverCurve driverCurve = null;
   private CompressorOperatingHistory operatingHistory = null;
   private StartupProfile startupProfile = null;
   private ShutdownProfile shutdownProfile = null;
@@ -3661,7 +3662,10 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * For compressors, maximum capacity is determined in priority order:
    * </p>
    * <ol>
-   * <li>Driver speed-dependent max power curve (if driver and speed are set)</li>
+   * <li>Driver performance curve ({@link neqsim.process.equipment.compressor.driver.DriverCurve}),
+   * which models ambient-temperature and altitude derating, evaluated at the driver's rated speed
+   * (peak deliverable power) if set</li>
+   * <li>Driver speed-dependent max power curve (if {@link CompressorDriver} and speed are set)</li>
    * <li>Mechanical design maximum power</li>
    * <li>Driver rated power with 10% overload margin</li>
    * </ol>
@@ -3670,16 +3674,26 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    */
   @Override
   public double getCapacityMax() {
-    // Priority 1: Driver with speed-dependent power curve
+    // Priority 1: Rich driver performance curve (ambient/altitude derating at current speed)
+    if (driverCurve != null) {
+      // The capacity ceiling is the driver's maximum deliverable power. Evaluate at the driver's
+      // rated speed (peak of the curve, with ambient/altitude derating applied) rather than the
+      // compressor's mechanical speed, which lives on a different speed scale than the driver.
+      double availableKW = driverCurve.getAvailablePower(driverCurve.getRatedSpeed());
+      if (availableKW > 0) {
+        return availableKW * 1000.0; // kW to W
+      }
+    }
+    // Priority 2: Driver with speed-dependent power curve
     if (driver != null && driver.getRatedSpeed() > 0 && speed > 0) {
       // Driver returns kW, convert to Watts for consistency with getTotalWork()
       return driver.getMaxAvailablePowerAtSpeed(speed) * 1000.0;
     }
-    // Priority 2: Mechanical design max power
+    // Priority 3: Mechanical design max power
     if (getMechanicalDesign().maxDesignPower > 0) {
       return getMechanicalDesign().maxDesignPower;
     }
-    // Priority 3: Driver rated power with 10% overload margin
+    // Priority 4: Driver rated power with 10% overload margin
     if (driver != null && driver.getRatedPower() > 0) {
       return driver.getRatedPower() * 1.1 * 1000.0; // kW to W
     }
@@ -3808,6 +3822,40 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     this.driver = new CompressorDriver(type, ratedPower);
     // Reinitialize constraints since speed constraint depends on driver rated speed
     reinitializeCapacityConstraints();
+  }
+
+  /**
+   * Get the rich driver performance curve.
+   *
+   * <p>
+   * The {@link neqsim.process.equipment.compressor.driver.DriverCurve} family
+   * ({@link neqsim.process.equipment.compressor.driver.GasTurbineDriver},
+   * {@link neqsim.process.equipment.compressor.driver.ElectricMotorDriver},
+   * {@link neqsim.process.equipment.compressor.driver.SteamTurbineDriver}) models ambient and
+   * altitude derating and is used as the highest-priority source in {@link #getCapacityMax()} when
+   * set.
+   * </p>
+   *
+   * @return the driver performance curve, or null if not set
+   */
+  public neqsim.process.equipment.compressor.driver.DriverCurve getDriverCurve() {
+    return driverCurve;
+  }
+
+  /**
+   * Set the rich driver performance curve.
+   *
+   * <p>
+   * When set, the curve's speed- and ambient-dependent available power takes priority over the
+   * simpler {@link CompressorDriver} model in {@link #getCapacityMax()}. This lets gas-turbine,
+   * electric-motor, and steam-turbine drivers feed a physically derated power limit into capacity
+   * and bottleneck analysis.
+   * </p>
+   *
+   * @param driverCurve the driver performance curve, or null to clear it
+   */
+  public void setDriverCurve(neqsim.process.equipment.compressor.driver.DriverCurve driverCurve) {
+    this.driverCurve = driverCurve;
   }
 
   /**

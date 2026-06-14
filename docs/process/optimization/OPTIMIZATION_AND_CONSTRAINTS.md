@@ -295,11 +295,11 @@ List<OptimizationObjective> objectives = Arrays.asList(
 );
 
 // Run Pareto optimization
-ParetoResult pareto = ProductionOptimizer.optimizePareto(
-    process, feed, config, objectives, null, 10);  // 10 Pareto points
+ParetoResult pareto = new ProductionOptimizer().optimizePareto(
+    process, feed, config, objectives, null);
 
 // Analyze Pareto front
-for (OptimizationResult point : pareto.getParetoFront()) {
+for (ParetoPoint point : pareto.getParetoFront()) {
     System.out.printf("Throughput: %.0f kg/hr, Power: %.1f kW%n",
         point.getObjectiveValues().get("throughput"),
         point.getObjectiveValues().get("powerConsumption"));
@@ -351,7 +351,8 @@ compressor.addCapacityConstraint(customPower);
 ```java
 // Set constraint limits directly
 compressor.setMaximumSpeed(11000.0);   // Creates/updates speed constraint
-compressor.setMaximumPower(500.0);     // Creates/updates power constraint
+compressor.initMechanicalDesign();
+compressor.getMechanicalDesign().setMaxDesignPower(500.0);  // Power constraint (kW)
 
 separator.setDesignGasLoadFactor(0.15); // Sets K-factor for constraint
 ```
@@ -443,7 +444,7 @@ OptimizationConfig config = new OptimizationConfig(1000.0, 50000.0)
     .maxIterations(25)
     .searchMode(SearchMode.GOLDEN_SECTION_SCORE);
 
-OptimizationResult result = ProductionOptimizer.optimize(process, feed, config);
+OptimizationResult result = new ProductionOptimizer().optimize(process, feed, config, null, null);
 
 System.out.printf("Maximum throughput: %.0f %s%n",
     result.getOptimalRate(), result.getRateUnit());
@@ -474,17 +475,17 @@ if (!bottleneck.isEmpty()) {
         constraint.getCurrentValue(), constraint.getUnit());
     System.out.printf("Design limit: %.2f %s%n",
         constraint.getDesignValue(), constraint.getUnit());
-    System.out.printf("Type: %s%n", constraint.getConstraintType());
+    System.out.printf("Type: %s%n", constraint.getType());
 }
 
 // List all equipment near capacity
 System.out.println("\n=== EQUIPMENT NEAR CAPACITY (>80%) ===");
-for (CapacityConstrainedEquipment equip : process.getEquipmentNearCapacityLimit(0.8)) {
-    ProcessEquipmentInterface unit = (ProcessEquipmentInterface) equip;
+for (String equipName : process.getEquipmentNearCapacityLimit()) {
+    ProcessEquipmentInterface unit = process.getUnit(equipName);
     System.out.printf("%s: %.1f%% (constraint: %s)%n",
         unit.getName(),
-        equip.getMaxUtilizationPercent(),
-        equip.getBottleneckConstraint().getName());
+        unit.getMaxUtilizationPercent(),
+        unit.getBottleneckConstraint().getName());
 }
 ```
 
@@ -525,13 +526,13 @@ OptimizationConfig config = new OptimizationConfig(0, 1)  // bounds ignored for 
     .tolerance(0.01);
 
 // Run optimization
-OptimizationResult result = ProductionOptimizer.optimize(process, variables, config, objectives, null);
+OptimizationResult result = new ProductionOptimizer().optimize(process, variables, config, objectives, null);
 
 System.out.println("Optimal decision variables:");
 for (Map.Entry<String, Double> entry : result.getDecisionVariables().entrySet()) {
     System.out.printf("  %s: %.2f%n", entry.getKey(), entry.getValue());
 }
-System.out.printf("Optimal profit: $%.2f/hr%n", result.getObjectiveValue());
+System.out.printf("Optimal profit: $%.2f/hr%n", result.getObjectiveValues().get("profit"));
 ```
 
 ### Pareto Optimization
@@ -553,15 +554,15 @@ List<OptimizationObjective> objectives = Arrays.asList(
         1.0, ObjectiveType.MINIMIZE)
 );
 
-// Run Pareto optimization with 15 weight combinations
-ParetoResult pareto = ProductionOptimizer.optimizePareto(
-    process, feed, config, objectives, null, 15);
+// Run Pareto optimization
+ParetoResult pareto = new ProductionOptimizer().optimizePareto(
+    process, feed, config, objectives, null);
 
 // Output Pareto front
 System.out.println("=== PARETO FRONT ===");
 System.out.println("Throughput (kg/hr) | Specific Power (kWh/t)");
 System.out.println("-------------------|-----------------------");
-for (OptimizationResult point : pareto.getParetoFront()) {
+for (ParetoPoint point : pareto.getParetoFront()) {
     Map<String, Double> vals = point.getObjectiveValues();
     System.out.printf("%18.0f | %22.1f%n",
         vals.get("throughput"), vals.get("specificPower"));
@@ -659,7 +660,7 @@ optimization:
 // Load and run
 ProductionOptimizationSpecLoader loader = new ProductionOptimizationSpecLoader();
 OptimizationConfig config = loader.loadConfig("optimization_config.yaml");
-OptimizationResult result = ProductionOptimizer.optimize(process, feed, config);
+OptimizationResult result = new ProductionOptimizer().optimize(process, feed, config, null, null);
 ```
 
 ---
@@ -690,10 +691,9 @@ OptimizationResult result = ProductionOptimizer.optimize(process, feed, config);
 | `isFeasible()` | Whether solution satisfies all constraints |
 | `getBottleneck()` | Limiting equipment |
 | `getBottleneckUtilization()` | Utilization of bottleneck |
-| `getObjectiveValue()` | Final objective value |
 | `getObjectiveValues()` | Map of all objective values |
 | `getDecisionVariables()` | Map of optimized variable values |
-| `getIterationCount()` | Number of iterations used |
+| `getIterations()` | Number of iterations used |
 | `getInfeasibilityDiagnosis()` | Detailed constraint violation report |
 
 ---

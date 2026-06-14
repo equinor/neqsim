@@ -34,7 +34,7 @@ heat recovery steam generators (HRSG), and combined cycle systems.
 ## 1. Gas Turbine
 
 ```java
-// Create fuel gas and air streams
+// Fuel gas stream — the combustion air is generated internally by the GasTurbine.
 SystemInterface fuelGas = new SystemSrkEos(273.15 + 25, 30.0);
 fuelGas.addComponent("methane", 0.90);
 fuelGas.addComponent("ethane", 0.06);
@@ -44,27 +44,22 @@ fuelGas.setMixingRule("classic");
 
 Stream fuelStream = new Stream("Fuel Gas", fuelGas);
 fuelStream.setFlowRate(5000.0, "kg/hr");
+fuelStream.run();
 
-// Air stream (simplified composition)
-SystemInterface air = new SystemSrkEos(273.15 + 15, 1.01325);
-air.addComponent("nitrogen", 0.79);
-air.addComponent("oxygen", 0.21);
-air.setMixingRule("classic");
-
-Stream airStream = new Stream("Combustion Air", air);
-airStream.setFlowRate(100000.0, "kg/hr");
-
-// Gas turbine
-GasTurbine gt = new GasTurbine("GT-001", fuelStream, airStream);
-gt.setIsentropicEfficiency(0.88);
-gt.setCompressorPressureRatio(18.0);
+// Simplified Brayton-cycle gas turbine: internal air compressor + combustor + expander + cooler.
+GasTurbine gt = new GasTurbine("GT-001", fuelStream);
+gt.combustionpressure = 18.0;      // firing / combustion pressure [bara]
+gt.setExcessAirFactor(2.5);        // excess air over stoichiometric (caps firing temperature)
 gt.run();
 
-double power_MW = gt.getPower("MW");
-double thermalEff = gt.getThermalEfficiency();
-double exhaustT = gt.getExhaustStream().getTemperature() - 273.15;
-double fuelRate = gt.getFuelConsumption("kg/hr");
+double power_MW = gt.getPower("MW");           // net shaft power (expander - air compressor)
+double rejectHeat_W = gt.getHeat();           // heat rejected by the exhaust cooler [W]
+double idealAFR = gt.calcIdealAirFuelRatio(); // stoichiometric air/fuel mass ratio
 ```
+
+> The legacy `GasTurbine` is a simplified thermodynamic Brayton model. For
+> vendor-rated power, part-load + ambient correction, degradation, emissions,
+> and dispatch use `GasTurbineUnit` + `GasTurbineCatalog` (see section 7).
 
 ## 2. Steam Turbine
 
@@ -89,28 +84,37 @@ double outletT = st.getOutletStream().getTemperature() - 273.15;
 ## 3. Heat Recovery Steam Generator (HRSG)
 
 ```java
-// Recover heat from gas turbine exhaust
-HRSG hrsg = new HRSG("HRSG-001", gt.getExhaustStream(), waterFeedStream);
+// Recover heat from a hot turbine-exhaust gas stream. The HRSG takes a single
+// hot-gas inlet stream; steam conditions are set on the unit.
+HRSG hrsg = new HRSG("HRSG-001", exhaustGasStream);
+hrsg.setSteamPressure(40.0);            // bara
+hrsg.setSteamTemperature(400.0, "C");
+hrsg.setFeedWaterTemperature(105.0, "C");
+hrsg.setApproachTemperature(15.0);
 hrsg.run();
 
-Stream steamOut = hrsg.getSteamOutStream();
-double steamT = steamOut.getTemperature() - 273.15;
-double steamP = steamOut.getPressure();
-double stackT = hrsg.getStackTemperature() - 273.15;
+double duty_W = hrsg.getHeatTransferred();
+double steamFlow = hrsg.getSteamFlowRate("kg/hr");
+double stackT = hrsg.getGasOutletTemperature() - 273.15;  // °C
 ```
 
 ## 4. Combined Cycle System
 
 ```java
-// Integrated GT + HRSG + ST
-CombinedCycleSystem ccgt = new CombinedCycleSystem("CCGT");
-ccgt.setGasTurbine(gt);
-ccgt.setHRSG(hrsg);
-ccgt.setSteamTurbine(st);
+// Integrated GT + HRSG + ST. The sub-units are built internally from the fuel
+// gas stream — configure conditions through the setters below.
+CombinedCycleSystem ccgt = new CombinedCycleSystem("CCGT", fuelStream);
+ccgt.setCombustionPressure(18.0);
+ccgt.setSteamPressure(40.0);
+ccgt.setSteamTemperature(400.0, "C");
+ccgt.setGasTurbineEfficiency(0.38);
+ccgt.setSteamTurbineEfficiency(0.85);
 ccgt.run();
 
 double totalPower = ccgt.getTotalPower("MW");
-double combinedEfficiency = ccgt.getCombinedEfficiency();
+double gtPower_W = ccgt.getGasTurbinePower();
+double stPower_W = ccgt.getSteamTurbinePower();
+double combinedEfficiency = ccgt.getOverallEfficiency();
 // Typical: 55-62% for modern CCGT
 ```
 
@@ -147,9 +151,12 @@ double pinchTemp = pinch.getPinchTemperature();     // °C
 // C3H8 + 5O2 -> 3CO2 + 4H2O
 
 // Approximate: 2.75 kg CO2 per kg natural gas (varies with composition)
-double fuelRate_kg_hr = gt.getFuelConsumption("kg/hr");
+double fuelRate_kg_hr = fuelStream.getFlowRate("kg/hr");
 double co2Factor = 2.75;  // kg CO2 / kg fuel (adjust for actual composition)
 double co2_tonnes_yr = fuelRate_kg_hr * co2Factor * 8760 / 1e6;
+
+// For a rigorous full-carbon-balance CO2, NOx, and methane-slip estimate use the
+// catalog-driven GasTurbineUnit (section 7): gt.getCO2EmissionKgPerHr().
 ```
 
 ## 7. Right-Sizing & Dispatch (gasturbine sub-package)

@@ -10,6 +10,8 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
@@ -130,6 +132,21 @@ public class WellFlow extends TwoPortEquipment {
   String pressureUnit = "bara";
   boolean useWellProductionIndex = false;
   boolean calcpressure = true;
+
+  // ----------------------------------------------------------------
+  // Subsurface capacity-constraint support (drawdown / min BHP)
+  // ----------------------------------------------------------------
+  /** Default maximum allowable reservoir drawdown (Pr - Pwf), bar. */
+  private static final double DEFAULT_MAX_DRAWDOWN_BAR = 9999.0;
+  /** Maximum allowable reservoir drawdown (Pr - Pwf), bar. */
+  private double maxDrawdownBar = DEFAULT_MAX_DRAWDOWN_BAR;
+  /**
+   * Minimum allowable flowing bottom-hole pressure (Pwf), bara. A value of 0 disables the minimum
+   * BHP constraint.
+   */
+  private double minBottomHolePressureBara = 0.0;
+  /** Whether the subsurface capacity constraints participate in capacity analysis. */
+  private boolean wellConstraintsEnabled = false;
 
   /**
    * Flow direction mode for the well.
@@ -696,6 +713,181 @@ public class WellFlow extends TwoPortEquipment {
   public double getWellProductionIndex() {
     return wellProductionIndex;
   }
+
+  // ================================================================
+  // Subsurface capacity constraints (drawdown / minimum BHP)
+  // ================================================================
+
+  /**
+   * Returns the live reservoir drawdown across the well inflow.
+   *
+   * <p>
+   * Drawdown is defined as the difference between the reservoir pressure at the inlet (Pr) and the
+   * flowing bottom-hole pressure at the outlet (Pwf): {@code drawdown = Pr - Pwf}. Excessive
+   * drawdown can cause sand production, water/gas coning and near-wellbore damage, so it is a
+   * fundamental subsurface deliverability limit.
+   * </p>
+   *
+   * @return the current drawdown in bar, or 0.0 if the streams are not yet available
+   */
+  public double getDrawdown() {
+    try {
+      double pr = getInletStream().getPressure("bara");
+      double pwf = getOutletStream().getPressure("bara");
+      double dd = pr - pwf;
+      return dd > 0.0 ? dd : 0.0;
+    } catch (RuntimeException ex) {
+      return 0.0;
+    }
+  }
+
+  /**
+   * Returns the live flowing bottom-hole pressure (Pwf) at the well outlet.
+   *
+   * @return the current bottom-hole pressure in bara, or a large value if not yet available
+   */
+  public double getBottomHolePressure() {
+    try {
+      return getOutletStream().getPressure("bara");
+    } catch (RuntimeException ex) {
+      return Double.MAX_VALUE;
+    }
+  }
+
+  /**
+   * Sets the maximum allowable reservoir drawdown (Pr - Pwf) for this well.
+   *
+   * <p>
+   * When the subsurface constraints are enabled (see {@link #useWellConstraints()}), the
+   * {@code "well drawdown"} capacity constraint reports a utilization of {@code drawdown / maxDrawdown}
+   * so the well participates in {@code findBottleneck()} and utilization analysis.
+   * </p>
+   *
+   * @param maxDrawdown the maximum allowable drawdown
+   * @param unit the pressure unit ("bara", "bar" or "psia")
+   */
+  public void setMaxDrawdown(double maxDrawdown, String unit) {
+    if ("psia".equalsIgnoreCase(unit) || "psi".equalsIgnoreCase(unit)) {
+      this.maxDrawdownBar = maxDrawdown * 0.0689476;
+    } else {
+      this.maxDrawdownBar = maxDrawdown;
+    }
+    refreshWellCapacityConstraints();
+  }
+
+  /**
+   * Gets the maximum allowable reservoir drawdown (Pr - Pwf).
+   *
+   * @return the maximum drawdown in bar
+   */
+  public double getMaxDrawdown() {
+    return maxDrawdownBar;
+  }
+
+  /**
+   * Sets the minimum allowable flowing bottom-hole pressure (Pwf) for this well.
+   *
+   * <p>
+   * A minimum BHP is commonly imposed to avoid liquid loading, to stay above the reservoir bubble
+   * point, or to respect artificial-lift envelopes. When enabled, the {@code "min BHP"} constraint
+   * reports a utilization of {@code minBHP / Pwf} (a minimum-type constraint) so approaching the
+   * lower limit drives utilization toward 100%.
+   * </p>
+   *
+   * @param minPressure the minimum bottom-hole pressure (use 0 to disable)
+   * @param unit the pressure unit ("bara", "bar" or "psia")
+   */
+  public void setMinBottomHolePressure(double minPressure, String unit) {
+    if ("psia".equalsIgnoreCase(unit) || "psi".equalsIgnoreCase(unit)) {
+      this.minBottomHolePressureBara = minPressure * 0.0689476;
+    } else {
+      this.minBottomHolePressureBara = minPressure;
+    }
+    refreshWellCapacityConstraints();
+  }
+
+  /**
+   * Gets the minimum allowable flowing bottom-hole pressure (Pwf).
+   *
+   * @return the minimum bottom-hole pressure in bara
+   */
+  public double getMinBottomHolePressure() {
+    return minBottomHolePressureBara;
+  }
+
+  /**
+   * Enables the subsurface capacity constraints (drawdown and minimum BHP) for this well.
+   *
+   * <p>
+   * The constraints are disabled by default so existing behaviour is unchanged. Call this method
+   * (typically together with {@link #setMaxDrawdown(double, String)} and/or
+   * {@link #setMinBottomHolePressure(double, String)}) to make the well a first-class participant in
+   * {@code findBottleneck()} and capacity-utilization analysis, mirroring the constraint support
+   * already available on separators, compressors, pipes and valves.
+   * </p>
+   *
+   * @return this well for method chaining
+   */
+  public WellFlow useWellConstraints() {
+    this.wellConstraintsEnabled = true;
+    refreshWellCapacityConstraints();
+    return this;
+  }
+
+  /**
+   * Indicates whether the subsurface capacity constraints are enabled for this well.
+   *
+   * @return true if the drawdown and minimum-BHP constraints participate in capacity analysis
+   */
+  public boolean isWellConstraintsEnabled() {
+    return wellConstraintsEnabled;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void initializeDefaultConstraints() {
+    addWellCapacityConstraints();
+  }
+
+  /**
+   * (Re)builds and registers the subsurface capacity constraints with the current limits and
+   * enabled state. Re-adding a constraint with the same name overwrites the previous definition, so
+   * this method is idempotent and safe to call from setters.
+   */
+  private void refreshWellCapacityConstraints() {
+    // getCapacityConstraints() lazily triggers initializeDefaultConstraints(); calling the helper
+    // directly here keeps the constraint design values and enabled flags in sync with the setters.
+    addWellCapacityConstraints();
+  }
+
+  /**
+   * Adds the drawdown and minimum-BHP capacity constraints using live stream suppliers.
+   */
+  private void addWellCapacityConstraints() {
+    // Reservoir drawdown constraint (Pr - Pwf). Maximum-type: utilization = drawdown / maxDrawdown.
+    addCapacityConstraint(new CapacityConstraint("well drawdown", "bar", ConstraintType.SOFT)
+        .setDesignValue(maxDrawdownBar).setWarningThreshold(0.9).setDataSource("equipment")
+        .setDescription("Reservoir drawdown Pr - Pwf (sand/coning deliverability limit)")
+        .setEnabled(wellConstraintsEnabled).setValueSupplier(new java.util.function.DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getDrawdown();
+          }
+        }));
+
+    // Minimum bottom-hole pressure constraint. Minimum-type: utilization = minBHP / Pwf.
+    addCapacityConstraint(new CapacityConstraint("min BHP", "bara", ConstraintType.SOFT)
+        .setMinValue(minBottomHolePressureBara).setWarningThreshold(1.1).setDataSource("equipment")
+        .setDescription("Minimum flowing bottom-hole pressure (liquid loading / bubble point limit)")
+        .setEnabled(wellConstraintsEnabled && minBottomHolePressureBara > 0.0)
+        .setValueSupplier(new java.util.function.DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getBottomHolePressure();
+          }
+        }));
+  }
+
 
   /**
    * <p>

@@ -62,7 +62,7 @@ This table summarizes how capacity utilization is calculated for each equipment 
 | Equipment | Utilization Formula | Duty Metric | Capacity Metric | Override Design Methods |
 |-----------|--------------------|--------------|-----------------|-----------------------|
 | **Separator** | `gasFlow / maxAllowableGasFlow` | Gas volumetric flow (m³/s) | K-factor × area × density function | `setDesignGasLoadFactor()`, `setInternalDiameter()` |
-| **Compressor** | `power / maxPower` | Shaft power (W) | Driver power or design power | `setMaximumPower()`, `setMaximumSpeed()` |
+| **Compressor** | `power / maxPower` | Shaft power (W) | Driver power or design power | `getMechanicalDesign().setMaxDesignPower()`, `setMaximumSpeed()` |
 | **Pump** | `power / maxPower` | Shaft power (W) | Design power | `getMechanicalDesign().setMaxDesignVolumeFlow()` |
 | **ThrottlingValve** | `volumeFlow / maxVolumeFlow` | Outlet flow (m³/hr) | Design Cv × conditions | `setDesignCv()`, `setDesignVolumeFlow()` |
 | **Heater/Cooler** | `duty / maxDuty` | Heat duty (W) | Max design duty | `getMechanicalDesign().setMaxDesignDuty()` |
@@ -138,7 +138,8 @@ separator.setSeparatorLength(7.0);
 ```java
 compressor.autoSize(1.2);
 // Override power limits
-compressor.setMaximumPower(5000.0);  // kW - overrides driver power
+compressor.initMechanicalDesign();
+compressor.getMechanicalDesign().setMaxDesignPower(5000.0);  // kW - overrides driver power
 compressor.setMaximumSpeed(12000.0); // RPM - sets speed limit
 // Or disable auto-generated curves and use manual efficiency
 compressor.setUsePolytropicCalc(true);

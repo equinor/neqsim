@@ -471,7 +471,7 @@ sep.initMechanicalDesign();
 SeparatorMechanicalDesign mechDesign = (SeparatorMechanicalDesign) sep.getMechanicalDesign();
 
 // Set design limits that will become constraints
-mechDesign.setMaxDesignGassVolFlow(5000.0);    // m³/hr → volumeFlow constraint
+mechDesign.setMaxDesignVolumeFlow(5000.0);     // m³/hr → volumeFlow constraint
 mechDesign.setMaxDesignPressureDrop(2.0);      // bara → pressureDrop constraint
 
 // For pipelines
@@ -526,8 +526,9 @@ for (CapacityConstrainedEquipment equip : process.getConstrainedEquipment()) {
 // 4. Use in optimization - optimizer checks ALL constraints
 ProductionOptimizer.OptimizationConfig config =
     new ProductionOptimizer.OptimizationConfig(1000.0, 50000.0);
+ProductionOptimizer optimizer = new ProductionOptimizer();
 ProductionOptimizer.OptimizationResult result =
-    ProductionOptimizer.optimize(process, feed, config);
+    optimizer.optimize(process, feed, config, null, null);
 
 // 5. The bottleneck could be separator, compressor, or pipeline
 System.out.println("Bottleneck: " + result.getBottleneck().getName());
@@ -538,10 +539,10 @@ System.out.println("Bottleneck: " + result.getBottleneck().getName());
 | Equipment | Constraints | Set By |
 |-----------|-------------|--------|
 | **Separator** | gasLoadFactor, liquidResidenceTime | autoSize(), setDesignGasLoadFactor() |
-| **Compressor** | speed, power, ratedPower, surgeMargin, stonewallMargin | autoSize(), setMaximumSpeed(), setMaximumPower() |
-| **Pump** | npshMargin, power, flowRate | setMaximumPower(), mechanical design |
+| **Compressor** | speed, power, ratedPower, surgeMargin, stonewallMargin | autoSize(), setMaximumSpeed(), getMechanicalDesign().setMaxDesignPower() |
+| **Pump** | npshMargin, power, flowRate | getMechanicalDesign().setMaxDesignPower(), mechanical design |
 | **ThrottlingValve** | valveOpening, cvUtilization, AIV | autoSize(), setCv(), setMaxDesignAIV() |
-| **Pipeline** | velocity, pressureDrop, volumeFlow, FIV_LOF, FIV_FRMS | autoSize(), setMaxLOF(), setMaxFRMS() |
+| **Pipeline** | velocity, pressureDrop, volumeFlow, FIV_LOF, FIV_FRMS | autoSize(), getMechanicalDesign().setMaxDesignVelocity() |
 | **PipeBeggsAndBrills** | velocity, LOF, FRMS, AIV | autoSize(), setMaxDesignVelocity(), setMaxDesignLOF(), setMaxDesignAIV() |
 | **AdiabaticPipe** | velocity, LOF, FRMS, AIV, pressureDrop | autoSize(), setMaxDesignVelocity(), setMaxDesignLOF(), setMaxDesignAIV() |
 | **Manifold** | headerVelocity, branchVelocity, headerLOF, headerFRMS, branchLOF, branchFRMS | autoSize(), setMaxDesignVelocity() |
@@ -558,7 +559,7 @@ separator.autoSize(1.2);                  // Uses your K-factor
 
 // 2. Override AFTER autoSize (keeps sizing, changes constraint limit)
 compressor.autoSize(1.2);
-compressor.setMaximumPower(6000.0);       // Override constraint limit (kW)
+compressor.getMechanicalDesign().setMaxDesignPower(6000.0);  // Override constraint limit (kW)
 compressor.setMaximumSpeed(12000.0);      // Override speed limit (RPM)
 
 // 3. Manually set constraint on existing equipment
@@ -782,7 +783,7 @@ for (CapacityConstraint c : compressor.getCapacityConstraints().values()) {
 }
 
 // ADD a new custom constraint (discharge temperature)
-CapacityConstraint tempLimit = new CapacityConstraint("dischargeTemp", ConstraintType.SOFT)
+CapacityConstraint tempLimit = new CapacityConstraint("dischargeTemp", "°C", ConstraintType.SOFT)
     .setDesignValue(150.0)  // °C design limit
     .setMaxValue(180.0)     // °C absolute max
     .setUnit("°C")
@@ -825,7 +826,7 @@ EquipmentCapacityStrategy heaterStrategy = new EquipmentCapacityStrategy() {
         Heater h = (Heater) equipment;
         Map<String, CapacityConstraint> constraints = new LinkedHashMap<>();
 
-        constraints.put("duty", new CapacityConstraint("duty", ConstraintType.DESIGN)
+        constraints.put("duty", new CapacityConstraint("duty", "kW", ConstraintType.DESIGN)
             .setDesignValue(5000.0)  // kW
             .setMaxValue(6000.0)
             .setUnit("kW")
@@ -852,7 +853,7 @@ public class ConstrainedHeater extends Heater implements CapacityConstrainedEqui
     }
 
     protected void initializeCapacityConstraints() {
-        addCapacityConstraint(new CapacityConstraint("duty", ConstraintType.DESIGN)
+        addCapacityConstraint(new CapacityConstraint("duty", "kW", ConstraintType.DESIGN)
             .setDesignValue(5000.0)
             .setUnit("kW")
             .setValueSupplier(() -> Math.abs(getDuty()) / 1000.0));
@@ -1809,7 +1810,7 @@ public class MyCustomStrategy implements EquipmentCapacityStrategy {
         MyCustomEquipment eq = (MyCustomEquipment) equipment;
 
         constraints.put("customLoad",
-            new CapacityConstraint("customLoad", ConstraintType.DESIGN)
+            new CapacityConstraint("customLoad", "kW", ConstraintType.DESIGN)
                 .setDesignValue(eq.getDesignLoad())
                 .setMaxValue(eq.getMaxLoad())
                 .setUnit("kW")
