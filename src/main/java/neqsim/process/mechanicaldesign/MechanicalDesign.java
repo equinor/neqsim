@@ -328,7 +328,7 @@ public class MechanicalDesign implements java.io.Serializable {
    */
   private void addDesignConstraint(List<CapacityConstraint> constraints, String name, String unit,
       double designLimit, double currentValue, DoubleSupplier supplier) {
-    if (designLimit > 0.0 && !Double.isNaN(currentValue)) {
+    if (designLimit > 0.0 && Double.isFinite(currentValue)) {
       CapacityConstraint constraint =
           new CapacityConstraint(name, unit, CapacityConstraint.ConstraintType.DESIGN)
               .setDesignValue(designLimit).setWarningThreshold(0.9)
