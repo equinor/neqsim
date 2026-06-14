@@ -446,6 +446,18 @@ public class ProcessAutomation {
   }
 
   /**
+   * Creates a new {@link AgenticProcessOptimizer} bound to this automation facade. This is the
+   * recommended entry point for closed-loop, ML- and agent-driven optimization over the underlying
+   * process: the optimizer drives {@link #evaluate(Map, String, java.util.List)} for every trial,
+   * speaks schema-versioned JSON, and never throws.
+   *
+   * @return a fresh optimizer wrapping this facade
+   */
+  public AgenticProcessOptimizer newOptimizer() {
+    return new AgenticProcessOptimizer(this);
+  }
+
+  /**
    * Converts an adjuster bound to a nullable {@link Double}, mapping sentinel "unbounded" values
    * (magnitude at or beyond {@link #UNBOUNDED_THRESHOLD}) and non-finite values to {@code null}.
    *

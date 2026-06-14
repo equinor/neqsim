@@ -680,6 +680,57 @@ snapshot reads constraints rather than re-solving, it is cheap to call on every 
 > `comp.getMechanicalDesign().setMaxDesignPower(kW)` to give the `power` constraint a basis. When a
 > chart is later attached, `reinitializeCapacityConstraints()` re-enables the chart metrics.
 
+### AgenticProcessOptimizer: closed-loop optimization for ML/agentic loops
+
+`evaluate()` makes a flowsheet *steppable*; `AgenticProcessOptimizer` is the **ready-made search
+loop** built on top of it, purpose-designed for ML and agentic use. Get one with
+`auto.newOptimizer()` (or `new AgenticProcessOptimizer(automation)`). It works entirely in terms of
+**string addresses**, a **never-throwing schema-versioned JSON contract**, and a **replayable
+trajectory** — so an LLM agent can build and solve an optimization problem straight from
+`getAdjustableParametersJson()` output without navigating Java objects.
+
+```java
+ProcessAutomation auto = plant.getAutomation();
+AgenticProcessOptimizer opt = auto.newOptimizer();
+opt.addVariable("Compression::Export Compressor.outletPressure", 80.0, 200.0, "bara");
+opt.minimize("Compression::Export Compressor.power", "kW");
+opt.addConstraintLessOrEqual("Export Oil.RVP", 0.79, "bara", 1.0e4); // quadratic penalty
+opt.setSeed(42).setMaxEvaluations(80);
+AgenticProcessOptimizer.OptimizationResult result = opt.optimize(); // never throws
+String json = opt.optimizeToJson(); // schema-versioned JSON incl. trajectory
+```
+
+- **Algorithm**: bounded Nelder–Mead simplex with deterministic (seeded) random initialization. A
+  flowsheet behind `evaluate()` is a noisy, feasibility-gated black box with no usable analytic
+  gradient, so a derivative-free method is the right choice. Same seed + same problem ⇒ identical
+  trajectory (reproducible experiments).
+- **Decision space**: `addVariable(address, lo, hi, unit)` (per-variable unit), or
+  `useAdjustableParameters()` to auto-fill bounded variables from the process adjusters (returns the
+  count added, skips unbounded ones).
+- **Objective**: `minimize(addr, unit)` / `maximize(addr, unit)` / `setObjective(addr, Sense, unit)`
+  for an address-based goal, or `setObjectiveFunction(Function<Map<String,Double>,Double>)` for a
+  **custom reward** computed over a read-map of decisions + constraint read-backs + watches
+  (reward shaping). Add observables with `addWatch(addr, unit)`.
+- **Constraints**: `addConstraintLessOrEqual` / `addConstraintGreaterOrEqual` /
+  `addConstraint(addr, type, limit, unit, penaltyWeight)` — hard inequalities folded in as weighted
+  quadratic penalties; infeasible runs are still logged but pushed to the back with a large penalty.
+- **Per-trial gating**: each trial sets the decision variables (each in its own unit, catching
+  rejections), calls `evaluate()` for one gated run (apply → run to convergence → feasibility flag),
+  then reads the objective/constraints individually. A malformed candidate degrades **one** trial
+  instead of crashing the loop; `optimize()` itself never throws.
+- **Trajectory tape**: every evaluated point is logged as a `Trial` (setpoints, read-backs, raw
+  objective, penalty, feasibility, minimized score) — the (state, action, reward) tape for offline
+  RL, surrogate-model fitting, and agent post-mortems. Exposed via `result.getTrajectory()` and in
+  the result JSON.
+- **Self-rating**: `getReadinessJson()` returns a machine-readable self-assessment rating each
+  capability `full`/`partial`/`none` (never_throws=full, deterministic=full,
+  bounded_action_space=full, json_io=full, reward_shaping=full, constraint_handling=full,
+  trajectory_logging=full, feasibility_gating=full; gradient_based=none,
+  global_optimum_guarantee=partial, parallel_evaluation=none) so an agent can decide whether to use
+  it before committing a budget.
+- **Tuning**: `setMaxEvaluations(int)` (evaluation budget), `setInnerConvergence(maxIter, tol)`
+  (per-trial `evaluate()` gating), `setConvergenceTolerance(double)` (simplex stop), `setSeed(long)`.
+
 ### Self-healing automation (PREFERRED for agents)
 
 The automation API includes self-diagnosis and auto-correction. When an address

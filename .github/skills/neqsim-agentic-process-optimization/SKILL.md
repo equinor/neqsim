@@ -248,6 +248,25 @@ Bridge to SciPy/Pyomo/BoTorch via `ProcessSimulationEvaluator` when you need
 algorithms NeqSim lacks (Bayesian, MINLP). **Do not claim NeqSim has Bayesian
 optimization or LHS — it does not.**
 
+> **Built-in shortcut — `AgenticProcessOptimizer` (NeqSim ≥ 3.13.0).** Before hand-rolling
+> the §3 evaluate-helper + §6 SciPy loop, consider `auto.newOptimizer()`: a ready-made
+> bounded Nelder–Mead search that already does the per-trial `evaluate()` gating, penalty
+> folding, trajectory logging, and never-throw JSON contract described in this skill.
+> Build the problem straight from string addresses:
+>
+> ```python
+> opt = auto.newOptimizer()
+> opt.addVariable("Compression::Export Compressor.outletPressure", 80.0, 200.0, "bara")
+> opt.minimize("Compression::Export Compressor.power", "kW")
+> opt.addConstraintLessOrEqual("Export Oil.RVP", 0.79, "bara", 1.0e4)
+> opt.setSeed(42).setMaxEvaluations(80)
+> result = json.loads(str(opt.optimizeToJson()))  # never throws; includes trajectory
+> readiness = json.loads(str(opt.getReadinessJson()))  # ML/agentic self-rating
+> ```
+>
+> Use the manual SciPy/Pyomo bridge only when you need an algorithm it lacks
+> (Bayesian, MINLP, true multi-objective Pareto) or parallel deep-copy sweeps (§7).
+
 ---
 
 ## 7. Multi-year / multi-scenario sweeps with deep copies
