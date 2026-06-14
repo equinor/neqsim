@@ -183,4 +183,54 @@ public class ProcessModelOptimizationView extends ProcessSystem {
     }
     return null;
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public ProcessEquipmentInterface getBottleneck() {
+    return model.getBottleneck();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getBottleneckUtilization() {
+    return model.getBottleneckUtilization();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public neqsim.process.equipment.capacity.BottleneckResult findBottleneck() {
+    return model.findBottleneck();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAnyEquipmentOverloaded() {
+    return model.isAnyEquipmentOverloaded();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAnyHardLimitExceeded() {
+    return model.isAnyHardLimitExceeded();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getUtilizationSnapshotJson() {
+    return model.getUtilizationSnapshotJson();
+  }
+}
+      String unitName = name.substring(idx + AREA_SEPARATOR.length());
+      ProcessSystem area = model.get(areaName);
+      return area != null ? area.getUnit(unitName) : null;
+    }
+
+    for (ProcessSystem area : model.getAllProcesses()) {
+      ProcessEquipmentInterface unit = area.getUnit(name);
+      if (unit != null) {
+        return unit;
+      }
+    }
+    return null;
+  }
 }
