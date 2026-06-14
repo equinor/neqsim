@@ -1,7 +1,7 @@
 ---
 layout: default
-title: "Autosize and Optimize Workflows"
-description: "Automatically size process equipment from mechanical design and then optimize operating setpoints in NeqSim, combining equipment utilization capacity constraints with operational optimization workflows."
+title: "autosize and optimize workflows"
+description: "Jupyter notebook tutorial for NeqSim"
 parent: Examples
 nav_order: 1
 ---

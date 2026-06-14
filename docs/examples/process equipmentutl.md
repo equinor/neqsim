@@ -1,17 +1,17 @@
 ---
 layout: default
-title: "reservoir to market optimization"
+title: "process equipmentutl"
 description: "Jupyter notebook tutorial for NeqSim"
 parent: Examples
 nav_order: 1
 ---
 
-# reservoir to market optimization
+# process equipmentutl
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
-> [`reservoir_to_market_optimization.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/reservoir_to_market_optimization.ipynb).
-> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/reservoir_to_market_optimization.ipynb)
-> or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/reservoir_to_market_optimization.ipynb).
+> [`process equipmentutl.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/process equipmentutl.ipynb).
+> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/process equipmentutl.ipynb)
+> or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/process equipmentutl.ipynb).
 
 ---
 
@@ -128,6 +128,21 @@ Imported: neqsim.process.equipment.reservoir.SimpleReservoir neqsim.process.equi
 ```
 
 </details>
+
+```python
+# Import the new value-chain economics classes up front (into a light kernel),
+# so the later economics cells just reuse them.
+EconomicParameters = ns.JClass("neqsim.process.optimization.valuechain.EconomicParameters")
+ValueChainObjective = ns.JClass("neqsim.process.optimization.valuechain.ValueChainObjective")
+DebottleneckingAdvisor = ns.JClass(
+    "neqsim.process.optimization.valuechain.DebottleneckingAdvisor")
+DebottleneckCandidate = ns.JClass(
+    "neqsim.process.optimization.valuechain.DebottleneckingAdvisor$DebottleneckCandidate")
+print("Value-chain classes imported:",
+      EconomicParameters.class_.getSimpleName(),
+      ValueChainObjective.class_.getSimpleName(),
+      DebottleneckingAdvisor.class_.getSimpleName())
+```
 
 ## 2. Reservoir — `SimpleReservoir`
 
@@ -1518,9 +1533,105 @@ for cp, nv in zip(carbon_prices, net_vs_carbon):
 ```
 
 ```python
-print("ns" in dir(), "total_rates" in dir(), "sweep_export" in dir())
-_EP = ns.JClass("neqsim.process.optimization.valuechain.EconomicParameters")
-print("loaded EconomicParameters:", _EP)
+# ===========================================================================
+# Figure 7 — value-chain economics: gross revenue vs net value vs CO2 emitted,
+# plus the carbon-price sensitivity at the economic optimum.
+# ===========================================================================
+fig, (axA, axB) = plt.subplots(1, 2, figsize=(13, 5))
+
+# --- Panel A: revenue / net value / CO2 across the field rate ---
+axA.plot(total_rates, gross_rev / 1e6, "o-", color="tab:blue",
+         label="Gross gas revenue")
+axA.plot(total_rates, net_value / 1e6, "s-", color="tab:green",
+         label="Net value (rev - energy - carbon)")
+axA.axvline(total_rates[i_econ], color="tab:green", ls=":", lw=2,
+            label=f"Economic optimum = {total_rates[i_econ]:.2f} MSm3/day")
+infeasible = ~(sweep_power <= POWER_CAP_MW)
+if infeasible.any():
+    axA.axvspan(total_rates[infeasible][0], total_rates[-1],
+                color="red", alpha=0.07, label="power infeasible")
+axA.set_xlabel("Total field gas rate [MSm3/day]")
+axA.set_ylabel("Cash flow [million NOK/day]", color="tab:blue")
+axA.set_title("Value-chain cash flow vs field rate")
+axA.grid(alpha=0.3)
+
+axA2 = axA.twinx()
+axA2.plot(total_rates, co2_day, "^--", color="tab:red", label="CO2 emitted")
+axA2.set_ylabel("CO2 [tonne/day]", color="tab:red")
+axA2.tick_params(axis="y", labelcolor="tab:red")
+lA1, lab1 = axA.get_legend_handles_labels()
+lA2, lab2 = axA2.get_legend_handles_labels()
+axA.legend(lA1 + lA2, lab1 + lab2, loc="upper left", fontsize=8)
+
+# --- Panel B: carbon-price sensitivity at the economic optimum ---
+axB.plot(carbon_prices, net_vs_carbon / 1e6, "o-", color="tab:purple")
+axB.axvline(econ.getCo2Tax(), color="gray", ls=":",
+            label=f"Base CO2 tax = {econ.getCo2Tax():.0f} NOK/t")
+axB.set_xlabel("CO2 price [NOK/tonne]")
+axB.set_ylabel("Net value [million NOK/day]")
+axB.set_title(f"Carbon-price sensitivity\n(at {total_rates[i_econ]:.2f} MSm3/day, "
+              f"{co2_day[i_econ]:.1f} t CO2/day)")
+axB.grid(alpha=0.3)
+axB.legend(fontsize=8)
+
+fig.suptitle("Figure 7 — Integrated value-chain economics "
+             "(NeqSim ValueChainObjective)", fontsize=13)
+fig.tight_layout(rect=(0, 0, 1, 0.96))
+plt.show()
+```
+
+```python
+# ===========================================================================
+# Part 5b — DebottleneckingAdvisor: rank capital upgrades by incremental NPV.
+# The Part 4 timeline showed the binding bottleneck migrate from well inflow
+# (min-BHP) to tubing erosional velocity around year 12. Each candidate below
+# removes one constraint and unlocks extra throughput from the year it is
+# installed; the advisor discounts the resulting cash flow and ranks by NPV.
+# ===========================================================================
+DebottleneckingAdvisor = ns.JClass(
+    "neqsim.process.optimization.valuechain.DebottleneckingAdvisor")
+Candidate = ns.JClass(
+    "neqsim.process.optimization.valuechain.DebottleneckingAdvisor$DebottleneckCandidate")
+
+GAS_NOK_PER_SM3 = econ.getGasPrice()          # 3.0 NOK/Sm3 (same as economics layer)
+DAYS = 365.0
+
+
+def annual_value(extra_msm3d):
+    """Annual incremental gas-sales value [NOK/yr] for an extra MSm3/day."""
+    return extra_msm3d * 1.0e6 * GAS_NOK_PER_SM3 * DAYS
+
+
+# name, target equipment, CAPEX [NOK], firstYear, lastYear, annual value [NOK/yr]
+candidate_specs = [
+    ("Larger-bore tubing",   "Tubing (erosional velocity)", 180e6, 12, 15, annual_value(0.80)),
+    ("Infill producer well", "Well IPR (min-BHP)",          350e6,  6, 15, annual_value(0.60)),
+    ("2nd separator train",  "Inlet separator (gas load)",  600e6,  4, 15, annual_value(1.00)),
+    ("Upsize comp. driver",  "Export compressor (power)",   250e6,  8, 15, annual_value(0.70)),
+]
+
+advisor = DebottleneckingAdvisor(econ)
+for name, target, capex, y0, y1, val in candidate_specs:
+    advisor.addCandidate(Candidate(name, target, float(capex), int(y0), int(y1),
+                                   float(val), None))
+
+ranked = advisor.evaluate()
+print("=== Debottlenecking advisor — upgrades ranked by incremental NPV ===")
+print(f"{'Rank':>4} {'Upgrade':<22} {'CAPEX':>10} {'PV benefit':>13} "
+      f"{'NPV':>13} {'B/C':>5} {'Payback':>8} {'Attractive':>10}")
+for rank, rec in enumerate(ranked, 1):
+    cand = rec.getCandidate()
+    payback = rec.getPaybackYears()
+    pb = f"{payback:.1f} yr" if payback >= 0 else "  -  "
+    print(f"{rank:>4} {str(cand.getName()):<22} {cand.getCapexNok()/1e6:9.0f}M "
+          f"{rec.getPvBenefitsNok()/1e6:12.0f}M {rec.getNpvNok()/1e6:12.0f}M "
+          f"{rec.getBenefitCostRatio():5.2f} {pb:>8} "
+          f"{'yes' if rec.isAttractive() else 'no':>10}")
+
+best = ranked[0]
+print(f"\nTop-ranked upgrade : {str(best.getCandidate().getName())} "
+      f"-> NPV {best.getNpvNok()/1e6:,.0f} MNOK "
+      f"(B/C {best.getBenefitCostRatio():.2f})")
 ```
 
 ## 8. Summary

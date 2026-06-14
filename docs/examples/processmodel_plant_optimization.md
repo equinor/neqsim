@@ -1,7 +1,7 @@
 ---
 layout: default
-title: "ProcessModel Plant Optimization"
-description: "Closed-loop optimization of a multi-area NeqSim ProcessModel plant using ProcessAutomation adjustable parameters, evaluate() feasibility gating, and utilization snapshots to minimize compression power subject to spec and surge constraints."
+title: "processmodel plant optimization"
+description: "Jupyter notebook tutorial for NeqSim"
 parent: Examples
 nav_order: 1
 ---
