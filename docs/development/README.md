@@ -39,6 +39,7 @@ This folder contains documentation for:
 | [TASK_LOG.md](TASK_LOG) | Persistent memory — searchable log of all solved tasks |
 | [LESSONS_LEARNED.md](LESSONS_LEARNED) | Practical lessons from 45+ solved tasks (EOS, convergence, API gotchas) |
 | [image_tools_agents_skills.md](image_tools_agents_skills) | Inventory of image-related tools, agents, and skills for P&IDs, drawings, scanned PDFs, maps, and screenshots |
+| [AGENT_SKILL_MAP.md](AGENT_SKILL_MAP) | Auto-generated map of which skills each NeqSim agent loads at invocation time |
 
 Start with `CONTEXT.md` in the repo root for a 60-second orientation.
 
@@ -105,6 +106,16 @@ public class SystemMyEos extends SystemEos {
 from neqsim import jneqsim
 fluid = jneqsim.thermo.system.SystemSrkEos(300.0, 50.0)
 ```
+
+---
+
+## Performance & Standards Integration
+
+| Document | Description |
+|----------|-------------|
+| [Performance Tuning Guide](performance_tuning) | Speed up simulations — warm-start K-values, flowsheet routing, stability short-circuit, and when to enable each optimization |
+| [TR/NORSOK Integration Recommendations](TR_NORSOK_integration_recommendations) | Synthesis of Equinor TR and NORSOK standard review with concrete recommendations for skills, agents, Java code, and data access |
+| [AI Extraction Skill Proposal](GITHUB_ISSUE_json_extraction_skill) | Feature proposal: extract process data from unstructured documents (text, PFDs, data sheets) into NeqSim JSON |
 
 ---
 

@@ -17,6 +17,10 @@ The Capacity Constraint Framework extends NeqSim's existing bottleneck analysis 
 - **Integration with ProductionOptimizer**: Works seamlessly with existing optimization tools
 - **ProcessSystem-wide analysis**: `findBottleneck()`, `getCapacityUtilizationSummary()`, and related methods iterate over ALL equipment
 
+> **Setting limits through mechanical design:** To derive capacity constraints directly from an
+> equipment's design envelope (max design pressure drop, volume flow, power, etc.), see
+> [Equipment Utilization via Mechanical Design](equipment_utilization_via_mechanical_design.md).
+
 ## Important: Constraints Disabled by Default
 
 > **⚠️ Key Behavior**: All separator, valve, pipeline, pump, and manifold constraints are **disabled by default** for backward compatibility. The optimizer checks whether any constraints are enabled before using the `CapacityConstrainedEquipment` interface.
@@ -206,11 +210,10 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 
 // Create a constraint with fluent builder pattern
-CapacityConstraint speedConstraint = new CapacityConstraint("speed", ConstraintType.HARD)
+CapacityConstraint speedConstraint = new CapacityConstraint("speed", "RPM", ConstraintType.HARD)
     .setDesignValue(10000.0)           // Design operating point (RPM)
     .setMaxValue(11000.0)              // Absolute maximum (trip point)
     .setMinValue(5000.0)               // Minimum stable operation
-    .setUnit("RPM")
     .setValueSupplier(() -> compressor.getSpeed());  // Live value getter
 ```
 
@@ -294,6 +297,142 @@ if (!result.isEmpty()) {
 }
 ```
 
+## Adding & Configuring Custom Constraints
+
+There are three ways to give an equipment new constraint functionality, ordered from the
+quickest (runtime, no subclassing) to the most reusable (built into an equipment type). All
+three produce ordinary `CapacityConstraint` objects, so they surface identically in
+`getMaxUtilization()`, `getBottleneckConstraint()`, `findBottleneck()`, and the utilization
+snapshot.
+
+### The constraint anatomy (what you configure)
+
+Every constraint is built with the fluent `CapacityConstraint` API. The two constructors are:
+
+```java
+new CapacityConstraint("name", "unit", ConstraintType.HARD);  // explicit unit + type
+new CapacityConstraint("name");                                // defaults: unit "", type SOFT
+```
+
+Configurable properties (all are optional fluent setters returning `this`):
+
+| Setter | Purpose | Default |
+|--------|---------|---------|
+| `setDesignValue(double)` | Limit used for utilization = current / design | required |
+| `setValueSupplier(DoubleSupplier)` | **Live** current value, re-evaluated each query | none |
+| `setCurrentValue(double)` | Static current value (use when there is no live source) | NaN |
+| `setMaxValue(double)` | Absolute trip point for `HARD` constraints | none |
+| `setMinValue(double)` | Minimum stable operating point | none |
+| `setWarningThreshold(double)` | Near-limit early warning (fraction, e.g. 0.9) | 0.9 |
+| `setUnit(String)` | Unit label (when the 1-arg constructor was used) | "" |
+| `setDescription(String)` | Human-readable description | "" |
+| `setDataSource(String)` | Provenance tag (e.g. `"mechanicalDesign"`, `"user"`) | "not_set" |
+| `setEnabled(boolean)` | Whether the optimizer/analysis counts it | `true` |
+
+> **Live vs. static value:** prefer `setValueSupplier(...)` so the constraint tracks the
+> simulation. A manually built constraint is **enabled by default**, so it counts as soon as
+> you add it (unlike the auto-generated strategy constraints, which start disabled).
+
+### Level 1 — Add a custom constraint to one equipment instance (no subclassing)
+
+The fastest path: build a constraint with a live supplier and register it on the equipment.
+Use this for one-off or study-specific limits.
+
+```java
+// Example: cap a heater on its outlet temperature
+Heater heater = new Heater("H-100", feed);
+// ... add to process and run ...
+
+CapacityConstraint tempLimit =
+    new CapacityConstraint("outletTemperature", "C", ConstraintType.SOFT)
+        .setDesignValue(120.0)                                  // design limit
+        .setWarningThreshold(0.9)                               // warn at 90%
+        .setDescription("Metallurgical limit on tube wall")
+        .setValueSupplier(() -> heater.getOutletStream()
+            .getTemperature("C"));                              // live value
+
+heater.addCapacityConstraint(tempLimit);                        // active immediately
+double util = heater.getMaxUtilization();                       // includes the new limit
+```
+
+Reconfigure or remove it at any time:
+
+```java
+heater.getCapacityConstraints().get("outletTemperature").setDesignValue(110.0);
+heater.getCapacityConstraints().get("outletTemperature").setEnabled(false); // what-if
+heater.removeCapacityConstraint("outletTemperature");                       // remove
+```
+
+### Level 2 — Give an equipment type built-in default constraints (subclass)
+
+To make a constraint part of every instance of an equipment type, override the
+`initializeDefaultConstraints()` hook on `ProcessEquipmentBaseClass`. It is called lazily the
+first time constraints are accessed (and after deserialization), so it is the right place to
+register type-specific constraints.
+
+```java
+public class MyReactor extends ProcessEquipmentBaseClass {
+
+  // ... constructors, run(), etc. ...
+
+  @Override
+  protected void initializeDefaultConstraints() {
+    addCapacityConstraint(
+        new CapacityConstraint("catalystBedDP", "bara", ConstraintType.DESIGN)
+            .setDesignValue(1.5)
+            .setDataSource("default")
+            .setValueSupplier(() -> getInletStreams().get(0).getPressure("bara")
+                - getOutletStreams().get(0).getPressure("bara")));
+  }
+}
+```
+
+Follow the framework convention: if your equipment should preserve backward compatibility,
+create the constraints **disabled** (`setEnabled(false)`) and provide a `useXxxConstraints()` /
+`enableConstraints()` method so users opt in (see how `Separator` exposes
+`useEquinorConstraints()`).
+
+### Level 3 — Derive constraints from the mechanical-design envelope
+
+When the limit is a property of the equipment's design envelope (max design power, flow,
+pressure drop, velocity, Cv, duty), configure it on the `MechanicalDesign` and let the bridge
+build the constraint for you. No `CapacityConstraint` object is needed. To support a **new**
+design-derived metric, override the matching protected `getOperating*` hook on a
+`MechanicalDesign` subclass. This path is documented in full in
+[Equipment Utilization via Mechanical Design](equipment_utilization_via_mechanical_design.md):
+
+```java
+equipment.getMechanicalDesign().setMaxDesignPower(6000.0);     // kW
+equipment.applyMechanicalDesignCapacityConstraints();          // opt-in bridge
+double util = equipment.getMaxUtilization();                   // now includes design power
+```
+
+#### Plant-wide one-call activation
+
+After auto-sizing a whole flowsheet, you do not need to loop over every unit. `ProcessSystem`
+and `ProcessModel` both expose a bulk helper that calls
+`applyMechanicalDesignCapacityConstraints()` on every contained piece of equipment and returns
+the number of units that registered at least one design-derived constraint. The call is
+**idempotent** (constraints use stable names) and safe to re-run after re-sizing:
+
+```java
+plant.autoSizeEquipment(1.20);                 // size every unit with a 20% margin
+int n = plant.applyMechanicalDesignCapacityConstraints();   // activate utilization plant-wide
+// n == number of units that now expose design-envelope constraints
+String snapshot = plant.getUtilizationSnapshotJson();        // side-effect-free read
+```
+
+For a multi-area `ProcessModel` the same method walks every area's `ProcessSystem`, so a single
+call activates utilization tracking across the entire plant.
+
+### Which level should I use?
+
+| Need | Use |
+|------|-----|
+| A one-off limit for a single run/study | **Level 1** (instance `addCapacityConstraint`) |
+| A limit that every instance of a new equipment type should have | **Level 2** (`initializeDefaultConstraints`) |
+| A limit that is part of the design envelope (power, flow, dP, velocity, Cv, duty) | **Level 3** (mechanical design + bridge) |
+
 ## Integration with AutoSizing and Mechanical Design
 
 ### How AutoSizing Creates Constraints
@@ -332,7 +471,7 @@ sep.initMechanicalDesign();
 SeparatorMechanicalDesign mechDesign = (SeparatorMechanicalDesign) sep.getMechanicalDesign();
 
 // Set design limits that will become constraints
-mechDesign.setMaxDesignGassVolFlow(5000.0);    // m³/hr → volumeFlow constraint
+mechDesign.setMaxDesignVolumeFlow(5000.0);     // m³/hr → volumeFlow constraint
 mechDesign.setMaxDesignPressureDrop(2.0);      // bara → pressureDrop constraint
 
 // For pipelines
@@ -387,8 +526,9 @@ for (CapacityConstrainedEquipment equip : process.getConstrainedEquipment()) {
 // 4. Use in optimization - optimizer checks ALL constraints
 ProductionOptimizer.OptimizationConfig config =
     new ProductionOptimizer.OptimizationConfig(1000.0, 50000.0);
+ProductionOptimizer optimizer = new ProductionOptimizer();
 ProductionOptimizer.OptimizationResult result =
-    ProductionOptimizer.optimize(process, feed, config);
+    optimizer.optimize(process, feed, config, null, null);
 
 // 5. The bottleneck could be separator, compressor, or pipeline
 System.out.println("Bottleneck: " + result.getBottleneck().getName());
@@ -399,10 +539,10 @@ System.out.println("Bottleneck: " + result.getBottleneck().getName());
 | Equipment | Constraints | Set By |
 |-----------|-------------|--------|
 | **Separator** | gasLoadFactor, liquidResidenceTime | autoSize(), setDesignGasLoadFactor() |
-| **Compressor** | speed, power, ratedPower, surgeMargin, stonewallMargin | autoSize(), setMaximumSpeed(), setMaximumPower() |
-| **Pump** | npshMargin, power, flowRate | setMaximumPower(), mechanical design |
+| **Compressor** | speed, power, ratedPower, surgeMargin, stonewallMargin | autoSize(), setMaximumSpeed(), getMechanicalDesign().setMaxDesignPower() |
+| **Pump** | npshMargin, power, flowRate | getMechanicalDesign().setMaxDesignPower(), mechanical design |
 | **ThrottlingValve** | valveOpening, cvUtilization, AIV | autoSize(), setCv(), setMaxDesignAIV() |
-| **Pipeline** | velocity, pressureDrop, volumeFlow, FIV_LOF, FIV_FRMS | autoSize(), setMaxLOF(), setMaxFRMS() |
+| **Pipeline** | velocity, pressureDrop, volumeFlow, FIV_LOF, FIV_FRMS | autoSize(), getMechanicalDesign().setMaxDesignVelocity() |
 | **PipeBeggsAndBrills** | velocity, LOF, FRMS, AIV | autoSize(), setMaxDesignVelocity(), setMaxDesignLOF(), setMaxDesignAIV() |
 | **AdiabaticPipe** | velocity, LOF, FRMS, AIV, pressureDrop | autoSize(), setMaxDesignVelocity(), setMaxDesignLOF(), setMaxDesignAIV() |
 | **Manifold** | headerVelocity, branchVelocity, headerLOF, headerFRMS, branchLOF, branchFRMS | autoSize(), setMaxDesignVelocity() |
@@ -419,13 +559,12 @@ separator.autoSize(1.2);                  // Uses your K-factor
 
 // 2. Override AFTER autoSize (keeps sizing, changes constraint limit)
 compressor.autoSize(1.2);
-compressor.setMaximumPower(6000.0);       // Override constraint limit (kW)
+compressor.getMechanicalDesign().setMaxDesignPower(6000.0);  // Override constraint limit (kW)
 compressor.setMaximumSpeed(12000.0);      // Override speed limit (RPM)
 
 // 3. Manually set constraint on existing equipment
-CapacityConstraint customPower = new CapacityConstraint("powerLimit", ConstraintType.HARD)
+CapacityConstraint customPower = new CapacityConstraint("powerLimit", "kW", ConstraintType.HARD)
     .setDesignValue(5000.0)
-    .setUnit("kW")
     .setValueSupplier(() -> compressor.getPower("kW"));
 compressor.addCapacityConstraint(customPower);
 
@@ -644,7 +783,7 @@ for (CapacityConstraint c : compressor.getCapacityConstraints().values()) {
 }
 
 // ADD a new custom constraint (discharge temperature)
-CapacityConstraint tempLimit = new CapacityConstraint("dischargeTemp", ConstraintType.SOFT)
+CapacityConstraint tempLimit = new CapacityConstraint("dischargeTemp", "°C", ConstraintType.SOFT)
     .setDesignValue(150.0)  // °C design limit
     .setMaxValue(180.0)     // °C absolute max
     .setUnit("°C")
@@ -687,7 +826,7 @@ EquipmentCapacityStrategy heaterStrategy = new EquipmentCapacityStrategy() {
         Heater h = (Heater) equipment;
         Map<String, CapacityConstraint> constraints = new LinkedHashMap<>();
 
-        constraints.put("duty", new CapacityConstraint("duty", ConstraintType.DESIGN)
+        constraints.put("duty", new CapacityConstraint("duty", "kW", ConstraintType.DESIGN)
             .setDesignValue(5000.0)  // kW
             .setMaxValue(6000.0)
             .setUnit("kW")
@@ -714,7 +853,7 @@ public class ConstrainedHeater extends Heater implements CapacityConstrainedEqui
     }
 
     protected void initializeCapacityConstraints() {
-        addCapacityConstraint(new CapacityConstraint("duty", ConstraintType.DESIGN)
+        addCapacityConstraint(new CapacityConstraint("duty", "kW", ConstraintType.DESIGN)
             .setDesignValue(5000.0)
             .setUnit("kW")
             .setValueSupplier(() -> Math.abs(getDuty()) / 1000.0));
@@ -1671,7 +1810,7 @@ public class MyCustomStrategy implements EquipmentCapacityStrategy {
         MyCustomEquipment eq = (MyCustomEquipment) equipment;
 
         constraints.put("customLoad",
-            new CapacityConstraint("customLoad", ConstraintType.DESIGN)
+            new CapacityConstraint("customLoad", "kW", ConstraintType.DESIGN)
                 .setDesignValue(eq.getDesignLoad())
                 .setMaxValue(eq.getMaxLoad())
                 .setUnit("kW")
@@ -1771,6 +1910,94 @@ if (results.isAnyCompressorOverspeed()) {
 ProcessSystem process = simulation.getProcess();
 BottleneckResult bottleneck = process.findBottleneck();
 ```
+
+## Capacity Utilization Snapshot (ML / RL Observation Vector)
+
+Both `ProcessSystem` and `ProcessModel` expose `getUtilizationSnapshotJson()`, and the
+`ProcessAutomation` facade exposes `getUtilizationSnapshot()` which delegates to whichever it wraps.
+The snapshot is a **side-effect-free** JSON view of every unit's capacity utilization — it never
+calls `run()`, it only reads the utilization already computed by each unit's constraints. This makes
+it the canonical **observation vector** for closed-loop and reinforcement-learning optimization,
+paired with `ProcessAutomation.evaluate(...)` (the action + reward step).
+
+```java
+ProcessAutomation auto = plant.getAutomation();
+plant.run(); // or auto.evaluate(...) — the snapshot reflects the most recent solve
+String json = auto.getUtilizationSnapshot();
+```
+
+The returned JSON (schema `"1.0"`) has the shape:
+
+```json
+{
+  "schemaVersion": "1.0",
+  "units": [
+    {
+      "area": "Export compression",
+      "name": "30-KA-01",
+      "type": "Compressor",
+      "capacityAnalysisEnabled": true,
+      "maxUtilization": 0.83,
+      "maxUtilizationPercent": 83.0,
+      "limitingConstraint": "power",
+      "feasible": true,
+      "hardLimitExceeded": false,
+      "power_kW": 1240.5,
+      "constraints": [
+        {"name": "power", "utilization": 0.83, "utilizationPercent": 83.0,
+         "current": 83.0, "design": 100.0, "unit": "%", "enabled": true, "violated": false}
+      ]
+    }
+  ],
+  "bottleneck": {"name": "30-KA-01", "utilization": 0.83,
+                 "utilizationPercent": 83.0, "limitingConstraint": "power"},
+  "anyOverloaded": false,
+  "anyHardLimitExceeded": false
+}
+```
+
+<table>
+<caption>Per-unit snapshot fields</caption>
+<tr><th>Field</th><th>Meaning</th></tr>
+<tr><td><code>area</code></td><td>Process-area name (only present in a <code>ProcessModel</code> snapshot)</td></tr>
+<tr><td><code>name</code> / <code>type</code></td><td>Unit name and simple class name</td></tr>
+<tr><td><code>maxUtilization</code></td><td>Highest enabled-constraint utilization (0–1; <code>NaN</code> reported as 0)</td></tr>
+<tr><td><code>limitingConstraint</code></td><td>Name of the constraint driving <code>maxUtilization</code> (or <code>null</code>)</td></tr>
+<tr><td><code>feasible</code></td><td><code>true</code> when no enabled constraint is exceeded</td></tr>
+<tr><td><code>power_kW</code></td><td>Shaft power, present for compressors and pumps only</td></tr>
+<tr><td><code>constraints[]</code></td><td>Per-constraint breakdown (utilization, current, design, unit, enabled, violated)</td></tr>
+</table>
+
+The plant-wide `bottleneck`, `anyOverloaded`, and `anyHardLimitExceeded` fields summarise the whole
+flowsheet. Because the snapshot reads constraints rather than re-solving, it is cheap to call on
+every optimization step.
+
+**Closed-loop RL pattern:**
+
+- **observation** = `getUtilizationSnapshot()`
+- **action** = setpoints passed to `ProcessAutomation.evaluate(...)`
+- **reward** = an objective read-back from `evaluate(...)` (e.g. negative compression power),
+  **penalized when** `anyOverloaded` is `true` or any unit's `maxUtilization > 1`.
+
+### Compressors Without a Performance Chart
+
+A compressor's surge, stonewall, and speed constraints are only physically meaningful when a
+performance chart is active. Without a chart the compressor runs on a fixed
+outlet-pressure/polytropic-efficiency model where distance-to-surge is undefined
+(`getDistanceToSurge()` returns positive infinity), which would otherwise pin the surge utilization
+at a degenerate flat 100% that never responds to feed rate.
+
+NeqSim therefore creates those chart-dependent constraints **present but disabled** for chartless
+compressors. The constraint objects still exist (so existence checks pass), but they are excluded
+from `getMaxUtilization()` and `getBottleneckConstraint()`. A chartless compressor consequently
+reports smooth, **power-driven** utilization. Give the `power` constraint a basis with:
+
+```java
+compressor.getMechanicalDesign().setMaxDesignPower(installedKw); // kW
+```
+
+When a performance chart is later attached, call `reinitializeCapacityConstraints()` to re-enable
+the chart-dependent metrics.
 
 ## See Also
 

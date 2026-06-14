@@ -785,6 +785,50 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
   }
 
   /**
+   * Derives capacity constraints from this equipment's mechanical-design limits and registers them
+   * for capacity/utilization analysis.
+   *
+   * <p>
+   * This is the opt-in bridge that makes the limits configured on the equipment's
+   * {@link MechanicalDesign} (for example {@code getMechanicalDesign().setMaxDesignPower(kW)} or
+   * {@code setMaxDesignVolumeFlow(...)}) surface in {@link #getMaxUtilization()},
+   * {@link #getBottleneckConstraint()} and the utilization snapshot. Call it after the design
+   * limits have been set and after the process has run, since the derived metrics depend on live
+   * stream conditions. The constraints use stable names, so the method is idempotent.
+   * </p>
+   *
+   * <p>
+   * The default implementation reads {@link MechanicalDesign#getDesignCapacityConstraints()} and
+   * registers each derived constraint through {@link #addCapacityConstraint(CapacityConstraint)}.
+   * It never throws &mdash; failures to read the mechanical design are treated as "no derived
+   * constraints". {@link neqsim.process.equipment.ProcessEquipmentBaseClass} overrides this with
+   * the same behaviour plus logging.
+   * </p>
+   *
+   * @return the number of mechanical-design-derived constraints that were registered
+   */
+  public default int applyMechanicalDesignCapacityConstraints() {
+    int added = 0;
+    try {
+      MechanicalDesign design = getMechanicalDesign();
+      if (design != null) {
+        List<CapacityConstraint> derived = design.getDesignCapacityConstraints();
+        if (derived != null) {
+          for (CapacityConstraint constraint : derived) {
+            if (constraint != null) {
+              addCapacityConstraint(constraint);
+              added++;
+            }
+          }
+        }
+      }
+    } catch (RuntimeException ex) {
+      // Treated as "no derived constraints" — never throws.
+    }
+    return added;
+  }
+
+  /**
    * Gets the bottleneck (most limiting) constraint for this equipment.
    *
    * <p>

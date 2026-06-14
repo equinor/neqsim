@@ -624,6 +624,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   StreamInterface liquidOutStream = new Stream("liquidOutStream");
   boolean stream_3isset = false;
   private double internalDiameter = 1.0;
+
+  /**
+   * Maximum allowable Fs factor (gas load factor) for the column internals [m/s*sqrt(kg/m3)]. Used
+   * as the design basis for the Fs-factor capacity constraint. Typical Souders-Brown design values
+   * are 2.0-2.5 for trayed columns and up to 3.0 for structured packing.
+   */
+  private double maxAllowableFsFactor = 2.5;
+
   neqsim.process.processmodel.ProcessSystem distoperations;
   Heater heater;
   Separator separator2;
@@ -2480,7 +2488,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     // caller-held streams at their stale pre-polish flows, removing the stale-to-solved product
     // flow difference from the surrounding process mass balance.
     this.gasOutStream = adoptSolvedProductStream(this.gasOutStream, candidate.gasOutStream);
-    this.liquidOutStream = adoptSolvedProductStream(this.liquidOutStream, candidate.liquidOutStream);
+    this.liquidOutStream =
+        adoptSolvedProductStream(this.liquidOutStream, candidate.liquidOutStream);
     this.stream_3isset = candidate.stream_3isset;
     this.heater = candidate.heater;
     this.separator2 = candidate.separator2;
@@ -2546,8 +2555,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * before the column solved holds those stream objects by reference. Replacing the field with the
    * candidate's freshly copied stream orphaned the caller-held objects at their stale (pre-polish)
    * flows, which dropped the difference between the stale and solved product flows from the overall
-   * process mass balance. Copying the solved thermodynamic system into the existing stream keeps the
-   * caller-held reference live and mass-consistent.
+   * process mass balance. Copying the solved thermodynamic system into the existing stream keeps
+   * the caller-held reference live and mass-consistent.
    * </p>
    *
    * @param live the existing product stream whose identity must be preserved
@@ -8410,12 +8419,141 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Calculates the Fs factor for the distillation column. The Fs factor is a measure of the gas
    * flow rate through the column relative to the cross-sectional area and the density of the gas.
    *
-   * @return the Fs factor as a double value
+   * <p>
+   * The Fs factor (gas load factor) is defined as {@code Fs = Vs * sqrt(rho_gas)} where {@code Vs}
+   * is the superficial gas velocity (m/s) and {@code rho_gas} is the gas density (kg/m3). It is
+   * proportional to the aerodynamic lift exerted by the gas on the liquid and is the primary
+   * hydraulic capacity indicator for the column.
+   * </p>
+   *
+   * @return the Fs factor in m/s*sqrt(kg/m3), or 0 if streams are not initialized or the internal
+   *         diameter is not set
    */
   public double getFsFactor() {
+    if (getGasOutStream() == null || getGasOutStream().getThermoSystem() == null) {
+      return 0.0;
+    }
     double intArea = Math.PI * getInternalDiameter() * getInternalDiameter() / 4.0;
+    if (intArea <= 0.0) {
+      return 0.0;
+    }
     return getGasOutStream().getThermoSystem().getFlowRate("m3/sec") / intArea
         * Math.sqrt(getGasOutStream().getThermoSystem().getDensity("kg/m3"));
+  }
+
+  /**
+   * Gets the maximum allowable Fs factor (gas load factor) used as the design basis for the
+   * Fs-factor capacity constraint.
+   *
+   * @return maximum allowable Fs factor in m/s*sqrt(kg/m3)
+   */
+  public double getMaxAllowableFsFactor() {
+    return maxAllowableFsFactor;
+  }
+
+  /**
+   * Sets the maximum allowable Fs factor (gas load factor) used as the design basis for the
+   * Fs-factor capacity constraint.
+   *
+   * <p>
+   * Re-initializes the capacity constraints so the new design value takes effect immediately.
+   * </p>
+   *
+   * @param maxAllowableFsFactor maximum allowable Fs factor in m/s*sqrt(kg/m3); must be positive
+   * @throws IllegalArgumentException if the value is not positive and finite
+   */
+  public void setMaxAllowableFsFactor(double maxAllowableFsFactor) {
+    if (!Double.isFinite(maxAllowableFsFactor) || maxAllowableFsFactor <= 0.0) {
+      throw new IllegalArgumentException("maxAllowableFsFactor must be positive and finite");
+    }
+    this.maxAllowableFsFactor = maxAllowableFsFactor;
+    reinitializeCapacityConstraints();
+  }
+
+  /**
+   * Calculates the Fs factor utilization as a fraction of the maximum allowable Fs factor.
+   *
+   * @return utilization ratio (0.0-1.0+); values above 1.0 indicate the design limit is exceeded
+   */
+  public double getFsFactorUtilization() {
+    double maxFs = getMaxAllowableFsFactor();
+    if (maxFs <= 0.0) {
+      return 0.0;
+    }
+    return getFsFactor() / maxFs;
+  }
+
+  /**
+   * Checks whether the current Fs factor is within the design limit.
+   *
+   * @return true if the Fs factor is within the maximum allowable limit
+   */
+  public boolean isFsFactorWithinDesignLimit() {
+    return getFsFactor() <= getMaxAllowableFsFactor();
+  }
+
+  /**
+   * Calculates the minimum vessel internal diameter required to keep the Fs factor at or below the
+   * maximum allowable value for the current gas flow rate.
+   *
+   * <p>
+   * From {@code Fs = Vs * sqrt(rho_gas)} and {@code Vs = Q / A}, the minimum diameter is
+   * {@code D_min = sqrt(4 * Q * sqrt(rho_gas) / (pi * Fs_max))}.
+   * </p>
+   *
+   * @return minimum internal diameter in metres, or 0 if streams are not initialized
+   */
+  public double getMinimumDiameterForFsLimit() {
+    if (getGasOutStream() == null || getGasOutStream().getThermoSystem() == null) {
+      return 0.0;
+    }
+    double maxFs = getMaxAllowableFsFactor();
+    if (maxFs <= 0.0) {
+      return 0.0;
+    }
+    double gasFlowM3s = getGasOutStream().getThermoSystem().getFlowRate("m3/sec");
+    double rhoGas = getGasOutStream().getThermoSystem().getDensity("kg/m3");
+    return Math.sqrt(4.0 * gasFlowM3s * Math.sqrt(rhoGas) / (Math.PI * maxFs));
+  }
+
+  /**
+   * Sets up the default capacity constraints for the distillation column.
+   *
+   * <p>
+   * Registers an Fs-factor (gas load factor) constraint that uses the live {@link #getFsFactor()}
+   * value against the {@link #getMaxAllowableFsFactor()} design basis. This makes the column
+   * participate in process-wide bottleneck analysis, capacity utilization summaries, and
+   * optimization constraint checking in the same way as other capacity-constrained equipment.
+   * </p>
+   */
+  @Override
+  protected void initializeDefaultConstraints() {
+    neqsim.process.equipment.capacity.CapacityConstraint fsConstraint =
+        new neqsim.process.equipment.capacity.CapacityConstraint("fsFactor", "m/s*sqrt(kg/m3)",
+            neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+    fsConstraint.setDesignValue(maxAllowableFsFactor);
+    fsConstraint.setMaxValue(maxAllowableFsFactor);
+    fsConstraint
+        .setSeverity(neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSeverity.SOFT);
+    fsConstraint.setDescription("Column Fs factor (gas load factor) vs maximum allowable");
+    fsConstraint.setDataSource("equipment");
+    fsConstraint.setValueSupplier(this::getFsFactor);
+    addCapacityConstraint(fsConstraint);
+  }
+
+  /**
+   * Rebuilds the capacity constraints so updated design values (e.g. max allowable Fs factor) take
+   * effect.
+   */
+  private void reinitializeCapacityConstraints() {
+    neqsim.process.equipment.capacity.CapacityConstraint existing =
+        getCapacityConstraints().get("fsFactor");
+    if (existing != null) {
+      existing.setDesignValue(maxAllowableFsFactor);
+      existing.setMaxValue(maxAllowableFsFactor);
+    } else {
+      initializeDefaultConstraints();
+    }
   }
 
   /**
@@ -8901,10 +9039,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Collect the names of all feeds registered through {@link #addFeedStream(StreamInterface, int)}.
    *
    * <p>
-   * Iterative process solving (for example a recycle loop, or the solver's own candidate-copy accept
-   * path) can leave cloned copies of a registered feed on its feed tray. Such clones share the
-   * registered feed name but have a different object identity, so they must never be mistaken for
-   * genuine legacy direct side feeds.
+   * Iterative process solving (for example a recycle loop, or the solver's own candidate-copy
+   * accept path) can leave cloned copies of a registered feed on its feed tray. Such clones share
+   * the registered feed name but have a different object identity, so they must never be mistaken
+   * for genuine legacy direct side feeds.
    * </p>
    *
    * @return set of registered feed stream names (non-null, non-empty names only)
@@ -8934,8 +9072,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * <p>
    * A cloned registered feed shares the registered feed name but has a different identity. Keeping
    * such clones in {@link #directExternalFeedStreams} would inflate
-   * {@link #getExternalFeedStreams(int)} on every solve and make the tray feed inventory grow without
-   * bound across repeated runs.
+   * {@link #getExternalFeedStreams(int)} on every solve and make the tray feed inventory grow
+   * without bound across repeated runs.
    * </p>
    *
    * @param trayIndex tray whose captured direct feeds should be pruned

@@ -31,6 +31,7 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #159957; color: #24292e; font-size: 1.25rem;">📚 Core Documentation</h3>
 <ul style="list-style: none; padding: 0; margin: 0;">
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="wiki/getting_started.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Getting Started</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Installation and first steps</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="java-getting-started.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Getting Started with Java</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Install, first calculations, developer setup</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="modules.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Modules Overview</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Architecture and package structure</span></li>
 <li style="padding: 0.5rem 0;"><a href="REFERENCE_MANUAL_INDEX.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Reference Manual</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Complete API documentation</span></li>
 </ul>

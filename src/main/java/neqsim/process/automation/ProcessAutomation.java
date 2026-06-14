@@ -446,6 +446,18 @@ public class ProcessAutomation {
   }
 
   /**
+   * Creates a new {@link AgenticProcessOptimizer} bound to this automation facade. This is the
+   * recommended entry point for closed-loop, ML- and agent-driven optimization over the underlying
+   * process: the optimizer drives {@link #evaluate(Map, String, java.util.List)} for every trial,
+   * speaks schema-versioned JSON, and never throws.
+   *
+   * @return a fresh optimizer wrapping this facade
+   */
+  public AgenticProcessOptimizer newOptimizer() {
+    return new AgenticProcessOptimizer(this);
+  }
+
+  /**
    * Converts an adjuster bound to a nullable {@link Double}, mapping sentinel "unbounded" values
    * (magnitude at or beyond {@link #UNBOUNDED_THRESHOLD}) and non-finite values to {@code null}.
    *
@@ -2772,6 +2784,37 @@ public class ProcessAutomation {
     }
     root.add("units", unitsArr);
     return root.toString();
+  }
+
+  /**
+   * Returns a stable, side-effect-free JSON utilization snapshot of every unit in the flowsheet.
+   *
+   * <p>
+   * This is the recommended observation endpoint for machine-learning / reinforcement-learning
+   * optimization loops. Whereas {@link #snapshot(String)} reports raw process variables, this
+   * method reports capacity <i>utilization</i> &mdash; for every unit the maximum constraint
+   * utilization, the limiting constraint, a per-constraint breakdown, feasibility, and (for
+   * compressors and pumps) shaft power, plus the plant-wide {@code bottleneck} and
+   * {@code anyOverloaded} flags. Pair it with
+   * {@link #evaluate(java.util.Map, String, java.util.List, String, int, double) evaluate(...)}
+   * (action + reward) to close an optimization loop: {@code evaluate} applies setpoints and runs
+   * the model; {@code getUtilizationSnapshot} reads back the resulting capacity observation.
+   * </p>
+   *
+   * <p>
+   * The method does <b>not</b> run the model; call {@link #evaluate} or {@link #run()} first so the
+   * reported utilization reflects the latest setpoints. For a multi-area model each unit entry
+   * carries an {@code "area"} property.
+   * </p>
+   *
+   * @return JSON string {@code {schemaVersion, units:[...], bottleneck:{...}, anyOverloaded,
+   *         anyHardLimitExceeded}}
+   */
+  public String getUtilizationSnapshot() {
+    if (processModel != null) {
+      return processModel.getUtilizationSnapshotJson();
+    }
+    return processSystem.getUtilizationSnapshotJson();
   }
 
   /**

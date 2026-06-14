@@ -18,6 +18,7 @@ Documentation for power generation equipment in NeqSim, including gas turbines, 
 - [Solar Panel](#solar-panel)
 - [Battery Storage](#battery-storage)
 - [Right-Sizing, Dispatch & Retrofit (gasturbine sub-package)](#right-sizing-dispatch--retrofit-gasturbine-sub-package)
+- [Driver Performance Curves (driver sub-package)](#driver-performance-curves-driver-sub-package)
 - [Usage Examples](#usage-examples)
 - [Capacity Constraints and Optimization](#capacity-constraints-and-optimization)
 - [Related Documentation](#related-documentation)
@@ -73,6 +74,7 @@ GasTurbine turbine = new GasTurbine("GT-101", fuelGasStream);
 |----------|-------------|------|
 | `combustionPressure` | Combustor pressure | bara |
 | `airGasRatio` | Air to fuel ratio | - |
+| `excessAirFactor` | Combustion-air excess over stoichiometric O₂ (`setExcessAirFactor`) | - |
 | `power` | Net electrical power output | W |
 | `heat` | Heat output | W |
 | `compressorPower` | Air compressor power | W |
@@ -98,7 +100,8 @@ fuelStream.setFlowRate(1000.0, "kg/hr");
 
 // Create gas turbine
 GasTurbine turbine = new GasTurbine("Power Turbine", fuelStream);
-turbine.combustionpressure = 15.0;  // bara (public field)
+turbine.combustionpressure = 2.5;   // bara (public field) - simplified low-pressure cycle
+turbine.setExcessAirFactor(2.5);    // sizes combustion air so O2 is not depleted
 
 // Run simulation
 turbine.run();
@@ -108,6 +111,15 @@ System.out.println("Net power: " + turbine.getPower() / 1e6 + " MW");
 System.out.println("Heat output: " + turbine.getHeat() / 1e6 + " MW");
 System.out.println("Ideal air/fuel ratio: " + turbine.calcIdealAirFuelRatio());
 ```
+
+> The internal air-side combustion balances stoichiometric oxygen against the
+> `excessAirFactor` (default 2.5) and burns each hydrocarbon only up to the
+> available oxygen, so the post-combustion flash stays physical. `getPower()`
+> returns the net shaft power (expander work minus the internal air-compressor
+> work); `getHeat()` returns the exhaust heat a HRSG could recover. This is a
+> simplified low-pressure-ratio model — keep `combustionpressure` modest (a few
+> bara) so the expander recovery exceeds the cold air-compression work and the
+> net shaft power stays positive.
 
 ---
 
@@ -501,6 +513,45 @@ plant.add(gt);
 plant.run();   // gt aggregates Compressor.getPower() automatically
 ```
 
+### Closing the loop: feeding the available-power limit back to compressors
+
+By default the link above is **one-way** — the turbine reads compressor shaft
+power but does not constrain it. Enable `setEnforcePowerLimit(true)` to close
+the loop: on every `run()` the unit distributes its site-corrected
+`getAvailablePowerW()` across the attached compressors (in proportion to their
+current demand) and installs each share as a
+[`GasTurbineDriver`](#driver-performance-curves-driver-sub-package) performance
+curve on the compressor via `Compressor.setDriverCurve(...)`. Because the
+per-compressor caps sum to the turbine available power, the capacity /
+bottleneck framework then enforces **Σ compressor power ≤ turbine available
+power** automatically.
+
+```java
+GasTurbineUnit gt = new GasTurbineUnit("GT-A", fuelStream,
+        GasTurbineCatalog.get("LM2500"));
+gt.addPowerConsumer(exportCompressor);
+gt.addPowerConsumer(injectionCompressor);
+gt.setAmbientTemperatureK(273.15 + 30.0);   // hot-day derate shrinks the budget
+gt.setEnforcePowerLimit(true);              // opt-in: cap the compressors
+plant.add(gt);
+plant.run();
+
+if (gt.isOverloaded()) {
+    System.out.println("Shortfall: " + gt.getPowerShortfallW() / 1e6 + " MW");
+}
+// Per-machine power budget actually installed on each compressor:
+gt.getPowerAllocationW().forEach((name, watts) ->
+        System.out.println(name + " allocated " + watts / 1e6 + " MW"));
+// Each compressor now reports a finite capacity limit from its driver curve:
+double capMW = exportCompressor.getCapacityMax() / 1e6;
+```
+
+> The default (`enforcePowerLimit = false`) preserves the historical
+> snapshot-only behaviour, so existing dispatch and right-sizing studies are
+> unaffected. Turn it on when you want the turbine's installed/derated power to
+> act as a hard ceiling for the compression train in capacity and
+> debottlenecking analysis.
+
 ### Fleet dispatch with N+1 redundancy
 
 ```java
@@ -542,7 +593,13 @@ System.out.println("CO2 avoided (t): " + res.totalCO2AvoidedTonne);
 System.out.println("Payback (yr):    " + res.simplePaybackYear);
 ```
 
-### End-to-end notebook
+### End-to-end notebooks
+
+The [Gas Turbine & Compressor Driver Coupling](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/gas_turbine_compressor_driver.ipynb)
+notebook is a focused, runnable introduction to the three abstractions on this
+page: the `GasTurbine` Brayton-cycle thermo model (Part A), the catalog-driven
+`GasTurbineUnit` accounting wrapper that caps a compressor train (Part B), and
+a standalone `GasTurbineDriver` capacity ceiling with ambient derating (Part C).
 
 The [Gas Turbine 20-Year Right-Sizing and Retrofit](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/gas_turbine_rightsizing_20yr.ipynb)
 notebook walks through a complete late-life study:
@@ -563,6 +620,61 @@ notebook walks through a complete late-life study:
 
 The full skill reference lives at
 [.github/skills/neqsim-power-generation/SKILL.md](https://github.com/equinor/neqsim/blob/master/.github/skills/neqsim-power-generation/SKILL.md).
+
+---
+
+## Driver Performance Curves (driver sub-package)
+
+A `Compressor` can be given a richer **driver performance curve** from
+`neqsim.process.equipment.compressor.driver`. Unlike the simpler enum-based
+`CompressorDriver`, the `DriverCurve` family models speed-dependent available
+power **with ambient-temperature and altitude derating**, and feeds that
+derated limit into `Compressor.getCapacityMax()` for capacity and bottleneck
+analysis.
+
+| Class | Models |
+|-------|--------|
+| `DriverCurve` | Interface (extends `Serializable`) — available power, torque, efficiency vs speed |
+| `DriverCurveBase` | Shared base: rated power/speed, ISO ambient, overspeed limit |
+| `GasTurbineDriver` | Ambient + altitude derating, part-load efficiency, fuel consumption |
+| `ElectricMotorDriver` | Constant-torque (VFD) or fixed-speed characteristics |
+| `SteamTurbineDriver` | Power vs steam conditions / extraction |
+
+### Attaching a driver curve to a compressor
+
+```java
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.driver.GasTurbineDriver;
+
+Compressor exportCompressor = new Compressor("Export", suctionStream);
+exportCompressor.setOutletPressure(120.0);
+
+// 20 MW gas-turbine driver, 35% design efficiency
+GasTurbineDriver driver = new GasTurbineDriver(20000.0, 0.35); // kW, fraction
+driver.setAmbientTemperature(30.0);   // hot-day derate
+exportCompressor.setDriverCurve(driver);
+exportCompressor.run();
+
+// getCapacityMax() now uses the derated driver curve (highest priority)
+double capMW = exportCompressor.getCapacityMax() / 1e6;
+double availMW = driver.getAvailablePower(driver.getRatedSpeed()) / 1000.0; // kW->MW
+boolean ok = driver.canSupplyPower(exportCompressor.getPower("kW"),
+        driver.getRatedSpeed());
+```
+
+`getCapacityMax()` resolves the limit in priority order:
+
+1. **`DriverCurve`** (`getDriverCurve()`) — derated available power at the
+   current/rated speed, if set.
+2. **`CompressorDriver`** speed-dependent max-power curve (if speed is set).
+3. **Mechanical design** maximum power.
+4. **`CompressorDriver`** rated power with a 10% overload margin.
+
+This is the same curve type that `GasTurbineUnit.setEnforcePowerLimit(true)`
+installs automatically on each driven compressor (see
+[Closing the loop](#closing-the-loop-feeding-the-available-power-limit-back-to-compressors)),
+so a gas turbine's installed/derated power becomes a hard ceiling for its
+compression train.
 
 ---
 
@@ -881,3 +993,4 @@ print(gt.getSizingReport())
 - [Heat Exchangers](heat_exchangers) - Heat recovery
 - [Sustainability](../sustainability/) - Emissions tracking
 - [Gas Turbine 20-Year Right-Sizing and Retrofit Notebook](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/gas_turbine_rightsizing_20yr.ipynb) - End-to-end late-life study using `GasTurbineUnit`, `TurbineDispatchOptimizer`, `LateLifeRetrofitStudy`, and reservoir-driven demand
+- [Gas Turbine & Compressor Driver Coupling Notebook](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/gas_turbine_compressor_driver.ipynb) - Focused intro to `GasTurbine`, `GasTurbineUnit`, and `GasTurbineDriver` with ambient derating

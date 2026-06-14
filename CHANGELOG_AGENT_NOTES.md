@@ -9,6 +9,40 @@
 
 ---
 
+## 2026-06-14 — AgenticProcessOptimizer: closed-loop optimizer for ML/agentic loops (new class)
+
+### Summary
+Added `neqsim.process.automation.AgenticProcessOptimizer`, a ready-made closed-loop,
+derivative-free optimizer that drives a process simulation through the existing
+`ProcessAutomation.evaluate(...)` primitive. Purpose-built for ML/agentic workflows:
+string-addressable decision variables, a never-throwing schema-versioned JSON contract,
+and a replayable (state, action, reward) trajectory tape.
+
+### What's new (additive — no breaking change)
+- `ProcessAutomation.newOptimizer()` → returns a fresh `AgenticProcessOptimizer` bound to the facade.
+- `AgenticProcessOptimizer` fluent API: `addVariable(addr, lo, hi, unit)`,
+  `useAdjustableParameters()`, `minimize/maximize/setObjective(addr, Sense, unit)`,
+  `setObjectiveFunction(Function<Map<String,Double>,Double>)`, `addWatch(addr, unit)`,
+  `addConstraintLessOrEqual/GreaterOrEqual/addConstraint(addr, type, limit, unit, penaltyWeight)`,
+  `setMaxEvaluations/setInnerConvergence/setConvergenceTolerance/setSeed`.
+- `optimize()` → `OptimizationResult` (never throws); `optimizeToJson()` → schema-versioned JSON
+  with the full trajectory; `getReadinessJson()` → machine-readable ML/agentic self-rating.
+- Algorithm: bounded Nelder–Mead simplex with deterministic (seeded) random init. Hard constraints
+  folded in as weighted quadratic penalties; infeasible trials logged but penalized.
+
+### Migration
+None. Existing code is unaffected. Agents optimizing a live `ProcessSystem`/`ProcessModel` should
+prefer `auto.newOptimizer()` over hand-rolling loops on top of `evaluate()`. Distinct from the
+classic `neqsim.process.util.optimizer` classes (which take a `Function<double[],Double>` over an
+opaque `ProcessSystem`).
+
+### Agents/skills to update
+- `neqsim-agentic-process-optimization` and `neqsim-optimization-and-doe` skills (mention the new class).
+- Documented in `AGENTS.md` and `.github/copilot-instructions.md` next to the `evaluate()` /
+  `getUtilizationSnapshot()` sections. Tests: `AgenticProcessOptimizerTest` (7 tests, all pass).
+
+---
+
 ## 2026-06-02 — CriticalPointFlash robustness fix (no API change)
 
 ### Summary

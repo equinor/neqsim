@@ -1,0 +1,239 @@
+{
+  "model": "self-contained 2-area ProcessModel (separation + recompression)",
+  "reference_pattern": "Oseberg Sture low-pressure operation (multi-area ProcessModel)",
+  "decision_variable": {
+    "address": "separation::oil stabilization heater.outletTemperature",
+    "unit": "C",
+    "range_C": [
+      45,
+      95
+    ]
+  },
+  "rvp_limit_bara": 0.9,
+  "objective": "minimise total energy input (compression power + heater duty) subject to RVP <= limit",
+  "optimum": {
+    "oil_heater_temperature_C": 70.0,
+    "export_oil_rvp_bara": 0.8445,
+    "total_compression_power_MW": 2.8793,
+    "heater_duty_MW": 1.9977,
+    "total_energy_MW": 4.877,
+    "bottleneck": {
+      "name": "recompression compressor",
+      "utilization": 0.8855058621660453,
+      "utilizationPercent": 88.55058621660453,
+      "limitingConstraint": "design volume flow"
+    }
+  },
+  "trials": [
+    {
+      "heater_T_C": 45.0,
+      "feasible": true,
+      "rejected": {},
+      "power_export_MW": 2.1931095273160808,
+      "power_recomp_MW": 0.813667137832322,
+      "total_power_MW": 3.006776665148403,
+      "heater_duty_MW": 0.4664186701170644,
+      "total_energy_MW": 3.4731953352654674,
+      "rvp_bara": 1.3196457364110044,
+      "rvp_ok": false,
+      "overloaded": false,
+      "bottleneck": {
+        "name": "export compressor",
+        "utilization": 0.8866405376297005,
+        "utilizationPercent": 88.66405376297006,
+        "limitingConstraint": "power"
+      }
+    },
+    {
+      "heater_T_C": 50.0,
+      "feasible": true,
+      "rejected": {},
+      "power_export_MW": 2.1832588749188644,
+      "power_recomp_MW": 0.8054480900401222,
+      "total_power_MW": 2.9887069649589866,
+      "heater_duty_MW": 0.7176459173526782,
+      "total_energy_MW": 3.706352882311665,
+      "rvp_bara": 1.216518106274675,
+      "rvp_ok": false,
+      "overloaded": false,
+      "bottleneck": {
+        "name": "export compressor",
+        "utilization": 0.8826580699833354,
+        "utilizationPercent": 88.26580699833355,
+        "limitingConstraint": "power"
+      }
+    },
+    {
+      "heater_T_C": 55.0,
+      "feasible": true,
+      "rejected": {},
+      "power_export_MW": 2.172723836776278,
+      "power_recomp_MW": 0.7968726751813765,
+      "total_power_MW": 2.9695965119576546,
+      "heater_duty_MW": 0.9905212652621139,
+      "total_energy_MW": 3.9601177772197684,
+      "rvp_bara": 1.1175264077141576,
+      "rvp_ok": false,
+      "overloaded": false,
+      "bottleneck": {
+        "name": "first stage separator",
+        "utilization": 0.8800119638606131,
+        "utilizationPercent": 88.00119638606131,
+        "limitingConstraint": "design volume flow"
+      }
+    },
+    {
+      "heater_T_C": 60.0,
+      "feasible": true,
+      "rejected": {},
+      "power_export_MW": 2.161804840703265,
+      "power_recomp_MW": 0.7836762546017607,
+      "total_power_MW": 2.9454810953050257,
+      "heater_duty_MW": 1.2900293123366144,
+      "total_energy_MW": 4.23551040764164,
+      "rvp_bara": 1.0225752407540238,
+      "rvp_ok": false,
+      "overloaded": false,
+      "bottleneck": {
+        "name": "recompression compressor",
+        "utilization": 0.8819486987799046,
+        "utilizationPercent": 88.19486987799046,
+        "limitingConstraint": "design volume flow"
+      }
+    },
+    {
+      "heater_T_C": 65.0,
+      "feasible": true,
+      "rejected": {},
+      "power_export_MW": 2.150873642639624,
+      "power_recomp_MW": 0.7639873493922488,
+      "total_power_MW": 2.9148609920318727,
+      "heater_duty_MW": 1.6227619749289188,
+      "total_energy_MW": 4.537622966960791,
+      "rvp_bara": 0.9315839009208313,
+      "rvp_ok": false,
+      "overloaded": false,
+      "bottleneck": {
+        "name": "recompression compressor",
+        "utilization": 0.8860066060395422,
+        "utilizationPercent": 88.60066060395422,
+        "limitingConstraint": "design volume flow"
+      }
+    },
+    {
+      "heater_T_C": 70.0,
+      "feasible": true,
+      "rejected": {},
+      "power_export_MW": 2.14036268350664,
+      "power_recomp_MW": 0.7389327010150731,
+      "total_power_MW": 2.879295384521713,
+      "heater_duty_MW": 1.9976682476531895,
+      "total_energy_MW": 4.876963632174903,
+      "rvp_bara": 0.8444955766100372,
+      "rvp_ok": true,
+      "overloaded": false,
+      "bottleneck": {
+        "name": "recompression compressor",
+        "utilization": 0.8855058621660453,
+        "utilizationPercent": 88.55058621660453,
+        "limitingConstraint": "design volume flow"
+      }
+    },
+    {
+      "heater_T_C": 75.0,
+      "feasible": true,
+      "rejected": {},
+      "power_export_MW": 2.1307551313196633,
+      "power_recomp_MW": 0.7098730454420022,
+      "total_power_MW": 2.8406281767616655,
+      "heater_duty_MW": 2.4273200040459044,
+      "total_energy_MW": 5.26794818080757,
+      "rvp_bara": 0.761284408584154,
+      "rvp_ok": true,
+      "overloaded": false,
+      "bottleneck": {
+        "name": "recompression compressor",
+        "utilization": 0.8807927336454972,
+        "utilizationPercent": 88.07927336454972,
+        "limitingConstraint": "design volume flow"
+      }
+    },
+    {
+      "heater_T_C": 80.0,
+      "feasible": true,
+      "rejected": {},
+      "power_export_MW": 2.124762174328167,
+      "power_recomp_MW": 0.6782776226036048,
+      "total_power_MW": 2.8030397969317717,
+      "heater_duty_MW": 2.9301386039234045,
+      "total_energy_MW": 5.733178400855176,
+      "rvp_bara": 0.6819795206914714,
+      "rvp_ok": true,
+      "overloaded": false,
+      "bottleneck": {
+        "name": "first stage separator",
+        "utilization": 0.8800119638606131,
+        "utilizationPercent": 88.00119638606131,
+        "limitingConstraint": "design volume flow"
+      }
+    },
+    {
+      "heater_T_C": 85.0,
+      "feasible": true,
+      "rejected": {},
+      "power_export_MW": 2.117672936347421,
+      "power_recomp_MW": 0.6455885879443236,
+      "total_power_MW": 2.7632615242917447,
+      "heater_duty_MW": 3.534470578009994,
+      "total_energy_MW": 6.2977321023017385,
+      "rvp_bara": 0.6067316188744056,
+      "rvp_ok": true,
+      "overloaded": false,
+      "bottleneck": {
+        "name": "first stage separator",
+        "utilization": 0.8800119638606131,
+        "utilizationPercent": 88.00119638606131,
+        "limitingConstraint": "design volume flow"
+      }
+    },
+    {
+      "heater_T_C": 90.0,
+      "feasible": true,
+      "rejected": {},
+      "power_export_MW": 2.1154693058861764,
+      "power_recomp_MW": 0.6205450783877904,
+      "total_power_MW": 2.736014384273967,
+      "heater_duty_MW": 3.9792459104639955,
+      "total_energy_MW": 6.715260294737963,
+      "rvp_bara": 0.5526945383871573,
+      "rvp_ok": true,
+      "overloaded": false,
+      "bottleneck": {
+        "name": "first stage separator",
+        "utilization": 0.8800119638606131,
+        "utilizationPercent": 88.00119638606131,
+        "limitingConstraint": "design volume flow"
+      }
+    },
+    {
+      "heater_T_C": 95.0,
+      "feasible": true,
+      "rejected": {},
+      "power_export_MW": 2.1141845062473967,
+      "power_recomp_MW": 0.6006117630190658,
+      "total_power_MW": 2.7147962692664627,
+      "heater_duty_MW": 4.293734502567712,
+      "total_energy_MW": 7.008530771834174,
+      "rvp_bara": 0.5118933570057176,
+      "rvp_ok": true,
+      "overloaded": false,
+      "bottleneck": {
+        "name": "first stage separator",
+        "utilization": 0.8800119638606131,
+        "utilizationPercent": 88.00119638606131,
+        "limitingConstraint": "design volume flow"
+      }
+    }
+  ],
+  "constraints_registered": 5
+}
