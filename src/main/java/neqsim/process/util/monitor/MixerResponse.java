@@ -19,11 +19,12 @@ public class MixerResponse extends BaseResponse {
   public MixerResponse(Mixer mixer) {
     super(mixer);
 
+    double feedMassFlow = 0.0;
+    for (int i = 0; i < mixer.getNumberOfInputStreams(); i++) {
+      feedMassFlow += mixer.getStream(i).getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"));
+    }
     data.put("feed mass flow",
-        new Value(
-            Double.toString(
-                mixer.getOutletStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
-            neqsim.util.unit.Units.getSymbol("mass flow")));
+        new Value(Double.toString(feedMassFlow), neqsim.util.unit.Units.getSymbol("mass flow")));
     data.put("outlet mass flow",
         new Value(
             Double.toString(
