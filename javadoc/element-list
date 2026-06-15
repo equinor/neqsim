@@ -217,6 +217,7 @@ neqsim.process.fielddevelopment.concept
 neqsim.process.fielddevelopment.economics
 neqsim.process.fielddevelopment.evaluation
 neqsim.process.fielddevelopment.facility
+neqsim.process.fielddevelopment.integrated
 neqsim.process.fielddevelopment.network
 neqsim.process.fielddevelopment.reporting
 neqsim.process.fielddevelopment.reservoir
@@ -290,6 +291,7 @@ neqsim.process.ml.surrogate
 neqsim.process.mpc
 neqsim.process.operations
 neqsim.process.operations.envelope
+neqsim.process.optimization.valuechain
 neqsim.process.processmodel
 neqsim.process.processmodel.biorefinery
 neqsim.process.processmodel.dexpi
