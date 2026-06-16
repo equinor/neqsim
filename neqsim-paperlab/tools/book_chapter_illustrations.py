@@ -36,7 +36,6 @@ from matplotlib.patches import (
     Circle,
     FancyArrowPatch,
     FancyBboxPatch,
-    PathPatch,
     Polygon,
     Rectangle,
     Wedge,
