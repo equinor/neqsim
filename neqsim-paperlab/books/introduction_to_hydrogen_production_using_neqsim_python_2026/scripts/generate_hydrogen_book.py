@@ -789,7 +789,7 @@ def topic_examples_markdown(chapter_dir):
                 table_safe(example["calculation"]),
                 table_safe(example["sweep"]),
                 table_safe(example["kpis"]),
-                table_safe(example["citation"]),
+                table_safe(example["source_labels"]),
             ])
             + " |"
         )

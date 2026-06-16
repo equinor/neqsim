@@ -112,7 +112,7 @@ notebook output or discussion.
 
 | Review list | No. | Topic | Calculation example placed here | Sweep or input basis | Output KPIs | Literature basis |
 |---|---:|---|---|---|---|---|
-| Green hydrogen | 9 | Process integration and hydrogen compression | Connect electrolyzer outlet pressure to drying, cooling, compression stages, and storage/export pressure. | Stack outlet pressure, compressor stage count, intercooler target, and export pressure. | Compression kWh/kg H2, discharge temperature, cooling duty, dryer water-removal flag, storage pressure margin. | \cite{gpsa2012,mokhatab2018,doeElectrolysis} |
+| Green hydrogen | 9 | Process integration and hydrogen compression | Connect electrolyzer outlet pressure to drying, cooling, compression stages, and storage/export pressure. | Stack outlet pressure, compressor stage count, intercooler target, and export pressure. | Compression kWh/kg H2, discharge temperature, cooling duty, dryer water-removal flag, storage pressure margin. | GPSA engineering data reference, Gas transmission and processing reference, US DOE electrolysis technology overview |
 
 
 ## Python workflow pattern

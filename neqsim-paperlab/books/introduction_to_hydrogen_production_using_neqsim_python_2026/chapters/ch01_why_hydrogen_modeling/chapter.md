@@ -111,7 +111,7 @@ notebook output or discussion.
 
 | Review list | No. | Topic | Calculation example placed here | Sweep or input basis | Output KPIs | Literature basis |
 |---|---:|---|---|---|---|---|
-| Cross-route frontier | 3 | Photoelectrochemical, photochemical, and biological hydrogen | Include exploratory solar/photo/bio routes as boundary-definition cases with solar-to-hydrogen or biological-yield indices. | Solar-to-hydrogen efficiency, reactor area, capacity factor, biological yield, and separation load. | Land or area intensity, H2 output index, maturity index, separation-energy attention. | \cite{doePhotoelectrochemical,doePhotobiological,holladay2009hydrogen} |
+| Cross-route frontier | 3 | Photoelectrochemical, photochemical, and biological hydrogen | Include exploratory solar/photo/bio routes as boundary-definition cases with solar-to-hydrogen or biological-yield indices. | Solar-to-hydrogen efficiency, reactor area, capacity factor, biological yield, and separation load. | Land or area intensity, H2 output index, maturity index, separation-energy attention. | US DOE photoelectrochemical hydrogen overview, US DOE photobiological hydrogen overview, Holladay et al. hydrogen-production technology review |
 
 
 ## Python workflow pattern

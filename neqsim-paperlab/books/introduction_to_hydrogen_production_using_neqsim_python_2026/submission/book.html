@@ -784,6 +784,7 @@ p.figure-discussion em {
 <li><a href="#full_integrated_model_listing">Full Integrated Model Listing</a></li>
 <li><a href="#capstone_portfolio">Capstone Portfolio</a></li>
 <li><a href="#author_bio">Author Bio</a></li>
+<li><a href="#references">References</a></li>
 </ul>
 </nav>
 <main>
@@ -933,6 +934,7 @@ reproducible, and grounded in thermodynamics rather than slogans.</p></section>
 <li class="toc-chapter"><a href="#full_integrated_model_listing"><span class="toc-title">Full Integrated Model Listing</span></a></li>
 <li class="toc-chapter"><a href="#capstone_portfolio"><span class="toc-title">Capstone Portfolio</span></a></li>
 <li class="toc-chapter"><a href="#author_bio"><span class="toc-title">Author Bio</span></a></li>
+<li class="toc-chapter"><a href="#references"><span class="toc-title">References</span></a></li>
 </ul>
 </section>
 <hr/>
@@ -960,7 +962,7 @@ reproducible, and grounded in thermodynamics rather than slogans.</p></section>
 <p>Build a minimal hydrogen process model, run it, and save engineering evidence. The practical setting is a small H2 production train. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="0-4-conceptual-model">0.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -1027,7 +1029,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <h2 id="0-7-parameter-study-script-graph-and-discussion">0.7 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Chapter-specific screening calculations for a small H2 production train, normalized to the KPIs: H2 mass rate, specific energy, water balance, and validation status.</p>
-<p><strong>Study basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. \cite{iea2023hydrogen,towler2013chemical}</p>
+<p><strong>Study basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <table>
 <thead><tr>
 <th>Case</th>
@@ -1125,7 +1127,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <figcaption>Figure 0.1: Evidence-backed calculation and study basis for 30-Minute Hydrogen Plant Quickstart.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Chapter-specific screening calculations for a small H2 production train, normalized to the KPIs: H2 mass rate, specific energy, water balance, and validation status.</p>
-<p><strong>Public study or standard basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. \cite{iea2023hydrogen,towler2013chemical}</p>
+<p><strong>Public study or standard basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <p><strong>Discussion.</strong> The figure turns a small H2 production train into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret H2 mass rate, specific energy, water balance, and validation status. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="0-11-interpretation-checklist">0.11 Interpretation checklist</h2>
 <table>
@@ -1283,7 +1285,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <p>Connect hydrogen routes, project decisions, and the role of open simulation. The practical setting is route screening across grey, blue, green, pink, and selected carrier-adjacent H2 concepts. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="1-4-conceptual-model">1.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -1349,7 +1351,7 @@ $$</div>
 <td>Include exploratory solar/photo/bio routes as boundary-definition cases with solar-to-hydrogen or biological-yield indices.</td>
 <td>Solar-to-hydrogen efficiency, reactor area, capacity factor, biological yield, and separation load.</td>
 <td>Land or area intensity, H2 output index, maturity index, separation-energy attention.</td>
-<td>\cite{doePhotoelectrochemical,doePhotobiological,holladay2009hydrogen}</td>
+<td>US DOE photoelectrochemical hydrogen overview, US DOE photobiological hydrogen overview, Holladay et al. hydrogen-production technology review</td>
 </tr>
 </tbody></table>
 <h2 id="1-7-python-workflow-pattern">1.7 Python workflow pattern</h2>
@@ -1373,7 +1375,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <h2 id="1-8-parameter-study-script-graph-and-discussion">1.8 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Chapter-specific screening calculations for route screening across grey, blue, green, pink, and selected carrier-adjacent H2 concepts, normalized to the KPIs: route selection, boundary definition, and evidence quality.</p>
-<p><strong>Study basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. \cite{iea2023hydrogen,towler2013chemical}</p>
+<p><strong>Study basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <table>
 <thead><tr>
 <th>Route</th>
@@ -1475,7 +1477,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <figcaption>Figure 1.1: Evidence-backed calculation and study basis for Why Hydrogen Production Modeling Matters.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Chapter-specific screening calculations for route screening across grey, blue, green, pink, and selected carrier-adjacent H2 concepts, normalized to the KPIs: route selection, boundary definition, and evidence quality.</p>
-<p><strong>Public study or standard basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. \cite{iea2023hydrogen,towler2013chemical}</p>
+<p><strong>Public study or standard basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <p><strong>Discussion.</strong> The figure turns route screening across grey, blue, green, pink, and selected carrier-adjacent H2 concepts into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret route selection, boundary definition, and evidence quality. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="1-11-interpretation-checklist">1.11 Interpretation checklist</h2>
 <table>
@@ -1632,7 +1634,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <p>Explain how Python calls the Java engine and why that matters for full API access. The practical setting is the software architecture behind reproducible simulations. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="2-4-conceptual-model">2.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -1699,7 +1701,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <h2 id="2-7-parameter-study-script-graph-and-discussion">2.7 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> A reproducibility score computed from visible artifacts: executable notebooks, result JSON files, graph files, traceable source code, and rerun path length.</p>
-<p><strong>Study basis.</strong> The public-study context is IEA's need for auditable low-emission hydrogen deployment evidence; the numerical scores are generated from the book workflow rubric. \cite{iea2023hydrogen}</p>
+<p><strong>Study basis.</strong> The public-study context is IEA's need for auditable low-emission hydrogen deployment evidence; the numerical scores are generated from the book workflow rubric. [<a href="#ref-1" class="cite">1</a>]</p>
 <table>
 <thead><tr>
 <th>Access pattern</th>
@@ -1801,7 +1803,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <figcaption>Figure 2.1: Evidence-backed calculation and study basis for NeqSim Architecture for Hydrogen Work.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> A reproducibility score computed from visible artifacts: executable notebooks, result JSON files, graph files, traceable source code, and rerun path length.</p>
-<p><strong>Public study or standard basis.</strong> The public-study context is IEA's need for auditable low-emission hydrogen deployment evidence; the numerical scores are generated from the book workflow rubric. \cite{iea2023hydrogen}</p>
+<p><strong>Public study or standard basis.</strong> The public-study context is IEA's need for auditable low-emission hydrogen deployment evidence; the numerical scores are generated from the book workflow rubric. [<a href="#ref-1" class="cite">1</a>]</p>
 <p><strong>Discussion.</strong> The figure turns the software architecture behind reproducible simulations into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret model transparency, object ownership, and reproducible execution. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="2-10-interpretation-checklist">2.10 Interpretation checklist</h2>
 <table>
@@ -1958,7 +1960,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <p>Set up notebooks, environments, units, versioning, and result files for industrial studies. The practical setting is the working environment around each hydrogen study. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="3-4-conceptual-model">3.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -2025,7 +2027,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <h2 id="3-7-parameter-study-script-graph-and-discussion">3.7 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> A reproducibility score computed from visible artifacts: executable notebooks, result JSON files, graph files, traceable source code, and rerun path length.</p>
-<p><strong>Study basis.</strong> The public-study context is IEA's need for auditable low-emission hydrogen deployment evidence; the numerical scores are generated from the book workflow rubric. \cite{iea2023hydrogen}</p>
+<p><strong>Study basis.</strong> The public-study context is IEA's need for auditable low-emission hydrogen deployment evidence; the numerical scores are generated from the book workflow rubric. [<a href="#ref-1" class="cite">1</a>]</p>
 <table>
 <thead><tr>
 <th>Execution mode</th>
@@ -2121,7 +2123,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <figcaption>Figure 3.1: Evidence-backed calculation and study basis for Python Environment and Reproducibility.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> A reproducibility score computed from visible artifacts: executable notebooks, result JSON files, graph files, traceable source code, and rerun path length.</p>
-<p><strong>Public study or standard basis.</strong> The public-study context is IEA's need for auditable low-emission hydrogen deployment evidence; the numerical scores are generated from the book workflow rubric. \cite{iea2023hydrogen}</p>
+<p><strong>Public study or standard basis.</strong> The public-study context is IEA's need for auditable low-emission hydrogen deployment evidence; the numerical scores are generated from the book workflow rubric. [<a href="#ref-1" class="cite">1</a>]</p>
 <p><strong>Discussion.</strong> The figure turns the working environment around each hydrogen study into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret environment checks, unit conventions, and traceable results. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="3-10-interpretation-checklist">3.10 Interpretation checklist</h2>
 <table>
@@ -2278,7 +2280,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <p>Use cubic equations of state, GERG-2008 mixture properties, and Leachman pure-hydrogen reference calculations correctly for H2-rich systems. The practical setting is H2, natural gas blends, steam, CO2, water, and impurities. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{soave1972,pengrobinson1976,michelsen2007,prausnitz1999,kunz2012gerg} \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-7" class="cite">7</a>, <a href="#ref-8" class="cite">8</a>, <a href="#ref-9" class="cite">9</a>, <a href="#ref-10" class="cite">10</a>, <a href="#ref-11" class="cite">11</a>] [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="4-4-conceptual-model">4.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -2362,7 +2364,7 @@ print(&quot;Leachman normal-H2 density&quot;, leachman.getPhase(0).getDensity_Le
 <h2 id="4-7-parameter-study-script-graph-and-discussion">4.7 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Pressure sweep for hydrogen-rich property-model comparison using SRK, PR, GERG-style checks, and the executable EOS/reference-equation comparison script included in the chapter.</p>
-<p><strong>Study basis.</strong> The comparison is aligned with the NTNU thesis treatment of cubic EOS, GERG-2008, Leachman reference equations, and hydrogen-rich gas modelling in NeqSim. \cite{soave1972,pengrobinson1976,kunz2012gerg,rogneSolbuIhlebaek2025}</p>
+<p><strong>Study basis.</strong> The comparison is aligned with the NTNU thesis treatment of cubic EOS, GERG-2008, Leachman reference equations, and hydrogen-rich gas modelling in NeqSim. [<a href="#ref-7" class="cite">7</a>, <a href="#ref-8" class="cite">8</a>, <a href="#ref-11" class="cite">11</a>, <a href="#ref-12" class="cite">12</a>]</p>
 <table>
 <thead><tr>
 <th>Pressure (bara)</th>
@@ -2408,7 +2410,7 @@ print(&quot;Leachman normal-H2 density&quot;, leachman.getPhase(0).getDensity_Le
 <p>The notebook compares cubic EOS density trends with a GERG-style reference check. Exact values should be refreshed by rerunning the notebook on the active NeqSim branch, but the expected shape is a smooth pressure response with visible high-pressure model spread.</p>
 <p><strong>Discussion.</strong> The parameter study shows how H2, natural gas blends, steam, CO2, water, and impurities responds when the controlling parameter changes. The important result is not a single base-case value; it is the shape of the response and the point where density, compressibility, enthalpy, heat capacity, speed of sound, phase split, and transport sanity checks begin to trade against margin or cost.</p>
 <h2 id="4-8-eos-and-reference-equation-comparison-script">4.8 EOS and Reference-Equation Comparison Script</h2>
-<p>The thermodynamic modelling thesis by Rogne Solbu and Ihlebaek compares cubic EOS models with high-accuracy reference equations for hydrogen, helium, and hydrogen-rich natural gas mixtures \cite{rogneSolbuIhlebaek2025}. This chapter therefore includes an executable NeqSim script at <code>scripts/eos_reference_comparison.py</code> and a notebook runner at <code>notebooks/eos_reference_comparison.ipynb</code>. The script runs the same comparison logic used in the figures below: SRK and Peng-Robinson are treated as design-screening cubic EOS models, Leachman is used as the pure-hydrogen reference equation, and GERG-2008-H2 is used as the hydrogen-rich methane mixture reference model.</p>
+<p>The thermodynamic modelling thesis by Rogne Solbu and Ihlebaek compares cubic EOS models with high-accuracy reference equations for hydrogen, helium, and hydrogen-rich natural gas mixtures [<a href="#ref-12" class="cite">12</a>]. This chapter therefore includes an executable NeqSim script at <code>scripts/eos_reference_comparison.py</code> and a notebook runner at <code>notebooks/eos_reference_comparison.ipynb</code>. The script runs the same comparison logic used in the figures below: SRK and Peng-Robinson are treated as design-screening cubic EOS models, Leachman is used as the pure-hydrogen reference equation, and GERG-2008-H2 is used as the hydrogen-rich methane mixture reference model.</p>
 <p>The script writes <code>figures/eos_reference_comparison_pure_h2.csv</code>, <code>figures/eos_reference_comparison_mixture.csv</code>, and <code>figures/eos_reference_comparison_results.json</code>, then saves the plotted figures. This makes the section auditable: the plotted deviations are not decorative curves, but are regenerated from NeqSim property calls on the active branch.</p>
 <figure class="numbered-figure"><img src="figures/eos_pure_h2_density_deviation.png" alt="Figure 4.3: Pure hydrogen density deviation for cubic and GERG models relative to the Leachman reference equation at 300 K."/>
 <figcaption>Figure 4.3: Pure hydrogen density deviation for cubic and GERG models relative to the Leachman reference equation at 300 K.</figcaption>
@@ -2532,7 +2534,7 @@ $$</div>
 <figcaption>Figure 4.1: Evidence-backed calculation and study basis for Hydrogen Reference Equations and Property Models.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Pressure sweep for hydrogen-rich property-model comparison using SRK, PR, GERG-style checks, and the executable EOS/reference-equation comparison script included in the chapter.</p>
-<p><strong>Public study or standard basis.</strong> The comparison is aligned with the NTNU thesis treatment of cubic EOS, GERG-2008, Leachman reference equations, and hydrogen-rich gas modelling in NeqSim. \cite{soave1972,pengrobinson1976,kunz2012gerg,rogneSolbuIhlebaek2025}</p>
+<p><strong>Public study or standard basis.</strong> The comparison is aligned with the NTNU thesis treatment of cubic EOS, GERG-2008, Leachman reference equations, and hydrogen-rich gas modelling in NeqSim. [<a href="#ref-7" class="cite">7</a>, <a href="#ref-8" class="cite">8</a>, <a href="#ref-11" class="cite">11</a>, <a href="#ref-12" class="cite">12</a>]</p>
 <p><strong>Discussion.</strong> The figure turns H2, natural gas blends, steam, CO2, water, and impurities into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret density, compressibility, enthalpy, heat capacity, speed of sound, phase split, and transport sanity checks. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="4-14-interpretation-checklist">4.14 Interpretation checklist</h2>
 <table>
@@ -2690,7 +2692,7 @@ $$</div>
 <p>Create robust fluid definitions for reforming, electrolysis, and purification models. The practical setting is feed gas, demineralized water, steam, shifted syngas, oxygen, and nitrogen. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{soave1972,pengrobinson1976,michelsen2007,prausnitz1999,kunz2012gerg} \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-7" class="cite">7</a>, <a href="#ref-8" class="cite">8</a>, <a href="#ref-9" class="cite">9</a>, <a href="#ref-10" class="cite">10</a>, <a href="#ref-11" class="cite">11</a>] [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="5-4-conceptual-model">5.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -2756,7 +2758,7 @@ $$</div>
 <td>Build a feed-water quality table that converts impurities and purification recovery into water-duty and fouling-risk indices.</td>
 <td>Demin water, desalinated seawater, treated wastewater, conductivity, chloride, and purification recovery.</td>
 <td>Make-up water kg/kg H2, reject-brine index, polishing duty, impurity/fouling attention.</td>
-<td>\cite{doeElectrolysis,iso22734,irena2022greenhydrogen}</td>
+<td>US DOE electrolysis technology overview, ISO 22734 electrolyzer safety basis, IRENA Green Hydrogen Cost Reduction</td>
 </tr>
 <tr>
 <td>Cross-route frontier</td>
@@ -2765,7 +2767,7 @@ $$</div>
 <td>Represent biomass or waste feed variability as an ultimate-analysis and moisture-content sensitivity before gasification/reforming.</td>
 <td>Moisture, oxygen-to-biomass ratio, tar/contaminant index, and CO2 capture option.</td>
 <td>Dry syngas H2 index, water duty, contaminant polishing load, biogenic carbon-credit index.</td>
-<td>\cite{doeBiomassGasification,holladay2009hydrogen,iea2023hydrogen}</td>
+<td>US DOE biomass gasification overview, Holladay et al. hydrogen-production technology review, IEA Global Hydrogen Review 2023</td>
 </tr>
 </tbody></table>
 <h2 id="5-7-python-workflow-pattern">5.7 Python workflow pattern</h2>
@@ -2789,7 +2791,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <h2 id="5-8-parameter-study-script-graph-and-discussion">5.8 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> EOS, phase-equilibrium, density, enthalpy, para-ortho, water, and impurity sweeps generated from thermodynamic property calculations and sanity checks.</p>
-<p><strong>Study basis.</strong> SRK, Peng-Robinson, GERG-2008, and thermodynamic-modelling references define the property-model envelope used for the plotted values. \cite{soave1972,pengrobinson1976,kunz2012gerg,michelsen2007}</p>
+<p><strong>Study basis.</strong> SRK, Peng-Robinson, GERG-2008, and thermodynamic-modelling references define the property-model envelope used for the plotted values. [<a href="#ref-7" class="cite">7</a>, <a href="#ref-8" class="cite">8</a>, <a href="#ref-11" class="cite">11</a>, <a href="#ref-9" class="cite">9</a>]</p>
 <table>
 <thead><tr>
 <th>Steam-to-carbon</th>
@@ -2891,7 +2893,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <figcaption>Figure 5.1: Evidence-backed calculation and study basis for Feedstocks, Water, Steam, Natural Gas, and Syngas Fluids.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> EOS, phase-equilibrium, density, enthalpy, para-ortho, water, and impurity sweeps generated from thermodynamic property calculations and sanity checks.</p>
-<p><strong>Public study or standard basis.</strong> SRK, Peng-Robinson, GERG-2008, and thermodynamic-modelling references define the property-model envelope used for the plotted values. \cite{soave1972,pengrobinson1976,kunz2012gerg,michelsen2007}</p>
+<p><strong>Public study or standard basis.</strong> SRK, Peng-Robinson, GERG-2008, and thermodynamic-modelling references define the property-model envelope used for the plotted values. [<a href="#ref-7" class="cite">7</a>, <a href="#ref-8" class="cite">8</a>, <a href="#ref-11" class="cite">11</a>, <a href="#ref-9" class="cite">9</a>]</p>
 <p><strong>Discussion.</strong> The figure turns feed gas, demineralized water, steam, shifted syngas, oxygen, and nitrogen into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret composition closure, dew point, water handling, and gas quality. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="5-11-interpretation-checklist">5.11 Interpretation checklist</h2>
 <table>
@@ -3048,7 +3050,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <p>Model hydrogen-production chemistry as Gibbs-minimization, stoichiometric-conversion, or catalyst-screening reactor problems. The practical setting is the chemistry block in blue H2, syngas conditioning, methanol-equilibrium demonstration, and ammonia-cracking screening studies. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{towler2013chemical,seader2016,kohl1997,mokhatab2018,gpsa2012} \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-6" class="cite">6</a>, <a href="#ref-13" class="cite">13</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-15" class="cite">15</a>, <a href="#ref-16" class="cite">16</a>] [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="6-4-conceptual-model">6.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -3114,7 +3116,7 @@ $$</div>
 <td>Add methane-pyrolysis equilibrium and solid-carbon handling as a thermochemical route-screening example beside SMR/ATR/POX.</td>
 <td>Temperature, conversion approach, heat-supply index, catalyst stability, and carbon-product credit.</td>
 <td>H2 yield, direct CO2 index, solid-carbon rate, heat-demand index, maturity attention.</td>
-<td>\cite{muradov2017methane,holladay2009hydrogen,iea2023hydrogen}</td>
+<td>Muradov methane-pyrolysis hydrogen review, Holladay et al. hydrogen-production technology review, IEA Global Hydrogen Review 2023</td>
 </tr>
 </tbody></table>
 <h2 id="6-7-python-workflow-pattern">6.7 Python workflow pattern</h2>
@@ -3152,7 +3154,7 @@ print(&quot;reactor power MW&quot;, reactor.getPower(&quot;MW&quot;))
 <h2 id="6-8-parameter-study-script-graph-and-discussion">6.8 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.</p>
-<p><strong>Study basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. \cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}</p>
+<p><strong>Study basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-16" class="cite">16</a>]</p>
 <table>
 <thead><tr>
 <th>Temperature (degC)</th>
@@ -3288,7 +3290,7 @@ $$</div>
 <figcaption>Figure 6.1: Evidence-backed calculation and study basis for Chemical Reaction Equilibrium: SMR, ATR, WGS, and Ammonia-Cracking Screening.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.</p>
-<p><strong>Public study or standard basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. \cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}</p>
+<p><strong>Public study or standard basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-16" class="cite">16</a>]</p>
 <p><strong>Discussion.</strong> The figure turns the chemistry block in blue H2, syngas conditioning, methanol-equilibrium demonstration, and ammonia-cracking screening studies into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret equilibrium composition, methane slip, CO conversion, H2 yield, steam-to-carbon, heat of reaction, and catalyst activity. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="6-15-interpretation-checklist">6.15 Interpretation checklist</h2>
 <table>
@@ -3445,7 +3447,7 @@ $$</div>
 <p>Simulate PEM, alkaline, SOEC, and AEM electrolyzers with I-V and Faradaic efficiency. The practical setting is green and pink H2 production from water and power. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="7-4-conceptual-model">7.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -3511,7 +3513,7 @@ $$</div>
 <td>Run ElectrolyzerTechnology.ALKALINE with current-density and voltage assumptions from the technology selector.</td>
 <td>Current density, operating pressure, Faradaic efficiency, and stack temperature.</td>
 <td>Cell voltage, kWh/kg H2, hydrogen rate, cooling or heat-rejection index.</td>
-<td>\cite{doeElectrolysis,buttler2018water,irena2022greenhydrogen}</td>
+<td>US DOE electrolysis technology overview, Buttler and Spliethoff water-electrolysis review, IRENA Green Hydrogen Cost Reduction</td>
 </tr>
 <tr>
 <td>Green hydrogen</td>
@@ -3520,7 +3522,7 @@ $$</div>
 <td>Run ElectrolyzerTechnology.PEM with pressure operation, I-V curve, and compression-offset accounting.</td>
 <td>Current density, pressure, membrane resistance, and Faradaic efficiency.</td>
 <td>Specific energy, stack power, pressure credit, CAPEX index, durability attention index.</td>
-<td>\cite{carmo2013pem,doeElectrolysis,iso22734}</td>
+<td>Carmo et al. PEM electrolysis review, US DOE electrolysis technology overview, ISO 22734 electrolyzer safety basis</td>
 </tr>
 <tr>
 <td>Green hydrogen</td>
@@ -3529,7 +3531,7 @@ $$</div>
 <td>Run ElectrolyzerTechnology.AEM as an emerging low-precious-metal case with a membrane-resistance sensitivity.</td>
 <td>AEM resistance factor, pressure, current density, and technology maturity factor.</td>
 <td>Specific energy, CAPEX index, durability risk index, water-management attention.</td>
-<td>\cite{doeElectrolysis,irena2022greenhydrogen,roger2017catalysts}</td>
+<td>US DOE electrolysis technology overview, IRENA Green Hydrogen Cost Reduction, Roger et al. water-splitting catalyst review</td>
 </tr>
 <tr>
 <td>Green hydrogen</td>
@@ -3538,7 +3540,7 @@ $$</div>
 <td>Run ElectrolyzerTechnology.SOEC with high-temperature efficiency and heat-credit assumptions.</td>
 <td>Stack temperature, heat-credit fraction, current density, and steam-feed condition.</td>
 <td>Electrical kWh/kg H2, thermal-duty credit, overall energy index, high-temperature materials attention.</td>
-<td>\cite{doeElectrolysis,buttler2018water,irena2022greenhydrogen}</td>
+<td>US DOE electrolysis technology overview, Buttler and Spliethoff water-electrolysis review, IRENA Green Hydrogen Cost Reduction</td>
 </tr>
 <tr>
 <td>Green hydrogen</td>
@@ -3547,7 +3549,7 @@ $$</div>
 <td>Represent HER/OER catalyst improvements as reduced activation overpotential in the I-V characteristic.</td>
 <td>HER overpotential, OER overpotential, Tafel slope proxy, and noble-metal loading index.</td>
 <td>Cell-voltage reduction, kWh/kg H2 reduction, catalyst-cost index, stability attention index.</td>
-<td>\cite{roger2017catalysts,buttler2018water,doeElectrolysis}</td>
+<td>Roger et al. water-splitting catalyst review, Buttler and Spliethoff water-electrolysis review, US DOE electrolysis technology overview</td>
 </tr>
 <tr>
 <td>Green hydrogen</td>
@@ -3556,7 +3558,7 @@ $$</div>
 <td>Model membrane changes as area-specific resistance, crossover, and degradation factors in a stack screening table.</td>
 <td>Membrane resistance, gas-crossover index, PFAS-free material flag, and lifetime multiplier.</td>
 <td>Ohmic-loss voltage, Faradaic-efficiency loss, durability index, product-purity attention.</td>
-<td>\cite{carmo2013pem,iso22734,doeElectrolysis}</td>
+<td>Carmo et al. PEM electrolysis review, ISO 22734 electrolyzer safety basis, US DOE electrolysis technology overview</td>
 </tr>
 </tbody></table>
 <h2 id="7-7-python-workflow-pattern">7.7 Python workflow pattern</h2>
@@ -3583,7 +3585,7 @@ print(el.getSpecificEnergyConsumption_kWh_per_kg_H2())
 <h2 id="7-8-parameter-study-script-graph-and-discussion">7.8 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Faraday-law water splitting, cell-voltage specific energy, current-density/load sweeps, and NeqSim Electrolyzer technology defaults where the notebook uses a stack model.</p>
-<p><strong>Study basis.</strong> Public DOE electrolysis technology descriptions, IRENA scale/cost-learning observations, and the Buttler-Spliethoff electrolysis review define the technology bands. \cite{doeElectrolysis,irena2022greenhydrogen,buttler2018water,iso22734}</p>
+<p><strong>Study basis.</strong> Public DOE electrolysis technology descriptions, IRENA scale/cost-learning observations, and the Buttler-Spliethoff electrolysis review define the technology bands. [<a href="#ref-17" class="cite">17</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <table>
 <thead><tr>
 <th>Technology</th>
@@ -3692,7 +3694,7 @@ $$</div>
 <figcaption>Figure 7.1: Evidence-backed calculation and study basis for Electrochemistry and Electrolyzer Stack Models.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Faraday-law water splitting, cell-voltage specific energy, current-density/load sweeps, and NeqSim Electrolyzer technology defaults where the notebook uses a stack model.</p>
-<p><strong>Public study or standard basis.</strong> Public DOE electrolysis technology descriptions, IRENA scale/cost-learning observations, and the Buttler-Spliethoff electrolysis review define the technology bands. \cite{doeElectrolysis,irena2022greenhydrogen,buttler2018water,iso22734}</p>
+<p><strong>Public study or standard basis.</strong> Public DOE electrolysis technology descriptions, IRENA scale/cost-learning observations, and the Buttler-Spliethoff electrolysis review define the technology bands. [<a href="#ref-17" class="cite">17</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <p><strong>Discussion.</strong> The figure turns green and pink H2 production from water and power into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret stack power, specific energy, pressure, temperature, and H2 production. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="7-12-interpretation-checklist">7.12 Interpretation checklist</h2>
 <table>
@@ -3849,7 +3851,7 @@ $$</div>
 <p>Handle water, CO2, N2, methane, CO, H2S, and trace impurities in H2 value chains. The practical setting is impurity-rich hydrogen, blue H2 capture, and transport interfaces. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{soave1972,pengrobinson1976,michelsen2007,prausnitz1999,kunz2012gerg} \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-7" class="cite">7</a>, <a href="#ref-8" class="cite">8</a>, <a href="#ref-9" class="cite">9</a>, <a href="#ref-10" class="cite">10</a>, <a href="#ref-11" class="cite">11</a>] [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="8-4-conceptual-model">8.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -3916,7 +3918,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <h2 id="8-7-parameter-study-script-graph-and-discussion">8.7 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> EOS, phase-equilibrium, density, enthalpy, para-ortho, water, and impurity sweeps generated from thermodynamic property calculations and sanity checks.</p>
-<p><strong>Study basis.</strong> SRK, Peng-Robinson, GERG-2008, and thermodynamic-modelling references define the property-model envelope used for the plotted values. \cite{soave1972,pengrobinson1976,kunz2012gerg,michelsen2007}</p>
+<p><strong>Study basis.</strong> SRK, Peng-Robinson, GERG-2008, and thermodynamic-modelling references define the property-model envelope used for the plotted values. [<a href="#ref-7" class="cite">7</a>, <a href="#ref-8" class="cite">8</a>, <a href="#ref-11" class="cite">11</a>, <a href="#ref-9" class="cite">9</a>]</p>
 <table>
 <thead><tr>
 <th>CO2 in H2 stream (mol%)</th>
@@ -4018,7 +4020,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <figcaption>Figure 8.1: Evidence-backed calculation and study basis for Phase Behavior with CO2, Water, and Impurities.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> EOS, phase-equilibrium, density, enthalpy, para-ortho, water, and impurity sweeps generated from thermodynamic property calculations and sanity checks.</p>
-<p><strong>Public study or standard basis.</strong> SRK, Peng-Robinson, GERG-2008, and thermodynamic-modelling references define the property-model envelope used for the plotted values. \cite{soave1972,pengrobinson1976,kunz2012gerg,michelsen2007}</p>
+<p><strong>Public study or standard basis.</strong> SRK, Peng-Robinson, GERG-2008, and thermodynamic-modelling references define the property-model envelope used for the plotted values. [<a href="#ref-7" class="cite">7</a>, <a href="#ref-8" class="cite">8</a>, <a href="#ref-11" class="cite">11</a>, <a href="#ref-9" class="cite">9</a>]</p>
 <p><strong>Discussion.</strong> The figure turns impurity-rich hydrogen, blue H2 capture, and transport interfaces into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret phase boundaries, water knockout, impurity enrichment, and hydrate risk. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="8-10-interpretation-checklist">8.10 Interpretation checklist</h2>
 <table>
@@ -4176,7 +4178,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <p>Assemble feed preheat, desulfurization, reforming, cooling, and separation steps. The practical setting is a conventional SMR, ATR, or POX front end. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{towler2013chemical,seader2016,kohl1997,mokhatab2018,gpsa2012} \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-6" class="cite">6</a>, <a href="#ref-13" class="cite">13</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-15" class="cite">15</a>, <a href="#ref-16" class="cite">16</a>] [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="9-4-conceptual-model">9.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -4242,7 +4244,7 @@ $$</div>
 <td>Compare ATR route-builder cases with oxygen-to-carbon and steam-to-carbon controls before downstream capture.</td>
 <td>O2/C and S/C cases around the base ATR operating window.</td>
 <td>Methane conversion, syngas H2/CO readiness, soot-risk index, oxygen demand, CO2 concentration index.</td>
-<td>\cite{iea2023hydrogen,towler2013chemical,gpsa2012}</td>
+<td>IEA Global Hydrogen Review 2023, Chemical engineering design reference, GPSA engineering data reference</td>
 </tr>
 <tr>
 <td>Blue hydrogen</td>
@@ -4251,7 +4253,7 @@ $$</div>
 <td>Run SMRHydrogenPlantBuilder, ATRHydrogenPlantBuilder, and POXHydrogenPlantBuilder as matched route-screening cases.</td>
 <td>Route type at equal methane feed with route-specific steam and oxygen assumptions.</td>
 <td>Conversion index, duty index, H2/CO readiness, downstream purification burden.</td>
-<td>\cite{iea2023hydrogen,towler2013chemical,gpsa2012}</td>
+<td>IEA Global Hydrogen Review 2023, Chemical engineering design reference, GPSA engineering data reference</td>
 </tr>
 </tbody></table>
 <h2 id="9-7-python-workflow-pattern">9.7 Python workflow pattern</h2>
@@ -4295,7 +4297,7 @@ print(&quot;ATR soot risk&quot;, atr_unit.getSootRiskIndex())
 <h2 id="9-8-parameter-study-script-graph-and-discussion">9.8 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.</p>
-<p><strong>Study basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. \cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}</p>
+<p><strong>Study basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-16" class="cite">16</a>]</p>
 <table>
 <thead><tr>
 <th>Route</th>
@@ -4391,7 +4393,7 @@ print(&quot;ATR soot risk&quot;, atr_unit.getSootRiskIndex())
 <figcaption>Figure 9.1: Evidence-backed calculation and study basis for Reforming Plant Flowsheets.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.</p>
-<p><strong>Public study or standard basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. \cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}</p>
+<p><strong>Public study or standard basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-16" class="cite">16</a>]</p>
 <p><strong>Discussion.</strong> The figure turns a conventional SMR, ATR, or POX front end into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret hydrogen yield, methane slip, furnace duty, and heat recovery. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="9-11-interpretation-checklist">9.11 Interpretation checklist</h2>
 <table>
@@ -4548,7 +4550,7 @@ print(&quot;ATR soot risk&quot;, atr_unit.getSootRiskIndex())
 <p>Design HTS/LTS sections and recover heat without losing process interpretability. The practical setting is CO conversion and steam management downstream of reforming. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{towler2013chemical,seader2016,kohl1997,mokhatab2018,gpsa2012} \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-6" class="cite">6</a>, <a href="#ref-13" class="cite">13</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-15" class="cite">15</a>, <a href="#ref-16" class="cite">16</a>] [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="10-4-conceptual-model">10.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -4614,7 +4616,7 @@ $$</div>
 <td>Build an exergy-loss proxy table from reformer heat duty, WGS heat release, capture penalty, and compression work.</td>
 <td>Shift temperature and heat-recovery approach temperature.</td>
 <td>CO slip, hydrogen gain, recoverable heat index, avoidable duty or exergy-loss index.</td>
-<td>\cite{michelsen2007,towler2013chemical,iea2023hydrogen}</td>
+<td>Thermodynamic modelling reference, Chemical engineering design reference, IEA Global Hydrogen Review 2023</td>
 </tr>
 <tr>
 <td>Blue hydrogen</td>
@@ -4623,7 +4625,7 @@ $$</div>
 <td>Compare fired-reformer heat demand, recoverable WGS heat, preheat duty, and an electrified-furnace substitution factor.</td>
 <td>Heat-recovery approach temperature, furnace electrification fraction, and steam-generation credit.</td>
 <td>Fuel-duty reduction, electric-load increase, net CO2 reduction, pinch or approach-temperature margin.</td>
-<td>\cite{towler2013chemical,gpsa2012,iea2023hydrogen}</td>
+<td>Chemical engineering design reference, GPSA engineering data reference, IEA Global Hydrogen Review 2023</td>
 </tr>
 </tbody></table>
 <h2 id="10-7-python-workflow-pattern">10.7 Python workflow pattern</h2>
@@ -4647,7 +4649,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <h2 id="10-8-parameter-study-script-graph-and-discussion">10.8 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.</p>
-<p><strong>Study basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. \cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}</p>
+<p><strong>Study basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-16" class="cite">16</a>]</p>
 <table>
 <thead><tr>
 <th>Shift temperature (degC)</th>
@@ -4749,7 +4751,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <figcaption>Figure 10.1: Evidence-backed calculation and study basis for Water-Gas Shift and Heat Recovery.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.</p>
-<p><strong>Public study or standard basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. \cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}</p>
+<p><strong>Public study or standard basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-16" class="cite">16</a>]</p>
 <p><strong>Discussion.</strong> The figure turns CO conversion and steam management downstream of reforming into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret CO slip, steam condensation, duty distribution, and approach temperature. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="10-11-interpretation-checklist">10.11 Interpretation checklist</h2>
 <table>
@@ -4906,7 +4908,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <p>Use single-bed and cascade PSA models to purify H2 and return tail gas to the furnace. The practical setting is hydrogen purification after shifted syngas. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{towler2013chemical,seader2016,kohl1997,mokhatab2018,gpsa2012} \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-6" class="cite">6</a>, <a href="#ref-13" class="cite">13</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-15" class="cite">15</a>, <a href="#ref-16" class="cite">16</a>] [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="11-4-conceptual-model">11.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -4972,7 +4974,7 @@ $$</div>
 <td>Run a PSACascade bed-count and equalisation sweep on shifted syngas.</td>
 <td>Number of beds, equalisation steps, recovery target, and tail-gas return assumption.</td>
 <td>H2 purity, H2 recovery, tail-gas heating value index, PSA CAPEX index.</td>
-<td>\cite{kohl1997,seader2016,gpsa2012}</td>
+<td>Gas purification reference, seader2016, GPSA engineering data reference</td>
 </tr>
 </tbody></table>
 <h2 id="11-7-python-workflow-pattern">11.7 Python workflow pattern</h2>
@@ -4999,7 +5001,7 @@ print(psa.getH2Purity(), psa.getH2Recovery())
 <h2 id="11-8-parameter-study-script-graph-and-discussion">11.8 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.</p>
-<p><strong>Study basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. \cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}</p>
+<p><strong>Study basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-16" class="cite">16</a>]</p>
 <table>
 <thead><tr>
 <th>Beds</th>
@@ -5113,7 +5115,7 @@ $$</div>
 <figcaption>Figure 11.1: Evidence-backed calculation and study basis for PSA Purification and Tail-Gas Integration.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.</p>
-<p><strong>Public study or standard basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. \cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}</p>
+<p><strong>Public study or standard basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-16" class="cite">16</a>]</p>
 <p><strong>Discussion.</strong> The figure turns hydrogen purification after shifted syngas into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret H2 purity, recovery, tail-gas composition, cycle assumptions, and CAPEX. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="11-12-interpretation-checklist">11.12 Interpretation checklist</h2>
 <table>
@@ -5270,7 +5272,7 @@ $$</div>
 <p>Couple hydrogen production with CO2 capture, compression, transport, and injection. The practical setting is blue H2 facilities and their CO2 export chain. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{towler2013chemical,seader2016,kohl1997,mokhatab2018,gpsa2012} \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-6" class="cite">6</a>, <a href="#ref-13" class="cite">13</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-15" class="cite">15</a>, <a href="#ref-16" class="cite">16</a>] [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="12-4-conceptual-model">12.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -5336,7 +5338,7 @@ $$</div>
 <td>Run a BlueHydrogenPlantBuilder capture-fraction sweep for SMR plus WGS, selective CO2 capture, PSA, and export compression.</td>
 <td>Capture target 70-98 percent at fixed methane feed, steam-to-carbon ratio, and CO2 export pressure.</td>
 <td>Hydrogen product rate, residual kg CO2/kg H2, captured CO2 export rate, CO2 compression-duty index.</td>
-<td>\cite{iea2023hydrogen,kohl1997,towler2013chemical}</td>
+<td>IEA Global Hydrogen Review 2023, Gas purification reference, Chemical engineering design reference</td>
 </tr>
 <tr>
 <td>Blue hydrogen</td>
@@ -5345,7 +5347,7 @@ $$</div>
 <td>Compare amine, physical-solvent, membrane, adsorption, and cryogenic capture as screening factors around ComponentCaptureUnit.</td>
 <td>Capture option and target capture fraction with technology-specific energy and product-pressure factors.</td>
 <td>Capture rate, hydrogen loss, CO2 purity, energy-penalty index, export-compression index.</td>
-<td>\cite{kohl1997,iea2023hydrogen,towler2013chemical}</td>
+<td>Gas purification reference, IEA Global Hydrogen Review 2023, Chemical engineering design reference</td>
 </tr>
 <tr>
 <td>Blue hydrogen</td>
@@ -5354,7 +5356,7 @@ $$</div>
 <td>Pass captured CO2 to export compression, pipeline pressure checks, and injection-envelope screening.</td>
 <td>CO2 export pressure, impurity margin, dehydration specification, and pipeline/injection pressure level.</td>
 <td>Dense-phase margin, compressor power, water-removal flag, injection-pressure acceptance, storage handoff pressure.</td>
-<td>\cite{mokhatab2018,gpsa2012,iea2023hydrogen}</td>
+<td>Gas transmission and processing reference, GPSA engineering data reference, IEA Global Hydrogen Review 2023</td>
 </tr>
 </tbody></table>
 <h2 id="12-7-python-workflow-pattern">12.7 Python workflow pattern</h2>
@@ -5399,7 +5401,7 @@ print(results)
 <h2 id="12-8-parameter-study-script-graph-and-discussion">12.8 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.</p>
-<p><strong>Study basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. \cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}</p>
+<p><strong>Study basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-16" class="cite">16</a>]</p>
 <table>
 <thead><tr>
 <th>CO2 capture target (%)</th>
@@ -5513,7 +5515,7 @@ $$</div>
 <figcaption>Figure 12.1: Evidence-backed calculation and study basis for Blue Hydrogen and CCS Integration with Route Builders.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.</p>
-<p><strong>Public study or standard basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. \cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}</p>
+<p><strong>Public study or standard basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-16" class="cite">16</a>]</p>
 <p><strong>Discussion.</strong> The figure turns blue H2 facilities and their CO2 export chain into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret capture rate, CO2 purity, dense-phase margins, compressor load, and injection envelope. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="12-12-interpretation-checklist">12.12 Interpretation checklist</h2>
 <table>
@@ -5670,7 +5672,7 @@ $$</div>
 <p>Build a screening electrolysis balance around water, power, oxygen, hydrogen, cooling, and compression. The practical setting is a PEM or alkaline plant connected to variable renewable power. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{towler2013chemical,seader2016,kohl1997,mokhatab2018,gpsa2012} \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-6" class="cite">6</a>, <a href="#ref-13" class="cite">13</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-15" class="cite">15</a>, <a href="#ref-16" class="cite">16</a>] [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="13-4-conceptual-model">13.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -5736,7 +5738,7 @@ $$</div>
 <td>Run a plant capacity-factor and part-load sweep around the electrolyzer plus balance-of-plant model.</td>
 <td>Capacity factor, part-load point, ramping/start-stop count, and buffer-storage duration.</td>
 <td>Annual H2 output, specific energy, utilization, degradation attention, storage requirement.</td>
-<td>\cite{irena2022greenhydrogen,doeElectrolysis,buttler2018water}</td>
+<td>IRENA Green Hydrogen Cost Reduction, US DOE electrolysis technology overview, Buttler and Spliethoff water-electrolysis review</td>
 </tr>
 </tbody></table>
 <h2 id="13-7-python-workflow-pattern">13.7 Python workflow pattern</h2>
@@ -5763,7 +5765,7 @@ print(el.getSpecificEnergyConsumption_kWh_per_kg_H2())
 <h2 id="13-8-parameter-study-script-graph-and-discussion">13.8 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Faraday-law water splitting, cell-voltage specific energy, current-density/load sweeps, and NeqSim Electrolyzer technology defaults where the notebook uses a stack model.</p>
-<p><strong>Study basis.</strong> Public DOE electrolysis technology descriptions, IRENA scale/cost-learning observations, and the Buttler-Spliethoff electrolysis review define the technology bands. \cite{doeElectrolysis,irena2022greenhydrogen,buttler2018water,iso22734}</p>
+<p><strong>Study basis.</strong> Public DOE electrolysis technology descriptions, IRENA scale/cost-learning observations, and the Buttler-Spliethoff electrolysis review define the technology bands. [<a href="#ref-17" class="cite">17</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <table>
 <thead><tr>
 <th>Capacity factor (%)</th>
@@ -5878,7 +5880,7 @@ $$</div>
 <figcaption>Figure 13.1: Evidence-backed calculation and study basis for Green Hydrogen Electrolysis Plant.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Faraday-law water splitting, cell-voltage specific energy, current-density/load sweeps, and NeqSim Electrolyzer technology defaults where the notebook uses a stack model.</p>
-<p><strong>Public study or standard basis.</strong> Public DOE electrolysis technology descriptions, IRENA scale/cost-learning observations, and the Buttler-Spliethoff electrolysis review define the technology bands. \cite{doeElectrolysis,irena2022greenhydrogen,buttler2018water,iso22734}</p>
+<p><strong>Public study or standard basis.</strong> Public DOE electrolysis technology descriptions, IRENA scale/cost-learning observations, and the Buttler-Spliethoff electrolysis review define the technology bands. [<a href="#ref-17" class="cite">17</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <p><strong>Discussion.</strong> The figure turns a PEM or alkaline plant connected to variable renewable power into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret kWh/kg, water consumption, oxygen byproduct, stack sizing, and BoP load. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="13-12-interpretation-checklist">13.12 Interpretation checklist</h2>
 <table>
@@ -6036,7 +6038,7 @@ $$</div>
 <p>Move hydrogen from production or purification pressure to export pressure while tracking power, discharge temperature, and cooling duty. The practical setting is the compressor train after PSA or electrolysis. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{towler2013chemical,seader2016,kohl1997,mokhatab2018,gpsa2012} \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-6" class="cite">6</a>, <a href="#ref-13" class="cite">13</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-15" class="cite">15</a>, <a href="#ref-16" class="cite">16</a>] [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="14-4-conceptual-model">14.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -6102,7 +6104,7 @@ $$</div>
 <td>Connect electrolyzer outlet pressure to drying, cooling, compression stages, and storage/export pressure.</td>
 <td>Stack outlet pressure, compressor stage count, intercooler target, and export pressure.</td>
 <td>Compression kWh/kg H2, discharge temperature, cooling duty, dryer water-removal flag, storage pressure margin.</td>
-<td>\cite{gpsa2012,mokhatab2018,doeElectrolysis}</td>
+<td>GPSA engineering data reference, Gas transmission and processing reference, US DOE electrolysis technology overview</td>
 </tr>
 </tbody></table>
 <h2 id="14-7-python-workflow-pattern">14.7 Python workflow pattern</h2>
@@ -6139,7 +6141,7 @@ print(c1.getPower(&quot;MW&quot;), c2.getPower(&quot;MW&quot;), k1.getDuty(&quot
 <h2 id="14-8-parameter-study-script-graph-and-discussion">14.8 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Isentropic compression, intercooling heat balance, pipeline pressure-profile, temperature-profile, and linepack inventory calculations.</p>
-<p><strong>Study basis.</strong> GPSA and gas-transmission references provide independent engineering ranges for compression, transport, and gas-quality interpretation. \cite{gpsa2012,mokhatab2018,towler2013chemical}</p>
+<p><strong>Study basis.</strong> GPSA and gas-transmission references provide independent engineering ranges for compression, transport, and gas-quality interpretation. [<a href="#ref-16" class="cite">16</a>, <a href="#ref-15" class="cite">15</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <table>
 <thead><tr>
 <th>Unit</th>
@@ -6254,7 +6256,7 @@ $$</div>
 <figcaption>Figure 14.1: Evidence-backed calculation and study basis for Hydrogen Compression and Intercooling.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Isentropic compression, intercooling heat balance, pipeline pressure-profile, temperature-profile, and linepack inventory calculations.</p>
-<p><strong>Public study or standard basis.</strong> GPSA and gas-transmission references provide independent engineering ranges for compression, transport, and gas-quality interpretation. \cite{gpsa2012,mokhatab2018,towler2013chemical}</p>
+<p><strong>Public study or standard basis.</strong> GPSA and gas-transmission references provide independent engineering ranges for compression, transport, and gas-quality interpretation. [<a href="#ref-16" class="cite">16</a>, <a href="#ref-15" class="cite">15</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <p><strong>Discussion.</strong> The figure turns the compressor train after PSA or electrolysis into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret stage power, discharge temperature, intercooler duty, total MW, specific kWh/kg, and operating envelope. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="14-13-interpretation-checklist">14.13 Interpretation checklist</h2>
 <table>
@@ -6411,7 +6413,7 @@ $$</div>
 <p>Model hydrogen pipeline pressure and temperature profiles, linepack inventory, and gas- quality quantities. The practical setting is long-distance compressed hydrogen export after compression. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{towler2013chemical,seader2016,kohl1997,mokhatab2018,gpsa2012} \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-6" class="cite">6</a>, <a href="#ref-13" class="cite">13</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-15" class="cite">15</a>, <a href="#ref-16" class="cite">16</a>] [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="15-4-conceptual-model">15.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -6491,7 +6493,7 @@ print(list(pipe.getLengthProfile())[:3], list(pipe.getPressureProfile())[:3])
 <h2 id="15-7-parameter-study-script-graph-and-discussion">15.7 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Isentropic compression, intercooling heat balance, pipeline pressure-profile, temperature-profile, and linepack inventory calculations.</p>
-<p><strong>Study basis.</strong> GPSA and gas-transmission references provide independent engineering ranges for compression, transport, and gas-quality interpretation. \cite{gpsa2012,mokhatab2018,towler2013chemical}</p>
+<p><strong>Study basis.</strong> GPSA and gas-transmission references provide independent engineering ranges for compression, transport, and gas-quality interpretation. [<a href="#ref-16" class="cite">16</a>, <a href="#ref-15" class="cite">15</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <table>
 <thead><tr>
 <th>Length (km)</th>
@@ -6605,7 +6607,7 @@ $$</div>
 <figcaption>Figure 15.1: Evidence-backed calculation and study basis for Pipeline Transport, Gas Quality, and Linepack.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Isentropic compression, intercooling heat balance, pipeline pressure-profile, temperature-profile, and linepack inventory calculations.</p>
-<p><strong>Public study or standard basis.</strong> GPSA and gas-transmission references provide independent engineering ranges for compression, transport, and gas-quality interpretation. \cite{gpsa2012,mokhatab2018,towler2013chemical}</p>
+<p><strong>Public study or standard basis.</strong> GPSA and gas-transmission references provide independent engineering ranges for compression, transport, and gas-quality interpretation. [<a href="#ref-16" class="cite">16</a>, <a href="#ref-15" class="cite">15</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <p><strong>Discussion.</strong> The figure turns long-distance compressed hydrogen export after compression into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret outlet pressure, outlet temperature, pressure profile, temperature profile, pressure drop, Wobbe index, relative density, and linepack. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="15-12-interpretation-checklist">15.12 Interpretation checklist</h2>
 <table>
@@ -6762,7 +6764,7 @@ $$</div>
 <p>Screen liquefaction duty and spin-isomer conversion heat for liquid-hydrogen concepts. The practical setting is liquid hydrogen precooling, expansion, storage, and boil-off screening. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{soave1972,pengrobinson1976,michelsen2007,prausnitz1999,kunz2012gerg} \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-7" class="cite">7</a>, <a href="#ref-8" class="cite">8</a>, <a href="#ref-9" class="cite">9</a>, <a href="#ref-10" class="cite">10</a>, <a href="#ref-11" class="cite">11</a>] [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="16-4-conceptual-model">16.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -6824,7 +6826,7 @@ for temperature in [300.0, 77.0, 40.0, 20.0]:
 <h2 id="16-7-parameter-study-script-graph-and-discussion">16.7 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> EOS, phase-equilibrium, density, enthalpy, para-ortho, water, and impurity sweeps generated from thermodynamic property calculations and sanity checks.</p>
-<p><strong>Study basis.</strong> SRK, Peng-Robinson, GERG-2008, and thermodynamic-modelling references define the property-model envelope used for the plotted values. \cite{soave1972,pengrobinson1976,kunz2012gerg,michelsen2007}</p>
+<p><strong>Study basis.</strong> SRK, Peng-Robinson, GERG-2008, and thermodynamic-modelling references define the property-model envelope used for the plotted values. [<a href="#ref-7" class="cite">7</a>, <a href="#ref-8" class="cite">8</a>, <a href="#ref-11" class="cite">11</a>, <a href="#ref-9" class="cite">9</a>]</p>
 <table>
 <thead><tr>
 <th>Temperature (K)</th>
@@ -6928,7 +6930,7 @@ $$</div>
 <figcaption>Figure 16.1: Evidence-backed calculation and study basis for Cryogenic Hydrogen and Para-Ortho Conversion.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> EOS, phase-equilibrium, density, enthalpy, para-ortho, water, and impurity sweeps generated from thermodynamic property calculations and sanity checks.</p>
-<p><strong>Public study or standard basis.</strong> SRK, Peng-Robinson, GERG-2008, and thermodynamic-modelling references define the property-model envelope used for the plotted values. \cite{soave1972,pengrobinson1976,kunz2012gerg,michelsen2007}</p>
+<p><strong>Public study or standard basis.</strong> SRK, Peng-Robinson, GERG-2008, and thermodynamic-modelling references define the property-model envelope used for the plotted values. [<a href="#ref-7" class="cite">7</a>, <a href="#ref-8" class="cite">8</a>, <a href="#ref-11" class="cite">11</a>, <a href="#ref-9" class="cite">9</a>]</p>
 <p><strong>Discussion.</strong> The figure turns liquid hydrogen precooling, expansion, storage, and boil-off screening into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret para fraction, conversion heat, Cp correction, thermal conductivity factor, and boil-off risk. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="16-11-interpretation-checklist">16.11 Interpretation checklist</h2>
 <table>
@@ -7085,7 +7087,7 @@ $$</div>
 <p>Screen compressed, liquefied, ammonia, methanol, and LOHC hydrogen storage and carrier concepts on energy, volume, and reconversion penalty. The practical setting is stationary and transport hydrogen storage plus carrier value chains. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="17-4-conceptual-model">17.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -7187,7 +7189,7 @@ for opt in options:
 <h2 id="17-7-parameter-study-script-graph-and-discussion">17.7 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Chapter-specific screening calculations for stationary and transport hydrogen storage plus carrier value chains, normalized to the KPIs: stored kg H2, volumetric and gravimetric density, reconversion energy penalty, round-trip efficiency, and boil-off or release risk.</p>
-<p><strong>Study basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. \cite{iea2023hydrogen,towler2013chemical}</p>
+<p><strong>Study basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <table>
 <thead><tr>
 <th>Option</th>
@@ -7302,7 +7304,7 @@ for opt in options:
 <figcaption>Figure 17.1: Evidence-backed calculation and study basis for Hydrogen Storage and Carriers.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Chapter-specific screening calculations for stationary and transport hydrogen storage plus carrier value chains, normalized to the KPIs: stored kg H2, volumetric and gravimetric density, reconversion energy penalty, round-trip efficiency, and boil-off or release risk.</p>
-<p><strong>Public study or standard basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. \cite{iea2023hydrogen,towler2013chemical}</p>
+<p><strong>Public study or standard basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <p><strong>Discussion.</strong> The figure turns stationary and transport hydrogen storage plus carrier value chains into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret stored kg H2, volumetric and gravimetric density, reconversion energy penalty, round-trip efficiency, and boil-off or release risk. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="17-10-interpretation-checklist">17.10 Interpretation checklist</h2>
 <table>
@@ -7459,7 +7461,7 @@ for opt in options:
 <p>Connect hydrogen production results to fuel-cell, gas-turbine, blending, refinery, fertilizer, steel, and synfuel end-use cases. The practical setting is the demand side of the hydrogen value chain. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="18-4-conceptual-model">18.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -7543,7 +7545,7 @@ print(&quot;PEMFC LHV efficiency (typical)&quot;, fuel_cell_eta_LHV)
 <h2 id="18-7-parameter-study-script-graph-and-discussion">18.7 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Chapter-specific screening calculations for the demand side of the hydrogen value chain, normalized to the KPIs: H2 demand by sector, end-use efficiency, blending limits, fuel-quality status, and value-chain matching.</p>
-<p><strong>Study basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. \cite{iea2023hydrogen,towler2013chemical}</p>
+<p><strong>Study basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <table>
 <thead><tr>
 <th>H2 vol% in blend</th>
@@ -7658,7 +7660,7 @@ print(&quot;PEMFC LHV efficiency (typical)&quot;, fuel_cell_eta_LHV)
 <figcaption>Figure 18.1: Evidence-backed calculation and study basis for Hydrogen End-Use: Power, Heat, Mobility, and Industry.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Chapter-specific screening calculations for the demand side of the hydrogen value chain, normalized to the KPIs: H2 demand by sector, end-use efficiency, blending limits, fuel-quality status, and value-chain matching.</p>
-<p><strong>Public study or standard basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. \cite{iea2023hydrogen,towler2013chemical}</p>
+<p><strong>Public study or standard basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <p><strong>Discussion.</strong> The figure turns the demand side of the hydrogen value chain into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret H2 demand by sector, end-use efficiency, blending limits, fuel-quality status, and value-chain matching. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="18-10-interpretation-checklist">18.10 Interpretation checklist</h2>
 <table>
@@ -7816,7 +7818,7 @@ print(&quot;PEMFC LHV efficiency (typical)&quot;, fuel_cell_eta_LHV)
 <p>Connect hydrogen simulations to material limits, leakage risk, embrittlement screening, and standards review. The practical setting is hydrogen service design decisions for piping, vessels, compressors, welds, valves, and storage interfaces. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{asmeb3112,api941,api521,ccps2008,iso19880}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-18" class="cite">18</a>, <a href="#ref-19" class="cite">19</a>, <a href="#ref-20" class="cite">20</a>, <a href="#ref-21" class="cite">21</a>, <a href="#ref-22" class="cite">22</a>]</p>
 <h2 id="19-4-conceptual-model">19.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -7889,7 +7891,7 @@ print(service)
 <h2 id="19-7-parameter-study-script-graph-and-discussion">19.7 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Operating-pressure, hydrogen partial-pressure, leak-source, materials-attention, and operability-margin screening calculations.</p>
-<p><strong>Study basis.</strong> ASME B31.12, API 941, API 521, and ISO hydrogen quality standards define the review basis; the plotted values are screening inputs, not acceptance decisions. \cite{asmeb3112,api941,api521,iso14687}</p>
+<p><strong>Study basis.</strong> ASME B31.12, API 941, API 521, and ISO hydrogen quality standards define the review basis; the plotted values are screening inputs, not acceptance decisions. [<a href="#ref-18" class="cite">18</a>, <a href="#ref-19" class="cite">19</a>, <a href="#ref-20" class="cite">20</a>, <a href="#ref-4" class="cite">4</a>]</p>
 <table>
 <thead><tr>
 <th>Screening input</th>
@@ -8025,7 +8027,7 @@ print(service)
 <figcaption>Figure 19.1: Evidence-backed calculation and study basis for Materials, Leakage, and Hydrogen Embrittlement.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Operating-pressure, hydrogen partial-pressure, leak-source, materials-attention, and operability-margin screening calculations.</p>
-<p><strong>Public study or standard basis.</strong> ASME B31.12, API 941, API 521, and ISO hydrogen quality standards define the review basis; the plotted values are screening inputs, not acceptance decisions. \cite{asmeb3112,api941,api521,iso14687}</p>
+<p><strong>Public study or standard basis.</strong> ASME B31.12, API 941, API 521, and ISO hydrogen quality standards define the review basis; the plotted values are screening inputs, not acceptance decisions. [<a href="#ref-18" class="cite">18</a>, <a href="#ref-19" class="cite">19</a>, <a href="#ref-20" class="cite">20</a>, <a href="#ref-4" class="cite">4</a>]</p>
 <p><strong>Discussion.</strong> The figure turns hydrogen service design decisions for piping, vessels, compressors, welds, valves, and storage interfaces into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret design pressure, temperature, H2 partial pressure, cyclic pressure range, leak consequence input, and material-screening status. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="19-12-interpretation-checklist">19.12 Interpretation checklist</h2>
 <table>
@@ -8182,7 +8184,7 @@ print(service)
 <p>Map simulations to standards, safety studies, and risk evaluation for hydrogen service. The practical setting is hydrogen-specific risk and standards compliance. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{asmeb3112,api941,api521,ccps2008,iso19880}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-18" class="cite">18</a>, <a href="#ref-19" class="cite">19</a>, <a href="#ref-20" class="cite">20</a>, <a href="#ref-21" class="cite">21</a>, <a href="#ref-22" class="cite">22</a>]</p>
 <h2 id="20-4-conceptual-model">20.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -8249,7 +8251,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <h2 id="20-7-parameter-study-script-graph-and-discussion">20.7 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Operating-pressure, hydrogen partial-pressure, leak-source, materials-attention, and operability-margin screening calculations.</p>
-<p><strong>Study basis.</strong> ASME B31.12, API 941, API 521, and ISO hydrogen quality standards define the review basis; the plotted values are screening inputs, not acceptance decisions. \cite{asmeb3112,api941,api521,iso14687}</p>
+<p><strong>Study basis.</strong> ASME B31.12, API 941, API 521, and ISO hydrogen quality standards define the review basis; the plotted values are screening inputs, not acceptance decisions. [<a href="#ref-18" class="cite">18</a>, <a href="#ref-19" class="cite">19</a>, <a href="#ref-20" class="cite">20</a>, <a href="#ref-4" class="cite">4</a>]</p>
 <table>
 <thead><tr>
 <th>Operating pressure (bara)</th>
@@ -8351,7 +8353,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <figcaption>Figure 20.1: Evidence-backed calculation and study basis for Safety, Standards, and Risk.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Operating-pressure, hydrogen partial-pressure, leak-source, materials-attention, and operability-margin screening calculations.</p>
-<p><strong>Public study or standard basis.</strong> ASME B31.12, API 941, API 521, and ISO hydrogen quality standards define the review basis; the plotted values are screening inputs, not acceptance decisions. \cite{asmeb3112,api941,api521,iso14687}</p>
+<p><strong>Public study or standard basis.</strong> ASME B31.12, API 941, API 521, and ISO hydrogen quality standards define the review basis; the plotted values are screening inputs, not acceptance decisions. [<a href="#ref-18" class="cite">18</a>, <a href="#ref-19" class="cite">19</a>, <a href="#ref-20" class="cite">20</a>, <a href="#ref-4" class="cite">4</a>]</p>
 <p><strong>Discussion.</strong> The figure turns hydrogen-specific risk and standards compliance into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret MAWP, relief loads, venting, leak consequences, dispersion to LFL, risk-matrix status, and SIL screening. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="20-10-interpretation-checklist">20.10 Interpretation checklist</h2>
 <table>
@@ -8508,7 +8510,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <p>Screen turndown, startup/shutdown, dynamic response, and controllability for hydrogen plants. The practical setting is operability and transient behaviour of hydrogen production and compression. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="21-4-conceptual-model">21.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -8602,7 +8604,7 @@ for step in range(60):
 <h2 id="21-7-parameter-study-script-graph-and-discussion">21.7 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Chapter-specific screening calculations for operability and transient behaviour of hydrogen production and compression, normalized to the KPIs: turndown limit, controller tuning indicator, ramping rate, startup time, anti-surge margin, and alarm-flood attention.</p>
-<p><strong>Study basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. \cite{iea2023hydrogen,towler2013chemical}</p>
+<p><strong>Study basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <table>
 <thead><tr>
 <th>Ramp rate (%/min)</th>
@@ -8710,7 +8712,7 @@ for step in range(60):
 <figcaption>Figure 21.1: Evidence-backed calculation and study basis for Operability, Controls, and Dynamics.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Chapter-specific screening calculations for operability and transient behaviour of hydrogen production and compression, normalized to the KPIs: turndown limit, controller tuning indicator, ramping rate, startup time, anti-surge margin, and alarm-flood attention.</p>
-<p><strong>Public study or standard basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. \cite{iea2023hydrogen,towler2013chemical}</p>
+<p><strong>Public study or standard basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <p><strong>Discussion.</strong> The figure turns operability and transient behaviour of hydrogen production and compression into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret turndown limit, controller tuning indicator, ramping rate, startup time, anti-surge margin, and alarm-flood attention. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="21-10-interpretation-checklist">21.10 Interpretation checklist</h2>
 <table>
@@ -8867,7 +8869,7 @@ for step in range(60):
 <p>Convert equipment results into AACE-class cost and economic screening metrics. The practical setting is early concept screening for hydrogen projects. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{turton2018,seider2017,peters2003,iea2023hydrogen}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-23" class="cite">23</a>, <a href="#ref-24" class="cite">24</a>, <a href="#ref-25" class="cite">25</a>, <a href="#ref-1" class="cite">1</a>]</p>
 <h2 id="22-4-conceptual-model">22.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -8933,7 +8935,7 @@ $$</div>
 <td>Add upstream methane leakage to direct residual CO2 and convert it to a lifecycle carbon-intensity sensitivity.</td>
 <td>Upstream methane leakage fraction, natural-gas consumption, carbon price, and capture target.</td>
 <td>Lifecycle kg CO2e/kg H2, carbon-cost index, breakeven carbon price, pass/fail against project CI target.</td>
-<td>\cite{howarth2021bluehydrogen,iea2023hydrogen,turton2018}</td>
+<td>Howarth and Jacobson blue-hydrogen lifecycle study, IEA Global Hydrogen Review 2023, Process cost-estimation reference</td>
 </tr>
 <tr>
 <td>Blue hydrogen</td>
@@ -8942,7 +8944,7 @@ $$</div>
 <td>Run an LCOH index case that includes gas price, capture CAPEX, CO2 transport/storage cost, carbon price, and utilization.</td>
 <td>Gas price, carbon price, capture target, storage tariff, and plant scale.</td>
 <td>LCOH, residual carbon-cost exposure, CAPEX index, probability of meeting policy threshold.</td>
-<td>\cite{iea2023hydrogen,turton2018,seider2017}</td>
+<td>IEA Global Hydrogen Review 2023, Process cost-estimation reference, Process design economics reference</td>
 </tr>
 </tbody></table>
 <h2 id="22-7-python-workflow-pattern">22.7 Python workflow pattern</h2>
@@ -8966,7 +8968,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <h2 id="22-8-parameter-study-script-graph-and-discussion">22.8 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Scale-factor CAPEX, utilization, OPEX, power-price, and LCOH index calculations from equipment and economic-screening formulas.</p>
-<p><strong>Study basis.</strong> IRENA and IEA hydrogen cost observations plus standard process-cost references define the early-study cost ranges. \cite{irena2022greenhydrogen,iea2023hydrogen,turton2018,seider2017}</p>
+<p><strong>Study basis.</strong> IRENA and IEA hydrogen cost observations plus standard process-cost references define the early-study cost ranges. [<a href="#ref-2" class="cite">2</a>, <a href="#ref-1" class="cite">1</a>, <a href="#ref-23" class="cite">23</a>, <a href="#ref-24" class="cite">24</a>]</p>
 <table>
 <thead><tr>
 <th>Plant scale (t/d H2)</th>
@@ -9085,7 +9087,7 @@ $$</div>
 <figcaption>Figure 22.1: Evidence-backed calculation and study basis for Cost Estimation and Project Economics.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Scale-factor CAPEX, utilization, OPEX, power-price, and LCOH index calculations from equipment and economic-screening formulas.</p>
-<p><strong>Public study or standard basis.</strong> IRENA and IEA hydrogen cost observations plus standard process-cost references define the early-study cost ranges. \cite{irena2022greenhydrogen,iea2023hydrogen,turton2018,seider2017}</p>
+<p><strong>Public study or standard basis.</strong> IRENA and IEA hydrogen cost observations plus standard process-cost references define the early-study cost ranges. [<a href="#ref-2" class="cite">2</a>, <a href="#ref-1" class="cite">1</a>, <a href="#ref-23" class="cite">23</a>, <a href="#ref-24" class="cite">24</a>]</p>
 <p><strong>Discussion.</strong> The figure turns early concept screening for hydrogen projects into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret CAPEX, OPEX, levelized cost, CEPCI escalation, sensitivity, and uncertainty. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="22-12-interpretation-checklist">22.12 Interpretation checklist</h2>
 <table>
@@ -9243,7 +9245,7 @@ $$</div>
 <p>Expose hydrogen models to optimizers, plant data, and repeatable scenario engines. The practical setting is model use after the first converged case. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="23-4-conceptual-model">23.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -9310,7 +9312,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <h2 id="23-7-parameter-study-script-graph-and-discussion">23.7 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> A reproducibility score computed from visible artifacts: executable notebooks, result JSON files, graph files, traceable source code, and rerun path length.</p>
-<p><strong>Study basis.</strong> The public-study context is IEA's need for auditable low-emission hydrogen deployment evidence; the numerical scores are generated from the book workflow rubric. \cite{iea2023hydrogen}</p>
+<p><strong>Study basis.</strong> The public-study context is IEA's need for auditable low-emission hydrogen deployment evidence; the numerical scores are generated from the book workflow rubric. [<a href="#ref-1" class="cite">1</a>]</p>
 <table>
 <thead><tr>
 <th>Scenario count</th>
@@ -9418,7 +9420,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <figcaption>Figure 23.1: Evidence-backed calculation and study basis for Optimization, Automation API, and Digital Twins.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> A reproducibility score computed from visible artifacts: executable notebooks, result JSON files, graph files, traceable source code, and rerun path length.</p>
-<p><strong>Public study or standard basis.</strong> The public-study context is IEA's need for auditable low-emission hydrogen deployment evidence; the numerical scores are generated from the book workflow rubric. \cite{iea2023hydrogen}</p>
+<p><strong>Public study or standard basis.</strong> The public-study context is IEA's need for auditable low-emission hydrogen deployment evidence; the numerical scores are generated from the book workflow rubric. [<a href="#ref-1" class="cite">1</a>]</p>
 <p><strong>Discussion.</strong> The figure turns model use after the first converged case into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret objective functions, dirty tracking, scenario sweeps, historian mismatch, and calibration. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="23-11-interpretation-checklist">23.11 Interpretation checklist</h2>
 <table>
@@ -9576,7 +9578,7 @@ print(fluid.getNumberOfPhases(), fluid.getDensity(&quot;kg/m3&quot;), fluid.getE
 <p>Combine reforming, WGS, PSA, tail-gas, CO2 capture, compression, and reporting. The practical setting is an integrated blue H2 screening case. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="24-4-conceptual-model">24.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -9664,7 +9666,7 @@ print(results)
 <h2 id="24-7-parameter-study-script-graph-and-discussion">24.7 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.</p>
-<p><strong>Study basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. \cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}</p>
+<p><strong>Study basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-16" class="cite">16</a>]</p>
 <table>
 <thead><tr>
 <th>Case</th>
@@ -9772,7 +9774,7 @@ $$</div>
 <figcaption>Figure 24.1: Evidence-backed calculation and study basis for Capstone A: Blue H2 Plant Python Study.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.</p>
-<p><strong>Public study or standard basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. \cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}</p>
+<p><strong>Public study or standard basis.</strong> IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>, <a href="#ref-14" class="cite">14</a>, <a href="#ref-16" class="cite">16</a>]</p>
 <p><strong>Discussion.</strong> The figure turns an integrated blue H2 screening case into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret plant H2 rate, CO2 intensity, fuel balance, CAPEX, and acceptance criteria. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="24-11-interpretation-checklist">24.11 Interpretation checklist</h2>
 <table>
@@ -9929,7 +9931,7 @@ $$</div>
 <p>Compare PEM, alkaline, SOEC, and AEM cases with compression, storage, and economics. The practical setting is a green H2 portfolio study. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="25-4-conceptual-model">25.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -9995,7 +9997,7 @@ $$</div>
 <td>Compare PEM, alkaline, SOEC, and AEM portfolio cases with LCOH, water intensity, utilization, and grid-emission factors.</td>
 <td>Electricity price, capacity factor, electrolyzer CAPEX, stack lifetime, grid CO2 intensity, and technology family.</td>
 <td>LCOH, kg CO2e/kg H2, water intensity, replacement cost, portfolio recommendation.</td>
-<td>\cite{irena2022greenhydrogen,iea2023hydrogen,turton2018}</td>
+<td>IRENA Green Hydrogen Cost Reduction, IEA Global Hydrogen Review 2023, Process cost-estimation reference</td>
 </tr>
 </tbody></table>
 <h2 id="25-7-python-workflow-pattern">25.7 Python workflow pattern</h2>
@@ -10036,7 +10038,7 @@ print(rows)
 <h2 id="25-8-parameter-study-script-graph-and-discussion">25.8 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Faraday-law water splitting, cell-voltage specific energy, current-density/load sweeps, and NeqSim Electrolyzer technology defaults where the notebook uses a stack model.</p>
-<p><strong>Study basis.</strong> Public DOE electrolysis technology descriptions, IRENA scale/cost-learning observations, and the Buttler-Spliethoff electrolysis review define the technology bands. \cite{doeElectrolysis,irena2022greenhydrogen,buttler2018water,iso22734}</p>
+<p><strong>Study basis.</strong> Public DOE electrolysis technology descriptions, IRENA scale/cost-learning observations, and the Buttler-Spliethoff electrolysis review define the technology bands. [<a href="#ref-17" class="cite">17</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <table>
 <thead><tr>
 <th>Technology</th>
@@ -10149,7 +10151,7 @@ $$</div>
 <figcaption>Figure 25.1: Evidence-backed calculation and study basis for Capstone B: Green H2 Plant and Portfolio Comparison.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Faraday-law water splitting, cell-voltage specific energy, current-density/load sweeps, and NeqSim Electrolyzer technology defaults where the notebook uses a stack model.</p>
-<p><strong>Public study or standard basis.</strong> Public DOE electrolysis technology descriptions, IRENA scale/cost-learning observations, and the Buttler-Spliethoff electrolysis review define the technology bands. \cite{doeElectrolysis,irena2022greenhydrogen,buttler2018water,iso22734}</p>
+<p><strong>Public study or standard basis.</strong> Public DOE electrolysis technology descriptions, IRENA scale/cost-learning observations, and the Buttler-Spliethoff electrolysis review define the technology bands. [<a href="#ref-17" class="cite">17</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <p><strong>Discussion.</strong> The figure turns a green H2 portfolio study into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret specific energy, water intensity, capacity factor, LCOH, and portfolio recommendation. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="25-12-interpretation-checklist">25.12 Interpretation checklist</h2>
 <table>
@@ -10306,7 +10308,7 @@ $$</div>
 <p>Combine production, conditioning, transport, storage/carrier, and end-use into an integrated value-chain study with economics and risk. The practical setting is an end-to-end H2 value-chain screening case from feed to end-user. In a desktop simulator this kind of model often disappears into a case file. In this book it becomes a Python-controlled object graph: fluids, streams, unit operations, calculations, figures, and result summaries are all visible and versionable.</p>
 <p>A hydrogen model is useful only when its boundary is explicit. The inlet composition, water specification, utility assumptions, pressure levels, product specification, and disposal route for by-products decide which equations are meaningful. NeqSim makes those boundaries inspectable because every stream and unit operation is an object that can be read, copied, serialized, and validated from Python.</p>
 <p>The same calculation should be able to serve several audiences. A process engineer wants mass and energy balances, a rotating-equipment engineer wants power and discharge temperature, a safety engineer wants inventories and relief cases, and a project engineer wants a cost range. The book therefore treats Python code as the common workbench where these views are generated from one model rather than retyped into separate spreadsheets.</p>
-<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? \cite{iea2023hydrogen,irena2022greenhydrogen,buttler2018water,iso14687,iso22734}</p>
+<p>Hydrogen adds its own modelling pressure. Molecules are light, diffusivity is high, compression work is significant, embrittlement and leakage matter, and small composition errors can move a product stream outside fuel-cell or pipeline specifications. That is why the chapter keeps returning to three questions: what is conserved, what is assumed, and what evidence should survive after the notebook closes? [<a href="#ref-1" class="cite">1</a>, <a href="#ref-2" class="cite">2</a>, <a href="#ref-3" class="cite">3</a>, <a href="#ref-4" class="cite">4</a>, <a href="#ref-5" class="cite">5</a>]</p>
 <h2 id="26-4-conceptual-model">26.4 Conceptual model</h2>
 <p>The chapter model can be read as a five-step engineering calculation:</p>
 <ol>
@@ -10408,7 +10410,7 @@ print({
 <h2 id="26-7-parameter-study-script-graph-and-discussion">26.7 Parameter study script, graph, and discussion</h2>
 <p>The chapter includes a runnable parameter-study notebook at <code>notebooks/parameter_study.ipynb</code>. It takes the compact script above one step further: the notebook defines a sweep, builds a results table, saves a CSV/JSON evidence bundle, and writes the graph shown below. The values are either direct engineering calculations or normalized study indices from cited public references and standards. Re-run the notebook on the active NeqSim branch when project values or branch-specific APIs change.</p>
 <p><strong>Calculation basis.</strong> Chapter-specific screening calculations for an end-to-end H2 value-chain screening case from feed to end-user, normalized to the KPIs: delivered cost of hydrogen at the end-user, carbon intensity from well-to-product, end-to-end energy efficiency, and integrated risk register.</p>
-<p><strong>Study basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. \cite{iea2023hydrogen,towler2013chemical}</p>
+<p><strong>Study basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <table>
 <thead><tr>
 <th>Case</th>
@@ -10521,7 +10523,7 @@ $$</div>
 <figcaption>Figure 26.1: Evidence-backed calculation and study basis for Capstone C: Hydrogen Value-Chain Integration.</figcaption>
 </figure>
 <p><strong>Calculation basis.</strong> Chapter-specific screening calculations for an end-to-end H2 value-chain screening case from feed to end-user, normalized to the KPIs: delivered cost of hydrogen at the end-user, carbon intensity from well-to-product, end-to-end energy efficiency, and integrated risk register.</p>
-<p><strong>Public study or standard basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. \cite{iea2023hydrogen,towler2013chemical}</p>
+<p><strong>Public study or standard basis.</strong> IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices. [<a href="#ref-1" class="cite">1</a>, <a href="#ref-6" class="cite">6</a>]</p>
 <p><strong>Discussion.</strong> The figure turns an end-to-end H2 value-chain screening case from feed to end-user into a data-backed study with traceable assumptions. The plotted values are generated from the chapter's calculation table, while the basis panel records the independent study or standard used to interpret delivered cost of hydrogen at the end-user, carbon intensity from well-to-product, end-to-end energy efficiency, and integrated risk register. The physical mechanism behind the figure is the coupling between equilibrium, transport, equipment performance, and specification constraints. Hydrogen production is rarely a single calculation: route chemistry sets purification load, purification losses affect heat balance, electrolyzer voltage sets compression and cooling demand, and operating pressure sets both linepack value and materials/safety attention. The engineering implication is that the first chapter figure should already carry numbers, units, and sources. It is not a sketch to decorate the chapter; it is the first screening result that the later notebook can rerun and refine.</p>
 <h2 id="26-11-interpretation-checklist">26.11 Interpretation checklist</h2>
 <table>
@@ -10726,6 +10728,38 @@ $$</div>
 <section id="author_bio">
 <h1 id="author-bio">Author Bio</h1>
 <p>Even Solbraa is associated with the NeqSim project, an open-source thermodynamic and process simulation toolkit used for research, teaching, and industrial process modelling. This book was prepared as a PaperLab manuscript to demonstrate how NeqSim and Python can be used for hydrogen production studies.</p>
+</section>
+<section id="bibliography">
+
+<h2 id="references">References</h2>
+<ol class="references">
+  <li id="ref-1" value="1">International Energy Agency, "Global Hydrogen Review 2023," 2023.</li>
+  <li id="ref-2" value="2">International Renewable Energy Agency, "Green Hydrogen Cost Reduction," 2020.</li>
+  <li id="ref-3" value="3">Buttler and Spliethoff, "Current status of water electrolysis for energy storage, grid balancing and sector coupling," <em>Renewable and Sustainable Energy Reviews</em>, vol. 82, pp. 2440--2454, 2018.</li>
+  <li id="ref-4" value="4">ISO, "ISO 14687: Hydrogen fuel quality - Product specification," 2019.</li>
+  <li id="ref-5" value="5">ISO, "ISO 22734: Hydrogen generators using water electrolysis," 2019.</li>
+  <li id="ref-6" value="6">Towler and Sinnott, "Chemical Engineering Design," 2013.</li>
+  <li id="ref-7" value="7">Soave, "Equilibrium constants from a modified Redlich-Kwong equation of state," <em>Chemical Engineering Science</em>, vol. 27, pp. 1197--1203, 1972.</li>
+  <li id="ref-8" value="8">Peng and Robinson, "A New Two-Constant Equation of State," <em>Industrial & Engineering Chemistry Fundamentals</em>, vol. 15, pp. 59--64, 1976.</li>
+  <li id="ref-9" value="9">Michelsen and Mollerup, "Thermodynamic Models: Fundamentals and Computational Aspects," 2007.</li>
+  <li id="ref-10" value="10">Prausnitz et al., "Molecular Thermodynamics of Fluid-Phase Equilibria," 1999.</li>
+  <li id="ref-11" value="11">Kunz and Wagner, "The GERG-2008 Wide-Range Equation of State for Natural Gases and Other Mixtures," <em>Journal of Chemical & Engineering Data</em>, vol. 57, pp. 3032--3091, 2012.</li>
+  <li id="ref-12" value="12">Rogne Solbu and Ihlebaek, "Thermodynamic and Viscosity Modeling of Hydrogen and Helium Systems for Natural Gas Transition Development and Integration in NeqSim," 2025.</li>
+  <li id="ref-13" value="13">Seader et al., "Separation Process Principles," 2016.</li>
+  <li id="ref-14" value="14">Kohl and Nielsen, "Gas Purification," 1997.</li>
+  <li id="ref-15" value="15">Mokhatab et al., "Handbook of Natural Gas Transmission and Processing," 2018.</li>
+  <li id="ref-16" value="16">Gas Processors Suppliers Association, "GPSA Engineering Data Book," 2012.</li>
+  <li id="ref-17" value="17">U.S. Department of Energy, "Hydrogen Production: Electrolysis," 2026.</li>
+  <li id="ref-18" value="18">ASME, "ASME B31.12: Hydrogen Piping and Pipelines," 2023.</li>
+  <li id="ref-19" value="19">API, "API Recommended Practice 941: Steels for Hydrogen Service at Elevated Temperatures and Pressures," 2020.</li>
+  <li id="ref-20" value="20">API, "API Standard 521: Pressure-relieving and Depressuring Systems," 2020.</li>
+  <li id="ref-21" value="21">CCPS, "Guidelines for Hazard Evaluation Procedures," 2008.</li>
+  <li id="ref-22" value="22">ISO, "ISO 19880: Gaseous hydrogen - Fuelling stations," 2020.</li>
+  <li id="ref-23" value="23">Turton et al., "Analysis, Synthesis, and Design of Chemical Processes," 2018.</li>
+  <li id="ref-24" value="24">Seider et al., "Product and Process Design Principles," 2017.</li>
+  <li id="ref-25" value="25">Peters et al., "Plant Design and Economics for Chemical Engineers," 2003.</li>
+</ol>
+
 </section>
 <section id="back_cover" class="book-cover-page back-cover"><img class="cover-art" src="cover_back.png" alt="Introduction to Hydrogen Production using NeqSim and Python — back cover"/></section>
 </main>

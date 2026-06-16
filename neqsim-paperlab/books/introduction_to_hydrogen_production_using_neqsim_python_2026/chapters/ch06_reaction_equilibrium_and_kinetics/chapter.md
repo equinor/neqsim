@@ -112,7 +112,7 @@ notebook output or discussion.
 
 | Review list | No. | Topic | Calculation example placed here | Sweep or input basis | Output KPIs | Literature basis |
 |---|---:|---|---|---|---|---|
-| Cross-route frontier | 1 | Methane pyrolysis and turquoise hydrogen | Add methane-pyrolysis equilibrium and solid-carbon handling as a thermochemical route-screening example beside SMR/ATR/POX. | Temperature, conversion approach, heat-supply index, catalyst stability, and carbon-product credit. | H2 yield, direct CO2 index, solid-carbon rate, heat-demand index, maturity attention. | \cite{muradov2017methane,holladay2009hydrogen,iea2023hydrogen} |
+| Cross-route frontier | 1 | Methane pyrolysis and turquoise hydrogen | Add methane-pyrolysis equilibrium and solid-carbon handling as a thermochemical route-screening example beside SMR/ATR/POX. | Temperature, conversion approach, heat-supply index, catalyst stability, and carbon-product credit. | H2 yield, direct CO2 index, solid-carbon rate, heat-demand index, maturity attention. | Muradov methane-pyrolysis hydrogen review, Holladay et al. hydrogen-production technology review, IEA Global Hydrogen Review 2023 |
 
 
 ## Python workflow pattern

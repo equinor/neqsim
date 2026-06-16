@@ -111,7 +111,7 @@ notebook output or discussion.
 
 | Review list | No. | Topic | Calculation example placed here | Sweep or input basis | Output KPIs | Literature basis |
 |---|---:|---|---|---|---|---|
-| Blue hydrogen | 8 | Hydrogen purification and PSA optimization | Run a PSACascade bed-count and equalisation sweep on shifted syngas. | Number of beds, equalisation steps, recovery target, and tail-gas return assumption. | H2 purity, H2 recovery, tail-gas heating value index, PSA CAPEX index. | \cite{kohl1997,seader2016,gpsa2012} |
+| Blue hydrogen | 8 | Hydrogen purification and PSA optimization | Run a PSACascade bed-count and equalisation sweep on shifted syngas. | Number of beds, equalisation steps, recovery target, and tail-gas return assumption. | H2 purity, H2 recovery, tail-gas heating value index, PSA CAPEX index. | Gas purification reference, seader2016, GPSA engineering data reference |
 
 
 ## Python workflow pattern

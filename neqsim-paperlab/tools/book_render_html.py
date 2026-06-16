@@ -1885,6 +1885,23 @@ def _inline_fmt(text):
         flags=re.IGNORECASE,
     )
 
+    # Preserve resolved citation markup produced by
+    # resolve_citations_numbered_html: numbered anchors such as
+    # <a href="#ref-7" class="cite">7</a> and unknown-key spans
+    # <span class="cite-unknown">key</span>. Without this they would be
+    # HTML-escaped below and render as literal "&lt;a href=...&gt;" text in
+    # both prose and table cells.
+    text = re.sub(
+        r'<a href="#ref-\d+" class="cite">\d+</a>',
+        lambda m: stash(m.group(0)),
+        text,
+    )
+    text = re.sub(
+        r'<span class="cite-unknown">[^<]+</span>',
+        lambda m: stash(m.group(0)),
+        text,
+    )
+
     # Markdown links and autolinks.
     text = re.sub(
         r"\[([^\]]+)\]\((https?://[^)\s]+)\)",

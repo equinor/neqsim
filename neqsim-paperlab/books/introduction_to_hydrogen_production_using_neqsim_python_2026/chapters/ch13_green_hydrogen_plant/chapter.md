@@ -112,7 +112,7 @@ notebook output or discussion.
 
 | Review list | No. | Topic | Calculation example placed here | Sweep or input basis | Output KPIs | Literature basis |
 |---|---:|---|---|---|---|---|
-| Green hydrogen | 7 | Dynamic operation with wind and solar | Run a plant capacity-factor and part-load sweep around the electrolyzer plus balance-of-plant model. | Capacity factor, part-load point, ramping/start-stop count, and buffer-storage duration. | Annual H2 output, specific energy, utilization, degradation attention, storage requirement. | \cite{irena2022greenhydrogen,doeElectrolysis,buttler2018water} |
+| Green hydrogen | 7 | Dynamic operation with wind and solar | Run a plant capacity-factor and part-load sweep around the electrolyzer plus balance-of-plant model. | Capacity factor, part-load point, ramping/start-stop count, and buffer-storage duration. | Annual H2 output, specific energy, utilization, degradation attention, storage requirement. | IRENA Green Hydrogen Cost Reduction, US DOE electrolysis technology overview, Buttler and Spliethoff water-electrolysis review |
 
 
 ## Python workflow pattern

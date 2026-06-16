@@ -111,8 +111,8 @@ notebook output or discussion.
 
 | Review list | No. | Topic | Calculation example placed here | Sweep or input basis | Output KPIs | Literature basis |
 |---|---:|---|---|---|---|---|
-| Blue hydrogen | 4 | Thermodynamic and exergy analysis of blue hydrogen plants | Build an exergy-loss proxy table from reformer heat duty, WGS heat release, capture penalty, and compression work. | Shift temperature and heat-recovery approach temperature. | CO slip, hydrogen gain, recoverable heat index, avoidable duty or exergy-loss index. | \cite{michelsen2007,towler2013chemical,iea2023hydrogen} |
-| Blue hydrogen | 7 | Heat integration and furnace electrification | Compare fired-reformer heat demand, recoverable WGS heat, preheat duty, and an electrified-furnace substitution factor. | Heat-recovery approach temperature, furnace electrification fraction, and steam-generation credit. | Fuel-duty reduction, electric-load increase, net CO2 reduction, pinch or approach-temperature margin. | \cite{towler2013chemical,gpsa2012,iea2023hydrogen} |
+| Blue hydrogen | 4 | Thermodynamic and exergy analysis of blue hydrogen plants | Build an exergy-loss proxy table from reformer heat duty, WGS heat release, capture penalty, and compression work. | Shift temperature and heat-recovery approach temperature. | CO slip, hydrogen gain, recoverable heat index, avoidable duty or exergy-loss index. | Thermodynamic modelling reference, Chemical engineering design reference, IEA Global Hydrogen Review 2023 |
+| Blue hydrogen | 7 | Heat integration and furnace electrification | Compare fired-reformer heat demand, recoverable WGS heat, preheat duty, and an electrified-furnace substitution factor. | Heat-recovery approach temperature, furnace electrification fraction, and steam-generation credit. | Fuel-duty reduction, electric-load increase, net CO2 reduction, pinch or approach-temperature margin. | Chemical engineering design reference, GPSA engineering data reference, IEA Global Hydrogen Review 2023 |
 
 
 ## Python workflow pattern

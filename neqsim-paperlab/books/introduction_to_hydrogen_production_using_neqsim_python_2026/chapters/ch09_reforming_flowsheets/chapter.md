@@ -111,8 +111,8 @@ notebook output or discussion.
 
 | Review list | No. | Topic | Calculation example placed here | Sweep or input basis | Output KPIs | Literature basis |
 |---|---:|---|---|---|---|---|
-| Blue hydrogen | 2 | Autothermal reforming for blue hydrogen | Compare ATR route-builder cases with oxygen-to-carbon and steam-to-carbon controls before downstream capture. | O2/C and S/C cases around the base ATR operating window. | Methane conversion, syngas H2/CO readiness, soot-risk index, oxygen demand, CO2 concentration index. | \cite{iea2023hydrogen,towler2013chemical,gpsa2012} |
-| Blue hydrogen | 3 | SMR versus ATR versus partial oxidation | Run SMRHydrogenPlantBuilder, ATRHydrogenPlantBuilder, and POXHydrogenPlantBuilder as matched route-screening cases. | Route type at equal methane feed with route-specific steam and oxygen assumptions. | Conversion index, duty index, H2/CO readiness, downstream purification burden. | \cite{iea2023hydrogen,towler2013chemical,gpsa2012} |
+| Blue hydrogen | 2 | Autothermal reforming for blue hydrogen | Compare ATR route-builder cases with oxygen-to-carbon and steam-to-carbon controls before downstream capture. | O2/C and S/C cases around the base ATR operating window. | Methane conversion, syngas H2/CO readiness, soot-risk index, oxygen demand, CO2 concentration index. | IEA Global Hydrogen Review 2023, Chemical engineering design reference, GPSA engineering data reference |
+| Blue hydrogen | 3 | SMR versus ATR versus partial oxidation | Run SMRHydrogenPlantBuilder, ATRHydrogenPlantBuilder, and POXHydrogenPlantBuilder as matched route-screening cases. | Route type at equal methane feed with route-specific steam and oxygen assumptions. | Conversion index, duty index, H2/CO readiness, downstream purification burden. | IEA Global Hydrogen Review 2023, Chemical engineering design reference, GPSA engineering data reference |
 
 
 ## Python workflow pattern

@@ -27,10 +27,30 @@ def parse_bibtex(bib_path):
         return {}
     bib_text = bib_path.read_text(encoding="utf-8")
     entries = {}
-    for block in re.finditer(r'@\w+\{(\w+),\s*(.*?)\n\}', bib_text, flags=re.DOTALL):
-        key = block.group(1)
+    # Scan each @type{ ... } entry using brace balancing so that both
+    # single-line entries (closing "}" at end of line) and multi-line entries
+    # (closing "}" on its own line) parse correctly.
+    n = len(bib_text)
+    for m in re.finditer(r'@\w+\s*\{', bib_text):
+        start = m.end()  # position just after the opening brace
+        depth = 1
+        j = start
+        while j < n and depth > 0:
+            ch = bib_text[j]
+            if ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+            j += 1
+        body = bib_text[start:j - 1]  # content inside the outer braces
+        comma = body.find(',')
+        if comma == -1:
+            continue
+        key = body[:comma].strip()
+        field_str = body[comma + 1:]
         fields = {}
-        for fld in re.finditer(r'(\w+)\s*=\s*\{(.*?)\}', block.group(2), flags=re.DOTALL):
+        for fld in re.finditer(r'(\w+)\s*=\s*\{(.*?)\}\s*(?:,|$)',
+                               field_str, flags=re.DOTALL):
             fields[fld.group(1).lower()] = fld.group(2).strip()
         entries[key] = fields
     return entries

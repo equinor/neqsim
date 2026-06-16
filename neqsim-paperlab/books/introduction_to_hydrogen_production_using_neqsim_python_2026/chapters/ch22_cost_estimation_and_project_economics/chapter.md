@@ -111,8 +111,8 @@ notebook output or discussion.
 
 | Review list | No. | Topic | Calculation example placed here | Sweep or input basis | Output KPIs | Literature basis |
 |---|---:|---|---|---|---|---|
-| Blue hydrogen | 6 | Methane leakage and lifecycle emissions | Add upstream methane leakage to direct residual CO2 and convert it to a lifecycle carbon-intensity sensitivity. | Upstream methane leakage fraction, natural-gas consumption, carbon price, and capture target. | Lifecycle kg CO2e/kg H2, carbon-cost index, breakeven carbon price, pass/fail against project CI target. | \cite{howarth2021bluehydrogen,iea2023hydrogen,turton2018} |
-| Blue hydrogen | 10 | Techno-economic and policy analysis of blue hydrogen | Run an LCOH index case that includes gas price, capture CAPEX, CO2 transport/storage cost, carbon price, and utilization. | Gas price, carbon price, capture target, storage tariff, and plant scale. | LCOH, residual carbon-cost exposure, CAPEX index, probability of meeting policy threshold. | \cite{iea2023hydrogen,turton2018,seider2017} |
+| Blue hydrogen | 6 | Methane leakage and lifecycle emissions | Add upstream methane leakage to direct residual CO2 and convert it to a lifecycle carbon-intensity sensitivity. | Upstream methane leakage fraction, natural-gas consumption, carbon price, and capture target. | Lifecycle kg CO2e/kg H2, carbon-cost index, breakeven carbon price, pass/fail against project CI target. | Howarth and Jacobson blue-hydrogen lifecycle study, IEA Global Hydrogen Review 2023, Process cost-estimation reference |
+| Blue hydrogen | 10 | Techno-economic and policy analysis of blue hydrogen | Run an LCOH index case that includes gas price, capture CAPEX, CO2 transport/storage cost, carbon price, and utilization. | Gas price, carbon price, capture target, storage tariff, and plant scale. | LCOH, residual carbon-cost exposure, CAPEX index, probability of meeting policy threshold. | IEA Global Hydrogen Review 2023, Process cost-estimation reference, Process design economics reference |
 
 
 ## Python workflow pattern

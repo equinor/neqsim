@@ -111,7 +111,7 @@ notebook output or discussion.
 
 | Review list | No. | Topic | Calculation example placed here | Sweep or input basis | Output KPIs | Literature basis |
 |---|---:|---|---|---|---|---|
-| Green hydrogen | 10 | Techno-economic and lifecycle analysis | Compare PEM, alkaline, SOEC, and AEM portfolio cases with LCOH, water intensity, utilization, and grid-emission factors. | Electricity price, capacity factor, electrolyzer CAPEX, stack lifetime, grid CO2 intensity, and technology family. | LCOH, kg CO2e/kg H2, water intensity, replacement cost, portfolio recommendation. | \cite{irena2022greenhydrogen,iea2023hydrogen,turton2018} |
+| Green hydrogen | 10 | Techno-economic and lifecycle analysis | Compare PEM, alkaline, SOEC, and AEM portfolio cases with LCOH, water intensity, utilization, and grid-emission factors. | Electricity price, capacity factor, electrolyzer CAPEX, stack lifetime, grid CO2 intensity, and technology family. | LCOH, kg CO2e/kg H2, water intensity, replacement cost, portfolio recommendation. | IRENA Green Hydrogen Cost Reduction, IEA Global Hydrogen Review 2023, Process cost-estimation reference |
 
 
 ## Python workflow pattern
