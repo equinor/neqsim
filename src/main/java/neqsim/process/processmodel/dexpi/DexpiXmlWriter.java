@@ -2110,8 +2110,7 @@ public final class DexpiXmlWriter {
       Map<String, ControllerDeviceInterface> controllers) {
     int eqIndex = 0;
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
-      if (unit instanceof Stream || unit instanceof DexpiStream || unit instanceof Mixer
-          || unit instanceof Splitter) {
+      if (unit instanceof Stream || unit instanceof Mixer || unit instanceof Splitter) {
         continue;
       }
       int base = 2000 + eqIndex * 10;
