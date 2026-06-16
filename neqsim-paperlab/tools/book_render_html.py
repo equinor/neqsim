@@ -9,12 +9,18 @@ Extends render_html_generic.py with:
 - Citation resolution and bibliography generation
 """
 
+import os
 import re
 import shutil
+import sys
 from collections import Counter
 from pathlib import Path
 
+# Ensure sibling modules (this tools/ dir) are importable regardless of cwd.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import book_builder
+from katex_head import KATEX_HEAD_BLOCK
 from citation_utils import (parse_bibtex, collect_all_cited_keys_from_chapters,
                             resolve_citations_numbered_html, collect_cited_keys)
 
@@ -53,14 +59,7 @@ def _html_head(title):
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>{_esc(title)}</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"/>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
-  onload="renderMathInElement(document.body, {{delimiters:[
-    {{left:'$$',right:'$$',display:true}},
-    {{left:'$',right:'$',display:false}}
-  ]}});"></script>
-<style>
+""" + KATEX_HEAD_BLOCK + f"""<style>
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 body {{
     font-family: Georgia, 'Times New Roman', serif;
@@ -1657,6 +1656,33 @@ def _md_to_html(md_text):
             i += 1
             continue
 
+        # Display math block ($$ ... $$), possibly spanning multiple lines.
+        # Must be consumed atomically so that continuation lines whose first
+        # non-space character is "-", "*", "+", or a digit are not mistaken
+        # for list items / other block constructs (which would split the
+        # equation across <p>/<li> boundaries and break KaTeX rendering).
+        # The raw (escaped) LaTeX is emitted inside a dedicated block element;
+        # the client-side KaTeX walker renders it from the text node.
+        if stripped.startswith("$$"):
+            close_list()
+            block_lines = [line]
+            if stripped.count("$$") >= 2:
+                # Opening line already closes the block (single-line equation).
+                i += 1
+            else:
+                i += 1
+                while i < len(lines):
+                    block_lines.append(lines[i])
+                    if "$$" in lines[i]:
+                        i += 1
+                        break
+                    i += 1
+            math_src = "\n".join(block_lines)
+            html_parts.append(
+                '<div class="math-display">{}</div>'.format(_esc(math_src))
+            )
+            continue
+
         # Blockquotes
         if stripped.startswith(">"):
             close_list()
@@ -1800,6 +1826,7 @@ def _md_to_html(md_text):
         while i < len(lines) and lines[i].strip() \
                 and not lines[i].strip().startswith("#") \
                 and not lines[i].strip().startswith("```") \
+                and not lines[i].strip().startswith("$$") \
                 and not re.match(r"^!\[", lines[i].strip()) \
                 and not lines[i].strip().startswith(">") \
                 and not lines[i].strip().startswith("- ") \

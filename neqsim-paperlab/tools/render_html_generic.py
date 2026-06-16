@@ -12,6 +12,8 @@ import sys
 import json
 from pathlib import Path
 
+from katex_head import KATEX_HEAD_BLOCK
+
 
 def get_html_header(title="Paper"):
     """Generate HTML header with KaTeX and styling."""
@@ -20,16 +22,7 @@ def get_html_header(title="Paper"):
 <head>
 <meta charset="utf-8">
 <title>""" + title + r"""</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
-  onload="renderMathInElement(document.body, {
-    delimiters: [
-      {left: '$$', right: '$$', display: true},
-      {left: '$', right: '$', display: false}
-    ]
-  })"></script>
-<style>
+""" + KATEX_HEAD_BLOCK + r"""<style>
   body { max-width: 900px; margin: 40px auto; font-family: 'Georgia', serif;
          line-height: 1.7; color: #333; padding: 0 20px; }
   h1 { font-size: 1.8em; border-bottom: 2px solid #2196F3; padding-bottom: 10px; }

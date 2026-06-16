@@ -113,7 +113,10 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     double enthalpy = 0;
 
     for (int k = 0; k < streams.size(); k++) {
-      streams.get(k).getThermoSystem().init(3);
+      // init(2) is sufficient: getEnthalpy() reads only residual thermodynamic
+      // properties, not the composition derivatives that init(3) additionally computes.
+      // This removes redundant derivative work from the per-tray enthalpy summation.
+      streams.get(k).getThermoSystem().init(2);
       enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
       // System.out.println("total enthalpy k : " + ( ((Stream)
       // streams.get(k)).getThermoSystem()).getEnthalpy());
@@ -132,7 +135,9 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
 
     for (int k = 0; k < streams.size(); k++) {
       if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
-        streams.get(k).getThermoSystem().init(3);
+        // init(2) is sufficient for getEnthalpy(); composition derivatives from init(3)
+        // are not read here, so skipping them removes dead work from the solver hot loop.
+        streams.get(k).getThermoSystem().init(2);
         enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
       }
       // System.out.println("total enthalpy k : " + ( ((Stream)

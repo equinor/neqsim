@@ -515,6 +515,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private boolean fullFractionatorFastPathEnabled = false;
   /** Solver strategy that actually completed the latest solve. */
   private transient SolverType lastSolverTypeUsed = SolverType.DIRECT_SUBSTITUTION;
+  /**
+   * Concrete solver chosen by the AUTO selector on the previous solve. When the column is solved
+   * again from a warm state (e.g. inside a recycle loop), AUTO reuses this solver directly instead
+   * of re-running the expensive feasibility pre-screen, candidate cloning, and multi-solver scoring
+   * on every call. Reset whenever the column reverts to a cold start.
+   */
+  private transient SolverType autoWarmStartSolver = null;
   /** Whether the latest run applied the opt-in full-fractionator fast path. */
   private transient boolean lastFullFractionatorFastPathApplied = false;
   /** Description of the latest opt-in full-fractionator fast-path action. */
@@ -1705,6 +1712,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (lastFullFractionatorFastPathApplied) {
       return SolverType.MESH_RESIDUAL;
     }
+    // Warm-start fast path: once the AUTO selector has chosen a concrete solver and the column has
+    // already been solved, reuse that solver directly on subsequent warm re-solves (e.g. inside a
+    // recycle loop). This skips the expensive feasibility pre-screen, candidate cloning and
+    // multi-solver scoring that AUTO performs on every call. Adjustable specifications keep the
+    // full AUTO path because their continuation/homotopy logic depends on it.
+    if (solverType == SolverType.AUTO && hasBeenSolvedBefore && autoWarmStartSolver != null
+        && autoWarmStartSolver != SolverType.AUTO && !hasAdjustableSpecifications()) {
+      return autoWarmStartSolver;
+    }
     return solverType;
   }
 
@@ -2585,6 +2601,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   void acceptAutoSolverCandidate(DistillationColumn candidate, SolverType selectedSolver) {
     acceptSolvedStateCandidate(candidate);
     lastSolverTypeUsed = selectedSolver;
+    // Remember the concrete solver AUTO selected so warm re-solves can reuse it directly.
+    if (selectedSolver != null && selectedSolver != SolverType.AUTO) {
+      autoWarmStartSolver = selectedSolver;
+    }
   }
 
   /**
@@ -4779,6 +4799,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     feedmixer = new Mixer("temp mixer");
     feedmixer.setMultiPhaseCheck(doMultiPhaseCheck);
     hasBeenSolvedBefore = false;
+    autoWarmStartSolver = null;
     lastTotalFeedFlow = -1.0;
     lastMeshResidual = null;
     terminalGasProductDrawStream = null;
@@ -12077,6 +12098,23 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public SolverType getLastSolverTypeUsed() {
     return lastSolverTypeUsed;
+  }
+
+  /**
+   * Get the concrete solver cached by the automatic solver for warm re-solves.
+   *
+   * <p>
+   * When {@link SolverType#AUTO} is configured, the first solve runs the full feasibility
+   * pre-screen and multi-candidate selection and caches the winning concrete solver. Subsequent
+   * warm re-solves (for example inside a recycle loop) reuse this cached solver directly, skipping
+   * the expensive selection step. Returns {@code null} before the first AUTO solve completes or
+   * after the column reverts to a cold start.
+   * </p>
+   *
+   * @return cached warm-start solver, or {@code null} if none is currently cached
+   */
+  public SolverType getAutoWarmStartSolver() {
+    return autoWarmStartSolver;
   }
 
   /**
