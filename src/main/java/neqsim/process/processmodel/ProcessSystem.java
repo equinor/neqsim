@@ -7390,6 +7390,9 @@ public class ProcessSystem extends SimulationBaseClass {
             }
             co.addProperty("enabled", c.isEnabled());
             co.addProperty("violated", c.isViolated());
+            if (c.getDataSource() != null) {
+              co.addProperty("dataSource", c.getDataSource());
+            }
             constraintsArr.add(co);
           }
         } catch (Exception e) {
