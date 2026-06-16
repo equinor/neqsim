@@ -40,7 +40,6 @@ from matplotlib.patches import (
     Rectangle,
     Wedge,
 )
-from matplotlib.path import Path as MplPath
 
 # ── Book palette ──────────────────────────────────────────────────────────
 NAVY = "#0d3b66"
