@@ -664,9 +664,10 @@ String json = auto.getUtilizationSnapshot();
 Per unit: `name`, `type`, `capacityAnalysisEnabled`, `maxUtilization` (0–1, NaN→0),
 `maxUtilizationPercent`, `limitingConstraint` (or `null`), `feasible`, `hardLimitExceeded`,
 `power_kW` (compressors/pumps only), and a `constraints[]` breakdown (`name`, `utilization`,
-`current`, `design`, `unit`, `enabled`, `violated`). For a `ProcessModel`, every unit also carries
-its `area` label. Plant-wide: `bottleneck` (highest-utilization unit, or `null`), `anyOverloaded`,
-`anyHardLimitExceeded`.
+`current`, `design`, `unit`, `enabled`, `violated`, and `dataSource` when set — e.g. `"equipment"`,
+`"design"` — so an agent can tell a rated limit from an estimate). For a `ProcessModel`, every unit
+also carries its `area` label. Plant-wide: `bottleneck` (highest-utilization unit, or `null`),
+`anyOverloaded`, `anyHardLimitExceeded`.
 
 **Closed-loop RL pattern:** observation = `getUtilizationSnapshot()`; action = setpoints passed to
 `evaluate()`; reward = an objective read-back from `evaluate()` (e.g. negative compression power)
@@ -679,6 +680,13 @@ snapshot reads constraints rather than re-solving, it is cheap to call on every 
 > reports smooth, power-driven utilization. Set an installed shaft power via
 > `comp.getMechanicalDesign().setMaxDesignPower(kW)` to give the `power` constraint a basis. When a
 > chart is later attached, `reinitializeCapacityConstraints()` re-enables the chart metrics.
+
+> **Expanders (turbo-expanders)**: `Expander` overrides the inherited `Compressor` capacity logic
+> so it no longer reports a spurious ~150% utilization. The inherited consumed-power constraints
+> (`power`, `ratedPower`) are removed and `isSimulationValid()` is expander-correct (negative shaft
+> power and a cooler outlet are *valid*). Call `expander.setRatedRecoveredPower(ratedKW)` to add a
+> `recoveredPower` HARD constraint (sourced from `|getPower|`, `dataSource = "equipment"`); without
+> a rating the expander simply reports no spurious limit instead of a fabricated one.
 
 ### AgenticProcessOptimizer: closed-loop optimization for ML/agentic loops
 

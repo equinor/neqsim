@@ -1703,6 +1703,18 @@ The Strategy Registry provides a plugin-based architecture for evaluating equipm
 | `ElectrolyzerCapacityStrategy` | Electrolyzer, CO2Electrolyzer | power, currentDensity, efficiency |
 | `WellFlowCapacityStrategy` | WellFlow | flowRate, wellheadPressure, drawdown |
 
+> **Expander note (equipment-level override).** The `ExpanderCapacityStrategy`
+> above belongs to the older `CapacityAnalysisEngine` path. On the
+> `getMaxUtilization()` / `getUtilizationSnapshotJson()` path, `Expander`
+> overrides the inherited `Compressor` logic: it removes the inherited
+> consumed-power constraints (`power`, `ratedPower`) — which are meaningless for a
+> machine that *produces* shaft power — and, when a rating is set via
+> `expander.setRatedRecoveredPower(kW)`, adds a `recoveredPower` HARD constraint
+> sourced from `|getPower|`. It also overrides `isSimulationValid()` so an
+> expander's normal state (negative shaft power, outlet colder than inlet,
+> pressure ratio < 1) is treated as valid. This removes the previously spurious
+> ~150 % expander utilization. See **Expanders (Turbo-Expanders)** below.
+
 ### Strategy Architecture
 
 ```
@@ -1945,7 +1957,8 @@ The returned JSON (schema `"1.0"`) has the shape:
       "power_kW": 1240.5,
       "constraints": [
         {"name": "power", "utilization": 0.83, "utilizationPercent": 83.0,
-         "current": 83.0, "design": 100.0, "unit": "%", "enabled": true, "violated": false}
+         "current": 83.0, "design": 100.0, "unit": "%", "enabled": true, "violated": false,
+         "dataSource": "design"}
       ]
     }
   ],
@@ -1965,7 +1978,8 @@ The returned JSON (schema `"1.0"`) has the shape:
 <tr><td><code>limitingConstraint</code></td><td>Name of the constraint driving <code>maxUtilization</code> (or <code>null</code>)</td></tr>
 <tr><td><code>feasible</code></td><td><code>true</code> when no enabled constraint is exceeded</td></tr>
 <tr><td><code>power_kW</code></td><td>Shaft power, present for compressors and pumps only</td></tr>
-<tr><td><code>constraints[]</code></td><td>Per-constraint breakdown (utilization, current, design, unit, enabled, violated)</td></tr>
+<tr><td><code>constraints[]</code></td><td>Per-constraint breakdown (utilization, current, design, unit, enabled, violated, and <code>dataSource</code> when set)</td></tr>
+<tr><td><code>dataSource</code></td><td>Provenance tag on each constraint (e.g. <code>"equipment"</code>, <code>"design"</code>) — lets an agent distinguish a rated/measured limit from an estimate. Emitted only when set.</td></tr>
 </table>
 
 The plant-wide `bottleneck`, `anyOverloaded`, and `anyHardLimitExceeded` fields summarise the whole
@@ -1998,6 +2012,35 @@ compressor.getMechanicalDesign().setMaxDesignPower(installedKw); // kW
 
 When a performance chart is later attached, call `reinitializeCapacityConstraints()` to re-enable
 the chart-dependent metrics.
+
+### Expanders (Turbo-Expanders)
+
+`Expander` extends `Compressor` but operates in reverse — it *produces* shaft power and *cools* the
+gas. The inherited compressor capacity logic does not fit this: the consumed-power constraints
+(`power`, `ratedPower`) have no meaning for a power-producing machine, and
+`Compressor.isSimulationValid()` treats an expander's *normal* operating state (negative shaft
+power, outlet colder than inlet, pressure ratio < 1) as invalid. Because
+`Compressor.getMaxUtilization()` returns a sentinel `1.5` whenever the simulation is flagged
+invalid with zero computed utilization, a healthy expander used to report a **spurious ~150 %
+utilization**.
+
+`Expander` now fixes this natively by overriding two methods:
+
+- `isSimulationValid()` — expander-correct: negative shaft power and a cooler outlet are valid;
+  only `NaN` or an outlet *hotter* than the inlet flags the run invalid.
+- `initializeCapacityConstraints()` — removes the inherited `power` / `ratedPower` constraints and,
+  when a rating is set, adds a `recoveredPower` HARD constraint sourced from `|getPower|` with
+  `dataSource = "equipment"`.
+
+Set the rated recovered shaft power to get a meaningful utilization; otherwise the expander simply
+reports no spurious limit:
+
+```java
+Expander expander = new Expander("X-100", feed);
+// ... add to process and run ...
+expander.setRatedRecoveredPower(5000.0);   // kW — rebuilds the recoveredPower constraint
+double util = expander.getMaxUtilization(); // |getPower| / 5000 kW, no spurious 150%
+```
 
 ## See Also
 

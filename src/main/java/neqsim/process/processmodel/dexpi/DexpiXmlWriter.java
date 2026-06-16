@@ -535,9 +535,12 @@ public final class DexpiXmlWriter {
 
     // When the model carries no instrumentation of its own, synthesize a standard set of ISA-5.1
     // control loops so the exported P&ID looks like a real engineering diagram (control valves,
-    // transmitters and PID controllers) rather than a bare block flow sketch.
+    // transmitters and PID controllers) rather than a bare block flow sketch. Synthesis is limited
+    // to the rich pyDEXPI/P&ID export path; the plain write(...) overloads stay backwards
+    // compatible and emit only the instrumentation explicitly present in the model.
     if ((effectiveTransmitters == null || effectiveTransmitters.isEmpty())
-        && AUTO_SYNTHESIZE_INSTRUMENTS.get().booleanValue()) {
+        && AUTO_SYNTHESIZE_INSTRUMENTS.get().booleanValue()
+        && Boolean.TRUE.equals(OMIT_DEFAULT_NAMESPACE.get())) {
       effectiveTransmitters = new LinkedHashMap<>();
       if (effectiveControllers == null) {
         effectiveControllers = new LinkedHashMap<>();
@@ -2145,7 +2148,9 @@ public final class DexpiXmlWriter {
           String ft = "FT-" + (base + 4);
           transmitters.put(ft, new VolumeFlowTransmitter(ft, in));
         }
-      } else if (unit instanceof HeatExchanger) {
+      } else if (unit instanceof Heater) {
+        // Cooler and HeatExchanger both extend Heater, so a single instanceof Heater check
+        // covers every cooling/heating service (a Cooler is not an instanceof HeatExchanger).
         StreamInterface out = firstOutlet(unit);
         if (out != null) {
           String tt = "TT-" + (base + 3);
