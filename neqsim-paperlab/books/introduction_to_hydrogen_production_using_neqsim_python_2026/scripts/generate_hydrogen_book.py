@@ -3579,7 +3579,6 @@ def chapter_md(number: int, spec):
     paras = [wrap(p) for p in COMMON_PARAGRAPHS]
     code = python_example(spec)
     extra = special_sections(spec)
-    notebook_lab = expanded_notebook_lab(spec)
     notebook_output = notebook_output_markdown(spec, number)
     eos_comparison_section = thermodynamic_eos_comparison_markdown(number) if spec[0] == "ch04_hydrogen_reference_equations" else ""
     process_coverage_section = process_calculation_coverage_markdown(number) if spec[0] == "ch23_optimization_automation_digital_twins" else ""
@@ -3710,8 +3709,6 @@ but readers should still run the snippet against the exact branch they use.
 
 {extra}
 
-{notebook_lab}
-
 {deep_dive}
 
 {paras[3]}
@@ -3746,89 +3743,19 @@ screening result that the later notebook can rerun and refine.
 
 {paras[4]}
 
-## Advanced modelling notes
+## Applying the standard workflow
 
-The next level of detail is to decide which simplifications are allowed to
-remain in the model. For {focus}, a simple equilibrium or equipment block is
-often enough to rank alternatives, but it is rarely enough to freeze a design.
-The modelling lead should write down which variables are design variables,
-which variables are operating variables, and which variables are uncertain
-parameters. A pressure level, for example, may be a design variable in a concept
-study, an operating variable in a dispatch model, and an uncertain parameter in
-an early vendor comparison. The same NeqSim object can support all three views,
-but the notebook should label the view clearly.
-
-A good hydrogen model also separates thermodynamic uncertainty from process
-configuration uncertainty. Thermodynamic uncertainty lives in EOS selection,
-binary interaction parameters, impurity treatment, water handling, and transport
-property correlations. Process configuration uncertainty lives in bed count,
-compressor staging, heat recovery, reactor approach to equilibrium, current
-density, plant availability, and control philosophy. Mixing these two categories
-in one sensitivity table makes the result hard to interpret. Keep the first
-screening table small, then add separate thermodynamic and process tables when
-the decision becomes sensitive.
-
-The most useful extension point in NeqSim is not a single class. It is the
-combination of a transparent `ProcessSystem`, addressable variables through
-`ProcessAutomation`, and Python loops that can run families of cases. Once the base
-case for {focus} is converged, the next study can sweep feed composition,
-pressure, recovery, cell voltage, catalyst activity, or ambient temperature
-without copying the flowsheet by hand. This is how a teaching example becomes a
-concept-selection engine.
-
-When the model supports a project decision, every result should carry a quality
-label. A classroom calculation may be labelled educational. A screening study
-may be AACE Class 5 or Class 4. A pre-FEED study needs vendor data, design code
-checks, process guarantees, and a documented uncertainty range. This chapter's
-workflow is deliberately compatible with that escalation: the first notebook is
-small, but it already contains the habits needed for a defensible larger study.
-
-## Extending the simulation
-
-| Extension | Why it matters | NeqSim/Python pattern |
-|---|---|---|
-| Composition sweep | Tests feedstock or product-spec sensitivity. | Clone the fluid, change mole fractions, run the same process. |
-| Pressure-level sweep | Reveals compression, purification, and storage trade-offs. | Update stream or equipment pressure through setters or `ProcessAutomation`. |
-| Technology comparison | Compares PEM, alkaline, SOEC, ATR, SMR, or PSA configurations. | Wrap each case in a function returning KPIs and assumptions. |
-| Uncertainty case | Gives P10/P50/P90 style decision support. | Use Python sampling with a NeqSim run inside each iteration where practical. |
-| Report package | Makes the calculation reviewable. | Save figures, results.json, assumptions, and validation checks together. |
-
-The extension step should be conservative. Change one idea at a time until the
-model response is understood. If two parameters must be changed together, write
-that coupling down explicitly. For example, increasing electrolyzer pressure may
-reduce downstream compression but can also change stack assumptions and cooling.
-Increasing PSA recovery may raise hydrogen product flow but can lower tail-gas
-heating value. Increasing reformer temperature may improve methane conversion
-but can worsen tube duty, materials limits, and catalyst deactivation. The
-simulation is the place where these trade-offs become visible.
-
-For {focus}, a useful design-review plot has three properties. First, the axes
-carry units and show the operating range rather than only the base point.
-Second, at least one line or marker is tied to a physical limit: equilibrium,
-specification, material temperature, maximum pressure, or a cost threshold.
-Third, the caption explains what decision the plot supports. A beautiful plot
-that does not support a decision belongs in a notebook scratchpad, not in the
-engineering report.
-
-The final extension is to make the model callable. A function that takes inputs
-and returns a dictionary of KPIs can be used by a notebook, a command-line
-script, a FastAPI endpoint, an optimizer, or a digital-twin loop. That is the
-practical reason this book uses Python rather than screenshots: the model can
-become infrastructure.
-
-## Technical review prompts
-
-Use these prompts when reviewing the chapter model with another engineer:
-
-- What decision would change if {kpis} moved by 10 percent?
-- Which assumption is most likely to be wrong in the current data set?
-- Which result is governed by thermodynamics, and which is governed by equipment
-    configuration?
-- Which unit operation should receive vendor data first?
-- Which safety or standards check must be completed before the result leaves
-    screening status?
-- Can the notebook be rerun by another engineer without editing hidden paths or
-    undocumented environment variables?
+The model in this chapter is built and reviewed with the same workbench routine
+used everywhere in the book: define the boundary, run the smallest meaningful
+calculation, validate against a physical limit, extract {kpis}, and save the
+evidence. The full notebook structure, the three-step validation routine
+(balance, physical-limit, and reference-case checks), the patterns for extending
+a single converged case into a sensitivity or technology study, and the
+peer-review prompts are collected once in *Appendix: Notebook structure,
+validation, and review methodology* so they are not repeated in every chapter.
+Chapter 3 covers the setup and reproducibility habits those steps rely on. Apply
+that routine to the model in this chapter ({focus}) before treating any number
+here as a design result.
 
 ## Common modelling pitfalls
 
@@ -3938,7 +3865,7 @@ def write_book_yaml():
         },
         "frontmatter": ["title_page", "copyright", "dedication", "preface", "model_scope_and_verification", "notebook_companion", "learning_roadmap", "task_decision_tree"],
         "parts": parts,
-        "backmatter": ["glossary", "troubleshooting_first_hour", "reproducibility_and_running_case", "full_integrated_model_listing", "capstone_portfolio", "author_bio"],
+        "backmatter": ["glossary", "troubleshooting_first_hour", "notebook_methodology", "reproducibility_and_running_case", "full_integrated_model_listing", "capstone_portfolio", "author_bio"],
         "nomenclature": {"file": "nomenclature.yaml", "position": "after_toc"},
         "bibliography": {"style": "numeric", "file": "refs.bib"},
     }
@@ -4179,6 +4106,110 @@ If a hydrogen notebook fails early, check these items first:
 6. Process streams are connected to the intended inlet and outlet objects.
 7. Recycles and adjusters have reasonable initial guesses.
 8. Specific energy and recovery values are checked against physical ranges.
+""", encoding="utf-8")
+    (bm / "notebook_methodology.md").write_text("""# Appendix: Notebook Structure, Validation, and Review Methodology
+
+Every chapter in this book builds a NeqSim model with the same workbench
+routine. Rather than repeat that routine inside each chapter, it is collected
+here once. When a chapter says \"apply the standard workflow,\" it means the
+structure, validation steps, extension patterns, and review prompts described
+below. Read this appendix early, then return to it whenever a chapter notebook
+grows beyond the compact teaching snippet.
+
+## Notebook structure
+
+The short code pattern shown in each chapter is the smallest working fragment.
+A serious chapter notebook should be longer and more explicit, with cells small
+enough that a reviewer can run one section, inspect the state, and decide
+whether the next section is credible. The aim is not a decorative notebook; it
+is an auditable model.
+
+| Notebook section | Purpose | Evidence to save |
+|---|---|---|
+| Input cell | Define composition, pressure, temperature, flow, technology, and standards basis. | A printed assumptions table with units. |
+| Model cell | Create the NeqSim system, stream, unit operation, or process model. | The class names and setter values used. |
+| Run cell | Execute the flash, unit operation, or `ProcessSystem`. | Convergence status and warning messages. |
+| KPI cell | Extract the chapter key performance indicators. | A table with units and engineering labels. |
+| Plot cell | Show the operating range, not just the base point. | PNG figure with axis labels and caption. |
+| Check cell | Compare against bounds, standards, or reference equations. | Pass/warn/fail status with comments. |
+| Export cell | Write the result into a dictionary or `results.json`. | A machine-readable artifact for reports. |
+
+The single most useful change is to turn the example into a function that takes
+a small set of physical inputs and returns a dictionary of outputs. A signature
+like `run_case(feed, pressure, temperature, option)` is far more reusable than a
+function with twenty unlabelled arguments. Put units in the argument names or
+docstrings, and put units in the result keys. That one change makes a chapter
+useful for sensitivity studies, optimization, uncertainty analysis, and
+automated reports.
+
+## Three-step validation
+
+**1. Balance check.** Show where conserved quantities go. For reacting and
+electrochemical systems, track where atoms or moles move. For compression and
+pipeline systems, show mass-flow consistency. For purification, show where
+hydrogen leaves the product boundary. For property-model chapters, compare a
+calculated density or enthalpy against a reference model or published point. A
+model with a plausible final number but no traceable balance is not ready for
+reuse.
+
+**2. Physical-limit check.** Confirm the result sits inside a physical bound:
+a specific energy above the thermodynamic minimum for electrolysis, a compressor
+discharge temperature below the material or seal limit, a PSA recovery inside
+industrial ranges, a pipeline pressure above delivery pressure plus margin, or a
+reaction result that moves in the correct direction when temperature, pressure,
+or steam-to-carbon ratio changes. This check often catches a wrong model before
+an extra decimal place would.
+
+**3. Reference-case check.** Compare against a published benchmark, a previous
+study, a known industrial range, or a reference equation. In the thermodynamics
+chapters this means GERG-2008 and Leachman-style checks; in the reaction
+chapters, reaction extents, equilibrium direction, and heat-of-reaction signs;
+in the transport chapters, pressure-drop and temperature profiles that respond
+sensibly to diameter, roughness, ambient temperature, and flow rate.
+
+Preserve negative results. If a flash fails, a reactor does not converge, a
+compressor exceeds a temperature limit, or a pipeline case misses delivery
+pressure, record it in the result table. Failed cases mark the edge of the
+operating envelope; make them reproducible rather than hiding them.
+
+## Extending a converged case
+
+Once the base case converges, change one idea at a time. If two parameters must
+move together, write the coupling down explicitly: higher electrolyzer pressure
+may cut downstream compression but change stack and cooling assumptions; higher
+PSA recovery may raise product flow but lower tail-gas heating value; higher
+reformer temperature may improve methane conversion but worsen tube duty and
+catalyst life.
+
+| Extension | Why it matters | NeqSim/Python pattern |
+|---|---|---|
+| Composition sweep | Tests feedstock or product-spec sensitivity. | Clone the fluid, change mole fractions, run the same process. |
+| Pressure-level sweep | Reveals compression, purification, and storage trade-offs. | Update stream or equipment pressure through setters or `ProcessAutomation`. |
+| Technology comparison | Compares PEM, alkaline, SOEC, ATR, SMR, or PSA configurations. | Wrap each case in a function returning KPIs and assumptions. |
+| Uncertainty case | Gives P10/P50/P90 style decision support. | Use Python sampling with a NeqSim run inside each iteration where practical. |
+| Report package | Makes the calculation reviewable. | Save figures, results.json, assumptions, and validation checks together. |
+
+A design-review plot should carry units and show the operating range, tie at
+least one line or marker to a physical limit (equilibrium, specification,
+material temperature, maximum pressure, or a cost threshold), and explain in its
+caption what decision it supports. Making the model callable as a function that
+returns a KPI dictionary lets the same model serve a notebook, a script, an
+optimizer, or a digital-twin loop.
+
+## Peer-review prompts
+
+Use these prompts when reviewing any chapter model with another engineer:
+
+- What decision would change if the headline KPIs moved by 10 percent?
+- Which assumption is most likely to be wrong in the current data set?
+- Which result is governed by thermodynamics, and which by equipment configuration?
+- Which unit operation should receive vendor data first?
+- Which safety or standards check must be completed before the result leaves screening status?
+- Can the notebook be rerun by another engineer without editing hidden paths or undocumented environment variables?
+
+Each result should also carry a quality label: educational for a classroom
+calculation, AACE Class 5 or 4 for a screening study, and a documented
+uncertainty range with vendor data and design-code checks for a pre-FEED study.
 """, encoding="utf-8")
     (bm / "reproducibility_and_running_case.md").write_text("""# Reproducibility and Running Case
 

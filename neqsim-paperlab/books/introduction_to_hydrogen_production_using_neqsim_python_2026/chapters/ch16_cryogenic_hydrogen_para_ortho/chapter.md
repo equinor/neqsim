@@ -187,76 +187,6 @@ the physical range and that the modelled boil-off is consistent with the
 combined latent and conversion heat load.
 
 
-## Extended notebook laboratory
-
-The short code pattern above is the smallest working fragment. A serious
-chapter notebook should be longer and more explicit. For liquid hydrogen precooling, expansion, storage, and boil-off screening, build the
-notebook around the base case, one sensitivity case, and one validation case. Keep the cells small enough that a reviewer can run
-one section, inspect the state, and decide whether the next section is credible.
-The objective is not to make the notebook decorative; it is to make the model
-auditable.
-
-| Notebook section | Purpose | Evidence to save |
-|---|---|---|
-| Input cell | Define composition, pressure, temperature, flow, technology, and standards basis. | A printed assumptions table with units. |
-| Model cell | Create the NeqSim system, stream, unit operation, or process model. | The class names and setter values used. |
-| Run cell | Execute the flash, unit operation, or `ProcessSystem`. | Convergence status and warning messages. |
-| KPI cell | Extract para fraction, conversion heat, Cp correction, thermal conductivity factor, and boil-off risk. | A table with units and engineering labels. |
-| Plot cell | Show the operating range, not just the base point. | PNG figure with axis labels and caption. |
-| Check cell | Compare against bounds, standards, or reference equations. | Pass/warn/fail status with comments. |
-| Export cell | Write the result into a dictionary or `results.json`. | A machine-readable artifact for reports. |
-
-When expanding the notebook, start by turning the example into a function. The
-function should take a small set of physical inputs and return a dictionary of
-outputs. That one change makes the chapter useful for sensitivity studies,
-optimization, uncertainty analysis, and automated reports. A good signature is
-usually something like `run_case(feed, pressure, temperature, option)` rather
-than a function with twenty unlabelled arguments. Put units in argument names or
-docstrings, and return units in the result keys.
-
-The first validation step is a balance check. For reacting and electrochemical
-systems, the notebook should show where atoms or moles move. For compression
-and pipeline systems, it should show mass-flow consistency. For purification,
-it should show where hydrogen leaves the product boundary. For property-model
-chapters, it should compare the calculated density or enthalpy to a reference
-model or published data point. A model that has a plausible final number but no
-traceable balance is not ready for reuse.
-
-The second validation step is a physical-limit check. Examples include a
-specific energy above the thermodynamic minimum for electrolysis, a compressor
-discharge temperature below the material or seal limit, a PSA recovery inside
-industrial ranges, a pipeline pressure above delivery pressure plus margin, or
-a reaction result that moves in the correct direction when temperature,
-pressure, or steam-to-carbon changes. This check is often more valuable than an
-extra decimal place because it catches the wrong model before the final report
-does.
-
-The third validation step is a reference-case check. Use a simple published
-benchmark, a notebook from a previous study, a known industrial range, or a
-reference equation where available. In the hydrogen thermodynamics chapter this
-means GERG-2008 and Leachman-style checks. In the reaction chapter it means
-reaction extents, equilibrium direction, and heat-of-reaction signs. In the
-transport chapter it means pressure drop and temperature profiles that respond
-sensibly to diameter, roughness, ambient temperature, and flow rate. In the
-materials chapter it means that the simulation outputs match the data fields a
-material engineer actually needs.
-
-A useful notebook also preserves negative results. If a flash fails, a reactor
-does not converge, a compressor discharge temperature exceeds a limit, or a
-pipeline case misses delivery pressure, write that down in the result table.
-Failed cases are often more informative than successful ones because they mark
-the edge of the operating envelope. The correct response is not to hide them;
-the correct response is to make the failure reproducible and then decide
-whether the model, input data, or process concept must change.
-
-For Cryogenic Hydrogen and Para-Ortho Conversion, a strong final cell should contain a compact executive table. It
-should have one row for the base case, one row for the most conservative
-technical case, and one row for the most favourable case. The table should
-include para fraction, conversion heat, Cp correction, thermal conductivity factor, and boil-off risk, plus a note about the thermodynamic model, the process
-configuration, and the quality of the input data. That table is the bridge from
-the teaching notebook to an engineering decision.
-
-
 
 
 The preferred workflow is deliberately repetitive. Define the fluid, set the units, run
@@ -298,89 +228,19 @@ itself. When a new class appears in NeqSim, a Python notebook can usually call i
 immediately through jneqsim or ns.JClass, which is exactly what a fast-moving hydrogen
 technology program needs.
 
-## Advanced modelling notes
+## Applying the standard workflow
 
-The next level of detail is to decide which simplifications are allowed to
-remain in the model. For liquid hydrogen precooling, expansion, storage, and boil-off screening, a simple equilibrium or equipment block is
-often enough to rank alternatives, but it is rarely enough to freeze a design.
-The modelling lead should write down which variables are design variables,
-which variables are operating variables, and which variables are uncertain
-parameters. A pressure level, for example, may be a design variable in a concept
-study, an operating variable in a dispatch model, and an uncertain parameter in
-an early vendor comparison. The same NeqSim object can support all three views,
-but the notebook should label the view clearly.
-
-A good hydrogen model also separates thermodynamic uncertainty from process
-configuration uncertainty. Thermodynamic uncertainty lives in EOS selection,
-binary interaction parameters, impurity treatment, water handling, and transport
-property correlations. Process configuration uncertainty lives in bed count,
-compressor staging, heat recovery, reactor approach to equilibrium, current
-density, plant availability, and control philosophy. Mixing these two categories
-in one sensitivity table makes the result hard to interpret. Keep the first
-screening table small, then add separate thermodynamic and process tables when
-the decision becomes sensitive.
-
-The most useful extension point in NeqSim is not a single class. It is the
-combination of a transparent `ProcessSystem`, addressable variables through
-`ProcessAutomation`, and Python loops that can run families of cases. Once the base
-case for liquid hydrogen precooling, expansion, storage, and boil-off screening is converged, the next study can sweep feed composition,
-pressure, recovery, cell voltage, catalyst activity, or ambient temperature
-without copying the flowsheet by hand. This is how a teaching example becomes a
-concept-selection engine.
-
-When the model supports a project decision, every result should carry a quality
-label. A classroom calculation may be labelled educational. A screening study
-may be AACE Class 5 or Class 4. A pre-FEED study needs vendor data, design code
-checks, process guarantees, and a documented uncertainty range. This chapter's
-workflow is deliberately compatible with that escalation: the first notebook is
-small, but it already contains the habits needed for a defensible larger study.
-
-## Extending the simulation
-
-| Extension | Why it matters | NeqSim/Python pattern |
-|---|---|---|
-| Composition sweep | Tests feedstock or product-spec sensitivity. | Clone the fluid, change mole fractions, run the same process. |
-| Pressure-level sweep | Reveals compression, purification, and storage trade-offs. | Update stream or equipment pressure through setters or `ProcessAutomation`. |
-| Technology comparison | Compares PEM, alkaline, SOEC, ATR, SMR, or PSA configurations. | Wrap each case in a function returning KPIs and assumptions. |
-| Uncertainty case | Gives P10/P50/P90 style decision support. | Use Python sampling with a NeqSim run inside each iteration where practical. |
-| Report package | Makes the calculation reviewable. | Save figures, results.json, assumptions, and validation checks together. |
-
-The extension step should be conservative. Change one idea at a time until the
-model response is understood. If two parameters must be changed together, write
-that coupling down explicitly. For example, increasing electrolyzer pressure may
-reduce downstream compression but can also change stack assumptions and cooling.
-Increasing PSA recovery may raise hydrogen product flow but can lower tail-gas
-heating value. Increasing reformer temperature may improve methane conversion
-but can worsen tube duty, materials limits, and catalyst deactivation. The
-simulation is the place where these trade-offs become visible.
-
-For liquid hydrogen precooling, expansion, storage, and boil-off screening, a useful design-review plot has three properties. First, the axes
-carry units and show the operating range rather than only the base point.
-Second, at least one line or marker is tied to a physical limit: equilibrium,
-specification, material temperature, maximum pressure, or a cost threshold.
-Third, the caption explains what decision the plot supports. A beautiful plot
-that does not support a decision belongs in a notebook scratchpad, not in the
-engineering report.
-
-The final extension is to make the model callable. A function that takes inputs
-and returns a dictionary of KPIs can be used by a notebook, a command-line
-script, a FastAPI endpoint, an optimizer, or a digital-twin loop. That is the
-practical reason this book uses Python rather than screenshots: the model can
-become infrastructure.
-
-## Technical review prompts
-
-Use these prompts when reviewing the chapter model with another engineer:
-
-- What decision would change if para fraction, conversion heat, Cp correction, thermal conductivity factor, and boil-off risk moved by 10 percent?
-- Which assumption is most likely to be wrong in the current data set?
-- Which result is governed by thermodynamics, and which is governed by equipment
-    configuration?
-- Which unit operation should receive vendor data first?
-- Which safety or standards check must be completed before the result leaves
-    screening status?
-- Can the notebook be rerun by another engineer without editing hidden paths or
-    undocumented environment variables?
+The model in this chapter is built and reviewed with the same workbench routine
+used everywhere in the book: define the boundary, run the smallest meaningful
+calculation, validate against a physical limit, extract para fraction, conversion heat, Cp correction, thermal conductivity factor, and boil-off risk, and save the
+evidence. The full notebook structure, the three-step validation routine
+(balance, physical-limit, and reference-case checks), the patterns for extending
+a single converged case into a sensitivity or technology study, and the
+peer-review prompts are collected once in *Appendix: Notebook structure,
+validation, and review methodology* so they are not repeated in every chapter.
+Chapter 3 covers the setup and reproducibility habits those steps rely on. Apply
+that routine to the model in this chapter (liquid hydrogen precooling, expansion, storage, and boil-off screening) before treating any number
+here as a design result.
 
 ## Common modelling pitfalls
 
