@@ -1,0 +1,57 @@
+{
+  "chapter": "ch17_storage_and_carriers",
+  "title": "Hydrogen Storage and Carriers",
+  "figure": "parameter_storage_carrier_roundtrip.png",
+  "caption": "Round-trip energy penalty and gravimetric density across H2 storage and carrier options.",
+  "description": "The storage chapter sweeps five storage/carrier options (compressed gas at 350 and 700 bar, cryogenic liquid H2, ammonia carrier, methanol carrier, LOHC) and tracks gravimetric H2 density of the carrier, volumetric H2 density, round-trip energy penalty (charge + discharge as fraction of LHV), and reconversion temperature attention.",
+  "discussion": "Compressed H2 has the highest gravimetric purity but the lowest volumetric density. Cryogenic and chemical carriers reverse that trade. Ammonia leads on volumetric density but pays the highest round-trip penalty and requires high-temperature reconversion. The engineering lesson is that storage selection depends on distance, dwell time, end-use purity, and access to cheap heat for reconversion, not on a single 'best' KPI.",
+  "calculation_basis": "Chapter-specific screening calculations for stationary and transport hydrogen storage plus carrier value chains, normalized to the KPIs: stored kg H2, volumetric and gravimetric density, reconversion energy penalty, round-trip efficiency, and boil-off or release risk.",
+  "study_basis": "IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices.",
+  "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference",
+  "citation": "\\cite{iea2023hydrogen,towler2013chemical}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Option": "CGH2 350 bar",
+      "Gravimetric H2 (wt%)": 100.0,
+      "Volumetric H2 (kg/m3)": 24.0,
+      "Round-trip penalty (frac LHV)": 0.1,
+      "Reconversion T attention": 0.2
+    },
+    {
+      "Option": "CGH2 700 bar",
+      "Gravimetric H2 (wt%)": 100.0,
+      "Volumetric H2 (kg/m3)": 42.0,
+      "Round-trip penalty (frac LHV)": 0.15,
+      "Reconversion T attention": 0.2
+    },
+    {
+      "Option": "LH2",
+      "Gravimetric H2 (wt%)": 100.0,
+      "Volumetric H2 (kg/m3)": 71.0,
+      "Round-trip penalty (frac LHV)": 0.35,
+      "Reconversion T attention": 0.85
+    },
+    {
+      "Option": "Ammonia",
+      "Gravimetric H2 (wt%)": 17.6,
+      "Volumetric H2 (kg/m3)": 121.0,
+      "Round-trip penalty (frac LHV)": 0.5,
+      "Reconversion T attention": 0.7
+    },
+    {
+      "Option": "Methanol",
+      "Gravimetric H2 (wt%)": 12.5,
+      "Volumetric H2 (kg/m3)": 99.0,
+      "Round-trip penalty (frac LHV)": 0.4,
+      "Reconversion T attention": 0.55
+    },
+    {
+      "Option": "LOHC (DBT)",
+      "Gravimetric H2 (wt%)": 6.2,
+      "Volumetric H2 (kg/m3)": 57.0,
+      "Round-trip penalty (frac LHV)": 0.45,
+      "Reconversion T attention": 0.75
+    }
+  ]
+}

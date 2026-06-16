@@ -1,0 +1,56 @@
+{
+  "chapter": "ch25_capstone_green_hydrogen_portfolio",
+  "title": "Capstone B: Green H2 Plant and Portfolio Comparison",
+  "figure": "parameter_green_portfolio_comparison.png",
+  "caption": "Parameter study for green-H2 technology portfolio comparison.",
+  "description": "The green capstone study compares PEM, alkaline, SOEC, and AEM concepts with specific energy, water intensity, and LCOH screening index.",
+  "discussion": "The portfolio plot shows why green hydrogen studies should compare technologies as a system, not just by stack voltage. SOEC can have lower electrical specific energy, alkaline can be cost competitive, and PEM/AEM may offer pressure or dynamics advantages. The recommendation must therefore reflect power profile, water, compression, maturity, and cost assumptions.",
+  "calculation_basis": "Faraday-law water splitting, cell-voltage specific energy, current-density/load sweeps, and NeqSim Electrolyzer technology defaults where the notebook uses a stack model.",
+  "study_basis": "Public DOE electrolysis technology descriptions, IRENA scale/cost-learning observations, and the Buttler-Spliethoff electrolysis review define the technology bands.",
+  "source_labels": "US DOE electrolysis technology overview, IRENA Green Hydrogen Cost Reduction, Buttler and Spliethoff water-electrolysis review, ISO 22734 electrolyzer safety basis",
+  "citation": "\\cite{doeElectrolysis,irena2022greenhydrogen,buttler2018water,iso22734}",
+  "topic_examples": [
+    {
+      "route": "Green hydrogen",
+      "number": 10,
+      "topic": "Techno-economic and lifecycle analysis",
+      "chapter": "ch25_capstone_green_hydrogen_portfolio",
+      "calculation": "Compare PEM, alkaline, SOEC, and AEM portfolio cases with LCOH, water intensity, utilization, and grid-emission factors.",
+      "sweep": "Electricity price, capacity factor, electrolyzer CAPEX, stack lifetime, grid CO2 intensity, and technology family.",
+      "kpis": "LCOH, kg CO2e/kg H2, water intensity, replacement cost, portfolio recommendation.",
+      "source_ids": [
+        "irena2022greenhydrogen",
+        "iea2023hydrogen",
+        "turton2018"
+      ],
+      "source_labels": "IRENA Green Hydrogen Cost Reduction, IEA Global Hydrogen Review 2023, Process cost-estimation reference",
+      "citation": "\\cite{irena2022greenhydrogen,iea2023hydrogen,turton2018}"
+    }
+  ],
+  "rows": [
+    {
+      "Technology": "PEM",
+      "Specific energy index": 1.0,
+      "Water intensity index": 1.0,
+      "LCOH index": 1.0
+    },
+    {
+      "Technology": "Alkaline",
+      "Specific energy index": 0.98,
+      "Water intensity index": 1.02,
+      "LCOH index": 0.88
+    },
+    {
+      "Technology": "SOEC",
+      "Specific energy index": 0.82,
+      "Water intensity index": 1.08,
+      "LCOH index": 1.18
+    },
+    {
+      "Technology": "AEM",
+      "Specific energy index": 1.02,
+      "Water intensity index": 1.01,
+      "LCOH index": 1.05
+    }
+  ]
+}

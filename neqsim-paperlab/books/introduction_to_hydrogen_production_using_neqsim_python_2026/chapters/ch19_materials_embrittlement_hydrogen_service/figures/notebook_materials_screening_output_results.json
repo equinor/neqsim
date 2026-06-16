@@ -1,0 +1,40 @@
+{
+  "chapter": "ch19_materials_embrittlement_hydrogen_service",
+  "title": "Materials, Leakage, and Hydrogen Embrittlement",
+  "figure": "notebook_materials_screening_output.png",
+  "caption": "Expected materials and embrittlement screening inputs from process outputs.",
+  "description": "The materials chapter notebook should not claim to predict embrittlement failure. It should convert process outputs into review inputs: partial pressure, temperature range, pressure cycling, water/impurity flags, and leak/source-term basis.",
+  "discussion": "The parameter study shows how hydrogen service design decisions for piping, vessels, compressors, welds, valves, and storage interfaces responds when the controlling parameter changes. The important result is not a single base-case value; it is the shape of the response and the point where design pressure, temperature, H2 partial pressure, cyclic pressure range, leak consequence input, and material-screening status begin to trade against margin or cost.",
+  "calculation_basis": "Operating-pressure, hydrogen partial-pressure, leak-source, materials-attention, and operability-margin screening calculations.",
+  "study_basis": "ASME B31.12, API 941, API 521, and ISO hydrogen quality standards define the review basis; the plotted values are screening inputs, not acceptance decisions.",
+  "source_labels": "ASME B31.12 hydrogen piping basis, API 941 hydrogen-service materials basis, API 521 pressure-relief and source-term basis, ISO 14687 hydrogen fuel-quality basis",
+  "citation": "\\cite{asmeb3112,api941,api521,iso14687}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Screening input": "H2 partial pressure",
+      "Expected output": "150 bara",
+      "Review use": "ASME B31.12/API 941 screen"
+    },
+    {
+      "Screening input": "Max discharge T",
+      "Expected output": "67 degC",
+      "Review use": "Seal and material limit"
+    },
+    {
+      "Screening input": "Min pipeline T",
+      "Expected output": "5.5 degC",
+      "Review use": "Toughness and MDMT prompt"
+    },
+    {
+      "Screening input": "Pressure cycle",
+      "Expected output": "60 bar",
+      "Review use": "Fatigue prompt"
+    },
+    {
+      "Screening input": "Leak source term",
+      "Expected output": "available",
+      "Review use": "Dispersion/QRA handoff"
+    }
+  ]
+}

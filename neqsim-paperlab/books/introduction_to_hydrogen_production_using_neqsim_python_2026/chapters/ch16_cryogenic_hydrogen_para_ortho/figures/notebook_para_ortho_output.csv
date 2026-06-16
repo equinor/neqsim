@@ -1,0 +1,5 @@
+Temperature (K),Equilibrium para fraction,Heat release (kJ/kg),Conductivity factor
+300,0.25,0.0,1.0
+77,0.52,210.0,1.08
+40,0.87,520.0,1.16
+20,0.997,700.0,1.25

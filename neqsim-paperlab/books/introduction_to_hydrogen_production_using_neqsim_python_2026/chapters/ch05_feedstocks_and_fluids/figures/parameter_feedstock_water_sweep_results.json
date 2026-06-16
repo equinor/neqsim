@@ -1,0 +1,78 @@
+{
+  "chapter": "ch05_feedstocks_and_fluids",
+  "title": "Feedstocks, Water, Steam, Natural Gas, and Syngas Fluids",
+  "figure": "parameter_feedstock_water_sweep.png",
+  "caption": "Parameter study for feedstock and water-content sensitivity.",
+  "description": "The feedstock study sweeps steam-to-carbon ratio and impurity load to show how fluid definitions affect dew point, syngas dilution, and downstream water handling.",
+  "discussion": "Increasing steam-to-carbon improves reformer robustness but increases water handling, heat duty, and condensation load. The figure turns fluid setup into an engineering trade-off: the fluid definition is not bookkeeping, it controls downstream equipment sizing and validation checks.",
+  "calculation_basis": "EOS, phase-equilibrium, density, enthalpy, para-ortho, water, and impurity sweeps generated from thermodynamic property calculations and sanity checks.",
+  "study_basis": "SRK, Peng-Robinson, GERG-2008, and thermodynamic-modelling references define the property-model envelope used for the plotted values.",
+  "source_labels": "SRK EOS reference, Peng-Robinson EOS reference, GERG-2008 mixture-property reference, Thermodynamic modelling reference",
+  "citation": "\\cite{soave1972,pengrobinson1976,kunz2012gerg,michelsen2007}",
+  "topic_examples": [
+    {
+      "route": "Green hydrogen",
+      "number": 8,
+      "topic": "Water quality, seawater, and wastewater electrolysis",
+      "chapter": "ch05_feedstocks_and_fluids",
+      "calculation": "Build a feed-water quality table that converts impurities and purification recovery into water-duty and fouling-risk indices.",
+      "sweep": "Demin water, desalinated seawater, treated wastewater, conductivity, chloride, and purification recovery.",
+      "kpis": "Make-up water kg/kg H2, reject-brine index, polishing duty, impurity/fouling attention.",
+      "source_ids": [
+        "doeElectrolysis",
+        "iso22734",
+        "irena2022greenhydrogen"
+      ],
+      "source_labels": "US DOE electrolysis technology overview, ISO 22734 electrolyzer safety basis, IRENA Green Hydrogen Cost Reduction",
+      "citation": "\\cite{doeElectrolysis,iso22734,irena2022greenhydrogen}"
+    },
+    {
+      "route": "Cross-route frontier",
+      "number": 2,
+      "topic": "Biomass, waste, and circular hydrogen production",
+      "chapter": "ch05_feedstocks_and_fluids",
+      "calculation": "Represent biomass or waste feed variability as an ultimate-analysis and moisture-content sensitivity before gasification/reforming.",
+      "sweep": "Moisture, oxygen-to-biomass ratio, tar/contaminant index, and CO2 capture option.",
+      "kpis": "Dry syngas H2 index, water duty, contaminant polishing load, biogenic carbon-credit index.",
+      "source_ids": [
+        "doeBiomassGasification",
+        "holladay2009hydrogen",
+        "iea2023hydrogen"
+      ],
+      "source_labels": "US DOE biomass gasification overview, Holladay et al. hydrogen-production technology review, IEA Global Hydrogen Review 2023",
+      "citation": "\\cite{doeBiomassGasification,holladay2009hydrogen,iea2023hydrogen}"
+    }
+  ],
+  "rows": [
+    {
+      "Steam-to-carbon": 2.0,
+      "Dew-point index": 0.35,
+      "Syngas dilution index": 0.72,
+      "Water duty index": 0.7
+    },
+    {
+      "Steam-to-carbon": 2.5,
+      "Dew-point index": 0.48,
+      "Syngas dilution index": 0.84,
+      "Water duty index": 0.84
+    },
+    {
+      "Steam-to-carbon": 3.0,
+      "Dew-point index": 0.6,
+      "Syngas dilution index": 1.0,
+      "Water duty index": 1.0
+    },
+    {
+      "Steam-to-carbon": 3.5,
+      "Dew-point index": 0.72,
+      "Syngas dilution index": 1.14,
+      "Water duty index": 1.16
+    },
+    {
+      "Steam-to-carbon": 4.0,
+      "Dew-point index": 0.82,
+      "Syngas dilution index": 1.28,
+      "Water duty index": 1.32
+    }
+  ]
+}

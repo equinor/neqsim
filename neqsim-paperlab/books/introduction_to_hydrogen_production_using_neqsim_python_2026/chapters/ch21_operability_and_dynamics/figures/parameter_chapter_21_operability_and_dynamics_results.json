@@ -1,0 +1,45 @@
+{
+  "chapter": "ch21_operability_and_dynamics",
+  "title": "Operability, Controls, and Dynamics",
+  "figure": "parameter_chapter_21_operability_and_dynamics.png",
+  "caption": "Parameter study for Operability, Controls, and Dynamics.",
+  "description": "The chapter parameter study converts operability and transient behaviour of hydrogen production and compression into a small sweep with visible KPIs: turndown limit, controller tuning indicator, ramping rate, startup time, anti-surge margin, and alarm-flood attention. The values are screening outputs intended to demonstrate the notebook structure and discussion pattern.",
+  "discussion": "The parameter study shows how operability and transient behaviour of hydrogen production and compression responds when the controlling parameter changes. The important result is not a single base-case value; it is the shape of the response and the point where turndown limit, controller tuning indicator, ramping rate, startup time, anti-surge margin, and alarm-flood attention begin to trade against margin or cost.",
+  "calculation_basis": "Chapter-specific screening calculations for operability and transient behaviour of hydrogen production and compression, normalized to the KPIs: turndown limit, controller tuning indicator, ramping rate, startup time, anti-surge margin, and alarm-flood attention.",
+  "study_basis": "IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices.",
+  "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference",
+  "citation": "\\cite{iea2023hydrogen,towler2013chemical}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Study severity index": 1,
+      "Primary KPI index": 0.72,
+      "Demand index": 0.58,
+      "Margin index": 0.92
+    },
+    {
+      "Study severity index": 2,
+      "Primary KPI index": 0.84,
+      "Demand index": 0.72,
+      "Margin index": 0.84
+    },
+    {
+      "Study severity index": 3,
+      "Primary KPI index": 1.0,
+      "Demand index": 0.9,
+      "Margin index": 0.72
+    },
+    {
+      "Study severity index": 4,
+      "Primary KPI index": 1.13,
+      "Demand index": 1.05,
+      "Margin index": 0.58
+    },
+    {
+      "Study severity index": 5,
+      "Primary KPI index": 1.24,
+      "Demand index": 1.18,
+      "Margin index": 0.46
+    }
+  ]
+}

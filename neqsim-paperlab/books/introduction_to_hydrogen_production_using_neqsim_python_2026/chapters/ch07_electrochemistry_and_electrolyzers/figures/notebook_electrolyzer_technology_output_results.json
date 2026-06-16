@@ -1,0 +1,136 @@
+{
+  "chapter": "ch07_electrochemistry_and_electrolyzers",
+  "title": "Electrochemistry and Electrolyzer Stack Models",
+  "figure": "notebook_electrolyzer_technology_output.png",
+  "caption": "Expected electrolyzer technology output from stack I-V and cost-hook cells.",
+  "description": "The notebook output should make the technology trade-off visible: SOEC has the lowest electrical specific energy in this screening basis, while low-temperature technologies carry different pressure, current-density, and cost assumptions.",
+  "discussion": "The parameter study shows how green and pink H2 production from water and power responds when the controlling parameter changes. The important result is not a single base-case value; it is the shape of the response and the point where stack power, specific energy, pressure, temperature, and H2 production begin to trade against margin or cost.",
+  "calculation_basis": "Faraday-law water splitting, cell-voltage specific energy, current-density/load sweeps, and NeqSim Electrolyzer technology defaults where the notebook uses a stack model.",
+  "study_basis": "Public DOE electrolysis technology descriptions, IRENA scale/cost-learning observations, and the Buttler-Spliethoff electrolysis review define the technology bands.",
+  "source_labels": "US DOE electrolysis technology overview, IRENA Green Hydrogen Cost Reduction, Buttler and Spliethoff water-electrolysis review, ISO 22734 electrolyzer safety basis",
+  "citation": "\\cite{doeElectrolysis,irena2022greenhydrogen,buttler2018water,iso22734}",
+  "topic_examples": [
+    {
+      "route": "Green hydrogen",
+      "number": 1,
+      "topic": "Alkaline water electrolysis",
+      "chapter": "ch07_electrochemistry_and_electrolyzers",
+      "calculation": "Run ElectrolyzerTechnology.ALKALINE with current-density and voltage assumptions from the technology selector.",
+      "sweep": "Current density, operating pressure, Faradaic efficiency, and stack temperature.",
+      "kpis": "Cell voltage, kWh/kg H2, hydrogen rate, cooling or heat-rejection index.",
+      "source_ids": [
+        "doeElectrolysis",
+        "buttler2018water",
+        "irena2022greenhydrogen"
+      ],
+      "source_labels": "US DOE electrolysis technology overview, Buttler and Spliethoff water-electrolysis review, IRENA Green Hydrogen Cost Reduction",
+      "citation": "\\cite{doeElectrolysis,buttler2018water,irena2022greenhydrogen}"
+    },
+    {
+      "route": "Green hydrogen",
+      "number": 2,
+      "topic": "PEM electrolysis",
+      "chapter": "ch07_electrochemistry_and_electrolyzers",
+      "calculation": "Run ElectrolyzerTechnology.PEM with pressure operation, I-V curve, and compression-offset accounting.",
+      "sweep": "Current density, pressure, membrane resistance, and Faradaic efficiency.",
+      "kpis": "Specific energy, stack power, pressure credit, CAPEX index, durability attention index.",
+      "source_ids": [
+        "carmo2013pem",
+        "doeElectrolysis",
+        "iso22734"
+      ],
+      "source_labels": "Carmo et al. PEM electrolysis review, US DOE electrolysis technology overview, ISO 22734 electrolyzer safety basis",
+      "citation": "\\cite{carmo2013pem,doeElectrolysis,iso22734}"
+    },
+    {
+      "route": "Green hydrogen",
+      "number": 3,
+      "topic": "Anion exchange membrane electrolysis",
+      "chapter": "ch07_electrochemistry_and_electrolyzers",
+      "calculation": "Run ElectrolyzerTechnology.AEM as an emerging low-precious-metal case with a membrane-resistance sensitivity.",
+      "sweep": "AEM resistance factor, pressure, current density, and technology maturity factor.",
+      "kpis": "Specific energy, CAPEX index, durability risk index, water-management attention.",
+      "source_ids": [
+        "doeElectrolysis",
+        "irena2022greenhydrogen",
+        "roger2017catalysts"
+      ],
+      "source_labels": "US DOE electrolysis technology overview, IRENA Green Hydrogen Cost Reduction, Roger et al. water-splitting catalyst review",
+      "citation": "\\cite{doeElectrolysis,irena2022greenhydrogen,roger2017catalysts}"
+    },
+    {
+      "route": "Green hydrogen",
+      "number": 4,
+      "topic": "Solid oxide electrolysis cells",
+      "chapter": "ch07_electrochemistry_and_electrolyzers",
+      "calculation": "Run ElectrolyzerTechnology.SOEC with high-temperature efficiency and heat-credit assumptions.",
+      "sweep": "Stack temperature, heat-credit fraction, current density, and steam-feed condition.",
+      "kpis": "Electrical kWh/kg H2, thermal-duty credit, overall energy index, high-temperature materials attention.",
+      "source_ids": [
+        "doeElectrolysis",
+        "buttler2018water",
+        "irena2022greenhydrogen"
+      ],
+      "source_labels": "US DOE electrolysis technology overview, Buttler and Spliethoff water-electrolysis review, IRENA Green Hydrogen Cost Reduction",
+      "citation": "\\cite{doeElectrolysis,buttler2018water,irena2022greenhydrogen}"
+    },
+    {
+      "route": "Green hydrogen",
+      "number": 5,
+      "topic": "Electrocatalysts for HER and OER",
+      "chapter": "ch07_electrochemistry_and_electrolyzers",
+      "calculation": "Represent HER/OER catalyst improvements as reduced activation overpotential in the I-V characteristic.",
+      "sweep": "HER overpotential, OER overpotential, Tafel slope proxy, and noble-metal loading index.",
+      "kpis": "Cell-voltage reduction, kWh/kg H2 reduction, catalyst-cost index, stability attention index.",
+      "source_ids": [
+        "roger2017catalysts",
+        "buttler2018water",
+        "doeElectrolysis"
+      ],
+      "source_labels": "Roger et al. water-splitting catalyst review, Buttler and Spliethoff water-electrolysis review, US DOE electrolysis technology overview",
+      "citation": "\\cite{roger2017catalysts,buttler2018water,doeElectrolysis}"
+    },
+    {
+      "route": "Green hydrogen",
+      "number": 6,
+      "topic": "Membrane and ionomer development",
+      "chapter": "ch07_electrochemistry_and_electrolyzers",
+      "calculation": "Model membrane changes as area-specific resistance, crossover, and degradation factors in a stack screening table.",
+      "sweep": "Membrane resistance, gas-crossover index, PFAS-free material flag, and lifetime multiplier.",
+      "kpis": "Ohmic-loss voltage, Faradaic-efficiency loss, durability index, product-purity attention.",
+      "source_ids": [
+        "carmo2013pem",
+        "iso22734",
+        "doeElectrolysis"
+      ],
+      "source_labels": "Carmo et al. PEM electrolysis review, ISO 22734 electrolyzer safety basis, US DOE electrolysis technology overview",
+      "citation": "\\cite{carmo2013pem,iso22734,doeElectrolysis}"
+    }
+  ],
+  "rows": [
+    {
+      "Technology": "PEM",
+      "Cell voltage (V)": 1.8,
+      "Specific energy (kWh/kg H2)": 52.0,
+      "Relative CAPEX index": 1.0
+    },
+    {
+      "Technology": "Alkaline",
+      "Cell voltage (V)": 1.85,
+      "Specific energy (kWh/kg H2)": 56.0,
+      "Relative CAPEX index": 0.75
+    },
+    {
+      "Technology": "SOEC",
+      "Cell voltage (V)": 1.3,
+      "Specific energy (kWh/kg H2)": 38.0,
+      "Relative CAPEX index": 1.7
+    },
+    {
+      "Technology": "AEM",
+      "Cell voltage (V)": 1.85,
+      "Specific energy (kWh/kg H2)": 60.0,
+      "Relative CAPEX index": 1.15
+    }
+  ]
+}

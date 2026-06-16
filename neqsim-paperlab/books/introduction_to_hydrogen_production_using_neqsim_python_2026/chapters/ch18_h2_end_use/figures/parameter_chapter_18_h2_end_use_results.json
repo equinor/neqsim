@@ -1,0 +1,45 @@
+{
+  "chapter": "ch18_h2_end_use",
+  "title": "Hydrogen End-Use: Power, Heat, Mobility, and Industry",
+  "figure": "parameter_chapter_18_h2_end_use.png",
+  "caption": "Parameter study for Hydrogen End-Use: Power, Heat, Mobility, and Industry.",
+  "description": "The chapter parameter study converts the demand side of the hydrogen value chain into a small sweep with visible KPIs: H2 demand by sector, end-use efficiency, blending limits, fuel-quality status, and value-chain matching. The values are screening outputs intended to demonstrate the notebook structure and discussion pattern.",
+  "discussion": "The parameter study shows how the demand side of the hydrogen value chain responds when the controlling parameter changes. The important result is not a single base-case value; it is the shape of the response and the point where H2 demand by sector, end-use efficiency, blending limits, fuel-quality status, and value-chain matching begin to trade against margin or cost.",
+  "calculation_basis": "Chapter-specific screening calculations for the demand side of the hydrogen value chain, normalized to the KPIs: H2 demand by sector, end-use efficiency, blending limits, fuel-quality status, and value-chain matching.",
+  "study_basis": "IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices.",
+  "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference",
+  "citation": "\\cite{iea2023hydrogen,towler2013chemical}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Study severity index": 1,
+      "Primary KPI index": 0.72,
+      "Demand index": 0.58,
+      "Margin index": 0.92
+    },
+    {
+      "Study severity index": 2,
+      "Primary KPI index": 0.84,
+      "Demand index": 0.72,
+      "Margin index": 0.84
+    },
+    {
+      "Study severity index": 3,
+      "Primary KPI index": 1.0,
+      "Demand index": 0.9,
+      "Margin index": 0.72
+    },
+    {
+      "Study severity index": 4,
+      "Primary KPI index": 1.13,
+      "Demand index": 1.05,
+      "Margin index": 0.58
+    },
+    {
+      "Study severity index": 5,
+      "Primary KPI index": 1.24,
+      "Demand index": 1.18,
+      "Margin index": 0.46
+    }
+  ]
+}

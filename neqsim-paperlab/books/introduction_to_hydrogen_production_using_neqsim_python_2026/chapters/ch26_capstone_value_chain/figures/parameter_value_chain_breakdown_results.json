@@ -1,0 +1,43 @@
+{
+  "chapter": "ch26_capstone_value_chain",
+  "title": "Capstone C: Hydrogen Value-Chain Integration",
+  "figure": "parameter_value_chain_breakdown.png",
+  "caption": "Delivered cost and carbon intensity breakdown across the H2 value chain for blue-vs-green production with pipeline export.",
+  "description": "The value-chain capstone composes production, conditioning, transport, storage, and end-use into one balance sheet. The sweep compares blue-SMR vs green-PEM production, both with 500 km pipeline export and salt-cavern storage. KPIs are delivered LCOH at the end user, well-to-product carbon intensity, end-to-end energy efficiency, and round-trip storage penalty.",
+  "discussion": "At today's cost basis blue H2 has a clear delivered-cost advantage, but green H2 has roughly a 4x lower carbon intensity. Adding salt-cavern storage costs both routes ~0.30 USD/kg and 4 percentage points of efficiency. The capstone makes the trade-off auditable: a single boundary, a consistent EOS, and one set of cost and carbon assumptions across every block in the chain.",
+  "calculation_basis": "Chapter-specific screening calculations for an end-to-end H2 value-chain screening case from feed to end-user, normalized to the KPIs: delivered cost of hydrogen at the end-user, carbon intensity from well-to-product, end-to-end energy efficiency, and integrated risk register.",
+  "study_basis": "IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices.",
+  "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference",
+  "citation": "\\cite{iea2023hydrogen,towler2013chemical}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Case": "Blue SMR + pipe + cavern",
+      "Delivered LCOH (USD/kg)": 2.4,
+      "CI well-to-product (kgCO2/kgH2)": 1.2,
+      "End-to-end eff (%)": 62.0,
+      "Storage penalty (%)": 4.0
+    },
+    {
+      "Case": "Blue SMR + pipe (no storage)",
+      "Delivered LCOH (USD/kg)": 2.1,
+      "CI well-to-product (kgCO2/kgH2)": 1.1,
+      "End-to-end eff (%)": 66.0,
+      "Storage penalty (%)": 0.0
+    },
+    {
+      "Case": "Green PEM + pipe + cavern",
+      "Delivered LCOH (USD/kg)": 4.8,
+      "CI well-to-product (kgCO2/kgH2)": 0.3,
+      "End-to-end eff (%)": 48.0,
+      "Storage penalty (%)": 4.0
+    },
+    {
+      "Case": "Green PEM + pipe (no storage)",
+      "Delivered LCOH (USD/kg)": 4.3,
+      "CI well-to-product (kgCO2/kgH2)": 0.25,
+      "End-to-end eff (%)": 52.0,
+      "Storage penalty (%)": 0.0
+    }
+  ]
+}

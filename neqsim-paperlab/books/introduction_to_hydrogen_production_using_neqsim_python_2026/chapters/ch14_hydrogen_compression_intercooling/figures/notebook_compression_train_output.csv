@@ -1,0 +1,6 @@
+Unit,Pressure (bara),Outlet T (degC),Power or duty (MW)
+Feed,90,20,0.0
+C-101,120,67,18.5
+E-101,120,20,-15.2
+C-102,150,59,14.1
+E-102,150,20,-11.6

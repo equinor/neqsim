@@ -1,0 +1,72 @@
+{
+  "chapter": "ch09_reforming_flowsheets",
+  "title": "Reforming Plant Flowsheets",
+  "figure": "parameter_reforming_route_builder_sweep.png",
+  "caption": "Parameter study for SMR, ATR, POX, and blue-H2 route builders.",
+  "description": "The reforming study compares route-builder outputs as relative indices for methane conversion, oxygen demand, tube or burner duty, and syngas H2/CO readiness.",
+  "discussion": "The route builders are not interchangeable black boxes. SMR, ATR, POX, and blue-SMR cases distribute energy and syngas quality differently. The study demonstrates why route comparison notebooks should report conversion, duty, syngas quality, and downstream purification assumptions together.",
+  "calculation_basis": "Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.",
+  "study_basis": "IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits.",
+  "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference, Gas purification reference, GPSA engineering data reference",
+  "citation": "\\cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}",
+  "topic_examples": [
+    {
+      "route": "Blue hydrogen",
+      "number": 2,
+      "topic": "Autothermal reforming for blue hydrogen",
+      "chapter": "ch09_reforming_flowsheets",
+      "calculation": "Compare ATR route-builder cases with oxygen-to-carbon and steam-to-carbon controls before downstream capture.",
+      "sweep": "O2/C and S/C cases around the base ATR operating window.",
+      "kpis": "Methane conversion, syngas H2/CO readiness, soot-risk index, oxygen demand, CO2 concentration index.",
+      "source_ids": [
+        "iea2023hydrogen",
+        "towler2013chemical",
+        "gpsa2012"
+      ],
+      "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference, GPSA engineering data reference",
+      "citation": "\\cite{iea2023hydrogen,towler2013chemical,gpsa2012}"
+    },
+    {
+      "route": "Blue hydrogen",
+      "number": 3,
+      "topic": "SMR versus ATR versus partial oxidation",
+      "chapter": "ch09_reforming_flowsheets",
+      "calculation": "Run SMRHydrogenPlantBuilder, ATRHydrogenPlantBuilder, and POXHydrogenPlantBuilder as matched route-screening cases.",
+      "sweep": "Route type at equal methane feed with route-specific steam and oxygen assumptions.",
+      "kpis": "Conversion index, duty index, H2/CO readiness, downstream purification burden.",
+      "source_ids": [
+        "iea2023hydrogen",
+        "towler2013chemical",
+        "gpsa2012"
+      ],
+      "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference, GPSA engineering data reference",
+      "citation": "\\cite{iea2023hydrogen,towler2013chemical,gpsa2012}"
+    }
+  ],
+  "rows": [
+    {
+      "Route": "SMR",
+      "Conversion index": 0.72,
+      "Duty index": 1.0,
+      "H2/CO readiness index": 0.9
+    },
+    {
+      "Route": "ATR",
+      "Conversion index": 0.82,
+      "Duty index": 0.72,
+      "H2/CO readiness index": 0.78
+    },
+    {
+      "Route": "POX",
+      "Conversion index": 0.7,
+      "Duty index": 0.62,
+      "H2/CO readiness index": 0.58
+    },
+    {
+      "Route": "Blue SMR",
+      "Conversion index": 0.72,
+      "Duty index": 1.1,
+      "H2/CO readiness index": 0.94
+    }
+  ]
+}

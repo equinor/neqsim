@@ -1,0 +1,57 @@
+{
+  "chapter": "ch18_h2_end_use",
+  "title": "Hydrogen End-Use: Power, Heat, Mobility, and Industry",
+  "figure": "parameter_h2_blending_wobbe.png",
+  "caption": "Wobbe Index and burner-tip behaviour vs hydrogen volume fraction in a natural-gas blend.",
+  "description": "The end-use chapter sweeps hydrogen volume fraction in a methane-dominated gas grid (0, 5, 10, 20, 30, 50 vol%) and tracks Wobbe Index, lower heating value (volumetric), laminar flame speed index, and a NOx-attention index for premix burners.",
+  "discussion": "At low blend levels (<10 vol% H2) Wobbe Index stays within typical EN 16726 H-gas bands and most existing appliances tolerate the change. Above 20 vol% the volumetric heating value drops noticeably and flame speed rises sharply, which can shift flame stability windows and NOx formation. End-use compatibility is therefore a per-appliance question, not a single grid-wide tolerance.",
+  "calculation_basis": "Chapter-specific screening calculations for the demand side of the hydrogen value chain, normalized to the KPIs: H2 demand by sector, end-use efficiency, blending limits, fuel-quality status, and value-chain matching.",
+  "study_basis": "IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices.",
+  "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference",
+  "citation": "\\cite{iea2023hydrogen,towler2013chemical}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "H2 vol% in blend": 0,
+      "Wobbe Index (MJ/Sm3)": 50.7,
+      "LHV vol (MJ/Sm3)": 36.0,
+      "Flame speed index": 1.0,
+      "NOx attention": 1.0
+    },
+    {
+      "H2 vol% in blend": 5,
+      "Wobbe Index (MJ/Sm3)": 50.3,
+      "LHV vol (MJ/Sm3)": 35.0,
+      "Flame speed index": 1.08,
+      "NOx attention": 1.02
+    },
+    {
+      "H2 vol% in blend": 10,
+      "Wobbe Index (MJ/Sm3)": 49.8,
+      "LHV vol (MJ/Sm3)": 34.0,
+      "Flame speed index": 1.18,
+      "NOx attention": 1.05
+    },
+    {
+      "H2 vol% in blend": 20,
+      "Wobbe Index (MJ/Sm3)": 48.6,
+      "LHV vol (MJ/Sm3)": 32.0,
+      "Flame speed index": 1.42,
+      "NOx attention": 1.15
+    },
+    {
+      "H2 vol% in blend": 30,
+      "Wobbe Index (MJ/Sm3)": 47.1,
+      "LHV vol (MJ/Sm3)": 30.0,
+      "Flame speed index": 1.72,
+      "NOx attention": 1.3
+    },
+    {
+      "H2 vol% in blend": 50,
+      "Wobbe Index (MJ/Sm3)": 43.5,
+      "LHV vol (MJ/Sm3)": 25.6,
+      "Flame speed index": 2.5,
+      "NOx attention": 1.75
+    }
+  ]
+}

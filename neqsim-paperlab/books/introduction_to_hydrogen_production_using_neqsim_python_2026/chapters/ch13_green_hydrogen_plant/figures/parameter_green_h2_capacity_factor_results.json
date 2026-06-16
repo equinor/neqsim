@@ -1,0 +1,62 @@
+{
+  "chapter": "ch13_green_hydrogen_plant",
+  "title": "Green Hydrogen Electrolysis Plant",
+  "figure": "parameter_green_h2_capacity_factor.png",
+  "caption": "Parameter study for green-H2 plant capacity factor and balance-of-plant load.",
+  "description": "The green-H2 plant study sweeps capacity factor and tracks annual hydrogen output, specific energy, and relative balance-of-plant load.",
+  "discussion": "Capacity factor changes the economics and equipment utilization more than it changes stack thermodynamics. The parameter study therefore connects the electrolyzer model to plant-level questions: water supply, cooling, compression, storage, and power availability.",
+  "calculation_basis": "Faraday-law water splitting, cell-voltage specific energy, current-density/load sweeps, and NeqSim Electrolyzer technology defaults where the notebook uses a stack model.",
+  "study_basis": "Public DOE electrolysis technology descriptions, IRENA scale/cost-learning observations, and the Buttler-Spliethoff electrolysis review define the technology bands.",
+  "source_labels": "US DOE electrolysis technology overview, IRENA Green Hydrogen Cost Reduction, Buttler and Spliethoff water-electrolysis review, ISO 22734 electrolyzer safety basis",
+  "citation": "\\cite{doeElectrolysis,irena2022greenhydrogen,buttler2018water,iso22734}",
+  "topic_examples": [
+    {
+      "route": "Green hydrogen",
+      "number": 7,
+      "topic": "Dynamic operation with wind and solar",
+      "chapter": "ch13_green_hydrogen_plant",
+      "calculation": "Run a plant capacity-factor and part-load sweep around the electrolyzer plus balance-of-plant model.",
+      "sweep": "Capacity factor, part-load point, ramping/start-stop count, and buffer-storage duration.",
+      "kpis": "Annual H2 output, specific energy, utilization, degradation attention, storage requirement.",
+      "source_ids": [
+        "irena2022greenhydrogen",
+        "doeElectrolysis",
+        "buttler2018water"
+      ],
+      "source_labels": "IRENA Green Hydrogen Cost Reduction, US DOE electrolysis technology overview, Buttler and Spliethoff water-electrolysis review",
+      "citation": "\\cite{irena2022greenhydrogen,doeElectrolysis,buttler2018water}"
+    }
+  ],
+  "rows": [
+    {
+      "Capacity factor (%)": 30,
+      "Annual H2 index": 0.3,
+      "Specific energy index": 1.06,
+      "BoP load index": 0.7
+    },
+    {
+      "Capacity factor (%)": 45,
+      "Annual H2 index": 0.45,
+      "Specific energy index": 1.03,
+      "BoP load index": 0.8
+    },
+    {
+      "Capacity factor (%)": 60,
+      "Annual H2 index": 0.6,
+      "Specific energy index": 1.0,
+      "BoP load index": 0.9
+    },
+    {
+      "Capacity factor (%)": 75,
+      "Annual H2 index": 0.75,
+      "Specific energy index": 0.99,
+      "BoP load index": 1.0
+    },
+    {
+      "Capacity factor (%)": 90,
+      "Annual H2 index": 0.9,
+      "Specific energy index": 0.98,
+      "BoP load index": 1.1
+    }
+  ]
+}

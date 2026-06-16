@@ -1,0 +1,39 @@
+{
+  "chapter": "ch00_hydrogen_quickstart",
+  "title": "30-Minute Hydrogen Plant Quickstart",
+  "figure": "parameter_quickstart_route_screen.png",
+  "caption": "Parameter study for the 30-minute hydrogen quickstart route screen.",
+  "description": "The quickstart study turns a single base case into a route comparison. The graph shows how blue-H2 capture, electrolysis, and export compression shift the balance between product rate, energy intensity, and carbon intensity.",
+  "discussion": "The quickstart result demonstrates why hydrogen examples should not stop at a product-flow number. Adding CO2 capture lowers carbon intensity but adds energy, while green-H2 routes move the burden to electricity and downstream compression. The engineering takeaway is to report product flow, energy, and carbon boundary together from the first notebook cell.",
+  "calculation_basis": "Chapter-specific screening calculations for a small H2 production train, normalized to the KPIs: H2 mass rate, specific energy, water balance, and validation status.",
+  "study_basis": "IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices.",
+  "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference",
+  "citation": "\\cite{iea2023hydrogen,towler2013chemical}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Case": "SMR base",
+      "H2 product index": 1.0,
+      "Specific energy index": 0.8,
+      "Carbon intensity index": 1.0
+    },
+    {
+      "Case": "Blue H2",
+      "H2 product index": 0.92,
+      "Specific energy index": 0.92,
+      "Carbon intensity index": 0.28
+    },
+    {
+      "Case": "PEM green",
+      "H2 product index": 0.72,
+      "Specific energy index": 1.18,
+      "Carbon intensity index": 0.04
+    },
+    {
+      "Case": "Compressed export",
+      "H2 product index": 0.7,
+      "Specific energy index": 1.36,
+      "Carbon intensity index": 0.04
+    }
+  ]
+}

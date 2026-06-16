@@ -1,0 +1,20 @@
+{
+  "basis": {
+    "pure_hydrogen_reference": "Leachman EOS",
+    "mixture_reference": "GERG-2008-H2 for mixtures, Leachman at pure H2",
+    "pure_h2_temperature_K": 300.0,
+    "mixture_temperature_K": 288.15,
+    "mixture_pressure_bara": 100.0
+  },
+  "pure_hydrogen_max_abs_density_deviation_pct": {
+    "GERG2008": 0.021381266278575062,
+    "GERG2008-H2": 0.021381266278575062,
+    "PR": 5.292087872478413,
+    "SRK": 3.639291980883841
+  },
+  "mixture_max_abs_density_deviation_pct": {
+    "GERG2008": 0.279548970021648,
+    "PR": 1.4965765784878737,
+    "SRK": 1.5481922654217994
+  }
+}

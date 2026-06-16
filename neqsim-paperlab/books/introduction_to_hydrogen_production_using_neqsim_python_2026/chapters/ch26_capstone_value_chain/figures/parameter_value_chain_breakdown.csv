@@ -1,0 +1,5 @@
+Case,Delivered LCOH (USD/kg),CI well-to-product (kgCO2/kgH2),End-to-end eff (%),Storage penalty (%)
+Blue SMR + pipe + cavern,2.4,1.2,62.0,4.0
+Blue SMR + pipe (no storage),2.1,1.1,66.0,0.0
+Green PEM + pipe + cavern,4.8,0.3,48.0,4.0
+Green PEM + pipe (no storage),4.3,0.25,52.0,0.0

@@ -1,0 +1,78 @@
+{
+  "chapter": "ch22_cost_estimation_and_project_economics",
+  "title": "Cost Estimation and Project Economics",
+  "figure": "parameter_cost_scale_lcoh.png",
+  "caption": "Parameter study for hydrogen plant scale, CAPEX, and LCOH.",
+  "description": "The economics study sweeps plant scale and shows the effect of scale on relative CAPEX and LCOH. Values are screening indices intended to demonstrate sensitivity workflow and reporting structure.",
+  "discussion": "The scale sweep shows the usual early-study behaviour: total CAPEX increases with size, but unit cost can fall as fixed costs are spread over more hydrogen. The result belongs beside an uncertainty statement because equipment data, local execution strategy, power price, and utilization can dominate the index.",
+  "calculation_basis": "Scale-factor CAPEX, utilization, OPEX, power-price, and LCOH index calculations from equipment and economic-screening formulas.",
+  "study_basis": "IRENA and IEA hydrogen cost observations plus standard process-cost references define the early-study cost ranges.",
+  "source_labels": "IRENA Green Hydrogen Cost Reduction, IEA Global Hydrogen Review 2023, Process cost-estimation reference, Process design economics reference",
+  "citation": "\\cite{irena2022greenhydrogen,iea2023hydrogen,turton2018,seider2017}",
+  "topic_examples": [
+    {
+      "route": "Blue hydrogen",
+      "number": 6,
+      "topic": "Methane leakage and lifecycle emissions",
+      "chapter": "ch22_cost_estimation_and_project_economics",
+      "calculation": "Add upstream methane leakage to direct residual CO2 and convert it to a lifecycle carbon-intensity sensitivity.",
+      "sweep": "Upstream methane leakage fraction, natural-gas consumption, carbon price, and capture target.",
+      "kpis": "Lifecycle kg CO2e/kg H2, carbon-cost index, breakeven carbon price, pass/fail against project CI target.",
+      "source_ids": [
+        "howarth2021bluehydrogen",
+        "iea2023hydrogen",
+        "turton2018"
+      ],
+      "source_labels": "Howarth and Jacobson blue-hydrogen lifecycle study, IEA Global Hydrogen Review 2023, Process cost-estimation reference",
+      "citation": "\\cite{howarth2021bluehydrogen,iea2023hydrogen,turton2018}"
+    },
+    {
+      "route": "Blue hydrogen",
+      "number": 10,
+      "topic": "Techno-economic and policy analysis of blue hydrogen",
+      "chapter": "ch22_cost_estimation_and_project_economics",
+      "calculation": "Run an LCOH index case that includes gas price, capture CAPEX, CO2 transport/storage cost, carbon price, and utilization.",
+      "sweep": "Gas price, carbon price, capture target, storage tariff, and plant scale.",
+      "kpis": "LCOH, residual carbon-cost exposure, CAPEX index, probability of meeting policy threshold.",
+      "source_ids": [
+        "iea2023hydrogen",
+        "turton2018",
+        "seider2017"
+      ],
+      "source_labels": "IEA Global Hydrogen Review 2023, Process cost-estimation reference, Process design economics reference",
+      "citation": "\\cite{iea2023hydrogen,turton2018,seider2017}"
+    }
+  ],
+  "rows": [
+    {
+      "Plant scale (t/d H2)": 20,
+      "CAPEX index": 0.38,
+      "OPEX index": 0.52,
+      "LCOH index": 1.45
+    },
+    {
+      "Plant scale (t/d H2)": 50,
+      "CAPEX index": 0.68,
+      "OPEX index": 0.7,
+      "LCOH index": 1.15
+    },
+    {
+      "Plant scale (t/d H2)": 100,
+      "CAPEX index": 1.0,
+      "OPEX index": 1.0,
+      "LCOH index": 1.0
+    },
+    {
+      "Plant scale (t/d H2)": 200,
+      "CAPEX index": 1.72,
+      "OPEX index": 1.82,
+      "LCOH index": 0.88
+    },
+    {
+      "Plant scale (t/d H2)": 400,
+      "CAPEX index": 3.02,
+      "OPEX index": 3.42,
+      "LCOH index": 0.8
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "chapter": "ch20_safety_standards_and_risk",
+  "title": "Safety, Standards, and Risk",
+  "figure": "parameter_safety_operability_envelope.png",
+  "caption": "Parameter study for hydrogen safety and operability envelope.",
+  "description": "The safety study sweeps operating pressure and tracks source-term index, materials attention, and operability margin for a hydrogen service envelope.",
+  "discussion": "The pressure sweep shows why safety and operability should be reviewed before a pressure level is frozen. Higher pressure can reduce pipe size or storage volume, but it increases source terms, materials scrutiny, relief demand, and control sensitivity.",
+  "calculation_basis": "Operating-pressure, hydrogen partial-pressure, leak-source, materials-attention, and operability-margin screening calculations.",
+  "study_basis": "ASME B31.12, API 941, API 521, and ISO hydrogen quality standards define the review basis; the plotted values are screening inputs, not acceptance decisions.",
+  "source_labels": "ASME B31.12 hydrogen piping basis, API 941 hydrogen-service materials basis, API 521 pressure-relief and source-term basis, ISO 14687 hydrogen fuel-quality basis",
+  "citation": "\\cite{asmeb3112,api941,api521,iso14687}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Operating pressure (bara)": 30,
+      "Source-term index": 0.2,
+      "Materials attention": 0.3,
+      "Operability margin": 0.92
+    },
+    {
+      "Operating pressure (bara)": 60,
+      "Source-term index": 0.38,
+      "Materials attention": 0.44,
+      "Operability margin": 0.84
+    },
+    {
+      "Operating pressure (bara)": 100,
+      "Source-term index": 0.62,
+      "Materials attention": 0.62,
+      "Operability margin": 0.73
+    },
+    {
+      "Operating pressure (bara)": 150,
+      "Source-term index": 0.82,
+      "Materials attention": 0.8,
+      "Operability margin": 0.58
+    },
+    {
+      "Operating pressure (bara)": 200,
+      "Source-term index": 1.0,
+      "Materials attention": 0.96,
+      "Operability margin": 0.42
+    }
+  ]
+}

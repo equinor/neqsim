@@ -1,0 +1,9 @@
+# Pinned-by-floor dependencies for the hydrogen-production book notebooks.
+# Install with: pip install -r requirements.txt
+neqsim>=3.0
+jpype1>=1.5
+numpy>=1.24
+pandas>=2.0
+matplotlib>=3.7
+scipy>=1.10
+jupyter>=1.0

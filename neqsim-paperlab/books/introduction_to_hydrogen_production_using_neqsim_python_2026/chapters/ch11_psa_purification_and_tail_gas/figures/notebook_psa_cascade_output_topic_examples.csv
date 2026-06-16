@@ -1,0 +1,2 @@
+route,number,topic,chapter,calculation,sweep,kpis,source_ids,source_labels,citation
+Blue hydrogen,8,Hydrogen purification and PSA optimization,ch11_psa_purification_and_tail_gas,Run a PSACascade bed-count and equalisation sweep on shifted syngas.,"Number of beds, equalisation steps, recovery target, and tail-gas return assumption.","H2 purity, H2 recovery, tail-gas heating value index, PSA CAPEX index.","['kohl1997', 'seader2016', 'gpsa2012']","Gas purification reference, seader2016, GPSA engineering data reference","\cite{kohl1997,seader2016,gpsa2012}"

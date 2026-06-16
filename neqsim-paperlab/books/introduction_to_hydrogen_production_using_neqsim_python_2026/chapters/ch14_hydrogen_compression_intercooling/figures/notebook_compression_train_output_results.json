@@ -1,0 +1,62 @@
+{
+  "chapter": "ch14_hydrogen_compression_intercooling",
+  "title": "Hydrogen Compression and Intercooling",
+  "figure": "notebook_compression_train_output.png",
+  "caption": "Expected two-stage compression and intercooling output.",
+  "description": "The compression notebook output should show power by stage, hot compressor discharge temperatures, and restored aftercooler temperatures. Those values are the basis for cooling, driver, and materials checks.",
+  "discussion": "The parameter study shows how the compressor train after PSA or electrolysis responds when the controlling parameter changes. The important result is not a single base-case value; it is the shape of the response and the point where stage power, discharge temperature, intercooler duty, total MW, specific kWh/kg, and operating envelope begin to trade against margin or cost.",
+  "calculation_basis": "Isentropic compression, intercooling heat balance, pipeline pressure-profile, temperature-profile, and linepack inventory calculations.",
+  "study_basis": "GPSA and gas-transmission references provide independent engineering ranges for compression, transport, and gas-quality interpretation.",
+  "source_labels": "GPSA engineering data reference, Gas transmission and processing reference, Chemical engineering design reference",
+  "citation": "\\cite{gpsa2012,mokhatab2018,towler2013chemical}",
+  "topic_examples": [
+    {
+      "route": "Green hydrogen",
+      "number": 9,
+      "topic": "Process integration and hydrogen compression",
+      "chapter": "ch14_hydrogen_compression_intercooling",
+      "calculation": "Connect electrolyzer outlet pressure to drying, cooling, compression stages, and storage/export pressure.",
+      "sweep": "Stack outlet pressure, compressor stage count, intercooler target, and export pressure.",
+      "kpis": "Compression kWh/kg H2, discharge temperature, cooling duty, dryer water-removal flag, storage pressure margin.",
+      "source_ids": [
+        "gpsa2012",
+        "mokhatab2018",
+        "doeElectrolysis"
+      ],
+      "source_labels": "GPSA engineering data reference, Gas transmission and processing reference, US DOE electrolysis technology overview",
+      "citation": "\\cite{gpsa2012,mokhatab2018,doeElectrolysis}"
+    }
+  ],
+  "rows": [
+    {
+      "Unit": "Feed",
+      "Pressure (bara)": 90,
+      "Outlet T (degC)": 20,
+      "Power or duty (MW)": 0.0
+    },
+    {
+      "Unit": "C-101",
+      "Pressure (bara)": 120,
+      "Outlet T (degC)": 67,
+      "Power or duty (MW)": 18.5
+    },
+    {
+      "Unit": "E-101",
+      "Pressure (bara)": 120,
+      "Outlet T (degC)": 20,
+      "Power or duty (MW)": -15.2
+    },
+    {
+      "Unit": "C-102",
+      "Pressure (bara)": 150,
+      "Outlet T (degC)": 59,
+      "Power or duty (MW)": 14.1
+    },
+    {
+      "Unit": "E-102",
+      "Pressure (bara)": 150,
+      "Outlet T (degC)": 20,
+      "Power or duty (MW)": -11.6
+    }
+  ]
+}

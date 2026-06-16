@@ -1,0 +1,28 @@
+{
+  "coverage_complete": true,
+  "families_reviewed": 25,
+  "covered_families": 25,
+  "missing_families": [],
+  "live_or_route_builder_rows": 6,
+  "chapter_parameter_rows": 10,
+  "coverage_by_primary_chapter": {
+    "ch04_hydrogen_reference_equations": 2,
+    "ch05_feedstocks_and_fluids": 2,
+    "ch19_materials_embrittlement_hydrogen_service": 2,
+    "ch22_cost_estimation_and_project_economics": 2,
+    "ch08_phase_behavior_with_co2_water_impurities": 2,
+    "ch09_reforming_flowsheets": 2,
+    "ch10_water_gas_shift_and_heat_recovery": 2,
+    "ch00_hydrogen_quickstart": 1,
+    "ch01_why_hydrogen_modeling": 1,
+    "ch02_neqsim_architecture_for_hydrogen": 1,
+    "ch06_reaction_equilibrium_and_kinetics": 1,
+    "ch07_electrochemistry_and_electrolyzers": 1,
+    "ch03_python_environment_and_reproducibility": 1,
+    "ch11_psa_purification_and_tail_gas": 1,
+    "ch14_hydrogen_compression_intercooling": 1,
+    "ch13_green_hydrogen_plant": 1,
+    "ch15_pipeline_transport_linepack": 1,
+    "ch20_safety_standards_and_risk": 1
+  }
+}

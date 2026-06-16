@@ -1,0 +1,5 @@
+Execution mode,Setup effort,Fresh-branch fidelity,Repeatability
+Installed package,0.25,0.45,0.7
+Workspace devtools,0.55,0.95,0.78
+Runner notebook,0.72,0.95,0.94
+Report refresh,0.65,0.8,0.9

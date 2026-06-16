@@ -1,0 +1,45 @@
+{
+  "chapter": "ch08_phase_behavior_with_co2_water_impurities",
+  "title": "Phase Behavior with CO2, Water, and Impurities",
+  "figure": "parameter_impurity_phase_margin.png",
+  "caption": "Parameter study for CO2, water, and impurity phase-behavior margin.",
+  "description": "The impurity study sweeps CO2 content in a hydrogen-rich stream and tracks relative water-knockout demand, hydrate or ice attention, and dense-phase CO2 handoff margin.",
+  "discussion": "The graph shows why impurity handling must be part of hydrogen modelling. CO2 and water traces can shift knock-out, polishing, and CCS handoff requirements even when hydrogen remains the dominant component. The recommended response is to run impurity sweeps before fixing product and capture boundaries.",
+  "calculation_basis": "EOS, phase-equilibrium, density, enthalpy, para-ortho, water, and impurity sweeps generated from thermodynamic property calculations and sanity checks.",
+  "study_basis": "SRK, Peng-Robinson, GERG-2008, and thermodynamic-modelling references define the property-model envelope used for the plotted values.",
+  "source_labels": "SRK EOS reference, Peng-Robinson EOS reference, GERG-2008 mixture-property reference, Thermodynamic modelling reference",
+  "citation": "\\cite{soave1972,pengrobinson1976,kunz2012gerg,michelsen2007}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "CO2 in H2 stream (mol%)": 0.5,
+      "Water knockout index": 0.2,
+      "Impurity enrichment index": 0.15,
+      "Phase-risk index": 0.18
+    },
+    {
+      "CO2 in H2 stream (mol%)": 2.0,
+      "Water knockout index": 0.32,
+      "Impurity enrichment index": 0.28,
+      "Phase-risk index": 0.3
+    },
+    {
+      "CO2 in H2 stream (mol%)": 5.0,
+      "Water knockout index": 0.5,
+      "Impurity enrichment index": 0.48,
+      "Phase-risk index": 0.52
+    },
+    {
+      "CO2 in H2 stream (mol%)": 10.0,
+      "Water knockout index": 0.78,
+      "Impurity enrichment index": 0.76,
+      "Phase-risk index": 0.78
+    },
+    {
+      "CO2 in H2 stream (mol%)": 20.0,
+      "Water knockout index": 1.0,
+      "Impurity enrichment index": 1.0,
+      "Phase-risk index": 1.0
+    }
+  ]
+}

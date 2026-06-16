@@ -1,0 +1,39 @@
+{
+  "chapter": "ch24_capstone_blue_hydrogen_python_study",
+  "title": "Capstone A: Blue H2 Plant Python Study",
+  "figure": "parameter_blue_capstone_acceptance.png",
+  "caption": "Parameter study for blue-H2 capstone acceptance criteria.",
+  "description": "The blue capstone study compares capture target cases against residual carbon intensity, hydrogen product index, and total energy index.",
+  "discussion": "The capstone result makes acceptance criteria explicit. The best carbon case is not automatically the best energy case, and a process change that increases hydrogen production may worsen residual carbon intensity. This is why capstone notebooks need pass/warn/fail criteria, not only KPIs.",
+  "calculation_basis": "Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.",
+  "study_basis": "IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits.",
+  "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference, Gas purification reference, GPSA engineering data reference",
+  "citation": "\\cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Case": "Base 90%",
+      "H2 product index": 1.0,
+      "Residual CI index": 0.18,
+      "Total energy index": 1.0
+    },
+    {
+      "Case": "High capture",
+      "H2 product index": 0.98,
+      "Residual CI index": 0.1,
+      "Total energy index": 1.08
+    },
+    {
+      "Case": "Low S/C",
+      "H2 product index": 1.04,
+      "Residual CI index": 0.22,
+      "Total energy index": 0.94
+    },
+    {
+      "Case": "High pressure export",
+      "H2 product index": 0.99,
+      "Residual CI index": 0.18,
+      "Total energy index": 1.12
+    }
+  ]
+}

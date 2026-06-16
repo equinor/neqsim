@@ -1,0 +1,62 @@
+{
+  "chapter": "ch01_why_hydrogen_modeling",
+  "title": "Why Hydrogen Production Modeling Matters",
+  "figure": "parameter_hydrogen_route_decision.png",
+  "caption": "Parameter study for hydrogen-route screening decisions.",
+  "description": "The route-screening parameter study compares carbon intensity, energy demand, and maturity across common hydrogen routes. The purpose is to demonstrate how NeqSim cases become decision evidence rather than isolated calculations.",
+  "discussion": "The graph shows that route selection is a multi-objective problem. A low-carbon route may need more electrical or thermal energy, and a mature route may not meet long-term carbon targets. The book uses this pattern repeatedly: model the route, expose the assumptions, and discuss the trade-off in engineering terms.",
+  "calculation_basis": "Chapter-specific screening calculations for route screening across grey, blue, green, pink, and selected carrier-adjacent H2 concepts, normalized to the KPIs: route selection, boundary definition, and evidence quality.",
+  "study_basis": "IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices.",
+  "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference",
+  "citation": "\\cite{iea2023hydrogen,towler2013chemical}",
+  "topic_examples": [
+    {
+      "route": "Cross-route frontier",
+      "number": 3,
+      "topic": "Photoelectrochemical, photochemical, and biological hydrogen",
+      "chapter": "ch01_why_hydrogen_modeling",
+      "calculation": "Include exploratory solar/photo/bio routes as boundary-definition cases with solar-to-hydrogen or biological-yield indices.",
+      "sweep": "Solar-to-hydrogen efficiency, reactor area, capacity factor, biological yield, and separation load.",
+      "kpis": "Land or area intensity, H2 output index, maturity index, separation-energy attention.",
+      "source_ids": [
+        "doePhotoelectrochemical",
+        "doePhotobiological",
+        "holladay2009hydrogen"
+      ],
+      "source_labels": "US DOE photoelectrochemical hydrogen overview, US DOE photobiological hydrogen overview, Holladay et al. hydrogen-production technology review",
+      "citation": "\\cite{doePhotoelectrochemical,doePhotobiological,holladay2009hydrogen}"
+    }
+  ],
+  "rows": [
+    {
+      "Route": "Grey SMR",
+      "Carbon intensity index": 1.0,
+      "Energy index": 0.78,
+      "Maturity index": 0.95
+    },
+    {
+      "Route": "Blue SMR",
+      "Carbon intensity index": 0.28,
+      "Energy index": 0.94,
+      "Maturity index": 0.78
+    },
+    {
+      "Route": "Green PEM",
+      "Carbon intensity index": 0.04,
+      "Energy index": 1.2,
+      "Maturity index": 0.7
+    },
+    {
+      "Route": "SOEC",
+      "Carbon intensity index": 0.03,
+      "Energy index": 0.92,
+      "Maturity index": 0.45
+    },
+    {
+      "Route": "Carrier screening",
+      "Carbon intensity index": 0.18,
+      "Energy index": 1.45,
+      "Maturity index": 0.35
+    }
+  ]
+}

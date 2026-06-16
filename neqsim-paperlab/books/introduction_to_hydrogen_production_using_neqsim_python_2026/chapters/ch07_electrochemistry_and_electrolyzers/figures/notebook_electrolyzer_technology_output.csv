@@ -1,0 +1,5 @@
+Technology,Cell voltage (V),Specific energy (kWh/kg H2),Relative CAPEX index
+PEM,1.8,52.0,1.0
+Alkaline,1.85,56.0,0.75
+SOEC,1.3,38.0,1.7
+AEM,1.85,60.0,1.15

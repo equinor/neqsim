@@ -1,0 +1,62 @@
+{
+  "chapter": "ch06_reaction_equilibrium_and_kinetics",
+  "title": "Chemical Reaction Equilibrium: SMR, ATR, WGS, and Ammonia-Cracking Screening",
+  "figure": "notebook_smr_equilibrium_sweep.png",
+  "caption": "Expected Gibbs-reactor trend for an SMR equilibrium temperature sweep.",
+  "description": "The reaction-equilibrium notebook should show methane conversion and hydrogen fraction increasing with reformer temperature for the selected steam-to-carbon and pressure basis, while convergence and mass-balance error remain visible in the output table.",
+  "discussion": "The parameter study shows how the chemistry block in blue H2, syngas conditioning, methanol-equilibrium demonstration, and ammonia-cracking screening studies responds when the controlling parameter changes. The important result is not a single base-case value; it is the shape of the response and the point where equilibrium composition, methane slip, CO conversion, H2 yield, steam-to-carbon, heat of reaction, and catalyst activity begin to trade against margin or cost.",
+  "calculation_basis": "Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.",
+  "study_basis": "IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits.",
+  "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference, Gas purification reference, GPSA engineering data reference",
+  "citation": "\\cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}",
+  "topic_examples": [
+    {
+      "route": "Cross-route frontier",
+      "number": 1,
+      "topic": "Methane pyrolysis and turquoise hydrogen",
+      "chapter": "ch06_reaction_equilibrium_and_kinetics",
+      "calculation": "Add methane-pyrolysis equilibrium and solid-carbon handling as a thermochemical route-screening example beside SMR/ATR/POX.",
+      "sweep": "Temperature, conversion approach, heat-supply index, catalyst stability, and carbon-product credit.",
+      "kpis": "H2 yield, direct CO2 index, solid-carbon rate, heat-demand index, maturity attention.",
+      "source_ids": [
+        "muradov2017methane",
+        "holladay2009hydrogen",
+        "iea2023hydrogen"
+      ],
+      "source_labels": "Muradov methane-pyrolysis hydrogen review, Holladay et al. hydrogen-production technology review, IEA Global Hydrogen Review 2023",
+      "citation": "\\cite{muradov2017methane,holladay2009hydrogen,iea2023hydrogen}"
+    }
+  ],
+  "rows": [
+    {
+      "Temperature (degC)": 750,
+      "CH4 conversion (-)": 0.62,
+      "H2 mole fraction (-)": 0.53,
+      "Reactor duty index": 0.72
+    },
+    {
+      "Temperature (degC)": 800,
+      "CH4 conversion (-)": 0.72,
+      "H2 mole fraction (-)": 0.58,
+      "Reactor duty index": 0.84
+    },
+    {
+      "Temperature (degC)": 850,
+      "CH4 conversion (-)": 0.82,
+      "H2 mole fraction (-)": 0.63,
+      "Reactor duty index": 1.0
+    },
+    {
+      "Temperature (degC)": 900,
+      "CH4 conversion (-)": 0.88,
+      "H2 mole fraction (-)": 0.66,
+      "Reactor duty index": 1.13
+    },
+    {
+      "Temperature (degC)": 950,
+      "CH4 conversion (-)": 0.93,
+      "H2 mole fraction (-)": 0.69,
+      "Reactor duty index": 1.27
+    }
+  ]
+}

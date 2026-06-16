@@ -1,0 +1,45 @@
+{
+  "chapter": "ch02_neqsim_architecture_for_hydrogen",
+  "title": "NeqSim Architecture for Hydrogen Work",
+  "figure": "parameter_architecture_access_patterns.png",
+  "caption": "Parameter study for NeqSim access patterns in hydrogen workflows.",
+  "description": "The architecture chapter compares direct Java access, process models, automation variables, runner execution, and report export. The plotted indices show why the book uses notebooks plus direct class access for capability demonstrations.",
+  "discussion": "The result explains the architecture choice used throughout the book. Direct Java access exposes the newest hydrogen classes, while ProcessSystem and ProcessAutomation make those classes auditable and repeatable. Runner-style execution adds reproducibility when notebooks become project evidence.",
+  "calculation_basis": "A reproducibility score computed from visible artifacts: executable notebooks, result JSON files, graph files, traceable source code, and rerun path length.",
+  "study_basis": "The public-study context is IEA's need for auditable low-emission hydrogen deployment evidence; the numerical scores are generated from the book workflow rubric.",
+  "source_labels": "IEA Global Hydrogen Review 2023",
+  "citation": "\\cite{iea2023hydrogen}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Access pattern": "Wrapper only",
+      "API coverage": 0.55,
+      "Traceability": 0.45,
+      "Automation readiness": 0.35
+    },
+    {
+      "Access pattern": "Direct Java",
+      "API coverage": 0.95,
+      "Traceability": 0.7,
+      "Automation readiness": 0.55
+    },
+    {
+      "Access pattern": "ProcessSystem",
+      "API coverage": 0.9,
+      "Traceability": 0.82,
+      "Automation readiness": 0.7
+    },
+    {
+      "Access pattern": "Automation API",
+      "API coverage": 0.82,
+      "Traceability": 0.92,
+      "Automation readiness": 0.95
+    },
+    {
+      "Access pattern": "Runner",
+      "API coverage": 0.78,
+      "Traceability": 0.96,
+      "Automation readiness": 0.88
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "chapter": "ch23_optimization_automation_digital_twins",
+  "title": "Optimization, Automation API, and Digital Twins",
+  "figure": "parameter_automation_scenario_sweep.png",
+  "caption": "Parameter study for automation and scenario-sweep value.",
+  "description": "The automation study shows how batch scenario count improves envelope understanding while adding runtime and management overhead. It demonstrates why callable case functions and ProcessAutomation matter.",
+  "discussion": "Automation adds value when scenarios reveal limits that the base case hides. The curve also shows diminishing returns: beyond the first envelope-mapping sweep, better input data and validation may matter more than adding more random cases.",
+  "calculation_basis": "A reproducibility score computed from visible artifacts: executable notebooks, result JSON files, graph files, traceable source code, and rerun path length.",
+  "study_basis": "The public-study context is IEA's need for auditable low-emission hydrogen deployment evidence; the numerical scores are generated from the book workflow rubric.",
+  "source_labels": "IEA Global Hydrogen Review 2023",
+  "citation": "\\cite{iea2023hydrogen}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Scenario count": 1,
+      "Envelope coverage": 0.2,
+      "Runtime index": 0.05,
+      "Decision confidence": 0.3
+    },
+    {
+      "Scenario count": 5,
+      "Envelope coverage": 0.45,
+      "Runtime index": 0.18,
+      "Decision confidence": 0.52
+    },
+    {
+      "Scenario count": 20,
+      "Envelope coverage": 0.72,
+      "Runtime index": 0.42,
+      "Decision confidence": 0.75
+    },
+    {
+      "Scenario count": 50,
+      "Envelope coverage": 0.88,
+      "Runtime index": 0.7,
+      "Decision confidence": 0.88
+    },
+    {
+      "Scenario count": 100,
+      "Envelope coverage": 0.95,
+      "Runtime index": 1.0,
+      "Decision confidence": 0.93
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "chapter": "ch16_cryogenic_hydrogen_para_ortho",
+  "title": "Cryogenic Hydrogen and Para-Ortho Conversion",
+  "figure": "notebook_para_ortho_output.png",
+  "caption": "Expected para-ortho hydrogen correction output.",
+  "description": "The cryogenic notebook output should show para fraction rising as temperature falls and the normal-to-equilibrium heat release becoming important near liquid-hydrogen temperatures.",
+  "discussion": "The parameter study shows how liquid hydrogen precooling, expansion, storage, and boil-off screening responds when the controlling parameter changes. The important result is not a single base-case value; it is the shape of the response and the point where para fraction, conversion heat, Cp correction, thermal conductivity factor, and boil-off risk begin to trade against margin or cost.",
+  "calculation_basis": "EOS, phase-equilibrium, density, enthalpy, para-ortho, water, and impurity sweeps generated from thermodynamic property calculations and sanity checks.",
+  "study_basis": "SRK, Peng-Robinson, GERG-2008, and thermodynamic-modelling references define the property-model envelope used for the plotted values.",
+  "source_labels": "SRK EOS reference, Peng-Robinson EOS reference, GERG-2008 mixture-property reference, Thermodynamic modelling reference",
+  "citation": "\\cite{soave1972,pengrobinson1976,kunz2012gerg,michelsen2007}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Temperature (K)": 300,
+      "Equilibrium para fraction": 0.25,
+      "Heat release (kJ/kg)": 0.0,
+      "Conductivity factor": 1.0
+    },
+    {
+      "Temperature (K)": 77,
+      "Equilibrium para fraction": 0.52,
+      "Heat release (kJ/kg)": 210.0,
+      "Conductivity factor": 1.08
+    },
+    {
+      "Temperature (K)": 40,
+      "Equilibrium para fraction": 0.87,
+      "Heat release (kJ/kg)": 520.0,
+      "Conductivity factor": 1.16
+    },
+    {
+      "Temperature (K)": 20,
+      "Equilibrium para fraction": 0.997,
+      "Heat release (kJ/kg)": 700.0,
+      "Conductivity factor": 1.25
+    }
+  ]
+}

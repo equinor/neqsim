@@ -1,0 +1,6 @@
+Access pattern,API coverage,Traceability,Automation readiness
+Wrapper only,0.55,0.45,0.35
+Direct Java,0.95,0.7,0.55
+ProcessSystem,0.9,0.82,0.7
+Automation API,0.82,0.92,0.95
+Runner,0.78,0.96,0.88

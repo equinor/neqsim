@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this book, please cite it as below."
+title: "Introduction to Hydrogen Production using NeqSim and Python"
+subtitle: "Thermodynamics, Process Simulation, and Reproducible Python Workflows"
+type: book
+authors:
+  - family-names: Solbraa
+    given-names: Even
+    affiliation: "NeqSim Project and NTNU"
+year: 2026
+publisher:
+  name: "NeqSim Project and NTNU"
+keywords:
+  - hydrogen
+  - NeqSim
+  - process simulation
+  - thermodynamics
+  - electrolysis
+  - reforming
+  - levelized cost of hydrogen
+  - carbon intensity
+license: CC-BY-4.0
+repository-code: "https://github.com/equinor/neqsim"

@@ -1,0 +1,6 @@
+Scenario count,Envelope coverage,Runtime index,Decision confidence
+1,0.2,0.05,0.3
+5,0.45,0.18,0.52
+20,0.72,0.42,0.75
+50,0.88,0.7,0.88
+100,0.95,1.0,0.93

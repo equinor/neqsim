@@ -1,0 +1,50 @@
+{
+  "chapter": "ch21_operability_and_dynamics",
+  "title": "Operability, Controls, and Dynamics",
+  "figure": "parameter_electrolyzer_ramp_response.png",
+  "caption": "Electrolyzer stack dynamic response: temperature rise and product purity vs power ramp rate.",
+  "description": "The dynamics chapter ramps a green-H2 electrolyzer from 30% to 90% rated power at varying ramp rates (1, 5, 10, 30, 60 %/min) and tracks settling time of cathode-side H2 purity, stack temperature peak, and crossover-O2 attention level.",
+  "discussion": "Fast ramps shorten settling time but raise crossover-O2 risk and stack temperature transients. The operability sweet spot for grid-following PEM units is typically 5-15 %/min: fast enough to follow renewable variability, slow enough to keep crossover within the LFL safety factor. Dynamic studies must therefore couple electrochemistry, thermal lag, and safety in one transient run.",
+  "calculation_basis": "Chapter-specific screening calculations for operability and transient behaviour of hydrogen production and compression, normalized to the KPIs: turndown limit, controller tuning indicator, ramping rate, startup time, anti-surge margin, and alarm-flood attention.",
+  "study_basis": "IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices.",
+  "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference",
+  "citation": "\\cite{iea2023hydrogen,towler2013chemical}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Ramp rate (%/min)": 1,
+      "Settling time (s)": 600,
+      "Peak dT (degC)": 2.0,
+      "Crossover O2 attention": 0.1,
+      "Operability margin": 0.95
+    },
+    {
+      "Ramp rate (%/min)": 5,
+      "Settling time (s)": 180,
+      "Peak dT (degC)": 4.5,
+      "Crossover O2 attention": 0.22,
+      "Operability margin": 0.85
+    },
+    {
+      "Ramp rate (%/min)": 10,
+      "Settling time (s)": 120,
+      "Peak dT (degC)": 7.0,
+      "Crossover O2 attention": 0.38,
+      "Operability margin": 0.7
+    },
+    {
+      "Ramp rate (%/min)": 30,
+      "Settling time (s)": 75,
+      "Peak dT (degC)": 12.0,
+      "Crossover O2 attention": 0.65,
+      "Operability margin": 0.45
+    },
+    {
+      "Ramp rate (%/min)": 60,
+      "Settling time (s)": 60,
+      "Peak dT (degC)": 18.0,
+      "Crossover O2 attention": 0.92,
+      "Operability margin": 0.22
+    }
+  ]
+}

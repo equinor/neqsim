@@ -1,0 +1,39 @@
+{
+  "chapter": "ch03_python_environment_and_reproducibility",
+  "title": "Python Environment and Reproducibility",
+  "figure": "parameter_reproducibility_modes.png",
+  "caption": "Parameter study for reproducibility modes in hydrogen notebooks.",
+  "description": "The reproducibility study compares local installed packages, workspace devtools loading, isolated runner execution, and cached report regeneration. The goal is to make environment choice a visible modelling assumption.",
+  "discussion": "Workspace devtools and runner execution score highest when the notebook must reflect the active NeqSim branch. Installed packages remain useful for published examples, but project studies need branch fidelity and repeatable execution. This is why generated notebooks include explicit setup and JSON outputs.",
+  "calculation_basis": "A reproducibility score computed from visible artifacts: executable notebooks, result JSON files, graph files, traceable source code, and rerun path length.",
+  "study_basis": "The public-study context is IEA's need for auditable low-emission hydrogen deployment evidence; the numerical scores are generated from the book workflow rubric.",
+  "source_labels": "IEA Global Hydrogen Review 2023",
+  "citation": "\\cite{iea2023hydrogen}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Execution mode": "Installed package",
+      "Setup effort": 0.25,
+      "Fresh-branch fidelity": 0.45,
+      "Repeatability": 0.7
+    },
+    {
+      "Execution mode": "Workspace devtools",
+      "Setup effort": 0.55,
+      "Fresh-branch fidelity": 0.95,
+      "Repeatability": 0.78
+    },
+    {
+      "Execution mode": "Runner notebook",
+      "Setup effort": 0.72,
+      "Fresh-branch fidelity": 0.95,
+      "Repeatability": 0.94
+    },
+    {
+      "Execution mode": "Report refresh",
+      "Setup effort": 0.65,
+      "Fresh-branch fidelity": 0.8,
+      "Repeatability": 0.9
+    }
+  ]
+}

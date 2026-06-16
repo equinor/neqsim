@@ -1,0 +1,62 @@
+{
+  "chapter": "ch11_psa_purification_and_tail_gas",
+  "title": "PSA Purification and Tail-Gas Integration",
+  "figure": "notebook_psa_cascade_output.png",
+  "caption": "Expected PSA cascade recovery and purity output.",
+  "description": "The PSA cells should show cascade recovery improving with bed count while purity remains high. Tail-gas flow is intentionally retained as a fuel-balance output rather than hidden in a single recovery number.",
+  "discussion": "The parameter study shows how hydrogen purification after shifted syngas responds when the controlling parameter changes. The important result is not a single base-case value; it is the shape of the response and the point where H2 purity, recovery, tail-gas composition, cycle assumptions, and CAPEX begin to trade against margin or cost.",
+  "calculation_basis": "Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.",
+  "study_basis": "IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits.",
+  "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference, Gas purification reference, GPSA engineering data reference",
+  "citation": "\\cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}",
+  "topic_examples": [
+    {
+      "route": "Blue hydrogen",
+      "number": 8,
+      "topic": "Hydrogen purification and PSA optimization",
+      "chapter": "ch11_psa_purification_and_tail_gas",
+      "calculation": "Run a PSACascade bed-count and equalisation sweep on shifted syngas.",
+      "sweep": "Number of beds, equalisation steps, recovery target, and tail-gas return assumption.",
+      "kpis": "H2 purity, H2 recovery, tail-gas heating value index, PSA CAPEX index.",
+      "source_ids": [
+        "kohl1997",
+        "seader2016",
+        "gpsa2012"
+      ],
+      "source_labels": "Gas purification reference, seader2016, GPSA engineering data reference",
+      "citation": "\\cite{kohl1997,seader2016,gpsa2012}"
+    }
+  ],
+  "rows": [
+    {
+      "Beds": 2,
+      "Equalisations": 0,
+      "H2 recovery (-)": 0.85,
+      "H2 purity (-)": 0.999
+    },
+    {
+      "Beds": 4,
+      "Equalisations": 1,
+      "H2 recovery (-)": 0.9,
+      "H2 purity (-)": 0.999
+    },
+    {
+      "Beds": 6,
+      "Equalisations": 2,
+      "H2 recovery (-)": 0.93,
+      "H2 purity (-)": 0.999
+    },
+    {
+      "Beds": 8,
+      "Equalisations": 3,
+      "H2 recovery (-)": 0.93,
+      "H2 purity (-)": 0.999
+    },
+    {
+      "Beds": 12,
+      "Equalisations": 5,
+      "H2 recovery (-)": 0.93,
+      "H2 purity (-)": 0.999
+    }
+  ]
+}

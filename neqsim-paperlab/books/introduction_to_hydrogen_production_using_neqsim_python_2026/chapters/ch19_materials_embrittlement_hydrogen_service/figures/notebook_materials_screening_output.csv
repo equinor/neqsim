@@ -1,0 +1,6 @@
+Screening input,Expected output,Review use
+H2 partial pressure,150 bara,ASME B31.12/API 941 screen
+Max discharge T,67 degC,Seal and material limit
+Min pipeline T,5.5 degC,Toughness and MDMT prompt
+Pressure cycle,60 bar,Fatigue prompt
+Leak source term,available,Dispersion/QRA handoff

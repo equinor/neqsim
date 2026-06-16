@@ -1,0 +1,94 @@
+{
+  "chapter": "ch12_blue_hydrogen_and_ccs",
+  "title": "Blue Hydrogen and CCS Integration with Route Builders",
+  "figure": "parameter_blue_h2_capture_fraction.png",
+  "caption": "Parameter study for blue-H2 capture fraction and CCS export load.",
+  "description": "The blue-H2 study sweeps target CO2 capture fraction and tracks residual carbon intensity, CO2 export load, and compression duty index.",
+  "discussion": "Higher capture targets reduce residual carbon intensity but increase CO2 export and compression demand. This is the central blue-H2 trade-off: the capture target must be selected with the CCS chain, power balance, and product specification visible in the same notebook.",
+  "calculation_basis": "Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.",
+  "study_basis": "IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits.",
+  "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference, Gas purification reference, GPSA engineering data reference",
+  "citation": "\\cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}",
+  "topic_examples": [
+    {
+      "route": "Blue hydrogen",
+      "number": 1,
+      "topic": "Steam methane reforming with carbon capture",
+      "chapter": "ch12_blue_hydrogen_and_ccs",
+      "calculation": "Run a BlueHydrogenPlantBuilder capture-fraction sweep for SMR plus WGS, selective CO2 capture, PSA, and export compression.",
+      "sweep": "Capture target 70-98 percent at fixed methane feed, steam-to-carbon ratio, and CO2 export pressure.",
+      "kpis": "Hydrogen product rate, residual kg CO2/kg H2, captured CO2 export rate, CO2 compression-duty index.",
+      "source_ids": [
+        "iea2023hydrogen",
+        "kohl1997",
+        "towler2013chemical"
+      ],
+      "source_labels": "IEA Global Hydrogen Review 2023, Gas purification reference, Chemical engineering design reference",
+      "citation": "\\cite{iea2023hydrogen,kohl1997,towler2013chemical}"
+    },
+    {
+      "route": "Blue hydrogen",
+      "number": 5,
+      "topic": "Carbon capture technologies",
+      "chapter": "ch12_blue_hydrogen_and_ccs",
+      "calculation": "Compare amine, physical-solvent, membrane, adsorption, and cryogenic capture as screening factors around ComponentCaptureUnit.",
+      "sweep": "Capture option and target capture fraction with technology-specific energy and product-pressure factors.",
+      "kpis": "Capture rate, hydrogen loss, CO2 purity, energy-penalty index, export-compression index.",
+      "source_ids": [
+        "kohl1997",
+        "iea2023hydrogen",
+        "towler2013chemical"
+      ],
+      "source_labels": "Gas purification reference, IEA Global Hydrogen Review 2023, Chemical engineering design reference",
+      "citation": "\\cite{kohl1997,iea2023hydrogen,towler2013chemical}"
+    },
+    {
+      "route": "Blue hydrogen",
+      "number": 9,
+      "topic": "CO2 transport and storage integration",
+      "chapter": "ch12_blue_hydrogen_and_ccs",
+      "calculation": "Pass captured CO2 to export compression, pipeline pressure checks, and injection-envelope screening.",
+      "sweep": "CO2 export pressure, impurity margin, dehydration specification, and pipeline/injection pressure level.",
+      "kpis": "Dense-phase margin, compressor power, water-removal flag, injection-pressure acceptance, storage handoff pressure.",
+      "source_ids": [
+        "mokhatab2018",
+        "gpsa2012",
+        "iea2023hydrogen"
+      ],
+      "source_labels": "Gas transmission and processing reference, GPSA engineering data reference, IEA Global Hydrogen Review 2023",
+      "citation": "\\cite{mokhatab2018,gpsa2012,iea2023hydrogen}"
+    }
+  ],
+  "rows": [
+    {
+      "CO2 capture target (%)": 70,
+      "Residual CI index": 0.42,
+      "CO2 export index": 0.7,
+      "Compression duty index": 0.75
+    },
+    {
+      "CO2 capture target (%)": 80,
+      "Residual CI index": 0.3,
+      "CO2 export index": 0.8,
+      "Compression duty index": 0.84
+    },
+    {
+      "CO2 capture target (%)": 90,
+      "Residual CI index": 0.18,
+      "CO2 export index": 0.9,
+      "Compression duty index": 0.94
+    },
+    {
+      "CO2 capture target (%)": 95,
+      "Residual CI index": 0.12,
+      "CO2 export index": 0.95,
+      "Compression duty index": 1.02
+    },
+    {
+      "CO2 capture target (%)": 98,
+      "Residual CI index": 0.08,
+      "CO2 export index": 0.98,
+      "Compression duty index": 1.1
+    }
+  ]
+}

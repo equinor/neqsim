@@ -1,0 +1,6 @@
+Ramp rate (%/min),Settling time (s),Peak dT (degC),Crossover O2 attention,Operability margin
+1,600,2.0,0.1,0.95
+5,180,4.5,0.22,0.85
+10,120,7.0,0.38,0.7
+30,75,12.0,0.65,0.45
+60,60,18.0,0.92,0.22

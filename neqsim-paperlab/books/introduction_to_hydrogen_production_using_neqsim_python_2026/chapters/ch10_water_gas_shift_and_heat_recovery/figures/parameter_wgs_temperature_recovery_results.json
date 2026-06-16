@@ -1,0 +1,78 @@
+{
+  "chapter": "ch10_water_gas_shift_and_heat_recovery",
+  "title": "Water-Gas Shift and Heat Recovery",
+  "figure": "parameter_wgs_temperature_recovery.png",
+  "caption": "Parameter study for water-gas-shift temperature and heat recovery.",
+  "description": "The WGS study sweeps shift temperature and shows how CO slip, hydrogen gain, and recoverable heat move in different directions.",
+  "discussion": "Lower shift temperature favours CO conversion, while higher temperature can improve heat-recovery opportunities and reactor driving force. The plot makes the design tension visible: WGS is a conversion, heat-integration, and condensation problem at the same time.",
+  "calculation_basis": "Stoichiometric SMR/ATR/POX/WGS balances, equilibrium or route-builder sweeps, PSA recovery accounting, and CO2-capture mass-balance indices.",
+  "study_basis": "IEA hydrogen route context plus process-design and gas-purification references set the screening ranges and interpretation limits.",
+  "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference, Gas purification reference, GPSA engineering data reference",
+  "citation": "\\cite{iea2023hydrogen,towler2013chemical,kohl1997,gpsa2012}",
+  "topic_examples": [
+    {
+      "route": "Blue hydrogen",
+      "number": 4,
+      "topic": "Thermodynamic and exergy analysis of blue hydrogen plants",
+      "chapter": "ch10_water_gas_shift_and_heat_recovery",
+      "calculation": "Build an exergy-loss proxy table from reformer heat duty, WGS heat release, capture penalty, and compression work.",
+      "sweep": "Shift temperature and heat-recovery approach temperature.",
+      "kpis": "CO slip, hydrogen gain, recoverable heat index, avoidable duty or exergy-loss index.",
+      "source_ids": [
+        "michelsen2007",
+        "towler2013chemical",
+        "iea2023hydrogen"
+      ],
+      "source_labels": "Thermodynamic modelling reference, Chemical engineering design reference, IEA Global Hydrogen Review 2023",
+      "citation": "\\cite{michelsen2007,towler2013chemical,iea2023hydrogen}"
+    },
+    {
+      "route": "Blue hydrogen",
+      "number": 7,
+      "topic": "Heat integration and furnace electrification",
+      "chapter": "ch10_water_gas_shift_and_heat_recovery",
+      "calculation": "Compare fired-reformer heat demand, recoverable WGS heat, preheat duty, and an electrified-furnace substitution factor.",
+      "sweep": "Heat-recovery approach temperature, furnace electrification fraction, and steam-generation credit.",
+      "kpis": "Fuel-duty reduction, electric-load increase, net CO2 reduction, pinch or approach-temperature margin.",
+      "source_ids": [
+        "towler2013chemical",
+        "gpsa2012",
+        "iea2023hydrogen"
+      ],
+      "source_labels": "Chemical engineering design reference, GPSA engineering data reference, IEA Global Hydrogen Review 2023",
+      "citation": "\\cite{towler2013chemical,gpsa2012,iea2023hydrogen}"
+    }
+  ],
+  "rows": [
+    {
+      "Shift temperature (degC)": 180,
+      "CO slip index": 0.18,
+      "H2 gain index": 0.92,
+      "Recoverable heat index": 0.58
+    },
+    {
+      "Shift temperature (degC)": 220,
+      "CO slip index": 0.25,
+      "H2 gain index": 0.95,
+      "Recoverable heat index": 0.7
+    },
+    {
+      "Shift temperature (degC)": 260,
+      "CO slip index": 0.34,
+      "H2 gain index": 0.98,
+      "Recoverable heat index": 0.82
+    },
+    {
+      "Shift temperature (degC)": 320,
+      "CO slip index": 0.5,
+      "H2 gain index": 1.0,
+      "Recoverable heat index": 0.95
+    },
+    {
+      "Shift temperature (degC)": 380,
+      "CO slip index": 0.68,
+      "H2 gain index": 0.96,
+      "Recoverable heat index": 1.08
+    }
+  ]
+}

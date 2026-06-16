@@ -1,0 +1,7 @@
+Option,Gravimetric H2 (wt%),Volumetric H2 (kg/m3),Round-trip penalty (frac LHV),Reconversion T attention
+CGH2 350 bar,100.0,24.0,0.1,0.2
+CGH2 700 bar,100.0,42.0,0.15,0.2
+LH2,100.0,71.0,0.35,0.85
+Ammonia,17.6,121.0,0.5,0.7
+Methanol,12.5,99.0,0.4,0.55
+LOHC (DBT),6.2,57.0,0.45,0.75

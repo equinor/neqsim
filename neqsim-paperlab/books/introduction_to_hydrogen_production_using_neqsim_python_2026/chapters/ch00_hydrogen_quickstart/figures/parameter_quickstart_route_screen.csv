@@ -1,0 +1,5 @@
+Case,H2 product index,Specific energy index,Carbon intensity index
+SMR base,1.0,0.8,1.0
+Blue H2,0.92,0.92,0.28
+PEM green,0.72,1.18,0.04
+Compressed export,0.7,1.36,0.04

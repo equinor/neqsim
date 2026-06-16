@@ -1,0 +1,45 @@
+{
+  "chapter": "ch04_hydrogen_reference_equations",
+  "title": "Hydrogen Reference Equations and Property Models",
+  "figure": "notebook_h2_density_reference.png",
+  "caption": "Expected companion-notebook output for hydrogen-rich gas density checks.",
+  "description": "The notebook compares cubic EOS density trends with a GERG-style reference check. Exact values should be refreshed by rerunning the notebook on the active NeqSim branch, but the expected shape is a smooth pressure response with visible high-pressure model spread.",
+  "discussion": "The parameter study shows how H2, natural gas blends, steam, CO2, water, and impurities responds when the controlling parameter changes. The important result is not a single base-case value; it is the shape of the response and the point where density, compressibility, enthalpy, heat capacity, speed of sound, phase split, and transport sanity checks begin to trade against margin or cost.",
+  "calculation_basis": "Pressure sweep for hydrogen-rich property-model comparison using SRK, PR, GERG-style checks, and the executable EOS/reference-equation comparison script included in the chapter.",
+  "study_basis": "The comparison is aligned with the NTNU thesis treatment of cubic EOS, GERG-2008, Leachman reference equations, and hydrogen-rich gas modelling in NeqSim.",
+  "source_labels": "SRK EOS reference, Peng-Robinson EOS reference, GERG-2008 mixture-property reference, Rogne Solbu and Ihlebaek NTNU thesis on H2/He thermodynamics and viscosity",
+  "citation": "\\cite{soave1972,pengrobinson1976,kunz2012gerg,rogneSolbuIhlebaek2025}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Pressure (bara)": 1.013,
+      "SRK density (kg/m3)": 0.14,
+      "PR density (kg/m3)": 0.14,
+      "GERG check (kg/m3)": 0.14
+    },
+    {
+      "Pressure (bara)": 10.0,
+      "SRK density (kg/m3)": 1.39,
+      "PR density (kg/m3)": 1.4,
+      "GERG check (kg/m3)": 1.4
+    },
+    {
+      "Pressure (bara)": 100.0,
+      "SRK density (kg/m3)": 13.1,
+      "PR density (kg/m3)": 13.4,
+      "GERG check (kg/m3)": 13.3
+    },
+    {
+      "Pressure (bara)": 500.0,
+      "SRK density (kg/m3)": 60.5,
+      "PR density (kg/m3)": 58.8,
+      "GERG check (kg/m3)": 59.6
+    },
+    {
+      "Pressure (bara)": 1000.0,
+      "SRK density (kg/m3)": 111.0,
+      "PR density (kg/m3)": 106.5,
+      "GERG check (kg/m3)": 108.2
+    }
+  ]
+}

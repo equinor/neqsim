@@ -1,0 +1,6 @@
+Route,Carbon intensity index,Energy index,Maturity index
+Grey SMR,1.0,0.78,0.95
+Blue SMR,0.28,0.94,0.78
+Green PEM,0.04,1.2,0.7
+SOEC,0.03,0.92,0.45
+Carrier screening,0.18,1.45,0.35

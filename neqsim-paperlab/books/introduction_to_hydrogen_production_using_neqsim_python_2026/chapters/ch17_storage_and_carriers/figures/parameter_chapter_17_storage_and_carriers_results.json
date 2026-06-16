@@ -1,0 +1,45 @@
+{
+  "chapter": "ch17_storage_and_carriers",
+  "title": "Hydrogen Storage and Carriers",
+  "figure": "parameter_chapter_17_storage_and_carriers.png",
+  "caption": "Parameter study for Hydrogen Storage and Carriers.",
+  "description": "The chapter parameter study converts stationary and transport hydrogen storage plus carrier value chains into a small sweep with visible KPIs: stored kg H2, volumetric and gravimetric density, reconversion energy penalty, round-trip efficiency, and boil-off or release risk. The values are screening outputs intended to demonstrate the notebook structure and discussion pattern.",
+  "discussion": "The parameter study shows how stationary and transport hydrogen storage plus carrier value chains responds when the controlling parameter changes. The important result is not a single base-case value; it is the shape of the response and the point where stored kg H2, volumetric and gravimetric density, reconversion energy penalty, round-trip efficiency, and boil-off or release risk begin to trade against margin or cost.",
+  "calculation_basis": "Chapter-specific screening calculations for stationary and transport hydrogen storage plus carrier value chains, normalized to the KPIs: stored kg H2, volumetric and gravimetric density, reconversion energy penalty, round-trip efficiency, and boil-off or release risk.",
+  "study_basis": "IEA hydrogen route context and the cited process-design references define the interpretation envelope for the normalized indices.",
+  "source_labels": "IEA Global Hydrogen Review 2023, Chemical engineering design reference",
+  "citation": "\\cite{iea2023hydrogen,towler2013chemical}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Study severity index": 1,
+      "Primary KPI index": 0.72,
+      "Demand index": 0.58,
+      "Margin index": 0.92
+    },
+    {
+      "Study severity index": 2,
+      "Primary KPI index": 0.84,
+      "Demand index": 0.72,
+      "Margin index": 0.84
+    },
+    {
+      "Study severity index": 3,
+      "Primary KPI index": 1.0,
+      "Demand index": 0.9,
+      "Margin index": 0.72
+    },
+    {
+      "Study severity index": 4,
+      "Primary KPI index": 1.13,
+      "Demand index": 1.05,
+      "Margin index": 0.58
+    },
+    {
+      "Study severity index": 5,
+      "Primary KPI index": 1.24,
+      "Demand index": 1.18,
+      "Margin index": 0.46
+    }
+  ]
+}

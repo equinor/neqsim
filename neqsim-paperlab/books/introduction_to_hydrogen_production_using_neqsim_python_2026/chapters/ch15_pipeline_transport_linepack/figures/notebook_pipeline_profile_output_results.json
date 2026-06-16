@@ -1,0 +1,45 @@
+{
+  "chapter": "ch15_pipeline_transport_linepack",
+  "title": "Pipeline Transport, Gas Quality, and Linepack",
+  "figure": "notebook_pipeline_profile_output.png",
+  "caption": "Expected hydrogen pipeline pressure and temperature profile.",
+  "description": "The pipeline notebook should produce a profile, not just an outlet pressure. The expected output shows pressure loss over distance and cooling toward the specified surface-temperature basis.",
+  "discussion": "The parameter study shows how long-distance compressed hydrogen export after compression responds when the controlling parameter changes. The important result is not a single base-case value; it is the shape of the response and the point where outlet pressure, outlet temperature, pressure profile, temperature profile, pressure drop, Wobbe index, relative density, and linepack begin to trade against margin or cost.",
+  "calculation_basis": "Isentropic compression, intercooling heat balance, pipeline pressure-profile, temperature-profile, and linepack inventory calculations.",
+  "study_basis": "GPSA and gas-transmission references provide independent engineering ranges for compression, transport, and gas-quality interpretation.",
+  "source_labels": "GPSA engineering data reference, Gas transmission and processing reference, Chemical engineering design reference",
+  "citation": "\\cite{gpsa2012,mokhatab2018,towler2013chemical}",
+  "topic_examples": [],
+  "rows": [
+    {
+      "Length (km)": 0,
+      "Pressure (bara)": 150.0,
+      "Temperature (degC)": 20.0,
+      "Linepack index": 1.0
+    },
+    {
+      "Length (km)": 100,
+      "Pressure (bara)": 138.0,
+      "Temperature (degC)": 13.5,
+      "Linepack index": 0.93
+    },
+    {
+      "Length (km)": 250,
+      "Pressure (bara)": 119.0,
+      "Temperature (degC)": 8.5,
+      "Linepack index": 0.8
+    },
+    {
+      "Length (km)": 400,
+      "Pressure (bara)": 101.0,
+      "Temperature (degC)": 6.2,
+      "Linepack index": 0.68
+    },
+    {
+      "Length (km)": 500,
+      "Pressure (bara)": 90.0,
+      "Temperature (degC)": 5.5,
+      "Linepack index": 0.6
+    }
+  ]
+}
