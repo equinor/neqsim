@@ -36,6 +36,16 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-06-16 — Offshore gas platform process model: lumped + high-fidelity expansion
+**Type:** B (Process)
+**Keywords:** ProcessModel, multi-area, E300 shared-pseudo, parallel compressor trains, anti-surge per train, TEG dehydration regeneration, SRK-CPA water saturation, test separator, verification benchmark, two-fidelity flag
+**Solution:** private task folder (redacted) — `eot_sla` Python package (one ProcessSystem builder per area composed into a ProcessModel) plus a stand-alone TEG regeneration sub-model module
+**Notes:**
+- Two fidelities behind a `high_fidelity` dataclass flag: default lumped model is benchmark-validated (10/10 checks); opt-in high-fidelity expands to parallel A/B compressor trains (splitter → N machines → mixer with ONE anti-surge recycle per train), a dedicated 3-phase test separator, and a full TEG dehy+regeneration loop. Summed parallel powers reconcile with the lumped equivalents.
+- Feed slates are a dry SRK 22-pseudo set with NO water/TEG, so a rigorous TEG regeneration loop cannot run in-line — built it as a separate SRK-CPA water-saturated sub-model (mixing rule 10, StreamSaturatorUtil + SimpleTEGAbsorber + HP/LP flash + DistillationColumn still + WaterStripperColumn + Recycle/Calculator), mirroring the `MLA_bug_test` TEG circuit. Result: dry-gas water dew point −33.5 °C (matches design target), lean TEG 99.93 wt%.
+- Gotchas: `Heater`/`HeatExchanger` live in `neqsim.process.equipment.heatexchanger` (NOT `.heater`). `toE300String(...)` must be wrapped in `str(...)` (returns java.lang.String). After clone+`setComposition`, do NOT re-call `setMixingRule` (keeps tuned Kij). Threaded standalone DistillationColumn run can report reboiler `getDuty()` as NaN — cosmetic; dew point/purity unaffected.
+- Environment: a broken venv (numpy `int32` AttributeError → jpype init fails) forced use of the system `py -3.12` interpreter for all runs.
+
 ### 2026-06-09 — Distillation column energy-balance bug: phase-split out-stream enthalpy
 **Type:** E (Feature / bug fix)
 **Keywords:** distillation, DistillationColumn, SimpleTray, reboiler duty, energy balance, phaseToSystem, getEnthalpy, single phase, phase type, TEG regeneration
