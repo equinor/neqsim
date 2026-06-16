@@ -2145,8 +2145,7 @@ public final class DexpiXmlWriter {
           String ft = "FT-" + (base + 4);
           transmitters.put(ft, new VolumeFlowTransmitter(ft, in));
         }
-      } else if (unit instanceof Cooler || unit instanceof Heater
-          || unit instanceof HeatExchanger) {
+      } else if (unit instanceof HeatExchanger) {
         StreamInterface out = firstOutlet(unit);
         if (out != null) {
           String tt = "TT-" + (base + 3);
