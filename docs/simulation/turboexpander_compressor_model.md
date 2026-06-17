@@ -432,3 +432,93 @@ String json = env.toJson(); // feasibility / surgeMargin / coldEndT / hydrateMar
 
 > See `docs/development/TASK_LOG.md` (2026-06-17 entry) for the design
 > rationale and the originating Oseberg turboexpander capability assessment.
+
+## Closing the Capability Gaps vs Commercial Software
+
+Three classes close the remaining honest gaps between NeqSim and dedicated
+turbomachinery / dynamic-simulation tools. They are deliberately transparent and
+fully tested rather than black-box, so the assumptions are inspectable.
+
+### 7. Validated Dynamics — `AntiSurgeDynamicBenchmark`
+
+HYSYS/UniSim Dynamics are the reference for compressor trip and anti-surge
+tuning. This benchmark gives NeqSim a **reproducible, deterministic transient
+case** that drives the production `AntiSurgeController` and a real
+`ThrottlingValve` against a transparent first-order gas-path surrogate:
+
+$$
+m_{k+1} = m_k - \dot{d}\,\Delta t + a\,\frac{u_k}{100}\,\Delta t
+$$
+
+where $m$ is the distance to surge, $\dot{d}$ the disturbance rate, $a$ the
+recycle authority and $u$ the valve opening. The closed loop must hold the
+margin at or above zero through the flow-reduction transient; the open-loop
+reference surges — proving the scenario is a genuine challenge and the
+controller adds value. The surrogate is a tuning aid (not validated field
+data), but it makes the controller's proportional kick, integral action,
+anti-windup and valve actuation analytically checkable before commissioning.
+
+```java
+AntiSurgeDynamicBenchmark benchmark = new AntiSurgeDynamicBenchmark();
+benchmark.run(true);                          // controller active
+boolean safe = benchmark.isSurgeAvoided();     // true: stayed out of surge
+double minMargin = benchmark.getMinimumSurgeMargin();
+double maxOpening = benchmark.getMaximumValveOpening();
+double[] marginTrace = benchmark.getSurgeMarginTrace();
+
+benchmark.run(false);                          // open-loop reference - surges
+```
+
+### 8. Reference Map Library — `TurboMachineryChartLibrary`
+
+Commercial tools ship validated OEM curve libraries. This class ships a small,
+versioned, **vendor-neutral reference-map library** so a user gets a
+physically-reasonable, dimensionally-correct map by name without digitising one.
+The maps are generic reference characteristics (not proprietary OEM data) and
+are composition-aware via the Khader normalisation, so one map serves many
+fluids. For fiscal or guarantee work the certified OEM curve is still required.
+
+```java
+TurboMachineryChartLibrary library = new TurboMachineryChartLibrary();
+library.listCompressorCharts(); // [GENERIC_CENTRIFUGAL_3SPEED]
+library.listExpanderCharts();   // [GENERIC_CRYO_EXPANDER, GEOMETRY_RADIAL_IFR]
+
+// fluid must be TPflashed before querying a compressor map (sound speed needed)
+new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid).TPflash();
+fluid.initThermoProperties();
+CompressorChartKhader2015 cmap = library.getCompressorChart(
+    TurboMachineryChartLibrary.GENERIC_CENTRIFUGAL_3SPEED, fluid, 0.3);
+
+ExpanderChartKhader emap = library.getExpanderChart(
+    TurboMachineryChartLibrary.GENERIC_CRYO_EXPANDER, referenceFluid);
+```
+
+### 9. Geometry-Based Map Generation — `RadialExpanderGeometryMap`
+
+AxSTREAM / Concepts NREC generate maps from blade geometry. This class is a
+**preliminary mean-line radial-inflow (IFR) turbine model** that builds an
+`ExpanderChartKhader` from a small set of geometric inputs — useful for concept
+screening or to seed a map when no OEM curve exists. It is not a blade-to-blade
+or CFD design code. Working with the velocity ratio $\nu = U_2/c_0$ and the
+rotor-inlet flow angle $\alpha_2$, the nominal (zero-incidence) velocity ratio is
+
+$$
+\nu_{opt} = \sqrt{1-R}\,\sin\alpha_2
+$$
+
+and the total-to-static efficiency follows a classic incidence + nozzle/rotor
+loss accounting (Dixon & Hall; Whitfield & Baines) that produces the
+characteristic efficiency peak near $\nu_{opt}\approx 0.7$.
+
+```java
+RadialExpanderGeometryMap gen = new RadialExpanderGeometryMap(0.424, 0.45, 0.45);
+gen.setReferenceFluid(referenceFluid);
+gen.setDesignHeadDropKjPerKg(45.0);
+ExpanderChartKhader chart = gen.generateChart(
+    new double[] {0.5, 0.75, 1.0},     // IGV positions
+    new double[] {78.0, 74.0, 70.0});  // nozzle angle per IGV [deg]
+double nuOpt = gen.nominalVelocityRatio(70.0);
+```
+
+> See `docs/development/TASK_LOG.md` (2026-06-17 "Closing the three turbomachinery
+> capability gaps" entry) for the rationale, tuning, and test coverage.
