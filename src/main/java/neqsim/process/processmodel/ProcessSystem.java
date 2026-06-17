@@ -3214,6 +3214,12 @@ public class ProcessSystem extends SimulationBaseClass {
             break;
           }
         }
+        // Fallback: detect other active feeds via stream wiring (inlet stream of u produced by a
+        // unit that is still active). This makes the guard work for flowsheets built with
+        // getOutletStream() wiring without explicit connect() registration.
+        if (!hasOtherActiveFeed && hasOtherActiveFeedViaStreams(u, visited)) {
+          hasOtherActiveFeed = true;
+        }
         if (hasOtherActiveFeed) {
           continue;
         }
@@ -3237,6 +3243,54 @@ public class ProcessSystem extends SimulationBaseClass {
       u.setLockedInactive(true);
     }
     return visited.size();
+  }
+
+  /**
+   * Detects whether a mixer/recycle node still has at least one active feed coming from a unit that
+   * is not already part of the deactivated set, using stream wiring (an inlet stream of the node is
+   * an outlet stream of some other still-active unit). Complements the {@link ProcessConnection}
+   * based check so the guard also protects flowsheets built with {@code getOutletStream()} wiring.
+   *
+   * @param node the mixer or recycle unit being evaluated
+   * @param visited the set of units already scheduled for deactivation
+   * @return {@code true} if another active feed reaches the node, {@code false} otherwise
+   */
+  private boolean hasOtherActiveFeedViaStreams(ProcessEquipmentInterface node,
+      java.util.Set<ProcessEquipmentInterface> visited) {
+    java.util.List<neqsim.process.equipment.stream.StreamInterface> nodeInlets;
+    try {
+      nodeInlets = node.getInletStreams();
+    } catch (Exception ex) {
+      return false;
+    }
+    if (nodeInlets == null || nodeInlets.isEmpty()) {
+      return false;
+    }
+    for (neqsim.process.equipment.stream.StreamInterface inlet : nodeInlets) {
+      if (inlet == null) {
+        continue;
+      }
+      for (ProcessEquipmentInterface source : unitOperations) {
+        if (source == node || visited.contains(source) || source.isLockedInactive()) {
+          continue;
+        }
+        java.util.List<neqsim.process.equipment.stream.StreamInterface> sourceOutlets;
+        try {
+          sourceOutlets = source.getOutletStreams();
+        } catch (Exception ex) {
+          continue;
+        }
+        if (sourceOutlets == null) {
+          continue;
+        }
+        for (neqsim.process.equipment.stream.StreamInterface outlet : sourceOutlets) {
+          if (outlet == inlet) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   /**
