@@ -5,6 +5,7 @@ import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.expander.TurboExpanderCompressorMechanicalDesign;
 import neqsim.process.util.monitor.TurboExpanderCompressorResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -26,6 +27,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 public class TurboExpanderCompressor extends Expander {
   private static final long serialVersionUID = 1001;
+
+  /** Coupled mechanical design for the combined expander-compressor unit. */
+  private TurboExpanderCompressorMechanicalDesign tecMechanicalDesign;
 
   // --- Expander/Compressor Configuration ---
   /** Expander outlet pressure [bar abs]. */
@@ -122,6 +126,22 @@ public class TurboExpanderCompressor extends Expander {
   private double[] qnEffCurveQnValues = null;
   private double[] qnEffCurveEffValues = null;
 
+  // --- P1: composition-aware 2-D expander performance map (optional) ---
+  /** Optional Khader-style 2-D expander performance map. When set it overrides the UC parabola. */
+  private ExpanderChartKhader expanderChart = null;
+
+  // --- P2: IGV as a controllable degree of freedom ---
+  /**
+   * When {@code true} the supplied {@link #IGVopening} is treated as a fixed control input and the
+   * model no longer recomputes the IGV opening from flow; an efficiency penalty curve is applied
+   * instead and the speed/power balance is solved around the imposed IGV position.
+   */
+  private boolean igvControlMode = false;
+  /** IGV positions (fraction of maximum area, 0..1) for the efficiency penalty curve. */
+  private double[] igvPenaltyOpenings = null;
+  /** Multiplicative efficiency penalty factors matching {@link #igvPenaltyOpenings} (0..1). */
+  private double[] igvPenaltyFactors = null;
+
   /**
    * Construct a TurboExpanderCompressor with the specified name and inlet stream.
    *
@@ -209,7 +229,7 @@ public class TurboExpanderCompressor extends Expander {
       double U = Math.PI * D * N / 60.0;
       double C = Math.sqrt(2.0 * h_s);
       uc = U / C / designUC;
-      double CF = getEfficiencyFromUC(uc);
+      double ucRaw = U / C;
       Q_exp = expanderFeedStream.getFluid().getFlowRate("m3/sec");
       double CF_qn_exp = 1.0;
       if (applyExpanderQnCorrection && designQnExp > 0.0 && N > 0.0) {
@@ -221,12 +241,12 @@ public class TurboExpanderCompressor extends Expander {
       } else {
         qn_ratio_exp = 1.0;
       }
-      double CF_total = CF * CF_qn_exp;
+      eta_s = computeExpanderEfficiency(ucRaw, uc, IGVopening, CF_qn_exp);
+      double CF_total = eta_s_design > 1e-9 ? eta_s / eta_s_design : 0.0;
       if (CF_total < 0.0) {
         CF_total = 0.0;
       }
       CF_total_converged = CF_total;
-      eta_s = eta_s_design * CF_total;
       if (useOutTemperatureSpec && eta_s_required > 0.0) {
         eta_s = eta_s_required;
       }
@@ -248,7 +268,7 @@ public class TurboExpanderCompressor extends Expander {
       double N2 = N + dN;
       double U2 = Math.PI * D * N2 / 60.0;
       uc2 = U2 / C / designUC;
-      double CF2 = getEfficiencyFromUC(uc2);
+      double ucRaw2 = U2 / C;
       double CF_qn_exp2 = 1.0;
       if (applyExpanderQnCorrection && designQnExp > 0.0 && N2 > 0.0) {
         qn_ratio_exp2 = (Q_exp * 60.0 / N2) / designQnExp;
@@ -259,11 +279,7 @@ public class TurboExpanderCompressor extends Expander {
       } else {
         qn_ratio_exp2 = 1.0;
       }
-      double CF_total2 = CF2 * CF_qn_exp2;
-      if (CF_total2 < 0.0) {
-        CF_total2 = 0.0;
-      }
-      eta_s2 = eta_s_design * CF_total2;
+      eta_s2 = computeExpanderEfficiency(ucRaw2, uc2, IGVopening, CF_qn_exp2);
       if (useOutTemperatureSpec && eta_s_required > 0.0) {
         eta_s2 = eta_s_required;
       }
@@ -315,7 +331,11 @@ public class TurboExpanderCompressor extends Expander {
     powerCompressor = W_compressor;
     setUCratioexpander(uc);
     setQNratioexpander(qn_ratio_exp);
-    updateIGVState(h_s, m1, Q_exp);
+    if (!igvControlMode) {
+      updateIGVState(h_s, m1, Q_exp);
+    } else {
+      lastStageEnthalpyDrop = h_s;
+    }
     setQNratiocompressor(qn_ratio);
     setQn(N / 60.0 * Q_comp / designQn);
 
@@ -587,8 +607,9 @@ public class TurboExpanderCompressor extends Expander {
     double denom = 0.0;
     for (int i = 0; i < n; i++) {
       double dx = ucValues[i] - h;
-      num += (efficiencyValues[i] - k) * (dx);
-      denom += dx * dx;
+      double dx2 = dx * dx;
+      num += (efficiencyValues[i] - k) * dx2;
+      denom += dx2 * dx2;
     }
     if (denom != 0.0) {
       ucCurveA = num / denom;
@@ -604,8 +625,148 @@ public class TurboExpanderCompressor extends Expander {
    * @return the efficiency
    */
   public double getEfficiencyFromUC(double uc) {
-    // return ucCurveA * (uc - ucCurveH) * (uc - ucCurveH) + ucCurveK;
+    if (ucCurveA != 0.0) {
+      return ucCurveA * (uc - ucCurveH) * (uc - ucCurveH) + ucCurveK;
+    }
+    // Default parabola when no curve has been fitted
     return -3.56 * (uc - 1) * (uc - 1) + 1;
+  }
+
+  /**
+   * Compute the expander isentropic efficiency for the current operating point. When a 2-D
+   * {@link ExpanderChartKhader} performance map (P1) has been supplied it is used directly;
+   * otherwise the fitted velocity-ratio parabola scaled by the design efficiency is used. The Q/N
+   * correction factor and the IGV efficiency penalty (P2) are then applied.
+   *
+   * @param ucRaw the raw velocity ratio U/C (used for the 2-D map lookup)
+   * @param ucNorm the normalised velocity ratio U/C/designUC (used for the legacy parabola)
+   * @param igv the IGV opening (fraction of maximum area, 0..1)
+   * @param qnCorrection the multiplicative Q/N efficiency correction factor
+   * @return the isentropic efficiency (0..1)
+   */
+  private double computeExpanderEfficiency(double ucRaw, double ucNorm, double igv,
+      double qnCorrection) {
+    double baseEff;
+    if (expanderChart != null && expanderChart.isMapDefined()) {
+      baseEff = expanderChart.getEfficiency(ucRaw, igv);
+    } else {
+      double cf = getEfficiencyFromUC(ucNorm);
+      if (cf < 0.0) {
+        cf = 0.0;
+      }
+      baseEff = expanderDesignIsentropicEfficiency * cf;
+    }
+    baseEff *= qnCorrection;
+    baseEff *= getIgvEfficiencyPenalty(igv);
+    if (baseEff < 0.0) {
+      baseEff = 0.0;
+    }
+    return baseEff;
+  }
+
+  /**
+   * Evaluate the IGV efficiency penalty curve (P2) at a given IGV opening. The penalty is a
+   * multiplicative factor (1.0 = no loss). When no penalty curve has been configured the method
+   * returns 1.0, making the feature transparent. Linear interpolation with edge clamping is used.
+   *
+   * @param igv the IGV opening (fraction of maximum area, 0..1)
+   * @return the multiplicative efficiency penalty factor (0..1)
+   */
+  public double getIgvEfficiencyPenalty(double igv) {
+    if (igvPenaltyOpenings == null || igvPenaltyFactors == null || igvPenaltyOpenings.length < 2) {
+      return 1.0;
+    }
+    double[] x = igvPenaltyOpenings;
+    double[] y = igvPenaltyFactors;
+    int n = x.length;
+    if (igv <= x[0]) {
+      return y[0];
+    }
+    if (igv >= x[n - 1]) {
+      return y[n - 1];
+    }
+    for (int i = 0; i < n - 1; i++) {
+      if (igv >= x[i] && igv <= x[i + 1]) {
+        double t = (igv - x[i]) / (x[i + 1] - x[i]);
+        return y[i] + t * (y[i + 1] - y[i]);
+      }
+    }
+    return y[n - 1];
+  }
+
+  /**
+   * Set the IGV efficiency penalty curve (P2). The penalty is applied as a multiplicative factor to
+   * the expander efficiency, allowing the IGV schedule fitted to OEM data to act as a validatable
+   * control law.
+   *
+   * @param openings array of IGV openings (fraction of maximum area, 0..1)
+   * @param penaltyFactors matching multiplicative efficiency penalty factors (0..1)
+   */
+  public void setIgvEfficiencyPenaltyCurve(double[] openings, double[] penaltyFactors) {
+    if (openings == null || penaltyFactors == null || openings.length != penaltyFactors.length
+        || openings.length < 2) {
+      this.igvPenaltyOpenings = null;
+      this.igvPenaltyFactors = null;
+      return;
+    }
+    int n = openings.length;
+    double[][] pairs = new double[n][2];
+    for (int i = 0; i < n; i++) {
+      pairs[i][0] = openings[i];
+      pairs[i][1] = penaltyFactors[i];
+    }
+    Arrays.sort(pairs, new java.util.Comparator<double[]>() {
+      @Override
+      public int compare(double[] a, double[] b) {
+        return Double.compare(a[0], b[0]);
+      }
+    });
+    this.igvPenaltyOpenings = new double[n];
+    this.igvPenaltyFactors = new double[n];
+    for (int i = 0; i < n; i++) {
+      this.igvPenaltyOpenings[i] = pairs[i][0];
+      this.igvPenaltyFactors[i] = pairs[i][1];
+    }
+  }
+
+  /**
+   * Returns whether the IGV is treated as a fixed control input (P2).
+   *
+   * @return {@code true} if IGV control mode is enabled
+   */
+  public boolean isIgvControlMode() {
+    return igvControlMode;
+  }
+
+  /**
+   * Enable or disable IGV control mode (P2). When enabled the supplied IGV opening is held fixed
+   * and acts as the primary turndown actuator; the model solves the speed/power balance around it
+   * instead of recomputing the IGV opening from flow.
+   *
+   * @param igvControlMode {@code true} to treat IGV as a fixed control input
+   */
+  public void setIgvControlMode(boolean igvControlMode) {
+    this.igvControlMode = igvControlMode;
+  }
+
+  /**
+   * Get the 2-D Khader-style expander performance map (P1).
+   *
+   * @return the expander chart, or {@code null} if none has been set
+   */
+  public ExpanderChartKhader getExpanderChart() {
+    return expanderChart;
+  }
+
+  /**
+   * Set the 2-D Khader-style expander performance map (P1). When set it overrides the
+   * velocity-ratio parabola and provides composition-aware efficiency and head as a function of U/C
+   * and IGV.
+   *
+   * @param expanderChart the expander chart to use
+   */
+  public void setExpanderChart(ExpanderChartKhader expanderChart) {
+    this.expanderChart = expanderChart;
   }
 
   /**
@@ -1475,5 +1636,21 @@ public class TurboExpanderCompressor extends Expander {
     }
 
     return expanderBalance + compressorBalance;
+  }
+
+  /**
+   * Get the coupled mechanical design for this turbo-expander-compressor.
+   *
+   * @return the coupled mechanical design
+   */
+  public TurboExpanderCompressorMechanicalDesign getTECMechanicalDesign() {
+    return tecMechanicalDesign;
+  }
+
+  /**
+   * Initialize the coupled mechanical design for this turbo-expander-compressor.
+   */
+  public void initTECMechanicalDesign() {
+    tecMechanicalDesign = new TurboExpanderCompressorMechanicalDesign(this);
   }
 }
