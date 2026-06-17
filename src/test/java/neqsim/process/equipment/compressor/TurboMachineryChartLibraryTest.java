@@ -52,6 +52,8 @@ public class TurboMachineryChartLibraryTest {
   void testCompressorReferenceMapIsUsable() {
     TurboMachineryChartLibrary library = new TurboMachineryChartLibrary();
     SystemInterface gas = fluid();
+    new neqsim.thermodynamicoperations.ThermodynamicOperations(gas).TPflash();
+    gas.initThermoProperties();
     CompressorChartKhader2015 chart =
         library.getCompressorChart(TurboMachineryChartLibrary.GENERIC_CENTRIFUGAL_3SPEED, gas, 0.3);
     double head = chart.getPolytropicHead(2600.0, 10500.0);
