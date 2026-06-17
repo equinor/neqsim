@@ -3221,6 +3221,9 @@ public class ProcessSystem extends SimulationBaseClass {
           hasOtherActiveFeed = true;
         }
         if (hasOtherActiveFeed) {
+          // This node is a live boundary (a parallel feed keeps it active): do not descend past it
+          // and do not lock it. Only units strictly downstream of the start belong to the section.
+          visited.remove(u);
           continue;
         }
       }
@@ -3269,6 +3272,13 @@ public class ProcessSystem extends SimulationBaseClass {
     for (neqsim.process.equipment.stream.StreamInterface inlet : nodeInlets) {
       if (inlet == null) {
         continue;
+      }
+      // An inlet stream that is itself a still-active registered unit (e.g. a feed Stream, which
+      // is both a StreamInterface and a ProcessEquipmentInterface) counts as a live feed. Feed
+      // streams report no outlet streams, so they are not found by the source-outlet scan below.
+      if (inlet instanceof ProcessEquipmentInterface && unitOperations.contains(inlet)
+          && !visited.contains(inlet) && !((ProcessEquipmentInterface) inlet).isLockedInactive()) {
+        return true;
       }
       for (ProcessEquipmentInterface source : unitOperations) {
         if (source == node || visited.contains(source) || source.isLockedInactive()) {
