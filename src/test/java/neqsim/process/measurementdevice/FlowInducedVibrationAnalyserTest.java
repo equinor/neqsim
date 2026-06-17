@@ -1,5 +1,7 @@
 package neqsim.process.measurementdevice;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -231,5 +233,74 @@ public class FlowInducedVibrationAnalyserTest {
 
     // Due to pressure and density changes along the pipe, the values should be different
     // assertNotEquals(defaultSegmentValue, segment5Value, DELTA);
+  }
+
+  @Test
+  @DisplayName("LOF with zero wall thickness throws a clear exception instead of returning NaN")
+  public void testLOFRequiresPositiveWallThickness() {
+    SystemInterface thermoSystem = new SystemSrkEos(298.15, 70.0);
+    thermoSystem.addComponent("methane", 0.90);
+    thermoSystem.addComponent("ethane", 0.10);
+    thermoSystem.setMixingRule("classic");
+    thermoSystem.setTotalFlowRate(100.0, "kg/hr");
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
+    ops.TPflash();
+    thermoSystem.initPhysicalProperties();
+
+    Stream stream = new Stream("test stream", thermoSystem);
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("test pipe", stream);
+    pipe.setDiameter(0.1);
+    // Intentionally leave the wall thickness unset (defaults to 0.0)
+    pipe.setLength(50.0);
+    pipe.setElevation(0.0);
+    pipe.setPipeWallRoughness(1.0e-5);
+    pipe.setNumberOfIncrements(10);
+
+    FlowInducedVibrationAnalyser analyzer = new FlowInducedVibrationAnalyser("LOF analyzer", pipe);
+    analyzer.setMethod("LOF");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(stream);
+    process.add(pipe);
+    process.add(analyzer);
+    process.run();
+
+    IllegalStateException ex =
+        assertThrows(IllegalStateException.class, () -> analyzer.getMeasuredValue("any"));
+    assertTrue(ex.getMessage().contains("wall thickness"),
+        "Exception message should explain the missing wall thickness");
+  }
+
+  @Test
+  @DisplayName("Support arrangement is validated and normalised; getters expose state")
+  public void testSupportArrangementValidationAndGetters() {
+    SystemInterface thermoSystem = new SystemSrkEos(298.15, 70.0);
+    thermoSystem.addComponent("methane", 1.0);
+    thermoSystem.setMixingRule("classic");
+    Stream stream = new Stream("test stream", thermoSystem);
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("test pipe", stream);
+
+    FlowInducedVibrationAnalyser analyzer = new FlowInducedVibrationAnalyser("analyzer", pipe);
+
+    // Default is Stiff
+    assertEquals("Stiff", analyzer.getSupportArrangement());
+
+    // Case-insensitive input is normalised to the canonical spelling
+    analyzer.setSupportArrangement("medium STIFF");
+    assertEquals("Medium stiff", analyzer.getSupportArrangement());
+
+    analyzer.setSupportArrangement("Flexible");
+    assertEquals("Flexible", analyzer.getSupportArrangement());
+
+    // Invalid categories are rejected with a helpful message
+    IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        () -> analyzer.setSupportArrangement("Very Stiff"));
+    assertTrue(ex.getMessage().contains("Valid values"));
+    assertThrows(IllegalArgumentException.class, () -> analyzer.setSupportArrangement(null));
+
+    // supportDistance is informational only but still round-trips
+    analyzer.setSupportDistance(6.0);
+    assertEquals(6.0, analyzer.getSupportDistance(), 1.0e-9);
   }
 }

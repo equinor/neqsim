@@ -253,9 +253,10 @@ public class DexpiExportForViewerTest extends NeqSimTest {
 
     // Set mechanical design parameters on key equipment
     inletSep.initMechanicalDesign();
-    inletSep.getMechanicalDesign().setInnerDiameter(2400);
-    inletSep.getMechanicalDesign().setWallThickness(25.0);
-    inletSep.getMechanicalDesign().setTantanLength(6000);
+    // Mechanical-design lengths are stored in metres (see SeparatorMechanicalDesign.calcDesign).
+    inletSep.getMechanicalDesign().setInnerDiameter(2.4);
+    inletSep.getMechanicalDesign().setWallThickness(0.025);
+    inletSep.getMechanicalDesign().setTantanLength(6.0);
     inletSep.getMechanicalDesign().setMaxOperationPressure(65.0);
     inletSep.getMechanicalDesign().setWeightTotal(18500);
     inletSep.getMechanicalDesign().setConstrutionMaterial("SA-516-70");
@@ -265,9 +266,9 @@ public class DexpiExportForViewerTest extends NeqSimTest {
     gasComp.getMechanicalDesign().setWeightTotal(8200);
 
     scrubber.initMechanicalDesign();
-    scrubber.getMechanicalDesign().setInnerDiameter(1200);
-    scrubber.getMechanicalDesign().setWallThickness(18.0);
-    scrubber.getMechanicalDesign().setTantanLength(3500);
+    scrubber.getMechanicalDesign().setInnerDiameter(1.2);
+    scrubber.getMechanicalDesign().setWallThickness(0.018);
+    scrubber.getMechanicalDesign().setTantanLength(3.5);
     scrubber.getMechanicalDesign().setMaxOperationPressure(130.0);
 
     // Add instruments via ProcessSystem (auto-collected by DEXPI writer)
