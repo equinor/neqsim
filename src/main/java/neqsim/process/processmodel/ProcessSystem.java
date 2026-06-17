@@ -3220,6 +3220,9 @@ public class ProcessSystem extends SimulationBaseClass {
           hasOtherActiveFeed = true;
         }
         if (hasOtherActiveFeed) {
+          // Keep this node active: remove it from the visited/locked set and do not descend past
+          // it, so the parallel branch that still has live feeds keeps running.
+          visited.remove(u);
           continue;
         }
       }
@@ -3299,10 +3302,17 @@ public class ProcessSystem extends SimulationBaseClass {
    * works for flowsheets built with {@code getOutletStream()} wiring rather than explicit
    * {@link #connect(String, String)} registration.
    *
+   * <p>
+   * A feed counts as "still active" when the inlet stream is neither part of the deactivated set
+   * (i.e. it is not a visited unit and is not produced by a visited unit such as a recycle outlet)
+   * nor locked inactive, and it is backed by a live source — either the inlet stream is itself a
+   * registered, unlocked unit operation (a fresh feed {@code Stream}) or it is produced by an
+   * unlocked upstream unit.
+   *
    * @param node the mixer or recycle unit whose inlet feeds are inspected
    * @param visited the set of units already locked/visited in the current deactivation traversal
-   * @return {@code true} if an inlet stream of {@code node} is produced by a unit that is neither
-   *         visited nor locked inactive, {@code false} otherwise
+   * @return {@code true} if at least one inlet of {@code node} is fed by a live source outside the
+   *         deactivated section, {@code false} otherwise
    */
   private boolean hasOtherActiveFeedViaStreams(ProcessEquipmentInterface node,
       java.util.Set<ProcessEquipmentInterface> visited) {
@@ -3319,29 +3329,80 @@ public class ProcessSystem extends SimulationBaseClass {
       if (inlet == null) {
         continue;
       }
+      // Skip inlets that belong to the deactivated section: the inlet stream is itself a visited
+      // unit, or it is produced by a visited unit (e.g. the outlet stream of a deactivated
+      // recycle).
+      if (isStreamFromUnitSet(inlet, visited, node)) {
+        continue;
+      }
+      // This inlet is outside the deactivated section. Is it backed by a live source?
+      // Case 1: the inlet stream is itself a registered, unlocked unit operation (a fresh feed).
+      if (inlet instanceof ProcessEquipmentInterface && inlet != node
+          && unitOperations.contains(inlet)
+          && !((ProcessEquipmentInterface) inlet).isLockedInactive()) {
+        return true;
+      }
+      // Case 2: the inlet stream is produced by an unlocked upstream unit.
       for (ProcessEquipmentInterface producer : unitOperations) {
-        if (producer == node) {
+        if (producer == node || producer.isLockedInactive()) {
           continue;
         }
-        java.util.List<neqsim.process.equipment.stream.StreamInterface> producerOutlets;
-        try {
-          producerOutlets = producer.getOutletStreams();
-        } catch (Exception ex) {
-          continue;
-        }
-        if (producerOutlets == null) {
-          continue;
-        }
-        boolean produces = false;
-        for (neqsim.process.equipment.stream.StreamInterface outlet : producerOutlets) {
-          if (outlet == inlet) {
-            produces = true;
-            break;
-          }
-        }
-        if (produces && !visited.contains(producer) && !producer.isLockedInactive()) {
+        if (unitProducesStream(producer, inlet)) {
           return true;
         }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Tests whether the given stream belongs to (originates from) any unit in the supplied set. A
+   * stream belongs to the set when it is itself one of the units, or when it is an outlet stream of
+   * one of the units.
+   *
+   * @param stream the stream to test
+   * @param units the set of units to test membership against
+   * @param exclude a unit to exclude from the producer search (typically the node being inspected)
+   * @return {@code true} if the stream is or is produced by a unit in {@code units}
+   */
+  private boolean isStreamFromUnitSet(neqsim.process.equipment.stream.StreamInterface stream,
+      java.util.Set<ProcessEquipmentInterface> units, ProcessEquipmentInterface exclude) {
+    if (stream instanceof ProcessEquipmentInterface
+        && units.contains((ProcessEquipmentInterface) stream)) {
+      return true;
+    }
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit == exclude) {
+        continue;
+      }
+      if (unitProducesStream(unit, stream)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Tests whether the given unit produces the supplied stream as one of its outlet streams.
+   *
+   * @param unit the unit whose outlet streams are inspected
+   * @param stream the stream to look for
+   * @return {@code true} if {@code stream} is one of the unit's outlet streams
+   */
+  private boolean unitProducesStream(ProcessEquipmentInterface unit,
+      neqsim.process.equipment.stream.StreamInterface stream) {
+    java.util.List<neqsim.process.equipment.stream.StreamInterface> outlets;
+    try {
+      outlets = unit.getOutletStreams();
+    } catch (Exception ex) {
+      return false;
+    }
+    if (outlets == null) {
+      return false;
+    }
+    for (neqsim.process.equipment.stream.StreamInterface outlet : outlets) {
+      if (outlet == stream) {
+        return true;
       }
     }
     return false;
