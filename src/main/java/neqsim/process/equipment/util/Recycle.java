@@ -1,6 +1,8 @@
 package neqsim.process.equipment.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -989,6 +991,41 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   @Override
   public StreamInterface getOutletStream() {
     return outletStream;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the tear (recycle) streams fed into this recycle unit via
+   * {@link #addStream(StreamInterface)}. Exposing them through the standard inlet accessor lets
+   * topology walkers (DOT/Graphviz export, JSON DTO export, DEXPI, auto-instrumentation) trace the
+   * recycle loop instead of rendering the recycle unit as an isolated node.
+   * </p>
+   */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    return Collections.unmodifiableList(streams);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the converged recycle outlet stream so the recycle loop closes back to its downstream
+   * consumer in topology graphs. Falls back to the internal mixed stream when no explicit outlet
+   * stream has been assigned via {@link #setOutletStream(StreamInterface)}.
+   * </p>
+   */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    if (outletStream != null) {
+      return Collections.singletonList(outletStream);
+    }
+    if (mixedStream != null) {
+      return Collections.singletonList(mixedStream);
+    }
+    return Collections.emptyList();
   }
 
   /**

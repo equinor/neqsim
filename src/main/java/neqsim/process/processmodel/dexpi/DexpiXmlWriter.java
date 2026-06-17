@@ -56,8 +56,12 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.measurementdevice.LevelTransmitter;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
+import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.measurementdevice.StreamMeasurementDeviceBaseClass;
+import neqsim.process.measurementdevice.TemperatureTransmitter;
+import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.equipment.TwoPortEquipment;
@@ -97,6 +101,29 @@ public final class DexpiXmlWriter {
    */
   private static final transient ThreadLocal<Boolean> OMIT_DEFAULT_NAMESPACE =
       ThreadLocal.withInitial(() -> Boolean.FALSE);
+
+  /**
+   * Thread-local flag controlling whether standard ISA-5.1 instrumentation (pressure, temperature,
+   * level and flow loops with matched controllers) is automatically synthesized for a
+   * {@link ProcessSystem} that defines no measurement devices or controllers of its own. When
+   * {@code true} (the default) every separator, compressor, cooler/heater and pump receives a
+   * realistic set of indicating/controlling loops so the exported P&amp;ID resembles a real
+   * engineering diagram instead of a bare block flow sketch. Set to {@code false} to export only
+   * the instrumentation that is explicitly present in the model.
+   */
+  private static final transient ThreadLocal<Boolean> AUTO_SYNTHESIZE_INSTRUMENTS =
+      ThreadLocal.withInitial(() -> Boolean.TRUE);
+
+  /**
+   * Enables or disables automatic synthesis of standard ISA-5.1 instrumentation for process systems
+   * that contain no explicit measurement devices or controllers.
+   *
+   * @param enabled {@code true} to synthesize standard control loops (default), {@code false} to
+   *        export only explicitly modelled instrumentation
+   */
+  public static void setAutoSynthesizeInstrumentation(boolean enabled) {
+    AUTO_SYNTHESIZE_INSTRUMENTS.set(Boolean.valueOf(enabled));
+  }
 
   private DexpiXmlWriter() {}
 
@@ -506,6 +533,21 @@ public final class DexpiXmlWriter {
       }
     }
 
+    // When the model carries no instrumentation of its own, synthesize a standard set of ISA-5.1
+    // control loops so the exported P&ID looks like a real engineering diagram (control valves,
+    // transmitters and PID controllers) rather than a bare block flow sketch. Synthesis is limited
+    // to the rich pyDEXPI/P&ID export path; the plain write(...) overloads stay backwards
+    // compatible and emit only the instrumentation explicitly present in the model.
+    if ((effectiveTransmitters == null || effectiveTransmitters.isEmpty())
+        && AUTO_SYNTHESIZE_INSTRUMENTS.get().booleanValue()
+        && Boolean.TRUE.equals(OMIT_DEFAULT_NAMESPACE.get())) {
+      effectiveTransmitters = new LinkedHashMap<>();
+      if (effectiveControllers == null) {
+        effectiveControllers = new LinkedHashMap<>();
+      }
+      synthesizeStandardInstrumentation(processSystem, effectiveTransmitters, effectiveControllers);
+    }
+
     if (effectiveTransmitters != null && !effectiveTransmitters.isEmpty()) {
       appendInstruments(document, root, effectiveTransmitters, effectiveControllers, usedIds,
           layoutPositions, nozzlePositions, processSystem);
@@ -566,9 +608,9 @@ public final class DexpiXmlWriter {
 
   private static Element createPlantInformation(Document document) {
     Element plantInformation = document.createElement("PlantInformation");
-    String applicationVersion = ProcessSystem.class.getPackage().getImplementationVersion() == null
-        ? "1.0"
-        : ProcessSystem.class.getPackage().getImplementationVersion();
+    String applicationVersion =
+        ProcessSystem.class.getPackage().getImplementationVersion() == null ? "1.0"
+            : ProcessSystem.class.getPackage().getImplementationVersion();
     plantInformation.setAttribute("Application", "NeqSim");
     plantInformation.setAttribute("ApplicationVersion", applicationVersion);
     plantInformation.setAttribute("OriginatingSystem", "NeqSim");
@@ -909,23 +951,30 @@ public final class DexpiXmlWriter {
       return rows;
     }
 
+    // Mechanical-design lengths (inner diameter, wall thickness, tan-to-tan length) are stored
+    // internally in metres. Convert to millimetres for the P&ID data bar.
     if (md.getInnerDiameter() > 0) {
-      rows.add(new String[] {"ID", formatMechValue(md.getInnerDiameter()) + " mm"});
+      rows.add(new String[] {"ID", formatMechValue(md.getInnerDiameter() * 1000.0) + " mm"});
     }
     if (md.getWallThickness() > 0) {
-      rows.add(new String[] {"Wall Thk.", formatMechValue(md.getWallThickness()) + " mm"});
+      rows.add(new String[] {"Wall Thk.", formatMechValue(md.getWallThickness() * 1000.0) + " mm"});
     }
     if (md.getTantanLength() > 0) {
-      rows.add(new String[] {"Length", formatMechValue(md.getTantanLength()) + " mm"});
+      rows.add(new String[] {"Length", formatMechValue(md.getTantanLength() * 1000.0) + " mm"});
     }
     String material = md.getConstrutionMaterial();
     if (material != null && !material.trim().isEmpty() && !"steel".equals(material)) {
       rows.add(new String[] {"Material", material});
     }
-    if (md.getMaxDesignPressure() > 0 && md.getMaxOperationPressure() > 0) {
+    boolean designPressureSet = md.getMaxDesignPressure() > 0 && md.getMaxOperationPressure() > 0;
+    if (designPressureSet) {
       rows.add(new String[] {"Design P.", formatMechValue(md.getMaxDesignPressure()) + " bara"});
     }
-    if (md.getMaxOperationTemperature() > 0) {
+    // Only emit a design temperature when it has been meaningfully set. The field defaults to the
+    // placeholder value 100.0 K (-173.1 C); emitting that for every unmodified unit produced a
+    // misleading constant on the P&ID, so it is suppressed unless a real design basis exists.
+    boolean designTemperatureSet = Math.abs(md.getMaxOperationTemperature() - 100.0) > 0.5;
+    if (designTemperatureSet) {
       double designTempC = md.getMaxOperationTemperature() - 273.15;
       rows.add(new String[] {"Design T.", formatMechValue(designTempC) + " \u00B0C"});
     }
@@ -2020,6 +2069,173 @@ public final class DexpiXmlWriter {
   }
 
   /**
+   * Synthesizes a standard set of ISA-5.1 instrumentation loops for a process system that defines
+   * no measurement devices or controllers of its own. The generated loops give every common piece
+   * of equipment a realistic indicating/controlling scheme so the exported P&amp;ID resembles a
+   * real engineering diagram:
+   *
+   * <table>
+   * <caption>Synthesized control loops by equipment type</caption>
+   * <tr>
+   * <th>Equipment</th>
+   * <th>Loops</th>
+   * </tr>
+   * <tr>
+   * <td>Separator</td>
+   * <td>PT/PIC on gas outlet, LT/LIC on liquid outlet, TT on gas outlet</td>
+   * </tr>
+   * <tr>
+   * <td>Compressor</td>
+   * <td>PT/PIC and TT on discharge, FT on suction</td>
+   * </tr>
+   * <tr>
+   * <td>Cooler / Heater / HeatExchanger</td>
+   * <td>TT/TIC on the process outlet</td>
+   * </tr>
+   * <tr>
+   * <td>Pump</td>
+   * <td>PT/PIC on discharge</td>
+   * </tr>
+   * </table>
+   *
+   * <p>
+   * The transmitters are bound to live process streams (or, for level, to the separator) so the
+   * downstream positioning logic can place each bubble above its parent equipment. Controller
+   * set-points are seeded from the current simulated stream conditions.
+   * </p>
+   *
+   * @param processSystem the process system to instrument
+   * @param transmitters the (initially empty) transmitter map to populate, keyed by ISA tag
+   * @param controllers the controller map to populate, keyed by derived ISA controller tag
+   */
+  private static void synthesizeStandardInstrumentation(ProcessSystem processSystem,
+      Map<String, MeasurementDeviceInterface> transmitters,
+      Map<String, ControllerDeviceInterface> controllers) {
+    int eqIndex = 0;
+    for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
+      if (unit instanceof Stream || unit instanceof Mixer || unit instanceof Splitter) {
+        continue;
+      }
+      int base = 2000 + eqIndex * 10;
+      eqIndex++;
+
+      if (unit instanceof Separator) {
+        Separator sep = (Separator) unit;
+        StreamInterface gas = sep.getGasOutStream();
+        if (gas != null) {
+          String pt = "PT-" + (base + 1);
+          transmitters.put(pt, new PressureTransmitter(pt, gas));
+          controllers.put("PC-" + (base + 1),
+              makeSynthController("PC-" + (base + 1), safePressure(gas)));
+          String tt = "TT-" + (base + 3);
+          transmitters.put(tt, new TemperatureTransmitter(tt, gas));
+        }
+        String lt = "LT-" + (base + 2);
+        transmitters.put(lt, new LevelTransmitter(lt, sep));
+        controllers.put("LC-" + (base + 2), makeSynthController("LC-" + (base + 2), 0.5));
+      } else if (unit instanceof Compressor) {
+        StreamInterface out = firstOutlet(unit);
+        if (out != null) {
+          String pt = "PT-" + (base + 1);
+          transmitters.put(pt, new PressureTransmitter(pt, out));
+          controllers.put("PC-" + (base + 1),
+              makeSynthController("PC-" + (base + 1), safePressure(out)));
+          String tt = "TT-" + (base + 3);
+          transmitters.put(tt, new TemperatureTransmitter(tt, out));
+        }
+        StreamInterface in = firstInlet(unit);
+        if (in != null) {
+          String ft = "FT-" + (base + 4);
+          transmitters.put(ft, new VolumeFlowTransmitter(ft, in));
+        }
+      } else if (unit instanceof Heater) {
+        // Cooler and HeatExchanger both extend Heater, so a single instanceof Heater check
+        // covers every cooling/heating service (a Cooler is not an instanceof HeatExchanger).
+        StreamInterface out = firstOutlet(unit);
+        if (out != null) {
+          String tt = "TT-" + (base + 3);
+          transmitters.put(tt, new TemperatureTransmitter(tt, out));
+          controllers.put("TC-" + (base + 3),
+              makeSynthController("TC-" + (base + 3), safeTemperature(out)));
+        }
+      } else if (unit instanceof Pump) {
+        StreamInterface out = firstOutlet(unit);
+        if (out != null) {
+          String pt = "PT-" + (base + 1);
+          transmitters.put(pt, new PressureTransmitter(pt, out));
+          controllers.put("PC-" + (base + 1),
+              makeSynthController("PC-" + (base + 1), safePressure(out)));
+        }
+      }
+    }
+  }
+
+  /**
+   * Builds a PID controller seeded with a realistic set-point for synthesized instrumentation.
+   *
+   * @param name the ISA controller tag
+   * @param setPoint the controller set-point value
+   * @return a configured controller device
+   */
+  private static ControllerDeviceInterface makeSynthController(String name, double setPoint) {
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass(name);
+    controller.setControllerSetPoint(setPoint);
+    controller.setControllerParameters(0.5, 200.0, 0.0);
+    return controller;
+  }
+
+  /**
+   * Returns the first outlet stream of an equipment unit, or {@code null} when it has none.
+   *
+   * @param unit the equipment unit
+   * @return the first outlet stream, or {@code null}
+   */
+  private static StreamInterface firstOutlet(ProcessEquipmentInterface unit) {
+    List<StreamInterface> outlets = unit.getOutletStreams();
+    return outlets != null && !outlets.isEmpty() ? outlets.get(0) : null;
+  }
+
+  /**
+   * Returns the first inlet stream of an equipment unit, or {@code null} when it has none.
+   *
+   * @param unit the equipment unit
+   * @return the first inlet stream, or {@code null}
+   */
+  private static StreamInterface firstInlet(ProcessEquipmentInterface unit) {
+    List<StreamInterface> inlets = unit.getInletStreams();
+    return inlets != null && !inlets.isEmpty() ? inlets.get(0) : null;
+  }
+
+  /**
+   * Reads the pressure of a stream in bara, returning {@code 0.0} if the value cannot be obtained.
+   *
+   * @param stream the stream to read
+   * @return the pressure in bara, or {@code 0.0} on error
+   */
+  private static double safePressure(StreamInterface stream) {
+    try {
+      return stream.getPressure("bara");
+    } catch (RuntimeException e) {
+      return 0.0;
+    }
+  }
+
+  /**
+   * Reads the temperature of a stream in degrees Celsius, returning {@code 0.0} if the value cannot
+   * be obtained.
+   *
+   * @param stream the stream to read
+   * @return the temperature in degrees Celsius, or {@code 0.0} on error
+   */
+  private static double safeTemperature(StreamInterface stream) {
+    try {
+      return stream.getTemperature("C");
+    } catch (RuntimeException e) {
+      return 0.0;
+    }
+  }
+
+  /**
    * Finds the name of the equipment whose inlet or outlet stream matches the transmitter's stream.
    *
    * @param device the measurement device
@@ -2028,7 +2244,14 @@ public final class DexpiXmlWriter {
    */
   private static String findParentEquipment(MeasurementDeviceInterface device,
       ProcessSystem processSystem) {
-    if (!(device instanceof StreamMeasurementDeviceBaseClass) || processSystem == null) {
+    if (processSystem == null) {
+      return null;
+    }
+    if (device instanceof LevelTransmitter) {
+      Separator sep = ((LevelTransmitter) device).getSeparator();
+      return sep != null ? sep.getName() : null;
+    }
+    if (!(device instanceof StreamMeasurementDeviceBaseClass)) {
       return null;
     }
     StreamInterface measuredStream = ((StreamMeasurementDeviceBaseClass) device).getStream();

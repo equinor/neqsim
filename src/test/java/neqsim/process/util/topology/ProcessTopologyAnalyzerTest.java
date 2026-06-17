@@ -151,4 +151,87 @@ public class ProcessTopologyAnalyzerTest {
     // Should return something (map may be empty if no redundancy)
     assertNotNull(increased);
   }
+
+  @Test
+  void testRecycleExposesInletAndOutletStreams() {
+    SystemSrkEos fluid = new SystemSrkEos(280.0, 50.0);
+    fluid.addComponent("methane", 0.9);
+    fluid.addComponent("ethane", 0.1);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("Loop Feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+
+    Stream tear = new Stream("Tear Seed", fluid.clone());
+    tear.setFlowRate(1.0, "kg/hr");
+
+    neqsim.process.equipment.mixer.Mixer mixer =
+        new neqsim.process.equipment.mixer.Mixer("Loop Mixer");
+    mixer.addStream(feed);
+    mixer.addStream(tear);
+
+    Separator sep = new Separator("Loop Separator", mixer.getOutletStream());
+
+    neqsim.process.equipment.util.Recycle recycle =
+        new neqsim.process.equipment.util.Recycle("Liquid Recycle");
+    recycle.addStream(sep.getLiquidOutStream());
+    recycle.setOutletStream(tear);
+
+    // Recycle now reports its tear inlet and converged outlet through the standard accessors.
+    assertEquals(1, recycle.getInletStreams().size());
+    assertSame(sep.getLiquidOutStream(), recycle.getInletStreams().get(0));
+    assertEquals(1, recycle.getOutletStreams().size());
+    assertSame(tear, recycle.getOutletStreams().get(0));
+  }
+
+  @Test
+  void testRecycleIsConnectedInTopologyGraph() {
+    SystemSrkEos fluid = new SystemSrkEos(280.0, 50.0);
+    fluid.addComponent("methane", 0.9);
+    fluid.addComponent("ethane", 0.1);
+    fluid.setMixingRule("classic");
+
+    ProcessSystem loop = new ProcessSystem();
+
+    Stream feed = new Stream("Loop Feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    loop.add(feed);
+
+    Stream tear = new Stream("Tear Seed", fluid.clone());
+    tear.setFlowRate(1.0, "kg/hr");
+    loop.add(tear);
+
+    neqsim.process.equipment.mixer.Mixer mixer =
+        new neqsim.process.equipment.mixer.Mixer("Loop Mixer");
+    mixer.addStream(feed);
+    mixer.addStream(tear);
+    loop.add(mixer);
+
+    Separator sep = new Separator("Loop Separator", mixer.getOutletStream());
+    loop.add(sep);
+
+    neqsim.process.equipment.util.Recycle recycle =
+        new neqsim.process.equipment.util.Recycle("Liquid Recycle");
+    recycle.addStream(sep.getLiquidOutStream());
+    recycle.setOutletStream(tear);
+    loop.add(recycle);
+
+    loop.run();
+
+    ProcessTopologyAnalyzer loopAnalyzer = new ProcessTopologyAnalyzer(loop);
+    loopAnalyzer.buildTopology();
+
+    // The recycle node must be wired into the graph, not isolated:
+    // separator liquid -> recycle (inlet) and recycle -> mixer (outlet/tear seed).
+    List<String> recycleUpstream = loopAnalyzer.getUpstreamEquipment("Liquid Recycle");
+    List<String> recycleDownstream = loopAnalyzer.getDownstreamEquipment("Liquid Recycle");
+    assertTrue(recycleUpstream.contains("Loop Separator"),
+        "Recycle should receive the separator liquid outlet as an inlet");
+    assertTrue(recycleDownstream.contains("Loop Mixer"),
+        "Recycle outlet (tear seed) should feed the loop mixer");
+
+    String dot = loopAnalyzer.toDotGraph();
+    assertTrue(dot.contains("Liquid Recycle"),
+        "DOT/Graphviz export should include the recycle node");
+  }
 }
