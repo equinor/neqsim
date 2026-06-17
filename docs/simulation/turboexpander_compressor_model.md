@@ -295,3 +295,140 @@ $$
 | `calcIGVOpening()` | Returns the calculated IGV opening fraction (0–1) |
 | `calcIGVOpenArea()` | Returns the actual open area [mm²] |
 | `getCurrentIGVArea()` | Returns the current IGV throat area [mm²] |
+
+---
+
+## Off-Design State-of-the-Art Enhancements
+
+The base model above uses 1-D reference curves. For high-fidelity off-design
+operability studies (turndown, trip/blowdown, mechanical limits, multi-variable
+envelopes) the following companion classes extend the expander side to the same
+fidelity as the composition-aware compressor side.
+
+### 1. Composition-Aware Expander Map — `ExpanderChartKhader`
+
+A 2-D radial-inflow expander performance map modeled on
+`CompressorChartKhader2015`. It returns isentropic efficiency and stage head
+drop as a function of velocity ratio $U/C$ and IGV position, and is
+**composition-aware**: head is normalized by the reference-fluid speed of
+sound squared and rescaled by the actual process-fluid $c_s^2$ at run time.
+
+$$
+\hat{H} = \frac{\Delta h_s}{c_{s,ref}^2}, \qquad
+\Delta h_s(\text{fluid}) = \hat{H}\,(U/C, \text{IGV}) \cdot c_{s,fluid}^2
+$$
+
+Efficiency and head are interpolated bilinearly over $U/C$ and IGV position
+with edge clamping. When a map is attached, `TurboExpanderCompressor`'s
+`computeExpanderEfficiency()` uses it; otherwise it falls back to the parabolic
+$U/C \times \eta_{design}$ law.
+
+```java
+ExpanderChartKhader chart = new ExpanderChartKhader(referenceFluid, 0.424);
+chart.setCurves(igvPositions, ucGrid, etaGrid, headDropKjPerKgGrid);
+turboExpanderComp.setExpanderChart(chart);
+double eta = chart.getEfficiency(0.7, 1.0);
+double dhDrop = chart.getStageHeadDrop(0.7, 1.0, processFluid);
+```
+
+### 2. IGV as a Controllable Degree of Freedom
+
+By default the IGV opening is recomputed by the model after every `run()`
+(see [IGV Handling](#igv-handling)). Enabling **IGV control mode** promotes
+`IGVopening` to a true input — the model no longer overwrites it — and couples
+it to an efficiency-penalty curve so the IGV can act as the primary turndown
+actuator with speed and power balanced around it.
+
+```java
+turboExpanderComp.setIgvControlMode(true);
+turboExpanderComp.setIgvEfficiencyPenaltyCurve(
+    new double[] {0.2, 0.4, 0.6, 0.8, 1.0},   // IGV opening fractions
+    new double[] {0.82, 0.90, 0.95, 0.99, 1.0}); // efficiency multipliers
+turboExpanderComp.setIGVopening(0.6);
+double penalty = turboExpanderComp.getIgvEfficiencyPenalty(0.6);
+```
+
+| Method | Description |
+|--------|-------------|
+| `setIgvControlMode(boolean)` | Enable/disable IGV as a fixed input (turndown actuator) |
+| `isIgvControlMode()` | Returns whether IGV control mode is active |
+| `setIgvEfficiencyPenaltyCurve(openings, factors)` | Set the $\eta(\text{IGV})$ loss curve |
+| `getIgvEfficiencyPenalty(igv)` | Linear-interpolated efficiency multiplier (1.0 if no curve) |
+
+### 3. Dynamic Anti-Surge Control — `AntiSurgeController`
+
+A transient regulator (subclass of `ControllerDeviceBaseClass`) that reads
+`Compressor.getDistanceToSurge()` and drives a recycle `ThrottlingValve` so the
+machine can run through trip, blowdown, startup, and load-rejection transients.
+It uses a reverse-acting PI law (error $= $ set-point $-$ surge margin) with
+anti-windup clamping, applied each `runTransient` timestep.
+
+```java
+AntiSurgeController asc = new AntiSurgeController("ASC", compressor, recycleValve);
+asc.setSurgeMarginSetPoint(0.10);
+asc.setProportionalGain(400.0);
+asc.setIntegralTime(20.0);
+asc.setOpeningRange(0.0, 100.0);
+recycleValve.addController("ASC", asc); // runs inside ProcessSystem.runTransient()
+```
+
+### 4. OEM Map Ingestion — `TurboExpanderMapIngestion`
+
+A loader that builds auditable maps from digitized OEM data sheets (e.g.
+ACR00162 design and Case B points). It constructs a
+`CompressorChartKhader2015` plus an `ExpanderChartKhader`, then validates the
+expander map against the certified anchor points within a tolerance.
+
+```java
+TurboExpanderMapIngestion ingest = new TurboExpanderMapIngestion();
+ingest.setReferenceFluid(referenceFluid);
+ingest.addAnchorPoint("design", 0.70, 1.0, 0.88);
+ingest.addAnchorPoint("caseB", 0.66, 0.6, 0.84);
+ExpanderChartKhader chart =
+    ingest.buildExpanderChart(igvPositions, ucGrid, etaGrid, headDropGrid);
+boolean ok = ingest.validateExpanderChart(chart, 0.02); // ±2% on anchors
+```
+
+### 5. Mechanical / Seal-Gas Envelope — `TurboExpanderSealGasEnvelope`
+
+Converts a thermodynamically feasible operating point into a mechanically
+allowable one by checking three independent limits:
+
+- **Axial thrust** vs differential pressure and thrust-bearing capacity
+  (with balance-piston offload).
+- **Seal-gas heater duty** against the installed heater rating
+  (default tuned to FE-25832 = 28 kW, 30 °C set-point).
+- **Critical-speed margin** between operating speed and the first critical
+  speed.
+
+$$
+\text{margin}_{crit} = \frac{N - N_{crit,1}}{N_{crit,1}}, \qquad
+Q_{seal} = 2\,\dot{m}_{seal}\,c_p\,\Delta T
+$$
+
+```java
+TurboExpanderSealGasEnvelope env = new TurboExpanderSealGasEnvelope(turboExpanderComp);
+env.setThrustAreas(0.0140, 0.0150);
+boolean allowable = env.evaluate(); // true if thrust, heater, and speed all OK
+String json = env.toJson();
+```
+
+### 6. Multi-Variable Operating Envelope — `TurboExpanderOperatingEnvelope`
+
+Sweeps inlet pressure × flow (extensible to composition) and produces grids of
+**feasibility**, **surge margin**, **cold-end temperature**, and **hydrate
+margin**, emitted via `toJson()` for the report generator.
+
+```java
+TurboExpanderOperatingEnvelope env = new TurboExpanderOperatingEnvelope(turboExpanderComp);
+env.setGrid(
+    new double[] {55.0, 60.95, 65.0},        // inlet pressures [bara]
+    new double[] {300000.0, 400000.0, 456000.0}); // flow rates [kg/hr]
+env.setSurgeQnLimit(0.6);
+env.setSpeedLimits(1100.0, 8950.0);
+env.run();
+String json = env.toJson(); // feasibility / surgeMargin / coldEndT / hydrateMargin grids
+```
+
+> See `docs/development/TASK_LOG.md` (2026-06-17 entry) for the design
+> rationale and the originating Oseberg turboexpander capability assessment.
