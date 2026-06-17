@@ -21,7 +21,7 @@ import neqsim.process.equipment.valve.ThrottlingValve;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * DesignSpecification.forSeparator("20-VA-01").setKFactor(0.08).setDiameter(3.0, "m")
  *     .setLength(8.0, "m").setMaterial("316L").setStandard("ASME-VIII").applyTo(separator);

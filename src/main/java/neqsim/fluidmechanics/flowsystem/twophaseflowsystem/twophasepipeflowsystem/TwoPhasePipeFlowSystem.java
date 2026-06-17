@@ -70,7 +70,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * </table>
  *
  * <h2>Usage Example (Traditional API)</h2>
- * 
+ *
  * <pre>{@code
  * // Create two-phase fluid
  * SystemInterface fluid = new SystemSrkEos(295.3, 5.0);
@@ -113,7 +113,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * }</pre>
  *
  * <h2>Usage Example (Builder API)</h2>
- * 
+ *
  * <pre>{@code
  * TwoPhasePipeFlowSystem pipe =
  *     TwoPhasePipeFlowSystem.builder().withFluid(thermoSystem).withDiameter(0.1, "m")
@@ -138,7 +138,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <p>
  * Set the solver type before calling solveSteadyState():
  * </p>
- * 
+ *
  * <pre>{@code
  * pipeSystem.setSolverType(TwoPhaseFixedStaggeredGridSolver.SolverType.DEFAULT);
  * pipeSystem.solveSteadyState(UUID.randomUUID());
@@ -239,7 +239,7 @@ public class TwoPhasePipeFlowSystem
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * TwoPhasePipeFlowSystem pipe =
    *     TwoPhasePipeFlowSystem.builder().withFluid(thermoSystem).withDiameter(0.1, "m")
@@ -265,7 +265,7 @@ public class TwoPhasePipeFlowSystem
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.horizontalPipe(fluid, 0.1, 1000, 100);
    * pipe.enableNonEquilibriumMassTransfer();
@@ -546,7 +546,7 @@ public class TwoPhasePipeFlowSystem
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.horizontalPipe(fluid, 0.1, 1000, 100);
    * pipe.enableNonEquilibriumMassTransfer();
@@ -570,7 +570,7 @@ public class TwoPhasePipeFlowSystem
    * This is a convenience method that enables non-equilibrium mass transfer, solves the system, and
    * returns the results. Equivalent to calling:
    * </p>
-   * 
+   *
    * <pre>
    * pipe.enableNonEquilibriumMassTransfer();
    * return pipe.solve();
@@ -607,6 +607,7 @@ public class TwoPhasePipeFlowSystem
    *             type using {@link #setSolverType} before calling. This method ignores the type
    *             parameter and uses the configured solver type enum.
    */
+  @Override
   @Deprecated
   public void solveSteadyState(int type) {
     solveSteadyState(type, UUID.randomUUID());
@@ -2671,6 +2672,7 @@ public class TwoPhasePipeFlowSystem
    *
    * @return the total pressure drop in bar
    */
+  @Override
   public double getTotalPressureDrop() {
     double inletPressure = flowNode[0].getBulkSystem().getPressure();
     double outletPressure = flowNode[getTotalNumberOfNodes() - 1].getBulkSystem().getPressure();

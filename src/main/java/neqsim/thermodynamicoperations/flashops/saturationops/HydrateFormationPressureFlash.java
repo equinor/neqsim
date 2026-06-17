@@ -70,8 +70,13 @@ public class HydrateFormationPressureFlash extends ConstantDutyTemperatureFlash 
   public void setFug() {
     for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        ((ComponentHydrate) system.getPhase(4).getComponent(j)).setRefFug(i,
-            system.getPhase(0).getFugacity(i));
+        if (system.getPhase(4).getComponent(i).isHydrateFormer()
+            || system.getPhase(4).getComponent(i).getName().equals("water")) {
+          ((ComponentHydrate) system.getPhase(4).getComponent(j)).setRefFug(i,
+              system.getPhase(0).getFugacity(i));
+        } else {
+          ((ComponentHydrate) system.getPhase(4).getComponent(j)).setRefFug(i, 0);
+        }
       }
     }
     system.getPhase(4).getComponent("water").fugcoef(system.getPhase(4));

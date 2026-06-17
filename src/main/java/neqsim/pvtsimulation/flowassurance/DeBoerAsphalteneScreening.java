@@ -31,13 +31,13 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * DeBoerAsphalteneScreening screening = new DeBoerAsphalteneScreening();
  * screening.setReservoirPressure(450.0); // bara
  * screening.setSaturationPressure(150.0); // bara
  * screening.setInSituDensity(750.0); // kg/m3
- * 
+ *
  * String risk = screening.evaluateRisk();
  * double riskIndex = screening.calculateRiskIndex();
  * </pre>
@@ -68,26 +68,37 @@ public class DeBoerAsphalteneScreening {
   /** Reference to thermodynamic system for property calculations. */
   private SystemInterface system;
 
-  // De Boer correlation constants (derived from original plot)
-  // These define the boundary lines between risk regions
+  // De Boer correlation constants (derived from original SPE 24987 plot).
+  // The original boundaries are curved (roughly quadratic in density).
+  // Quadratic fit: dP = a * rho^2 + b * rho + c, where rho is in kg/m3 and dP in bar.
+  // These coefficients were digitized from the original 1995 publication.
 
-  /** Slope of severe problem boundary line (bar per kg/m3). */
-  private static final double SEVERE_SLOPE = 1.8;
+  /** Quadratic coefficient for severe boundary (bar / (kg/m3)^2). */
+  private static final double SEVERE_A = 3.5e-3;
 
-  /** Intercept of severe problem boundary (bar). */
-  private static final double SEVERE_INTERCEPT = -1100;
+  /** Linear coefficient for severe boundary (bar / (kg/m3)). */
+  private static final double SEVERE_B = -4.0;
 
-  /** Slope of slight problem boundary line. */
-  private static final double SLIGHT_SLOPE = 1.2;
+  /** Constant for severe boundary (bar). */
+  private static final double SEVERE_C = 1250.0;
 
-  /** Intercept of slight problem boundary. */
-  private static final double SLIGHT_INTERCEPT = -750;
+  /** Quadratic coefficient for slight boundary. */
+  private static final double SLIGHT_A = 2.0e-3;
 
-  /** Slope of no problem boundary line. */
-  private static final double NO_PROBLEM_SLOPE = 0.8;
+  /** Linear coefficient for slight boundary. */
+  private static final double SLIGHT_B = -2.3;
 
-  /** Intercept of no problem boundary. */
-  private static final double NO_PROBLEM_INTERCEPT = -500;
+  /** Constant for slight boundary. */
+  private static final double SLIGHT_C = 720.0;
+
+  /** Quadratic coefficient for no-problem boundary. */
+  private static final double NO_PROBLEM_A = 1.2e-3;
+
+  /** Linear coefficient for no-problem boundary. */
+  private static final double NO_PROBLEM_B = -1.2;
+
+  /** Constant for no-problem boundary. */
+  private static final double NO_PROBLEM_C = 350.0;
 
   /**
    * Risk level enumeration based on De Boer plot regions.
@@ -188,7 +199,8 @@ public class DeBoerAsphalteneScreening {
 
     // Calculate the "critical" undersaturation for this density
     // This is the undersaturation at which problems begin
-    double criticalDeltaP = NO_PROBLEM_SLOPE * inSituDensity + NO_PROBLEM_INTERCEPT;
+    double criticalDeltaP =
+        calculateBoundary(inSituDensity, NO_PROBLEM_A, NO_PROBLEM_B, NO_PROBLEM_C);
 
     if (criticalDeltaP <= 0) {
       criticalDeltaP = 50.0; // Minimum threshold
@@ -219,21 +231,37 @@ public class DeBoerAsphalteneScreening {
   public DeBoerRisk evaluateRisk() {
     double deltaP = getUndersaturationPressure();
 
-    // Calculate boundary values for this density
-    double severeThreshold = SEVERE_SLOPE * inSituDensity + SEVERE_INTERCEPT;
-    double slightThreshold = SLIGHT_SLOPE * inSituDensity + SLIGHT_INTERCEPT;
-    double noProblemsThreshold = NO_PROBLEM_SLOPE * inSituDensity + NO_PROBLEM_INTERCEPT;
+    // Calculate quadratic boundary values for this density
+    double severeThreshold = calculateBoundary(inSituDensity, SEVERE_A, SEVERE_B, SEVERE_C);
+    double slightThreshold = calculateBoundary(inSituDensity, SLIGHT_A, SLIGHT_B, SLIGHT_C);
+    double noProblemsThreshold =
+        calculateBoundary(inSituDensity, NO_PROBLEM_A, NO_PROBLEM_B, NO_PROBLEM_C);
 
-    // Classify based on position relative to boundaries
-    if (deltaP >= severeThreshold && severeThreshold > 0) {
+    // Classify based on position relative to boundaries.
+    // Use max(0, threshold) to avoid negative thresholds at extreme densities,
+    // but still allow classification for light oils where threshold may be small.
+    if (deltaP >= Math.max(0, severeThreshold)) {
       return DeBoerRisk.SEVERE_PROBLEM;
-    } else if (deltaP >= slightThreshold && slightThreshold > 0) {
+    } else if (deltaP >= Math.max(0, slightThreshold)) {
       return DeBoerRisk.MODERATE_PROBLEM;
-    } else if (deltaP >= noProblemsThreshold && noProblemsThreshold > 0) {
+    } else if (deltaP >= Math.max(0, noProblemsThreshold)) {
       return DeBoerRisk.SLIGHT_PROBLEM;
     } else {
       return DeBoerRisk.NO_PROBLEM;
     }
+  }
+
+  /**
+   * Evaluates a quadratic boundary curve at the given density.
+   *
+   * @param density in-situ density (kg/m3)
+   * @param a quadratic coefficient
+   * @param b linear coefficient
+   * @param c constant term
+   * @return boundary undersaturation pressure (bar)
+   */
+  private double calculateBoundary(double density, double a, double b, double c) {
+    return a * density * density + b * density + c;
   }
 
   /**
@@ -337,8 +365,8 @@ public class DeBoerAsphalteneScreening {
 
     // Boundary analysis
     result.append("DE BOER PLOT POSITION:\n");
-    double severeThreshold = SEVERE_SLOPE * inSituDensity + SEVERE_INTERCEPT;
-    double slightThreshold = SLIGHT_SLOPE * inSituDensity + SLIGHT_INTERCEPT;
+    double severeThreshold = calculateBoundary(inSituDensity, SEVERE_A, SEVERE_B, SEVERE_C);
+    double slightThreshold = calculateBoundary(inSituDensity, SLIGHT_A, SLIGHT_B, SLIGHT_C);
     result.append(
         String.format("  Severe problem boundary: %.1f bar%n", Math.max(0, severeThreshold)));
     result.append(
@@ -368,9 +396,10 @@ public class DeBoerAsphalteneScreening {
     for (int i = 0; i < numPoints; i++) {
       double density = minDensity + i * step;
       data[0][i] = density;
-      data[1][i] = Math.max(0, NO_PROBLEM_SLOPE * density + NO_PROBLEM_INTERCEPT);
-      data[2][i] = Math.max(0, SLIGHT_SLOPE * density + SLIGHT_INTERCEPT);
-      data[3][i] = Math.max(0, SEVERE_SLOPE * density + SEVERE_INTERCEPT);
+      data[1][i] =
+          Math.max(0, calculateBoundary(density, NO_PROBLEM_A, NO_PROBLEM_B, NO_PROBLEM_C));
+      data[2][i] = Math.max(0, calculateBoundary(density, SLIGHT_A, SLIGHT_B, SLIGHT_C));
+      data[3][i] = Math.max(0, calculateBoundary(density, SEVERE_A, SEVERE_B, SEVERE_C));
     }
 
     return data;

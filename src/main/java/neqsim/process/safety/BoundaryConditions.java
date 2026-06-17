@@ -17,7 +17,7 @@ import java.util.Objects;
  *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * BoundaryConditions conditions = BoundaryConditions.builder().ambientTemperature(278.15) // 5°C
  *     .windSpeed(8.0) // 8 m/s

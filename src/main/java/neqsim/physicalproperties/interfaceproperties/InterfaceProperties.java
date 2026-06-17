@@ -19,6 +19,7 @@ import neqsim.physicalproperties.interfaceproperties.surfacetension.FirozabadiRa
 import neqsim.physicalproperties.interfaceproperties.surfacetension.GTSurfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.GTSurfaceTensionSimple;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.LGTSurfaceTension;
+import neqsim.physicalproperties.interfaceproperties.surfacetension.CDFTSurfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.ParachorSurfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.SurfaceTensionInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -75,13 +76,10 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   public InterfaceProperties clone() {
     InterfaceProperties clonedSystem = null;
     try {
-      // clonedSystem = (InterfaceProperties) suclone();
-      // clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations)
-      // chemicalReactionOperations.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      clonedSystem = (InterfaceProperties) super.clone();
+    } catch (CloneNotSupportedException ex) {
+      throw new AssertionError("Clone failed for InterfaceProperties", ex);
     }
-    // clonedSystem.system = system;
     return clonedSystem;
   }
 
@@ -219,6 +217,8 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
       surfTensModel = new GTSurfaceTensionSimple(system);
     } else if ("Full Gradient Theory".equals(model)) {
       surfTensModel = new GTSurfaceTension(system);
+    } else if ("cDFT".equals(model) || "Classical DFT".equals(model)) {
+      surfTensModel = new CDFTSurfaceTension(system);
     } else if ("Firozabadi Ramley".equals(model)) {
       surfTensModel = new FirozabadiRamleyInterfaceTension(system);
     } else if ("Parachor".equals(model) || "Weinaug-Katz".equals(model)) {

@@ -201,9 +201,9 @@ SystemSrkSchwartzentruberRenon fluid = new SystemSrkSchwartzentruberRenon(T, P);
 High-accuracy reference equation for natural gas.
 
 ```java
-import neqsim.thermo.system.SystemGERG2008;
+import neqsim.thermo.system.SystemGERG2008Eos;
 
-SystemGERG2008 gas = new SystemGERG2008(288.15, 50.0);
+SystemGERG2008Eos gas = new SystemGERG2008Eos(288.15, 50.0);
 gas.addComponent("nitrogen", 0.02);
 gas.addComponent("CO2", 0.01);
 gas.addComponent("methane", 0.85);
@@ -211,7 +211,7 @@ gas.addComponent("ethane", 0.08);
 gas.addComponent("propane", 0.04);
 ```
 
-**Accuracy:** 
+**Accuracy:**
 - Density: ±0.1% (normal conditions)
 - Speed of sound: ±0.1%
 

@@ -26,7 +26,7 @@
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Create a production profile with decline curve
  * ProductionProfile profile = new ProductionProfile(facilityProcess);

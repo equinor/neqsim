@@ -151,6 +151,42 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   }
 
   /**
+   * Setter for the pressure convergence tolerance.
+   *
+   * @param pressureTolerance relative pressure tolerance used to decide recycle convergence
+   */
+  public void setPressureTolerance(double pressureTolerance) {
+    this.pressureTolerance = pressureTolerance;
+  }
+
+  /**
+   * Getter for the pressure convergence tolerance.
+   *
+   * @return relative pressure tolerance used to decide recycle convergence
+   */
+  public double getPressureTolerance() {
+    return this.pressureTolerance;
+  }
+
+  /**
+   * Setter for the maximum number of recycle iterations.
+   *
+   * @param maxIterations maximum number of recycle iterations before validation flags the recycle
+   */
+  public void setMaxIterations(int maxIterations) {
+    this.maxIterations = maxIterations;
+  }
+
+  /**
+   * Getter for the maximum number of recycle iterations.
+   *
+   * @return maximum number of recycle iterations before validation flags the recycle
+   */
+  public int getMaxIterations() {
+    return this.maxIterations;
+  }
+
+  /**
    * <p>
    * resetIterations.
    * </p>
@@ -258,21 +294,15 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
           if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName()
               .equals(componentName)) {
             gotComponent = true;
-            index =
-                streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
-            // compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
-            // .getComponentName();
+            index = mixedStream.getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
+            break;
           }
         }
 
         if (gotComponent) {
-          // logger.info("adding moles starting....");
           mixedStream.getThermoSystem().addComponent(index, moles);
-          // mixedStream.getThermoSystem().init_x_y();
-          // logger.info("adding moles finished");
         } else {
-          logger.warn("ikke gaa hit");
-          mixedStream.getThermoSystem().addComponent(index, moles);
+          mixedStream.getThermoSystem().addComponent(componentName, moles);
         }
       }
     }
@@ -547,6 +577,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     this.flowTolerance = tolerance;
     this.temperatureTolerance = tolerance;
     this.compositionTolerance = tolerance;
+    this.pressureTolerance = tolerance;
   }
 
   /**

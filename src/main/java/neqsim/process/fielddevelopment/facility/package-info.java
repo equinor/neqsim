@@ -53,7 +53,7 @@
  * </table>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * // Build a gas processing facility
  * FacilityConfig facility =
@@ -63,7 +63,7 @@
  *             BlockConfig.of(BlockType.CO2_REMOVAL_AMINE).withParameter("capacity_mmscfd", 200.0))
  *         .addBlock(BlockConfig.of(BlockType.TEG_DEHYDRATION))
  *         .addBlock(BlockConfig.of(BlockType.COMPRESSION).withParameter("stages", 3)).build();
- * 
+ *
  * // Use with concept evaluation
  * ConceptEvaluator evaluator = new ConceptEvaluator();
  * ConceptKPIs kpis = evaluator.evaluate(concept, facility);

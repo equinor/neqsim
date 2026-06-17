@@ -133,11 +133,16 @@ Available viscosity models:
 - `"friction theory"` - Quiñones-Cisneros friction theory
 - `"LBC"` - Lohrenz-Bray-Clark (tunable)
 - `"PFCT"` - Pedersen corresponding states
+- `"CSP"` - Alias for PFCT/Pedersen corresponding states
 - `"PFCT-Heavy-Oil"` - Pedersen for heavy oils
 - `"KTA"` - KTA method
 - `"Muzny"` - Muzny (for hydrogen)
 - `"CO2Model"` - CO₂ reference
 - `"MethaneModel"` - Methane reference
+
+The PFCT/CSP viscosity model supports four tunable CSP viscosity parameters through
+`setCspViscosityParameters`, `setCspViscosityParameter`, and the matching
+`getCspViscosityParameters` accessors on `PhysicalProperties`.
 
 ### Thermal Conductivity Model Selection
 
@@ -199,7 +204,7 @@ fluid.getPhase("oil").getPhysicalProperties().setLbcParameter(0, 0.105);
 For non-SRK/PR equations of state:
 
 ```java
-FrictionTheoryViscosityMethod viscModel = 
+FrictionTheoryViscosityMethod viscModel =
     (FrictionTheoryViscosityMethod) fluid.getPhase("oil")
         .getPhysicalProperties().getViscosityModel();
 
@@ -272,31 +277,31 @@ package neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 public class MyCustomViscosityModel extends Viscosity {
-    
+
     public MyCustomViscosityModel(PhysicalProperties phase) {
         super(phase);
     }
-    
+
     @Override
     public double calcViscosity() {
         // Your implementation here
         double viscosity = 0.0;
-        
+
         // Access phase properties
         double T = phase.getPhase().getTemperature();  // K
         double P = phase.getPhase().getPressure();     // bar
         double rho = phase.getPhase().getDensity();    // kg/m³
-        
+
         // Access component properties
         for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
             double x = phase.getPhase().getComponent(i).getx();
             double Tc = phase.getPhase().getComponent(i).getTC();
             // ... calculate contribution
         }
-        
+
         return viscosity;  // Pa·s
     }
-    
+
     @Override
     public double getPureComponentViscosity(int i) {
         // Return pure component viscosity for component i

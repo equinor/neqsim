@@ -1,10 +1,14 @@
 package neqsim.process.fielddevelopment.screening;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import neqsim.process.fielddevelopment.concept.FieldConcept;
 import neqsim.process.fielddevelopment.concept.InfrastructureInput;
+import neqsim.process.fielddevelopment.concept.ReservoirInput;
 import neqsim.process.fielddevelopment.facility.BlockConfig;
 import neqsim.process.fielddevelopment.facility.BlockType;
 import neqsim.process.fielddevelopment.facility.FacilityConfig;
@@ -121,6 +125,59 @@ public class EmissionsTracker {
     return estimate(concept, null);
   }
 
+  /**
+   * Estimates lifecycle emissions from an annual production profile.
+   *
+   * <p>
+   * The calculation scales compression and utility power with production load while keeping a fixed
+   * base-load component. Flaring, fugitive emissions, and vented CO2 are calculated from annual gas
+   * throughput, so emissions follow decline profiles rather than a single annual screening value.
+   * </p>
+   *
+   * @param concept field concept
+   * @param facilityConfig facility configuration
+   * @param productionProfile annual production profile in Sm3/year for gas or bbl/year for oil
+   * @return lifecycle emissions profile
+   */
+  public LifecycleEmissionsProfile estimateLifecycle(FieldConcept concept,
+      FacilityConfig facilityConfig, Map<Integer, Double> productionProfile) {
+    if (productionProfile == null || productionProfile.isEmpty()) {
+      return LifecycleEmissionsProfile.empty();
+    }
+
+    EmissionsReport baseReport = estimate(concept, facilityConfig);
+    boolean gasConcept = isGasConcept(concept);
+    double peakProduction = 0.0;
+    for (Double value : productionProfile.values()) {
+      peakProduction = Math.max(peakProduction, value == null ? 0.0 : value.doubleValue());
+    }
+
+    InfrastructureInput.PowerSupply powerSupply =
+        concept.getInfrastructure() != null ? concept.getInfrastructure().getPowerSupply()
+            : InfrastructureInput.PowerSupply.GAS_TURBINE;
+    double emissionFactor = getEmissionFactor(powerSupply);
+    List<LifecycleEmissionsProfile.AnnualEmissions> annual =
+        new ArrayList<LifecycleEmissionsProfile.AnnualEmissions>();
+
+    TreeMap<Integer, Double> sortedProfile = new TreeMap<Integer, Double>(productionProfile);
+    for (Map.Entry<Integer, Double> entry : sortedProfile.entrySet()) {
+      double production = entry.getValue() == null ? 0.0 : entry.getValue().doubleValue();
+      double loadFactor = peakProduction > 0.0 ? Math.min(1.0, production / peakProduction) : 0.0;
+      double powerMw = baseReport.getTotalPowerMW() * (0.35 + 0.65 * loadFactor);
+      double powerEmissionsTonnes = powerMw * 8000.0 * emissionFactor / 1000.0;
+      double gasProductionSm3d = getAnnualGasProductionSm3d(concept, production, gasConcept);
+      double flaringEmissionsTonnes =
+          gasProductionSm3d * 0.001 * 365.0 * FLARE_EFFICIENCY * FLARE_KG_CO2_PER_SM3 / 1000.0;
+      double fugitiveEmissionsTonnes = estimateFugitiveEmissions(gasProductionSm3d);
+      double ventedCo2Tonnes = estimateAnnualVentedCO2(concept, gasProductionSm3d);
+      double productionBoe = getAnnualProductionBoe(concept, production, gasConcept);
+      annual.add(new LifecycleEmissionsProfile.AnnualEmissions(entry.getKey(), production,
+          productionBoe, loadFactor, powerMw, powerSupply.name(), powerEmissionsTonnes,
+          flaringEmissionsTonnes, fugitiveEmissionsTonnes, ventedCo2Tonnes));
+    }
+    return new LifecycleEmissionsProfile(annual);
+  }
+
   private double estimatePowerConsumption(FieldConcept concept, FacilityConfig facilityConfig) {
     double power = BASE_FACILITY_MW;
 
@@ -230,6 +287,44 @@ public class EmissionsTracker {
     // Assume mostly gas for this estimate
     double boepd = sm3d / 6000.0;
     return boepd * 365.0;
+  }
+
+  private boolean isGasConcept(FieldConcept concept) {
+    if (concept.getReservoir() == null) {
+      return true;
+    }
+    ReservoirInput.FluidType fluidType = concept.getReservoir().getFluidType();
+    return fluidType == ReservoirInput.FluidType.LEAN_GAS
+        || fluidType == ReservoirInput.FluidType.RICH_GAS
+        || fluidType == ReservoirInput.FluidType.GAS_CONDENSATE;
+  }
+
+  private double getAnnualGasProductionSm3d(FieldConcept concept, double annualProduction,
+      boolean gasConcept) {
+    if (gasConcept) {
+      return annualProduction / 365.0;
+    }
+    double oilSm3PerYear = annualProduction * 0.158987;
+    double gor = concept.getReservoir() != null ? concept.getReservoir().getGor() : 100.0;
+    return oilSm3PerYear * gor / 365.0;
+  }
+
+  private double estimateAnnualVentedCO2(FieldConcept concept, double gasProductionSm3d) {
+    if (concept.getReservoir() == null || !concept.needsCO2Removal()) {
+      return 0.0;
+    }
+    double co2Percent = concept.getReservoir().getCo2Percent();
+    double annualCO2Sm3 = gasProductionSm3d * co2Percent / 100.0 * 365.0;
+    return annualCO2Sm3 * 1.98 / 1000.0;
+  }
+
+  private double getAnnualProductionBoe(FieldConcept concept, double annualProduction,
+      boolean gasConcept) {
+    if (gasConcept) {
+      return annualProduction / 6000.0;
+    }
+    double gasBoe = getAnnualGasProductionSm3d(concept, annualProduction, false) * 365.0 / 6000.0;
+    return annualProduction + gasBoe;
   }
 
   /**

@@ -39,11 +39,11 @@ public class TooManyIterationsException extends neqsim.util.exception.ThermoExce
 
   /**
    * Get remediation advice for this exception.
-   * 
+   *
    * <p>
    * Returns a hint on how to fix convergence issues. AI agents can use this to self-correct.
    * </p>
-   * 
+   *
    * @return remediation advice string
    */
   public String getRemediation() {

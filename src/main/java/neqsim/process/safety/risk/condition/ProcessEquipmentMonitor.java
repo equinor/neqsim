@@ -32,13 +32,13 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * ProcessEquipmentMonitor monitor = new ProcessEquipmentMonitor(separator);
  * monitor.setDesignTemperatureRange(273.15, 373.15); // Design T range in K
  * monitor.setDesignPressureRange(1.0, 50.0); // Design P range in bara
  * monitor.setBaseFailureRate(0.0001); // per hour
- * 
+ *
  * // After process simulation runs:
  * monitor.update(); // Reads T, P, capacity from equipment
  * double failureRate = monitor.getAdjustedFailureRate();

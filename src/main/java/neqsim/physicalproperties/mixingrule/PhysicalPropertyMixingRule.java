@@ -42,8 +42,8 @@ public class PhysicalPropertyMixingRule
 
     try {
       mixRule = (PhysicalPropertyMixingRule) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+    } catch (CloneNotSupportedException ex) {
+      throw new AssertionError("Clone failed for PhysicalPropertyMixingRule", ex);
     }
 
     double[][] Gij2 = Gij.clone();

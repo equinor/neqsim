@@ -6,17 +6,17 @@ import neqsim.process.logic.LogicCondition;
 
 /**
  * Condition that checks valve position/opening percentage.
- * 
+ *
  * <p>
  * Supports comparison operators: &gt;, &gt;=, &lt;, &lt;=, ==, !=
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * // Check if valve is closed (less than 5% open)
  * ValvePositionCondition closed = new ValvePositionCondition(valve, "&lt;", 5.0);
- * 
+ *
  * // Check if valve is fully open
  * ValvePositionCondition open = new ValvePositionCondition(valve, "&gt;", 95.0);
  * </pre>
@@ -89,7 +89,7 @@ public class ValvePositionCondition implements LogicCondition {
 
   @Override
   public ProcessEquipmentInterface getTargetEquipment() {
-    return (ProcessEquipmentInterface) valve; // Cast needed due to interface hierarchy
+    return valve; // Cast needed due to interface hierarchy
   }
 
   @Override

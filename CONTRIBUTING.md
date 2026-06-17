@@ -5,6 +5,22 @@ email, or any other method with the owners of this repository before making a ch
 
 Please note we have a code of conduct, please follow it in all your interactions with the project.
 
+## Getting Started
+
+**New contributor?** Set up your environment with the onboarding wizard:
+
+```bash
+pip install -e devtools/    # one-time: registers the `neqsim` command
+neqsim onboard             # interactive setup — Java, Maven, build, Python, agents
+neqsim onboard --check     # non-interactive diagnostic
+neqsim doctor              # detailed environment health check
+```
+
+> **`neqsim` not found?** Your Python Scripts directory may not be on PATH.
+> See [devtools/README.md](devtools/README.md#troubleshooting-neqsim-not-found) for fix instructions.
+
+See [VISION_AGENTS.md](VISION_AGENTS.md) for what belongs in the core repo vs. community contributions.
+
 ## Pull Request Process
 
 1. Ensure any install or build dependencies are removed before the end of the layer when doing a
@@ -15,6 +31,45 @@ Please note we have a code of conduct, please follow it in all your interactions
    Pull Request would represent. The versioning scheme we use is [SemVer](http://semver.org/).
 4. You may merge the Pull Request in once you have the sign-off of two other developers, or if you
    do not have permission to do that, you may request the second reviewer to merge it for you.
+
+## AI-Assisted Contributions Welcome
+
+NeqSim embraces AI-assisted development. PRs generated with the help of AI coding agents
+(GitHub Copilot, Claude Code, Cursor, Windsurf, Codex, etc.) are first-class contributions.
+
+**When submitting an AI-assisted PR:**
+
+1. **Mark it** — add `[AI-Assisted]` to the PR title or note it in the description.
+2. **Note testing level** — state whether tests were run locally (`mvnw test`),
+   which specific tests passed, and whether static analysis was checked.
+3. **Confirm understanding** — briefly confirm you understand what the code does
+   and why the change is appropriate, even if AI generated the initial draft.
+4. **Include prompts (optional)** — if you used a specific prompt or agent workflow
+   that produced the result, sharing it helps reviewers and future contributors.
+
+**What makes a great AI-assisted PR:**
+
+- A focused change (one issue/topic per PR, same as any contribution)
+- Java 8 compatible code (see `AGENTS.md` for forbidden Java 9+ features)
+- Passing tests (`mvnw.cmd test` on Windows, `./mvnw test` on Linux/Mac)
+- Physical/engineering correctness verified (not just "compiles and runs")
+
+**Skill and agent contributions are especially welcome.** You don't need to write Java
+to contribute — domain experts can submit:
+
+- **Skills** (`.github/skills/*/SKILL.md`) — domain workflows, best practices, code patterns
+- **Agents** (`.github/agents/*.agent.md`) — specialist agent definitions
+- **Notebooks** (`examples/notebooks/`) — validated simulation examples
+- **Community skills** — host in your own repo, one command to publish:
+
+```bash
+neqsim new-skill "skill-name"                          # scaffold a core skill
+neqsim skill publish user/neqsim-my-skill              # publish a community skill
+```
+
+See the [Skills Guide](docs/integration/skills_guide.md) for the full walkthrough
+(core, community, and private skills), [.github/skills/README.md](.github/skills/README.md)
+for the quick contribution guide, and [community-skills.yaml](community-skills.yaml) for the community catalog.
 
 ## Style guideline
 

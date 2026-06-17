@@ -167,18 +167,21 @@ public class WellDesignCalculator implements Serializable {
   /** Temperature derating factor applied to production casing (0-1). */
   private double temperatureDeratingFactor = 1.0;
 
-  // ============ Design Factors (NORSOK D-010) ============
-  /** Minimum burst design factor. */
-  private static final double MIN_BURST_DF = 1.10;
+  // ============ Design Factors (NORSOK D-010, configurable via DataSource) ============
+  /** Minimum burst design factor (default: NORSOK D-010 Table 18). */
+  private double minBurstDF = 1.10;
 
-  /** Minimum collapse design factor. */
-  private static final double MIN_COLLAPSE_DF = 1.00;
+  /** Minimum collapse design factor (default: NORSOK D-010 Table 18). */
+  private double minCollapseDF = 1.00;
 
-  /** Minimum tension design factor. */
-  private static final double MIN_TENSION_DF = 1.60;
+  /** Minimum tension design factor (default: NORSOK D-010 Table 18). */
+  private double minTensionDF = 1.60;
 
   /** Minimum triaxial (von Mises Equivalent) design factor per NORSOK D-010. */
-  private static final double MIN_VME_DF = 1.25;
+  private double minVmeDF = 1.25;
+
+  /** Whether this is an injection well (changes load cases). */
+  private boolean injectionWell = false;
 
   /** Pore pressure gradient (bar/m) — typical hydrostatic. */
   private static final double PORE_PRESSURE_GRADIENT = 0.1013;
@@ -230,7 +233,7 @@ public class WellDesignCalculator implements Serializable {
 
     // Barlow burst formula: P_burst = 2 * SMYS * t / OD
     // Required: P_rated >= DF * P_design
-    double requiredBurstRating = MIN_BURST_DF * netBurstSurface; // bara
+    double requiredBurstRating = minBurstDF * netBurstSurface; // bara
 
     // OD in mm
     double odMm = productionCasingOD * 25.4;
@@ -241,7 +244,7 @@ public class WellDesignCalculator implements Serializable {
     // ---- Collapse Load ----
     // Worst case: empty string opposite full mud/cement column
     double collapsePressure = PORE_PRESSURE_GRADIENT * productionCasingDepth;
-    double requiredCollapseRating = MIN_COLLAPSE_DF * collapsePressure;
+    double requiredCollapseRating = minCollapseDF * collapsePressure;
 
     // Simplified collapse (yield-strength collapse for D/t < 15):
     // P_collapse = 2 * SMYS * ((D/t - 1) / (D/t)^2)
@@ -303,7 +306,7 @@ public class WellDesignCalculator implements Serializable {
 
     // Burst: kick tolerance scenario
     double burstPressure = FRAC_GRADIENT * intermediateCasingDepth;
-    double requiredBurstRating = MIN_BURST_DF * burstPressure;
+    double requiredBurstRating = minBurstDF * burstPressure;
     double burstThickness = (requiredBurstRating * 0.1 * odMm) / (2.0 * smys);
 
     // Collapse: lost returns with partial evacuation
@@ -323,7 +326,7 @@ public class WellDesignCalculator implements Serializable {
 
     // Burst: kick scenario
     double burstPressure = FRAC_GRADIENT * surfaceCasingDepth;
-    double requiredBurstRating = MIN_BURST_DF * burstPressure;
+    double requiredBurstRating = minBurstDF * burstPressure;
     double burstThickness = (requiredBurstRating * 0.1 * odMm) / (2.0 * smys);
 
     // Minimum for 20" casing ~ 12.7 mm
@@ -339,7 +342,7 @@ public class WellDesignCalculator implements Serializable {
 
     // Tubing burst: SITP (shut-in tubing pressure)
     double tubeDesignPressure = maxWellheadPressure;
-    double requiredBurstRating = MIN_BURST_DF * tubeDesignPressure;
+    double requiredBurstRating = minBurstDF * tubeDesignPressure;
 
     tubingWallThickness = (requiredBurstRating * 0.1 * odMm) / (2.0 * smys);
     // Minimum from API 5CT catalog for 5.5" tubing ~ 6.4 mm
@@ -511,7 +514,7 @@ public class WellDesignCalculator implements Serializable {
       double dt = odMm / t;
       // Yield-strength collapse (API 5C3 simplified)
       double collapseRating = 2.0 * smysMPa * ((dt - 1.0) / (dt * dt));
-      if (collapseRating >= collapsePressureMPa * MIN_COLLAPSE_DF) {
+      if (collapseRating >= collapsePressureMPa * minCollapseDF) {
         return t;
       }
     }
@@ -566,9 +569,7 @@ public class WellDesignCalculator implements Serializable {
     } else if ("J55".equals(grade) || "K55".equals(grade)) {
       return 517.0;
     } else if ("N80".equals(grade) || "L80".equals(grade)) {
-      return 689.0;
     } else if ("C90".equals(grade)) {
-      return 689.0;
     } else if ("C95".equals(grade) || "T95".equals(grade)) {
       return 724.0;
     } else if ("P110".equals(grade)) {
@@ -576,7 +577,6 @@ public class WellDesignCalculator implements Serializable {
     } else if ("Q125".equals(grade)) {
       return 931.0;
     } else if ("13Cr".equals(grade) || "13CR".equals(grade)) {
-      return 689.0;
     } else if ("S13Cr".equals(grade) || "Super13Cr".equals(grade)) {
       return 724.0;
     } else if ("25Cr".equals(grade)) {
@@ -598,7 +598,6 @@ public class WellDesignCalculator implements Serializable {
     } else if ("J55".equals(grade) || "K55".equals(grade)) {
       return 379.0;
     } else if ("N80".equals(grade) || "L80".equals(grade)) {
-      return 552.0;
     } else if ("C90".equals(grade)) {
       return 621.0;
     } else if ("C95".equals(grade) || "T95".equals(grade)) {
@@ -608,7 +607,6 @@ public class WellDesignCalculator implements Serializable {
     } else if ("Q125".equals(grade)) {
       return 862.0;
     } else if ("13Cr".equals(grade) || "13CR".equals(grade)) {
-      return 552.0; // Similar to L80 for 13Cr-L80
     } else if ("S13Cr".equals(grade) || "Super13Cr".equals(grade)) {
       return 621.0;
     } else if ("25Cr".equals(grade)) {
@@ -920,5 +918,102 @@ public class WellDesignCalculator implements Serializable {
    */
   public double getTemperatureDeratingFactor() {
     return temperatureDeratingFactor;
+  }
+
+  // ============ Design Factor Setters (for DataSource configuration) ============
+
+  /**
+   * Set the minimum burst design factor.
+   *
+   * @param minBurstDF burst design factor (default 1.10 per NORSOK D-010)
+   */
+  public void setMinBurstDesignFactor(double minBurstDF) {
+    this.minBurstDF = minBurstDF;
+  }
+
+  /**
+   * Set the minimum collapse design factor.
+   *
+   * @param minCollapseDF collapse design factor (default 1.00 per NORSOK D-010)
+   */
+  public void setMinCollapseDesignFactor(double minCollapseDF) {
+    this.minCollapseDF = minCollapseDF;
+  }
+
+  /**
+   * Set the minimum tension design factor.
+   *
+   * @param minTensionDF tension design factor (default 1.60 per NORSOK D-010)
+   */
+  public void setMinTensionDesignFactor(double minTensionDF) {
+    this.minTensionDF = minTensionDF;
+  }
+
+  /**
+   * Set the minimum triaxial (VME) design factor.
+   *
+   * @param minVmeDF VME design factor (default 1.25 per NORSOK D-010)
+   */
+  public void setMinVmeDesignFactor(double minVmeDF) {
+    this.minVmeDF = minVmeDF;
+  }
+
+  /**
+   * Set whether this is an injection well.
+   *
+   * <p>
+   * Injection wells have different load cases: burst from injection pressure, collapse from
+   * evacuation during workover, and thermal stress considerations.
+   * </p>
+   *
+   * @param injectionWell true for injection well design
+   */
+  public void setInjectionWell(boolean injectionWell) {
+    this.injectionWell = injectionWell;
+  }
+
+  /**
+   * Check if this calculator is configured for injection well.
+   *
+   * @return true if injection well
+   */
+  public boolean isInjectionWell() {
+    return injectionWell;
+  }
+
+  /**
+   * Get the current minimum burst design factor.
+   *
+   * @return burst design factor
+   */
+  public double getMinBurstDesignFactor() {
+    return minBurstDF;
+  }
+
+  /**
+   * Get the current minimum collapse design factor.
+   *
+   * @return collapse design factor
+   */
+  public double getMinCollapseDesignFactor() {
+    return minCollapseDF;
+  }
+
+  /**
+   * Get the current minimum tension design factor.
+   *
+   * @return tension design factor
+   */
+  public double getMinTensionDesignFactor() {
+    return minTensionDF;
+  }
+
+  /**
+   * Get the current minimum VME design factor.
+   *
+   * @return VME design factor
+   */
+  public double getMinVmeDesignFactor() {
+    return minVmeDF;
   }
 }

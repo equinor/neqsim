@@ -1,6 +1,9 @@
 package neqsim.process.equipment.heatexchanger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
@@ -13,6 +16,67 @@ public class MultiStreamHeatExchanger2Test {
 
   static neqsim.thermo.system.SystemInterface testSystem;
   Stream gasStream;
+
+  @Test
+  void testPublicStreamApiRegistersAndUpdatesStreams() {
+    testSystem = new neqsim.thermo.Fluid().create("dry gas");
+    testSystem.setPressure(10.0, "bara");
+    testSystem.setTemperature(273.15 + 60.0, "K");
+    testSystem.setMixingRule(2);
+
+    Stream firstStream = new Stream("first stream", testSystem.clone());
+    firstStream.setTemperature(100.0, "C");
+    firstStream.setFlowRate(20000.0, "kg/hr");
+
+    Stream secondStream = new Stream("second stream", testSystem.clone());
+    secondStream.setTemperature(20.0, "C");
+    secondStream.setFlowRate(8000.0, "kg/hr");
+
+    MultiStreamHeatExchanger2 heatEx = new MultiStreamHeatExchanger2("stream api heatEx");
+    heatEx.addInStream(firstStream);
+
+    assertSame(firstStream, heatEx.getInStream(0));
+    assertNotNull(heatEx.getOutStream(0));
+
+    heatEx.setFeedStream(0, secondStream);
+
+    assertSame(secondStream, heatEx.getInStream(0));
+    assertNotNull(heatEx.getOutStream(0));
+  }
+
+  @Test
+  void testRunRefreshesInletStateOnRepeatedRuns() {
+    testSystem = new neqsim.thermo.Fluid().create("dry gas");
+    testSystem.setPressure(10.0, "bara");
+    testSystem.setTemperature(273.15 + 60.0, "K");
+    testSystem.setMixingRule(2);
+
+    Stream hotStream = new Stream("hot stream", testSystem.clone());
+    hotStream.setTemperature(100.0, "C");
+    hotStream.setFlowRate(20000.0, "kg/hr");
+    hotStream.run();
+
+    Stream coldStream = new Stream("cold stream", testSystem.clone());
+    coldStream.setTemperature(0.0, "C");
+    coldStream.setFlowRate(8000.0, "kg/hr");
+    coldStream.run();
+
+    MultiStreamHeatExchanger2 heatEx = new MultiStreamHeatExchanger2("state refresh heatEx");
+    heatEx.addInStreamMSHE(hotStream, "hot", null);
+    heatEx.addInStreamMSHE(coldStream, "cold", 30.0);
+    heatEx.run();
+
+    double firstHotOutletTemp = heatEx.getOutStream(0).getTemperature("C");
+    assertEquals(0.0, heatEx.energyDiff(), 1e-3);
+
+    coldStream.setFlowRate(12000.0, "kg/hr");
+    coldStream.run();
+    heatEx.run();
+
+    double secondHotOutletTemp = heatEx.getOutStream(0).getTemperature("C");
+    assertEquals(0.0, heatEx.energyDiff(), 1e-3);
+    assertTrue(secondHotOutletTemp < firstHotOutletTemp - 1.0);
+  }
 
   @Test
   void testRun1() {

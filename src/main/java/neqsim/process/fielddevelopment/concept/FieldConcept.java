@@ -21,7 +21,7 @@ import java.util.UUID;
  * consistency.
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * FieldConcept concept = FieldConcept.builder("Marginal Gas Tieback")

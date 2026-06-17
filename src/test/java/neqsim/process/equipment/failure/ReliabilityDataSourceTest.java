@@ -145,4 +145,26 @@ class ReliabilityDataSourceTest {
     // Should return null for unknown equipment
     assertTrue(data == null);
   }
+
+  @Test
+  void testSupplementaryDataLoaded() {
+    ReliabilityDataSource dataSource = ReliabilityDataSource.getInstance();
+
+    // Supplementary CSVs add equipment types beyond the primary CSV
+    // (e.g. Transformer, Circuit Breaker from IEEE 493; Wellhead, BOP from IOGP)
+    int entryCount = dataSource.getEntryCount();
+    // Primary CSV has 37 entries; supplementary CSVs add many more
+    assertTrue(entryCount > 37,
+        "Expected supplementary data to increase entry count above 37, got " + entryCount);
+  }
+
+  @Test
+  void testGetDataSources() {
+    ReliabilityDataSource dataSource = ReliabilityDataSource.getInstance();
+
+    List<String> sources = dataSource.getDataSources();
+    assertNotNull(sources);
+    assertTrue(sources.size() >= 2,
+        "Expected at least 2 distinct data sources, got " + sources.size());
+  }
 }

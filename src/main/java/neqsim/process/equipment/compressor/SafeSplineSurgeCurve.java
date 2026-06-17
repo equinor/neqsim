@@ -198,6 +198,7 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
    * Wrapper retaining old API.
    * </p>
    */
+  @Override
   public double getSurgeFlow(double headValue) {
     return getFlow(headValue);
   }
@@ -260,6 +261,7 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
    * Wrapper retaining old API.
    * </p>
    */
+  @Override
   public boolean isSurge(double headValue, double flowValue) {
     return isLimit(headValue, flowValue);
   }

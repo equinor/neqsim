@@ -9,7 +9,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction.WallF
 
 /**
  * Unit tests for WallFriction.
- * 
+ *
  * Tests wall shear stress calculations for various flow regimes.
  */
 public class WallFrictionTest {

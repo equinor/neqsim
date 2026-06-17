@@ -7,6 +7,8 @@
 package neqsim.process.equipment.separator;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign;
@@ -46,6 +48,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class GasScrubberSimple extends Separator {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  static Logger logger = LogManager.getLogger(GasScrubberSimple.class);
 
   SystemInterface gasSystem;
   SystemInterface waterSystem;
@@ -174,7 +178,7 @@ public class GasScrubberSimple extends Separator {
     for (int i = 0; i < separatorSection.size(); i++) {
       ktotal *= (1.0 - separatorSection.get(i).getEfficiency());
     }
-    System.out.println("Ktot " + (1.0 - ktotal));
+    logger.debug("Ktot {}", (1.0 - ktotal));
     double area = getInternalDiameter() * getInternalDiameter() / 4.0 * 3.14;
     double gasVel =
         thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarVolume() / 1e5 / area;

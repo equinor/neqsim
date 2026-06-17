@@ -8,7 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Test pH calculation for CO2-water system.
- * 
+ *
  * <p>
  * CO2 dissolved in water should form carbonic acid and its dissociation products, resulting in an
  * acidic solution with pH around 4-5 at ambient conditions.
@@ -17,7 +17,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class CO2WaterPHTest {
   /**
    * Test that CO2-water system produces acidic pH.
-   * 
+   *
    * <p>
    * Expected: pH around 4-5 (acidic due to carbonic acid formation).
    * </p>

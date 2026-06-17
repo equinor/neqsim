@@ -36,15 +36,15 @@ import java.util.Map;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Get factors for Brazil
  * RegionalCostFactors brazilFactors = RegionalCostFactors.forRegion("BR");
- * 
+ *
  * // Apply to NCS-based estimate
  * double ncsCAPEX = 800; // MUSD
  * double brazilCAPEX = ncsCAPEX * brazilFactors.getCapexFactor();
- * 
+ *
  * // Use with EconomicsEstimator
  * EconomicsEstimator estimator = new EconomicsEstimator();
  * EconomicsReport ncsReport = estimator.estimate(concept, facility);

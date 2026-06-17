@@ -168,6 +168,20 @@ public class FluidResponse {
               Double.toString(inputFluid.getPhase(name)
                   .getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
               neqsim.util.unit.Units.getSymbol("volume flow")));
+      newdata.put("viscosity",
+          new Value(Double.toString(inputFluid.getPhase(name).getViscosity("kg/msec")), "kg/msec"));
+      newdata.put("thermalConductivity", new Value(
+          Double.toString(inputFluid.getPhase(name).getThermalConductivity("W/mK")), "W/mK"));
+      newdata.put("Cp",
+          new Value(Double.toString(inputFluid.getPhase(name).getCp("J/kgK")), "J/kgK"));
+      newdata.put("Cv",
+          new Value(Double.toString(inputFluid.getPhase(name).getCv("J/kgK")), "J/kgK"));
+      newdata.put("compressibilityFactor",
+          new Value(Double.toString(inputFluid.getPhase(name).getZ()), "-"));
+      newdata.put("speedOfSound",
+          new Value(Double.toString(inputFluid.getPhase(name).getSoundSpeed("m/s")), "m/s"));
+      newdata.put("entropy",
+          new Value(Double.toString(inputFluid.getPhase(name).getEntropy("J/molK")), "J/molK"));
       properties.put(name, newdata);
     }
   }

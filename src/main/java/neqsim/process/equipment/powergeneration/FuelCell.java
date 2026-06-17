@@ -50,8 +50,8 @@ public class FuelCell extends TwoPortEquipment {
    * Constructor for FuelCell.
    * </p>
    *
-   * @param name name of unit operation
-   * @param fuelStream inlet fuel stream
+   * @param name          name of unit operation
+   * @param fuelStream    inlet fuel stream
    * @param oxidantStream inlet oxidant stream
    */
   public FuelCell(String name, StreamInterface fuelStream, StreamInterface oxidantStream) {
@@ -60,7 +60,9 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>Setter for the field <code>oxidantStream</code>.</p>
+   * <p>
+   * Setter for the field <code>oxidantStream</code>.
+   * </p>
    *
    * @param stream oxidant stream
    */
@@ -69,7 +71,9 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>Getter for the field <code>oxidantStream</code>.</p>
+   * <p>
+   * Getter for the field <code>oxidantStream</code>.
+   * </p>
    *
    * @return oxidant stream
    */
@@ -77,8 +81,24 @@ public class FuelCell extends TwoPortEquipment {
     return oxidantStream;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getInletStreams() {
+    java.util.List<StreamInterface> in = new java.util.ArrayList<>();
+    StreamInterface fuel = getInletStream();
+    if (fuel != null) {
+      in.add(fuel);
+    }
+    if (oxidantStream != null) {
+      in.add(oxidantStream);
+    }
+    return in;
+  }
+
   /**
-   * <p>Setter for the field <code>efficiency</code>.</p>
+   * <p>
+   * Setter for the field <code>efficiency</code>.
+   * </p>
    *
    * @param efficiency electrical efficiency of the cell
    */
@@ -87,7 +107,9 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>Getter for the field <code>efficiency</code>.</p>
+   * <p>
+   * Getter for the field <code>efficiency</code>.
+   * </p>
    *
    * @return efficiency of the cell
    */
@@ -96,7 +118,9 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>Getter for the field <code>power</code>.</p>
+   * <p>
+   * Getter for the field <code>power</code>.
+   * </p>
    *
    * @return electrical power produced [W]
    */
@@ -105,7 +129,9 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>Getter for the field <code>heatLoss</code>.</p>
+   * <p>
+   * Getter for the field <code>heatLoss</code>.
+   * </p>
    *
    * @return heat lost from the cell [W]
    */
@@ -154,4 +180,3 @@ public class FuelCell extends TwoPortEquipment {
     setCalculationIdentifier(id);
   }
 }
-

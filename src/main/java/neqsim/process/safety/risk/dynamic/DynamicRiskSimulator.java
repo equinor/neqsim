@@ -8,12 +8,10 @@ import java.util.Map;
 import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.failure.EquipmentFailureMode;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.safety.risk.OperationalRiskResult;
 import neqsim.process.safety.risk.OperationalRiskSimulator;
 import neqsim.process.util.optimizer.ProductionImpactAnalyzer;
 
@@ -39,7 +37,7 @@ import neqsim.process.util.optimizer.ProductionImpactAnalyzer;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * DynamicRiskSimulator simulator = new DynamicRiskSimulator(processSystem);

@@ -225,6 +225,7 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    *
    * @param pressure outlet pressure in bara
    */
+  @Override
   public void setOutletPressure(double pressure);
 
   /**
@@ -233,6 +234,7 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    * @param pressure outlet pressure in bara
    * @deprecated use {@link #setOutletPressure(double)} instead
    */
+  @Override
   @Deprecated
   public default void setOutPressure(double pressure) {
     setOutletPressure(pressure);
@@ -243,6 +245,7 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    *
    * @param temperature outlet temperature in Kelvin
    */
+  @Override
   public void setOutletTemperature(double temperature);
 
   /**
@@ -251,6 +254,7 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    * @param temperature outlet temperature in Kelvin
    * @deprecated use {@link #setOutletTemperature(double)} instead
    */
+  @Override
   @Deprecated
   public default void setOutTemperature(double temperature) {
     setOutletTemperature(temperature);

@@ -62,7 +62,7 @@ ComponentInterface (Component)
 ### Method Flow for Property Calculation
 
 ```
-1. System.init(initType) 
+1. System.init(initType)
    └── Phase.init(initType)
            └── Component.init()       // Pure component a, b parameters
            └── Phase.calcA()          // Mixture attractive parameter
@@ -88,9 +88,9 @@ import neqsim.thermo.phase.PhaseCustomEos;  // Your custom phase
 
 /**
  * Thermodynamic system using a custom equation of state.
- * 
+ *
  * <p>This EoS is based on [describe basis and modifications].</p>
- * 
+ *
  * <p>Reference: Author et al., Journal, Year</p>
  *
  * @author YourName
@@ -99,14 +99,14 @@ import neqsim.thermo.phase.PhaseCustomEos;  // Your custom phase
 public class SystemCustomEos extends SystemEos {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
-    
+
     /**
      * Constructor with default conditions (298.15 K, 1 bar).
      */
     public SystemCustomEos() {
         this(298.15, 1.0, false);
     }
-    
+
     /**
      * Constructor for SystemCustomEos.
      *
@@ -116,7 +116,7 @@ public class SystemCustomEos extends SystemEos {
     public SystemCustomEos(double T, double P) {
         this(T, P, false);
     }
-    
+
     /**
      * Constructor for SystemCustomEos with solid phase option.
      *
@@ -126,23 +126,23 @@ public class SystemCustomEos extends SystemEos {
      */
     public SystemCustomEos(double T, double P, boolean checkForSolids) {
         super(T, P, checkForSolids);
-        
+
         // Set model identification
         modelName = "Custom-EOS";
-        
+
         // Set characterization model for plus fractions
         getCharacterization().setTBPModel("PedersenSRK"); // Or create custom
-        
+
         // Set attractive term type (affects alpha function)
         attractiveTermNumber = 0; // 0=Soave, 1=PR, etc.
-        
+
         // Initialize phases with your custom phase class
         for (int i = 0; i < numberOfPhases; i++) {
             phaseArray[i] = new PhaseCustomEos();
             phaseArray[i].setTemperature(T);
             phaseArray[i].setPressure(P);
         }
-        
+
         // Handle solid phase if requested
         if (solidPhaseCheck) {
             setNumberOfPhases(5);
@@ -151,7 +151,7 @@ public class SystemCustomEos extends SystemEos {
             phaseArray[numberOfPhases - 1].setPressure(P);
             phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
         }
-        
+
         // Handle hydrate phase if requested
         if (hydrateCheck) {
             phaseArray[numberOfPhases - 1] = new PhaseHydrate();
@@ -160,7 +160,7 @@ public class SystemCustomEos extends SystemEos {
             phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
         }
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public SystemCustomEos clone() {
@@ -196,11 +196,11 @@ import neqsim.thermo.component.ComponentCustomEos;
 public class PhaseCustomEos extends PhaseEos {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
-    
+
     // EoS-specific constants (example: SRK-like)
     // For SRK: delta1 = 1, delta2 = 0, u = 1, w = 0
     // For PR:  delta1 = 1+sqrt(2), delta2 = 1-sqrt(2)
-    
+
     /**
      * Constructor for PhaseCustomEos.
      */
@@ -212,7 +212,7 @@ public class PhaseCustomEos extends PhaseEos {
         uEOS = 1.0;    // u parameter in generalized cubic EoS
         wEOS = 0.0;    // w parameter
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public PhaseCustomEos clone() {
@@ -224,19 +224,19 @@ public class PhaseCustomEos extends PhaseEos {
         }
         return clonedPhase;
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public void addComponent(String name, double moles, double molesInPhase,
             int compNumber) {
         // Use your custom component class
-        componentArray[compNumber] = new ComponentCustomEos(name, moles, 
+        componentArray[compNumber] = new ComponentCustomEos(name, moles,
             molesInPhase, compNumber);
     }
-    
+
     /**
      * Calculate mixture attractive parameter A.
-     * 
+     *
      * <p>Uses mixing rule: A = sum_i sum_j x_i x_j sqrt(a_i * a_j) * (1 - k_ij)</p>
      *
      * @param phase the phase
@@ -246,28 +246,28 @@ public class PhaseCustomEos extends PhaseEos {
      * @return mixture A parameter
      */
     @Override
-    public double calcA(PhaseInterface phase, double temperature, 
+    public double calcA(PhaseInterface phase, double temperature,
             double pressure, int numberOfComponents) {
         double aij = 0.0;
-        
+
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
                 double ai = phase.getComponent(i).getaT();
                 double aj = phase.getComponent(j).getaT();
                 double kij = getMixingRule().getKij(i, j);
-                
-                aij += phase.getComponent(i).getx() 
-                     * phase.getComponent(j).getx() 
+
+                aij += phase.getComponent(i).getx()
+                     * phase.getComponent(j).getx()
                      * Math.sqrt(ai * aj) * (1.0 - kij);
             }
         }
-        
+
         return aij;
     }
-    
+
     /**
      * Calculate mixture co-volume parameter B.
-     * 
+     *
      * <p>Linear mixing rule: B = sum_i x_i * b_i</p>
      *
      * @param phase the phase
@@ -277,20 +277,20 @@ public class PhaseCustomEos extends PhaseEos {
      * @return mixture B parameter
      */
     @Override
-    public double calcB(PhaseInterface phase, double temperature, 
+    public double calcB(PhaseInterface phase, double temperature,
             double pressure, int numberOfComponents) {
         double b = 0.0;
-        
+
         for (int i = 0; i < numberOfComponents; i++) {
             b += phase.getComponent(i).getx() * phase.getComponent(i).getb();
         }
-        
+
         return b;
     }
-    
+
     /**
      * Solve the cubic EoS for molar volume.
-     * 
+     *
      * <p>General cubic form:
      * P = RT/(V-b) - a(T)/((V + delta1*b)(V + delta2*b))</p>
      *
@@ -302,31 +302,31 @@ public class PhaseCustomEos extends PhaseEos {
      * @return molar volume in m³/mol
      */
     @Override
-    public double molarVolume(double pressure, double temperature, 
+    public double molarVolume(double pressure, double temperature,
             double A, double B, PhaseType pt) throws Exception {
-        
+
         // Convert to dimensionless form
         double Ared = A * pressure / (R * R * temperature * temperature);
         double Bred = B * pressure / (R * temperature);
-        
+
         // Cubic coefficients for Z³ + c2*Z² + c1*Z + c0 = 0
         double c2 = -(1.0 + Bred - uEOS * Bred);
         double c1 = Ared + wEOS * Bred * Bred - uEOS * Bred - uEOS * Bred * Bred;
         double c0 = -(Ared * Bred + wEOS * Bred * Bred + wEOS * Bred * Bred * Bred);
-        
+
         // Solve cubic equation
         double[] roots = solveCubic(c2, c1, c0);
-        
+
         // Select appropriate root based on phase type
         double Z = selectRoot(roots, pt);
-        
+
         if (Z < 0 || Double.isNaN(Z)) {
             throw new Exception("Invalid compressibility factor: " + Z);
         }
-        
+
         return Z * R * temperature / pressure;
     }
-    
+
     /**
      * Solve cubic equation x³ + c2*x² + c1*x + c0 = 0.
      *
@@ -339,12 +339,12 @@ public class PhaseCustomEos extends PhaseEos {
         // Implement Cardano's formula or Newton-Raphson
         // For simplicity, use existing NeqSim solver
         double[] roots = new double[3];
-        
+
         // Use analytical solution (Cardano)
         double p = c1 - c2 * c2 / 3.0;
         double q = 2.0 * c2 * c2 * c2 / 27.0 - c2 * c1 / 3.0 + c0;
         double D = q * q / 4.0 + p * p * p / 27.0;
-        
+
         if (D > 0) {
             // One real root
             double u = Math.cbrt(-q / 2.0 + Math.sqrt(D));
@@ -360,10 +360,10 @@ public class PhaseCustomEos extends PhaseEos {
             roots[1] = r * Math.cos((theta + 2.0 * Math.PI) / 3.0) - c2 / 3.0;
             roots[2] = r * Math.cos((theta + 4.0 * Math.PI) / 3.0) - c2 / 3.0;
         }
-        
+
         return roots;
     }
-    
+
     /**
      * Select appropriate root based on phase type.
      *
@@ -374,14 +374,14 @@ public class PhaseCustomEos extends PhaseEos {
     private double selectRoot(double[] roots, PhaseType pt) {
         double minZ = Double.MAX_VALUE;
         double maxZ = Double.MIN_VALUE;
-        
+
         for (double root : roots) {
             if (!Double.isNaN(root) && root > 0) {
                 minZ = Math.min(minZ, root);
                 maxZ = Math.max(maxZ, root);
             }
         }
-        
+
         // Gas phase: largest root; Liquid phase: smallest root
         if (pt == PhaseType.GAS) {
             return maxZ;
@@ -389,21 +389,21 @@ public class PhaseCustomEos extends PhaseEos {
             return minZ;
         }
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public double getF() {
         // Helmholtz free energy departure function
         return super.getF();
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public double dFdV() {
         // dF/dV derivative (used for pressure calculation)
         return super.dFdV();
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public double dFdVdV() {
@@ -432,11 +432,11 @@ package neqsim.thermo.component;
 public class ComponentCustomEos extends ComponentEos {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
-    
+
     // Custom parameters
     private double customParam1 = 0.0;
     private double customParam2 = 0.0;
-    
+
     /**
      * Constructor for ComponentCustomEos.
      *
@@ -445,11 +445,11 @@ public class ComponentCustomEos extends ComponentEos {
      * @param molesInPhase Moles in this phase
      * @param compIndex Component index
      */
-    public ComponentCustomEos(String name, double moles, double molesInPhase, 
+    public ComponentCustomEos(String name, double moles, double molesInPhase,
             int compIndex) {
         super(name, moles, molesInPhase, compIndex);
     }
-    
+
     /**
      * Constructor for ComponentCustomEos from ComponentInterface.
      *
@@ -460,11 +460,11 @@ public class ComponentCustomEos extends ComponentEos {
      * @param a Attractive parameter
      * @param moles Total moles
      */
-    public ComponentCustomEos(int number, double TC, double PC, double M, 
+    public ComponentCustomEos(int number, double TC, double PC, double M,
             double a, double moles) {
         super(number, TC, PC, M, a, moles);
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public ComponentCustomEos clone() {
@@ -476,10 +476,10 @@ public class ComponentCustomEos extends ComponentEos {
         }
         return clonedComponent;
     }
-    
+
     /**
      * Calculate temperature-dependent attractive parameter a(T).
-     * 
+     *
      * <p>Uses alpha function: a(T) = a_c * alpha(T_r, omega)</p>
      *
      * @param temperature in Kelvin
@@ -487,22 +487,22 @@ public class ComponentCustomEos extends ComponentEos {
     @Override
     public void calcAT(double temperature) {
         double Tr = temperature / TC;
-        
+
         // Critical attractive parameter (Soave form)
         double ac = 0.42748 * R * R * TC * TC / PC;
-        
+
         // Alpha function (Soave-type)
-        double m = 0.48 + 1.574 * acentricFactor 
+        double m = 0.48 + 1.574 * acentricFactor
                  - 0.176 * acentricFactor * acentricFactor;
         double alpha = Math.pow(1.0 + m * (1.0 - Math.sqrt(Tr)), 2);
-        
+
         // Temperature-dependent a
         aT = ac * alpha;
     }
-    
+
     /**
      * Calculate co-volume parameter b.
-     * 
+     *
      * <p>For cubic EoS: b = Omega_b * R * Tc / Pc</p>
      */
     @Override
@@ -510,7 +510,7 @@ public class ComponentCustomEos extends ComponentEos {
         // Soave form (Omega_b = 0.08664)
         b = 0.08664 * R * TC / PC;
     }
-    
+
     /**
      * Calculate fugacity coefficient.
      *
@@ -521,39 +521,39 @@ public class ComponentCustomEos extends ComponentEos {
      */
     @Override
     public void Finit(PhaseInterface phase, double temperature, double pressure,
-            double totalNumberOfMoles, double beta, int numberOfComponents, 
+            double totalNumberOfMoles, double beta, int numberOfComponents,
             int initType) {
-        
-        super.Finit(phase, temperature, pressure, totalNumberOfMoles, 
+
+        super.Finit(phase, temperature, pressure, totalNumberOfMoles,
                     beta, numberOfComponents, initType);
-        
+
         if (initType > 1) {
             // Calculate fugacity coefficient
             double A = phase.getA() / (numberOfMolesInPhase * numberOfMolesInPhase);
             double B = phase.getB() / numberOfMolesInPhase;
             double Z = phase.getZ();
-            
+
             // Partial molar volume contribution
             double bRatio = b / B;
-            
+
             // Activity coefficient derivative
             double sumAij = 0.0;
             for (int j = 0; j < numberOfComponents; j++) {
-                double aij = Math.sqrt(aT * phase.getComponent(j).getaT()) 
+                double aij = Math.sqrt(aT * phase.getComponent(j).getaT())
                            * (1.0 - phase.getMixingRule().getKij(componentNumber, j));
                 sumAij += phase.getComponent(j).getx() * aij;
             }
             double dAdn = 2.0 * sumAij / (numberOfMolesInPhase);
-            
+
             // Fugacity coefficient (for SRK-type)
             double lnPhi = bRatio * (Z - 1.0) - Math.log(Z - B * pressure / (R * temperature))
                          - A / B * (dAdn / A - bRatio) * Math.log(1.0 + B / Z);
-            
+
             fugacityCoefficient = Math.exp(lnPhi);
             logFugacityCoefficient = lnPhi;
         }
     }
-    
+
     // Custom parameter accessors
     public double getCustomParam1() { return customParam1; }
     public void setCustomParam1(double value) { this.customParam1 = value; }
@@ -581,10 +581,10 @@ import neqsim.thermo.phase.PhaseInterface;
  * @author YourName
  */
 public class CustomMixingRule implements EosMixingRulesInterface {
-    
+
     private double[][] kij;  // Binary interaction parameters
     private double[][] lij;  // Co-volume interaction parameters (optional)
-    
+
     /**
      * Constructor for CustomMixingRule.
      *
@@ -594,7 +594,7 @@ public class CustomMixingRule implements EosMixingRulesInterface {
         int n = phase.getNumberOfComponents();
         kij = new double[n][n];
         lij = new double[n][n];
-        
+
         // Initialize default values (0 = no interaction)
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
@@ -603,20 +603,20 @@ public class CustomMixingRule implements EosMixingRulesInterface {
             }
         }
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public double getKij(int i, int j) {
         return kij[i][j];
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public void setKij(int i, int j, double value) {
         kij[i][j] = value;
         kij[j][i] = value;  // Symmetric
     }
-    
+
     /**
      * Get co-volume interaction parameter.
      *
@@ -627,7 +627,7 @@ public class CustomMixingRule implements EosMixingRulesInterface {
     public double getLij(int i, int j) {
         return lij[i][j];
     }
-    
+
     /**
      * Set co-volume interaction parameter.
      *
@@ -639,49 +639,49 @@ public class CustomMixingRule implements EosMixingRulesInterface {
         lij[i][j] = value;
         lij[j][i] = value;
     }
-    
+
     /** {@inheritDoc} */
     @Override
-    public double calcA(PhaseInterface phase, double temperature, 
+    public double calcA(PhaseInterface phase, double temperature,
             double pressure, int numberOfComponents) {
         double A = 0.0;
-        
+
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
                 double ai = phase.getComponent(i).getaT();
                 double aj = phase.getComponent(j).getaT();
                 double xi = phase.getComponent(i).getx();
                 double xj = phase.getComponent(j).getx();
-                
+
                 // Custom combining rule
                 A += xi * xj * Math.sqrt(ai * aj) * (1.0 - kij[i][j]);
             }
         }
-        
+
         return A;
     }
-    
+
     /** {@inheritDoc} */
     @Override
-    public double calcB(PhaseInterface phase, double temperature, 
+    public double calcB(PhaseInterface phase, double temperature,
             double pressure, int numberOfComponents) {
         double B = 0.0;
-        
+
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
                 double bi = phase.getComponent(i).getb();
                 double bj = phase.getComponent(j).getb();
                 double xi = phase.getComponent(i).getx();
                 double xj = phase.getComponent(j).getx();
-                
+
                 // Custom co-volume mixing (with lij)
                 B += xi * xj * (bi + bj) / 2.0 * (1.0 - lij[i][j]);
             }
         }
-        
+
         return B;
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public CustomMixingRule clone() {
@@ -716,35 +716,35 @@ import neqsim.thermo.phase.PhaseModifiedSrkEos;
 
 /**
  * Modified SRK EoS with temperature-dependent kij.
- * 
+ *
  * <p>kij(T) = kij0 + kij1 * (T - 298.15)</p>
  *
  * @author YourName
  */
 public class SystemModifiedSrkEos extends SystemEos {
     private static final long serialVersionUID = 1000;
-    
+
     public SystemModifiedSrkEos() {
         this(298.15, 1.0, false);
     }
-    
+
     public SystemModifiedSrkEos(double T, double P) {
         this(T, P, false);
     }
-    
+
     public SystemModifiedSrkEos(double T, double P, boolean checkForSolids) {
         super(T, P, checkForSolids);
         modelName = "Modified-SRK-EOS";
         getCharacterization().setTBPModel("PedersenSRK");
         attractiveTermNumber = 0;
-        
+
         for (int i = 0; i < numberOfPhases; i++) {
             phaseArray[i] = new PhaseModifiedSrkEos();
             phaseArray[i].setTemperature(T);
             phaseArray[i].setPressure(P);
         }
     }
-    
+
     @Override
     public SystemModifiedSrkEos clone() {
         SystemModifiedSrkEos cloned = null;
@@ -772,6 +772,7 @@ fluid.setMixingRule("classic");
 
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
+fluid.initProperties();
 
 System.out.println("Z = " + fluid.getPhase("gas").getZ());
 System.out.println("Density = " + fluid.getPhase("gas").getDensity("kg/m3"));
@@ -791,79 +792,79 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SystemModifiedSrkEosTest {
-    
+
     @Test
     void testPureMethane() {
         SystemInterface fluid = new SystemModifiedSrkEos(300.0, 50.0);
         fluid.addComponent("methane", 1.0);
         fluid.setMixingRule("classic");
-        
+
         ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
         ops.TPflash();
-        
+
         // Expected Z for methane at 300K, 50 bar (from NIST)
         double expectedZ = 0.88; // Approximate
         double calculatedZ = fluid.getPhase("gas").getZ();
-        
-        assertEquals(expectedZ, calculatedZ, 0.05, 
+
+        assertEquals(expectedZ, calculatedZ, 0.05,
             "Compressibility should match reference");
     }
-    
+
     @Test
     void testBinaryMixture() {
         SystemInterface fluid = new SystemModifiedSrkEos(300.0, 50.0);
         fluid.addComponent("methane", 0.9);
         fluid.addComponent("ethane", 0.1);
         fluid.setMixingRule("classic");
-        
+
         ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
         ops.TPflash();
-        
+
         double density = fluid.getPhase("gas").getDensity("kg/m3");
-        
+
         // Density should be reasonable (30-50 kg/m3 at these conditions)
-        assertTrue(density > 20 && density < 60, 
+        assertTrue(density > 20 && density < 60,
             "Density should be in expected range: " + density);
     }
-    
+
     @Test
     void testPhaseEquilibrium() {
         SystemInterface fluid = new SystemModifiedSrkEos(250.0, 30.0);
         fluid.addComponent("methane", 0.7);
         fluid.addComponent("n-hexane", 0.3);
         fluid.setMixingRule("classic");
-        
+
         ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
         ops.TPflash();
-        
+
         // Should have two phases at these conditions
-        assertEquals(2, fluid.getNumberOfPhases(), 
+        assertEquals(2, fluid.getNumberOfPhases(),
             "Should have two phases");
-        
+
         // Check K-values are reasonable
         double KmethaneGas = fluid.getPhase("gas").getComponent("methane").getx();
         double KmethaneLiq = fluid.getPhase("oil").getComponent("methane").getx();
-        assertTrue(KmethaneGas > KmethaneLiq, 
+        assertTrue(KmethaneGas > KmethaneLiq,
             "Methane should concentrate in gas phase");
     }
-    
+
     @Test
     void testVaporPressure() {
         // Test against known vapor pressure data
         double[] Texp = {190.0, 200.0, 210.0};  // K
         double[] Pexp = {5.0, 10.0, 18.0};      // bar (approximate)
-        
+
         for (int i = 0; i < Texp.length; i++) {
             SystemInterface fluid = new SystemModifiedSrkEos(Texp[i], 1.0);
             fluid.addComponent("methane", 1.0);
             fluid.setMixingRule("classic");
-            
+
             ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
             try {
                 ops.bubblePointPressureFlash(false);
                 double Pcalc = fluid.getPressure();
-                
-                assertEquals(Pexp[i], Pcalc, Pexp[i] * 0.15, 
+
+                assertEquals(Pexp[i], Pcalc, Pexp[i] * 0.15,
                     "Vapor pressure at " + Texp[i] + "K");
             } catch (Exception e) {
                 fail("Bubble point calculation failed: " + e.getMessage());
@@ -894,6 +895,7 @@ fluid.setMixingRule("classic")
 # Run flash calculation
 ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
 ops.TPflash()
+fluid.initProperties()
 
 # Get results
 print(f"Model: {fluid.getModelName()}")
@@ -908,6 +910,7 @@ fluid_srk.setMixingRule("classic")
 
 ops_srk = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid_srk)
 ops_srk.TPflash()
+fluid_srk.initProperties()
 
 print(f"\nComparison with standard SRK:")
 print(f"Modified Z = {fluid.getPhase('gas').getZ():.4f}")
@@ -926,18 +929,18 @@ def generate_phase_envelope(fluid_class, composition, name):
     for comp, frac in composition.items():
         fluid.addComponent(comp, frac)
     fluid.setMixingRule("classic")
-    
+
     ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
-    
+
     try:
         ops.calcPTphaseEnvelope()
-        
+
         # Get envelope data
         T_dew = list(fluid.getPhaseEnvelope().getDewPointLine().get("temperature"))
         P_dew = list(fluid.getPhaseEnvelope().getDewPointLine().get("pressure"))
         T_bub = list(fluid.getPhaseEnvelope().getBubblePointLine().get("temperature"))
         P_bub = list(fluid.getPhaseEnvelope().getBubblePointLine().get("pressure"))
-        
+
         return {
             'T_dew': T_dew, 'P_dew': P_dew,
             'T_bub': T_bub, 'P_bub': P_bub,
@@ -984,14 +987,15 @@ void validateAgainstNIST() {
     // NIST Reference: Methane at 300K, 100 bar
     double Z_NIST = 0.8577;
     double rho_NIST = 66.23; // kg/m³
-    
+
     SystemInterface fluid = new SystemCustomEos(300.0, 100.0);
     fluid.addComponent("methane", 1.0);
     fluid.setMixingRule("classic");
-    
+
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
-    
+    fluid.initProperties();
+
     assertEquals(Z_NIST, fluid.getPhase(0).getZ(), 0.01);
     assertEquals(rho_NIST, fluid.getPhase(0).getDensity("kg/m3"), 1.0);
 }
@@ -1005,14 +1009,14 @@ public double molarVolume(...) throws Exception {
     // Add iteration limits and convergence checks
     int maxIterations = 100;
     double tolerance = 1e-10;
-    
+
     for (int iter = 0; iter < maxIterations; iter++) {
         // Newton-Raphson or other solver
         if (Math.abs(residual) < tolerance) {
             return volume;
         }
     }
-    
+
     throw new TooManyIterationsException("Volume solver did not converge");
 }
 ```
@@ -1022,11 +1026,11 @@ public double molarVolume(...) throws Exception {
 ```java
 /**
  * Calculate alpha function for temperature-dependent attractive parameter.
- * 
+ *
  * <p>Uses the Mathias-Copeman alpha function for improved accuracy:</p>
  * <p>alpha = [1 + c1*(1-sqrt(Tr)) + c2*(1-sqrt(Tr))² + c3*(1-sqrt(Tr))³]²</p>
- * 
- * <p>Reference: Mathias, P.M., Copeman, T.W., 
+ *
+ * <p>Reference: Mathias, P.M., Copeman, T.W.,
  * "Extension of the Peng-Robinson EOS to Complex Mixtures",
  * Fluid Phase Equilibria, 1983.</p>
  */
@@ -1055,7 +1059,7 @@ public MySystem clone() {
 
 ```java
 if (temperature <= 0) {
-    throw new InvalidInputException(this, "init", "temperature", 
+    throw new InvalidInputException(this, "init", "temperature",
         "must be positive, got " + temperature);
 }
 

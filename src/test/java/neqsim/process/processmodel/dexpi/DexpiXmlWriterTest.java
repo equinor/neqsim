@@ -10,13 +10,13 @@ import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.filter.Filter;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
-import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
-import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
@@ -175,6 +175,52 @@ public class DexpiXmlWriterTest extends NeqSimTest {
   }
 
   /**
+   * Tests that a Tank is reverse-mapped to Tank and that its symbol is in the ShapeCatalogue.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testTankReverseMapping() throws IOException {
+    Stream feed = createFeedStream();
+    Tank tank = new Tank("T-101", feed);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(tank);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(xml.contains("ComponentClass=\"Tank\""), "Should map Tank to Tank");
+    assertTrue(xml.contains("STORAGE_TANK_SHAPE"),
+        "Tank symbol should be present in the ShapeCatalogue");
+  }
+
+  /**
+   * Tests that a Filter is reverse-mapped to Filter and that its symbol is in the ShapeCatalogue.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testFilterReverseMapping() throws IOException {
+    Stream feed = createFeedStream();
+    Filter filter = new Filter("F-101", feed);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(filter);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(xml.contains("ComponentClass=\"Filter\""), "Should map Filter to Filter");
+    assertTrue(xml.contains("FILTER_SHAPE"),
+        "Filter symbol should be present in the ShapeCatalogue");
+  }
+
+  /**
    * Tests that a ThreePhaseSeparator is correctly mapped.
    *
    * @throws IOException if writing fails
@@ -320,6 +366,53 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     assertNotNull(xml);
     assertTrue(xml.contains("<PlantModel"), "Should contain PlantModel root");
     assertTrue(xml.contains("PlantInformation"), "Should contain PlantInformation");
+  }
+
+  /**
+   * Tests that the standard writer declares the DEXPI namespace and exports originating-system
+   * metadata required by Proteus consumers.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testStandardExportMetadata() throws IOException {
+    ProcessSystem process = new ProcessSystem();
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(xml.contains("xmlns=\"http://sandbox.dexpi.org/xml\""),
+        "Standard export should include the DEXPI default namespace");
+    assertTrue(xml.contains("OriginatingSystem=\"NeqSim\""),
+        "PlantInformation should identify NeqSim as the originating system");
+    assertTrue(xml.contains("OriginatingSystemVendor=\"Equinor / NeqSim\""),
+        "PlantInformation should identify the originating system vendor");
+    assertTrue(xml.contains("OriginatingSystemVersion="),
+        "PlantInformation should include originating system version metadata");
+  }
+
+  /**
+   * Tests that pyDEXPI-friendly export omits only the default namespace while retaining the
+   * originating-system metadata needed by pyDEXPI/Proteus loaders.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testPyDexpiExportOmitsNamespaceButKeepsMetadata() throws IOException {
+    ProcessSystem process = new ProcessSystem();
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.writeForPyDexpi(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertFalse(xml.contains("xmlns=\"http://sandbox.dexpi.org/xml\""),
+        "pyDEXPI export should omit the DEXPI default namespace");
+    assertFalse(xml.contains("xmlns:xsi="), "pyDEXPI export should omit namespace declarations");
+    assertTrue(xml.contains("OriginatingSystem=\"NeqSim\""),
+        "pyDEXPI export should keep originating system metadata");
+    assertTrue(xml.contains("PlantInformation"),
+        "pyDEXPI export should keep unqualified PlantInformation elements");
   }
 
   /**

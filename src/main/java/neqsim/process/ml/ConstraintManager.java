@@ -26,7 +26,7 @@ public class ConstraintManager implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   private final Map<String, Constraint> constraints;
-  private final List<ConstraintViolationListener> listeners;
+  private final transient List<ConstraintViolationListener> listeners;
 
   /**
    * Listener interface for constraint violation events.

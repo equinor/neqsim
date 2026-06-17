@@ -69,6 +69,15 @@ public class Mixer extends ProcessEquipmentBaseClass
   double lowestPressure = Double.NEGATIVE_INFINITY;
 
   private boolean doMultiPhaseCheck = true;
+  private double[] lastInletTemperatures = null;
+  private double[] lastInletPressures = null;
+  private double[] lastInletFlowRates = null;
+  private double[][] lastInletCompositions = null;
+  private String[] lastInletSpecifications = null;
+  private int lastNumberOfInputStreams = -1;
+  private boolean lastIsSetOutTemperature = false;
+  private boolean lastDoMultiPhaseCheck = true;
+  private double lastOutTemperature = Double.NaN;
 
   /**
    * <p>
@@ -173,15 +182,23 @@ public class Mixer extends ProcessEquipmentBaseClass
    */
   public void mixStream() {
     int index = 0;
-    lowestPressure = mixedStream.getThermoSystem().getPhase(0).getPressure();
+    // Determine outlet pressure from the lowest pressure across ACTIVE inlet streams only.
+    // Streams with negligible flow (bypassed / deactivated) must not influence the mixer
+    // pressure — their stale pressure would otherwise drive the outlet to a wrong value.
+    lowestPressure = Double.POSITIVE_INFINITY;
     boolean hasAddedNewComponent = false;
-    for (int k = 1; k < streams.size(); k++) {
-      if (streams.get(k).getThermoSystem().getPhase(0).getPressure() < lowestPressure) {
-        lowestPressure = streams.get(k).getThermoSystem().getPhase(0).getPressure();
+    for (int k = 0; k < streams.size(); k++) {
+      if (streams.get(k).getFlowRate("kg/hr") <= getMinimumFlow()) {
+        continue;
+      }
+      double p = streams.get(k).getThermoSystem().getPhase(0).getPressure();
+      if (p < lowestPressure) {
+        lowestPressure = p;
       }
     }
-    for (int k = 0; k < streams.size(); k++) {
-      // streams.get(k).getThermoSystem().getPhase(0).setPressure(lowestPressure);
+    if (Double.isInfinite(lowestPressure)) {
+      // All inlets are inactive — fall back to the template stream's pressure.
+      lowestPressure = mixedStream.getThermoSystem().getPhase(0).getPressure();
     }
 
     // Process ALL streams starting from k=1 (k=0 is already cloned into mixedStream)
@@ -201,21 +218,55 @@ public class Mixer extends ProcessEquipmentBaseClass
         double moles =
             streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getNumberOfmoles();
 
+        double srcMolarMass =
+            streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getMolarMass();
+        double destMolarMass = srcMolarMass;
+
         for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0)
             .getNumberOfComponents(); p++) {
           if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName()
               .equals(componentName)) {
             gotComponent = true;
-            index =
-                streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
+            index = mixedStream.getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
+            destMolarMass =
+                mixedStream.getThermoSystem().getPhase(0).getComponent(p).getMolarMass();
+            break;
           }
         }
 
         if (gotComponent) {
-          mixedStream.getThermoSystem().addComponent(index, moles);
+          // Two inlets may carry a component with the same name but a different molar mass
+          // (e.g. independently characterized pseudo/plus-fractions such as "C7" in separate
+          // trains). Adding source moles onto the destination component keeps the destination's
+          // molar mass, which conserves moles but NOT mass. Scale the added moles by the
+          // source/destination molar-mass ratio so that the added MASS (moles * MW) is preserved.
+          double molesToAdd = moles;
+          if (destMolarMass > 0.0 && Math.abs(srcMolarMass - destMolarMass) > 1.0e-9) {
+            molesToAdd = moles * srcMolarMass / destMolarMass;
+            logger.warn("Mixer '" + getName() + "': component '" + componentName
+                + "' has different molar mass in inlet stream (" + srcMolarMass
+                + " kg/mol) than in the mixed stream (" + destMolarMass
+                + " kg/mol). Scaling moles to conserve mass.");
+          }
+          mixedStream.getThermoSystem().addComponent(index, molesToAdd);
         } else {
           hasAddedNewComponent = true;
-          mixedStream.getThermoSystem().addComponent(componentName, moles);
+          // Component present in this inlet but absent from the mixed-stream template
+          // (stream 0). Adding it by name only routes through the component database, which
+          // (a) throws for pseudo/TBP fractions that are not in the database and (b) assigns
+          // the database default molar mass instead of the inlet's characterized value,
+          // breaking mass conservation. For TBP/plus fractions, re-create the fraction with
+          // its characterized molar mass and density so the added mass (moles * MW) is
+          // preserved; otherwise fall back to the database lookup for real components.
+          neqsim.thermo.component.ComponentInterface srcComponent =
+              streams.get(k).getThermoSystem().getPhase(0).getComponent(i);
+          if (srcComponent.isIsTBPfraction() || srcComponent.isIsPlusFraction()) {
+            String rawName = componentName.replaceFirst("_PC$", "");
+            mixedStream.getThermoSystem().addTBPfraction(rawName, moles,
+                srcComponent.getMolarMass(), srcComponent.getNormalLiquidDensity());
+          } else {
+            mixedStream.getThermoSystem().addComponent(componentName, moles);
+          }
         }
       }
     }
@@ -282,6 +333,77 @@ public class Mixer extends ProcessEquipmentBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public boolean needRecalculation() {
+    if (streams.isEmpty() || mixedStream == null || lastInletCompositions == null
+        || streams.size() != lastNumberOfInputStreams || streams.size() != lastInletFlowRates.length
+        || isSetOutTemperature != lastIsSetOutTemperature
+        || doMultiPhaseCheck != lastDoMultiPhaseCheck || outTemperature != lastOutTemperature) {
+      return true;
+    }
+    for (int streamIndex = 0; streamIndex < streams.size(); streamIndex++) {
+      StreamInterface stream = streams.get(streamIndex);
+      if (stream == null || stream.getThermoSystem() == null) {
+        return true;
+      }
+      SystemInterface inletSystem = stream.getThermoSystem();
+      if (inletSystem.getTemperature() != lastInletTemperatures[streamIndex]
+          || inletSystem.getPressure() != lastInletPressures[streamIndex] || !java.util.Objects
+              .equals(stream.getSpecification(), lastInletSpecifications[streamIndex])) {
+        return true;
+      }
+      double flow = inletSystem.getFlowRate("kg/hr");
+      double lastFlow = lastInletFlowRates[streamIndex];
+      if ((flow <= getMinimumFlow()) != (lastFlow <= getMinimumFlow())) {
+        return true;
+      }
+      if (flow > getMinimumFlow() && Math.abs(flow - lastFlow) / flow >= 1e-6) {
+        return true;
+      }
+      neqsim.thermo.phase.PhaseInterface phase = inletSystem.getPhase(0);
+      double[] lastComposition = lastInletCompositions[streamIndex];
+      int numberOfComponents = phase.getNumberOfComponents();
+      if (lastComposition == null || numberOfComponents != lastComposition.length) {
+        return true;
+      }
+      for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+        if (phase.getComponent(componentIndex).getz() != lastComposition[componentIndex]) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private void updateRecalculationState() {
+    int streamCount = streams.size();
+    lastNumberOfInputStreams = streamCount;
+    lastInletTemperatures = new double[streamCount];
+    lastInletPressures = new double[streamCount];
+    lastInletFlowRates = new double[streamCount];
+    lastInletCompositions = new double[streamCount][];
+    lastInletSpecifications = new String[streamCount];
+    for (int streamIndex = 0; streamIndex < streamCount; streamIndex++) {
+      StreamInterface stream = streams.get(streamIndex);
+      SystemInterface inletSystem = stream.getThermoSystem();
+      lastInletTemperatures[streamIndex] = inletSystem.getTemperature();
+      lastInletPressures[streamIndex] = inletSystem.getPressure();
+      lastInletFlowRates[streamIndex] = inletSystem.getFlowRate("kg/hr");
+      lastInletCompositions[streamIndex] = inletSystem.getMolarComposition();
+      lastInletSpecifications[streamIndex] = stream.getSpecification();
+    }
+    lastIsSetOutTemperature = isSetOutTemperature;
+    lastDoMultiPhaseCheck = doMultiPhaseCheck;
+    lastOutTemperature = outTemperature;
+  }
+
+  private void finishRun(UUID id) {
+    updateRecalculationState();
+    mixedStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     double enthalpy = 0.0;
     // ((Stream) streams.get(0)).getThermoSystem().display();
@@ -304,7 +426,7 @@ public class Mixer extends ProcessEquipmentBaseClass
       }
       mixedStream.setThermoSystem(thermoSystem2);
       isActive(false);
-      setCalculationIdentifier(id);
+      finishRun(id);
       return;
     }
 
@@ -374,7 +496,7 @@ public class Mixer extends ProcessEquipmentBaseClass
       mixedStream.getThermoSystem().setMultiPhaseCheck(true);
     }
 
-    setCalculationIdentifier(id);
+    finishRun(id);
   }
 
   /** {@inheritDoc} */

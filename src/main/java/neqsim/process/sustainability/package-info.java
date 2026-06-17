@@ -21,7 +21,7 @@
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * ProcessSystem process = new ProcessSystem();
  * // ... configure process with compressors, heaters, flares, etc. ...

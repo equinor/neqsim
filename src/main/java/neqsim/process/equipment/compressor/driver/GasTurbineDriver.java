@@ -13,26 +13,32 @@ package neqsim.process.equipment.compressor.driver;
  * <li>Fuel gas consumption</li>
  * </ul>
  *
- * <p><strong>Temperature Derating</strong></p>
+ * <p>
+ * <strong>Temperature Derating</strong>
+ * </p>
  * <p>
  * Gas turbines experience reduced power output at higher ambient temperatures due to reduced air
  * density and compressor work increase. The typical derating is approximately 0.7% per °C above the
  * ISO reference temperature of 15°C.
  * </p>
  *
- * <p><strong>Altitude Derating</strong></p>
+ * <p>
+ * <strong>Altitude Derating</strong>
+ * </p>
  * <p>
  * At higher altitudes, reduced air density decreases mass flow through the turbine, reducing power
  * output. Typical derating is about 3.5% per 305m (1000 ft) of elevation.
  * </p>
  *
- * <p><strong>Example Usage</strong></p>
- * 
+ * <p>
+ * <strong>Example Usage</strong>
+ * </p>
+ *
  * <pre>
  * GasTurbineDriver driver = new GasTurbineDriver(10000, 7500, 0.35);
  * driver.setAmbientTemperature(35.0); // 35°C ambient
  * driver.setAltitude(500); // 500m elevation
- * 
+ *
  * double availablePower = driver.getAvailablePower(7500); // ~8200 kW after derating
  * double fuelRate = driver.getFuelConsumption(8000, 7500); // kg/hr or kW thermal
  * </pre>
@@ -73,7 +79,6 @@ public class GasTurbineDriver extends DriverCurveBase {
    * Default constructor.
    */
   public GasTurbineDriver() {
-    super();
     setDriverType();
   }
 

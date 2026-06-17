@@ -4,12 +4,12 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Fire Detector instrument for fire detection and alarm systems.
- * 
+ *
  * <p>
  * A fire detector is a binary sensor that detects the presence of fire. It can be used in emergency
  * shutdown (ESD) systems where multiple fire detectors may need to activate before triggering an
  * ESD response (voting logic).
- * 
+ *
  * <p>
  * Key features:
  * <ul>
@@ -19,30 +19,30 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>Supports alarm configuration for logging and escalation</li>
  * <li>Reset capability for testing and normal operation restoration</li>
  * </ul>
- * 
+ *
  * <p>
  * Typical usage in ESD system with voting logic:
- * 
+ *
  * <pre>
  * // Create fire detectors
  * FireDetector fireDetector1 = new FireDetector("FD-101");
  * FireDetector fireDetector2 = new FireDetector("FD-102");
- * 
+ *
  * // Configure alarm thresholds
  * AlarmConfig alarmConfig = AlarmConfig.builder().highLimit(0.5).delay(1.0).unit("binary").build();
  * fireDetector1.setAlarmConfig(alarmConfig);
  * fireDetector2.setAlarmConfig(alarmConfig);
- * 
+ *
  * // Simulate fire detection
  * fireDetector1.detectFire();
  * fireDetector2.detectFire();
- * 
+ *
  * // Check detector states
  * if (fireDetector1.isFireDetected() &amp;&amp; fireDetector2.isFireDetected()) {
  *   // Two fire alarms - activate ESD
  *   esdSystem.activate();
  * }
- * 
+ *
  * // After emergency is resolved
  * fireDetector1.reset();
  * fireDetector2.reset();
@@ -94,7 +94,7 @@ public class FireDetector extends MeasurementDeviceBaseClass {
 
   /**
    * Simulates fire detection - activates the detector.
-   * 
+   *
    * <p>
    * In real applications, this would be triggered by actual sensor readings (IR, UV, heat, smoke).
    * For simulation purposes, this method directly sets the fire detected state.
@@ -107,7 +107,7 @@ public class FireDetector extends MeasurementDeviceBaseClass {
 
   /**
    * Sets a partial signal level (for testing gradual detection).
-   * 
+   *
    * <p>
    * If signal level exceeds detection threshold, fire is considered detected.
    * </p>
@@ -121,7 +121,7 @@ public class FireDetector extends MeasurementDeviceBaseClass {
 
   /**
    * Resets the detector to inactive (no fire detected) state.
-   * 
+   *
    * <p>
    * This simulates detector reset after emergency is resolved or for testing purposes.
    * </p>
@@ -205,7 +205,7 @@ public class FireDetector extends MeasurementDeviceBaseClass {
 
   /**
    * Gets the measured value of the fire detector.
-   * 
+   *
    * <p>
    * Returns 1.0 if fire is detected, 0.0 if no fire detected.
    * </p>
@@ -219,7 +219,7 @@ public class FireDetector extends MeasurementDeviceBaseClass {
 
   /**
    * Gets the measured value in the specified unit.
-   * 
+   *
    * <p>
    * Fire detector only supports "binary" unit. Returns 1.0 if fire detected, 0.0 otherwise.
    * </p>

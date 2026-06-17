@@ -67,6 +67,6 @@ public class TestCondensate {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    testSystem.display();
+    // testSystem.display();
   }
 }

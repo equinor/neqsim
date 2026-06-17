@@ -330,6 +330,7 @@ condensate.setMixingRule("classic");
 
 ThermodynamicOperations ops = new ThermodynamicOperations(condensate);
 ops.TPflash();
+condensate.initProperties();
 
 // Get liquid properties for pool model
 double liquidFraction = 1.0 - condensate.getPhase(0).getBeta();
@@ -462,17 +463,17 @@ public class SourceTermDTO {
     public String nodeId;
     public String scenarioType;
     public double holeDiameter_m;
-    
+
     // Upstream conditions
     public double P_upstream_bar;
     public double T_upstream_K;
     public Map<String, Double> composition;
-    
+
     // Discharge conditions
     public double mdot_total_kg_s;
     public double mdot_gas_kg_s;
     public double mdot_liquid_kg_s;
-    
+
     // Thermodynamic properties
     public double T_release_K;
     public double P_release_bar;
@@ -481,13 +482,13 @@ public class SourceTermDTO {
     public double rho_gas_kg_m3;
     public double gamma;
     public double Cp_J_kgK;
-    
+
     // Flags
     public boolean choked;
     public boolean twoPhase;
     public boolean hydrateRisk;
     public boolean solidRisk;
-    
+
     // Convert from NeqSim SourceTermResult
     public static SourceTermDTO fromNeqSim(SourceTermResult result, int timeIndex) {
         SourceTermDTO dto = new SourceTermDTO();
@@ -496,7 +497,7 @@ public class SourceTermDTO {
         // ... populate other fields
         return dto;
     }
-    
+
     // Export to various formats
     public void exportToPHAST(String filename) { /* ... */ }
     public void exportToFLACS(String filename) { /* ... */ }
@@ -762,18 +763,18 @@ void validateAgainstAPI520() {
     SystemInterface methane = new SystemSrkEos(300.0, 100.0);
     methane.addComponent("methane", 1.0);
     methane.setMixingRule("classic");
-    
+
     LeakModel leak = LeakModel.builder()
         .fluid(methane)
         .holeDiameter(25.0, "mm")
         .dischargeCoefficient(0.62)
         .build();
-    
+
     double mdot = leak.calculateMassFlowRate();
-    
+
     // API 520 correlation for comparison
     double mdotAPI520 = calculateAPI520CriticalFlow(methane, 0.025);
-    
+
     // Should agree within 5%
     assertEquals(mdotAPI520, mdot, mdotAPI520 * 0.05);
 }
@@ -803,14 +804,14 @@ import neqsim.process.safety.risk.*;
 import java.util.*;
 
 public class QRASourceTermGenerator {
-    
+
     // Standard hole sizes per NORSOK Z-013 / company practice
     private static final double[] HOLE_SIZES_MM = {5.0, 25.0, 100.0};
     private static final String[] SIZE_NAMES = {"Small", "Medium", "Large"};
-    
+
     public void generateSourceTerms(SystemInterface fluid, String nodeId) {
         List<SourceTermResult> results = new ArrayList<>();
-        
+
         for (int i = 0; i < HOLE_SIZES_MM.length; i++) {
             LeakModel leak = LeakModel.builder()
                 .fluid(fluid)
@@ -819,31 +820,31 @@ public class QRASourceTermGenerator {
                 .vesselVolume(10.0)
                 .scenarioName(SIZE_NAMES[i] + " Leak - " + nodeId)
                 .build();
-            
+
             SourceTermResult result = leak.calculateSourceTerm(600.0, 1.0);
             results.add(result);
-            
+
             // Export for each consequence tool
             String baseName = nodeId + "_" + SIZE_NAMES[i].toLowerCase();
             result.exportToPHAST(baseName + "_phast.csv");
             result.exportToFLACS(baseName + "_flacs.csv");
             result.exportToJSON(baseName + ".json");
         }
-        
+
         // Generate rupture case
         VesselDepressurization rupture = createRuptureCase(fluid, nodeId);
         rupture.exportResultsToCSV(nodeId + "_rupture.csv");
-        
+
         // Generate summary documentation
         generateDocumentation(results, nodeId);
     }
-    
+
     private void generateDocumentation(List<SourceTermResult> results, String nodeId) {
         StringBuilder doc = new StringBuilder();
         doc.append("# Source Term Summary - ").append(nodeId).append("\n\n");
         doc.append("| Scenario | Hole (mm) | mdot (kg/s) | T_rel (K) | Phase |\n");
         doc.append("|----------|-----------|-------------|-----------|-------|\n");
-        
+
         for (int i = 0; i < results.size(); i++) {
             SourceTermResult r = results.get(i);
             doc.append(String.format("| %s | %.0f | %.2f | %.1f | %s |\n",
@@ -851,7 +852,7 @@ public class QRASourceTermGenerator {
                 r.getMassFlowRate()[0], r.getTemperature()[0],
                 r.getVaporFraction()[0] > 0.99 ? "Gas" : "Two-phase"));
         }
-        
+
         // Write to file
         writeToFile(nodeId + "_summary.md", doc.toString());
     }

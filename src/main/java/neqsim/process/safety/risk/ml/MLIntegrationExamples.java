@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,12 +25,12 @@ import org.apache.logging.log4j.Logger;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * // Create adapter for external model
  * MLModelAdapter adapter =
  *     MLIntegrationExamples.createOnnxAdapter("/models/failure_predictor.onnx");
- * 
+ *
  * // Register with risk interface
  * RiskMLInterface mlInterface = new RiskMLInterface();
  * mlInterface.registerModel("failure_predictor", RiskMLInterface.ModelType.FAILURE_PREDICTION,
@@ -143,7 +142,7 @@ public class MLIntegrationExamples {
    * </p>
    *
    * <h2>Dependencies Required</h2>
-   * 
+   *
    * <pre>
    * &lt;dependency&gt;
    *   &lt;groupId&gt;com.microsoft.onnxruntime&lt;/groupId&gt;
@@ -177,7 +176,7 @@ public class MLIntegrationExamples {
      * <p>
      * In production, this would use:
      * </p>
-     * 
+     *
      * <pre>
      * env = OrtEnvironment.getEnvironment();
      * session = env.createSession(modelPath, new OrtSession.SessionOptions());
@@ -232,7 +231,7 @@ public class MLIntegrationExamples {
    * </p>
    *
    * <h2>Dependencies Required</h2>
-   * 
+   *
    * <pre>
    * &lt;dependency&gt;
    *   &lt;groupId&gt;org.tensorflow&lt;/groupId&gt;
@@ -272,7 +271,7 @@ public class MLIntegrationExamples {
      * <p>
      * In production:
      * </p>
-     * 
+     *
      * <pre>
      * model = SavedModelBundle.load(modelDir, "serve");
      * </pre>

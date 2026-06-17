@@ -55,11 +55,29 @@ public class ComponentWonWax extends ComponentSolid {
     double liquidPhaseFugacity =
         refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
 
+    // Solid-liquid volume change (Poynting correction)
+    double liquidMolarVolume = refPhase.getMolarVolume();
+    double solidMolarVolume = liquidMolarVolume * 0.9;
+    double refPressure = 1.0; // bara
+    double presTerm = -(liquidMolarVolume - solidMolarVolume) * (phase1.getPressure() - refPressure)
+        / R / phase1.getTemperature();
+
+    // Heat capacity difference solid-liquid (Pedersen et al., 1991)
+    // DeltaCp_SL = 0.3033 * MW - 4.635e-4 * MW * T [cal/mol/K], converted to J/(mol*K)
+    double mw = getMolarMass() * 1000.0; // g/mol
+    double deltaCpSL = (0.3033 * mw - 4.635e-4 * mw * phase1.getTemperature()) * 4.184;
+    double cpTerm = deltaCpSL / R * (getTriplePointTemperature() / phase1.getTemperature() - 1.0
+        - Math.log(getTriplePointTemperature() / phase1.getTemperature()));
+
+    // Won activity coefficient from solubility parameter model
     double solidActivityCoefficient = getWonActivityCoefficient(phase1);
-    logger.info("activity coef Won " + solidActivityCoefficient);
+
+    // Solid fugacity with DeltaCp and Poynting corrections
     SolidFug =
-        getx() * liquidPhaseFugacity * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
-            * (1.0 - phase1.getTemperature() / getTriplePointTemperature()));
+        getx() * liquidPhaseFugacity
+            * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
+                * (1.0 - phase1.getTemperature() / getTriplePointTemperature()) + cpTerm
+                + presTerm);
 
     fugacityCoefficient = solidActivityCoefficient * SolidFug / (phase1.getPressure() * getx());
     return fugacityCoefficient;
@@ -93,33 +111,46 @@ public class ComponentWonWax extends ComponentSolid {
   }
 
   /**
+   * Calculates the liquid molar volume at 25 deg C for the Won solubility parameter model.
+   *
    * <p>
-   * getWonVolume.
+   * Uses the density correlation: d25 = 0.8155 + 6.273e-4 * MW - 13.06 / MW (g/cm3, MW in g/mol).
+   * Returns volume in cm3/mol.
    * </p>
    *
    * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
+   * @return molar volume at 25 deg C in cm3/mol
    */
   public double getWonVolume(PhaseInterface phase1) {
-    double d25 = 0.8155 + 0.6273e-4 * getMolarMass() - 13.06 / getMolarMass();
+    double mw = getMolarMass() * 1000.0; // convert kg/mol to g/mol
+    double d25 = 0.8155 + 0.6273e-4 * mw - 13.06 / mw;
 
-    return getMolarMass() / d25;
+    return mw / d25;
   }
 
   /**
+   * Calculates the Won solubility parameter for this component.
+   *
    * <p>
-   * getWonParam.
+   * delta_i = sqrt((DH_vap - DH_fus - RT) / V_i) in (cal/cm3)^0.5. Uses Morgan-Kobayashi
+   * correlation for vaporization enthalpy and Pedersen correlations for fusion properties. All
+   * molecular-weight-dependent correlations use MW in g/mol.
    * </p>
    *
    * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
+   * @return solubility parameter in (cal/cm3)^0.5
    */
   public double getWonParam(PhaseInterface phase1) {
-    // calculation of Heat of fusion
-    double Tf = 374.5 * 0.02617 * getMolarMass() - 20172 / getMolarMass();
-    double Hf = 0.1426 * getMolarMass() * Tf;
+    double mw = getMolarMass() * 1000.0; // convert kg/mol to g/mol
 
-    // calculation of Enthalpy of evaporation
+    // Melting temperature (Pedersen, 1991) [K]
+    double Tf = 374.5 + 0.02617 * mw - 20172.0 / mw;
+
+    // Heat of fusion (Pedersen, 1991) [cal/mol]
+    double Hf = 0.1426 * mw * Tf;
+
+    // Enthalpy of vaporization (Morgan-Kobayashi, 1982) using Pitzer correlation
+    // R = 1.9858775 cal/(mol*K)
     double x = 1.0 - phase1.getTemperature() / getTC();
     double deltaHvap0 =
         5.2804 * Math.pow(x, 0.3333) + 12.865 * Math.pow(x, 0.8333) + 1.171 * Math.pow(x, 1.2083)
@@ -130,11 +161,16 @@ public class ComponentWonWax extends ComponentSolid {
     double deltaHvap2 =
         7.2543 * Math.pow(x, 0.3333) - 346.45 * Math.pow(x, 0.8333) - 610.48 * Math.pow(x, 1.2083)
             + 839.89 * x + 160.05 * Math.pow(x, 2.0) - 50.711 * Math.pow(x, 3.0);
-    double carbonnumber = getMolarMass() / 0.014;
+    double carbonnumber = mw / 14.0;
     double omega = 0.0520750 + 0.0448946 * carbonnumber - 0.000185397 * carbonnumber * carbonnumber;
     double Hvap =
         1.9858775 * getTC() * (deltaHvap0 + omega * deltaHvap1 + omega * omega * deltaHvap2);
-    return Math.sqrt((Hvap - Hf - 1.9858775 * phase1.getTemperature())
-        / (getMolarMass() / (0.8155 + 0.6273e-4 * getMolarMass() - 13.06 / getMolarMass())));
+
+    // Molar volume at 25 deg C [cm3/mol]
+    double d25 = 0.8155 + 0.6273e-4 * mw - 13.06 / mw;
+    double vol = mw / d25;
+
+    // Solubility parameter: delta = sqrt((Hvap - Hf - RT) / V) in (cal/cm3)^0.5
+    return Math.sqrt((Hvap - Hf - 1.9858775 * phase1.getTemperature()) / vol);
   }
 }

@@ -1046,6 +1046,10 @@ public class ProductionProfile implements Serializable {
 
   /**
    * Fits harmonic decline using linear regression on 1/q vs t.
+   *
+   * @param times the time values for the decline data points
+   * @param rates the production rate values corresponding to each time point
+   * @return a two-element array containing the initial rate and decline rate
    */
   private double[] fitHarmonicDecline(List<Double> times, List<Double> rates) {
     int n = times.size();
@@ -1072,6 +1076,8 @@ public class ProductionProfile implements Serializable {
 
   /**
    * Gets the name of the current facility bottleneck.
+   *
+   * @return the bottleneck equipment name, or null if no facility or bottleneck
    */
   private String getFacilityBottleneckName() {
     if (facility == null) {

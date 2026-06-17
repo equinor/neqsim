@@ -253,7 +253,7 @@ Multiple independent protection layers ensure safety even if individual layers f
 
 ```java
 // Run the integrated safety system example
-java neqsim.process.util.example.IntegratedSafetySystemExample
+./mvnw -Dexec.classpathScope=test -Dexec.mainClass="neqsim.process.util.example.IntegratedSafetySystemExample" exec:java
 
 // Expected output:
 // - System configuration summary

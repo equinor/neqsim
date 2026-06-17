@@ -2,6 +2,7 @@
 layout: default
 title: Dynamic Simulation
 parent: Risk Framework
+description: "Dynamic simulation integration with risk analysis. Time-dependent reliability modeling, transient response to failures, and real-time risk monitoring."
 ---
 
 # P1: Dynamic Simulation Integration
@@ -131,7 +132,7 @@ double[] startupTimes = {4.0, 8.0, 12.0, 24.0};
 for (double startupTime : startupTimes) {
     sim.setStartupTime(startupTime);
     DynamicRiskResult result = sim.runSimulation();
-    System.out.println("Startup " + startupTime + "h: " + 
+    System.out.println("Startup " + startupTime + "h: " +
         result.getExpectedProduction() + " MMscf/year");
 }
 ```
@@ -150,7 +151,7 @@ DynamicRiskResult result = sim.runSimulation();
 
 // Get per-equipment contribution
 for (EquipmentRiskContribution contrib : result.getEquipmentContributions()) {
-    System.out.println(contrib.getName() + 
+    System.out.println(contrib.getName() +
         ": Steady=" + contrib.getSteadyStateLoss() +
         ", Transient=" + contrib.getTransientLoss());
 }

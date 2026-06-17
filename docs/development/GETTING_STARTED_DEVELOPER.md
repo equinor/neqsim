@@ -163,8 +163,17 @@ The agent creates a task folder, researches the topic, builds a simulation, vali
 
 #### Manual Alternative
 ```bash
-python devtools/new_task.py "Your task description" --type B
+neqsim new-task "Your task description" --type B --intake-pause always
 ```
+
+The intake pause creates the folder first, then lets you edit
+`study_config.yaml`, add details to `user_input.md`, or place document inputs
+such as PDFs, Excel stream tables, P&IDs, and data sheets in
+`step1_scope_and_research/references/` before notebooks are created. Task
+notebooks use NeqSim Runner by default, so execution runs in isolated
+subprocesses with separate JVMs instead of depending on manual kernel restarts.
+Runner outputs are merged into task-level `results.json`, and the report gate
+warns if planned notebook jobs are missing, failed, or timed out.
 
 Then follow the workflow in `task_solve/<your_task>/README.md`:
 - **Step 1**: Scope & Research (standards, methods, deliverables)
@@ -188,7 +197,7 @@ Then follow the workflow in `task_solve/<your_task>/README.md`:
 **Best for**: Filling gaps, fixing errors, or improving clarity.
 
 1. **Find documentation to improve**:
-   - Browse [docs/](../../docs/)
+   - Browse [docs/](../)
    - Look for "TODO", missing sections, or outdated content
    - Check [BROKEN_API_AUDIT_REPORT.md](../BROKEN_API_AUDIT_REPORT.md) for known issues
 
@@ -238,22 +247,39 @@ Then follow the workflow in `task_solve/<your_task>/README.md`:
 
 2. **Follow structure**:
    - Introduction cell (what it demonstrates)
-   - Setup cell (imports using `jneqsim` gateway)
+   - Setup cell (imports workspace Java classes using `neqsim_dev_setup`)
    - Fluid creation
    - Process building
    - Run simulation
    - Results (formatted table/plots)
    - Discussion/conclusions
 
-3. **Import pattern** (CRITICAL):
+3. **Import pattern for repository/task notebooks** (CRITICAL):
    ```python
-   # Use this pattern for all notebooks:
-   from neqsim import jneqsim
+   import os
+   import sys
+   from pathlib import Path
 
-   SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
-   ProcessSystem = jneqsim.process.processmodel.ProcessSystem
-   Stream = jneqsim.process.equipment.stream.Stream
+   PROJECT_ROOT = Path(os.environ.get("NEQSIM_PROJECT_ROOT", Path.cwd())).resolve()
+   for candidate in [PROJECT_ROOT] + list(PROJECT_ROOT.parents):
+       if (candidate / "pom.xml").exists() and (candidate / "devtools" / "neqsim_dev_setup.py").exists():
+           PROJECT_ROOT = candidate
+           break
+   sys.path.insert(0, str(PROJECT_ROOT / "devtools"))
+
+   from neqsim_dev_setup import neqsim_init, neqsim_classes
+
+   ns = neqsim_init(project_root=PROJECT_ROOT, recompile=False, verbose=True)
+   ns = neqsim_classes(ns)
+
+   SystemSrkEos = ns.SystemSrkEos
+   ProcessSystem = ns.ProcessSystem
+   Stream = ns.Stream
    ```
+
+   This is different from published pip quickstarts: local repository notebooks
+   should not use `from neqsim import jneqsim` because that can miss workspace
+   Java changes.
 
 4. **Test notebook**:
    - Restart kernel & run all cells
@@ -271,6 +297,30 @@ Then follow the workflow in `task_solve/<your_task>/README.md`:
 4. **Test compilation**: `javac YourExample.java`
 
 **See**: [notebook.example.agent.md](../../.github/agents/notebook.example.agent.md) for guidelines.
+
+### E. Contribute a Skill
+
+Skills are the **easiest** way to contribute — no Java required. You write a markdown
+file with domain knowledge, code patterns, and common mistakes that AI agents use to
+solve engineering tasks.
+
+**Core skill** (shipped with NeqSim):
+```bash
+neqsim new-skill "my-topic"      # scaffold SKILL.md
+# Edit .github/skills/neqsim-my-topic/SKILL.md
+# Register in README + copilot-instructions.md
+# Submit PR
+```
+
+**Community skill** (hosted in your own repo):
+```bash
+# 1. Create SKILL.md in your GitHub repo
+# 2. Publish to the catalog:
+neqsim skill publish your-username/your-repo
+```
+
+**See**: [Skills Guide](../integration/skills_guide.md) for the full walkthrough
+including SKILL.md format, requirements checklist, and private/team skills.
 
 ---
 
@@ -414,16 +464,16 @@ git commit               # If merging
 #### Eclipse
 - Right-click test class → **Debug As** → **JUnit Test**
 
-### Build and Update Python Package
+### Build Workspace Classes for Notebooks
 
-After Java changes, rebuild and copy to Python:
+After Java changes, compile the workspace and use the devtools notebook setup.
+Do not copy a JAR into the Python `neqsim` package for repository notebooks.
 
 ```powershell
 # Windows
-.\mvnw.cmd package -DskipTests
-Copy-Item target\neqsim-3.5.0.jar $env:APPDATA\Python\Python312\site-packages\neqsim\lib\java11\ -Force
+.\mvnw.cmd compile
 
-# Restart Jupyter kernel to reload
+# Restart Jupyter kernel or let NeqSim Runner start a fresh worker JVM
 ```
 
 ### Clean Workspace
@@ -497,7 +547,7 @@ Once you're comfortable with the basics:
 ./mvnw checkstyle:check
 
 # Create task
-python devtools/new_task.py "Task description"
+neqsim new-task "Task description" --intake-pause always
 
 # Update branch
 git fetch origin && git rebase origin/master

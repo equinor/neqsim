@@ -10,11 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
-import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Models utility air systems for offshore and onshore facilities.
@@ -514,6 +509,7 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
    *
    * @return JSON string
    */
+  @Override
   public String toJson() {
     Map<String, Object> results = new LinkedHashMap<>();
     results.put("systemName", getName());

@@ -1,6 +1,6 @@
 /*
  * OptimizedVUflash.java
- * 
+ *
  * High-performance VU flash with optimized convergence for separator applications
  */
 
@@ -55,6 +55,10 @@ public class OptimizedVUflash extends Flash {
 
   /**
    * Constructor for OptimizedVUflash.
+   *
+   * @param system thermodynamic system to flash
+   * @param Vspec specified total volume
+   * @param Uspec specified internal energy
    */
   public OptimizedVUflash(SystemInterface system, double Vspec, double Uspec) {
     this.system = system;
@@ -65,6 +69,8 @@ public class OptimizedVUflash extends Flash {
 
   /**
    * Validates inputs with fast checks.
+   *
+   * @return true if specified volume and internal energy are finite and usable
    */
   private boolean validateInputs() {
     return Vspec > 0 && Double.isFinite(Uspec);
@@ -100,6 +106,8 @@ public class OptimizedVUflash extends Flash {
 
   /**
    * Optimized derivative calculations with safety checks.
+   *
+   * @return derivative of the objective with respect to pressure
    */
   private double calcdQdP() {
     return system.getPressure() * (system.getVolume() - Vspec)
@@ -140,6 +148,8 @@ public class OptimizedVUflash extends Flash {
 
   /**
    * High-performance solver with adaptive convergence and line search.
+   *
+   * @return converged pressure, or the current system pressure if input validation fails
    */
   public double solveQ() {
     if (!validateInputs()) {
@@ -202,7 +212,8 @@ public class OptimizedVUflash extends Flash {
         // Single TP flash per iteration
         tpFlash.run();
 
-        // Calculate convergence metrics - check BOTH iteration variable changes AND specification errors
+        // Calculate convergence metrics - check BOTH iteration variable changes AND specification
+        // errors
         double presError = Math.abs((nyPres - oldPres) / Math.max(nyPres, 0.1));
         double tempError = Math.abs((nyTemp - oldTemp) / Math.max(nyTemp, 1.0));
         double totalError = presError + tempError;
@@ -210,8 +221,7 @@ public class OptimizedVUflash extends Flash {
         // Also check actual volume and energy specification errors
         double volErr = Math.abs((system.getVolume() - Vspec) / Vspec);
         double hTarget = Uspec + system.getPressure() * Vspec;
-        double hErr = Math.abs((system.getEnthalpy() - hTarget)
-            / Math.max(Math.abs(hTarget), 1.0));
+        double hErr = Math.abs((system.getEnthalpy() - hTarget) / Math.max(Math.abs(hTarget), 1.0));
 
         // Early termination only if BOTH iteration convergence AND specification errors are small
         if (totalError < tolerance && volErr < 1e-6 && hErr < 1e-5) {
@@ -261,9 +271,18 @@ public class OptimizedVUflash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    // Minimal TP flash for initialization
-    tpFlash.run();
-    solveQ();
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values;
+    // warm-start enabled only for subsequent iterations.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      // Minimal TP flash for initialization
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */

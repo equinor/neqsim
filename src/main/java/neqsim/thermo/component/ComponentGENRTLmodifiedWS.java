@@ -31,18 +31,6 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
 
   /** {@inheritDoc} */
   @Override
-  public double getlnGammadt() {
-    return dlngammadt;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getlnGammadn(int k) {
-    return dlngammadn[k];
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure, PhaseType pt, double[][] WSalpha, double[][] WSgij, double[][] intparam,
       String[][] mixRule) {

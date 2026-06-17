@@ -15,7 +15,7 @@ package neqsim.thermo.characterization;
  *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * CharacterizationOptions options =
  *     CharacterizationOptions.builder().transferBinaryInteractionParameters(true)

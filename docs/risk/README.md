@@ -2,6 +2,7 @@
 layout: default
 title: Advanced Risk Framework
 parent: Risk Framework
+description: "Advanced risk and reliability framework documentation. Equipment reliability, system availability, barrier management, and quantitative risk assessment for oil and gas facilities."
 ---
 
 # NeqSim Advanced Risk Framework
@@ -50,7 +51,7 @@ System.out.println("Expected production: " + result.getExpectedProduction());
 ```
 
 For comprehensive examples, see:
-- [RiskFrameworkQuickStart.java](../../src/main/java/neqsim/process/safety/risk/examples/RiskFrameworkQuickStart.java)
+- [RiskFrameworkQuickStart.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/safety/risk/examples/RiskFrameworkQuickStart.java)
 - [Advanced Risk Framework Tutorial](../examples/AdvancedRiskFramework_Tutorial.ipynb)
 
 ## Feature Documentation

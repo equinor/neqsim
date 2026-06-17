@@ -2,6 +2,7 @@
 layout: default
 title: Monte Carlo Simulation
 parent: Risk Framework
+description: "Monte Carlo reliability simulation for process systems. Run stochastic failure/repair simulations to estimate availability, production loss, and maintenance costs."
 ---
 
 # Monte Carlo Risk Simulation
@@ -80,7 +81,7 @@ Input: Equipment list with (λ, MTTR, capacity_factor)
 For each iteration i = 1 to N:
     Initialize: all equipment OPERATING
     cumulative_production = 0
-    
+
     For each hour t = 0 to T × 24:
         For each equipment e:
             If e is OPERATING:
@@ -88,21 +89,21 @@ For each iteration i = 1 to N:
                 If U < λ_e × Δt:
                     e.state = FAILED
                     e.repair_remaining = sample_repair_time(MTTR_e)
-            
+
             If e is FAILED:
                 e.repair_remaining -= Δt
                 If e.repair_remaining <= 0:
                     e.state = OPERATING
-        
+
         # Calculate production this hour
         capacity = 1.0
         For each equipment e:
             If e is FAILED:
                 capacity *= e.capacity_factor_when_failed
-        
+
         production_this_hour = design_rate × capacity
         cumulative_production += production_this_hour
-    
+
     Store result[i] = cumulative_production
 
 Calculate statistics:
@@ -158,7 +159,7 @@ System.out.println("Expected downtime events: " + result.getExpectedDowntimeEven
 System.out.println("Expected total downtime: " + result.getExpectedDowntimeHours() + " hours");
 
 // Confidence interval
-System.out.println("95% CI: [" + result.getLowerConfidenceLimit() + 
+System.out.println("95% CI: [" + result.getLowerConfidenceLimit() +
                    ", " + result.getUpperConfidenceLimit() + "]");
 ```
 
@@ -268,7 +269,7 @@ int[] iterations = {100, 500, 1000, 5000, 10000};
 
 for (int n : iterations) {
     OperationalRiskResult result = simulator.runSimulation(n, 365);
-    System.out.printf("N=%d: P50=%.0f, StdErr=%.1f%n", 
+    System.out.printf("N=%d: P50=%.0f, StdErr=%.1f%n",
         n, result.getP50Production(), result.getStandardError());
 }
 ```

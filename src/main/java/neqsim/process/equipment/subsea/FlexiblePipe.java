@@ -501,6 +501,7 @@ public class FlexiblePipe extends TwoPortEquipment {
   /**
    * Initialize mechanical design.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new FlexiblePipeMechanicalDesign(this);
   }

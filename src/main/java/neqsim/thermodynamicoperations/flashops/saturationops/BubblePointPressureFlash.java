@@ -36,7 +36,12 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
     if (system.getPhase(0).getNumberOfComponents() == 1) {
       ComponentInterface comp = system.getPhase(0).getComponent(0);
       if (system.getTemperature() >= comp.getTC()) {
-        throw new IllegalStateException("System is supercritical");
+        // For SAFT-VR Mie, the model Tc differs from NIST Tc in the database.
+        // Only throw if clearly supercritical (well above NIST Tc).
+        String modelName = system.getModelName() == null ? "" : system.getModelName();
+        if (!modelName.contains("SAFT")) {
+          throw new IllegalStateException("System is supercritical");
+        }
       }
       double pGuess = comp.getAntoineVaporPressure(system.getTemperature());
       if (Double.isNaN(pGuess) || pGuess <= 0 || pGuess < comp.getTriplePointPressure()

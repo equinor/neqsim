@@ -29,20 +29,20 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * ProcessDerivativeCalculator calc = new ProcessDerivativeCalculator(process);
- * 
+ *
  * // Define variables
  * calc.addInputVariable("Feed.flowRate", "kg/hr");
  * calc.addInputVariable("Feed.pressure", "bara");
  * calc.addOutputVariable("Separator.gasOutStream.flowRate", "kg/hr");
  * calc.addOutputVariable("Separator.liquidLevel", "fraction");
- * 
+ *
  * // Calculate Jacobian
  * double[][] jacobian = calc.calculateJacobian();
- * 
+ *
  * // Or get single derivative
  * double dGasFlow_dFeedFlow =
  *     calc.getDerivative("Separator.gasOutStream.flowRate", "Feed.flowRate");

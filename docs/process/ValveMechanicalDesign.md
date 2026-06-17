@@ -258,15 +258,187 @@ ValveMechanicalDesign mechDesign = (ValveMechanicalDesign) valve.getMechanicalDe
 mechDesign.setValveCharacterization("equal percentage");
 ```
 
+## Configuring Valve Sizing Parameters
+
+### Selecting the Sizing Standard
+
+Use `setValveSizingStandard()` on the `ValveMechanicalDesign` object to select which
+sizing model to use:
+
+```java
+import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.equipment.stream.Stream;
+
+// Create fluid and stream
+SystemInterface fluid = new SystemSrkEos(273.15 + 25, 50);
+fluid.addComponent("methane", 0.9);
+fluid.addComponent("ethane", 0.1);
+fluid.setMixingRule("classic");
+
+Stream feed = new Stream("feed", fluid);
+feed.setFlowRate(10000.0, "kg/hr");
+
+// Create valve
+ThrottlingValve valve = new ThrottlingValve("PCV-100", feed);
+valve.setOutletPressure(25.0);
+valve.setPercentValveOpening(100);
+
+// Select sizing standard
+ValveMechanicalDesign mechDesign = (ValveMechanicalDesign) valve.getMechanicalDesign();
+mechDesign.setValveSizingStandard("IEC 60534");
+```
+
+### Configuring IEC 60534 Parameters
+
+When using IEC 60534 sizing, the following parameters can be configured on the
+sizing method object:
+
+| Parameter | Method | Default | Description |
+|-----------|--------|---------|-------------|
+| $x_T$ | `setxT(double)` | 0.137 | Pressure drop ratio factor at choked flow. Typical values: globe valve 0.69-0.80, butterfly 0.25-0.50, ball 0.15-0.25 |
+| $F_L$ | `setFL(double)` | 1.0 | Liquid pressure recovery factor |
+| $F_D$ | `setFD(double)` | 1.0 | Valve style modifier |
+
+```java
+// Access the sizing method and configure parameters
+mechDesign.setValveSizingStandard("IEC 60534");
+mechDesign.getValveSizingMethod().setxT(0.75);  // Globe valve typical value
+mechDesign.getValveSizingMethod().setFL(0.90);   // Liquid recovery factor
+```
+
+### Computing and Retrieving Cv/Kv
+
+After running the valve in a `ProcessSystem` or standalone, call `calcKv()` to compute
+the flow coefficient:
+
+```java
+ProcessSystem process = new ProcessSystem();
+process.add(feed);
+process.add(valve);
+process.run();
+
+// Calculate Cv/Kv
+valve.calcKv();
+
+double kv = valve.getKv();  // Flow coefficient (metric)
+double cv = valve.getCv();  // Flow coefficient (US/imperial, Cv = 1.156 * Kv)
+double cg = valve.getCg();  // Gas sizing coefficient
+
+System.out.printf("Kv = %.2f, Cv = %.2f, Cg = %.2f%n", kv, cv, cg);
+```
+
+### Complete Gas Valve Sizing Example
+
+```java
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
+
+// 1. Create fluid
+SystemInterface fluid = new SystemSrkEos(273.15 + 25, 50);
+fluid.addComponent("methane", 0.9);
+fluid.addComponent("ethane", 0.1);
+fluid.setMixingRule("classic");
+fluid.setTotalFlowRate(10000.0, "kg/hr");
+
+// 2. Build process
+Stream feed = new Stream("feed", fluid);
+ThrottlingValve valve = new ThrottlingValve("PCV-100", feed);
+valve.setOutletPressure(25.0);
+valve.setPercentValveOpening(100);
+
+// 3. Select sizing standard and configure
+ValveMechanicalDesign mechDesign = (ValveMechanicalDesign) valve.getMechanicalDesign();
+mechDesign.setValveSizingStandard("IEC 60534");
+mechDesign.getValveSizingMethod().setxT(0.75);
+
+// 4. Run and size
+ProcessSystem process = new ProcessSystem();
+process.add(feed);
+process.add(valve);
+process.run();
+valve.calcKv();
+
+// 5. Read results
+System.out.printf("Cv = %.2f%n", valve.getCv());
+System.out.printf("Kv = %.2f%n", valve.getKv());
+```
+
+### Complete Liquid Valve Sizing Example
+
+```java
+// Liquid valve - water service
+SystemInterface water = new SystemSrkEos(273.15 + 60, 10);
+water.addComponent("water", 1.0);
+water.setMixingRule("classic");
+water.setTotalFlowRate(50000.0, "kg/hr");
+
+Stream waterFeed = new Stream("water feed", water);
+ThrottlingValve lcv = new ThrottlingValve("LCV-200", waterFeed);
+lcv.setOutletPressure(5.0);
+lcv.setPercentValveOpening(100);
+
+// Use default sizing (adequate for liquid)
+ProcessSystem process = new ProcessSystem();
+process.add(waterFeed);
+process.add(lcv);
+process.run();
+lcv.calcKv();
+
+System.out.printf("Liquid Cv = %.2f%n", lcv.getCv());
+```
+
+### Python (Jupyter Notebook) Example
+
+```python
+from neqsim import jneqsim
+
+# Create fluid
+fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 50.0)
+fluid.addComponent("methane", 0.9)
+fluid.addComponent("ethane", 0.1)
+fluid.setMixingRule("classic")
+fluid.setTotalFlowRate(10000.0, "kg/hr")
+
+# Build process
+Stream = jneqsim.process.equipment.stream.Stream
+ThrottlingValve = jneqsim.process.equipment.valve.ThrottlingValve
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+
+feed = Stream("feed", fluid)
+valve = ThrottlingValve("PCV-100", feed)
+valve.setOutletPressure(25.0)
+valve.setPercentValveOpening(100)
+
+# Configure sizing standard
+mech_design = valve.getMechanicalDesign()
+mech_design.setValveSizingStandard("IEC 60534")
+mech_design.getValveSizingMethod().setxT(0.75)
+
+# Run
+process = ProcessSystem()
+process.add(feed)
+process.add(valve)
+process.run()
+
+valve.calcKv()
+print(f"Cv = {valve.getCv():.2f}")
+print(f"Kv = {valve.getKv():.2f}")
+```
+
 ## IEC 60534 Gas Sizing Formula
 
-For compressible fluids, the Kv (or Cv) is calculated using:
+For compressible fluids, the Kv (or Cv) is calculated per IEC 60534-2-1 using the volumetric
+flow rate at **standard conditions** (273.15 K, 101.325 kPa):
 
-$$K_v = \frac{Q}{N_9 \cdot P_1 \cdot Y} \sqrt{\frac{M \cdot T \cdot Z}{x}}$$
+$$K_v = \frac{Q_{std}}{N_9 \cdot P_1 \cdot Y} \sqrt{\frac{M \cdot T \cdot Z}{x}}$$
 
 Where:
-- $Q$ = volumetric flow rate at inlet conditions (m³/h)
-- $N_9$ = 24.6 (numerical constant for SI units)
+- $Q_{std}$ = volumetric flow rate at standard conditions (m³/h at 273.15 K, 101.325 kPa)
+- $N_9$ = 24.6 (numerical constant for SI units with standard flow)
 - $P_1$ = inlet pressure (kPa abs)
 - $Y$ = expansion factor = $1 - \frac{x}{3 \cdot F_\gamma \cdot x_T}$
 - $M$ = molecular weight (g/mol)
@@ -275,6 +447,16 @@ Where:
 - $x$ = pressure drop ratio = $\Delta P / P_1$
 - $F_\gamma$ = specific heat ratio factor = $\gamma / 1.40$
 - $x_T$ = pressure drop ratio factor at choked flow
+
+The conversion from actual volumetric flow to standard flow is:
+
+$$Q_{std} = Q_{actual} \cdot \frac{P_1}{P_{std}} \cdot \frac{T_{std}}{T} \cdot \frac{1}{Z}$$
+
+where $P_{std}$ = 101.325 kPa and $T_{std}$ = 273.15 K.
+
+> **Note:** Prior to the fix for [issue #1918](https://github.com/equinor/neqsim/issues/1918),
+> the default and simple sizing methods incorrectly used actual volumetric flow instead of
+> standard volumetric flow, resulting in significantly underestimated Cv values.
 
 ### Choked Flow
 

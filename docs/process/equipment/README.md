@@ -50,7 +50,8 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Reactors | [reactors.md](reactors) | CSTR, PFR, equilibrium reactors |
+| Reactors (Overview) | [reactors.md](reactors) | All reactor types: PFR, CSTR, Gibbs, stoichiometric, ammonia, sulfur, bio-processing |
+| Plug Flow Reactor | [plug_flow_reactor.md](plug_flow_reactor) | Kinetic PFR with power-law/LHHW/reversible kinetics, catalyst bed, Ergun ΔP, energy modes |
 | Electrolyzers | [electrolyzers.md](electrolyzers) | Water and CO₂ electrolysis |
 
 ### Ejectors

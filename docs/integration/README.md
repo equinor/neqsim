@@ -24,6 +24,11 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 | [ai_validation_framework.md](ai_validation_framework) | **AI-friendly validation framework with structured error handling** |
 | [ai_platform_integration.md](ai_platform_integration) | AI platform integration guide |
 | [ml_integration.md](ml_integration) | Machine learning integration |
+| [ai_agentic_programming_intro.md](ai_agentic_programming_intro) | **Introduction to agentic engineering with NeqSim — concepts, architecture, getting started** |
+| [ai_agents_reference.md](ai_agents_reference) | **Complete catalog of all 16 AI agents and 14 skills** |
+| [ai_workflow_examples.md](ai_workflow_examples) | **Step-by-step walkthroughs of agent-driven engineering workflows** |
+| [skills_guide.md](skills_guide) | **Creating, using, and managing skills — core, community, and local private** |
+| [agentic_capability_rating.md](agentic_capability_rating) | **Dimensional capability rating for NeqSim's agentic process simulation stack** |
 
 ### Control Systems
 
@@ -44,6 +49,15 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 | Document | Description |
 |----------|-------------|
 | [web_api_json_process_builder.md](web_api_json_process_builder) | **JSON Process Builder, structured error responses, stream wiring API, and session management for online simulators** |
+
+### MCP / Model Context Protocol
+
+| Document | Description |
+|----------|-------------|
+| [mcp_getting_started.md](mcp_getting_started) | **Getting Started — 5-minute guide to connecting any LLM to NeqSim via MCP** |
+| [mcp_neqsim_core_layer.md](mcp_neqsim_core_layer) | **MCP core layer — FlashRunner, ProcessRunner, Validator, ComponentQuery, typed models, example/schema catalogs** |
+| [mcp_server_guide.md](mcp_server_guide) | **NeqSim MCP Server — Quarkus-based server for VS Code Copilot, Claude Desktop, and other LLM clients** |
+| [mcp_agentic_workflow_improvements.md](mcp_agentic_workflow_improvements) | **Agentic MCP improvements — standard response contracts, all-tool schema/example coverage, setup templates, process JSON contracts, benchmark trust, lifecycle metadata, safety gates, and coverage tests** |
 
 ### P&ID and Design
 

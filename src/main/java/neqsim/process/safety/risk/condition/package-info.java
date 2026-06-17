@@ -24,7 +24,7 @@
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * // Create model with base OREDA failure rate
  * ConditionBasedReliability pump =
@@ -54,7 +54,7 @@
  * The adjusted failure rates from condition-based models can replace generic OREDA rates in the
  * operational risk simulator for more accurate, real-time risk assessment.
  * </p>
- * 
+ *
  * <pre>
  * // Use condition-based rates in risk simulation
  * EquipmentFailureMode mode = new EquipmentFailureMode();

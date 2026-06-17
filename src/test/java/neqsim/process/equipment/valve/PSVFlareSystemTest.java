@@ -13,7 +13,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Test class for simulating a complete PSV relief scenario with flare system.
- * 
+ *
  * <p>
  * This test simulates a realistic overpressure incident where:
  * <ul>
@@ -23,7 +23,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Gas is combusted in the flare with heat release calculation</li>
  * <li>System tracks total gas burned, heat release rate, and cumulative heat release</li>
  * </ul>
- * 
+ *
  * <p>
  * The scenario demonstrates:
  * <ul>
@@ -53,7 +53,7 @@ public class PSVFlareSystemTest {
 
   /**
    * Set up the process system with PSV and flare.
-   * 
+   *
    * <p>
    * System configuration:
    * <ul>
@@ -130,7 +130,7 @@ public class PSVFlareSystemTest {
 
   /**
    * Test complete PSV relief scenario with flare system.
-   * 
+   *
    * <p>
    * Scenario:
    * <ol>
@@ -335,7 +335,7 @@ public class PSVFlareSystemTest {
 
   /**
    * Test flare system with multiple relief sources.
-   * 
+   *
    * <p>
    * This test simulates a scenario where multiple PSVs relieve simultaneously into a common flare
    * header, demonstrating header capacity and combined heat release.

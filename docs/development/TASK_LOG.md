@@ -15,11 +15,20 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 ```
 ### YYYY-MM-DD — Short task title
-**Type:** A (Property) | B (Process) | C (PVT) | D (Standards) | E (Feature) | F (Design)
+**Type:** A (Property) | B (Process) | C (PVT) | D (Standards) | E (Feature) | F (Design) | G (Workflow)
 **Keywords:** comma, separated, search, terms
 **Solution:** Where the code lives (test file, notebook, source file)
 **Notes:** Key decisions, gotchas, or results worth remembering
 ```
+
+## Privacy Rule
+
+Task log entries are public/reusable memory. Do not include company/operator
+names, field/facility/asset names, equipment tag numbers, internal document
+names, private system names, access diagnostics, or task folder slugs containing
+those details. Use generic descriptors such as `confidential offshore gas
+platform`, `private task folder (redacted)`, `operator-specific technical
+requirement`, or `confidential compressor route`.
 
 ---
 
@@ -56,6 +65,325 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 **Keywords:** turboexpander, expander-compressor, companding, EC-OD, River City Engineering, Mafi-Trench, single shaft, power balance, compressor map, CompressorChartKhader2015, off-design
 **Solution:** `src/main/java/neqsim/process/equipment/expander/MapTurboExpanderCompressor.java` (new map-based single-shaft machine), `src/test/java/neqsim/process/equipment/expander/MapTurboExpanderCompressorTest.java`, `examples/notebooks/ExpanderCompressorModelComparison.ipynb` (compares Expander, Compressor+map, CompressorChartKhader2015, TurboExpanderCompressor, MapTurboExpanderCompressor)
 **Notes:** New `MapTurboExpanderCompressor` couples a real `Expander` + `Compressor` on a common shaft and solves shaft speed by power balance (BALANCED_SPEED mode) reusing the compressor performance map — the open analogue of EC-OD's rigorous map method, complementing the existing curve-fit/IGV `TurboExpanderCompressor`. Notebook gotchas: (1) compressor map flow range must match the feed's actual inlet volumetric flow (130000 kg/hr ≈ 3525 m³/hr lands mid-map; 423000 kg/hr was far off-map and gave negative head/efficiency); (2) `CompressorChartKhader2015.setCurves` requires strictly increasing flow per speed line — a duplicate point (3591.5, 3591.5) threw NonMonotonicSequenceException. Both integrated models agree closely (discharge 52.4 vs 52.1 bara, shaft power balanced). Notebook also includes a **turndown / feasibility analysis**: as expander inlet pressure falls, recovered power drops ~linearly (isentropic enthalpy-drop law) while the brake-compressor min-speed power demand stays ~constant (1.019 MW); their crossover gives the minimum feasible inlet pressure (~55.5 bara, expansion ratio ≈1.33). Below it the shaft pegs at min map speed with negative power-balance residual → compressor surge (EC-OD recycle line). Related to Bloch & Soares (2001), Agahi & Ershaghi, Whitfield & Baines (U/C≈0.7). Notebook validated end-to-end via nbconvert.
+
+### 2026-06-09 — Distillation column energy-balance bug: phase-split out-stream enthalpy
+**Type:** E (Feature / bug fix)
+**Keywords:** distillation, DistillationColumn, SimpleTray, reboiler duty, energy balance, phaseToSystem, getEnthalpy, single phase, phase type, TEG regeneration
+**Solution:** Fix in `src/main/java/neqsim/process/equipment/distillation/SimpleTray.java` (`scalePhaseSystemToNormalizedMoles`); regression test `src/test/java/neqsim/process/equipment/distillation/TegRegenerationEnergyBalanceTest.java`
+**Notes:** Single-stage TEG regeneration column reported reboiler duty ~6 kW and global energy imbalance ~ -20 kW (reference rig value 24.38 kW). Root cause: `SystemThermo.phaseToSystem` builds a single-phase out-stream by copying the selected phase's moles into every phase slot, relying on `setNumberOfPhases(1)` + `setPhaseType`. `SimpleTray.scalePhaseSystemToNormalizedMoles` then re-scaled all slots and ended with `init(0); init(1)`, which re-expanded the system to its max phases AND reset slot 0 to the default (gas) type — so `getEnthalpy()` summed a spurious second phase and evaluated a liquid outlet on the vapour EOS root. Gas outlets "accidentally" worked (default slot-0 type is gas). Fix: capture `PhaseType getType()` at method entry, then after scaling do `setNumberOfPhases(1); setPhaseType(0, extractedType); init(3)`. Note `setPhaseType(int, String)` rejects names like "aqueous" via byName, so use the `PhaseType` enum overload. After fix: Qreb=24.57 kW, global imbalance 0.008 kW, all 90 existing distillation tests still pass.
+
+### 2026-06-04 — Gravity dump-flood seawater injection: choke cavitation, free-fall & flow-assurance screen
+**Type:** B (Process / Flow assurance) + E (Feature)
+**Keywords:** gravity injection, dump flood, seawater injection, depleted reservoir, hydrostatic head, choke cavitation, ISA-75, IEC 60534, vapour pressure, free-fall, vapour cavity, downhole choke, ICD, water hammer, Joukowsky, API 14E erosional velocity, FIV, sulphate scale, BaSO4, SrSO4, ElectrolyteScaleCalculator, subsea water treatment, GravityDumpFloodInjectionAnalyzer
+**Solution:** task_solve/2026-06-04_gravity_dump_flood_seawater_injection_choke_cavitation_fa/ (notebook step2_analysis/01_choke_cavitation_screen.ipynb) + new Java class src/main/java/neqsim/process/equipment/pipeline/GravityDumpFloodInjectionAnalyzer.java + test
+**Notes:** A 2630 m sub-seabed seawater column (ρ≈1013 kg/m³ at 2.5 °C) delivers ~261 bar static head — exceeding a depleted reservoir at 180–200 bara (static sandface ~299 bara). To land sandface on P_res the tubing-top pressure would be NEGATIVE (−61 to −81 bara) ⇒ a wellhead/seabed choke CANNOT throttle it: the column free-falls and a near-vacuum vapour cavity opens to ~617 m below seabed (P_res 200). Water true vapour pressure is ~7.5 mbar (NOT the "0.01 bar" liquid assumption), so a surface choke drives σ→0 (full flashing/cavitation/erosion/FIV). The ~100–120 bar surplus MUST be dissipated DOWNHOLE (downhole choke / ICD / small-ID tail-pipe; 6" friction only ~1.6 bar, need <100 mm ID). Water hammer on the liquid-full column ≈13 bar (6", wave 1365 m/s, reflection 2L/a≈3.85 s ⇒ close slower). API 14E erosional velocity Ve≈3.83 m/s. Sulphate scale from seawater SO4 + formation Ba/Sr: BaSO4 SI up to 3.48 (strongly scaling) ⇒ rising backpressure over life. Implemented the missing unified `GravityDumpFloodInjectionAnalyzer` (head balance + free-fall/vapour-cavity onset + required downhole back-pressure + friction tail-pipe sizing + ISA-75 σ), Java 8, Serializable, 3 JUnit tests green; cross-validates the notebook (head 261.24 vs 261.44 bar). Total solution: subsea seawater treatment (filtration + electrolytic disinfection + sulphate removal, e.g. Seabox/SWIT NOV, qualified ~3000 m) as the water-quality front-end + downhole flow control. Consistency-checker FAIL is the known false-positive pattern (parametric sweep arrays + two depletion cases lumped into `other`).
+
+### 2026-06-02 — Kent-Eisenberg validation: CO₂/H₂S partial pressures over aqueous MDEA
+**Type:** C (PVT/thermo validation)
+**Keywords:** Kent-Eisenberg, MDEA, amine, CO2, H2S, acid gas loading, partial pressure, validation, electrolyte chemistry, SystemKentEisenberg
+**Solution:** task_solve/2026-06-02_kent_eisenberg_model_validation_co2_h2s_amine/step2_analysis/kent_eisenberg_validation.ipynb
+**Notes:** `SystemKentEisenberg` is MDEA-only (protonation + bicarbonate/carbonate + bisulfide, NO carbamate; for MEA/DEA use `AmineSystem`). MUST call `chemicalReactionInit()` + `createDatabase(True)` BEFORE `setMixingRule(4)`, else acid gas is treated as physical Henry-law solubility and pCO₂ is over-predicted by 1–2 orders. Robust partial pressure = liquid-phase fugacity `p_i = x_i·φ_i·P` at a single-liquid TP flash (avoids unstable bubble-point search). Known limitation: CO₂ @ 40 °C (313.15 K) does not converge the electrolyte equilibrium solve in this build (free-CO₂ x→1, pressure-independent) — flagged non-converged and excluded; CO₂ @ 50 °C and H₂S @ 40/50 °C converge. Consistency checks use Spearman ρ≥0.98 for monotonicity (tolerant of ~2% solver noise at top loading). Literature comparison is a labelled PLACEHOLDER (Jou/Mather/Otto 1982 anchors) — deviations illustrative only; NeqSim still over-predicts pCO₂ vs open-literature MDEA range.
+
+### 2026-05-30 — Agentic dynamics: pluggable integrators + EventScheduler wired into runTransient
+**Type:** E (Feature)
+**Keywords:** dynamic simulation, runTransient, IntegratorStrategy, BDFIntegrator, implicit euler, EventScheduler, ESD trip, setpoint ramp, ProcessSystem, ProcessModel, measurement device, differential pressure transmitter, composition analyzer, flow ratio meter, transient runnable serialization
+**Solution:** `src/main/java/neqsim/process/dynamics/{IntegratorStrategy,ExplicitEulerIntegrator,BDFIntegrator,EventScheduler}.java`; `src/main/java/neqsim/process/measurementdevice/{DifferentialPressureTransmitter,CompositionAnalyzer,FlowRatioMeter}.java`; wiring in `ProcessSystem.runTransient(double,UUID)` and new `ProcessModel.runTransient(double,UUID)` / `setEventScheduler` / `setIntegratorStrategy`; tests in `src/test/java/neqsim/process/processmodel/RunTransientEventSchedulerTest.java`.
+**Notes:** `EventScheduler` must be a `transient` field on `ProcessSystem` because `Runnable` payloads (lambdas, anonymous classes) are not Serializable; otherwise `ProcessSystem.deepCopy` inside `captureInitialState` throws `NotSerializableException` on the first `runTransient` call. Multi-area plants: install scheduler once on `ProcessModel`, it is propagated to every child area. For stiff dynamics use `setIntegratorStrategy(new BDFIntegrator())`; check `lastStepFellBack()` after each step to detect Newton-divergence fallback. Skill `neqsim-dynamic-simulation` updated with three new sections.
+
+### 2026-05-30 — Agentic synthesis: SeparationDuty + FlowsheetSynthesisEngine
+**Type:** E (Feature)
+**Keywords:** flowsheet synthesis, separation duty, candidate topology generation, total annual cost, recovery target, purity target, unit operation selection, agentic process design
+**Solution:** `src/main/java/neqsim/process/synthesis/{SeparationDuty,FlowsheetSynthesisEngine,FlowsheetCandidate}.java`; tests in `src/test/java/neqsim/process/synthesis/`.
+**Notes:** Engine generates candidate flowsheet topologies (separator trains, columns, flash cascades) for a given `SeparationDuty` and scores them on TAC / recovery / energy, returning a ranked `List<FlowsheetCandidate>` with JSON-serializable spec for downstream agents. Reusable lesson: keep the duty spec orthogonal to the synthesis engine so future synthesis strategies (genetic, RL, LLM-guided) plug in cleanly.
+
+### 2026-05-30 — Agentic automation: typed writes with rollback + audit log
+**Type:** E (Feature)
+**Keywords:** ProcessAutomation, typed write validation, setVariableValue, transactional rollback, write history audit, diagnostics taxonomy, VALUE_OUT_OF_BOUNDS, INVALID_TYPE, READ_ONLY_VARIABLE, UNIT_CONVERSION_FAILED
+**Solution:** `src/main/java/neqsim/process/automation/ProcessAutomation.java` plus diagnostics in `AutomationDiagnostics`; tests under `src/test/java/neqsim/process/automation/`.
+**Notes:** `setValuesWithRollback(Map updates, String unit)` reverts every write in the batch if any single update fails validation. `getWriteHistory()` returns a timestamped audit list with old/new value, unit, status, and error category. Reusable lesson: for agentic write paths, validate before mutating and capture the pre-write value for every variable so a single failure does not leave the model in an inconsistent state.
+
+### 2026-05-08 — Safety-system barrier performance analyzer
+**Type:** E (Feature) / G (Workflow)
+**Keywords:** safety critical systems, barrier performance, major accident risk, deluge, firewater, fire gas detection, passive fire protection, SIS voting, STID, performance standards
+**Solution:** `src/main/java/neqsim/process/safety/barrier/SafetySystemPerformanceAnalyzer.java`; tests in `src/test/java/neqsim/process/safety/barrier/SafetySystemPerformanceAnalyzerTest.java`
+**Notes:** Added an analyzer that bridges the existing `BarrierRegister`, `FireDetector`/`GasDetector`, and `neqsim.process.logic.sis.SafetyInstrumentedFunction` models. Reusable lesson: assess active/passive safety-system barriers as a reporting layer over existing evidence, instruments, and SIS logic instead of creating parallel detector or SIF abstractions.
+
+### 2026-05-08 — Recompressor barrier verification technical safety screen
+**Type:** F (Design) / G (Workflow)
+**Keywords:** barrier verification, technical safety, closed flare, recompressor, HAZOP, FMEA, LOPA, bow-tie, risk matrix, STID, tagreader
+**Solution:** `private task folder (redacted)`
+**Notes:** Completed a separate barrier and technical-safety screening study using prior NeqSim source-term results and a real STID retrieval package curated into a barrier-linked evidence inventory. Reusable lesson: broad document retrieval should be converted into a small traceable evidence map, and current barrier credit should still be withheld until status, effectiveness, independence, proof-test/SRS evidence, event replay, and material/MDMT records are verified.
+
+### 2026-05-08 — Closed-flare recompressor blowdown verification screen
+**Type:** F (Design) / G (Workflow)
+**Keywords:** closed flare, recompressor, blowdown, trapped inventory, depressurization, MDMT, flare load, tagreader, STID, technical safety
+**Solution:** `private task folder (redacted)`; reusable code in `src/main/java/neqsim/process/safety/inventory/TrappedInventoryCalculator.java`; tests in `src/test/java/neqsim/process/safety/inventory/TrappedInventoryCalculatorTest.java`
+**Notes:** Reused a private, consistency-checked recompressor inventory and dynamic blowdown source-term task, screened transient flare load versus documented capacity context, and generated Word/HTML report outputs. Added `TrappedInventoryCalculator` to bridge documented equipment/pipe volume evidence to NeqSim blowdown inputs. Reusable lesson: distinguish small transient blowdown loads from sustained closed-flare/recompression operating margin, and treat low blowdown temperatures as an MDMT follow-up until material/wall data are verified.
+
+### 2026-05-07 — Confidential gas precompression inlet velocity screen
+**Type:** B (Process) / G (Workflow)
+**Keywords:** STID, tagreader, P&ID, pressure drop, gas velocity, scrubber, compressor suction, Word report, PipeBeggsAndBrills
+**Solution:** `private task folder (redacted)`
+**Notes:** Retrieved route P&IDs and equipment design documents from STID, extracted line/nozzle diameters, read 24-hour historian averages with tagreader, used NeqSim gas properties plus a PipeBeggsAndBrills straight-pipe check, and generated a Word report. Reusable lesson: reject inconsistent historian unit metadata, document the adopted flow-unit interpretation, and separate measured route pressure loss from straight-pipe friction and local equipment/minor losses.
+
+### 2026-05-07 — Confidential STID UniSim power extraction
+**Type:** B (Process) / G (Workflow)
+**Keywords:** STID, UniSim, HYSYS, process simulation, total power, compressor duty, document retrieval
+**Solution:** `private task folder (redacted)`
+**Notes:** Searched multiple installation scopes for the newest runnable `.usc` case, inspected zip attachments before selecting the latest case file, ran the selected UniSim case through COM, and reported total mechanical power as compressor plus pump duty. Reusable pattern: keep STID identifiers and asset-specific power values private, while recording the selection and power-accounting method publicly.
+
+### 2026-05-06 — Confidential separator carry-over cooler scaling screen
+**Type:** B (Process) / G (Workflow)
+**Keywords:** separator carry-over, cooler scaling, anti-surge recycle, STID, tagreader, NaCl source term, compressor calibration, plate heat exchanger
+**Solution:** `private task folder (redacted)`
+**Notes:** Built a NeqSim gas-path screening model from separator gas outlet through a suction cooler, scrubber, and recompressor with measured fixed anti-surge recycle. STID and tagreader manifests were kept in the private task folder. Reusable pattern: model anti-surge recycle as a measured stream when compressor maps are unavailable, then evaluate NaCl risk first as a water carry-over source term and halite saturation threshold before claiming a deposition/fouling rate.
+
+### 2026-04-29 — Route-level piping hydraulic builder for STID line lists
+**Type:** E (Feature) / G (Workflow)
+**Keywords:** PipingRouteBuilder, STID, E3D, line list, piping route, pressure drop, PipeBeggsAndBrills, fittings, K-value, equivalent length
+**Solution:** `src/main/java/neqsim/process/equipment/pipeline/routing/PipingRouteBuilder.java`, `src/test/java/neqsim/process/equipment/pipeline/routing/PipingRouteBuilderTest.java`, `docs/process/piping_route_builder.md`
+**Notes:** Added a high-level builder that converts serial line-list rows with from/to nodes, pipe length, hydraulic diameter, wall thickness, roughness, elevation change, and fitting/valve K values into a `ProcessSystem` of Beggs-and-Brill pipe segments. Future STID/E3D/P&ID hydraulic tasks should extract route rows first, then use `PipingRouteBuilder` instead of hand-assembling pipe units; export `route.toJson()` for traceability and reuse.
+
+### 2026-04-28 — Confidential upstream compressor pressure-drop analysis
+**Type:** B (Process)
+**Keywords:** upstream compressor, precompression, pressure drop, STID, tagreader, piping hydraulics, separator outlet, scrubber, route hydraulics, debottlenecking
+**Solution:** `private task folder (redacted)`
+**Notes:** STID P&IDs/stress isometrics and a saved pressure workbook were combined with NeqSim PR gas properties and Darcy/K-value hydraulics. Base model pressure drop matched the plant snapshot within about 0.1 bar. Main reusable lesson: extract serial route rows first, preserve private source references only inside the task folder, and keep public logs to generic route-pressure-drop decisions and method choices.
+
+### 2026-04-21 — Confidential scrubber performance deliverable
+**Type:** F (Design) / G (Workflow)
+**Keywords:** scrubber, GasScrubberMechanicalDesign, operator-specific conformity, ConformityReport, mesh pad, demisting cyclones, inlet momentum, k-factor, historic peak
+**Solution:**
+- `private task folder (redacted)` — multi-case conformity runs + reference-style tables + Excel/HTML export
+- Docs: `docs/process/equipment/separators.md` — new section "Gas Scrubber Mechanical Design and Conformity Checking" with Java+Python workflow, multi-case screening pattern, and usage constraints
+- Test: `DocExamplesCompilationTest#testGasScrubberConformityCheckDoc` verifies the documented API path end-to-end
+**Notes:**
+- Multi-case reference-style table generation covered normal and historic peak cases; incomplete private tag history was excluded from the public summary.
+- Output layout mirrors a vendor-style reference spreadsheet without logging vendor file names or internal document IDs.
+- Operator-specific conformity outcomes were summarized privately; public reusable lesson is to define a new `ConformityRuleSet` subclass instead of modifying existing limits.
+- Efficiency and carry-over rows are deferred — table schema already reserves placeholder rows
+
+### 2026-07-04 — Compressor Sealing
+**Type:** B (Process)
+**Keywords:** bics, components, compressor, connected, equipment, flow, floating production, model, pr78
+**Solution:** `private task folder (redacted)`
+**Notes:** The unified NeqSim model replicates a confidential floating production process in a single connected `ProcessSystem`. Public log keeps only reusable modeling lessons; asset-specific validation metrics remain in the private task folder.
+
+### 2026-04-16 — Confidential full process model with plant data integration
+**Type:** B (Process)
+**Keywords:** compression, converged, data, full process, plant data integration, liquid recycle, recycle convergence
+**Solution:** `private task folder (redacted)`
+**Notes:** A confidential full process model with recycles converged. Scrubber liquids were recycled to appropriate separation stages and parallel train behavior was modeled explicitly. Exact asset names and performance figures are kept in the private task folder.
+
+### 2026-04-16 — CO2 injection hydrogen accumulation in wells
+**Type:** B (Process)
+**Keywords:** accumulation, hydrogen, injection, wells, CO2, CCS
+**Solution:** `private task folder (redacted)`
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-04-16 — CO2 injection hydrogen accumulation risk assessment
+**Type:** B (Process)
+**Keywords:** accumulation, assessment, bara, classic, component, conditions, critical, dense, drops, equation
+**Solution:** `private task folder (redacted)`
+**Notes:** The confidential CO2 injection well case operates safely in dense single phase under the screened normal operating envelope.
+
+### 2026-04-13 — Elemental sulfur deposition in gas turbine fuel
+**Type:** B (Process)
+**Keywords:** approximately, assumed, causes, cooling, deposition, drop, elemental sulfur, fuel gas
+**Solution:** `private task folder (redacted)`
+**Notes:** NeqSim thermodynamic modelling showed a low-temperature S8 deposition risk for an assumed confidential fuel-gas case. Public log retains only the reusable JT-cooling and sulfur-solidification workflow.
+
+### 2026-04-13 — FLNG feedgas process design and analysis
+**Type:** F (Design)
+**Keywords:** achieved, amine, benzene, both, case, cases, comp, component, design, essentially
+**Solution:** task_solve/2026-04-13_flng_feedgas_process_design_and_analysis/step2_analysis/01_flng_process.ipynb
+**Notes:** 1. CO2 removal to 50 ppm achieved for both Lean and Rich cases via amine unit (modelled as component splitter). 2.
+
+### 2026-04-10 — Crude oil blending into export blend
+**Type:** B (Process)
+**Keywords:** blend, blending, crude, decreases, e300, exceed, fluid, fraction, gravity
+**Solution:** `private task folder (redacted)`
+**Notes:** The confidential crude blend API gravity decreases monotonically with increasing heavy-stream fraction. Public log keeps the reusable interpolation and specification-screening method; exact stream names are private.
+
+### 2026-04-10 — Out of Zone Injection - NeqSim Implementation Discussion
+**Type:** E (Feature)
+**Keywords:** discussion, implementation, injection, zone
+**Solution:** task_solve/2026-04-10_out_of_zone_injection_neqsim_implementation_discussion/
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-04-09 — MIMEE NeqSim Code Review - Methane Emissions
+**Type:** E (Feature)
+**Keywords:** code, emissions, methane, mimee, review
+**Solution:** task_solve/2026-04-09_mimee_neqsim_code_review_methane_emissions/step2_analysis/01_reference_implementation.ipynb, task_solve/2026-04-09_mimee_neqsim_code_review_methane_emissions/step2_analysis/02_detailed_method_comparison.ipynb, task_solve/2026-04-09_mimee_neqsim_code_review_methane_emissions/step2_analysis/04_gas_composition_sensitivity.ipynb
+**Notes:** Key results: deviation average percent: 38.0; deviation range percent: 8.4% to 80.1%; offshore norge equivalent temp C: 60-65; crossover temp C: ~40; neqsim factor at 20C g per m3 bar: 25.21.
+
+### 2026-04-08 — Condensation UniSim NeqSim comparison
+**Type:** D (Standards)
+**Keywords:** characterization, comparison, component, components, compositions, condensation, e300, feed
+**Solution:** `private task folder (redacted)`
+**Notes:** The E300 import successfully reproduces the UniSim 31-component fluid characterization in NeqSim. Molecular weights match to within 0.3% for all 12 streams tested (feed, gas, oil compositions). The feed flash vapour fraction differs by 3.
+
+### 2026-04-08 — R510 SG condensation UniSim to NeqSim conversion
+**Type:** B (Process)
+**Keywords:** condensation, conversion, r510, unisim
+**Solution:** task_solve/2026-04-08_r510_sg_condensation_unisim_to_neqsim_conversion/step2_analysis/01_unisim_neqsim_comparison.ipynb
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-04-08 — Early phase sprint paper
+**Type:** B (Process)
+**Keywords:** early, paper, phase, sprint, field development
+**Solution:** `private task folder (redacted)`
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-04-07 — Compressor dry gas seal condensation analysis
+**Type:** B (Process)
+**Keywords:** alkane, caused, causes, components, compressor, condensation, continuous, dry gas seal, envelope
+**Solution:** `private task folder (redacted)`
+**Notes:** A confidential dry gas seal case identified two condensation mechanisms. Public log keeps only the reusable phase-envelope, JT expansion, and seal-gas workflow; equipment tags and exact pressures remain private.
+
+### 2026-04-07 — Injection compressor dry gas seal failure analysis
+**Type:** B (Process)
+**Keywords:** compressor, failure, injection, seal, dry gas seal
+**Solution:** `private task folder (redacted)`
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-04-06 — Advanced Electrolyte EOS Development and Scientific Paper
+**Type:** A (Property)
+**Keywords:** advanced, average, calculation, corrected, counter, cross, development, dilution, discovered, electrolyte
+**Solution:** task_solve/2026-04-06_advanced_electrolyte_eos_development_and_scientific_paper/step2_analysis/01_electrolyte_model_comparison.ipynb
+**Notes:** Discovered fundamental reference state bug in getActivityCoefficient(k): counter-ions retained in reference, weakening DH ~3x. Corrected 2-arg calculation reduces average MAE from 16.9% to 4.2%. Cross-ion Cl- W0 consistency improved from 6x to 1.
+
+### 2026-04-06 — TEG Dehydration Sizing for 50 MMSCFD Wet Gas
+**Type:** B (Process)
+**Keywords:** dehydration, mmscfd, sizing
+**Solution:** task_solve/2026-04-06_teg_dehydration_sizing_for_50_mmscfd_wet_gas/step2_analysis/01_TEG_dehydration_sizing.ipynb
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-04-05 — Wax Formation Models Comparison and Improvement
+**Type:** D (Standards)
+**Keywords:** comparison, formation, improvement, models
+**Solution:** task_solve/2026-04-05_wax_formation_models_comparison_and_improvement/
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-03-30 — NeqSim Library Review - High Impact Fixes and Updates
+**Type:** E (Feature)
+**Keywords:** fixes, high, impact, library, review, updates
+**Solution:** task_solve/2026-03-30_neqsim_library_review_high_impact_fixes_and_updates/
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-03-27 — Hydrogen blending in export gas quality analysis
+**Type:** B (Process)
+**Keywords:** binding, blending, compositions, constraint, density, export, fraction, hydrogen, index, lean
+**Solution:** `private task folder (redacted)`
+**Notes:** Relative density — not the Wobbe index — is the binding constraint for H2 blending in the screened export-gas cases. Lean gas tolerates lower H2 addition than medium or rich gas before violating EN 16726 relative-density limits.
+
+### 2026-03-27 — Process model from existing simulator
+**Type:** B (Process)
+**Keywords:** compression, compressors, condensate, existing simulator, export, feed, model
+**Solution:** `private task folder (redacted)`
+**Notes:** The confidential process model runs successfully in NeqSim with PR EOS. Public log keeps the reusable simulator-conversion and compression-train workflow, while asset names and exact capacities remain private.
+
+### 2026-03-26 — CO2 injection hydrogen accumulation in wells
+**Type:** B (Process)
+**Keywords:** accumulation, bara, bulk, component, enrichment, factors, hydrogen, injection, mixing, phase
+**Solution:** `private task folder (redacted)`
+**Notes:** Hydrogen accumulation in the gas phase is a REAL thermodynamic phenomenon. At T=4 C the two-phase region spans 42-58 bara. H2 enrichment factors reach 5-8x (3.9-5.9 mol% H2 in gas vs 0.75% in bulk). K_H2 = 11.9 at 50 bara.
+
+### 2026-03-24 — NeqSim Pseudo-Component Characterization Documentation
+**Type:** E (Feature)
+**Keywords:** characterization, component, documentation, pseudo
+**Solution:** task_solve/2026-03-24_neqsim_pseudo_component_characterization_documentation/
+**Notes:** Task folder created; analysis in progress.
+
+### 2026-03-24 — Probabilistic NPV Monte Carlo analysis
+**Type:** G (Workflow)
+**Keywords:** analytical, appraisal, carlo, field, function, influential, model, monte, musd
+**Solution:** `private task folder (redacted)`
+**Notes:** A confidential field NPV study used Monte Carlo and value-of-information screening. Public log keeps the reusable economic workflow; field name, exact valuation figures, and recommendations remain private.
+
+### 2026-03-23 — FLNG Class A Concept Study Offshore Tanzania 3000m
+**Type:** G (Workflow)
+**Keywords:** benchmarks, c3mr, capex, challenges, class, concept, contr, depth, economic, faces
+**Solution:** task_solve/2026-03-23_flng_class_a_concept_study_offshore_tanzania_3000m/step2_analysis/01_reservoir_fluid_pvt.ipynb, task_solve/2026-03-23_flng_class_a_concept_study_offshore_tanzania_3000m/step2_analysis/02_flng_process_simulation.ipynb, task_solve/2026-03-23_flng_class_a_concept_study_offshore_tanzania_3000m/step2_analysis/03_capex_economics.ipynb
+**Notes:** The FLNG Tanzania concept at 3000m water depth faces significant economic challenges. Total CAPEX of $6201M ($1772/tonne) is at the upper end of FLNG benchmarks.
+
+### 2026-03-23 — CO2 injection hydrogen accumulation analysis
+**Type:** B (Process)
+**Keywords:** accumulation, beckm, concern, confirmed, cross, engineering, feasibility, four, gerg, hydrogen
+**Solution:** `private task folder (redacted)`
+**Notes:** Hydrogen accumulation in the gas phase is a confirmed engineering concern for the confidential CO2 injection case, validated by four independent EOS models and cross-referenced with private feasibility-study findings.
+
+### 2026-03-21 — compressor_train_analysis
+**Type:** B (Process)
+**Keywords:** above, assessed, baseline, booster, capex, compressor, compressordesignfeasibilityreport, extends, feasibility
+**Solution:** `private task folder (redacted)`
+**Notes:** The booster compressor + precooler installation screened as feasible for a confidential production case. Public log keeps only the reusable compressor-feasibility workflow; asset name and exact economic uplift remain private.
+
+### 2026-03-20 — H2 properties data comparison
+**Type:** D (Standards)
+**Keywords:** aard, agrees, closely, compared, comparison, data, densitometer, density, enhanced, experimental
+**Solution:** task_solve/2026-03-20_h2_properties_data_comparison/step2_analysis/01_h2_density_comparison.ipynb
+**Notes:** Overall AARD: REFPROP=1.8408%, NeqSim Std GERG-2008=2.0790%, NeqSim GERG-2008-H2=2.2120%, NeqSim SRK=1.9948%. NeqSim standard GERG-2008 agrees closely with REFPROP (AARD=0.6221%).
+
+### 2026-03-19 — Utsira Nord Floating Wind Class A Concept Study
+**Type:** G (Workflow)
+**Keywords:** class, commercial, concept, cost, costs, current, farm, floati, floating, foundation
+**Solution:** task_solve/2026-03-19_utsira_nord_floating_wind_class_a_concept_study/step2_analysis/01_design_basis_and_site.ipynb, task_solve/2026-03-19_utsira_nord_floating_wind_class_a_concept_study/step2_analysis/02_wind_resource_and_aep.ipynb, task_solve/2026-03-19_utsira_nord_floating_wind_class_a_concept_study/step2_analysis/03_electrical_system_design.ipynb
+**Notes:** The project LCOE of ~2141 NOK/MWh (202 EUR/MWh) reflects the pre-commercial cost level of floating offshore wind. At current costs, the project requires substantial government CfD/subsidy support (~2000 NOK/MWh) to achieve economic viability.
+
+### 2026-03-18 — umoe_composites_300bar_cng_tank_filling_temperature
+**Type:** B (Process)
+**Keywords:** approximately, classic, composites, filling, hours, lean, limit, maximum, methane, mixing
+**Solution:** task_solve/2026-03-18_umoe_composites_300bar_cng_tank_filling_temperature/step2_analysis/01_filling_simulation.ipynb, task_solve/2026-03-18_umoe_composites_300bar_cng_tank_filling_temperature/step2_analysis/02_literature_review.ipynb, task_solve/2026-03-18_umoe_composites_300bar_cng_tank_filling_temperature/step2_analysis/03_benchmark_validation.ipynb
+**Notes:** Filling the Umoe Composites 300 bar Type IV tank from 20.0 to 300.0 bar at 247.5 Sm3/day takes approximately 52 hours. The maximum gas temperature reaches 31.0 C, which is within the ISO 11119-3 limit of 85.0 C with a margin of 54.0 C.
+
+### 2026-03-12 — turboexpander modification evaluation for future operation
+**Type:** B (Process)
+**Keywords:** across, barg, below, class, declining, decreases, drops, evaluation, feasible, future
+**Solution:** task_solve/2026-03-12_turboexpander_modification_evaluation_for_future_operation/step2_analysis/01_tex_performance.ipynb, task_solve/2026-03-12_turboexpander_modification_evaluation_for_future_operation/step2_analysis/02_seal_gas_condensation.ipynb, task_solve/2026-03-12_turboexpander_modification_evaluation_for_future_operation/step2_analysis/03_uncertainty_risk.ipynb
+**Notes:** TEX PERFORMANCE: Feasible 2025-2029 (inlet P > 48 barg). Infeasible from 2030 when pressure ratio drops below ~1.05. Speed DECREASES from ~6950 to ~4500 rpm â€” no overspeed risk. TEX provides 5-8 degC advantage over JT valve through 2029.
+
+### 2026-03-11 — TPG4230 Field Development and Operations Learning Material
+**Type:** G (Workflow)
+**Keywords:** aspects, assurance, chain, characterization, complete, compress, course, covering, covers, design
+**Solution:** task_solve/2026-03-11_tpg4230_field_development_and_operations_learning_material/step2_analysis/Module_01_Introduction_and_Value_Chain.ipynb, task_solve/2026-03-11_tpg4230_field_development_and_operations_learning_material/step2_analysis/Module_02_Flow_Performance.ipynb, task_solve/2026-03-11_tpg4230_field_development_and_operations_learning_material/step2_analysis/Module_03_Oil_Gas_Processing.ipynb
+**Notes:** The learning material covers all key aspects of field development: reservoir fluid characterization, production flow performance, oil and gas processing, flow assurance, separator design, gas compression and pipeline hydraulics, production scheduling...
+
+### 2026-03-07 — Ultima Thule Field Development - Class A Study
+**Type:** G (Workflow)
+**Keywords:** class, development, field, study, thule, ultima
+**Solution:** task_solve/2026-03-07_UltimaThule_ClassA_study/
+**Notes:** Task folder created; analysis in progress.
+
+
+### 2025-07-24 — Process Optimization Enhancements: NIP-03, NIP-06, NIP-08, NIP-09 Implementation
+**Type:** E (Feature)
+**Keywords:** process optimization, rate-based absorber, SQP optimizer, multiphase flow, Hagedorn-Brown, Mukherjee-Brill, multi-variable adjuster, Onda correlation, Billet-Schultes, mass transfer, enhancement factor, damped successive substitution
+**Solution:** src/main/java/neqsim/process/equipment/absorber/RateBasedAbsorber.java, src/main/java/neqsim/process/util/optimizer/SQPoptimizer.java, src/main/java/neqsim/process/equipment/pipeline/PipeHagedornBrown.java, src/main/java/neqsim/process/equipment/pipeline/PipeMukherjeeAndBrill.java, examples/notebooks/process_optimization_enhancements.ipynb
+**Notes:** Implemented four NIPs from process optimization review. NIP-06: RateBasedAbsorber with Onda 1968 and Billet-Schultes 1999 mass transfer correlations, Hatta/Van Krevelen enhancement factors (6 tests). NIP-08: SQPoptimizer with active-set SQP for constrained process optimization (5 tests). NIP-03: PipeHagedornBrown and PipeMukherjeeAndBrill multiphase flow correlations (8 tests). NIP-09: MultiVariableAdjuster convergence fix — replaced Broyden accelerator with damped successive substitution (α=0.1) after Broyden caused oscillation/divergence due to wrong Jacobian sign. All 23 tests pass. Docs updated: absorbers.md, sqp_optimizer.md, multiphase_flow_correlations.md, adjusters.md, CHANGELOG_AGENT_NOTES.md.
+
+### 2026-04-17 — cDFT Surface Tension: Kernel Correction, Mixture Extension, Paper
+**Type:** E (Feature)
+**Keywords:** cDFT, surface tension, interfacial tension, density functional theory, kernel range, mixture IFT, Peng-Robinson, SRK, predictive, lambda correlation, acentric factor, critical correction, Miqueu, gradient theory, Parachor, Fluid Phase Equilibria
+**Solution:** src/main/java/neqsim/thermo/util/LCSF/surfacetension/CDFTSurfaceTension.java, task_solve/2026-04-17_cdft_surface_tension_paper_kernel_correction_and_mixture_extension/, neqsim-paperlab/papers/cdft_surface_tension_2026/
+**Notes:** Implemented predictive cDFT surface tension from cubic EOS. Three proposals: (A) kernel range correction λ(ω) = 0.749 − 0.740ω reduces AAD from 41.5% to 9.5% for 8 pure components (beats GT 12.8%, Parachor 17.6%; Miqueu GT 2.2% still best). (B) Mixture solver with shared-δ tanh profiles and cross kernels achieves 37.6% AAD for CH4/C3H8 at 277.6K (vs 61.7% Parachor). (C) Paper manuscript for Fluid Phase Equilibria with 4 figures, 3 tables. 27+ tests across 6 test classes. Key insight: critical exponent correction (1−Tr)^(−0.24) essential near Tc.
+### 2026-04-18 — Systematic "hardcoded phase 0" bug elimination in two-phase flow
+**Type:** E (Feature/Bugfix)
+**Keywords:** two-phase flow, mass transfer, heat transfer, friction factor, Reynolds number, velocity, phase index, interphase transport, Krishna-Standart, film model, non-equilibrium, pipeline condensation, stratified flow, slug flow, droplet flow, stirred cell
+**Solution:** src/main/java/neqsim/fluidmechanics/flownode/ (multiple files across 3 rounds)
+**Notes:** Found and fixed 29 bugs across 3 audit rounds. Root cause: methods accepting `int phase`/`int phaseNum` parameters internally called `getReynoldsNumber()`, `getVelocity()`, or `calcWallFrictionFactor(0, node)` without passing the phase index through. These default to phase 0 (gas), making liquid-phase (1) calculations use incorrect gas-phase Reynolds numbers, velocities, and friction factors. Fixed files: NonEquilibriumFluidBoundary, ReactiveKrishnaStandartFilmModel, KrishnaStandartFilmModel, TwoPhaseFixedStaggeredGridSolver, InterphaseStratifiedFlow, TwoPhaseFlowNode, InterphaseDropletFlow, InterphaseSlugFlow, InterphaseTransportCoefficientBaseClass, MultiPhaseFlowNode, InterphasePipeFlow, InterphaseStirredCellFlow. Also added NaN guards, divide-by-zero protections, convergence fixes, and dead code cleanup. All fluidmechanics tests pass.
+
+### 2026-06-18 — TwoFluidPipe transient & pressure gradient benchmark and fixes
+**Type:** E (Feature)
+**Keywords:** TwoFluidPipe, transient, multiphase, two-fluid model, pressure gradient, benchmark, McAdams viscosity, Beggs Brill, holdup, friction factor, Haaland, pipeline
+**Solution:** src/main/java/neqsim/process/equipment/pipeline/TwoFluidPipe.java, src/test/java/neqsim/process/equipment/pipeline/TwoFluidPipeBenchmarkTest.java
+**Notes:** Fixed transient inlet BC override (isTransientMode flag), outlet pressure capture bug, improved viscosity model (McAdams quality-based harmonic averaging). Added 19 benchmark tests in 8 categories validating against PipeBeggsAndBrills and literature. Single-phase gas ratio 0.98, two-phase GLR sweep 0.81–1.33, vertical riser gravity 1.04 bar matches ρgH, D⁻⁵ diameter scaling ratio 33.7. Transient holdup evolution 0.19→0.09 after flow step-change now works correctly.
+
+### 2026-03-14 — Fix IEC 60534 gas valve sizing: use standard volumetric flow (issue #1918)
+**Type:** D (Standards)
+**Keywords:** valve sizing, IEC 60534, Cv, Kv, gas valve, standard flow, actual flow, control valve, throttling valve, choked flow, N9
+**Solution:** src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534.java, src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534_full.java, src/test/java/neqsim/process/mechanicaldesign/valve/ControlValveSizingTest.java
+**Notes:** Gas valve Cv was severely underestimated (~98% too low at 50 bara) because IEC 60534 equation was applied with actual volumetric flow instead of standard volumetric flow (273.15 K, 101.325 kPa). Fix: convert Q_actual to Q_std = Q_actual × (P₁/P_std) × (T_std/T₁) / Z before applying the IEC formula. Fixed in sizeControlValveGas(), calculateFlowRateFromKvAndValveOpeningGas(), and calculateValveOpeningFromFlowRateGas() in both base and _full classes. Added regression test matching Python fluids library result (Cv ≈ 16.2 for 10000 kg/hr methane at 50 bara). Liquid valves were not affected.
 
 ### 2026-03-10 — Process architecture improvements: stream introspection, named controllers, connections, unified elements
 **Type:** E (Feature)
@@ -113,13 +441,13 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 ### 2026-03-09 — Sulfur Deposition Analysis
 **Type:** B (Process)
-**Keywords:** sulfur, S8, deposition, desublimation, Joule-Thomson, JT cooling, backflow, letdown, valve, H2S, Draupner, pressure reduction, solid flash, GibbsReactor, SulfurDepositionAnalyser, preheating, mitigation
-**Solution:** task_solve/2026-03-09_draupner_backflow_letdown_sulfur_deposition_analysis/
+**Keywords:** sulfur, S8, deposition, desublimation, Joule-Thomson, JT cooling, backflow, letdown, valve, H2S, pressure reduction, solid flash, GibbsReactor, SulfurDepositionAnalyser, preheating, mitigation
+**Solution:** `private task folder (redacted)`
 **Notes:** Analysed elemental sulfur deposition in a backflow letdown system (70→15 bara). JT cooling gives ~-20°C outlet (JT coeff 0.46-0.58 K/bar). 100% of Monte Carlo scenarios (N=300) produce solid S8. Primary mechanism is desublimation, not chemical reaction. Air ingress (O2) contributes via H2S oxidation at Gibbs equilibrium. Preheating helps but S8 solid persists even at 100°C preheat with >0.01 ppb S8 feed. Used SRK EOS, ThrottlingValve, TPSolidflash, GibbsReactor, SulfurDepositionAnalyser. 9/9 benchmarks PASS (JT coefficients within 15%, S8 solubility within literature order-of-magnitude). Overall risk: High (5 high, 4 medium, 1 low risks).
 
 ### 2026-03-08 — Mercury Removal in LNG Pre-Treatment — NeqSim Chemisorption Model
 **Type:** B (Process), F (Design)
-**Keywords:** mercury, Hg, removal, guard bed, chemisorption, CuS, sorbent, adsorber, NTU, Ergun, packed bed, LNG, pre-treatment, Snøhvit, HLNG, mass transfer zone, breakthrough, transient, bed lifetime, mechanical design, ASME VIII, cost estimation, CAPEX, OPEX, sorbent replacement, fuel gas strategy
+**Keywords:** mercury, Hg, removal, guard bed, chemisorption, CuS, sorbent, adsorber, NTU, Ergun, packed bed, LNG, pre-treatment, mass transfer zone, breakthrough, transient, bed lifetime, mechanical design, ASME VIII, cost estimation, CAPEX, OPEX, sorbent replacement, fuel gas strategy
 **Solution:** `src/main/java/neqsim/process/equipment/adsorber/MercuryRemovalBed.java`, `src/test/java/neqsim/process/equipment/adsorber/MercuryRemovalBedTest.java`, `task_solve/2026-03-08_mercury_removal_lng_pretreatment/`
 **Notes:**
 - MercuryRemovalBed: NTU-based steady-state + cell-by-cell transient PDE (upwind scheme, CFL sub-stepping), Ergun pressure drop, Arrhenius kinetics, bypass/degradation, bed lifetime estimation
@@ -220,7 +548,7 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 **Keywords:** electrical design, separator, heater, cooler, pipeline, heat tracing, cathodic protection, system electrical design, load list, transformer sizing, emergency generator
 **Solution:** `src/main/java/neqsim/process/electricaldesign/separator/SeparatorElectricalDesign.java`, `heatexchanger/HeatExchangerElectricalDesign.java`, `pipeline/PipelineElectricalDesign.java`, `system/SystemElectricalDesign.java`
 **Notes:**
-- Implemented Phases 2-3 of ELECTRICAL_DESIGN_PROPOSAL.md
+- Implemented electrical design phases 2-3.
 - SeparatorElectricalDesign: models control valves, instrumentation, lighting, optional heat tracing (no shaft power)
 - HeatExchangerElectricalDesign: auto-detects type (ELECTRIC_HEATER / AIR_COOLER / SHELL_AND_TUBE) from equipment class
 - PipelineElectricalDesign: heat tracing (W/m × length), cathodic protection, instrumentation
@@ -228,6 +556,12 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 - Integrated into Separator (eager init), Heater/Cooler (lazy init), AdiabaticPipe and PipeBeggsAndBrills (lazy init)
 - Added ProcessSystem.getSystemElectricalDesign() for one-call plant electrical summary
 - 24 unit tests all passing in ElectricalDesignTest
+
+### 2026-04-16 — Review Dynamic Process and Control Functionality
+**Type:** G (Workflow)
+**Keywords:** dynamic simulation, transient, PID controller, MPC, HYSYS Dynamics, K-Spice, safety chain, HIPPS, ESD, blowdown, VU-flash, DynamicProcessHelper, ProcessEventBus, alarm, runTransient, control, measurement device, valve, split-range, override, bumpless transfer, sequence control, SFC, distillation dynamics, heat exchanger dynamics, rotor inertia
+**Solution:** task_solve/2026-04-16_review_dynamic_process_and_control_functionality/step1_scope_and_research/analysis.md
+**Notes:** Comprehensive 45-feature comparison across 7 categories against 5 commercial simulators. NeqSim scores 63/90 (70%) vs HYSYS 79/90 (88%). Leads in 8 areas (VU-flash, safety chain, Monte Carlo risk, auto-instrumentation, water hammer, DEXPI export, event bus, specialised analysers). 10 NIPs proposed with 4-phase roadmap. Key gaps: explicit Euler only (no implicit/adaptive), no dynamic HX/column, no bumpless transfer, no split-range/override, no sequence control.
 
 ---
 

@@ -287,6 +287,36 @@ public class ProcessGraph implements Serializable {
   }
 
   /**
+   * Adds a signal (non-stream) edge between two nodes.
+   *
+   * <p>
+   * Signal edges represent data dependencies that are not physical stream connections, such as
+   * Calculator input/output variable links. They carry no stream reference but participate in
+   * topological ordering so that dependent units execute in the correct sequence.
+   * </p>
+   *
+   * @param source source node
+   * @param target target node
+   * @param name descriptive name for the signal edge
+   * @param edgeType the edge type (typically {@link ProcessEdge.EdgeType#SIGNAL})
+   * @return the created edge
+   */
+  public ProcessEdge addSignalEdge(ProcessNode source, ProcessNode target, String name,
+      ProcessEdge.EdgeType edgeType) {
+    Objects.requireNonNull(source, "source cannot be null");
+    Objects.requireNonNull(target, "target cannot be null");
+
+    int index = edges.size();
+    ProcessEdge edge = new ProcessEdge(index, source, target, name, edgeType);
+    edges.add(edge);
+    source.addOutgoingEdge(edge);
+    target.addIncomingEdge(edge);
+
+    invalidateCache();
+    return edge;
+  }
+
+  /**
    * Adds an edge between two equipment units.
    *
    * @param sourceEquipment source equipment

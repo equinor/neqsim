@@ -2,7 +2,7 @@ package neqsim.process.util.monitor;
 
 /**
  * Key Performance Indicators for scenario execution.
- * 
+ *
  * <p>
  * Captures critical metrics across safety, process, environmental, and economic dimensions to
  * enable comprehensive scenario comparison and analysis.
@@ -260,6 +260,8 @@ public class ScenarioKPI {
 
   /**
    * Calculates overall safety score (0-100, higher is better).
+   *
+   * @return the safety score from 0 to 100
    */
   public double calculateSafetyScore() {
     double score = 100.0;
@@ -282,6 +284,8 @@ public class ScenarioKPI {
 
   /**
    * Calculates environmental impact score (0-100, higher is better = less impact).
+   *
+   * @return the environmental score from 0 to 100
    */
   public double calculateEnvironmentalScore() {
     double score = 100.0;
@@ -296,6 +300,8 @@ public class ScenarioKPI {
 
   /**
    * Calculates process performance score (0-100, higher is better).
+   *
+   * @return the process performance score from 0 to 100
    */
   public double calculateProcessScore() {
     double score = 100.0;
@@ -310,6 +316,8 @@ public class ScenarioKPI {
 
   /**
    * Calculates overall composite score.
+   *
+   * @return the weighted overall score from 0 to 100
    */
   public double calculateOverallScore() {
     return (calculateSafetyScore() * 0.5 + calculateEnvironmentalScore() * 0.25

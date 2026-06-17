@@ -24,7 +24,7 @@ import neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetTemp
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * SystemInterface fluid = new SystemSrkCPA(373.15, 300.0);
  * // Add components...

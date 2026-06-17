@@ -395,7 +395,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * <p>
    * updateMoles.
    * </p>
-   * 
+   *
    * <p>
    * Updates the moles in the reactive phase based on the calculated n_mol values from the Newton
    * solver. Uses Phase.addMolesChemReac with totdn=0 to only affect phase moles without corrupting
@@ -623,14 +623,14 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
   /**
    * Enforce minimum physically reasonable concentrations for ionic species.
-   * 
+   *
    * <p>
    * When the chemical equilibrium solver fails to converge, ionic species like H3O+ and OH- can be
    * left at unrealistically low values. This method checks the water auto-ionization equilibrium
    * (Kw = [H3O+][OH-]) and corrects unrealistic values while respecting legitimate acidic or
    * alkaline conditions.
    * </p>
-   * 
+   *
    * <p>
    * The method only intervenes when both H3O+ and OH- are unrealistically low (violating Kw), not
    * when the solution is legitimately acidic (high H3O+, low OH-) or alkaline (low H3O+, high OH-).
@@ -1118,7 +1118,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
   /**
    * Solve least-squares problem using SVD pseudo-inverse.
-   * 
+   *
    * <p>
    * For rank-deficient or ill-conditioned matrices, this provides a more robust solution than
    * direct inversion. Uses SVD decomposition: A = U * S * V^T, then x = V * S^(-1) * U^T * b.

@@ -19,7 +19,7 @@
  * </ol>
  *
  * <h2>Usage Pattern:</h2>
- * 
+ *
  * <pre>
  * // Register surrogate
  * SurrogateModelRegistry.getInstance().register("flash-model", myNeuralNet);

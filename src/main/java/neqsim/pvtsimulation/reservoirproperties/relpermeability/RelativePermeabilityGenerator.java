@@ -1,6 +1,5 @@
 package neqsim.pvtsimulation.reservoirproperties.relpermeability;
 
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -11,6 +10,7 @@ import java.util.Map;
  * Generates relative permeability tables for oil-water (SWOF) and gas-oil (SGOF) systems using
  * industry-standard Corey power-law and LET three-parameter models. Output can be formatted as
  * Eclipse-compatible keywords.
+ * </p>
  *
  * <p>
  * <b>Corey Model (1954):</b>

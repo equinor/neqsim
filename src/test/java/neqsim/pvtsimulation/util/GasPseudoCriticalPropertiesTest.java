@@ -1,6 +1,5 @@
 package neqsim.pvtsimulation.util;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -8,13 +7,20 @@ import org.junit.jupiter.api.Test;
 /**
  * Tests for GasPseudoCriticalProperties correlations.
  *
- * <p>All methods now return Kelvin and bara by default.</p>
+ * <p>
+ * All methods now return Kelvin and bara by default.
+ * </p>
  */
 class GasPseudoCriticalPropertiesTest {
 
   // Conversion helpers for reference values
-  private static double rToK(double r) { return r * 5.0 / 9.0; }
-  private static double psiaToBara(double psia) { return psia / 14.5038; }
+  private static double rToK(double r) {
+    return r * 5.0 / 9.0;
+  }
+
+  private static double psiaToBara(double psia) {
+    return psia / 14.5038;
+  }
 
   // ========== STANDING CORRELATION ==========
 
@@ -39,8 +45,7 @@ class GasPseudoCriticalPropertiesTest {
     double tpcK = GasPseudoCriticalProperties.pseudoCriticalTemperatureStanding(0.75);
     double ppcBara = GasPseudoCriticalProperties.pseudoCriticalPressureStanding(0.75);
 
-    assertTrue(tpcK > rToK(370) && tpcK < rToK(430),
-        "Tpc should be in K range, got " + tpcK);
+    assertTrue(tpcK > rToK(370) && tpcK < rToK(430), "Tpc should be in K range, got " + tpcK);
     assertTrue(ppcBara > psiaToBara(630) && ppcBara < psiaToBara(700),
         "Ppc should be in bara range, got " + ppcBara);
   }
@@ -118,8 +123,7 @@ class GasPseudoCriticalPropertiesTest {
   void testPiperWithN2() {
     double tpcClean =
         GasPseudoCriticalProperties.pseudoCriticalTemperaturePiper(0.75, 0.0, 0.0, 0.0);
-    double tpcN2 =
-        GasPseudoCriticalProperties.pseudoCriticalTemperaturePiper(0.75, 0.0, 0.0, 0.10);
+    double tpcN2 = GasPseudoCriticalProperties.pseudoCriticalTemperaturePiper(0.75, 0.0, 0.0, 0.10);
 
     assertTrue(Math.abs(tpcClean - tpcN2) > 0.5, "N2 should meaningfully change Tpc");
   }
@@ -140,11 +144,10 @@ class GasPseudoCriticalPropertiesTest {
 
   @Test
   void testWichertAzizNoImpurities() {
-    double tpcK = rToK(400.0);  // 222.22 K
-    double ppcBara = psiaToBara(660.0);  // 45.51 bara
+    double tpcK = rToK(400.0); // 222.22 K
+    double ppcBara = psiaToBara(660.0); // 45.51 bara
 
-    double[] corrected = GasPseudoCriticalProperties.wichertAzizCorrection(
-        tpcK, ppcBara, 0.0, 0.0);
+    double[] corrected = GasPseudoCriticalProperties.wichertAzizCorrection(tpcK, ppcBara, 0.0, 0.0);
 
     assertEquals(tpcK, corrected[0], 1e-6, "No correction needed without impurities");
     assertEquals(ppcBara, corrected[1], 1e-6, "No correction needed without impurities");
@@ -155,8 +158,8 @@ class GasPseudoCriticalPropertiesTest {
     double tpcK = rToK(400.0);
     double ppcBara = psiaToBara(660.0);
 
-    double[] corrected = GasPseudoCriticalProperties.wichertAzizCorrection(
-        tpcK, ppcBara, 0.10, 0.0);
+    double[] corrected =
+        GasPseudoCriticalProperties.wichertAzizCorrection(tpcK, ppcBara, 0.10, 0.0);
 
     assertTrue(corrected[0] < tpcK, "Tpc should decrease with H2S");
     assertTrue(Math.abs(corrected[1] - ppcBara) > 0.1, "Ppc should change with H2S");
@@ -167,8 +170,8 @@ class GasPseudoCriticalPropertiesTest {
     double tpcK = rToK(400.0);
     double ppcBara = psiaToBara(660.0);
 
-    double[] corrected = GasPseudoCriticalProperties.wichertAzizCorrection(
-        tpcK, ppcBara, 0.0, 0.10);
+    double[] corrected =
+        GasPseudoCriticalProperties.wichertAzizCorrection(tpcK, ppcBara, 0.0, 0.10);
 
     assertTrue(corrected[0] < tpcK, "Tpc should decrease with CO2");
   }
@@ -178,8 +181,8 @@ class GasPseudoCriticalPropertiesTest {
     double tpcK = rToK(400.0);
     double ppcBara = psiaToBara(660.0);
 
-    double[] corrected = GasPseudoCriticalProperties.wichertAzizCorrection(
-        tpcK, ppcBara, 0.10, 0.05);
+    double[] corrected =
+        GasPseudoCriticalProperties.wichertAzizCorrection(tpcK, ppcBara, 0.10, 0.05);
 
     assertTrue(corrected[0] < tpcK, "Tpc should decrease with acid gases");
     assertTrue(corrected[0] > rToK(300), "Corrected Tpc should still be reasonable");
@@ -192,8 +195,8 @@ class GasPseudoCriticalPropertiesTest {
     double tpcK = 222.0;
     double ppcBara = 45.5;
 
-    double[] corrected = GasPseudoCriticalProperties.wichertAzizCorrection(
-        tpcK, ppcBara, 0.10, 0.05);
+    double[] corrected =
+        GasPseudoCriticalProperties.wichertAzizCorrection(tpcK, ppcBara, 0.10, 0.05);
 
     assertTrue(corrected[0] > 0 && corrected[0] < 300,
         "Corrected Tpc should be reasonable Kelvin value");
@@ -226,8 +229,8 @@ class GasPseudoCriticalPropertiesTest {
     double ppcBara = GasPseudoCriticalProperties.pseudoCriticalPressureSutton(gammaG);
 
     // Step 2: Wichert-Aziz correction (K/bara in/out)
-    double[] corrected = GasPseudoCriticalProperties.wichertAzizCorrection(
-        tpcK, ppcBara, yH2S, yCO2);
+    double[] corrected =
+        GasPseudoCriticalProperties.wichertAzizCorrection(tpcK, ppcBara, yH2S, yCO2);
 
     assertTrue(corrected[0] > rToK(300) && corrected[0] < rToK(500),
         "Corrected Tpc should be in range, got " + corrected[0]);

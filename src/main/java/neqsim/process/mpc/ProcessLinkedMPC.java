@@ -24,7 +24,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Build process
@@ -86,7 +86,7 @@ public class ProcessLinkedMPC implements Serializable {
   private final List<StateVariable> stateVariables;
 
   /** Linearizer for model identification. */
-  private ProcessLinearizer linearizer;
+  private transient ProcessLinearizer linearizer;
 
   /** Last linearization result. */
   private LinearizationResult linearizationResult;

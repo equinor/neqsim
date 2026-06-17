@@ -84,7 +84,7 @@ public class SplitterCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If equipment implements CapacityConstrainedEquipment, use its constraints
     if (splitter instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) splitter).getMaxUtilization();
+      return splitter.getMaxUtilization();
     }
 
     // Fall back to basic evaluation
@@ -139,7 +139,7 @@ public class SplitterCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If splitter implements CapacityConstrainedEquipment, use its constraints
     if (splitter instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) splitter).getCapacityConstraints();
+      return splitter.getCapacityConstraints();
     }
 
     // Pressure drop constraint

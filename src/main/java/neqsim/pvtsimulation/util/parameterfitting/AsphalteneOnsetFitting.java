@@ -22,7 +22,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * Typical usage:
  * </p>
- * 
+ *
  * <pre>
  * // Create fluid system with asphaltene
  * SystemInterface fluid = new SystemSrkCPAstatoil(373.15, 200.0);

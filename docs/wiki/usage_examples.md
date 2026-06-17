@@ -283,231 +283,43 @@ System.out.println("Stabilized oil: " + lpSeparator.getLiquidOutStream().getFlow
 
 ### Compression System
 
-Multi-stage compression with intercooling.
+## Distillation column
+
+Simulate a deethanizer column with six available solver algorithms. See
+[distillation column docs](distillation_column.md) for full mathematical details.
 
 ```java
+import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.heatexchanger.Cooler;
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
-// Create gas feed
-SystemSrkEos gas = new SystemSrkEos(298.15, 5.0);
-gas.addComponent("methane", 0.95);
-gas.addComponent("ethane", 0.03);
-gas.addComponent("propane", 0.02);
-gas.setMixingRule("classic");
+SystemSrkEos feed = new SystemSrkEos(216.0, 30.0);
+feed.addComponent("methane", 0.5);
+feed.addComponent("ethane", 0.2);
+feed.addComponent("propane", 0.15);
+feed.addComponent("n-butane", 0.05);
+feed.addComponent("n-pentane", 0.05);
+feed.addComponent("n-hexane", 0.03);
+feed.addComponent("n-heptane", 0.02);
+feed.setMixingRule("classic");
 
-Stream feed = new Stream("Feed Gas", gas);
-feed.setFlowRate(50000.0, "Sm3/day");
-feed.setTemperature(30.0, "C");
-feed.setPressure(5.0, "bara");
+Stream feedStream = new Stream("feed", feed);
+feedStream.setFlowRate(100.0, "kg/hr");
+feedStream.run();
 
-// Stage 1: 5 -> 20 bar
-Compressor stage1 = new Compressor("Stage 1", feed);
-stage1.setOutletPressure(20.0, "bara");
-stage1.setPolytropicEfficiency(0.78);
-stage1.setUsePolytropicCalc(true);
+DistillationColumn column = new DistillationColumn("Deethanizer", 5, true, false);
+column.addFeedStream(feedStream, 5);
+column.getReboiler().setOutTemperature(378.15);
+column.setTopPressure(30.0);
+column.setBottomPressure(32.0);
+column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
+column.run();
 
-Cooler intercooler1 = new Cooler("Intercooler 1", stage1.getOutletStream());
-intercooler1.setOutTemperature(35.0, "C");
-
-Separator scrubber1 = new Separator("Scrubber 1", intercooler1.getOutletStream());
-
-// Stage 2: 20 -> 80 bar
-Compressor stage2 = new Compressor("Stage 2", scrubber1.getGasOutStream());
-stage2.setOutletPressure(80.0, "bara");
-stage2.setPolytropicEfficiency(0.78);
-stage2.setUsePolytropicCalc(true);
-
-Cooler aftercooler = new Cooler("Aftercooler", stage2.getOutletStream());
-aftercooler.setOutTemperature(40.0, "C");
-
-// Build process
-ProcessSystem process = new ProcessSystem();
-process.add(feed);
-process.add(stage1);
-process.add(intercooler1);
-process.add(scrubber1);
-process.add(stage2);
-process.add(aftercooler);
-process.run();
-
-// Results
-System.out.println("Stage 1 power: " + stage1.getPower("kW") + " kW");
-System.out.println("Stage 1 outlet T: " + stage1.getOutletStream().getTemperature("C") + " °C");
-System.out.println("Stage 2 power: " + stage2.getPower("kW") + " kW");
-System.out.println("Stage 2 outlet T: " + stage2.getOutletStream().getTemperature("C") + " °C");
-System.out.println("Total power: " + (stage1.getPower("kW") + stage2.getPower("kW")) + " kW");
+System.out.println("Gas:    " + column.getGasOutStream().getFlowRate("kg/hr") + " kg/hr");
+System.out.println("Liquid: " + column.getLiquidOutStream().getFlowRate("kg/hr") + " kg/hr");
 ```
 
-### Heat Exchanger
-
-Shell and tube heat exchanger with two streams.
-
-```java
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.heatexchanger.HeatExchanger;
-import neqsim.process.processmodel.ProcessSystem;
-import neqsim.thermo.system.SystemSrkEos;
-
-// Hot stream (gas to be cooled)
-SystemSrkEos hotFluid = new SystemSrkEos(373.15, 50.0);
-hotFluid.addComponent("methane", 0.9);
-hotFluid.addComponent("ethane", 0.1);
-hotFluid.setMixingRule("classic");
-
-Stream hotStream = new Stream("Hot Gas", hotFluid);
-hotStream.setFlowRate(5000.0, "kg/hr");
-hotStream.setTemperature(100.0, "C");
-hotStream.setPressure(50.0, "bara");
-
-// Cold stream (cooling water)
-SystemSrkEos coldFluid = new SystemSrkEos(293.15, 3.0);
-coldFluid.addComponent("water", 1.0);
-coldFluid.setMixingRule("classic");
-
-Stream coldStream = new Stream("Cooling Water", coldFluid);
-coldStream.setFlowRate(20000.0, "kg/hr");
-coldStream.setTemperature(20.0, "C");
-coldStream.setPressure(3.0, "bara");
-
-// Heat exchanger
-HeatExchanger hx = new HeatExchanger("Gas Cooler");
-hx.setFeedStream(0, hotStream);
-hx.setFeedStream(1, coldStream);
-hx.setUAvalue(5000.0);  // W/K
-
-ProcessSystem process = new ProcessSystem();
-process.add(hotStream);
-process.add(coldStream);
-process.add(hx);
-process.run();
-
-System.out.println("Hot stream outlet T: " + hx.getOutStream(0).getTemperature("C") + " °C");
-System.out.println("Cold stream outlet T: " + hx.getOutStream(1).getTemperature("C") + " °C");
-System.out.println("Duty: " + hx.getDuty() / 1000.0 + " kW");
-```
-
-### Complete Gas Processing Plant
-
-A more complete example with multiple unit operations.
-
-```java
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.valve.ThrottlingValve;
-import neqsim.process.equipment.separator.*;
-import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.heatexchanger.*;
-import neqsim.process.equipment.mixer.StaticMixer;
-import neqsim.process.processmodel.ProcessSystem;
-import neqsim.thermo.system.SystemSrkEos;
-
-// Rich gas feed
-SystemSrkEos richGas = new SystemSrkEos(310.0, 70.0);
-richGas.addComponent("nitrogen", 0.01);
-richGas.addComponent("CO2", 0.02);
-richGas.addComponent("methane", 0.75);
-richGas.addComponent("ethane", 0.10);
-richGas.addComponent("propane", 0.06);
-richGas.addComponent("i-butane", 0.02);
-richGas.addComponent("n-butane", 0.02);
-richGas.addComponent("i-pentane", 0.01);
-richGas.addComponent("n-pentane", 0.01);
-richGas.setMixingRule("classic");
-
-Stream feed = new Stream("Rich Gas Feed", richGas);
-feed.setFlowRate(100000.0, "Sm3/day");
-feed.setTemperature(35.0, "C");
-feed.setPressure(70.0, "bara");
-
-// Inlet scrubber
-Separator inletScrubber = new Separator("Inlet Scrubber", feed);
-
-// Gas cooling
-Cooler gasCooler = new Cooler("Gas Cooler", inletScrubber.getGasOutStream());
-gasCooler.setOutTemperature(-20.0, "C");
-
-// Cold separator (NGL recovery)
-Separator coldSeparator = new Separator("Cold Separator", gasCooler.getOutletStream());
-
-// Sales gas compression
-Compressor salesCompressor = new Compressor("Sales Gas Compressor", coldSeparator.getGasOutStream());
-salesCompressor.setOutletPressure(150.0, "bara");
-salesCompressor.setIsentropicEfficiency(0.75);
-
-// Build and run
-ProcessSystem process = new ProcessSystem();
-process.add(feed);
-process.add(inletScrubber);
-process.add(gasCooler);
-process.add(coldSeparator);
-process.add(salesCompressor);
-process.run();
-
-// Results
-System.out.println("=== Gas Processing Results ===");
-System.out.println("Feed rate: " + feed.getFlowRate("MSm3/day") + " MSm³/day");
-System.out.println("Sales gas rate: " + salesCompressor.getOutletStream().getFlowRate("MSm3/day") + " MSm³/day");
-System.out.println("NGL rate: " + coldSeparator.getLiquidOutStream().getFlowRate("kg/hr") + " kg/hr");
-System.out.println("Compressor power: " + salesCompressor.getPower("MW") + " MW");
-```
-
----
-
-## Pipeline Calculations
-
-Multiphase pipeline pressure drop calculation.
-
-```java
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
-import neqsim.process.processmodel.ProcessSystem;
-import neqsim.thermo.system.SystemSrkEos;
-
-// Multiphase fluid
-SystemSrkEos fluid = new SystemSrkEos(320.0, 80.0);
-fluid.addComponent("methane", 0.75);
-fluid.addComponent("ethane", 0.10);
-fluid.addComponent("propane", 0.08);
-fluid.addComponent("n-pentane", 0.05);
-fluid.addComponent("n-heptane", 0.02);
-fluid.setMixingRule("classic");
-
-Stream inlet = new Stream("Pipeline Inlet", fluid);
-inlet.setFlowRate(50000.0, "kg/hr");
-inlet.setTemperature(45.0, "C");
-inlet.setPressure(80.0, "bara");
-
-// Pipeline
-PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills("Export Pipeline", inlet);
-pipeline.setLength(50000.0);           // 50 km
-pipeline.setDiameter(0.3048);          // 12 inch
-pipeline.setElevation(100.0);          // 100m elevation gain
-pipeline.setPipeWallRoughness(4.5e-5); // Steel pipe
-pipeline.setNumberOfIncrements(20);
-
-ProcessSystem process = new ProcessSystem();
-process.add(inlet);
-process.add(pipeline);
-process.run();
-
-System.out.println("=== Pipeline Results ===");
-System.out.println("Inlet pressure: " + inlet.getPressure("bara") + " bara");
-System.out.println("Outlet pressure: " + pipeline.getOutletStream().getPressure("bara") + " bara");
-System.out.println("Pressure drop: " + (inlet.getPressure("bara") - pipeline.getOutletStream().getPressure("bara")) + " bar");
-System.out.println("Outlet temperature: " + pipeline.getOutletStream().getTemperature("C") + " °C");
-System.out.println("Flow regime: " + pipeline.getFlowRegime());
-System.out.println("Liquid holdup: " + pipeline.getLiquidHoldup());
-```
-
----
-
-## Specialized Equipment
-
-### Wind Turbine
+## Wind turbine
 
 The `WindTurbine` unit converts kinetic energy in wind into electrical power using a simple
 actuator-disk formulation. Air density is assumed constant at 1.225 kg/m³ and all inefficiencies

@@ -53,12 +53,36 @@ double efficiency = pump.getIsentropicEfficiency();
 // By outlet pressure
 pump.setOutletPressure(50.0, "bara");
 
-// By pressure rise
-pump.setPressureRise(30.0, "bara");
-
-// By head
-pump.setHead(300.0, "m");
+// By outlet pressure and temperature (TP flash mode)
+pump.setOutletPressure(50.0, "bara");
+pump.setOutletTemperature(35.0, "C"); // supports "K", "C", "F", "R"
 ```
+
+### Outlet Temperature Mode
+
+When `setOutletTemperature` is called, the pump switches to **TP flash mode**:
+- The isentropic / pump-curve calculation is skipped
+- A TP flash is performed at the specified temperature and outlet pressure
+- Power is **back-calculated** from the enthalpy difference between inlet and outlet
+
+This is useful when discharge conditions are known from plant data or design specifications.
+
+```java
+// Set outlet temperature with unit
+pump.setOutletTemperature(35.0, "C");   // Celsius
+pump.setOutletTemperature(308.15, "K"); // Kelvin
+pump.setOutletTemperature(95.0, "F");   // Fahrenheit
+pump.setOutletTemperature(554.67, "R"); // Rankine
+
+// Or in Kelvin without unit
+pump.setOutletTemperature(308.15);
+
+pump.run();
+double power = pump.getPower("kW"); // back-calculated from enthalpy difference
+```
+
+> **Note:** The legacy method `setOutTemperature(double)` is deprecated.
+> Use `setOutletTemperature(double)` or `setOutletTemperature(double, String)` instead.
 
 ---
 

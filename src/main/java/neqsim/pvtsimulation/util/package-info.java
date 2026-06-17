@@ -14,7 +14,7 @@
  * </ul>
  *
  * <h2>Black Oil Correlations Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Field units (default)
  * double Pb = BlackOilCorrelations.bubblePointStanding(500, 0.8, 35, 200, true);

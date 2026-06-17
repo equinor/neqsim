@@ -2,6 +2,7 @@
 layout: default
 title: Bow-Tie Analysis
 parent: Risk Framework
+description: "Bow-tie risk analysis for process plants using NeqSim. Model threats, barriers, consequences, and top events with BowTieModel class."
 ---
 
 # P4: Bow-Tie Diagram Analysis
@@ -53,19 +54,19 @@ Prevention barriers reduce the likelihood of threats causing the top event:
 
 ```java
 // addPreventionBarrier(id, description, PFD, threatIds[])
-analyzer.addPreventionBarrier("B1", "Corrosion Monitoring Program", 0.1, 
+analyzer.addPreventionBarrier("B1", "Corrosion Monitoring Program", 0.1,
     new String[]{"T1"});
-analyzer.addPreventionBarrier("B2", "Protective Coating", 0.05, 
+analyzer.addPreventionBarrier("B2", "Protective Coating", 0.05,
     new String[]{"T1"});
-analyzer.addPreventionBarrier("B3", "Erosion/Corrosion Monitoring", 0.1, 
+analyzer.addPreventionBarrier("B3", "Erosion/Corrosion Monitoring", 0.1,
     new String[]{"T2"});
-analyzer.addPreventionBarrier("B4", "PAHH + ESD (SIF-001)", 0.01, 
+analyzer.addPreventionBarrier("B4", "PAHH + ESD (SIF-001)", 0.01,
     new String[]{"T3"});
-analyzer.addPreventionBarrier("B5", "PSV Protection", 0.01, 
+analyzer.addPreventionBarrier("B5", "PSV Protection", 0.01,
     new String[]{"T3"});
-analyzer.addPreventionBarrier("B6", "Physical Barriers/Guards", 0.1, 
+analyzer.addPreventionBarrier("B6", "Physical Barriers/Guards", 0.1,
     new String[]{"T4"});
-analyzer.addPreventionBarrier("B7", "Fatigue Monitoring", 0.15, 
+analyzer.addPreventionBarrier("B7", "Fatigue Monitoring", 0.15,
     new String[]{"T5"});
 ```
 
@@ -87,17 +88,17 @@ Mitigation barriers reduce the severity of consequences:
 
 ```java
 // addMitigationBarrier(id, description, PFD, consequenceIds[])
-analyzer.addMitigationBarrier("M1", "Gas Detection System", 0.1, 
+analyzer.addMitigationBarrier("M1", "Gas Detection System", 0.1,
     new String[]{"C1", "C2"});
-analyzer.addMitigationBarrier("M2", "Emergency Shutdown", 0.05, 
+analyzer.addMitigationBarrier("M2", "Emergency Shutdown", 0.05,
     new String[]{"C1", "C2", "C3"});
-analyzer.addMitigationBarrier("M3", "Fire & Gas System", 0.1, 
+analyzer.addMitigationBarrier("M3", "Fire & Gas System", 0.1,
     new String[]{"C1"});
-analyzer.addMitigationBarrier("M4", "Containment Bund", 0.1, 
+analyzer.addMitigationBarrier("M4", "Containment Bund", 0.1,
     new String[]{"C2"});
-analyzer.addMitigationBarrier("M5", "Spare Capacity", 0.5, 
+analyzer.addMitigationBarrier("M5", "Spare Capacity", 0.5,
     new String[]{"C3"});
-analyzer.addMitigationBarrier("M6", "Emergency Response Plan", 0.2, 
+analyzer.addMitigationBarrier("M6", "Emergency Response Plan", 0.2,
     new String[]{"C1", "C2", "C4"});
 ```
 
@@ -108,15 +109,15 @@ BowTieModel model = analyzer.analyze();
 
 // Get overall frequencies
 System.out.println("Top Event: " + model.getTopEvent());
-System.out.println("Unmitigated Frequency: " + 
+System.out.println("Unmitigated Frequency: " +
     model.getUnmitigatedFrequency() + " /year");
-System.out.println("Mitigated Frequency: " + 
+System.out.println("Mitigated Frequency: " +
     model.getMitigatedFrequency() + " /year");
 
 // Analyze each threat path
 for (BowTieModel.Threat threat : model.getThreats()) {
     double reducedFreq = model.getReducedFrequencyForThreat(threat.getId());
-    System.out.println(threat.getDescription() + 
+    System.out.println(threat.getDescription() +
         ": " + threat.getFrequency() + " -> " + reducedFreq);
 }
 
@@ -124,7 +125,7 @@ for (BowTieModel.Threat threat : model.getThreats()) {
 for (BowTieModel.Consequence consequence : model.getConsequences()) {
     double mitigatedRisk = model.getMitigatedRiskForConsequence(
         consequence.getId());
-    System.out.println(consequence.getDescription() + 
+    System.out.println(consequence.getDescription() +
         ": $" + mitigatedRisk + "/year");
 }
 ```
@@ -196,7 +197,7 @@ double withBarrier = model.getReducedFrequencyForThreat("T1");
 double withoutBarrier = model.getThreats().get(0).getFrequency();
 double barrierEffectiveness = 1 - (withBarrier / withoutBarrier);
 
-System.out.println("Barrier reduces frequency by " + 
+System.out.println("Barrier reduces frequency by " +
     (barrierEffectiveness * 100) + "%");
 ```
 
@@ -214,8 +215,8 @@ sif.setFinalElementPFD(0.02);
 
 // Add to bow-tie with calculated PFD
 analyzer.addPreventionBarrier(
-    "B-SIF", 
-    "SIF-001 PAHH Shutdown", 
+    "B-SIF",
+    "SIF-001 PAHH Shutdown",
     sif.calculatePFDavg(),  // Use calculated PFD
     new String[]{"T3"}      // Overpressure threat
 );
@@ -254,7 +255,7 @@ double degradedRisk = degraded.getMitigatedRisk();
 
 System.out.println("Baseline risk: $" + baselineRisk + "/year");
 System.out.println("Risk with B1 failed: $" + degradedRisk + "/year");
-System.out.println("Risk increase: " + 
+System.out.println("Risk increase: " +
     ((degradedRisk - baselineRisk) / baselineRisk * 100) + "%");
 
 // Restore barrier

@@ -42,7 +42,48 @@ class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
     double GCV = standard.getValue("GCV");
     double WI = standard.getValue("WI");
     assertEquals(39612.08330867018, GCV, 0.01);
-    assertEquals(44.61477915805513, WI, 0.01);
+    // WI alias should resolve to SuperiorWobbeIndex (was previously a constant
+    // ~44.6 mol/m3 due to missing alias mapping in getValue()).
+    assertEquals(standard.getValue("SuperiorWobbeIndex"), WI, 1e-9);
+    assertEquals(51698.75555489656, WI, 0.01);
+    assertEquals(WI, standard.getValue("WobbeIndex"), 1e-9);
+  }
+
+  /**
+   * Regression test: getValue("WI") must vary with composition. Previously returned a near-constant
+   * compression-factor / molar-density value because "WI" was not aliased to "SuperiorWobbeIndex".
+   */
+  @Test
+  void testWIAliasVariesWithComposition() {
+    SystemInterface leanGas = new SystemSrkEos(273.15 + 20.0, 1.0);
+    leanGas.addComponent("methane", 0.98);
+    leanGas.addComponent("ethane", 0.02);
+    leanGas.setMixingRule("classic");
+    new ThermodynamicOperations(leanGas).TPflash();
+    Standard_ISO6976_2016 leanStd = new Standard_ISO6976_2016(leanGas, 0, 15.55, "volume");
+    leanStd.setReferenceState("real");
+    leanStd.setReferenceType("volume");
+    leanStd.calculate();
+    double leanWI = leanStd.getValue("WI");
+
+    SystemInterface richGas = new SystemSrkEos(273.15 + 20.0, 1.0);
+    richGas.addComponent("methane", 0.80);
+    richGas.addComponent("ethane", 0.10);
+    richGas.addComponent("propane", 0.10);
+    richGas.setMixingRule("classic");
+    new ThermodynamicOperations(richGas).TPflash();
+    Standard_ISO6976_2016 richStd = new Standard_ISO6976_2016(richGas, 0, 15.55, "volume");
+    richStd.setReferenceState("real");
+    richStd.setReferenceType("volume");
+    richStd.calculate();
+    double richWI = richStd.getValue("WI");
+
+    Assertions.assertTrue(Math.abs(leanWI - richWI) > 1000.0,
+        "WI should differ between lean and rich gas, got lean=" + leanWI + " rich=" + richWI);
+    Assertions.assertTrue(richWI > leanWI,
+        "Rich gas should have higher WI, got lean=" + leanWI + " rich=" + richWI);
+    Assertions.assertTrue(leanWI > 45000.0 && leanWI < 60000.0, "leanWI=" + leanWI);
+    Assertions.assertTrue(richWI > 45000.0 && richWI < 60000.0, "richWI=" + richWI);
   }
 
   /**

@@ -125,7 +125,13 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     /** Discharge (blowdown). */
     DISCHARGE,
     /** Filling (pressurization). */
-    FILLING
+    FILLING,
+    /**
+     * Idle (no flow). The vessel holds its contents with zero mass flow while still exchanging heat
+     * with the ambient environment. Use this mode to simulate transport or storage phases where the
+     * tank is disconnected from supply and delivery lines.
+     */
+    IDLE
   }
 
   /**
@@ -140,10 +146,9 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
      * Stefan-Boltzmann radiation model applied to outer wall boundary.
      *
      * <p>
-     * Net fire flux as function of outer wall temperature:
-     * q_fire = absorptivity * flameEmissivity * sigma * T_flame^4
-     *        + fireConvectionCoeff * (T_flame - T_wall)
-     *        - surfaceEmissivity * sigma * T_wall^4
+     * Net fire flux as function of outer wall temperature: q_fire = absorptivity * flameEmissivity
+     * * sigma * T_flame^4 + fireConvectionCoeff * (T_flame - T_wall) - surfaceEmissivity * sigma *
+     * T_wall^4
      * </p>
      */
     STEFAN_BOLTZMANN
@@ -376,7 +381,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   private SystemInterface thermoSystem;
   private StreamInterface outletStream;
   private double wallTemperature;
-  private TransientWallHeatTransfer wallModel;
+  private transient TransientWallHeatTransfer wallModel;
   private double currentTime = 0.0;
 
   // Two-phase modeling support
@@ -385,8 +390,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   private double initialBeta = 1.0; // Initial vapor fraction from feed stream
   private double gasWallTemperature;
   private double liquidWallTemperature;
-  private TransientWallHeatTransfer gasWallModel;
-  private TransientWallHeatTransfer liquidWallModel;
+  private transient TransientWallHeatTransfer gasWallModel;
+  private transient TransientWallHeatTransfer liquidWallModel;
   private double liquidVolumeFraction = 0.0;
 
   // History for output
@@ -978,8 +983,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Sets a preset fire type with standard parameters.
    *
    * <p>
-   * Automatically configures the Stefan-Boltzmann fire model with industry-standard parameters
-   * and calculates the flame temperature from the incident heat flux.
+   * Automatically configures the Stefan-Boltzmann fire model with industry-standard parameters and
+   * calculates the flame temperature from the incident heat flux.
    * </p>
    *
    * @param type Preset fire type (SCANDPOWER_JET, SCANDPOWER_POOL, API_JET, API_POOL)
@@ -1076,15 +1081,13 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Calculates the net fire heat flux at the outer wall surface using the Stefan-Boltzmann model.
    *
    * <p>
-   * The net heat flux is:
-   * q_fire = alpha_s * epsilon_f * sigma * T_f^4
-   *        + h_f * (T_f - T_wall)
-   *        - epsilon_s * sigma * T_wall^4
+   * The net heat flux is: q_fire = alpha_s * epsilon_f * sigma * T_f^4 + h_f * (T_f - T_wall) -
+   * epsilon_s * sigma * T_wall^4
    * </p>
    *
    * <p>
-   * This models the combined radiation from the fire (absorbed by the wall), convection from
-   * the fire, and re-radiation from the hot wall surface back to the surroundings.
+   * This models the combined radiation from the fire (absorbed by the wall), convection from the
+   * fire, and re-radiation from the hot wall surface back to the surroundings.
    * </p>
    *
    * @param outerWallTemperatureK Outer wall surface temperature [K]
@@ -1097,8 +1100,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double radiationIn =
         surfaceAbsorptivity * flameEmissivity * STEFAN_BOLTZMANN * Math.pow(flameTemperature, 4);
     double convectionIn = fireConvectionCoeff * (flameTemperature - outerWallTemperatureK);
-    double reRadiation =
-        surfaceEmissivity * STEFAN_BOLTZMANN * Math.pow(outerWallTemperatureK, 4);
+    double reRadiation = surfaceEmissivity * STEFAN_BOLTZMANN * Math.pow(outerWallTemperatureK, 4);
     return radiationIn + convectionIn - reRadiation;
   }
 
@@ -1106,21 +1108,17 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Calculates the flame temperature from the incident heat flux.
    *
    * <p>
-   * Uses Newton-Raphson iteration to solve:
-   * q_incident = alpha_s * epsilon_f * sigma * T_f^4 + h_f * (T_f - T_ref)
-   * for T_f, where T_ref is the ambient temperature.
+   * Uses Newton-Raphson iteration to solve: q_incident = alpha_s * epsilon_f * sigma * T_f^4 + h_f
+   * * (T_f - T_ref) for T_f, where T_ref is the ambient temperature.
    * </p>
    */
   private void calculateFlameTemperature() {
     double Tref = ambientTemperature;
     double Tf = 900.0; // Initial guess [K]
     for (int iter = 0; iter < 100; iter++) {
-      double f =
-          surfaceAbsorptivity * flameEmissivity * STEFAN_BOLTZMANN * Math.pow(Tf, 4)
-          + fireConvectionCoeff * (Tf - Tref)
-          - incidentHeatFlux;
-      double df =
-          4.0 * surfaceAbsorptivity * flameEmissivity * STEFAN_BOLTZMANN * Math.pow(Tf, 3)
+      double f = surfaceAbsorptivity * flameEmissivity * STEFAN_BOLTZMANN * Math.pow(Tf, 4)
+          + fireConvectionCoeff * (Tf - Tref) - incidentHeatFlux;
+      double df = 4.0 * surfaceAbsorptivity * flameEmissivity * STEFAN_BOLTZMANN * Math.pow(Tf, 3)
           + fireConvectionCoeff;
       double dT = f / df;
       Tf -= dT;
@@ -1336,6 +1334,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    *
    * @return Pressure [Pa]
    */
+  @Override
   public double getPressure() {
     return thermoSystem.getPressure() * 1e5; // bar to Pa
   }
@@ -1346,6 +1345,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * @param unit Pressure unit ("Pa", "bar", "bara", "barg", "psi")
    * @return Pressure in specified unit
    */
+  @Override
   public double getPressure(String unit) {
     double pPa = getPressure();
     switch (unit.toLowerCase()) {
@@ -1366,6 +1366,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    *
    * @return Temperature [K]
    */
+  @Override
   public double getTemperature() {
     return thermoSystem.getTemperature();
   }
@@ -1376,6 +1377,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * @param unit Temperature unit ("K", "C", "F")
    * @return Temperature in specified unit
    */
+  @Override
   public double getTemperature(String unit) {
     double tK = getTemperature();
     switch (unit.toUpperCase()) {
@@ -1398,6 +1400,21 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       return wallModel.getInnerWallTemperature();
     }
     return wallTemperature;
+  }
+
+  /**
+   * Sets the initial wall temperature and re-initializes the wall model. Use this method to chain
+   * consecutive simulations (e.g. filling &rarr; transport &rarr; emptying) where the wall
+   * temperature at the start of one phase equals the wall temperature at the end of the previous
+   * phase.
+   *
+   * @param temperatureK Initial wall temperature [K]
+   */
+  public void setInitialWallTemperature(double temperatureK) {
+    this.wallTemperature = temperatureK;
+    this.gasWallTemperature = temperatureK;
+    this.liquidWallTemperature = temperatureK;
+    initializeWallModel();
   }
 
   /**
@@ -1636,6 +1653,11 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * @return Mass flow rate [kg/s] (positive for discharge)
    */
   private double calculateMassFlowRate() {
+    // IDLE mode: no mass flow, only heat exchange with ambient
+    if (flowDirection == FlowDirection.IDLE) {
+      return 0.0;
+    }
+
     // If a fixed flow rate is specified, use it directly
     if (useFixedFlowRate) {
       return (flowDirection == FlowDirection.DISCHARGE) ? fixedMassFlowRate : -fixedMassFlowRate;
@@ -2352,7 +2374,10 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
         case ENERGY_BALANCE:
           // Full energy balance: U_new = U_old - mdot*h_out*dt + Q*dt
           double hOut;
-          if (flowDirection == FlowDirection.DISCHARGE) {
+          if (flowDirection == FlowDirection.IDLE) {
+            // IDLE: no mass flow, only heat exchange
+            hOut = 0.0;
+          } else if (flowDirection == FlowDirection.DISCHARGE) {
             // Gas leaving carries its own specific enthalpy
             hOut = initialH / initialMass;
           } else {
@@ -2633,6 +2658,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    *
    * @return The thermodynamic system
    */
+  @Override
   public SystemInterface getThermoSystem() {
     return thermoSystem;
   }
@@ -2844,7 +2870,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
 
     for (double t = dt; t <= endTime + dt / 2; t += dt) {
       // Check target pressure stop condition
-      if (!Double.isNaN(targetPressure)) {
+      if (!Double.isNaN(targetPressure) && flowDirection != FlowDirection.IDLE) {
         double currentP = thermoSystem.getPressure() * 1e5;
         if (flowDirection == FlowDirection.FILLING && currentP >= targetPressure) {
           targetPressureReached = true;

@@ -6,26 +6,26 @@ import neqsim.util.validation.ValidationResult;
 
 /**
  * Contract for process streams.
- * 
+ *
  * <p>
  * Defines requirements and guarantees for {@link StreamInterface} implementations. AI agents can
  * use this contract to validate stream setup before connecting to equipment.
  * </p>
- * 
+ *
  * <h2>Preconditions (what the stream needs):</h2>
  * <ul>
  * <li>Valid thermodynamic system attached</li>
  * <li>Flow rate &gt; 0</li>
  * <li>Valid name for identification</li>
  * </ul>
- * 
+ *
  * <h2>Postconditions (what run() provides):</h2>
  * <ul>
  * <li>Calculated outlet conditions</li>
  * <li>Phase equilibrium (if flash performed)</li>
  * <li>Stream properties accessible via getFluid()</li>
  * </ul>
- * 
+ *
  * @author NeqSim
  * @version 1.0
  */
@@ -40,7 +40,7 @@ public class StreamContract implements ModuleContract<StreamInterface> {
 
   /**
    * Get the singleton instance.
-   * 
+   *
    * @return contract instance
    */
   public static StreamContract getInstance() {

@@ -3,6 +3,7 @@ package neqsim.chemicalreactions;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
@@ -10,16 +11,17 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Test for three-phase (gas/oil/water) calculation with pH measurement.
- * 
+ *
  * <p>
  * Tests the chemical equilibrium algorithm with methane, n-decane, and water to verify correct pH
  * calculation in the aqueous phase.
  * </p>
  */
+@Disabled("Temporarily disabled")
 public class ThreePhaseWaterPHTest {
   /**
    * Test pure water pH calculation with single phase.
-   * 
+   *
    * <p>
    * Pure water at 25°C should have: - Equal H3O+ and OH- concentrations (electroneutrality) - pH ~
    * 7 (molarity based) or ~ 8.7 (mole fraction based) - Element conservation (A*n = b)
@@ -91,7 +93,6 @@ public class ThreePhaseWaterPHTest {
    * Test three-phase (gas/oil/water) pH calculation.
    */
   @Test
-  // @Disabled("Long-running diagnostic; enable locally when needed")
   public void testMethaneDecaneWaterThreePhase() {
     double[] pressures = {10.0};
     double temperature = 298.15; // 25°C

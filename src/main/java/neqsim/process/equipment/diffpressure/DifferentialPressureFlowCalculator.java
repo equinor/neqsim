@@ -144,9 +144,9 @@ public final class DifferentialPressureFlowCalculator {
     SystemInterface baseSystem = createBaseSystem(componentList, fractionArray, normalizeFractions);
     double molecularWeight = baseSystem.getMolarMass() * 1000.0;
 
-    SystemInterface actualSystem = (SystemInterface) baseSystem.clone();
-    SystemInterface standardSystem = (SystemInterface) baseSystem.clone();
-    SystemInterface zeroPressureSystem = (SystemInterface) baseSystem.clone();
+    SystemInterface actualSystem = baseSystem.clone();
+    SystemInterface standardSystem = baseSystem.clone();
+    SystemInterface zeroPressureSystem = baseSystem.clone();
 
     double standardDensity = calculateStandardDensity(standardSystem);
 
@@ -702,7 +702,7 @@ public final class DifferentialPressureFlowCalculator {
     setState(system, temperatureKelvin, pressureAbar);
     double density = system.getDensity("kg/m3");
 
-    SystemInterface zeroPressureSystem = (SystemInterface) system.clone();
+    SystemInterface zeroPressureSystem = system.clone();
     setState(zeroPressureSystem, temperatureKelvin, DEFAULT_STANDARD_PRESSURE_BARA);
     double kappa = zeroPressureSystem.getGamma();
 

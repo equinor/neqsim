@@ -129,11 +129,11 @@ public class HaydukMinhasDiffusivity extends Diffusivity {
       return molarMass / normalLiquidDensity;
     }
 
-    // Fallback: estimate from critical volume
-    double Vc = liquidPhase.getPhase().getComponent(i).getCriticalVolume(); // m³/mol
+    // Fallback: estimate from critical volume using Tyn-Calus method
+    // getCriticalVolume() returns cm³/mol
+    double Vc = liquidPhase.getPhase().getComponent(i).getCriticalVolume();
     if (Vc > 0) {
-      // Convert m³/mol to cm³/mol and apply Rackett-type factor
-      return Vc * 1e6 / 0.285;
+      return 0.285 * Math.pow(Vc, 1.048);
     }
 
     // Default estimate based on molar mass (rough approximation)

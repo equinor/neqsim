@@ -2,6 +2,7 @@
 layout: default
 title: Risk Simulation Framework
 nav_order: 7
+description: "NeqSim risk and reliability simulation framework. Covers equipment failure modeling, Monte Carlo simulation, bow-tie analysis, SIS integration, risk matrix, and production impact analysis."
 ---
 
 # Risk Simulation Framework Documentation
@@ -115,9 +116,9 @@ topology.setFunctionalLocation("Compressor A", "1775-KA-23011A")
 
 # Risk matrix
 matrix = RiskMatrix()
-matrix.addRiskItem("Compressor Trip", 
+matrix.addRiskItem("Compressor Trip",
     RiskMatrix.ProbabilityCategory.POSSIBLE,
-    RiskMatrix.ConsequenceCategory.MAJOR, 
+    RiskMatrix.ConsequenceCategory.MAJOR,
     500000.0)
 print(matrix.toVisualization())
 ```

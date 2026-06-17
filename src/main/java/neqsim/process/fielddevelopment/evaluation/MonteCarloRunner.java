@@ -28,7 +28,7 @@ import neqsim.process.fielddevelopment.economics.CashFlowEngine.CashFlowResult;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * MonteCarloRunner mc = new MonteCarloRunner(cashFlowEngine);
@@ -542,7 +542,7 @@ public class MonteCarloRunner implements Serializable {
         double pi = totalCapex > 0 ? (cfResult.getNpv() / totalCapex) + 1.0 : 0.0;
         result.setProfitabilityIndex(pi);
         result.setConverged(true);
-        convergedCount++;;
+        convergedCount++;
       } catch (Exception e) {
         logger.debug("Iteration {} failed: {}", i, e.getMessage());
         result.setConverged(false);

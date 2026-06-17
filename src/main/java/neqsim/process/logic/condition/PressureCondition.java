@@ -6,17 +6,17 @@ import neqsim.process.logic.LogicCondition;
 
 /**
  * Condition that checks if pressure meets a specified criteria.
- * 
+ *
  * <p>
  * Supports comparison operators: &gt;, &gt;=, &lt;, &lt;=, ==, !=
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * // Check if pressure is above 5 bara
  * PressureCondition minPressure = new PressureCondition(stream, 5.0, "&gt;");
- * 
+ *
  * // Check if pressure is stable at 10 bara (within tolerance)
  * PressureCondition stable = new PressureCondition(stream, 10.0, "==", 0.5);
  * </pre>

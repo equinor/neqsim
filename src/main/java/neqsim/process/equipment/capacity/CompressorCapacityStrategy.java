@@ -93,7 +93,7 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
 
     // Check if compressor implements CapacityConstrainedEquipment
     if (comp instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) comp).getMaxUtilization();
+      return comp.getMaxUtilization();
     }
 
     // Fallback: use power utilization
@@ -162,7 +162,7 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If compressor already implements CapacityConstrainedEquipment, use its constraints
     if (comp instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) comp).getCapacityConstraints();
+      return comp.getCapacityConstraints();
     }
 
     // Otherwise, build constraints manually

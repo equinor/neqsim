@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
-import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -83,6 +82,9 @@ public class ProducedWaterTreatmentTrain extends ProcessEquipmentBaseClass {
 
   // Calculated values
   private boolean isCompliant = false;
+
+  /** Demulsifier dose optimizer and monthly OIW decision-support facade. */
+  private OilInWaterDoseOptimizer oilInWaterDoseOptimizer = new OilInWaterDoseOptimizer();
 
   // ============================================================================
   // CONSTRUCTORS
@@ -181,6 +183,43 @@ public class ProducedWaterTreatmentTrain extends ProcessEquipmentBaseClass {
         return;
       }
     }
+  }
+
+  /**
+   * Gets the oil-in-water demulsifier dose optimizer for this treatment train.
+   *
+   * @return optimizer instance
+   */
+  public OilInWaterDoseOptimizer getOilInWaterDoseOptimizer() {
+    if (oilInWaterDoseOptimizer == null) {
+      oilInWaterDoseOptimizer = new OilInWaterDoseOptimizer();
+    }
+    return oilInWaterDoseOptimizer;
+  }
+
+  /**
+   * Sets the oil-in-water demulsifier dose optimizer for this treatment train.
+   *
+   * @param optimizer optimizer instance
+   */
+  public void setOilInWaterDoseOptimizer(OilInWaterDoseOptimizer optimizer) {
+    if (optimizer != null) {
+      this.oilInWaterDoseOptimizer = optimizer;
+    }
+  }
+
+  /**
+   * Recommends a demulsifier dose using the configured optimizer.
+   *
+   * @param untreatedOilInWaterMgL untreated or pre-chemical OIW concentration in mg/L
+   * @param waterRateM3h produced-water flow rate in m3/h
+   * @param dayOfMonth current day of month, starting at 1
+   * @return dose recommendation
+   */
+  public OilInWaterDoseOptimizer.DoseRecommendation recommendDemulsifierDose(
+      double untreatedOilInWaterMgL, double waterRateM3h, int dayOfMonth) {
+    return getOilInWaterDoseOptimizer().recommendDose(untreatedOilInWaterMgL, waterRateM3h,
+        dayOfMonth);
   }
 
   // ============================================================================

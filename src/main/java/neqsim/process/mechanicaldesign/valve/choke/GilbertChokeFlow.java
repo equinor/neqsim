@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * <b>Gilbert Equation:</b>
  * </p>
- * 
+ *
  * <pre>
  * q_L = (P_wh * d ^ 1.89) / (C * GLR ^ 0.546)
  * </pre>
@@ -97,7 +97,6 @@ public class GilbertChokeFlow extends MultiphaseChokeFlow {
    * Default constructor using Gilbert's original constants.
    */
   public GilbertChokeFlow() {
-    super();
     this.dischargeCoefficient = 1.0; // Already embedded in correlation constant
     setCorrelationType(CorrelationType.GILBERT);
   }
@@ -119,7 +118,6 @@ public class GilbertChokeFlow extends MultiphaseChokeFlow {
    * @param correlationType the correlation variant to use
    */
   public GilbertChokeFlow(CorrelationType correlationType) {
-    super();
     this.dischargeCoefficient = 1.0;
     setCorrelationType(correlationType);
   }

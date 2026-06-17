@@ -28,17 +28,17 @@ import org.apache.logging.log4j.Logger;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * DevelopmentOptionRanker ranker = new DevelopmentOptionRanker();
- * 
+ *
  * // Define criteria weights
  * ranker.setWeight(Criterion.NPV, 0.25);
  * ranker.setWeight(Criterion.CO2_INTENSITY, 0.15);
  * ranker.setWeight(Criterion.TECHNICAL_RISK, 0.20);
  * ranker.setWeight(Criterion.STRATEGIC_FIT, 0.15);
  * ranker.setWeight(Criterion.EXECUTION_RISK, 0.25);
- * 
+ *
  * // Add development options
  * DevelopmentOption opt1 = ranker.addOption("FPSO Development");
  * opt1.setScore(Criterion.NPV, 850.0); // MUSD
@@ -46,14 +46,14 @@ import org.apache.logging.log4j.Logger;
  * opt1.setScore(Criterion.TECHNICAL_RISK, 0.7); // 0-1, higher=riskier
  * opt1.setScore(Criterion.STRATEGIC_FIT, 0.9); // 0-1
  * opt1.setScore(Criterion.EXECUTION_RISK, 0.6);
- * 
+ *
  * DevelopmentOption opt2 = ranker.addOption("Tieback to Platform A");
  * opt2.setScore(Criterion.NPV, 420.0);
  * opt2.setScore(Criterion.CO2_INTENSITY, 8.0);
  * opt2.setScore(Criterion.TECHNICAL_RISK, 0.3);
  * opt2.setScore(Criterion.STRATEGIC_FIT, 0.7);
  * opt2.setScore(Criterion.EXECUTION_RISK, 0.3);
- * 
+ *
  * // Rank options
  * RankingResult result = ranker.rank();
  * System.out.println(result.generateReport());

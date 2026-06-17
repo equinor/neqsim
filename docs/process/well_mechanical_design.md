@@ -1,6 +1,6 @@
 ---
 title: "Well Mechanical Design"
-description: "Subsea well casing and tubing mechanical design, well barrier verification per NORSOK D-010, and drilling cost estimation using WellMechanicalDesign, WellDesignCalculator, and WellCostEstimator."
+description: "Subsea well casing and tubing mechanical design, standards-based barrier verification per NORSOK D-010, MAASP calculation per API RP 90, and drilling cost estimation using WellMechanicalDesign, WellDesignCalculator, WellBarrierSchematic, and WellCostEstimator."
 ---
 
 # Well Mechanical Design
@@ -18,17 +18,26 @@ NeqSim's mechanical design framework:
 SubseaWell (equipment)
 └── WellMechanicalDesign (design orchestration)
     ├── WellDesignCalculator (casing/tubing engineering)
+    ├── WellMechanicalDesignDataSource (CSV standards loader)
+    ├── WellBarrierSchematic (NORSOK D-010 two-barrier verification)
+    │   ├── BarrierEnvelope (primary / secondary)
+    │   │   └── BarrierElement (individual barrier components)
+    │   └── Validation logic (element counts, DHSV/ISV, annulus monitoring)
     └── WellCostEstimator (drilling & completion costs)
 ```
 
+Design factors, barrier requirements, and MAASP parameters are loaded from
+CSV standards databases at runtime — no magic numbers in code.
+
 ### Applicable Standards
 
-| Standard | Scope |
-|----------|-------|
-| NORSOK D-010 | Well integrity, two-barrier principle, design factors |
-| API 5CT / ISO 11960 | Casing and tubing grades and properties |
-| API Bull 5C3 | Burst, collapse, and tension formulas |
-| API RP 90 | Annular casing pressure management |
+| Standard | Scope | CSV Data File |
+|----------|-------|---------------|
+| NORSOK D-010 Rev 5 | Well integrity, two-barrier principle, design factors | `norsok_standards.csv` |
+| API 5CT / ISO 11960 | Casing and tubing grades and properties | `CasingProperties.csv` |
+| API Bull 5C3 / TR 5C3 | Burst, collapse, and tension formulas | `api_standards.csv` |
+| API RP 90 | Annular casing pressure management, MAASP | `api_standards.csv` |
+| ISO 16530-1 | Well integrity lifecycle governance | `dnv_iso_en_standards.csv` |
 
 ### Minimum Design Factors (NORSOK D-010)
 
@@ -196,25 +205,179 @@ Map<String, Object> results = calc.toMap();
 
 ## Well Barrier Verification
 
-Per NORSOK D-010, subsea wells must maintain two independent well barriers.
-`WellMechanicalDesign.calcDesign()` automatically verifies:
+NeqSim implements well barrier verification per NORSOK D-010 using a structured
+three-class model: `BarrierElement` → `BarrierEnvelope` → `WellBarrierSchematic`.
 
-1. **Primary barrier** requires minimum 2 elements
-2. **Secondary barrier** requires minimum 2 elements
-3. **DHSV (SSSV)** required for subsea production wells
-4. **Annular pressure monitoring** noted as required
+### Barrier Elements (NORSOK D-010 Section 4)
+
+A `BarrierElement` is an independent physical component that prevents uncontrolled
+flow. Each element has a type, functional status, and verification status.
 
 ```java
-design.calcDesign();
+BarrierElement dhsv = new BarrierElement(BarrierElement.ElementType.DHSV, "DHSV");
+dhsv.setStatus(BarrierElement.Status.INTACT);
+dhsv.setVerified(true);
+dhsv.setInstallationDepth(500.0);
 
-if (design.isBarrierVerificationPassed()) {
+System.out.println(dhsv.isFunctional());  // true (INTACT or DEGRADED)
+```
+
+**Supported element types** (18 types per NORSOK D-010 Figure 3, Tables 20/36/37):
+
+| Type | Description | Typical Envelope |
+|------|-------------|-----------------|
+| `CASING` | Production casing | Secondary |
+| `TUBING` | Tubing string | Primary |
+| `PACKER` | Production packer | Primary |
+| `DHSV` | Downhole safety valve (SSSV) | Primary (producer) |
+| `ISV` | Injection safety valve | Primary (injector) |
+| `WELLHEAD` | Wellhead and tubing hanger | Both |
+| `XMAS_TREE` | Christmas tree | Primary |
+| `CEMENT` | Cement (primary or secondary) | Secondary |
+| `CASING_CEMENT` | Cement behind production casing | Secondary |
+| `FORMATION` | Competent caprock | Secondary |
+| `PLUG` | Bridge/cement plug | Either |
+| `WING_VALVE` | Wing valve (WV/PWV) | Primary |
+| `SWAB_VALVE` | Swab valve | Primary |
+| `ASV` | Annular safety valve | Secondary |
+| `KILL_VALVE` | Kill valve | Secondary |
+| `GAUGE` | Downhole gauge | — |
+| `ANNULUS_ACCESS_VALVE` | Annulus access valve | Secondary |
+| `CHEMICAL_INJECTION_VALVE` | Chemical injection valve | — |
+
+### Barrier Envelopes (NORSOK D-010 Section 5)
+
+A `BarrierEnvelope` groups elements into a complete pressure-containing boundary:
+
+```java
+BarrierEnvelope primary = new BarrierEnvelope("Primary");
+primary.addElement(new BarrierElement(BarrierElement.ElementType.TUBING, "Tubing"));
+primary.addElement(new BarrierElement(BarrierElement.ElementType.DHSV, "DHSV"));
+primary.addElement(new BarrierElement(BarrierElement.ElementType.XMAS_TREE, "Xmas Tree"));
+
+boolean intact = primary.isIntact();              // true if all elements functional
+boolean meets = primary.meetsMinimum(2);          // true if >= 2 functional elements
+int functional = primary.getFunctionalElementCount();
+boolean hasDhsv = primary.hasElementType(BarrierElement.ElementType.DHSV);
+```
+
+### Barrier Schematic (Two-Barrier Principle)
+
+The `WellBarrierSchematic` validates the complete barrier arrangement:
+
+```java
+WellBarrierSchematic schematic = new WellBarrierSchematic();
+schematic.setWellType("OIL_PRODUCER");
+
+schematic.setPrimaryEnvelope(primary);
+schematic.setSecondaryEnvelope(secondary);
+
+schematic.validate();
+
+if (schematic.isPassed()) {
     System.out.println("Two-barrier principle satisfied");
 } else {
-    for (String note : design.getBarrierNotes()) {
-        System.out.println(note);
+    for (String issue : schematic.getIssues()) {
+        System.out.println(issue);
     }
 }
 ```
+
+**Automatic validation checks:**
+
+| Check | Requirement | Standard |
+|-------|-------------|----------|
+| Primary element count | ≥ 2 functional elements | NORSOK D-010 Sec 5 |
+| Secondary element count | ≥ 2 functional elements | NORSOK D-010 Sec 5 |
+| DHSV present (producers) | Required in primary envelope | NORSOK D-010 Table 20 |
+| ISV present (injectors) | Required in primary envelope | NORSOK D-010 Table 36 |
+| Annulus monitoring | Required | API RP 90 |
+| Envelope integrity | All elements must be functional | NORSOK D-010 |
+
+### Automatic Barrier Construction
+
+When `WellMechanicalDesign.calcDesign()` runs, it automatically builds barrier
+envelopes from the `SubseaWell` configuration:
+
+- **Primary envelope:** tubing, DHSV (producer) or ISV (injector), wellhead, tree
+- **Secondary envelope:** casing, cement, wellhead
+- Extra elements are added based on `primaryBarrierElements` / `secondaryBarrierElements` counts
+
+```java
+// Runs automatically during calcDesign()
+design.calcDesign();
+
+WellBarrierSchematic schematic = design.getBarrierSchematic();
+Map<String, Object> barrierMap = schematic.toMap();
+// Contains element-level detail: type, status, verified, installation depth
+```
+
+### Legacy Barrier Verification
+
+For backward compatibility, the count-based barrier verification still works
+when no schematic is configured:
+
+```java
+well.setPrimaryBarrierElements(3);
+well.setSecondaryBarrierElements(3);
+well.setHasDHSV(true);
+
+design.calcDesign();
+boolean passed = design.isBarrierVerificationPassed();
+```
+
+## Standards-Based Design Data
+
+Design factors and requirements are loaded from CSV databases at runtime via
+`WellMechanicalDesignDataSource`. This eliminates hardcoded magic numbers and
+allows company/project-specific overrides.
+
+### How It Works
+
+```java
+// WellMechanicalDesign.readDesignSpecifications() does this automatically:
+WellMechanicalDesignDataSource dataSource = new WellMechanicalDesignDataSource();
+
+// 1. Load NORSOK D-010 design factors from CSV
+dataSource.loadNorskD010DesignFactors(calculator, isInjectionWell);
+// Sets: burstDF=1.10, collapseDF=1.00 (or 1.10 for injectors), tensionDF=1.60, vmeDF=1.25
+
+// 2. Load barrier requirements from CSV
+Map<String, Double> barriers = dataSource.loadBarrierRequirements();
+// Returns: minPrimaryElements, minSecondaryElements, dhsvRequired, isvRequiredInjector, ...
+
+// 3. Load API RP 90 MAASP parameters
+Map<String, Double> maasp = dataSource.loadApiRp90Parameters();
+// Returns: safetyFactor, collapseFactor, pressureTolerance, decayTestDuration, maxDecayRate
+
+// 4. Load ISO 16530 lifecycle requirements
+Map<String, Double> lifecycle = dataSource.loadIso16530Requirements();
+// Returns: integrityTestInterval, barrierVerificationInterval, cementEvaluationRequired
+```
+
+### CSV Standards Files
+
+The well design data comes from these standards CSV files in `src/main/resources/designdata/standards/`:
+
+| File | Standards | Example Specifications |
+|------|----------|----------------------|
+| `norsok_standards.csv` | NORSOK D-010 | BurstDesignFactor, CollapseDesignFactor, MinPrimaryBarrierElements, DHSVRequired |
+| `api_standards.csv` | API RP 90, API TR 5C3 | MAASPSafetyFactor, BarlowBurstFormula, MaxPressureDecayRate |
+| `dnv_iso_en_standards.csv` | ISO 16530-1 | WellIntegrityTestInterval, BarrierVerificationInterval |
+
+### Production vs. Injection Design Factors
+
+The data source automatically selects the right design factors based on well type:
+
+| Factor | Production Well | Injection Well | Source |
+|--------|----------------|----------------|--------|
+| Burst DF | 1.10 | 1.10 | NORSOK D-010 Table 18 |
+| Collapse DF | 1.00 | **1.10** | NORSOK D-010 Table 18 |
+| Tension DF | 1.60 | 1.60 | NORSOK D-010 Table 18 |
+| Triaxial (VME) DF | 1.25 | 1.25 | NORSOK D-010 |
+
+Note: injection wells use a higher collapse design factor (1.10 vs 1.00)
+because reversed pressure loads during shut-in can create collapse scenarios.
 
 ## Cost Estimation
 
@@ -349,9 +512,14 @@ FieldDevelopmentCostReport report = costEst.estimateDevelopmentCosts();
 | Class | Package | Purpose |
 |-------|---------|---------|
 | `SubseaWell` | `neqsim.process.equipment.subsea` | Equipment class with well engineering properties |
-| `WellMechanicalDesign` | `neqsim.process.mechanicaldesign.subsea` | Design orchestration, barrier verification |
+| `WellMechanicalDesign` | `neqsim.process.mechanicaldesign.subsea` | Design orchestration, barrier verification, JSON reporting |
 | `WellDesignCalculator` | `neqsim.process.mechanicaldesign.subsea` | Casing/tubing burst, collapse, tension calculations |
+| `WellMechanicalDesignDataSource` | `neqsim.process.mechanicaldesign.subsea` | Loads design factors from CSV standards databases |
+| `BarrierElement` | `neqsim.process.mechanicaldesign.subsea` | Single barrier element (type, status, depth) |
+| `BarrierEnvelope` | `neqsim.process.mechanicaldesign.subsea` | Ordered collection of elements forming one envelope |
+| `WellBarrierSchematic` | `neqsim.process.mechanicaldesign.subsea` | Primary + secondary envelopes with NORSOK D-010 validation |
 | `WellCostEstimator` | `neqsim.process.mechanicaldesign.subsea` | Drilling & completion cost estimation |
+| `AnnularLeakagePath` | `neqsim.process.equipment.reservoir` | Annular leakage + MAASP calculation per API RP 90 |
 
 ## Data Files
 
@@ -359,9 +527,13 @@ FieldDevelopmentCostReport report = costEst.estimateDevelopmentCosts();
 |------|------|---------|
 | `WellCostData.csv` | `src/main/resources/designdata/` | Well cost parameters by type and rig |
 | `CasingProperties.csv` | `src/main/resources/designdata/` | API 5CT casing grade properties (SMYS, SMTS) |
+| `norsok_standards.csv` | `src/main/resources/designdata/standards/` | NORSOK D-010 design factors, barrier requirements |
+| `api_standards.csv` | `src/main/resources/designdata/standards/` | API RP 90 MAASP parameters, API TR 5C3 burst formula |
+| `dnv_iso_en_standards.csv` | `src/main/resources/designdata/standards/` | ISO 16530-1 lifecycle requirements |
 
 ## Related Documentation
 
+- [Out-of-Zone Injection](out_of_zone_injection.md) - Multi-zone injection, leakage, MAASP
 - [SURF Subsea Equipment](SURF_SUBSEA_EQUIPMENT) - PLET, PLEM, manifolds, trees, jumpers, umbilicals
 - [Mechanical Design Framework](mechanical_design) - Architecture and JSON export
 - [Mechanical Design Standards](mechanical_design_standards) - Industry standards reference

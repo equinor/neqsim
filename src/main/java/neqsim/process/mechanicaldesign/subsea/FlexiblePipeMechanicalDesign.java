@@ -312,6 +312,7 @@ public class FlexiblePipeMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate cost estimate for the flexible pipe.
    */
+  @Override
   public void calculateCostEstimate() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
@@ -356,6 +357,7 @@ public class FlexiblePipeMechanicalDesign extends MechanicalDesign {
    *
    * @return list of BOM items
    */
+  @Override
   public List<Map<String, Object>> generateBillOfMaterials() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();

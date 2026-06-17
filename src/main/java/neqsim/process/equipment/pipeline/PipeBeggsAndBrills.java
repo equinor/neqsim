@@ -12,7 +12,6 @@ import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Pipeline simulation using Beggs and Brill empirical correlations for multiphase flow.
@@ -577,7 +576,21 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   private boolean runAdiabatic = true;
   private boolean runConstantSurfaceTemperature = false;
 
-  private double constantSurfaceTemperature;
+  private double constantSurfaceTemperature = 288.15;
+
+  /**
+   * Formation (geothermal) temperature gradient in K/m. When set to a positive value, the surface
+   * temperature varies with depth along the pipe: T_surface(depth) = surfaceTemperatureAtInlet +
+   * gradient * depth. For injection wells (negative elevation), depth increases downward. For
+   * production wells or risers, depth decreases upward.
+   */
+  private double formationTemperatureGradient = 0.0;
+
+  /**
+   * Surface (formation) temperature at the inlet of the pipe in Kelvin. Used together with
+   * {@link #formationTemperatureGradient} to compute a depth-dependent boundary temperature.
+   */
+  private double surfaceTemperatureAtInlet = Double.NaN;
 
   private double heatTransferCoefficient;
 
@@ -663,6 +676,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * @param nominalDiameter a double in inch
    * @param pipeSec a {@link java.lang.String} object
    */
+  @Override
   public void setPipeSpecification(double nominalDiameter, String pipeSec) {
     this.pipeSpecification = pipeSec;
     this.nominalDiameter = nominalDiameter;
@@ -740,6 +754,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @param angle a double
    */
+  @Override
   public void setAngle(double angle) {
     this.angle = angle;
   }
@@ -751,6 +766,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @param pipeWallRoughness the pipeWallRoughness to set
    */
+  @Override
   public void setPipeWallRoughness(double pipeWallRoughness) {
     this.pipeWallRoughness = pipeWallRoughness;
   }
@@ -762,6 +778,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @param numberOfIncrements a int
    */
+  @Override
   public void setNumberOfIncrements(int numberOfIncrements) {
     this.numberOfIncrements = numberOfIncrements;
   }
@@ -797,9 +814,83 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     } else {
       throw new RuntimeException("unit not supported " + unit);
     }
+    super.setConstantSurfaceTemperature(this.constantSurfaceTemperature);
     this.runIsothermal = false;
     this.runAdiabatic = false;
     this.runConstantSurfaceTemperature = true;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setConstantSurfaceTemperature(double temperature) {
+    super.setConstantSurfaceTemperature(temperature);
+    this.constantSurfaceTemperature = temperature;
+    this.runIsothermal = false;
+    this.runAdiabatic = false;
+    this.runConstantSurfaceTemperature = true;
+  }
+
+  /**
+   * Sets a depth-dependent formation temperature profile. When both parameters are set, the surface
+   * temperature at each pipe segment is calculated as: T_surface = inletTemperature + gradient *
+   * cumulativeElevationChange.
+   *
+   * <p>
+   * For a vertical injection well with negative totalElevation (going downward), the cumulative
+   * elevation becomes more negative with depth, so the formation temperature increases with depth
+   * when the gradient is negative (e.g., -0.03 K/m means +30 C/km geothermal gradient downward).
+   * </p>
+   *
+   * @param inletTemperature the formation temperature at the pipe inlet in the specified unit
+   * @param gradient the temperature gradient in K/m (typically 0.03 for geothermal, sign follows
+   *        elevation convention)
+   * @param unit temperature unit for inletTemperature ("K" or "C")
+   */
+  public void setFormationTemperatureGradient(double inletTemperature, double gradient,
+      String unit) {
+    if (unit.equals("K")) {
+      this.surfaceTemperatureAtInlet = inletTemperature;
+    } else if (unit.equals("C")) {
+      this.surfaceTemperatureAtInlet = inletTemperature + 273.15;
+    } else {
+      throw new RuntimeException("unit not supported " + unit);
+    }
+    this.formationTemperatureGradient = gradient;
+    this.runIsothermal = false;
+    this.runAdiabatic = false;
+    this.runConstantSurfaceTemperature = true;
+  }
+
+  /**
+   * Gets the formation temperature gradient in K/m.
+   *
+   * @return the formation temperature gradient
+   */
+  public double getFormationTemperatureGradient() {
+    return formationTemperatureGradient;
+  }
+
+  /**
+   * Gets the surface (formation) temperature at the pipe inlet in Kelvin.
+   *
+   * @return the surface temperature at the inlet
+   */
+  public double getSurfaceTemperatureAtInlet() {
+    return surfaceTemperatureAtInlet;
+  }
+
+  /**
+   * Calculates the formation (surface) temperature at the current cumulative elevation. If a
+   * formation temperature gradient has been set, returns the depth-dependent value. Otherwise
+   * returns the constant surface temperature.
+   *
+   * @return the surface temperature in Kelvin at the current position
+   */
+  private double getSurfaceTemperatureAtPosition() {
+    if (formationTemperatureGradient != 0.0 && !Double.isNaN(surfaceTemperatureAtInlet)) {
+      return surfaceTemperatureAtInlet + formationTemperatureGradient * cumulativeElevation;
+    }
+    return constantSurfaceTemperature;
   }
 
   /**
@@ -862,13 +953,18 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * @param heatTransferCoefficient the overall heat transfer coefficient in W/(m²·K)
    * @throws IllegalArgumentException if heatTransferCoefficient is negative
    */
+  @Override
   public void setHeatTransferCoefficient(double heatTransferCoefficient) {
     if (heatTransferCoefficient < 0) {
       throw new IllegalArgumentException(
           "Heat transfer coefficient must be non-negative, got: " + heatTransferCoefficient);
     }
+    super.setHeatTransferCoefficient(heatTransferCoefficient);
     this.heatTransferCoefficient = heatTransferCoefficient;
     this.heatTransferMode = HeatTransferMode.SPECIFIED_U;
+    this.runIsothermal = false;
+    this.runAdiabatic = heatTransferCoefficient <= 0;
+    this.runConstantSurfaceTemperature = heatTransferCoefficient > 0;
   }
 
   /**
@@ -878,6 +974,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @param pressure the desired outlet pressure in bara
    */
+  @Override
   public void setOutletPressure(double pressure) {
     this.specifiedOutletPressure = pressure;
     this.specifiedOutletPressureUnit = "bara";
@@ -892,6 +989,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * @param pressure the desired outlet pressure
    * @param unit the pressure unit (e.g., "bara", "barg", "Pa", "MPa")
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     this.specifiedOutletPressure = pressure;
     this.specifiedOutletPressureUnit = unit;
@@ -1010,6 +1108,10 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * </p>
    */
   public void calculateMissingValue() {
+    if (!Double.isNaN(totalLength) && Double.isNaN(totalElevation) && Double.isNaN(angle)) {
+      totalElevation = 0.0;
+      angle = 0.0;
+    }
     if (Double.isNaN(totalLength)) {
       totalLength = calculateLength();
     } else if (Double.isNaN(totalElevation)) {
@@ -1466,8 +1568,23 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
       system.setPressure(pressureOut);
       if (!runIsothermal) {
+        double inletTempBeforeHeat = system.getTemperature();
+        double analyticalDeltaT = calcTemperatureDifference(system);
         enthalpyInlet = calcHeatBalance(enthalpyInlet, system, testOps);
-        // testOps.PHflash(enthalpyInlet);
+        // Defensive guard: PHflash can diverge (clamping T to its 0.1 K minimum sentinel
+        // or to other unphysical values) on some JVM/locale combinations, e.g. for
+        // pure-water increments at borderline turbulent Re. If the enthalpy round-trip
+        // produced a temperature outside the physically allowed analytical band
+        // [Tin, Tin + dT_analytical], fall back to the analytical solution and re-init.
+        double Tafter = system.getTemperature();
+        double Tanalytical = inletTempBeforeHeat + analyticalDeltaT;
+        double bandLow = Math.min(inletTempBeforeHeat, Tanalytical) - 1.0;
+        double bandHigh = Math.max(inletTempBeforeHeat, Tanalytical) + 1.0;
+        if (Tafter < 100.0 || Tafter > 2000.0 || Tafter < bandLow || Tafter > bandHigh) {
+          system.setTemperature(Tanalytical);
+          testOps.TPflash();
+          enthalpyInlet = system.getEnthalpy();
+        }
         temperatureProfile.add(system.getTemperature());
       } else {
         testOps.TPflash();
@@ -1820,6 +1937,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * @param coefficient the outer heat transfer coefficient [W/(m²·K)]
    * @throws IllegalArgumentException if coefficient is negative
    */
+  @Override
   public void setOuterHeatTransferCoefficient(double coefficient) {
     if (coefficient < 0) {
       throw new IllegalArgumentException(
@@ -1833,6 +1951,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @return the outer heat transfer coefficient [W/(m²·K)]
    */
+  @Override
   public double getOuterHeatTransferCoefficient() {
     return outerHeatTransferCoefficient;
   }
@@ -1897,6 +2016,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @return the insulation thickness [m]
    */
+  @Override
   public double getInsulationThickness() {
     return insulationThickness;
   }
@@ -1964,7 +2084,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   public double calcTemperatureDifference(SystemInterface system) {
     double cpLocal = system.getCp("J/kgK");
     double Tmi = system.getTemperature("C");
-    double Ts = constantSurfaceTemperature - 273.15;
+    double surfaceTemp = getSurfaceTemperatureAtPosition();
+    double Ts = surfaceTemp - 273.15;
 
     // Handle case where surface temperature equals inlet temperature (no heat
     // transfer)
@@ -2413,30 +2534,41 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
       // Apply heat transfer if not adiabatic and surface temperature is set
       if (heatTransferMode != HeatTransferMode.ADIABATIC
-          && heatTransferMode != HeatTransferMode.ISOTHERMAL
-          && !Double.isNaN(constantSurfaceTemperature) && constantSurfaceTemperature > 0) {
-        // Calculate heat transfer using NTU-effectiveness method
-        double Twall = constantSurfaceTemperature; // in Kelvin
-        double Tin = advectedTemperature; // in Kelvin
-
-        // Get heat transfer coefficient (use specified or estimate)
-        double U = heatTransferCoefficient;
-        if (U <= 0 || Double.isNaN(U)) {
-          U = 25.0; // Default reasonable value W/(m²·K) for subsea pipe
+          && heatTransferMode != HeatTransferMode.ISOTHERMAL) {
+        // Calculate surface temperature at this segment position
+        double segmentElevationAtPosition = segmentElevation * segment;
+        double Twall;
+        if (formationTemperatureGradient != 0.0 && !Double.isNaN(surfaceTemperatureAtInlet)) {
+          Twall =
+              surfaceTemperatureAtInlet + formationTemperatureGradient * segmentElevationAtPosition;
+        } else if (!Double.isNaN(constantSurfaceTemperature) && constantSurfaceTemperature > 0) {
+          Twall = constantSurfaceTemperature;
+        } else {
+          Twall = Double.NaN;
         }
+        if (!Double.isNaN(Twall) && Twall > 0) {
+          // Calculate heat transfer using NTU-effectiveness method
+          double Tin = advectedTemperature; // in Kelvin
 
-        // Heat transfer area for this segment
-        double A = Math.PI * insideDiameter * segmentLengthMeters;
+          // Get heat transfer coefficient (use specified or estimate)
+          double U = heatTransferCoefficient;
+          if (U <= 0 || Double.isNaN(U)) {
+            U = 25.0; // Default reasonable value W/(m²·K) for subsea pipe
+          }
 
-        // Estimate Cp from inlet (simplified - full approach would need flash)
-        double segmentCp = inletSystem.getCp("J/kgK");
-        double segmentMassFlow = Math.max(1e-6, newMassFlow);
+          // Heat transfer area for this segment
+          double A = Math.PI * insideDiameter * segmentLengthMeters;
 
-        // NTU = U*A / (m_dot * Cp)
-        double NTU = U * A / (segmentMassFlow * segmentCp);
+          // Estimate Cp from inlet (simplified - full approach would need flash)
+          double segmentCp = inletSystem.getCp("J/kgK");
+          double segmentMassFlow = Math.max(1e-6, newMassFlow);
 
-        // Analytical solution: T_out = T_wall + (T_in - T_wall) * exp(-NTU)
-        advectedTemperature = Twall + (Tin - Twall) * Math.exp(-NTU);
+          // NTU = U*A / (m_dot * Cp)
+          double NTU = U * A / (segmentMassFlow * segmentCp);
+
+          // Analytical solution: T_out = T_wall + (T_in - T_wall) * exp(-NTU)
+          advectedTemperature = Twall + (Tin - Twall) * Math.exp(-NTU);
+        }
       }
 
       // Apply relaxation for wave propagation
@@ -2513,13 +2645,6 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     increaseTime(dt);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {
-    system.display();
-  }
-
   /**
    * <p>
    * getInletSuperficialVelocity.
@@ -2538,6 +2663,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @return the heat transfer coefficient
    */
+  @Override
   public double getHeatTransferCoefficient() {
     return heatTransferCoefficient;
   }
@@ -2560,6 +2686,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @return a double
    */
+  @Override
   public int getNumberOfIncrements() {
     return numberOfIncrements;
   }
@@ -2571,6 +2698,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @return angle in degrees
    */
+  @Override
   public double getAngle() {
     return angle;
   }
@@ -2578,19 +2706,49 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   /** {@inheritDoc} */
   @Override
   public double getLength() {
-    return cumulativeLength;
+    return totalLength;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getElevation() {
-    return cumulativeElevation;
+    return totalElevation;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getDiameter() {
     return insideDiameter;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getPipeWallRoughness() {
+    return pipeWallRoughness;
+  }
+
+  /**
+   * Calculate the total equivalent length from all fittings using this pipe's actual internal
+   * diameter.
+   *
+   * @return equivalent length from fittings in meters
+   */
+  @Override
+  public double getEquivalentLength() {
+    if (!useFittings || fittings.isEmpty()) {
+      return 0.0;
+    }
+    return fittings.getTotalEquivalentLength(insideDiameter);
+  }
+
+  /**
+   * Get the effective pipe length used for pressure-drop calculations.
+   *
+   * @return straight pipe length plus fittings equivalent length in meters
+   */
+  @Override
+  public double getEffectiveLength() {
+    return totalLength + getEquivalentLength();
   }
 
   /**

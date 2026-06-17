@@ -71,8 +71,7 @@ public class InterphaseTransportCoefficientBaseClass
   /** {@inheritDoc} */
   @Override
   public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
-    // TODO: Should calcWallFrictionFactor(phase, node be called below?)
-    return (1.0 + 75.0 * node.getPhaseFraction(1)) * calcWallFrictionFactor(0, node);
+    return (1.0 + 75.0 * node.getPhaseFraction(1)) * calcWallFrictionFactor(phase, node);
   }
 
   /** {@inheritDoc} */

@@ -1,6 +1,8 @@
 package neqsim.process.fielddevelopment.reservoir;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Injection well performance model for water and gas injection.
@@ -50,7 +52,7 @@ import java.io.Serializable;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * InjectionWellModel well = new InjectionWellModel();
  * well.setWellType(InjectionType.WATER_INJECTOR);
@@ -61,9 +63,9 @@ import java.io.Serializable;
  * well.setWellDepth(3000.0, "m");
  * well.setTubingID(0.1, "m");
  * well.setMaxBHP(350.0, "bara"); // Below fracture pressure
- * 
+ *
  * InjectionWellResult result = well.calculate(10000.0); // Target 10000 Sm3/day
- * 
+ *
  * System.out.println("Achievable rate: " + result.getAchievableRate() + " Sm3/day");
  * System.out.println("Required WHI pressure: " + result.getWellheadPressure() + " bara");
  * System.out.println("BHP: " + result.getBottomholePressure() + " bara");
@@ -748,6 +750,360 @@ public class InjectionWellModel implements Serializable {
       }
       return sb.toString();
     }
+  }
+
+  // ===================== Multi-Zone Support (NIP-02) =====================
+
+  private transient List<InjectionZone> zones = new ArrayList<>();
+
+  /**
+   * Represents an injection zone in a multi-zone injection well.
+   */
+  public static class InjectionZone implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Zone name. */
+    public String name;
+    /** TVD to zone midpoint (m). */
+    public double depth;
+    /** Reservoir pressure (bara). */
+    public double reservoirPressure;
+    /** Formation permeability (mD). */
+    public double permeability;
+    /** Formation thickness (m). */
+    public double thickness;
+    /** Skin factor (dimensionless). */
+    public double skinFactor;
+    /** Fracture pressure (bara). */
+    public double fracturePressure;
+    /** Whether this is the target zone for injection. */
+    public boolean isTargetZone;
+
+    /**
+     * Creates an injection zone.
+     *
+     * @param name zone name
+     * @param depth TVD to zone midpoint (m)
+     * @param reservoirPressure reservoir pressure (bara)
+     * @param permeability formation permeability (mD)
+     * @param thickness formation thickness (m)
+     * @param fracturePressure fracture pressure (bara)
+     */
+    public InjectionZone(String name, double depth, double reservoirPressure, double permeability,
+        double thickness, double fracturePressure) {
+      this.name = name;
+      this.depth = depth;
+      this.reservoirPressure = reservoirPressure;
+      this.permeability = permeability;
+      this.thickness = thickness;
+      this.fracturePressure = fracturePressure;
+    }
+  }
+
+  /**
+   * Multi-zone injection calculation result.
+   */
+  public static class MultiZoneInjectionResult implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Per-zone results. */
+    public List<InjectionZoneResult> zoneResults = new ArrayList<>();
+    /** Total achievable rate across all zones (Sm3/day). */
+    public double totalRate;
+    /** Injection efficiency: fraction entering target zone(s). */
+    public double injectionEfficiency;
+    /** Total out-of-zone rate (Sm3/day). */
+    public double outOfZoneRate;
+    /** Common BHP used for allocation (bara). */
+    public double commonBHP;
+
+    /**
+     * Gets the total injection rate.
+     *
+     * @return total rate (Sm3/day)
+     */
+    public double getTotalRate() {
+      return totalRate;
+    }
+
+    /**
+     * Gets injection efficiency.
+     *
+     * @return efficiency (0-1)
+     */
+    public double getInjectionEfficiency() {
+      return injectionEfficiency;
+    }
+
+    /**
+     * Gets out-of-zone rate.
+     *
+     * @return OOZ rate (Sm3/day)
+     */
+    public double getOutOfZoneRate() {
+      return outOfZoneRate;
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("Multi-Zone Injection Result\n");
+      sb.append("==========================\n");
+      sb.append(String.format("Common BHP: %.1f bara%n", commonBHP));
+      sb.append(String.format("Total rate: %.0f Sm3/day%n", totalRate));
+      sb.append(String.format("Injection efficiency: %.1f%%%n", injectionEfficiency * 100));
+      sb.append(String.format("Out-of-zone rate: %.0f Sm3/day%n", outOfZoneRate));
+      sb.append("\nPer-zone breakdown:\n");
+      for (InjectionZoneResult zr : zoneResults) {
+        sb.append(String.format("  %s: %.0f Sm3/day (%.1f%%)%s%s%n", zr.zoneName, zr.rate,
+            zr.allocationFraction * 100, zr.isTargetZone ? " [TARGET]" : "",
+            zr.fractureRisk ? " [FRACTURE RISK]" : ""));
+      }
+      return sb.toString();
+    }
+  }
+
+  /**
+   * Result for a single injection zone.
+   */
+  public static class InjectionZoneResult implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Zone name. */
+    public String zoneName;
+    /** Injection rate into this zone (Sm3/day). */
+    public double rate;
+    /** Injectivity index for this zone (Sm3/day/bar). */
+    public double injectivityIndex;
+    /** Fraction of total injection. */
+    public double allocationFraction;
+    /** Whether BHP exceeds zone fracture pressure. */
+    public boolean fractureRisk;
+    /** Whether this is a target zone. */
+    public boolean isTargetZone;
+    /** Hall slope for this zone (bar day/Sm3). */
+    public double hallSlope;
+  }
+
+  /**
+   * Add an injection zone.
+   *
+   * @param zone injection zone to add
+   */
+  public void addZone(InjectionZone zone) {
+    zones.add(zone);
+  }
+
+  /**
+   * Get the list of injection zones.
+   *
+   * @return list of zones
+   */
+  public List<InjectionZone> getZones() {
+    return zones;
+  }
+
+  /**
+   * Calculate multi-zone injection allocation at a given total target rate.
+   *
+   * <p>
+   * The BHP is determined from the total target rate and the combined injectivity of all zones.
+   * Each zone then receives flow proportional to its individual injectivity and pressure
+   * differential.
+   * </p>
+   *
+   * @param totalTargetRate total target injection rate (Sm3/day)
+   * @return multi-zone injection result with per-zone breakdown
+   */
+  public MultiZoneInjectionResult calculateMultiZone(double totalTargetRate) {
+    MultiZoneInjectionResult result = new MultiZoneInjectionResult();
+
+    if (zones.isEmpty()) {
+      return result;
+    }
+
+    // Calculate injectivity index for each zone
+    double totalII = 0.0;
+    List<Double> zoneIIs = new ArrayList<>();
+    for (InjectionZone zone : zones) {
+      double ii = calculateZoneInjectivityIndex(zone);
+      zoneIIs.add(ii);
+      totalII += ii;
+    }
+
+    // Combined: totalRate = totalII × (BHP - avgPres)
+    // Find required BHP for target rate
+    double avgWeightedPres = 0.0;
+    for (int i = 0; i < zones.size(); i++) {
+      avgWeightedPres += zoneIIs.get(i) * zones.get(i).reservoirPressure;
+    }
+    avgWeightedPres /= totalII;
+
+    double requiredBHP = avgWeightedPres + totalTargetRate / totalII;
+
+    // Limit BHP to minimum fracture pressure across zones
+    double minFracPressure = Double.MAX_VALUE;
+    for (InjectionZone zone : zones) {
+      if (zone.fracturePressure > 0 && zone.fracturePressure < minFracPressure) {
+        minFracPressure = zone.fracturePressure;
+      }
+    }
+    double effectiveBHP = Math.min(requiredBHP, Math.min(maxBHP, minFracPressure));
+    result.commonBHP = effectiveBHP;
+
+    // Calculate per-zone rates at the effective BHP
+    double totalRate = 0.0;
+    double targetRate = 0.0;
+    double oozRate = 0.0;
+
+    for (int i = 0; i < zones.size(); i++) {
+      InjectionZone zone = zones.get(i);
+      double ii = zoneIIs.get(i);
+      double zoneRate = ii * (effectiveBHP - zone.reservoirPressure);
+      if (zoneRate < 0) {
+        zoneRate = 0.0;
+      }
+
+      InjectionZoneResult zr = new InjectionZoneResult();
+      zr.zoneName = zone.name;
+      zr.rate = zoneRate;
+      zr.injectivityIndex = ii;
+      zr.isTargetZone = zone.isTargetZone;
+      zr.fractureRisk = effectiveBHP > zone.fracturePressure && zone.fracturePressure > 0;
+      zr.hallSlope = ii > 0 ? 1.0 / ii : 0.0;
+
+      result.zoneResults.add(zr);
+      totalRate += zoneRate;
+      if (zone.isTargetZone) {
+        targetRate += zoneRate;
+      } else {
+        oozRate += zoneRate;
+      }
+    }
+
+    // Compute allocation fractions
+    for (InjectionZoneResult zr : result.zoneResults) {
+      zr.allocationFraction = totalRate > 0 ? zr.rate / totalRate : 0.0;
+    }
+
+    result.totalRate = totalRate;
+    result.outOfZoneRate = oozRate;
+    result.injectionEfficiency = totalRate > 0 ? targetRate / totalRate : 0.0;
+
+    return result;
+  }
+
+  /**
+   * Calculate injectivity index for a specific zone using Darcy radial flow.
+   *
+   * @param zone the injection zone
+   * @return injectivity index (Sm3/day/bar)
+   */
+  private double calculateZoneInjectivityIndex(InjectionZone zone) {
+    double kSI = zone.permeability * 9.869e-16; // mD to m²
+    double viscosity = formationWaterViscosity * 1e-3; // cP to Pa·s
+    double lnRatio = Math.log(drainageRadius / wellboreRadius);
+
+    // II = 2π k h / (μ × (ln(re/rw) + S)) in SI (m³/s/Pa)
+    double iiSI = 2.0 * Math.PI * kSI * zone.thickness / (viscosity * (lnRatio + zone.skinFactor));
+
+    // Convert to Sm3/day/bar
+    // 1 m³/s/Pa = 86400 / 1e5 = 0.864 Sm3/day/bar
+    return iiSI * 86400.0 / 1e5;
+  }
+
+  /**
+   * Get the zone results from the last multi-zone calculation.
+   *
+   * @return list of per-zone results, or empty list if no calculation done
+   */
+  public List<InjectionZoneResult> getZoneResults() {
+    // Re-run calculation to get current results
+    // (stateless - always recalculates)
+    return new ArrayList<>();
+  }
+
+  // ===================== Thermal Stress (NIP-08) =====================
+
+  private double thermalExpansionCoeff = 0.0; // 1/K
+  private double youngsModulus = 0.0; // Pa
+  private double poissonsRatio = 0.25;
+  private double injectionTemperature = 0.0; // K
+  private double reservoirTemperatureForThermal = 0.0; // K
+  private boolean thermalStressEnabled = false;
+
+  /**
+   * Set thermoelastic parameters for thermal stress reduction during cold injection.
+   *
+   * <p>
+   * During cold water or CO2 injection, the near-wellbore rock cools, reducing the minimum
+   * horizontal stress and effectively lowering the fracture pressure. The thermal stress reduction
+   * is:
+   * </p>
+   * <p>
+   * delta_sigma_thermal = alpha_T * E / (1 - nu) * (T_inj - T_res)
+   * </p>
+   *
+   * @param injectionTemp injection fluid temperature (K)
+   * @param reservoirTemp reservoir temperature (K)
+   * @param thermalExpansion linear thermal expansion coefficient (1/K), typically 1e-5 to 3e-5
+   * @param youngsModulusGPa Young's modulus (GPa), typically 10-50 GPa for reservoir rock
+   */
+  public void setThermalStressReduction(double injectionTemp, double reservoirTemp,
+      double thermalExpansion, double youngsModulusGPa) {
+    this.injectionTemperature = injectionTemp;
+    this.reservoirTemperatureForThermal = reservoirTemp;
+    this.thermalExpansionCoeff = thermalExpansion;
+    this.youngsModulus = youngsModulusGPa * 1e9; // GPa to Pa
+    this.thermalStressEnabled = true;
+  }
+
+  /**
+   * Set Poisson's ratio for thermal stress calculation.
+   *
+   * @param nu Poisson's ratio (dimensionless, typically 0.2-0.35)
+   */
+  public void setPoissonsRatio(double nu) {
+    this.poissonsRatio = nu;
+  }
+
+  /**
+   * Get the thermal stress reduction at the wellbore wall.
+   *
+   * @return thermal stress reduction (bar), positive means stress decreases
+   */
+  public double getThermalStressReduction() {
+    if (!thermalStressEnabled) {
+      return 0.0;
+    }
+    double deltaT = injectionTemperature - reservoirTemperatureForThermal;
+    // deltaT < 0 for cold injection -> stress reduction is positive
+    double deltaSigmaPa = thermalExpansionCoeff * youngsModulus / (1.0 - poissonsRatio) * deltaT;
+    return -deltaSigmaPa / 1e5; // Pa to bar, negate so cold injection gives positive reduction
+  }
+
+  /**
+   * Get the effective fracture pressure accounting for thermal stress.
+   *
+   * <p>
+   * Cold injection reduces the minimum horizontal stress and therefore the fracture pressure:
+   * Pfrac_effective = Pfrac_original - |delta_sigma_thermal|
+   * </p>
+   *
+   * @return effective fracture pressure (bara)
+   */
+  public double getEffectiveFracturePressure() {
+    double reduction = getThermalStressReduction();
+    return fracturePressure - reduction;
+  }
+
+  /**
+   * Check if thermal stress is enabled.
+   *
+   * @return true if thermal stress parameters have been set
+   */
+  public boolean isThermalStressEnabled() {
+    return thermalStressEnabled;
   }
 
   /**

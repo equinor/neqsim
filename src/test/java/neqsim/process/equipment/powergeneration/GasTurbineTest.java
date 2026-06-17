@@ -1,11 +1,11 @@
 package neqsim.process.equipment.powergeneration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
@@ -37,20 +37,30 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void testStreamConstructorInitializesAirSide() {
+    GasTurbine gasturb = new GasTurbine("turbine", gasStream);
+
+    assertNotNull(gasturb.airStream);
+    assertNotNull(gasturb.airCompressor);
+  }
+
+  @Test
   void testGetMechanicalDesign() {}
 
-  @Disabled
   @Test
   void testRun() {
-    // TODO: test not working
     gasStream.run();
     GasTurbine gasturb = new GasTurbine("turbine", gasStream);
 
-    // gasStream.run();
     gasturb.run();
 
     logger.info("power generated " + gasturb.getPower() / 1.0e6);
     logger.info("heat generated " + gasturb.getHeat() / 1.0e6);
+
+    // The Brayton cycle must produce a finite, non-zero net shaft power and reject heat.
+    Assertions.assertTrue(Double.isFinite(gasturb.getPower()), "power must be finite");
+    Assertions.assertTrue(gasturb.getPower() > 0.0, "net power must be positive");
+    Assertions.assertTrue(Double.isFinite(gasturb.getHeat()), "heat must be finite");
   }
 
   @Test

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.process.design.AutoSizeable;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -78,6 +79,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   protected double lastOutTemperature = 0.0;
   protected double lastDuty = 0.0;
   protected double lastPressureDrop = 0.0;
+  protected double[] lastComposition = null;
 
   protected transient HeatExchangerMechanicalDesign mechanicalDesign;
   HeatExchangerElectricalDesign electricalDesign;
@@ -247,6 +249,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
    *
    * @param pressure Pressure in bara
    */
+  @Override
   public void setOutletPressure(double pressure) {
     setOutPressure = true;
     this.pressureUnit = "bara";
@@ -262,12 +265,41 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   }
 
   /**
+   * Checks whether an explicit outlet-pressure specification has been set.
+   *
+   * @return true if the heater applies a specified outlet pressure during {@link #run(UUID)}
+   */
+  public boolean hasOutletPressureSpecification() {
+    return setOutPressure;
+  }
+
+  /**
+   * Gets the specified outlet pressure value.
+   *
+   * @return specified outlet pressure in {@link #getSpecifiedOutletPressureUnit()}, or 0.0 if not
+   *         specified
+   */
+  public double getSpecifiedOutletPressure() {
+    return pressureOut;
+  }
+
+  /**
+   * Gets the unit used for the specified outlet pressure.
+   *
+   * @return pressure unit string used by {@link #setOutletPressure(double, String)}
+   */
+  public String getSpecifiedOutletPressureUnit() {
+    return pressureUnit;
+  }
+
+  /**
    * <p>
    * Set the outlet temperature of the heater.
    * </p>
    *
    * @param temperature Temperature in Kelvin
    */
+  @Override
   public void setOutletTemperature(double temperature) {
     setTemperature = true;
     setEnergyInput = false;
@@ -283,6 +315,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
    * @param temperature Temperature in Kelvin
    * @deprecated use {@link #setOutletTemperature(double)} instead
    */
+  @Override
   @Deprecated
   public void setOutTemperature(double temperature) {
     setOutletTemperature(temperature);
@@ -312,19 +345,32 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
-    if (inStream == null) {
+    if (inStream == null || inStream.getFluid() == null || lastComposition == null) {
       return true;
     }
-    if (inStream.getFluid().getTemperature() == lastTemperature
-        && inStream.getFluid().getPressure() == lastPressure
-        && Math.abs(inStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
-            / inStream.getFluid().getFlowRate("kg/hr") < 1e-6
-        && lastDuty == getDuty() && lastOutPressure == pressureOut
-        && lastOutTemperature == temperatureOut && getPressureDrop() == lastPressureDrop) {
-      return false;
-    } else {
+    SystemInterface inFluid = inStream.getFluid();
+    // Cheap scalar checks first - avoid the composition array walk if any fail.
+    if (inFluid.getTemperature() != lastTemperature || inFluid.getPressure() != lastPressure
+        || lastDuty != getDuty() || lastOutPressure != pressureOut
+        || lastOutTemperature != temperatureOut || getPressureDrop() != lastPressureDrop) {
       return true;
     }
+    double inFlow = inFluid.getFlowRate("kg/hr");
+    if (inFlow <= 0.0 || lastFlowRate <= 0.0 || Math.abs(inFlow - lastFlowRate) / inFlow >= 1e-6) {
+      return true;
+    }
+    // Allocation-free composition comparison.
+    neqsim.thermo.phase.PhaseInterface ph0 = inFluid.getPhase(0);
+    int n = ph0.getNumberOfComponents();
+    if (n != lastComposition.length) {
+      return true;
+    }
+    for (int i = 0; i < n; i++) {
+      if (ph0.getComponent(i).getz() != lastComposition[i]) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** {@inheritDoc} */
@@ -343,10 +389,13 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
       lastOutPressure = pressureOut;
       lastOutTemperature = temperatureOut;
       lastPressureDrop = pressureDrop;
+      lastComposition = inStream.getFluid().getMolarComposition().clone();
       setCalculationIdentifier(id);
       return;
     }
-    system.init(3);
+    // Use init(2) instead of init(3) - only need enthalpy (from init level 2), not composition
+    // derivatives (level 3). The clone from the inlet already has valid thermodynamic state.
+    system.init(2);
     double oldH = system.getEnthalpy();
     if (isSetEnergyStream()) {
       energyInput = -energyStream.getDuty();
@@ -392,6 +441,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
     lastOutPressure = pressureOut;
     lastOutTemperature = temperatureOut;
     lastPressureDrop = pressureDrop;
+    lastComposition = inStream.getFluid().getMolarComposition().clone();
     setCalculationIdentifier(id);
   }
 
@@ -451,6 +501,24 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
     // Use PowerUnit for conversion
     neqsim.util.unit.PowerUnit powerUnit = new neqsim.util.unit.PowerUnit(energyInput, "W");
     return powerUnit.getValue(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit,
+      String pressureUnit, String flowUnit) {
+    Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
+    StreamInterface out = getOutletStream();
+    if (out != null) {
+      state.put("temperature", ProcessEquipmentInterface
+          .createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
+      state.put("pressure",
+          ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
+      state.put("flow",
+          ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
+    }
+    state.put("duty", ProcessEquipmentInterface.createStateEntry(getDuty("kW"), "kW"));
+    return state;
   }
 
   /**

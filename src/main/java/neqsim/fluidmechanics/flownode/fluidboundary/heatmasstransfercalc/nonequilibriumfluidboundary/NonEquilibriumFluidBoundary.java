@@ -431,8 +431,10 @@ public abstract class NonEquilibriumFluidBoundary
    * @param phaseNum a int
    */
   public void calcHeatTransferCoefficients(int phaseNum) {
+    // Pr = Cp_mass * mu / k, where Cp_mass = Cp_total / (n * M)
     prandtlNumber[phaseNum] = getBulkSystem().getPhase(phaseNum).getCp()
         / getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
+        / getBulkSystem().getPhase(phaseNum).getMolarMass()
         * getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getViscosity()
         / getBulkSystem().getPhase(phaseNum).getPhysicalProperties().getConductivity();
     // System.out.println("prandtlNumber " + prandtlNumber[phase] + " interface " +
@@ -517,11 +519,24 @@ public abstract class NonEquilibriumFluidBoundary
 
       df = -heatTransferCoefficient[0] * heatTransferCorrection[0]
           - heatTransferCoefficient[1] * heatTransferCorrection[1];
-      // System.out.println("f " + f + " df " + df);
-      // if(interphaseSystem.getTemperature() - f/df>0.0)
-      // interphaseSystem.setTemperature(interphaseSystem.getTemperature() - f/df);
-      interphaseSystem.setTemperature(interphaseSystem.getTemperature() - f / df);
-      // System.out.println("new temp " + interphaseSystem.getTemperature());
+      // Guard against zero derivative to prevent NaN/Infinity temperature
+      if (Math.abs(df) < 1e-30) {
+        break;
+      }
+      double step = f / df;
+      // Clamp step to avoid extreme temperature jumps
+      double maxStep = 50.0; // max 50 K per iteration
+      if (step > maxStep) {
+        step = maxStep;
+      } else if (step < -maxStep) {
+        step = -maxStep;
+      }
+      double newTemp = interphaseSystem.getTemperature() - step;
+      // Ensure temperature stays positive (Kelvin)
+      if (newTemp < 1.0) {
+        newTemp = 1.0;
+      }
+      interphaseSystem.setTemperature(newTemp);
     } while (Math.abs(f) > 1e-6 && iter < 100);
 
     interphaseHeatFlux[0] = -heatTransferCoefficient[0] * heatTransferCorrection[0]
@@ -542,6 +557,7 @@ public abstract class NonEquilibriumFluidBoundary
     // double oldErr = 0.0;
     double factor = 10.0;
     // if(bulkSystem.isChemicalSystem()) factor=100.0;
+    long tStart = System.currentTimeMillis();
     setuMassTrans();
     do {
       // oldErr = err;
@@ -637,14 +653,15 @@ public abstract class NonEquilibriumFluidBoundary
         if (massTransferCalc) {
           massTransSolve();
         }
-      } while (Math.abs((totalFluxOld - totalFlux) / totalFlux) > 1e-6 && iterOuter < 50);
+      } while (Math.abs(totalFlux) > 1e-30
+          && Math.abs((totalFluxOld - totalFlux) / totalFlux) > 1e-6 && iterOuter < 50);
 
       if (heatTransferCalc) {
         this.heatTransSolve();
         heatFlux = this.getInterphaseHeatFlux(0);
       }
-    } while (Math.abs((oldHeatFlux - heatFlux) / heatFlux) > 1e-6 && heatTransferCalc
-        && iterInner < 50);
+    } while (Math.abs(heatFlux) > 1e-30 && Math.abs((oldHeatFlux - heatFlux) / heatFlux) > 1e-6
+        && heatTransferCalc && iterInner < 50);
     init();
   }
 }

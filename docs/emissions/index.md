@@ -864,26 +864,53 @@ plt.show()
 
 ### Integration with NeqSim Production Optimizer
 
-NeqSim includes a built-in `ProductionOptimizer` class that can be extended for multi-objective optimization:
+NeqSim includes a built-in `ProductionOptimizer` class that supports multi-objective
+(Pareto) optimization. Objectives are defined with `OptimizationObjective` (an evaluator
+function plus a `MAXIMIZE`/`MINIMIZE` direction):
 
 ```java
+import java.util.Arrays;
+import java.util.List;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.ProductionOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer.ObjectiveType;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationObjective;
+import neqsim.process.util.optimizer.ProductionOptimizer.ParetoPoint;
+import neqsim.process.util.optimizer.ProductionOptimizer.ParetoResult;
 
-// Create process system
+// Create process system and obtain the feed stream that drives throughput
 ProcessSystem process = new ProcessSystem();
 // ... add equipment ...
+StreamInterface feed = (StreamInterface) process.getUnit("Well Feed");
 
-// Create optimizer with emission constraints
-ProductionOptimizer optimizer = new ProductionOptimizer(process);
-optimizer.addObjective("gasProduction", "maximize");
-optimizer.addObjective("emissions", "minimize");
-optimizer.addConstraint("CO2eq", "<=", emissionPermit);
+// Two competing objectives: maximise gas production, minimise CO2-equivalent emissions
+OptimizationObjective gasProduction = new OptimizationObjective("gasProduction",
+    proc -> proc.getUnit("Export Gas").getFluid().getFlowRate("kg/hr"),
+    1.0, ObjectiveType.MAXIMIZE);
+OptimizationObjective emissions = new OptimizationObjective("emissions",
+    proc -> estimateCO2eq(proc),   // user-supplied emission model
+    1.0, ObjectiveType.MINIMIZE);
 
-// Run multi-objective optimization
-optimizer.runParetoOptimization();
-List<Solution> paretoFront = optimizer.getParetoFront();
+OptimizationConfig config = new OptimizationConfig(1000.0, 20000.0)
+    .rateUnit("kg/hr")
+    .maxIterations(20);
+
+// Run multi-objective (Pareto) optimization
+ProductionOptimizer optimizer = new ProductionOptimizer();
+ParetoResult pareto = optimizer.optimizePareto(
+    process, feed, config, Arrays.asList(gasProduction, emissions), null);
+
+List<ParetoPoint> paretoFront = pareto.getParetoFront();
+for (ParetoPoint point : paretoFront) {
+    System.out.println(point.getObjectiveValues());
+}
 ```
+
+> `estimateCO2eq(ProcessSystem)` is a user-supplied function returning the facility
+> CO₂-equivalent rate. Hard limits (e.g. an emission permit) can be added as an
+> `OptimizationConstraint` and passed as the final argument instead of `null`.
 
 ### Related Documentation
 

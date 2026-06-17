@@ -246,6 +246,85 @@ valve.setPercentValveOpening(50.0)  # % open
 process.add(valve)
 ```
 
+### Valve Sizing (Cv Calculation)
+
+Calculate the required Cv/Kv for a gas control valve:
+
+```python
+valve = ThrottlingValve("PCV-100", inlet_stream)
+valve.setOutletPressure(25.0)
+valve.setPercentValveOpening(100)
+
+# Select sizing standard: "default", "IEC 60534", "IEC 60534 full", "prod choke"
+mech_design = valve.getMechanicalDesign()
+mech_design.setValveSizingStandard("IEC 60534")
+
+# Configure valve-specific parameters
+mech_design.getValveSizingMethod().setxT(0.75)  # Pressure drop ratio factor
+
+process.add(valve)
+process.run()
+
+valve.calcKv()
+print(f"Cv = {valve.getCv():.2f}")
+print(f"Kv = {valve.getKv():.2f}")
+```
+
+See [Valve Mechanical Design](../process/ValveMechanicalDesign.md) for full details
+on available sizing standards, parameters, and formulas.
+
+### Choke Collapse Diagnostic
+
+Detect loss of critical (sonic) flow across a throttling valve or choke and flag
+flashing / cavitation in liquid service. See
+[Choke Collapse Analysis](../process/choke-collapse.md) for the full theory.
+
+```python
+ChokeCollapseAnalyzer = jneqsim.process.equipment.valve.ChokeCollapseAnalyzer
+
+# After valve.run():
+result = valve.analyseChokeCollapse()
+print("Flow regime :", result.getFlowRegime())          # CRITICAL / SUBCRITICAL / TRANSITION / REVERSE
+print("Collapse    :", result.getCollapseMode())        # NONE / NEAR_COLLAPSE / COLLAPSED / FLASHING / CAVITATION
+print("r           :", result.getPressureRatio())
+print("r_c         :", result.getCriticalPressureRatio())
+print("margin      :", result.getMarginToCollapse())
+for rec in result.getRecommendations():
+    print(" -", rec)
+
+# What-if: vary downstream pressure without changing the model
+analyzer = ChokeCollapseAnalyzer(valve)
+analyzer.setCriticalMarginThreshold(0.05)   # 5% transition band
+analyzer.setDownstreamPressure(80.0, "bara")
+print(analyzer.analyze().toJson())
+```
+
+### Inadvertent Valve Operation (IVO) Screening
+
+Screen credible inadvertent open / close / stuck scenarios per API 521 §4.4.13
+and NORSOK P-002 §5.5. See
+[Inadvertent Valve Operation](../process/inadvertent-valve-operation.md) for
+the full scenario taxonomy and severity rules.
+
+```python
+IvoResult = jneqsim.process.equipment.valve.InadvertentValveOperationResult
+
+# After valve.run():
+result = valve.analyseInadvertentOperation(
+    IvoResult.ValveRole.BLOCK,            # BLOCK / CONTROL / BYPASS / CHECK / PSV_ISOLATION / ESD / BLOWDOWN
+    IvoResult.IvoMode.SPURIOUS_CLOSE,     # SPURIOUS_OPEN / SPURIOUS_CLOSE / STUCK_OPEN / STUCK_CLOSED / PARTIAL_STROKE
+    100.0,                                # downstream segment design pressure [bara]
+)
+print("Severity        :", result.getSeverity())     # NONE / MINOR / MAJOR / SAFETY_CRITICAL
+print("Overpressure x  :", result.getOverpressureFactor())
+print("Blocked outlet  :", result.isBlockedOutlet())
+print("Reverse flow    :", result.isReverseFlowRisk())
+print("Loss of relief  :", result.isLossOfReliefPath())
+print("Fails to isolate:", result.isFailureToIsolateOnDemand())
+for rec in result.getRecommendations():
+    print(" -", rec)
+```
+
 ---
 
 ## Flowsheet Building
@@ -333,11 +412,10 @@ process.run()
 ```python
 Adjuster = jneqsim.process.equipment.util.Adjuster
 
-# Adjust compressor outlet pressure to achieve target flow
+# Adjust compressor outlet pressure to achieve target gas volume flow
 adjuster = Adjuster("Adjust-1")
-adjuster.setAdjustedVariable(compressor, "outlet pressure")
-adjuster.setTargetVariable(outlet_stream, "flow rate", "kg/hr")
-adjuster.setTargetValue(5000)  # Target 5000 kg/hr
+adjuster.setAdjustedVariable(compressor, "pressure", "bara")
+adjuster.setTargetVariable(outlet_stream, "gasVolumeFlow", 5000.0, "Am3/hr")
 adjuster.setTolerance(1e-4)
 process.add(adjuster)
 

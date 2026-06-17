@@ -132,7 +132,6 @@ public class Standard_ISO18453 extends neqsim.standards.Standard {
       if ("F".equals(returnUnit)) {
         return dewPointTemperature * 9.0 / 5.0 + 32.0;
       }
-      return dewPointTemperature;
     }
     return dewPointTemperature;
   }

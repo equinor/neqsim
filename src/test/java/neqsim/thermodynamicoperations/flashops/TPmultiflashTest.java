@@ -71,6 +71,72 @@ class TPmultiflashTest {
   }
 
   /**
+   * Verifies that enhanced stability checks do not perturb hydrocarbon-only PR binary flashes.
+   */
+  @Test
+  void testEnhancedHydrocarbonBinaryMatchesOrdinaryMultiphaseCheck() {
+    final double binaryInteractionParameter = 0.05;
+    double[][] conditions =
+        new double[][] {{110.0, 264.0}, {112.5, 276.0}, {70.0, 458.0}, {120.0, 200.0}};
+
+    for (double[] condition : conditions) {
+      SystemInterface ordinarySystem =
+          createMethaneHeptanePrSystem(binaryInteractionParameter, false);
+      ordinarySystem.setPressure(condition[0], "bara");
+      ordinarySystem.setTemperature(condition[1], "K");
+      new ThermodynamicOperations(ordinarySystem).TPflash();
+      ordinarySystem.initProperties();
+
+      SystemInterface enhancedSystem =
+          createMethaneHeptanePrSystem(binaryInteractionParameter, true);
+      enhancedSystem.setPressure(condition[0], "bara");
+      enhancedSystem.setTemperature(condition[1], "K");
+      new ThermodynamicOperations(enhancedSystem).TPflash();
+      enhancedSystem.initProperties();
+
+      assertEquals(ordinarySystem.getNumberOfPhases(), enhancedSystem.getNumberOfPhases(),
+          "Enhanced flash should not change phase count at P=" + condition[0] + " bara, T="
+              + condition[1] + " K");
+      assertEquals(ordinarySystem.hasPhaseType("gas"), enhancedSystem.hasPhaseType("gas"));
+      assertEquals(ordinarySystem.hasPhaseType("oil"), enhancedSystem.hasPhaseType("oil"));
+      assertEquals(ordinarySystem.hasPhaseType("aqueous"), enhancedSystem.hasPhaseType("aqueous"));
+
+      for (int phaseNumber = 0; phaseNumber < ordinarySystem.getNumberOfPhases(); phaseNumber++) {
+        assertEquals(ordinarySystem.getPhase(phaseNumber).getType(),
+            enhancedSystem.getPhase(phaseNumber).getType());
+        assertEquals(ordinarySystem.getBeta(phaseNumber), enhancedSystem.getBeta(phaseNumber),
+            1.0e-10);
+      }
+    }
+  }
+
+  /**
+   * Creates the methane/n-heptane PR system used in binary hydrocarbon flash regression tests.
+   *
+   * @param binaryInteractionParameter methane/n-heptane binary interaction parameter
+   * @param enhancedCheck true to enable enhanced multiphase checks
+   * @return configured methane/n-heptane PR thermodynamic system
+   */
+  private SystemInterface createMethaneHeptanePrSystem(double binaryInteractionParameter,
+      boolean enhancedCheck) {
+    SystemInterface methaneHeptaneSystem = new neqsim.thermo.system.SystemPrEos();
+    methaneHeptaneSystem.addComponent("methane", 70.0);
+    methaneHeptaneSystem.addComponent("n-heptane", 30.0);
+
+    methaneHeptaneSystem.setMixingRule("classic");
+    ((EosMixingRulesInterface) methaneHeptaneSystem.getPhase(0).getMixingRule())
+        .setBinaryInteractionParameter(0, 1, binaryInteractionParameter);
+    ((EosMixingRulesInterface) methaneHeptaneSystem.getPhase(1).getMixingRule())
+        .setBinaryInteractionParameter(0, 1, binaryInteractionParameter);
+
+    methaneHeptaneSystem.setMultiPhaseCheck(true);
+    if (enhancedCheck) {
+      methaneHeptaneSystem.setEnhancedMultiPhaseCheck(true);
+    }
+    return methaneHeptaneSystem;
+  }
+
+  /**
    * Test three-phase vapor-liquid-liquid equilibrium for sour gas system (methane/CO2/H2S). At low
    * temperatures and moderate pressures, this mixture can exhibit three-phase behavior with a vapor
    * phase, a CO2-rich liquid, and an H2S-rich liquid.

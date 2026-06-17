@@ -187,7 +187,7 @@ public enum AdvectionScheme {
 
   /**
    * Estimate the numerical dispersion reduction factor compared to first-order upwind.
-   * 
+   *
    * <p>
    * This is approximate and depends on the solution smoothness and CFL number.
    * </p>

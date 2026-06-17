@@ -15,7 +15,7 @@
  *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * RiskModel model = new RiskModel("HP Separator Study");
  * model.addInitiatingEvent("Small Leak", 1e-3, ConsequenceCategory.MINOR);

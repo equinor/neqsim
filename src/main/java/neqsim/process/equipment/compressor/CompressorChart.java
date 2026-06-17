@@ -24,6 +24,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * Generates the surge curve by taking the head value at the lowest flow for each speed from the
    * compressor chart values.
    */
+  @Override
   public void generateSurgeCurve() {
     int n = chartValues.size();
     java.util.TreeMap<Double, Double> uniqueSurgePoints = new java.util.TreeMap<>();
@@ -350,6 +351,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * @param head the required polytropic head in the chart's head unit (kJ/kg or meter)
    * @return the calculated speed in RPM (as double for precision)
    */
+  @Override
   public double getSpeedValue(double flow, double head) {
     // Fan law: H = f(Q/N) * N², so N = sqrt(H / f(Q/N))
     // For initial guess, use reference speed scaled by sqrt of head ratio
@@ -733,6 +735,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    *
    * @return a double
    */
+  @Override
   public double getMaxSpeedCurve() {
     return maxSpeedCurve;
   }
@@ -779,6 +782,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * @return The surge flow (minimum flow) at the specified speed in m3/hr, or Double.NaN if no
    *         curves exist
    */
+  @Override
   public double getSurgeFlowAtSpeed(double speed) {
     if (chartValues.isEmpty()) {
       return Double.NaN;
@@ -819,6 +823,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * @return The surge head at the specified speed in kJ/kg or meter (depending on headUnit), or
    *         Double.NaN if no curves exist
    */
+  @Override
   public double getSurgeHeadAtSpeed(double speed) {
     if (chartValues.isEmpty()) {
       return Double.NaN;
@@ -862,6 +867,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * @return The stone wall flow (maximum flow) at the specified speed in m3/hr, or Double.NaN if no
    *         curves exist
    */
+  @Override
   public double getStoneWallFlowAtSpeed(double speed) {
     if (chartValues.isEmpty()) {
       return Double.NaN;
@@ -902,6 +908,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * @return The stone wall head at the specified speed in kJ/kg or meter (depending on headUnit),
    *         or Double.NaN if no curves exist
    */
+  @Override
   public double getStoneWallHeadAtSpeed(double speed) {
     if (chartValues.isEmpty()) {
       return Double.NaN;

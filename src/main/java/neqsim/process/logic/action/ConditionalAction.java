@@ -5,7 +5,7 @@ import neqsim.process.logic.LogicCondition;
 
 /**
  * Executes an action conditionally based on a runtime condition.
- * 
+ *
  * <p>
  * Conditional actions provide if-then-else logic within process sequences:
  * <ul>
@@ -13,22 +13,22 @@ import neqsim.process.logic.LogicCondition;
  * <li>If condition is false, execute alternative action (optional)</li>
  * <li>Enables dynamic decision-making in sequences</li>
  * </ul>
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * // If temperature &gt; 100°C, open cooling valve; else open bypass valve
  * LogicCondition highTemp = new TemperatureCondition(reactor, 100.0, "&gt;");
  * LogicAction openCooling = new OpenValveAction(coolingValve);
  * LogicAction openBypass = new OpenValveAction(bypassValve);
- * 
+ *
  * ConditionalAction conditional =
  *     new ConditionalAction(highTemp, openCooling, openBypass, "Temperature Control");
- * 
+ *
  * // In sequence
  * startupLogic.addAction(conditional, 0.0);
- * 
+ *
  * // Execute - checks condition at runtime
  * conditional.execute(); // Opens appropriate valve based on current temperature
  * </pre>

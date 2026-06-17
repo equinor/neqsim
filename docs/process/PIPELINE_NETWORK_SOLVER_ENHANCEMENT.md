@@ -13,9 +13,9 @@ The Hardy Cross looped network solver has been implemented in NeqSim. See the [e
 
 | Class | Location | Purpose |
 |-------|----------|---------|
-| `LoopedPipeNetwork` | [network/LoopedPipeNetwork.java](../../src/main/java/neqsim/process/equipment/network/LoopedPipeNetwork.java) | Main network class with Hardy Cross solver |
-| `LoopDetector` | [network/LoopDetector.java](../../src/main/java/neqsim/process/equipment/network/LoopDetector.java) | DFS spanning tree loop detection |
-| `NetworkLoop` | [network/NetworkLoop.java](../../src/main/java/neqsim/process/equipment/network/NetworkLoop.java) | Loop representation with member pipes |
+| `LoopedPipeNetwork` | [network/LoopedPipeNetwork.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/network/LoopedPipeNetwork.java) | Main network class with Hardy Cross solver |
+| `LoopDetector` | [network/LoopDetector.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/network/LoopDetector.java) | DFS spanning tree loop detection |
+| `NetworkLoop` | [network/NetworkLoop.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/network/NetworkLoop.java) | Loop representation with member pipes |
 
 ### Key Features
 
@@ -33,20 +33,20 @@ NeqSim currently has two network classes:
 
 | Class | Location | Capabilities |
 |-------|----------|--------------|
-| `PipeFlowNetwork` | [network/PipeFlowNetwork.java](../../src/main/java/neqsim/process/equipment/network/PipeFlowNetwork.java) | Tree topology, TDMA solver, compositional tracking |
-| `WellFlowlineNetwork` | [network/WellFlowlineNetwork.java](../../src/main/java/neqsim/process/equipment/network/WellFlowlineNetwork.java) | Well-flowline gathering, Beggs-Brill |
+| `PipeFlowNetwork` | [network/PipeFlowNetwork.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/network/PipeFlowNetwork.java) | Tree topology, TDMA solver, compositional tracking |
+| `WellFlowlineNetwork` | [network/WellFlowlineNetwork.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/equipment/network/WellFlowlineNetwork.java) | Well-flowline gathering, Beggs-Brill |
 
 ### Current Limitations
 
 1. **Tree Topology Only**: Networks must be acyclic (no loops)
    - Each manifold can have only ONE outbound pipeline
    - No support for ring mains or looped distribution systems
-   
+
 2. **Sequential Solving**: Manifolds processed in topological order
    - Cannot handle pressure-dependent flow distribution in loops
    - No simultaneous solution of network equations
 
-3. **Fixed Pressure Boundaries**: 
+3. **Fixed Pressure Boundaries**:
    - Inlet pressures from feed streams
    - No iterative pressure-flow balance
 
@@ -99,7 +99,7 @@ For larger networks or transient simulations:
 Solve F(Q, P) = 0 where:
   - Continuity at each node: Σ Q_in = Σ Q_out
   - Momentum for each pipe: P_in - P_out = f(Q, geometry, fluid)
-  
+
 Jacobian: J = ∂F/∂(Q,P)
 Update: [ΔQ, ΔP] = -J⁻¹ * F
 ```
@@ -129,46 +129,46 @@ subject to:
 
 ```java
 public class LoopedPipeNetwork extends PipeFlowNetwork {
-    
+
     /** Loop detection and representation */
     private List<NetworkLoop> independentLoops;
-    
+
     /** Solver selection */
     public enum NetworkSolver {
         HARDY_CROSS,      // Simple iterative for steady-state
         NEWTON_RAPHSON,   // Simultaneous for complex networks
         SEQUENTIAL        // Current tree-topology solver
     }
-    
+
     /** Detect and store network loops */
     public void detectLoops() {
         // Use DFS to find spanning tree
         // Chords (non-tree edges) define independent loops
     }
-    
+
     /** Hardy Cross iteration */
     private void solveHardyCross(UUID id, double tolerance, int maxIter) {
         for (int iter = 0; iter < maxIter; iter++) {
             double maxCorrection = 0;
-            
+
             for (NetworkLoop loop : independentLoops) {
                 // Calculate head loss around loop
                 double headLoss = loop.calculateHeadLoss();
-                
+
                 // Calculate flow correction
                 double correction = loop.calculateFlowCorrection(headLoss);
-                
+
                 // Apply correction to all pipes in loop
                 loop.applyCorrection(correction);
-                
+
                 maxCorrection = Math.max(maxCorrection, Math.abs(correction));
             }
-            
+
             // Re-run pipe hydraulics with updated flows
             for (PipelineSegment pipe : allPipelines) {
                 pipe.getPipeline().run(id);
             }
-            
+
             if (maxCorrection < tolerance) {
                 break; // Converged
             }
@@ -183,12 +183,12 @@ public class LoopedPipeNetwork extends PipeFlowNetwork {
 public class NetworkLoop {
     /** Pipes in this loop with direction (+1 or -1) */
     private List<LoopMember> members;
-    
+
     public static class LoopMember {
         PipelineSegment pipe;
         int direction; // +1 = same as loop direction, -1 = opposite
     }
-    
+
     /** Calculate sum of head losses around the loop */
     public double calculateHeadLoss() {
         double totalHead = 0;
@@ -198,7 +198,7 @@ public class NetworkLoop {
         }
         return totalHead;
     }
-    
+
     /** Calculate Hardy Cross flow correction */
     public double calculateFlowCorrection(double headLoss) {
         double denominator = 0;
@@ -212,7 +212,7 @@ public class NetworkLoop {
         }
         return -headLoss / denominator;
     }
-    
+
     /** Apply flow correction to all pipes in loop */
     public void applyCorrection(double deltaQ) {
         for (LoopMember member : members) {
@@ -227,7 +227,7 @@ public class NetworkLoop {
 ### Phase 3: Loop Detection Algorithm
 
 ```java
-/** 
+/**
  * Detect independent loops using DFS spanning tree.
  * Each non-tree edge (chord) defines one independent loop.
  */
@@ -236,11 +236,11 @@ public List<NetworkLoop> detectIndependentLoops() {
     Set<String> visited = new HashSet<>();
     Map<String, String> parent = new HashMap<>();
     Set<PipelineSegment> treeEdges = new HashSet<>();
-    
+
     // DFS to build spanning tree
     String startNode = findSourceManifold();
     dfsSpanningTree(startNode, null, visited, parent, treeEdges);
-    
+
     // Non-tree edges (chords) define loops
     for (PipelineSegment pipe : allPipelines) {
         if (!treeEdges.contains(pipe)) {
@@ -249,7 +249,7 @@ public List<NetworkLoop> detectIndependentLoops() {
             loops.add(loop);
         }
     }
-    
+
     return loops;
 }
 
@@ -257,7 +257,7 @@ private NetworkLoop traceLoop(PipelineSegment chord, Map<String, String> parent)
     // Find path in tree between chord endpoints
     String node1 = chord.getFromManifold();
     String node2 = chord.getToManifold();
-    
+
     // Trace paths to common ancestor and construct loop
     // ... implementation details ...
 }
@@ -274,7 +274,7 @@ private NetworkLoop traceLoop(PipelineSegment chord, Map<String, String> parent)
 public void run(UUID id) {
     // Detect topology type
     detectLoops();
-    
+
     if (independentLoops.isEmpty()) {
         // Tree topology - use existing sequential solver
         runSequential(id);
@@ -320,7 +320,7 @@ network.run();
       / \
      /   \
     B-----C
-    
+
 Feed at A, demands at B and C
 Verify: Q_AB + Q_AC = Q_feed
         Q_AB - Q_BC = Demand_B
@@ -337,7 +337,7 @@ Verify: Q_AB + Q_AC = Q_feed
       D----E----F
       |
     Outlet
-    
+
 Multiple paths from A to F
 Verify flows distribute according to resistance
 ```
@@ -348,7 +348,7 @@ Verify flows distribute according to resistance
     Well1 --- Manifold1 ---+--- Export
                           |
     Well2 --- Manifold2 ---+
-    
+
 Crossover between manifolds for flexibility
 ```
 

@@ -201,7 +201,6 @@ public class PipeCostEstimate extends UnitCostEstimateBaseClass {
     if ("10".equals(pipeSchedule) || "10S".equals(pipeSchedule)) {
       return 0.7;
     } else if ("40".equals(pipeSchedule) || "40S".equals(pipeSchedule)) {
-      return 1.0;
     } else if ("80".equals(pipeSchedule) || "80S".equals(pipeSchedule)) {
       return 1.4;
     } else if ("160".equals(pipeSchedule)) {

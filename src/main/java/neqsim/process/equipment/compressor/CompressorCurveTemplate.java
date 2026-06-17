@@ -55,22 +55,22 @@ import java.util.Arrays;
  * <p>
  * <strong>Usage Example:</strong>
  * </p>
- * 
+ *
  * <pre>
  * // Get template by name (flexible naming)
  * CompressorCurveTemplate template = CompressorCurveTemplate.getTemplate("pipeline");
- * 
+ *
  * // Scale to design point
  * CompressorChartInterface chart = template.scaleToDesignPoint(10000, // designSpeed (RPM)
  *     5000, // designFlow (m³/hr)
  *     85.0, // designHead (kJ/kg)
  *     5 // numberOfSpeeds
  * );
- * 
+ *
  * // Or use with CompressorChartGenerator
  * CompressorChartGenerator generator = new CompressorChartGenerator(compressor);
  * CompressorChartInterface chart = generator.generateFromTemplate("EXPORT", 5);
- * 
+ *
  * // List available templates
  * String[] all = CompressorCurveTemplate.getAvailableTemplates();
  * String[] apps = CompressorCurveTemplate.getTemplatesByCategory("application");

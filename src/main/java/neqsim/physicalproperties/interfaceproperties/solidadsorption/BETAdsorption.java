@@ -59,7 +59,6 @@ public class BETAdsorption extends AbstractAdsorptionModel {
    * Default constructor.
    */
   public BETAdsorption() {
-    super();
   }
 
   /**

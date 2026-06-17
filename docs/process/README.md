@@ -42,9 +42,17 @@ This documentation is organized into the following sections:
 | [equipment/adsorption_bed.md](equipment/adsorption_bed) | **Adsorption bed** — transient simulation, LDF mass transfer, PSA/TSA cycles |
 | [mercury_removal.md](mercury_removal) | **Mercury removal guard beds** — chemisorption (PuraSpec), bed loading, breakthrough, degradation, mechanical design, cost |
 | [bioprocessing.md](bioprocessing) | **Bio-processing** — reactors, fermenters, solid-liquid separators, LLE, evaporators, dryers, crystallizers |
+| [neqsim-studio.md](neqsim-studio) | **NeqSim Studio (Python)** — newcomer-friendly process builder: natural language, templates, guided wizard, edit-by-chat, recipe gallery |
 | [processmodel/](processmodel/) | ProcessSystem and flowsheet management |
+| [process_json_export_and_e300_fluids.md](process_json_export_and_e300_fluids) | **Process JSON export** — self-contained ProcessSystem/ProcessModel JSON for MCP, including E300-equivalent component properties and volume correction |
+| [simulation-hooks-and-events.md](simulation-hooks-and-events) | **Lifecycle hooks, event bus, auto-validation** for ProcessSystem and ProcessModel |
 | [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
 | [controllers.md](controllers) | Process controllers and logic |
+| [unisim-to-neqsim-conversion.md](unisim-to-neqsim-conversion) | **UniSim/HYSYS conversion** — convert `.usc` models to NeqSim with E300 full-fluid transfer and export back to UniSim |
+| [piping_route_builder.md](piping_route_builder) | **STID/E3D line-list piping route builder** — convert route tables into serial Beggs-and-Brill hydraulic models and water-hammer screening handoffs |
+| [water_hammer_implementation.md](../wiki/water_hammer_implementation.md) | **Water hammer/liquid hammer screening** — fast valve closure, pump trip, STID route, tagreader event, and MCP runWaterHammer workflow |
+| [operational_evidence_package.md](operational_evidence_package) | **Operational evidence package** — combine P&ID/STID references, tagreader values, scenario actions, and bottleneck detection |
+| [exergy-analysis.md](exergy-analysis) | **Exergy analysis** — plant-wide destruction hotspots for ProcessSystem and ProcessModel |
 
 ### Process Design Guide
 
@@ -57,7 +65,6 @@ This documentation is organized into the following sections:
 | Document | Description |
 |----------|-------------|
 | [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK) | **Automated equipment sizing and optimization framework** |
-| [OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](OPTIMIZATION_IMPROVEMENT_PROPOSAL) | Implementation status and roadmap |
 
 **Key Features:**
 - `AutoSizeable` interface - Equipment auto-sizing from flow requirements
@@ -72,6 +79,7 @@ This documentation is organized into the following sections:
 |----------|-------------|
 | [optimization/OPTIMIZATION_AND_CONSTRAINTS.md](optimization/OPTIMIZATION_AND_CONSTRAINTS) | **COMPREHENSIVE: Complete guide to optimization algorithms, constraint types, bottleneck analysis** |
 | [optimization/OPTIMIZATION_OVERVIEW.md](optimization/OPTIMIZATION_OVERVIEW) | When to use which optimizer |
+| [optimization/process-researcher.md](optimization/process-researcher) | **Process researcher** - generate and rank candidate flowsheets from feed/product targets, including reaction routes |
 | [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK) | Equipment capacity limits and utilization tracking |
 
 **Key Features:**
@@ -136,6 +144,7 @@ This documentation is organized into the following sections:
 | [well_mechanical_design.md](well_mechanical_design) | **Well casing/tubing design, barrier verification, cost estimation per NORSOK D-010, API 5CT** |
 | [torg_integration.md](torg_integration) | Technical Requirements Documents (TORG) integration |
 | [field_development_orchestration.md](field_development_orchestration) | Complete design workflow orchestration |
+| [mechanical_design/two_phase_heat_transfer.md](mechanical_design/two_phase_heat_transfer) | **Two-phase heat transfer — Shah condensation, Chen/Gungor-Winterton boiling, Friedel/MSH pressure drop, Ebert-Panchal fouling, incremental zone analysis, tube inserts** |
 
 ### Cost Estimation Framework (NEW) ✨
 
@@ -160,10 +169,12 @@ This documentation is organized into the following sections:
 | Streams | [streams.md](equipment/streams) | Stream, EnergyStream, VirtualStream |
 | Separators | [separators.md](equipment/separators) | Separator, ThreePhaseSeparator, GasScrubber |
 | Heat Exchangers | [heat_exchangers.md](equipment/heat_exchangers) | Heater, Cooler, HeatExchanger |
-| Compressors | [compressors.md](equipment/compressors) | Compressor, CompressorChart |
+| Compressors | [compressors.md](equipment/compressors) | Compressor, CompressorChart, CompressorWashing |
 | Pumps | [pumps.md](equipment/pumps) | Pump, PumpChart |
 | Expanders | [expanders.md](equipment/expanders) | Expander, TurboExpanderCompressor |
 | Valves | [valves.md](equipment/valves) | ThrottlingValve, SafetyValve, BlowdownValve |
+| **Choke Collapse Analysis** | [choke-collapse.md](choke-collapse) | ChokeCollapseAnalyzer — critical pressure ratio, flashing, cavitation |
+| **Inadvertent Valve Operation** | [inadvertent-valve-operation.md](inadvertent-valve-operation) | InadvertentValveOperationAnalyzer — API 521 §4.4.13 / NORSOK P-002 IVO screening |
 | **Well Chokes** | [well_choke_implementation.md](well_choke_implementation) | Sachdeva, Gilbert choke models, ThrottlingValve integration |
 | Distillation | [distillation.md](equipment/distillation) | DistillationColumn, SimpleTray |
 | Absorbers | [absorbers.md](equipment/absorbers) | SimpleAbsorber, SimpleTEGAbsorber |
@@ -175,6 +186,10 @@ This documentation is organized into the following sections:
 | H2S Scavengers | [H2S_scavenger_guide.md](H2S_scavenger_guide) | H2S chemical scavenging (triazine, glyoxal, iron sponge) |
 | Reactors | [reactors.md](equipment/reactors) | GibbsReactor |
 | Pipelines | [pipelines.md](equipment/pipelines) | Pipeline, AdiabaticPipe, TopsidePiping, Riser |
+| **Water Hammer Screening** | [water_hammer_implementation.md](../wiki/water_hammer_implementation.md) | WaterHammerPipe, WaterHammerStudy, MCP runWaterHammer |
+| **Piping Route Builder** | [piping_route_builder.md](piping_route_builder) | PipingRouteBuilder for STID/E3D line-list route hydraulics |
+| **CO2 Well Analysis** | [co2_injection_well_analysis.md](co2_injection_well_analysis) | CO2InjectionWellAnalyzer, ImpurityMonitor, TransientWellbore, CO2FlowCorrections |
+| **Hydrogen Production** | [hydrogen_production.md](hydrogen_production) | SMR/ATR/POX route templates, ReformerFurnace, CatalyticTubeReformer, AutothermalReformer, PartialOxidationReactor, PSACascade, Electrolyzer |
 | Looped Networks | [looped_networks.md](equipment/looped_networks) | LoopedPipeNetwork, Hardy Cross solver |
 | Tanks | [tanks.md](equipment/tanks) | Tank, VesselDepressurization |
 | Wells | [wells.md](equipment/wells) | Well equipment |
@@ -183,6 +198,8 @@ This documentation is organized into the following sections:
 | Subsea Boosters | [subsea_boosters.md](equipment/subsea_boosters) | SubseaBooster, multiphase pumps |
 | Umbilicals | [umbilicals.md](equipment/umbilicals) | Umbilical systems |
 | Battery Storage | [battery_storage.md](equipment/battery_storage) | BatteryStorage |
+| **Heat Integration** | [heat_integration.md](equipment/heat_integration) | PinchAnalysis, HeatStream |
+| **Power Generation** | [power_generation.md](equipment/power_generation) | GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem, FuelCell, WindTurbine, SolarPanel |
 | Failure Modes | [failure_modes.md](equipment/failure_modes) | EquipmentFailureMode, reliability |
 | Mixers/Splitters | [mixers_splitters.md](equipment/mixers_splitters) | Mixer, Splitter |
 | Utility | [util/](equipment/util/) | Adjuster, Recycle, Calculator |

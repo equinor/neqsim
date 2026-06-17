@@ -59,7 +59,7 @@ public class CompressorCurveCorrections implements Serializable {
    * The efficiency of centrifugal compressors varies with Reynolds number due to viscous losses in
    * the boundary layers. This correction is based on the correlation:
    * </p>
-   * 
+   *
    * <pre>
    * η_corrected / η_reference = (Re_actual / Re_reference)^n
    * </pre>
@@ -100,7 +100,7 @@ public class CompressorCurveCorrections implements Serializable {
    * <p>
    * Reynolds number for compressors is typically defined as:
    * </p>
-   * 
+   *
    * <pre>
    * Re = (u * D) / ν
    * </pre>
@@ -139,7 +139,7 @@ public class CompressorCurveCorrections implements Serializable {
    * <p>
    * The Mach number is the ratio of gas velocity to sonic velocity:
    * </p>
-   * 
+   *
    * <pre>
    * Ma = V / c
    * </pre>
@@ -161,7 +161,7 @@ public class CompressorCurveCorrections implements Serializable {
    * <p>
    * The speed of sound in an ideal gas is:
    * </p>
-   * 
+   *
    * <pre>
    * c = sqrt(k * R * T / M)
    * </pre>
@@ -197,7 +197,7 @@ public class CompressorCurveCorrections implements Serializable {
    * <p>
    * The maximum flow can be estimated from:
    * </p>
-   * 
+   *
    * <pre>
    * Q_max = A * c * Ma_critical
    * </pre>
@@ -320,7 +320,7 @@ public class CompressorCurveCorrections implements Serializable {
    * Compressor efficiency decreases as operating point moves away from BEP. This method calculates
    * a parabolic efficiency profile:
    * </p>
-   * 
+   *
    * <pre>
    * η = η_max * [1 - k * (Q/Q_design - 1)²]
    * </pre>

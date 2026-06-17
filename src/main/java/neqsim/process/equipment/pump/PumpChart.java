@@ -61,7 +61,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * PumpChart chart = new PumpChart();
  * double[] speed = {1000.0};
@@ -243,6 +243,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * @param npshRequired 2D array of NPSH required values [speed index][flow index] in meters
    * @throws IllegalArgumentException if dimensions don't match flow/speed arrays
    */
+  @Override
   public void setNPSHCurve(double[][] npshRequired) {
     if (speed == null || flow == null) {
       throw new IllegalArgumentException(
@@ -303,6 +304,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * @param speed pump speed in rpm
    * @return NPSH required in meters, or 0.0 if no NPSH curve is available
    */
+  @Override
   public double getNPSHRequired(double flow, double speed) {
     if (!hasNPSHCurve || reducedNPSHFunc == null) {
       return 0.0; // No NPSH curve available
@@ -335,6 +337,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    *
    * @return true if NPSH curve is available
    */
+  @Override
   public boolean hasNPSHCurve() {
     return hasNPSHCurve;
   }
@@ -515,6 +518,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    *
    * @return flow rate at BEP in m³/hr at reference speed
    */
+  @Override
   public double getBestEfficiencyFlowRate() {
     // Find maximum efficiency by searching through reduced flow range
     double bestFlow = 0.0;
@@ -549,6 +553,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    *
    * @return specific speed (dimensionless)
    */
+  @Override
   public double getSpecificSpeed() {
     if (!headUnit.equals("meter")) {
       logger.warn("Specific speed calculation requires head in meters");
@@ -567,6 +572,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * @param speed pump speed in rpm
    * @return operating status string
    */
+  @Override
   public String getOperatingStatus(double flow, double speed) {
     if (checkSurge2(flow, speed)) {
       return "SURGE";
@@ -703,6 +709,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    *
    * @return reference density in kg/m³, or -1.0 if not set
    */
+  @Override
   public double getReferenceDensity() {
     return referenceDensity;
   }
@@ -720,6 +727,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    *
    * @param referenceDensity reference fluid density in kg/m³ (use -1.0 to disable correction)
    */
+  @Override
   public void setReferenceDensity(double referenceDensity) {
     this.referenceDensity = referenceDensity;
     if (referenceDensity > 0) {
@@ -732,6 +740,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    *
    * @return true if reference density is set and correction will be applied
    */
+  @Override
   public boolean hasDensityCorrection() {
     return referenceDensity > 0;
   }
@@ -751,6 +760,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * @param actualDensity actual fluid density in kg/m³
    * @return corrected head in the unit specified by getHeadUnit()
    */
+  @Override
   public double getCorrectedHead(double flow, double speed, double actualDensity) {
     double chartHead = getHead(flow, speed);
     if (referenceDensity > 0 && actualDensity > 0) {
@@ -789,6 +799,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * @param headBEP head at best efficiency point in meters
    * @param speed pump speed in rpm
    */
+  @Override
   public void calculateViscosityCorrection(double viscosity, double flowBEP, double headBEP,
       double speed) {
     if (viscosity <= 1.0) {
@@ -913,6 +924,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * @param actualViscosity actual kinematic viscosity in cSt
    * @return fully corrected head
    */
+  @Override
   public double getFullyCorrectedHead(double flow, double speed, double actualDensity,
       double actualViscosity) {
     // First apply viscosity correction if needed
@@ -947,6 +959,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * @param actualViscosity actual kinematic viscosity in cSt
    * @return corrected efficiency in percent
    */
+  @Override
   public double getCorrectedEfficiency(double flow, double speed, double actualViscosity) {
     double baseEfficiency = getEfficiency(flow, speed);
 
@@ -968,6 +981,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    *
    * @param referenceViscosity reference kinematic viscosity in cSt (typically 1.0 for water)
    */
+  @Override
   public void setReferenceViscosity(double referenceViscosity) {
     this.referenceViscosity = referenceViscosity;
     if (referenceViscosity > 0) {
@@ -980,6 +994,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    *
    * @return reference viscosity in cSt
    */
+  @Override
   public double getReferenceViscosity() {
     return referenceViscosity;
   }
@@ -989,6 +1004,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    *
    * @param useViscosityCorrection true to enable viscosity correction
    */
+  @Override
   public void setUseViscosityCorrection(boolean useViscosityCorrection) {
     this.useViscosityCorrection = useViscosityCorrection;
   }
@@ -998,6 +1014,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    *
    * @return true if viscosity correction is active
    */
+  @Override
   public boolean isUseViscosityCorrection() {
     return useViscosityCorrection;
   }
@@ -1007,6 +1024,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    *
    * @return flow correction factor
    */
+  @Override
   public double getFlowCorrectionFactor() {
     return cQ;
   }
@@ -1016,6 +1034,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    *
    * @return head correction factor
    */
+  @Override
   public double getHeadCorrectionFactor() {
     return cH;
   }
@@ -1025,6 +1044,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    *
    * @return efficiency correction factor
    */
+  @Override
   public double getEfficiencyCorrectionFactor() {
     return cEta;
   }

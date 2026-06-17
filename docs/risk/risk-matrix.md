@@ -2,6 +2,7 @@
 layout: default
 title: Risk Matrix
 parent: Risk Framework
+description: "Risk matrix implementation for classifying and evaluating risks. ISO 31000 based 5x5 matrix with customizable likelihood, consequence categories, and ALARP thresholds."
 ---
 
 # Risk Matrix
@@ -188,7 +189,7 @@ matrix.buildRiskMatrix();
 RiskMatrix matrix = new RiskMatrix();
 
 // Add risk items manually
-matrix.addRiskItem("Compressor Trip", 
+matrix.addRiskItem("Compressor Trip",
     ProbabilityCategory.MEDIUM,      // 0.5-1.0 failures/year
     ConsequenceCategory.MAJOR,       // 50-80% production loss
     500000.0);                       // $500k estimated cost
@@ -213,16 +214,16 @@ ReliabilityDataSource reliability = ReliabilityDataSource.getInstance();
 for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
     String name = equipment.getName();
     String type = equipment.getClass().getSimpleName();
-    
+
     // Get reliability data
     double failureRate = reliability.getFailureRate(type);
     ProbabilityCategory prob = ProbabilityCategory.fromFrequency(failureRate);
-    
+
     // Simulate to get consequence
     EquipmentFailureMode failure = EquipmentFailureMode.trip(name);
     ProductionImpactResult impact = analyzer.analyzeFailureImpact(failure);
     ConsequenceCategory cons = ConsequenceCategory.fromProductionLoss(impact.getPercentLoss());
-    
+
     // Add to matrix
     matrix.addRiskItem(name + " Trip", prob, cons, impact.getRevenueImpact());
 }

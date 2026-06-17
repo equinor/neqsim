@@ -23,7 +23,7 @@
  * </ul>
  *
  * <h2>Integration Example</h2>
- * 
+ *
  * <pre>
  * // Create ML interface
  * RiskMLInterface mlInterface = new RiskMLInterface("Platform Risk ML");

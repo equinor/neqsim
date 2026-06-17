@@ -36,7 +36,7 @@ public class RiskMLInterface implements Serializable {
   private Map<String, MLModel> models;
 
   /** Feature extractors. */
-  private Map<String, FeatureExtractor> featureExtractors;
+  private transient Map<String, FeatureExtractor> featureExtractors;
 
   /** Prediction history. */
   private List<PredictionRecord> predictionHistory;

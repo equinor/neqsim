@@ -1,6 +1,6 @@
 ---
 title: Adjusters
-description: Documentation for adjuster equipment in NeqSim process simulation.
+description: "Documentation for adjuster equipment in NeqSim process simulation. Covers single-variable Adjuster with standard and functional interface modes, and MultiVariableAdjuster for simultaneous multi-variable specification using damped successive substitution."
 ---
 
 # Adjusters
@@ -13,6 +13,9 @@ Documentation for adjuster equipment in NeqSim process simulation.
 - [Configuration](#configuration)
 - [Functional Interface Mode](#functional-interface-mode)
 - [Usage Examples](#usage-examples)
+- [Multiple Adjusters](#multiple-adjusters)
+- [Multi-Variable Adjuster](#multi-variable-adjuster)
+- [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -377,6 +380,107 @@ process.add(adj2);
 
 ---
 
+## Multi-Variable Adjuster
+
+**Class:** `MultiVariableAdjuster` (package `neqsim.process.equipment.util`)
+
+The `MultiVariableAdjuster` solves N equations in N unknowns simultaneously using
+**damped successive substitution**. This is more robust than
+chaining N single-variable adjusters, which solve sequentially and may oscillate when
+the variables interact.
+
+### When to Use MultiVariableAdjuster vs Single Adjuster
+
+| Scenario | Recommended |
+|----------|-------------|
+| One spec, one variable | `Adjuster` (single) |
+| N independent specs | N separate `Adjuster` instances |
+| N interacting specs (e.g., simultaneous T and P targets) | `MultiVariableAdjuster` |
+| Column condenser/reboiler coupled duties | `MultiVariableAdjuster` |
+
+### Basic Usage
+
+```java
+import neqsim.process.equipment.util.MultiVariableAdjuster;
+
+// Build the process
+Stream feed = new Stream("feed", fluid);
+feed.setFlowRate(5000.0, "kg/hr");
+
+Heater heater = new Heater("heater", feed);
+heater.setOutTemperature(350.0);  // Initial guess
+
+Compressor comp = new Compressor("compressor", heater.getOutletStream());
+comp.setOutletPressure(80.0);    // Initial guess
+
+ProcessSystem process = new ProcessSystem();
+process.add(feed);
+process.add(heater);
+process.add(comp);
+
+// Multi-variable adjuster: adjust 2 variables to hit 2 targets
+MultiVariableAdjuster mva = new MultiVariableAdjuster("MVA");
+
+// Variable 1: heater outlet temperature
+mva.addAdjustedVariable(heater, "outTemperature", "K");
+
+// Variable 2: compressor outlet pressure
+mva.addAdjustedVariable(comp, "outletPressure", "bara");
+
+// Target 1: product stream temperature = 400 K
+mva.addTargetSpecification(comp, "temperature", 400.0, "K");
+
+// Target 2: product stream pressure = 100 bara
+mva.addTargetSpecification(comp, "pressure", 100.0, "bara");
+
+// Optional: bounds and solver settings
+mva.setVariableBounds(0, 300.0, 500.0);  // Heater temp bounds
+mva.setVariableBounds(1, 50.0, 200.0);   // Compressor P bounds
+mva.setMaxIterations(50);
+mva.setTolerance(1e-4);
+
+// Add to process and run
+process.add(mva);
+process.run();
+
+// Check convergence
+if (mva.isConverged()) {
+    System.out.println("Converged in " + mva.getIterations() + " iterations");
+    System.out.println("Max residual: " + mva.getMaxResidual());
+} else {
+    System.out.println("WARNING: did not converge");
+}
+```
+
+### Key Methods
+
+| Method | Description |
+|--------|-------------|
+| `addAdjustedVariable(equipment, variable, unit)` | Add a variable to manipulate |
+| `addTargetSpecification(equipment, variable, target, unit)` | Add a target to satisfy |
+| `setVariableBounds(index, lower, upper)` | Set bounds on adjusted variable by index |
+| `setMaxIterations(int)` | Maximum solver iterations (default: 50) |
+| `setTolerance(double)` | Convergence tolerance (default: 1e-4) |
+| `isConverged()` | Whether the solver converged |
+| `getIterations()` | Number of iterations used |
+| `getMaxResidual()` | Largest residual at convergence |
+| `getNumberOfVariables()` | Number of adjusted variables |
+
+### How It Works
+
+The damped successive substitution algorithm adjusts each variable by a fraction
+of the current residual:
+
+$$\mathbf{x}_{k+1} = \mathbf{x}_k + \alpha \cdot \mathbf{r}_k$$
+
+where $\mathbf{r}_k = \mathbf{t} - \mathbf{y}(\mathbf{x}_k)$ is the residual vector
+(target minus current output) and $\alpha = 0.1$ is the damping factor. This
+provides robust first-order convergence for a wide range of process gains.
+The method converges when $|1 - \alpha \cdot g| < 1$ for all variables, where
+$g$ is the process gain (sensitivity of output to input).
+
+---
+
 ## Troubleshooting
 
 ### Convergence Issues
@@ -412,3 +516,5 @@ Check that specifications are achievable before troubleshooting solver settings.
 - [Recycles](recycles) - Recycle handling
 - [Calculators](calculators) - Custom calculations
 - [Process Controllers](../../controllers) - PID and logic control
+- [SQP Optimizer](../../optimization/sqp_optimizer) - Nonlinear constrained optimization
+- [Optimization Overview](../../optimization/OPTIMIZATION_OVERVIEW) - All optimization tools

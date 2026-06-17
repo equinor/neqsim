@@ -41,7 +41,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <h2>Usage Example - VLP Curve Generation</h2>
- * 
+ *
  * <pre>{@code
  * // Create reservoir fluid
  * SystemInterface fluid = new SystemSrkEos(373.15, 250.0);
@@ -77,7 +77,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * }</pre>
  *
  * <h2>Integration with WellFlow (IPR-VLP Nodal Analysis)</h2>
- * 
+ *
  * <pre>{@code
  * // Create WellFlow for IPR
  * WellFlow ipr = new WellFlow("well IPR");
@@ -397,7 +397,7 @@ public class TubingPerformance extends TwoPortEquipment {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * <p>
    * Calculates wellhead conditions from bottom-hole conditions by integrating the pressure-drop
    * correlation up the tubing.
@@ -513,7 +513,7 @@ public class TubingPerformance extends TwoPortEquipment {
 
   /**
    * Calculate temperature using Ramey (1962) steady-state model.
-   * 
+   *
    * <p>
    * The Ramey model accounts for:
    * <ul>
@@ -862,7 +862,7 @@ public class TubingPerformance extends TwoPortEquipment {
 
   /**
    * Generate a VLP curve (Tubing Performance Curve).
-   * 
+   *
    * <p>
    * Calculates the required bottom-hole pressure for each flow rate to achieve a specified wellhead
    * pressure. This is essential for nodal analysis and reservoir simulation coupling.
@@ -959,7 +959,7 @@ public class TubingPerformance extends TwoPortEquipment {
 
   /**
    * Generate VLP curves for multiple wellhead pressures.
-   * 
+   *
    * <p>
    * This produces a family of VLP curves useful for sensitivity analysis and reservoir simulator
    * table generation.
@@ -982,7 +982,7 @@ public class TubingPerformance extends TwoPortEquipment {
 
   /**
    * Find the operating point (intersection of IPR and VLP).
-   * 
+   *
    * <p>
    * Given a WellFlow (IPR model) and target wellhead pressure, finds the flow rate and bottom-hole
    * pressure where IPR = VLP.
@@ -1252,7 +1252,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * <p>
    * Example CSV format:
    * </p>
-   * 
+   *
    * <pre>
    * FlowRate(MSm3/day),BHP(bara)
    * 0.5,85

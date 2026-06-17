@@ -1,6 +1,6 @@
 /*
  * ImprovedVUflashQfunc.java
- * 
+ *
  * Enhanced VU flash with better numerical stability for separator applications
  */
 
@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * ImprovedVUflashQfunc class with enhanced numerical stability.
  * </p>
- * 
+ *
  * Improvements: - Bounds checking for pressure and temperature - Better damping and convergence
  * criteria - Validation of inputs and outputs - Fallback mechanisms for problematic cases
  *
@@ -42,6 +42,10 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Constructor for ImprovedVUflashQfunc.
+   *
+   * @param system thermodynamic system to flash
+   * @param Vspec specified volume
+   * @param Uspec specified internal energy
    */
   public ImprovedVUflashQfunc(SystemInterface system, double Vspec, double Uspec) {
     this.system = system;
@@ -52,6 +56,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Validates inputs before running VU flash.
+   *
+   * @return {@code true} when {@code Vspec} and {@code Uspec} are finite and physically valid
    */
   private boolean validateInputs() {
     if (Vspec <= 0) {
@@ -67,6 +73,10 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Validates pressure and temperature bounds.
+   *
+   * @param pressure pressure in bar
+   * @param temperature temperature in Kelvin
+   * @return {@code true} when both values fall within the configured solver bounds
    */
   private boolean isWithinBounds(double pressure, double temperature) {
     return pressure >= MIN_PRESSURE && pressure <= MAX_PRESSURE && temperature >= MIN_TEMPERATURE
@@ -75,6 +85,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Calculates derivative with safety checks.
+   *
+   * @return the dQ/dP derivative, clamped away from zero by the configured threshold
    */
   public double calcdQdPP() {
     double dVdP = system.getdVdPtn();
@@ -92,6 +104,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Calculates derivative with safety checks.
+   *
+   * @return second derivative of the objective with respect to temperature
    */
   public double calcdQdTT() {
     double dQdT_val = calcdQdT();
@@ -108,6 +122,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Calculates derivative.
+   *
+   * @return derivative of the objective with respect to temperature
    */
   public double calcdQdT() {
     double dQdT = (Uspec + system.getPressure() * Vspec - system.getEnthalpy())
@@ -117,6 +133,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Calculates derivative.
+   *
+   * @return derivative of the objective with respect to pressure
    */
   public double calcdQdP() {
     double dQdP = system.getPressure() * (system.getVolume() - Vspec)
@@ -126,6 +144,8 @@ public class ImprovedVUflashQfunc extends Flash {
 
   /**
    * Enhanced solver with better convergence and bounds checking.
+   *
+   * @return converged pressure, or the current system pressure if input validation fails
    */
   public double solveQ() {
     if (!validateInputs()) {
@@ -232,8 +252,17 @@ public class ImprovedVUflashQfunc extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    tpFlash.run();
-    solveQ();
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values;
+    // warm-start enabled only for inner iterations within the outer V/U loop.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */

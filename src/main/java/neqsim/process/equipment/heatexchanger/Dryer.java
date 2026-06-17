@@ -15,14 +15,18 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Dryer for removing moisture from wet solids or liquid streams.
  *
  * <p>
- * Models various drying equipment including drum dryers, spray dryers, and flash dryers. The dryer
- * evaporates a specified amount of volatile components (typically water) from the feed to achieve a
+ * Models various drying equipment including drum dryers, spray dryers, and
+ * flash dryers. The dryer
+ * evaporates a specified amount of volatile components (typically water) from
+ * the feed to achieve a
  * target moisture content or outlet temperature.
  * </p>
  *
  * <p>
- * The drying process is modeled as a heated flash: the feed is heated to generate vapor, which is
- * separated from the dried product. The energy input determines how much moisture is removed.
+ * The drying process is modeled as a heated flash: the feed is heated to
+ * generate vapor, which is
+ * separated from the dried product. The energy input determines how much
+ * moisture is removed.
  * </p>
  *
  * <p>
@@ -100,7 +104,7 @@ public class Dryer extends ProcessEquipmentBaseClass {
   /**
    * Constructor for Dryer with inlet stream.
    *
-   * @param name name of the dryer
+   * @param name        name of the dryer
    * @param inletStream the wet feed stream
    */
   public Dryer(String name, StreamInterface inletStream) {
@@ -147,6 +151,28 @@ public class Dryer extends ProcessEquipmentBaseClass {
     return vaporStream;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getInletStreams() {
+    if (inletStream == null) {
+      return java.util.Collections.emptyList();
+    }
+    return java.util.Collections.singletonList(inletStream);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getOutletStreams() {
+    java.util.List<StreamInterface> out = new java.util.ArrayList<>();
+    if (driedProductStream != null) {
+      out.add(driedProductStream);
+    }
+    if (vaporStream != null) {
+      out.add(vaporStream);
+    }
+    return out;
+  }
+
   /**
    * Set the dryer type.
    *
@@ -178,7 +204,7 @@ public class Dryer extends ProcessEquipmentBaseClass {
    * Set the outlet temperature with unit.
    *
    * @param temperature temperature value
-   * @param unit temperature unit ("K", "C", "F")
+   * @param unit        temperature unit ("K", "C", "F")
    */
   public void setOutletTemperature(double temperature, String unit) {
     if ("C".equalsIgnoreCase(unit)) {

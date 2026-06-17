@@ -1,18 +1,13 @@
 package neqsim.process.equipment.util;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import neqsim.process.equipment.heatexchanger.Heater;
-import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 
 /**
@@ -46,7 +41,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * </ul>
  *
  * <h2>Typical Process</h2>
- * 
+ *
  * <pre>
  * Water from Separator -&gt; Degasser (3-5 barg) -&gt; CFU (1 barg) -&gt; Caisson (atm) -&gt; Sea
  *                              |                    |               |
@@ -54,7 +49,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * </pre>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * {@code
  * // Quick setup for a typical 3-stage system
@@ -62,23 +57,23 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * system.setWaterFlowRate(100.0, "m3/hr");
  * system.setWaterTemperature(80.0, "C");
  * system.setInletPressure(30.0, "bara");
- * 
+ *
  * // Set degassing stage pressures
  * system.setDegasserPressure(4.0, "bara");
  * system.setCFUPressure(1.0, "bara");
- * 
+ *
  * // Set dissolved gas composition (from PVT analysis)
  * system.setDissolvedGasComposition(new String[] {"CO2", "methane", "ethane", "propane"},
  *     new double[] {0.51, 0.44, 0.04, 0.01} // mole fractions
  * );
- * 
+ *
  * // Optional: Apply tuned kij parameters from lab calibration
  * system.setTunedInteractionParameters(true);
- * 
+ *
  * // Run and get emissions
  * system.run();
  * System.out.println(system.getEmissionsReport());
- * 
+ *
  * // Compare with conventional handbook method
  * System.out.println(system.getMethodComparisonReport());
  * }

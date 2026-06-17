@@ -5,7 +5,7 @@ import neqsim.integration.ValidationFramework.*;
 
 /**
  * Validators for thermodynamic systems (SystemInterface implementations).
- * 
+ *
  * <p>
  * Checks:
  * <ul>
@@ -20,7 +20,7 @@ public class ThermoValidator {
 
   /**
    * Validate a thermodynamic system before use in equipment.
-   * 
+   *
    * @param system The system to validate
    * @return ValidationResult with errors and warnings
    */

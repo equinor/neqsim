@@ -30,7 +30,7 @@ import org.apache.logging.log4j.Logger;
  * </ul>
  *
  * <h2>Usage:</h2>
- * 
+ *
  * <pre>
  * {@code
  * ProcessSimulationFunction function = new ProcessSimulationFunction(process);
@@ -83,7 +83,6 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
    * @param processSystem the process system to wrap
    */
   public ProcessSimulationFunction(ProcessSystem processSystem) {
-    super();
     this.processSystem = processSystem;
     this.parameterPaths = new ArrayList<>();
     this.measurementPaths = new ArrayList<>();

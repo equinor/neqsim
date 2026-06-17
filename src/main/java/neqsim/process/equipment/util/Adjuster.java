@@ -53,9 +53,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   private static final double MAX_RELATIVE_STEP = 0.5;
   private boolean activateWhenLess = false;
   private boolean active = true;
-  private Function<ProcessEquipmentInterface, Double> targetValueCalculator;
-  private Function<ProcessEquipmentInterface, Double> adjustedValueGetter;
-  private BiConsumer<ProcessEquipmentInterface, Double> adjustedValueSetter;
+  private transient Function<ProcessEquipmentInterface, Double> targetValueCalculator;
+  private transient Function<ProcessEquipmentInterface, Double> adjustedValueGetter;
+  private transient BiConsumer<ProcessEquipmentInterface, Double> adjustedValueSetter;
 
   /**
    * <p>
@@ -149,6 +149,19 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment) {
     this.targetEquipment = targetEquipment;
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>targetVariable</code>.
+   * </p>
+   *
+   * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param targetVariable a {@link java.lang.String} object
+   */
+  public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable) {
+    this.targetEquipment = targetEquipment;
+    this.targetVariable = targetVariable;
   }
 
   /**
@@ -432,6 +445,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    *
    * @return true if the Adjuster is active, false otherwise
    */
+  @Override
   public boolean isActive() {
     return active;
   }
@@ -598,6 +612,51 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    */
   public double getMinAdjustedValue() {
     return minAdjustedValue;
+  }
+
+  /**
+   * Returns the equipment whose variable is adjusted by this adjuster.
+   *
+   * @return the adjusted equipment, or null if not configured
+   */
+  public ProcessEquipmentInterface getAdjustedEquipment() {
+    return adjustedEquipment;
+  }
+
+  /**
+   * Returns the name of the adjusted variable, e.g. "pressure" or "temperature".
+   *
+   * @return the adjusted variable name (may be empty if not configured)
+   */
+  public String getAdjustedVariable() {
+    return adjustedVariable;
+  }
+
+  /**
+   * Returns the unit of measure used for the adjusted variable.
+   *
+   * @return the adjusted variable unit (may be empty if not configured)
+   */
+  public String getAdjustedVariableUnit() {
+    return adjustedVariableUnit;
+  }
+
+  /**
+   * Returns the equipment that holds the target variable this adjuster drives toward.
+   *
+   * @return the target equipment, or null if not configured
+   */
+  public ProcessEquipmentInterface getTargetEquipment() {
+    return targetEquipment;
+  }
+
+  /**
+   * Returns the name of the target variable the adjuster drives toward, e.g. "temperature".
+   *
+   * @return the target variable name (may be empty if not configured)
+   */
+  public String getTargetVariable() {
+    return targetVariable;
   }
 
   /**

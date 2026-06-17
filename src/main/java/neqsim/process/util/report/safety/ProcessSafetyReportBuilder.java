@@ -157,7 +157,6 @@ public class ProcessSafetyReportBuilder {
     }
     if (messageLower.contains("warn") || messageLower.contains("deviation")
         || messageLower.contains("monitor")) {
-      return SeverityLevel.WARNING;
     }
     return SeverityLevel.WARNING;
   }

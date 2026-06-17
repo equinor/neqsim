@@ -24,10 +24,10 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * <b>Mass Flow Rate Equation:</b>
  * </p>
- * 
+ *
  * <pre>
  * m_dot = Cd * A2 * sqrt(2 * P1 * rho1 / denominator)
- * 
+ *
  * where denominator accounts for:
  * - Kinetic energy change (velocity change through restriction)
  * - Polytropic gas expansion work
@@ -37,7 +37,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * <b>Critical Pressure Ratio Correlation:</b>
  * </p>
- * 
+ *
  * <pre>
  * y_critical = 0.5847 - 0.0227 * ln(x_g)
  * </pre>
@@ -68,7 +68,6 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
    * Default constructor for SachdevaChokeFlow.
    */
   public SachdevaChokeFlow() {
-    super();
     this.dischargeCoefficient = 0.84;
   }
 

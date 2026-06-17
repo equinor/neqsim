@@ -191,6 +191,8 @@ public final class SeparatorFireExposure {
     /**
      * Heat from flare radiation incident on the separator shell using the inner surface area as the
      * exposure area approximation (W).
+     *
+     * @return flare radiative heat in watts
      */
     public double flareRadiativeHeat() {
       return flareRadiativeHeat;

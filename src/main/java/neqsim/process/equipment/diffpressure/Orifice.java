@@ -313,6 +313,7 @@ public class Orifice extends TwoPortEquipment {
    * @param dt Time step in seconds (not used for orifice as it has no accumulation/storage)
    * @param id Unique identifier for this simulation run
    */
+  @Override
   public void runTransient(double dt, UUID id) {
     // For orifice, transient behavior is quasi-steady (no accumulation)
     // Just run steady-state calculation

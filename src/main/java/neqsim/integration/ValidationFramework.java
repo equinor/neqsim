@@ -5,20 +5,20 @@ import java.util.stream.Collectors;
 
 /**
  * Core framework for validating NeqSim simulations before execution.
- * 
+ *
  * <p>
  * <b>Purpose:</b> Detect setup errors early (missing mixing rules, invalid parameters, unconverged
  * state) before long-running simulations. Enables AI agents to self-correct and provides developers
  * with clear error messages.
- * 
+ *
  * <p>
  * <b>Usage:</b>
- * 
+ *
  * <pre>
  * SystemInterface system = new SystemSrkEos(...);
  * system.addComponent("methane", 0.5);
  * // Missing: system.setMixingRule("classic")
- * 
+ *
  * ValidationResult result = system.validate();
  * if (!result.isReady()) {
  *   System.err.println(result.getErrorsSummary());
@@ -187,7 +187,7 @@ public class ValidationFramework {
   public interface Validatable {
     /**
      * Validate this object's state and configuration.
-     * 
+     *
      * @return ValidationResult with errors, warnings, and readiness status
      */
     ValidationResult validate();

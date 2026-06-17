@@ -3,7 +3,6 @@ package neqsim.process.util.optimizer;
 import java.io.Serializable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
@@ -24,24 +23,24 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * // Create process system with pipeline
  * ProcessSystem process = new ProcessSystem();
  * process.add(inlet);
  * process.add(pipe);
- * 
+ *
  * // Create generator
  * LiftCurveGenerator generator = new LiftCurveGenerator(process, "inlet", "pipeline");
  * generator.setMaxVelocity(20.0); // m/s constraint
- * 
+ *
  * // Define operating envelope
  * double[] flowRates = {1000, 5000, 10000, 20000, 30000}; // kg/hr
  * double[] thpValues = {20, 40, 60, 80}; // bara
- * 
+ *
  * // Generate table
  * LiftCurveTable table = generator.generateTable(flowRates, thpValues, "bara", "kg/hr");
- * 
+ *
  * // Export to Eclipse format
  * String eclipseFormat = table.toEclipseFormat();
  * </pre>

@@ -443,7 +443,6 @@ public class SURFCostEstimator {
     } else if ("X60".equals(grade)) {
       return 414.0;
     } else if ("X65".equals(grade)) {
-      return 448.0;
     } else if ("X70".equals(grade)) {
       return 483.0;
     } else if ("X80".equals(grade)) {

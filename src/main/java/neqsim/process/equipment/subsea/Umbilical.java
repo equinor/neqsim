@@ -244,7 +244,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
 
   // ============ Functional Elements ============
   /** List of umbilical elements. */
-  private List<UmbilicalElement> elements = new ArrayList<UmbilicalElement>();
+  private transient List<UmbilicalElement> elements = new ArrayList<UmbilicalElement>();
 
   /** Number of hydraulic lines. */
   private int hydraulicLineCount = 0;
@@ -477,6 +477,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
    *
    * @return mechanical design instance
    */
+  @Override
   public UmbilicalMechanicalDesign getMechanicalDesign() {
     if (mechanicalDesign == null) {
       mechanicalDesign = new UmbilicalMechanicalDesign(this);
@@ -487,6 +488,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
   /**
    * Initialize mechanical design.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new UmbilicalMechanicalDesign(this);
   }

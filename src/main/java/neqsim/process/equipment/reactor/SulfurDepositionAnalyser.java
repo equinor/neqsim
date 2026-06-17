@@ -1,8 +1,6 @@
 package neqsim.process.equipment.reactor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,9 +13,9 @@ import com.google.gson.JsonObject;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.pvtsimulation.flowassurance.DeWaardMilliamsCorrosion;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.pvtsimulation.flowassurance.DeWaardMilliamsCorrosion;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**

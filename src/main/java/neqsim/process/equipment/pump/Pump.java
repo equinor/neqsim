@@ -4,6 +4,8 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -13,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.electricaldesign.pump.PumpElectricalDesign;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.pump.PumpMechanicalDesign;
@@ -28,11 +31,12 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Centrifugal pump simulation model for process systems.
  *
  * <p>
- * This class simulates a centrifugal pump using either:
+ * This class simulates a centrifugal pump using one of three modes:
  * </p>
  * <ul>
  * <li>Isentropic compression with specified outlet pressure and efficiency</li>
  * <li>Manufacturer pump curves via {@link PumpChart} for realistic performance</li>
+ * <li>Fixed outlet temperature mode using {@link #setOutletTemperature(double, String)}</li>
  * </ul>
  *
  * <h2>Key Features</h2>
@@ -43,6 +47,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * test fluid</li>
  * <li><b>NPSH Monitoring:</b> Cavitation detection based on available vs required NPSH</li>
  * <li><b>Operating Status:</b> Surge, stonewall, and efficiency monitoring</li>
+ * <li><b>Outlet Temperature Mode:</b> When outlet temperature is set, the pump performs a TP flash
+ * at the specified temperature and outlet pressure. Power is back-calculated from the enthalpy
+ * difference. This is useful when discharge conditions are known from plant data.</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
@@ -53,6 +60,13 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * pump.setOutletPressure(10.0, "bara");
  * pump.setIsentropicEfficiency(0.75);
  * pump.run();
+ *
+ * // With fixed outlet temperature (useful for plant data matching)
+ * Pump pump2 = new Pump("PlantPump", feedStream);
+ * pump2.setOutletPressure(10.0, "bara");
+ * pump2.setOutletTemperature(35.0, "C");
+ * pump2.run();
+ * double power = pump2.getPower("kW"); // back-calculated
  *
  * // With manufacturer pump curves
  * double[] speed = {1000.0, 1500.0};
@@ -102,6 +116,21 @@ public class Pump extends TwoPortEquipment
   private boolean checkNPSH = false;
   private double npshMargin = 1.3; // Safety margin for NPSH (NPSHa should be > npshMargin *
                                    // NPSHr)
+  private double lastInletTemperature = Double.NaN;
+  private double lastInletPressure = Double.NaN;
+  private double lastInletFlowRate = Double.NaN;
+  private double[] lastInletComposition = null;
+  private double lastOutletPressure = Double.NaN;
+  private double lastOutTemperature = Double.NaN;
+  private double lastSpeed = Double.NaN;
+  private double lastMinimumFlow = Double.NaN;
+  private double lastIsentropicEfficiency = Double.NaN;
+  private double lastPower = Double.NaN;
+  private boolean lastUseOutTemperature = false;
+  private boolean lastCalculateAsCompressor = false;
+  private boolean lastPowerSet = false;
+  private boolean lastUsePumpChart = false;
+  private boolean lastCheckNPSH = false;
 
   /**
    * Constructor for Pump.
@@ -188,6 +217,24 @@ public class Pump extends TwoPortEquipment
     return powerUnit.getValue(unit);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit,
+      String pressureUnit, String flowUnit) {
+    Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
+    StreamInterface out = getOutletStream();
+    if (out != null) {
+      state.put("flow",
+          ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
+      state.put("pressure",
+          ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
+      state.put("temperature", ProcessEquipmentInterface
+          .createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
+    }
+    state.put("power", ProcessEquipmentInterface.createStateEntry(getPower("kW"), "kW"));
+    return state;
+  }
+
   /**
    * <p>
    * getDuty.
@@ -212,6 +259,70 @@ public class Pump extends TwoPortEquipment
 
   /** {@inheritDoc} */
   @Override
+  public boolean needRecalculation() {
+    if (thermoSystem == null || inStream == null || inStream.getThermoSystem() == null
+        || lastInletComposition == null) {
+      return true;
+    }
+    SystemInterface inletSystem = inStream.getThermoSystem();
+    if (inletSystem.getTemperature() != lastInletTemperature
+        || inletSystem.getPressure() != lastInletPressure || pressure != lastOutletPressure
+        || outTemperature != lastOutTemperature || speed != lastSpeed
+        || minimumFlow != lastMinimumFlow || isentropicEfficiency != lastIsentropicEfficiency
+        || dH != lastPower || useOutTemperature != lastUseOutTemperature
+        || calculateAsCompressor != lastCalculateAsCompressor || powerSet != lastPowerSet
+        || pumpChart.isUsePumpChart() != lastUsePumpChart || checkNPSH != lastCheckNPSH) {
+      return true;
+    }
+    double flow = inletSystem.getFlowRate("kg/hr");
+    if (flow <= 0.0 || lastInletFlowRate <= 0.0
+        || Math.abs(flow - lastInletFlowRate) / flow >= 1e-6) {
+      return true;
+    }
+    neqsim.thermo.phase.PhaseInterface phase = inletSystem.getPhase(0);
+    int numberOfComponents = phase.getNumberOfComponents();
+    if (numberOfComponents != lastInletComposition.length) {
+      return true;
+    }
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (phase.getComponent(i).getz() != lastInletComposition[i]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void updateRecalculationState() {
+    if (inStream == null || inStream.getThermoSystem() == null) {
+      lastInletComposition = null;
+      return;
+    }
+    SystemInterface inletSystem = inStream.getThermoSystem();
+    lastInletTemperature = inletSystem.getTemperature();
+    lastInletPressure = inletSystem.getPressure();
+    lastInletFlowRate = inletSystem.getFlowRate("kg/hr");
+    lastInletComposition = inletSystem.getMolarComposition();
+    lastOutletPressure = pressure;
+    lastOutTemperature = outTemperature;
+    lastSpeed = speed;
+    lastMinimumFlow = minimumFlow;
+    lastIsentropicEfficiency = isentropicEfficiency;
+    lastPower = dH;
+    lastUseOutTemperature = useOutTemperature;
+    lastCalculateAsCompressor = calculateAsCompressor;
+    lastPowerSet = powerSet;
+    lastUsePumpChart = pumpChart.isUsePumpChart();
+    lastCheckNPSH = checkNPSH;
+  }
+
+  private void finishRun(UUID id) {
+    updateRecalculationState();
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     // System.out.println("pump running..");
     if (inStream.getFlowRate("kg/sec") < minimumFlow) {
@@ -220,8 +331,7 @@ public class Pump extends TwoPortEquipment
       thermoSystem.init(3);
       dH = 0.0;
       outStream.setThermoSystem(thermoSystem);
-      outStream.setCalculationIdentifier(id);
-      setCalculationIdentifier(id);
+      finishRun(id);
       return;
     }
 
@@ -363,8 +473,7 @@ public class Pump extends TwoPortEquipment
     // thermoOps.PSflash(entropy);
     dH = thermoSystem.getEnthalpy() - hinn;
     outStream.setThermoSystem(thermoSystem);
-    outStream.setCalculationIdentifier(id);
-    setCalculationIdentifier(id);
+    finishRun(id);
 
     // outStream.run(id);
   }
@@ -533,8 +642,12 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
+   * Set the outlet temperature of the pump in Kelvin.
+   *
    * <p>
-   * Set the outlet temperature of the pump.
+   * When set, the pump skips the isentropic or pump-curve calculation and instead performs a TP
+   * flash at this temperature and the outlet pressure. Power is back-calculated from the enthalpy
+   * difference between inlet and outlet.
    * </p>
    *
    * @param outTemperature outlet temperature in Kelvin
@@ -546,12 +659,17 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Set the outlet temperature of the pump with unit specification.
+   *
+   * <p>
+   * When set, the pump skips the isentropic or pump-curve calculation and instead performs a TP
+   * flash at this temperature and the outlet pressure. Power is back-calculated from the enthalpy
+   * difference between inlet and outlet. Supported units: "K" (Kelvin), "C" (Celsius), "F"
+   * (Fahrenheit), "R" (Rankine).
    * </p>
    *
    * @param temperature outlet temperature value
-   * @param unit temperature unit (e.g., "K", "C", "R", "F")
+   * @param unit temperature unit ("K", "C", "F", or "R"), case-insensitive
    */
   @Override
   public void setOutletTemperature(double temperature, String unit) {
@@ -577,6 +695,7 @@ public class Pump extends TwoPortEquipment
    * @param outTemperature outlet temperature in Kelvin
    * @deprecated use {@link #setOutletTemperature(double)} instead
    */
+  @Override
   @Deprecated
   public void setOutTemperature(double outTemperature) {
     setOutletTemperature(outTemperature);
@@ -622,6 +741,7 @@ public class Pump extends TwoPortEquipment
    * @param pressure a double
    * @param unit a {@link java.lang.String} object
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     setOutletPressure(pressure);
     pressureUnit = unit;
@@ -716,6 +836,7 @@ public class Pump extends TwoPortEquipment
    *
    * @return NPSHa in meters
    */
+  @Override
   public double getNPSHAvailable() {
     try {
       inStream.getThermoSystem().init(3);
@@ -767,6 +888,7 @@ public class Pump extends TwoPortEquipment
    *
    * @return NPSHr in meters
    */
+  @Override
   public double getNPSHRequired() {
     // Try to get NPSH from pump chart if available
     if (pumpChart != null && pumpChart.isUsePumpChart() && pumpChart.hasNPSHCurve()) {
@@ -804,6 +926,7 @@ public class Pump extends TwoPortEquipment
    *
    * @return true if cavitation risk exists (NPSHa &lt; npshMargin * NPSHr)
    */
+  @Override
   public boolean isCavitating() {
     if (!checkNPSH) {
       return false;
@@ -824,6 +947,7 @@ public class Pump extends TwoPortEquipment
    *
    * @param checkNPSH true to enable NPSH checking
    */
+  @Override
   public void setCheckNPSH(boolean checkNPSH) {
     this.checkNPSH = checkNPSH;
   }

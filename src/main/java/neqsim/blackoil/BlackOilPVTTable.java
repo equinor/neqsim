@@ -1,5 +1,6 @@
 package neqsim.blackoil;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -11,12 +12,19 @@ import java.util.function.ToDoubleFunction;
  * Bw: reservoir m3 per standard m3 (rm3 / Sm3) mu_*: Pa·s
  *
  * @author esol
+ * @version 1.0
  */
-public class BlackOilPVTTable {
+public class BlackOilPVTTable implements Serializable {
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000L;
+
   /**
    * Record class to hold PVT data for a specific pressure.
    */
-  public static final class Record {
+  public static final class Record implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000L;
+
     public final double p;
     public final double Rs;
     public final double Bo;

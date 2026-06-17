@@ -2,7 +2,7 @@ package neqsim.physicalproperties.system.liquidphysicalproperties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.physicalproperties.methods.liquidphysicalproperties.conductivity.Conductivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.conductivity.FilippovConductivityMethod;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.density.Density;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.CO2water;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.Viscosity;
@@ -35,7 +35,7 @@ public class CO2waterPhysicalProperties extends PhysicalProperties {
   public CO2waterPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {
     super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
-    conductivityCalc = new Conductivity(this);
+    conductivityCalc = new FilippovConductivityMethod(this);
     viscosityCalc = new Viscosity(this);
     diffusivityCalc = new CO2water(this);
     densityCalc = new Density(this);

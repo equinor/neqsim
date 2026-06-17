@@ -33,7 +33,7 @@
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Calculate water injection for full voidage replacement
  * InjectionStrategy strategy = InjectionStrategy.waterInjection(1.0); // VRR = 1.0

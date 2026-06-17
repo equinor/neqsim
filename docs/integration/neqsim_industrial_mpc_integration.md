@@ -207,7 +207,7 @@ for (double P : pressures) {
         feed.setPressure(P, "bara");
         feed.setTemperature(T, "K");
         process.run();
-        
+
         mpc.generateStepResponses();
         String filename = String.format("model_P%.0f_T%.0f.csv", P, T);
         exporter.exportStepResponseModel(filename);
@@ -383,13 +383,13 @@ double chokeMargin = (chokeLimit - currentFlow) / chokeLimit * 100;  // %
 // If near choke (bottleneck), simulate options:
 if (chokeMargin < 10) {
     System.out.println("Compressor approaching choke limit!");
-    
+
     // Option 1: Increase inlet pressure
     double newInletPressure = compressor.getInletPressure() * 1.1;
     compressor.setInletPressure(newInletPressure);
     process.run();
     double newChokeMargin = // recalculate
-    
+
     // Option 2: Cool the inlet gas
     // Option 3: Install parallel compressor
 }
@@ -421,6 +421,7 @@ NeqSim can validate these shadow prices by simulating the actual production gain
 // Calculate phase properties for soft sensor
 ThermodynamicOperations thermoOps = new ThermodynamicOperations(fluid);
 thermoOps.TPflash();
+fluid.initProperties();
 
 double gasCompressibility = fluid.getPhase("gas").getZ();
 double liquidDensity = fluid.getPhase("oil").getDensity("kg/m3");
@@ -436,7 +437,7 @@ SoftSensorExporter exporter = mpc.createSoftSensorExporter();
 exporter.setFluid(fluid);
 
 // Generate MW as function of composition and conditions
-exporter.exportCorrelation("molecularWeight", 
+exporter.exportCorrelation("molecularWeight",
     new String[]{"C1_fraction", "C2_fraction", "temperature", "pressure"},
     "mw_correlation.csv");
 ```
@@ -506,20 +507,20 @@ A background service can use NeqSim to validate MPC model predictions:
 public class ModelValidator {
     private ProcessSystem neqsimModel;
     private double[] mpcPrediction;
-    
+
     public ValidationResult validate(ProcessData currentData) {
         // Apply current conditions to NeqSim model
         applyConditions(neqsimModel, currentData);
         neqsimModel.run();
-        
+
         // Compare outputs
         double[] neqsimOutput = getOutputs(neqsimModel);
         double[] errors = new double[neqsimOutput.length];
-        
+
         for (int i = 0; i < errors.length; i++) {
             errors[i] = Math.abs(neqsimOutput[i] - mpcPrediction[i]);
         }
-        
+
         return new ValidationResult(errors, isModelValid(errors));
     }
 }
@@ -529,7 +530,7 @@ public class ModelValidator {
 
 ```java
 // State variable with bias tracking
-StateVariable liquidLevel = new StateVariable("Liquid_Level", 
+StateVariable liquidLevel = new StateVariable("Liquid_Level",
     separator, "liquidLevel", 0.0, 1.0, "fraction");
 
 // Configure bias estimation
@@ -555,7 +556,7 @@ import neqsim.process.mpc.*;
 import neqsim.thermo.system.*;
 
 public class SeparatorMPCIntegration {
-    
+
     public static void main(String[] args) {
         // 1. Build process model
         SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
@@ -565,69 +566,69 @@ public class SeparatorMPCIntegration {
         fluid.addComponent("n-butane", 0.03);
         fluid.addComponent("n-pentane", 0.02);
         fluid.setMixingRule("classic");
-        
+
         ProcessSystem process = new ProcessSystem();
-        
+
         Stream feed = new Stream("Feed", fluid);
         feed.setFlowRate(500.0, "kg/hr");
         feed.setTemperature(25.0, "C");
         feed.setPressure(50.0, "bara");
-        
+
         Separator hpSep = new Separator("HP_Separator", feed);
         hpSep.setInternalDiameter(1.5);
-        
+
         process.add(feed);
         process.add(hpSep);
         process.run();
-        
+
         // 2. Configure MPC
         ProcessLinkedMPC mpc = new ProcessLinkedMPC("HP_Sep_MPC", process);
-        
+
         // Manipulated Variables
         mpc.addMV("Feed_Flow", feed, "flowRate", 200.0, 800.0, "kg/hr");
         mpc.addMV("Operating_Pressure", hpSep, "pressure", 30.0, 70.0, "bara");
-        
+
         // Controlled Variables
-        mpc.addCV("Gas_Production", hpSep.getGasOutStream(), 
+        mpc.addCV("Gas_Production", hpSep.getGasOutStream(),
                   "flowRate", 100.0, 400.0, "kg/hr");
-        mpc.addCV("Liquid_Level", hpSep, 
+        mpc.addCV("Liquid_Level", hpSep,
                   "liquidLevel", 0.3, 0.7, "fraction");
-        
+
         // Disturbance Variables
         mpc.addDV("Feed_Temperature", feed, "temperature", "C");
         mpc.addDV("Feed_Composition_C1", feed, "methane_fraction", "mol/mol");
-        
+
         // 3. Generate models
         mpc.setLinearizationStepSize(0.05);
         mpc.setSettlingTime(600.0);
         mpc.setSamplingTime(10.0);
         mpc.generateStepResponses();
-        
+
         // 4. Export for industrial MPC
         IndustrialMPCExporter exporter = mpc.createIndustrialExporter();
         exporter.setModelName("HP_Separator");
         exporter.setDescription("High Pressure Separator MPC Model");
-        
+
         // Step response model
         exporter.exportStepResponseModel("hp_sep_model.csv");
-        
+
         // MPC configuration
         exporter.setPredictionHorizon(30);
         exporter.setControlHorizon(10);
         exporter.setExecutionInterval(10.0);
         exporter.exportMPCConfiguration("hp_sep_config.json");
-        
+
         // 5. Export soft sensors
         SoftSensorExporter softSensor = mpc.createSoftSensorExporter();
         softSensor.setFluid(fluid);
         softSensor.exportCalculation("gas_density", "gas_density_calc.csv");
         softSensor.exportCalculation("liquid_density", "liquid_density_calc.csv");
-        
+
         // 6. Export for nonlinear MPC (optional)
         SubrModlExporter subrModl = mpc.createSubrModlExporter();
         subrModl.setModelName("HP_Sep_NL");
         subrModl.exportConfiguration("hp_sep_subrmodl.cnf");
-        
+
         System.out.println("MPC integration files generated successfully!");
     }
 }
@@ -638,22 +639,22 @@ public class SeparatorMPCIntegration {
 ```java
 // Configure for production optimization
 public class ProductionOptimization {
-    
+
     public static void configureOptimization(ProcessLinkedMPC mpc) {
         // Set optimization objective
         mpc.setOptimizationObjective(OptimizationType.MAXIMIZE_THROUGHPUT);
-        
+
         // Define economic weights
         mpc.setEconomicWeight("Gas_Production", 1.0);    // $/kg
         mpc.setEconomicWeight("Oil_Production", 1.5);    // $/kg
         mpc.setEconomicWeight("Power_Consumption", -0.1); // $/kWh
-        
+
         // Configure constraints for optimizer
         mpc.setConstraintPriority("Safety_Limits", Priority.HARD);
         mpc.setConstraintPriority("Environmental", Priority.HARD);
         mpc.setConstraintPriority("Quality_Specs", Priority.SOFT);
         mpc.setConstraintPriority("Equipment_Limits", Priority.SOFT);
-        
+
         // Export optimization configuration
         IndustrialMPCExporter exporter = mpc.createIndustrialExporter();
         exporter.setOptimizationEnabled(true);
@@ -822,5 +823,5 @@ This complementary approach combines the accuracy of first-principles thermodyna
 
 ---
 
-*Document Version: 1.0*  
+*Document Version: 1.0*
 *Last Updated: December 2024*

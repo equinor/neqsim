@@ -59,12 +59,50 @@ PVT simulations support regression against experimental data using Levenberg-Mar
 Always characterize C7+ properly:
 - Use `addTBPfraction()` for each carbon number fraction
 - Use `addPlusFraction()` for the heavy end
-- Call `getCharacterization().characterise()` before running PVT
+- Call `getCharacterization().characterisePlusFraction()` before running PVT
 
-## Flow Assurance
+## EOS Parameter Fitting for PVT Matching
+When PVT simulation results don't match experimental data, tune EOS parameters:
+- Load the `neqsim-eos-regression` skill for the full regression workflow
+- Common tuning targets: binary interaction parameters (kij), volume translation, C7+ characterization
+- Use scipy minimize in Python or Levenberg-Marquardt in Java
+- Objective function: minimize sum of squared errors between simulated and experimental values
+
+```java
+// Compare simulation vs experimental saturation pressure
+SaturationPressure satP = new SaturationPressure(fluid);
+satP.run();
+double simPsat = satP.getSaturationPressure();
+double expPsat = 250.0; // experimental value in bara
+double error = (simPsat - expPsat) / expPsat;
+```
+
+## Slim Tube Simulation for MMP
+```java
+SlimTubeSim slimTube = new SlimTubeSim(fluid);
+slimTube.setInjectionGas(injectionGas);
+slimTube.run();
+double mmp = slimTube.getMinimumMiscibilityPressure();
+```
+
+## Shared Skills
+- Java 8 rules: See `neqsim-java8-rules` skill for forbidden features and alternatives
+- API patterns: See `neqsim-api-patterns` skill for fluid/equipment usage
+- EOS regression: See `neqsim-eos-regression` skill for parameter fitting workflows
+- Input validation: See `neqsim-input-validation` skill for pre-simulation checks
+- Troubleshooting: See `neqsim-troubleshooting` skill for flash convergence recovery
+
+## API Verification
+ALWAYS read the actual class source to verify method signatures before using them. Do NOT assume API patterns — check constructors, method names, and parameter types.
 `neqsim.pvtsimulation.flowassurance` includes asphaltene screening:
 - `DeBoerAsphalteneScreening` — de Boer plot method
 - `AsphalteneStabilityAnalyzer` — stability analysis
 
-## Java 8 Only
-No `var`, `List.of()`, or any Java 9+ syntax.
+## Shared Skills
+- Java 8 rules: See `neqsim-java8-rules` skill
+- API patterns: See `neqsim-api-patterns` skill for fluid/equipment usage
+
+## Code Verification for Documentation
+When producing code that will appear in documentation or examples, write a JUnit test
+that exercises every API call shown (append to `DocExamplesCompilationTest.java`) and
+run it to confirm it passes. Always read actual source classes before referencing them in docs.

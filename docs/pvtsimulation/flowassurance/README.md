@@ -51,7 +51,11 @@ Flow assurance encompasses the prevention and remediation of:
 |-------|---------|---------|
 | `AsphalteneCharacterization` | `neqsim.thermo.characterization` | SARA-based characterization |
 | `AsphalteneStabilityAnalyzer` | `neqsim.pvtsimulation.flowassurance` | High-level CPA analysis API |
-| `DeBoerAsphalteneScreening` | `neqsim.pvtsimulation.flowassurance` | Empirical De Boer screening |
+| `DeBoerAsphalteneScreening` | `neqsim.pvtsimulation.flowassurance` | Empirical De Boer screening (quadratic boundaries) |
+| `FloryHugginsAsphalteneModel` | `neqsim.pvtsimulation.flowassurance` | Flory-Huggins regular solution model with physics-based calibration and API gravity configuration |
+| `RefractiveIndexAsphalteneScreening` | `neqsim.pvtsimulation.flowassurance` | Refractive index stability screening (Buckley et al.) |
+| `AsphalteneMultiMethodBenchmark` | `neqsim.pvtsimulation.flowassurance` | Unified 6-method comparison framework with literature cases |
+| `PedersenAsphalteneCharacterization` | `neqsim.thermo.characterization` | Pedersen cubic EOS asphaltene characterization with kij tuning |
 | `AsphalteneMethodComparison` | `neqsim.pvtsimulation.flowassurance` | Compare multiple methods |
 | `AsphalteneOnsetPressureFlash` | `neqsim.thermodynamicoperations` | Onset pressure calculation |
 | `AsphalteneOnsetTemperatureFlash` | `neqsim.thermodynamicoperations` | Onset temperature calculation |

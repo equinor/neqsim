@@ -352,6 +352,7 @@ public class TopsidePipingMechanicalDesign extends PipelineMechanicalDesign {
    *
    * @return minimum operation temperature in Kelvin
    */
+  @Override
   public double getMinOperationTemperature() {
     return minOperationTemperature;
   }
@@ -361,6 +362,7 @@ public class TopsidePipingMechanicalDesign extends PipelineMechanicalDesign {
    *
    * @param minOperationTemperature minimum operation temperature in Kelvin
    */
+  @Override
   public void setMinOperationTemperature(double minOperationTemperature) {
     this.minOperationTemperature = minOperationTemperature;
   }

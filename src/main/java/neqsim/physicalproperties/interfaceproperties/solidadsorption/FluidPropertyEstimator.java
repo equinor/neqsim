@@ -1,6 +1,5 @@
 package neqsim.physicalproperties.interfaceproperties.solidadsorption;
 
-import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**

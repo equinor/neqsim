@@ -33,7 +33,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * <b>Usage Example:</b>
  * </p>
- * 
+ *
  * <pre>
  * // Configure valve to use Sachdeva multiphase model
  * ThrottlingValve choke = new ThrottlingValve("Production Choke", feed);

@@ -284,10 +284,6 @@ public class LumpingModel implements java.io.Serializable {
     /** {@inheritDoc} */
     @Override
     public void generateLumpedComposition(Characterise charac) {
-      double weightFrac = 0.0;
-      double weightTot = 0.0;
-      double molFracTot = 0.0;
-
       int firstPlusFractionNumber =
           system.getCharacterization().getPlusFractionModel().getFirstPlusFractionNumber();
       int compNumberOfFirstComponentInPlusFraction =
@@ -326,6 +322,9 @@ public class LumpingModel implements java.io.Serializable {
       fractionOfHeavyEnd = new double[numberOfLumpedComponents];
       double[] zPlus = new double[numberOfLumpedComponents];
 
+      double weightFrac = 0.0;
+      double weightTot = 0.0;
+      double molFracTot = 0.0;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         if ((system.getPhase(0).getComponent(i).isIsTBPfraction()
             || system.getPhase(0).getComponent(i).isIsPlusFraction())
@@ -512,18 +511,22 @@ public class LumpingModel implements java.io.Serializable {
    * getModel.
    * </p>
    *
-   * @param modelName a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.characterization.LumpingModelInterface} object
    */
-  public LumpingModelInterface getModel(String modelName) {
-    if (modelName.equals("PVTlumpingModel")) {
-      name = "PVTlumpingModel";
+  public LumpingModelInterface getModel(String name) {
+    if (name.equals("PVTlumpingModel")) {
+      this.name = "PVTlumpingModel";
       return new PVTLumpingModel();
-    } else if (modelName.equals("no lumping")) {
-      name = "no lumping";
+    } else if (name.equals("no lumping")) {
+      this.name = "no lumping";
       return new NoLumpingModel();
     } else {
-      name = "standard";
+      if (!name.isEmpty()) {
+        logger.warn(
+            "Lumping model '" + name + "' not recognized, defaulting to StandardLumpingModel");
+      }
+      this.name = "standard";
       return new StandardLumpingModel();
     }
   }

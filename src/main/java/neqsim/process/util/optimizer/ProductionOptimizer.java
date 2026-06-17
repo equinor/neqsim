@@ -22,6 +22,7 @@ import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -61,7 +62,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * <strong>Usage Example (Java)</strong>
  * </p>
- * 
+ *
  * <pre>{@code
  * // Create process model
  * ProcessSystem process = new ProcessSystem();
@@ -84,7 +85,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * <strong>Usage Example (Python via neqsim-python/JPype)</strong>
  * </p>
- * 
+ *
  * <pre>{@code
  * from neqsim.neqsimpython import jneqsim
  *
@@ -107,7 +108,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * <strong>Multi-Variable Optimization Example</strong>
  * </p>
- * 
+ *
  * <pre>{@code
  * // Define manipulated variables
  * List<ManipulatedVariable> variables = Arrays.asList(
@@ -201,7 +202,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Java Example</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * OptimizationObjective throughput = new OptimizationObjective("throughput",
    *     proc -> proc.getUnit("outlet").getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
@@ -210,7 +211,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Python Example (via JPype)</strong>
    * </p>
-   * 
+   *
    * <pre>
    * from jpype import JImplements, JOverride
    *
@@ -1000,7 +1001,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Java Example</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0).tolerance(100.0)
    *     .maxIterations(50).searchMode(SearchMode.GOLDEN_SECTION_SCORE).rateUnit("kg/hr")
@@ -1010,7 +1011,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Python Example (via JPype)</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * config = OptimizationConfig(50000.0, 200000.0) \
    *     .tolerance(100.0) \
@@ -1093,13 +1094,13 @@ public class ProductionOptimizer {
 
     /**
      * Sets whether to reject simulation results that are physically invalid.
-     * 
+     *
      * <p>
      * When enabled (default), the optimizer will mark operating points as infeasible if any
      * equipment reports invalid simulation results (e.g., negative power in compressors, NaN
      * values, etc.).
      * </p>
-     * 
+     *
      * @param reject true to reject invalid simulations
      * @return this config for method chaining
      */
@@ -1110,7 +1111,7 @@ public class ProductionOptimizer {
 
     /**
      * Gets whether invalid simulations are rejected.
-     * 
+     *
      * @return true if invalid simulations are rejected
      */
     public boolean isRejectInvalidSimulations() {
@@ -1315,12 +1316,12 @@ public class ProductionOptimizer {
 
     /**
      * Enables parallel evaluation of candidates in PSO and scenario optimization.
-     * 
+     *
      * <p>
      * When enabled, particle swarm optimization evaluates particles in parallel using a thread
      * pool, and scenario optimization runs scenarios concurrently.
      * </p>
-     * 
+     *
      * @param parallel true to enable parallel evaluations
      * @return this config for method chaining
      */
@@ -1331,7 +1332,7 @@ public class ProductionOptimizer {
 
     /**
      * Sets the number of threads for parallel evaluations.
-     * 
+     *
      * @param threads number of threads (default: available processors)
      * @return this config for method chaining
      */
@@ -1342,12 +1343,12 @@ public class ProductionOptimizer {
 
     /**
      * Sets the grid size for Pareto front generation.
-     * 
+     *
      * <p>
      * For weighted-sum Pareto optimization, this determines how many weight combinations are
      * evaluated. A grid size of 11 generates weights: 0.0, 0.1, 0.2, ..., 1.0.
      * </p>
-     * 
+     *
      * @param gridSize number of weight points per objective (default: 11)
      * @return this config for method chaining
      */
@@ -1358,7 +1359,7 @@ public class ProductionOptimizer {
 
     /**
      * Returns whether parallel evaluations are enabled.
-     * 
+     *
      * @return true if parallel evaluations are enabled
      */
     public boolean isParallelEvaluations() {
@@ -1367,7 +1368,7 @@ public class ProductionOptimizer {
 
     /**
      * Returns the number of threads for parallel evaluations.
-     * 
+     *
      * @return number of threads
      */
     public int getParallelThreads() {
@@ -1376,7 +1377,7 @@ public class ProductionOptimizer {
 
     /**
      * Returns the grid size for Pareto front generation.
-     * 
+     *
      * @return Pareto grid size
      */
     public int getParetoGridSize() {
@@ -1584,6 +1585,61 @@ public class ProductionOptimizer {
           constraints == null ? Collections.emptyList() : new ArrayList<>(constraints);
     }
 
+    /**
+     * Creates a feed-rate scenario over a multi-area {@link ProcessModel} plant. The model is
+     * wrapped in a {@link ProcessModelOptimizationView} so it is optimized as a single whole-plant
+     * flowsheet; objectives and constraints resolve {@code getUnit(...)} across all areas and
+     * support area-qualified {@code "Area::Unit"} addresses.
+     *
+     * @param name unique scenario name (must not be null)
+     * @param model the multi-area plant to optimize (must not be null)
+     * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
+     * @param config optimizer configuration (must not be null)
+     * @param objectives list of objectives (may be null or empty)
+     * @param constraints list of constraints (may be null or empty)
+     */
+    public ScenarioRequest(String name, ProcessModel model, StreamInterface feedStream,
+        OptimizationConfig config, List<OptimizationObjective> objectives,
+        List<OptimizationConstraint> constraints) {
+      this.name = Objects.requireNonNull(name, "Scenario name is required");
+      Objects.requireNonNull(model, "Scenario model is required");
+      this.process = new ProcessModelOptimizationView(model);
+      this.feedStream = Objects.requireNonNull(feedStream, "Scenario feed stream is required");
+      this.variables = Collections.emptyList();
+      this.config = Objects.requireNonNull(config, "Scenario config is required");
+      this.objectives = objectives == null ? Collections.emptyList() : new ArrayList<>(objectives);
+      this.constraints =
+          constraints == null ? Collections.emptyList() : new ArrayList<>(constraints);
+    }
+
+    /**
+     * Creates a multi-variable scenario over a multi-area {@link ProcessModel} plant. The model is
+     * wrapped in a {@link ProcessModelOptimizationView} so it is optimized as a single whole-plant
+     * flowsheet; manipulated-variable setters, objectives, and constraints resolve
+     * {@code getUnit(...)} across all areas and support area-qualified {@code "Area::Unit"}
+     * addresses.
+     *
+     * @param name unique scenario name (must not be null)
+     * @param model the multi-area plant to optimize (must not be null)
+     * @param variables list of manipulated variables with bounds and setters (may be null or empty)
+     * @param config optimizer configuration (must not be null)
+     * @param objectives list of objectives (may be null or empty)
+     * @param constraints list of constraints (may be null or empty)
+     */
+    public ScenarioRequest(String name, ProcessModel model, List<ManipulatedVariable> variables,
+        OptimizationConfig config, List<OptimizationObjective> objectives,
+        List<OptimizationConstraint> constraints) {
+      this.name = Objects.requireNonNull(name, "Scenario name is required");
+      Objects.requireNonNull(model, "Scenario model is required");
+      this.process = new ProcessModelOptimizationView(model);
+      this.feedStream = null;
+      this.variables = variables == null ? Collections.emptyList() : new ArrayList<>(variables);
+      this.config = Objects.requireNonNull(config, "Scenario config is required");
+      this.objectives = objectives == null ? Collections.emptyList() : new ArrayList<>(objectives);
+      this.constraints =
+          constraints == null ? Collections.emptyList() : new ArrayList<>(constraints);
+    }
+
     public String getName() {
       return name;
     }
@@ -1625,7 +1681,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Java Example</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * ManipulatedVariable flowVar = new ManipulatedVariable("feedFlow", 50000.0, 200000.0, // lower/upper
    *                                                                                      // bounds
@@ -1635,7 +1691,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Python Example (via JPype)</strong>
    * </p>
-   * 
+   *
    * <pre>
    * from jpype import JImplements, JOverride
    *
@@ -1767,17 +1823,31 @@ public class ProductionOptimizer {
       return metric.applyAsDouble(result);
     }
 
-    /** Convenience KPI for reporting optimal rate. */
+    /**
+     * Convenience KPI for reporting optimal rate.
+     *
+     * @param unitLabel the unit label for the rate (e.g. "kg/hr")
+     * @return a ScenarioKpi that extracts the optimal rate
+     */
     public static ScenarioKpi optimalRate(String unitLabel) {
       return new ScenarioKpi("optimalRate", unitLabel, OptimizationResult::getOptimalRate);
     }
 
-    /** Convenience KPI for reporting solver score. */
+    /**
+     * Convenience KPI for reporting solver score.
+     *
+     * @return a ScenarioKpi that extracts the optimization score
+     */
     public static ScenarioKpi score() {
       return new ScenarioKpi("score", null, OptimizationResult::getScore);
     }
 
-    /** KPI that returns a specific objective value by name. */
+    /**
+     * KPI that returns a specific objective value by name.
+     *
+     * @param objectiveName the name of the objective to extract
+     * @return a ScenarioKpi that extracts the named objective value
+     */
     public static ScenarioKpi objectiveValue(String objectiveName) {
       return new ScenarioKpi(objectiveName, null,
           result -> result.getObjectiveValues().getOrDefault(objectiveName, Double.NaN));
@@ -2152,7 +2222,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Java Example</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * ProductionOptimizer optimizer = new ProductionOptimizer();
    * OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0)
@@ -2165,7 +2235,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Python Example (via JPype)</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * optimizer = ProductionOptimizer()
    * config = OptimizationConfig(50000.0, 200000.0) \
@@ -2223,7 +2293,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Java Example</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * List<ManipulatedVariable> variables = Arrays.asList(
    *     new ManipulatedVariable("flow", 50000, 200000, "kg/hr",
@@ -2241,7 +2311,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Python Example (via JPype)</strong>
    * </p>
-   * 
+   *
    * <pre>
    * from jpype import JImplements, JOverride
    * Arrays = jneqsim.java.util.Arrays
@@ -2307,6 +2377,73 @@ public class ProductionOptimizer {
     }
     return particleSwarmSearch(process, variables, config, safeObjectives, safeConstraints,
         iterationHistory);
+  }
+
+  /**
+   * Optimize a single feed stream rate for a multi-area {@link ProcessModel} plant.
+   *
+   * <p>
+   * This is the whole-plant counterpart of
+   * {@link #optimize(ProcessSystem, StreamInterface, OptimizationConfig, List, List)}. The model is
+   * wrapped in a {@link ProcessModelOptimizationView} so the existing single-{@code ProcessSystem}
+   * optimizer engine is reused unchanged. The key difference is that each candidate evaluation runs
+   * the whole plant to cross-area convergence via
+   * {@link ProcessModel#runUntilConverged(int, double)} (default 50 iterations, tolerance 5e-3) and
+   * the capacity / bottleneck scan covers equipment in every area.
+   * </p>
+   *
+   * <p>
+   * Objectives and constraints written against the {@code ProcessSystem} API work unchanged: the
+   * view they receive resolves {@code getUnit(...)} across all areas and supports area-qualified
+   * {@code "Area::Unit"} addresses.
+   * </p>
+   *
+   * @param model the multi-area plant to evaluate (must not be null)
+   * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
+   * @param config optimizer configuration including bounds and algorithm (must not be null)
+   * @param objectives list of objectives to compute weighted scores (may be null or empty)
+   * @param constraints list of constraints with optional penalties (may be null or empty)
+   * @return optimization result containing optimal rate, bottleneck, and diagnostics
+   * @throws NullPointerException if model, feedStream, or config is null
+   * @throws IllegalArgumentException if config is invalid
+   */
+  public OptimizationResult optimize(ProcessModel model, StreamInterface feedStream,
+      OptimizationConfig config, List<OptimizationObjective> objectives,
+      List<OptimizationConstraint> constraints) {
+    Objects.requireNonNull(model, "ProcessModel is required");
+    ProcessModelOptimizationView view = new ProcessModelOptimizationView(model);
+    return optimize(view, feedStream, config, objectives, constraints);
+  }
+
+  /**
+   * Optimize multiple manipulated variables for a multi-area {@link ProcessModel} plant.
+   *
+   * <p>
+   * This is the whole-plant counterpart of
+   * {@link #optimize(ProcessSystem, List, OptimizationConfig, List, List)}. The model is wrapped in
+   * a {@link ProcessModelOptimizationView} so the existing multi-dimensional search algorithms
+   * (Nelder-Mead, particle swarm, gradient descent) are reused unchanged. Manipulated-variable
+   * setters receive the view as a {@code ProcessSystem}; calling {@code proc.getUnit("Unit")}
+   * resolves the unit across all areas, and area-qualified {@code "Area::Unit"} addresses are also
+   * supported.
+   * </p>
+   *
+   * @param model the multi-area plant to evaluate (must not be null)
+   * @param variables list of manipulated variables with bounds and setters (must not be empty)
+   * @param config optimizer configuration (must not be null)
+   * @param objectives list of objectives (may be null or empty)
+   * @param constraints list of constraints (may be null or empty)
+   * @return optimization result with optimal variable values in {@code getDecisionVariables()}
+   * @throws NullPointerException if model, variables, or config is null
+   * @throws IllegalArgumentException if variables is empty or algorithm doesn't support
+   *         multi-variable
+   */
+  public OptimizationResult optimize(ProcessModel model, List<ManipulatedVariable> variables,
+      OptimizationConfig config, List<OptimizationObjective> objectives,
+      List<OptimizationConstraint> constraints) {
+    Objects.requireNonNull(model, "ProcessModel is required");
+    ProcessModelOptimizationView view = new ProcessModelOptimizationView(model);
+    return optimize(view, variables, config, objectives, constraints);
   }
 
   /**
@@ -2424,7 +2561,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Java Example</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * List<OptimizationObjective> objectives = Arrays.asList(
    *     new OptimizationObjective("throughput", p -> p.getUnit("outlet").getFlowRate("kg/hr"), 1.0,
@@ -2446,7 +2583,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Python Example (via JPype)</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * objectives = Arrays.asList([throughput_obj, power_obj])
    * config = OptimizationConfig(50000, 200000).paretoGridSize(11)
@@ -2529,7 +2666,7 @@ public class ProductionOptimizer {
    * <p>
    * <strong>Java Example</strong>
    * </p>
-   * 
+   *
    * <pre>{@code
    * List<ManipulatedVariable> variables =
    *     Arrays.asList(new ManipulatedVariable("flow", 50000, 200000, "kg/hr", flowSetter),
@@ -2595,6 +2732,69 @@ public class ProductionOptimizer {
 
     return new ParetoResult(paretoFront, allPoints, objectiveNames, objectiveTypes,
         totalIterations);
+  }
+
+  /**
+   * Perform multi-objective Pareto optimization on a multi-area {@link ProcessModel} plant by
+   * varying a single feed-stream flow rate.
+   *
+   * <p>
+   * This is the whole-plant counterpart of
+   * {@link #optimizePareto(ProcessSystem, StreamInterface, OptimizationConfig, List, List)}. The
+   * model is wrapped in a {@link ProcessModelOptimizationView} so the existing weighted-sum Pareto
+   * engine is reused unchanged. Objectives and constraints written against the
+   * {@code ProcessSystem} API resolve {@code getUnit(...)} across all areas and support
+   * area-qualified {@code "Area::Unit"} addresses.
+   * </p>
+   *
+   * @param model the multi-area plant to evaluate (must not be null)
+   * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
+   * @param config optimizer configuration; {@code paretoGridSize} controls weight granularity
+   * @param objectives list of objectives (must have at least 2 for Pareto optimization)
+   * @param constraints list of constraints (may be null or empty)
+   * @return Pareto result containing the Pareto front, utopia/nadir points, and all evaluated
+   *         points
+   * @throws NullPointerException if model, feedStream, config, or objectives is null
+   * @throws IllegalArgumentException if fewer than 2 objectives are provided
+   */
+  public ParetoResult optimizePareto(ProcessModel model, StreamInterface feedStream,
+      OptimizationConfig config, List<OptimizationObjective> objectives,
+      List<OptimizationConstraint> constraints) {
+    Objects.requireNonNull(model, "ProcessModel is required");
+    ProcessModelOptimizationView view = new ProcessModelOptimizationView(model);
+    return optimizePareto(view, feedStream, config, objectives, constraints);
+  }
+
+  /**
+   * Perform multi-objective Pareto optimization on a multi-area {@link ProcessModel} plant with
+   * multiple manipulated variables.
+   *
+   * <p>
+   * This is the whole-plant counterpart of
+   * {@link #optimizePareto(ProcessSystem, List, OptimizationConfig, List, List)}. The model is
+   * wrapped in a {@link ProcessModelOptimizationView} so the existing multi-dimensional Pareto
+   * engine (Nelder-Mead / particle swarm at each weight combination) is reused unchanged.
+   * Manipulated-variable setters receive the view as a {@code ProcessSystem}; calling
+   * {@code proc.getUnit("Unit")} resolves the unit across all areas, and area-qualified
+   * {@code "Area::Unit"} addresses are also supported.
+   * </p>
+   *
+   * @param model the multi-area plant to evaluate (must not be null)
+   * @param variables list of manipulated variables with bounds and setters (must not be empty)
+   * @param config optimizer configuration; {@code paretoGridSize} controls weight granularity
+   * @param objectives list of objectives (must have at least 2 for Pareto optimization)
+   * @param constraints list of constraints (may be null or empty)
+   * @return Pareto result containing the Pareto front, utopia/nadir points, and all evaluated
+   *         points
+   * @throws NullPointerException if model, variables, config, or objectives is null
+   * @throws IllegalArgumentException if fewer than 2 objectives or no variables are provided
+   */
+  public ParetoResult optimizePareto(ProcessModel model, List<ManipulatedVariable> variables,
+      OptimizationConfig config, List<OptimizationObjective> objectives,
+      List<OptimizationConstraint> constraints) {
+    Objects.requireNonNull(model, "ProcessModel is required");
+    ProcessModelOptimizationView view = new ProcessModelOptimizationView(model);
+    return optimizePareto(view, variables, config, objectives, constraints);
   }
 
   /**
@@ -2715,6 +2915,10 @@ public class ProductionOptimizer {
 
   /**
    * Create weighted objectives from original objectives and weights.
+   *
+   * @param originals the original optimization objectives
+   * @param weights the weight multipliers for each objective
+   * @return the weighted objectives
    */
   private List<OptimizationObjective> createWeightedObjectives(
       List<OptimizationObjective> originals, double[] weights) {
@@ -2730,6 +2934,10 @@ public class ProductionOptimizer {
 
   /**
    * Filter points to keep only Pareto-optimal (non-dominated) solutions.
+   *
+   * @param allPoints all candidate Pareto points
+   * @param objectiveTypes map of objective names to their types
+   * @return the non-dominated Pareto front
    */
   private List<ParetoPoint> filterToPareto(List<ParetoPoint> allPoints,
       Map<String, ObjectiveType> objectiveTypes) {
@@ -2810,7 +3018,12 @@ public class ProductionOptimizer {
         additionalConstraints);
   }
 
-  /** Render a compact Markdown table describing utilization per unit. */
+  /**
+   * Render a compact Markdown table describing utilization per unit.
+   *
+   * @param records the utilization records to render
+   * @return a Markdown-formatted table string
+   */
   public static String formatUtilizationTable(List<UtilizationRecord> records) {
     StringBuilder sb = new StringBuilder();
     sb.append("| Equipment | Duty | Capacity | Utilization | Limit |\n");
@@ -2825,7 +3038,13 @@ public class ProductionOptimizer {
     return sb.toString();
   }
 
-  /** Render scenario KPIs and bottleneck information side-by-side. */
+  /**
+   * Render scenario KPIs and bottleneck information side-by-side.
+   *
+   * @param comparison the scenario comparison result
+   * @param kpis the KPI definitions to include
+   * @return a Markdown-formatted comparison table string
+   */
   public static String formatScenarioComparisonTable(ScenarioComparisonResult comparison,
       List<ScenarioKpi> kpis) {
     Objects.requireNonNull(comparison, "comparison");
@@ -2902,6 +3121,9 @@ public class ProductionOptimizer {
   /**
    * Build utilization series for each equipment across the provided iteration history to facilitate
    * charting or CSV export.
+   *
+   * @param iterationHistory the iteration history to process
+   * @return a list of utilization series, one per equipment
    */
   public static List<UtilizationSeries> buildUtilizationSeries(
       List<IterationRecord> iterationHistory) {
@@ -2941,6 +3163,9 @@ public class ProductionOptimizer {
 
   /**
    * Render a compact Markdown timeline showing bottlenecks across iterations.
+   *
+   * @param iterationHistory the iteration history to render
+   * @return a Markdown-formatted timeline table string
    */
   public static String formatUtilizationTimeline(List<IterationRecord> iterationHistory) {
     StringBuilder sb = new StringBuilder();
@@ -2975,6 +3200,10 @@ public class ProductionOptimizer {
   /**
    * Convenience wrapper that derives reasonable bounds from the current feed rate and returns a
    * concise summary (max rate, limiting equipment, utilization margin).
+   *
+   * @param process the process system to optimize
+   * @param feedStream the feed stream to vary
+   * @return optimization summary with max rate, limiting equipment, and utilization margin
    */
   public OptimizationSummary quickOptimize(ProcessSystem process, StreamInterface feedStream) {
     return quickOptimize(process, feedStream, "kg/hr", Collections.emptyList());
@@ -2983,6 +3212,12 @@ public class ProductionOptimizer {
   /**
    * Convenience wrapper that derives reasonable bounds from the current feed rate and returns a
    * concise summary (max rate, limiting equipment, utilization margin).
+   *
+   * @param process the process system to optimize
+   * @param feedStream the feed stream to vary
+   * @param rateUnit the unit for flow rate (e.g., "kg/hr")
+   * @param constraints the optimization constraints to enforce
+   * @return optimization summary with max rate, limiting equipment, and utilization margin
    */
   public OptimizationSummary quickOptimize(ProcessSystem process, StreamInterface feedStream,
       String rateUnit, List<OptimizationConstraint> constraints) {
@@ -3465,6 +3700,14 @@ public class ProductionOptimizer {
    * via central differences for better accuracy. The search direction is the negative gradient
    * (steepest ascent since we maximize feasibility score).
    * </p>
+   *
+   * @param process the process system to optimize
+   * @param variables the manipulated variables with bounds
+   * @param config the optimization configuration
+   * @param objectives the optimization objectives
+   * @param constraints the optimization constraints
+   * @param iterationHistory list to record iteration progress
+   * @return the optimization result with best found point
    */
   private OptimizationResult gradientDescentSearch(ProcessSystem process,
       List<ManipulatedVariable> variables, OptimizationConfig config,

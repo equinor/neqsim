@@ -7,7 +7,7 @@
 package neqsim.physicalproperties.system.liquidphysicalproperties;
 
 import neqsim.physicalproperties.methods.gasphysicalproperties.density.Density;
-import neqsim.physicalproperties.methods.liquidphysicalproperties.conductivity.Conductivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.conductivity.FilippovConductivityMethod;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.AmineDiffusivity;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.AmineViscosity;
 import neqsim.thermo.phase.PhaseInterface;
@@ -36,7 +36,7 @@ public class AminePhysicalProperties extends LiquidPhysicalProperties {
   public AminePhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
       int multicomponentDiffusionMethod) {
     super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
-    conductivityCalc = new Conductivity(this);
+    conductivityCalc = new FilippovConductivityMethod(this);
     viscosityCalc = new AmineViscosity(this);
     diffusivityCalc = new AmineDiffusivity(this);
     densityCalc = new Density(this);

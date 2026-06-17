@@ -6,13 +6,13 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * FlowRegimeDetector class.
  * </p>
- * 
+ *
  * <p>
  * Determines the two-phase flow regime in horizontal and inclined pipes based on fluid properties
  * and flow conditions. Implements flow pattern maps based on Taitel-Dukler (1976) theory and
  * extensions by Barnea et al.
  * </p>
- * 
+ *
  * <p>
  * Supported flow regimes:
  * <ul>

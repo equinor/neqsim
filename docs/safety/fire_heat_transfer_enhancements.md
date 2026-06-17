@@ -63,7 +63,7 @@ solver. This is the recommended approach for vessel/tank fire depressurization c
 See [Vessel Depressurization - Stefan-Boltzmann Fire Model](../process/equipment/vessel_depressurization.md#stefan-boltzmann-fire-model) for full API reference and worked examples.
 
 ## Separator fire blowdown worked example
-The runnable `SeparatorFireDepressurizationExample` (`src/main/java/neqsim/process/util/example/SeparatorFireDepressurizationExample.java`)
+The runnable `SeparatorFireDepressurizationExample` (`src/test/java/neqsim/process/util/example/SeparatorFireDepressurizationExample.java`)
 illustrates how to couple a separator depressurization to the flare with the fire utilities:
 - Dynamic separator blowdown via `BlowdownValve` + `Orifice` feeding a `Flare`
 - API 521 pool-fire loads plus generalized Stefan–Boltzmann radiative flux
@@ -73,7 +73,7 @@ illustrates how to couple a separator depressurization to the flare with the fir
 
 To run the illustration:
 ```bash
-mvn -pl . -Dexec.mainClass="neqsim.process.util.example.SeparatorFireDepressurizationExample" exec:java
+./mvnw -Dexec.classpathScope=test -Dexec.mainClass="neqsim.process.util.example.SeparatorFireDepressurizationExample" exec:java
 ```
 The output prints separator pressure, flow to flare, wall temperatures, rupture margin, and fire
 heat metrics at each timestep so the fire impact on depressurization can be reviewed end-to-end.

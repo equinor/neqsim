@@ -238,8 +238,9 @@ public class SystemElectrolyteCPAMM extends SystemSrkCPA {
    * </p>
    *
    * <p>
-   * The ion-solvent interaction energy follows: τ_iw = u0_iw + uT_iw × (T - 298.15) where u0 and uT
-   * are from IonParametersMM.
+   * The ion-solvent interaction energy follows: ΔU_iw(T) = u0 + uT × (T - T_ref) and we need τ(T) =
+   * ΔU_iw(T) / T. The HV NRTL uses τ = Dij/T + DijT, so we set: Dij = u0 - uT × T_ref and DijT =
+   * uT.
    * </p>
    *
    * @param alphaValue the NRTL non-randomness parameter (typically 0.2 for electrolytes)
@@ -268,28 +269,33 @@ public class SystemElectrolyteCPAMM extends SystemSrkCPA {
           if (charge_i != 0 && charge_j == 0) {
             IonParametersMM.IonData ionData = IonParametersMM.getIonData(name_i);
             if (ionData != null) {
-              // Get solvent-specific parameters if available
               double u0 = IonParametersMM.getU0(name_i, name_j);
               double uT = IonParametersMM.getUT(name_i, name_j);
 
-              // Set Huron-Vidal parameters: Dij = u0, DijT = uT
-              hvRule.setHVDijParameter(i, j, u0);
+              // Convert MM parameters to HV NRTL format:
+              // MM: ΔU(T) = u0 + uT*(T - T_ref), τ = ΔU/T
+              // HV: τ = Dij/T + DijT
+              // Matching: Dij = u0 - uT*T_ref, DijT = uT
+              double hvDij = u0 - uT * IonParametersMM.T_REF;
+              hvRule.setHVDijParameter(i, j, hvDij);
               hvRule.setHVDijTParameter(i, j, uT);
               hvRule.setHValphaParameter(i, j, alphaValue);
+              hvRule.setClassicOrHV(i, j, "HV");
             }
           }
           // Set solvent-ion parameters (solvent i with ion j)
           else if (charge_i == 0 && charge_j != 0) {
             IonParametersMM.IonData ionData = IonParametersMM.getIonData(name_j);
             if (ionData != null) {
-              // Get solvent-specific parameters if available
               double u0 = IonParametersMM.getU0(name_j, name_i);
               double uT = IonParametersMM.getUT(name_j, name_i);
 
-              // Set Huron-Vidal parameters: Dij = u0, DijT = uT
-              hvRule.setHVDijParameter(i, j, u0);
+              // Convert MM parameters to HV NRTL format (same conversion)
+              double hvDij = u0 - uT * IonParametersMM.T_REF;
+              hvRule.setHVDijParameter(i, j, hvDij);
               hvRule.setHVDijTParameter(i, j, uT);
               hvRule.setHValphaParameter(i, j, alphaValue);
+              hvRule.setClassicOrHV(i, j, "HV");
             }
           }
         }

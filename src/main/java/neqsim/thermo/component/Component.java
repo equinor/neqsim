@@ -56,7 +56,9 @@ public abstract class Component implements ComponentInterface {
    * <code>numberOfMoles = totalNumberOfMoles * z</code>.
    */
   protected double numberOfMoles = 0.0;
-  /** Number of moles of Component in Phase. Ideally <code>totalNumberOfMoles * x * beta</code>. */
+  /**
+   * Number of moles of Component in Phase. Ideally <code>totalNumberOfMoles * x * beta</code>.
+   */
   protected double numberOfMolesInPhase = 0.0;
   protected double K;
 
@@ -105,6 +107,7 @@ public abstract class Component implements ComponentInterface {
   protected double debyeDipoleMoment = 0;
   protected double viscosityCorrectionFactor = 0;
   protected double criticalVolume = 0;
+  private double costaldCharacteristicVolume = 0.0;
   protected double racketZ = 0;
   protected double gibbsEnergyOfFormation = 0;
   protected double criticalViscosity = 0.0;
@@ -130,6 +133,28 @@ public abstract class Component implements ComponentInterface {
   protected double[] TwuCoonParams = new double[3];
   protected double[] matiascopemanSolidParams = new double[3];
   protected double[] matiascopemanParamsUMRPRU = new double[5];
+  protected double[] matiascopemanParamsUMRCPA = new double[5];
+  /** Dedicated UMR-CPA energy parameter a0 [bar*L^2/mol^2] (Tasios et al. 2025). */
+  protected double umrCpaA0 = 0.0;
+  /** Dedicated UMR-CPA co-volume b [L/mol] (Tasios et al. 2025). */
+  protected double umrCpaB = 0.0;
+  /** Dedicated UMR-CPA association energy [bar*L/mol] (Tasios et al. 2025). */
+  protected double umrCpaAssociationEnergy = 0.0;
+  /** Dedicated UMR-CPA association volume (dimensionless beta) (Tasios et al. 2025). */
+  protected double umrCpaAssociationVolume = 0.0;
+  /** Flag (1 = use dedicated UMR-CPA associating parameters) (Tasios et al. 2025). */
+  protected int umrCpaAssociating = 0;
+  /**
+   * Dedicated UMR-CPA Rackett Z used by the PR-based Peneloux volume translation (Tasios et al.
+   * 2025). Kept separate from the SRK-CPA {@code racketZCPA} because the Peneloux shift constants
+   * differ between the PR and SRK volume-translation relations.
+   */
+  protected double umrCpaRacketZ = 0.0;
+  /**
+   * Dedicated UMR-CPA temperature-dependent volume-correction term [1/K] used together with
+   * {@code umrCpaRacketZ} (Tasios et al. 2025).
+   */
+  protected double umrCpaVolumeCorrectionT = 0.0;
   protected double lennardJonesMolecularDiameter = 0;
   protected double lennardJonesEnergyParameter = 0;
   protected double stokesCationicDiameter = 0;
@@ -178,8 +203,19 @@ public abstract class Component implements ComponentInterface {
   protected double mSAFTi = 0;
   protected double sigmaSAFTi = 0;
   protected double epsikSAFT = 0;
+  protected double lambdaRSAFTVRMie = 12.0;
+  protected double lambdaASAFTVRMie = 6.0;
+  protected double mSAFTVRMie = 0;
+  protected double sigmaSAFTVRMie = 0;
+  protected double epsikSAFTVRMie = 0;
   private double associationVolumeSAFT;
   private double associationEnergySAFT = 0;
+  private double associationEnergySAFTVRMie = 0;
+  /**
+   * SAFT-VR Mie bond volume K_HB in m^3 (Lafitte 2013 Eq. 39). For water: 101.69 Angstrom^3 =
+   * 1.0169e-28 m^3. If zero, falls back to kappa * sigma^3 (PC-SAFT convention).
+   */
+  private double associationVolumeSAFTVRMie = 0;
 
   /**
    * <p>
@@ -368,6 +404,58 @@ public abstract class Component implements ComponentInterface {
         matiascopemanParamsUMRPRU[3] = 0.0;
         matiascopemanParamsUMRPRU[4] = 0.0;
 
+        // Five-parameter Mathias-Copeman coefficients for the UMR-CPA model
+        // (Tasios et al., Fluid Phase Equilibria 2025, doi:10.1016/j.fluid.2024.114241).
+        // These are stored in dedicated columns so that the UMR-CPA fit is kept separate from
+        // the UMR-PRU MCPR1..MCPR3 columns. Wrapped in a guard because not every component
+        // database CSV provides these columns.
+        try {
+          matiascopemanParamsUMRCPA[0] = Double.parseDouble(dataSet.getString("UMRCPA_MC1"));
+          matiascopemanParamsUMRCPA[1] = Double.parseDouble(dataSet.getString("UMRCPA_MC2"));
+          matiascopemanParamsUMRCPA[2] = Double.parseDouble(dataSet.getString("UMRCPA_MC3"));
+          matiascopemanParamsUMRCPA[3] = Double.parseDouble(dataSet.getString("UMRCPA_MC4"));
+          matiascopemanParamsUMRCPA[4] = Double.parseDouble(dataSet.getString("UMRCPA_MC5"));
+        } catch (Exception umrcpaMcEx) {
+          matiascopemanParamsUMRCPA[0] = 0.0;
+          matiascopemanParamsUMRCPA[1] = 0.0;
+          matiascopemanParamsUMRCPA[2] = 0.0;
+          matiascopemanParamsUMRCPA[3] = 0.0;
+          matiascopemanParamsUMRCPA[4] = 0.0;
+        }
+
+        // Dedicated UMR-CPA pure-component parameters for associating compounds
+        // (Tasios et al., Fluid Phase Equilibria 2025). a0 is stored in [bar*L^2/mol^2], the
+        // co-volume b in [L/mol] and the association energy in [bar*L/mol]; the association
+        // volume is the dimensionless beta. These are kept in separate columns so the UMR-CPA
+        // water/glycol sub-model is not mixed with the generic PR-CPA aCPA_PR/bCPA_PR columns.
+        // Wrapped in a guard because not every component database CSV provides these columns.
+        try {
+          umrCpaA0 = Double.parseDouble(dataSet.getString("UMRCPA_a0"));
+          umrCpaB = Double.parseDouble(dataSet.getString("UMRCPA_b"));
+          umrCpaAssociationEnergy = Double.parseDouble(dataSet.getString("UMRCPA_assocEnergy"));
+          umrCpaAssociationVolume = Double.parseDouble(dataSet.getString("UMRCPA_assocVolume"));
+          umrCpaAssociating = Integer.parseInt(dataSet.getString("UMRCPA_associating").trim());
+        } catch (Exception umrcpaParamEx) {
+          umrCpaA0 = 0.0;
+          umrCpaB = 0.0;
+          umrCpaAssociationEnergy = 0.0;
+          umrCpaAssociationVolume = 0.0;
+          umrCpaAssociating = 0;
+        }
+
+        // Dedicated UMR-CPA Rackett Z and temperature-dependent volume-correction term for the
+        // PR-based Peneloux volume translation (Tasios et al., Fluid Phase Equilibria 2025). These
+        // live in separate columns from the SRK-CPA racketZCPA/volcorrCPA_T because the PR and SRK
+        // Peneloux shift relations differ. Wrapped in its own guard so that a database CSV without
+        // these columns (e.g. COMP_EXT.csv) simply falls back to the SRK-CPA racketZCPA.
+        try {
+          umrCpaRacketZ = Double.parseDouble(dataSet.getString("UMRCPA_racketZ"));
+          umrCpaVolumeCorrectionT = Double.parseDouble(dataSet.getString("UMRCPA_volcorr_T"));
+        } catch (Exception umrcpaVolEx) {
+          umrCpaRacketZ = 0.0;
+          umrCpaVolumeCorrectionT = 0.0;
+        }
+
         matiascopemanSolidParams[0] = Double.parseDouble(dataSet.getString("MC1Solid"));
         matiascopemanSolidParams[1] = Double.parseDouble(dataSet.getString("MC2Solid"));
         matiascopemanSolidParams[2] = Double.parseDouble(dataSet.getString("MC3Solid"));
@@ -428,7 +516,8 @@ public abstract class Component implements ComponentInterface {
         setVolumeCorrectionT_CPA(Double.parseDouble(dataSet.getString("volcorrCPA_T")));
         volumeCorrectionT = Double.parseDouble(dataSet.getString("volcorrSRK_T"));
 
-        if (this.getClass().getName().equals("neqsim.thermo.component.ComponentPrCPA")) {
+        if (this.getClass().getName().equals("neqsim.thermo.component.ComponentPrCPA")
+            || this.getClass().getName().equals("neqsim.thermo.component.ComponentUMRCPA")) {
           // System.out.println("pr-cpa");
           associationVolume = Double.parseDouble(dataSet.getString("associationboundingvolume_PR"));
           aCPA = Double.parseDouble(dataSet.getString("aCPA_PR"));
@@ -443,6 +532,22 @@ public abstract class Component implements ComponentInterface {
           mCPA = Double.parseDouble(dataSet.getString("mCPA_SRK"));
         }
 
+        // For the UMR-CPA model, associating compounds (water, glycols, ...) use the dedicated
+        // PR-CPA parameter set regressed in Tasios et al. (Fluid Phase Equilibria 2025) instead
+        // of the legacy generic aCPA_PR/bCPA_PR columns. Unit conversion to NeqSim internal units:
+        // a0 [bar*L^2/mol^2] -> internal (x 1e4, same scale as SRK-CPA a0 in [Pa*m^6/mol^2] x 1e5),
+        // b [L/mol] -> internal (x 1e2), association energy [bar*L/mol] -> [J/mol] (x 1e2, since
+        // 1 bar*L = 100 J); the association volume is the dimensionless beta and is used directly.
+        // The Mathias-Copeman alpha for these compounds is supplied through the UMRCPA_MC columns
+        // and installed as attractive term 22 in ComponentUMRCPA.setAttractiveTerm.
+        if (this.getClass().getName().equals("neqsim.thermo.component.ComponentUMRCPA")
+            && umrCpaAssociating == 1 && Math.abs(umrCpaA0) > 1e-20) {
+          aCPA = umrCpaA0 * 1.0e4;
+          bCPA = umrCpaB * 1.0e2;
+          associationVolume = umrCpaAssociationVolume;
+          associationEnergy = umrCpaAssociationEnergy * 1.0e2;
+        }
+
         criticalViscosity = Double.parseDouble(dataSet.getString("criticalViscosity"));
         if (criticalViscosity < 1e-20) {
           criticalViscosity =
@@ -452,9 +557,42 @@ public abstract class Component implements ComponentInterface {
         mSAFTi = Double.parseDouble(dataSet.getString("mSAFT"));
         sigmaSAFTi = Double.parseDouble(dataSet.getString("sigmaSAFT")) / 1.0e10;
         epsikSAFT = Double.parseDouble(dataSet.getString("epsikSAFT"));
+        try {
+          lambdaRSAFTVRMie = Double.parseDouble(dataSet.getString("lambdaRSAFTVRMie"));
+          lambdaASAFTVRMie = Double.parseDouble(dataSet.getString("lambdaASAFTVRMie"));
+        } catch (Exception ex) {
+          lambdaRSAFTVRMie = 12.0;
+          lambdaASAFTVRMie = 6.0;
+        }
+        try {
+          mSAFTVRMie = Double.parseDouble(dataSet.getString("mSAFTVRMie"));
+          sigmaSAFTVRMie = Double.parseDouble(dataSet.getString("sigmaSAFTVRMie")) / 1.0e10;
+          epsikSAFTVRMie = Double.parseDouble(dataSet.getString("epsikSAFTVRMie"));
+        } catch (Exception ex) {
+          mSAFTVRMie = mSAFTi;
+          sigmaSAFTVRMie = sigmaSAFTi;
+          epsikSAFTVRMie = epsikSAFT;
+        }
         setAssociationVolumeSAFT(
             Double.parseDouble(dataSet.getString("associationboundingvolume_PCSAFT")));
         setAssociationEnergySAFT(Double.parseDouble(dataSet.getString("associationenergy_PCSAFT")));
+        try {
+          double epsVRMie = Double.parseDouble(dataSet.getString("associationenergy_SAFTVRMie"));
+          if (epsVRMie > 0) {
+            associationEnergySAFTVRMie = epsVRMie;
+          }
+        } catch (Exception ex) {
+          // Column not available or zero - will use PCSAFT value as fallback
+        }
+        try {
+          double kHB = Double.parseDouble(dataSet.getString("associationvolume_SAFTVRMie"));
+          if (kHB > 0) {
+            associationVolumeSAFTVRMie = kHB;
+          }
+        } catch (Exception ex) {
+          // Column not available or zero - will compute from PCSAFT kappa * sigma^3 as
+          // fallback
+        }
         if (Math.abs(criticalViscosity) < 1e-12) {
           criticalViscosity =
               7.94830 * Math.sqrt(molarMass * 1e3) * Math.pow(criticalPressure, 2.0 / 3.0)
@@ -507,7 +645,15 @@ public abstract class Component implements ComponentInterface {
             + getMeltingPointTemperature()
             + ", -242000, 189, 53, -0.00784, 0, 0, 0, 5.46, 0.305, 647, 0.081, 0, 52100000, 0.32, -0.212, 0.258, 0, 0.999, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'no', "
             + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT()
-            + ", 0, 0,0,0,0,0," + isW + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
+            + ", 0, 0,0,0,0,0," + isW + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+            + ", 12.0, 6.0, 0, 0, 0, 0, 0"
+            // Trailing values for the UMR-CPA columns appended to COMP.csv
+            // (UMRCPA_MC1..5, UMRCPA_a0, UMRCPA_b, UMRCPA_assocEnergy, UMRCPA_assocVolume,
+            // UMRCPA_assocScheme, UMRCPA_associating, UMRCPA_racketZ, UMRCPA_volcorr_T).
+            // Pseudo-components are non-associating, so all are zero. These must be present
+            // because comptemp is created as "SELECT * FROM comp" and the positional INSERT must
+            // match the full column count.
+            + ", 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0)");
       }
       CASnumber = "00-00-0";
     } catch (Exception ex) {
@@ -517,12 +663,12 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public synchronized Component clone() {
+  public Component clone() {
     Component clonedComponent = null;
     try {
       clonedComponent = (Component) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+    } catch (CloneNotSupportedException ex) {
+      throw new AssertionError("Clone failed for Component", ex);
     }
 
     return clonedComponent;
@@ -589,8 +735,20 @@ public abstract class Component implements ComponentInterface {
       if (ionicCharge != 0 || isIsIon()) {
         K = 1.0e-40;
       } else {
-        K = Math.exp(Math.log(criticalPressure / pressure)
-            + 5.373 * (1.0 + srkacentricFactor) * (1.0 - criticalTemperature / temperature));
+        // Warm-start: preserve K if it's a non-default converged value.
+        // Opt-in via ThermodynamicModelSettings.setUseWarmStartKValues(true) or
+        // the system property -Dneqsim.warmStartK=true. Saves successive-
+        // substitution iterations in iterative flashes (PSflash, PHflash,
+        // dew/bubble point) and recycle loops by 2-3x, but may converge to
+        // numerically slightly different (physically equivalent) solutions.
+        // Default off preserves exact baseline reproducibility.
+        if (neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues() && Double.isFinite(K)
+            && K > 1e-20 && Math.abs(K - 1.0) > 1e-3) {
+          // Keep existing K — warm start
+        } else {
+          K = Math.exp(Math.log(criticalPressure / pressure)
+              + 5.373 * (1.0 + srkacentricFactor) * (1.0 - criticalTemperature / temperature));
+        }
       }
       z = numberOfMoles / totalNumberOfMoles;
       x = z;
@@ -810,6 +968,12 @@ public abstract class Component implements ComponentInterface {
   @Override
   public double getDebyeDipoleMoment() {
     return debyeDipoleMoment;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDebyeDipoleMoment(double debyeDipoleMoment) {
+    this.debyeDipoleMoment = debyeDipoleMoment;
   }
 
   /** {@inheritDoc} */
@@ -1053,7 +1217,9 @@ public abstract class Component implements ComponentInterface {
       case "kg/mol":
         conversionFactor = 1.0;
         break;
+      case "g/mol":
       case "gr/mol":
+      case "kg/kmol":
         conversionFactor = 1000.0;
         break;
       case "lbm/lbmol":
@@ -1105,7 +1271,8 @@ public abstract class Component implements ComponentInterface {
   @Override
   public double logfugcoefdT(PhaseInterface phase) {
     dfugdt = 0.0;
-    // this.fugcoefDiffTemp(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+    // this.fugcoefDiffTemp(phase, phase.getNumberOfComponents(),
+    // phase.getTemperature(),
     // phase.getPressure());
     return dfugdt;
   }
@@ -1114,7 +1281,8 @@ public abstract class Component implements ComponentInterface {
   @Override
   public double logfugcoefdP(PhaseInterface phase) {
     dfugdp = 0.0;
-    // this.fugcoefDiffPres(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+    // this.fugcoefDiffPres(phase, phase.getNumberOfComponents(),
+    // phase.getTemperature(),
     // phase.getPressure());
     return dfugdp;
   }
@@ -2088,6 +2256,18 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getCostaldCharacteristicVolume() {
+    return costaldCharacteristicVolume;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCostaldCharacteristicVolume(double costaldCharacteristicVolume) {
+    this.costaldCharacteristicVolume = costaldCharacteristicVolume;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getCriticalViscosity() {
     return criticalViscosity;
   }
@@ -2162,6 +2342,66 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getLambdaRSAFTVRMie() {
+    return lambdaRSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setLambdaRSAFTVRMie(double lambdaRSAFTVRMie) {
+    this.lambdaRSAFTVRMie = lambdaRSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getLambdaASAFTVRMie() {
+    return lambdaASAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setLambdaASAFTVRMie(double lambdaASAFTVRMie) {
+    this.lambdaASAFTVRMie = lambdaASAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getmSAFTVRMie() {
+    return mSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setmSAFTVRMie(double mSAFTVRMie) {
+    this.mSAFTVRMie = mSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSigmaSAFTVRMie() {
+    return sigmaSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setSigmaSAFTVRMie(double sigmaSAFTVRMie) {
+    this.sigmaSAFTVRMie = sigmaSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getEpsikSAFTVRMie() {
+    return epsikSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setEpsikSAFTVRMie(double epsikSAFTVRMie) {
+    this.epsikSAFTVRMie = epsikSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getAssociationVolumeSAFT() {
     return associationVolumeSAFT;
   }
@@ -2182,6 +2422,30 @@ public abstract class Component implements ComponentInterface {
   @Override
   public void setAssociationEnergySAFT(double associationEnergySAFT) {
     this.associationEnergySAFT = associationEnergySAFT;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getAssociationEnergySAFTVRMie() {
+    return associationEnergySAFTVRMie > 0 ? associationEnergySAFTVRMie : associationEnergySAFT;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setAssociationEnergySAFTVRMie(double associationEnergySAFTVRMie) {
+    this.associationEnergySAFTVRMie = associationEnergySAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getAssociationVolumeSAFTVRMie() {
+    return associationVolumeSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setAssociationVolumeSAFTVRMie(double associationVolumeSAFTVRMie) {
+    this.associationVolumeSAFTVRMie = associationVolumeSAFTVRMie;
   }
 
   /** {@inheritDoc} */
@@ -2463,14 +2727,33 @@ public abstract class Component implements ComponentInterface {
       return getVoli() / 1.0e5 * 60.0;
     } else if (flowunit.equals("m3/hr")) {
       return getVoli() / 1.0e5 * 3600.0;
-    } else if (flowunit.equals("mole/sec")) {
+    } else if (flowunit.equals("mole/sec") || flowunit.equals("mol/sec")) {
       return numberOfMolesInPhase;
-    } else if (flowunit.equals("mole/min")) {
+    } else if (flowunit.equals("mole/min") || flowunit.equals("mol/min")) {
       return numberOfMolesInPhase * 60.0;
-    } else if (flowunit.equals("mole/hr")) {
+    } else if (flowunit.equals("mole/hr") || flowunit.equals("mol/hr")) {
       return numberOfMolesInPhase * 3600.0;
+    } else if (flowunit.equals("kmole/sec") || flowunit.equals("kmol/sec")) {
+      return numberOfMolesInPhase / 1000.0;
+    } else if (flowunit.equals("kmole/min") || flowunit.equals("kmol/min")) {
+      return numberOfMolesInPhase * 60.0 / 1000.0;
+    } else if (flowunit.equals("kmole/hr") || flowunit.equals("kmol/hr")) {
+      return numberOfMolesInPhase * 3600.0 / 1000.0;
+    } else if (flowunit.equals("kmole/day") || flowunit.equals("kmol/day")) {
+      return numberOfMolesInPhase * 3600.0 * 24.0 / 1000.0;
+    } else if (flowunit.equals("lbmole/hr") || flowunit.equals("lbmol/hr")) {
+      return numberOfMolesInPhase * 3600.0 / 1000.0 * 2.20462262;
+    } else if (flowunit.equals("lb/hr")) {
+      return numberOfMolesInPhase * getMolarMass() * 3600.0 * 2.20462262;
+    } else if (flowunit.equals("barrel/day") || flowunit.equals("bbl/day")) {
+      return numberOfMolesInPhase * getMolarMass() * 3600.0 * 24.0 * 2.20462262 * 0.068;
     } else {
-      throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
+      throw new RuntimeException(
+          "failed.. unit: " + flowunit + " not supported. Supported units: kg/sec, kg/min, "
+              + "kg/hr, tonnes/year, m3/sec, m3/min, m3/hr, mole/sec, mol/sec, mole/min, "
+              + "mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, "
+              + "kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, "
+              + "barrel/day, bbl/day");
     }
   }
 
@@ -2483,14 +2766,32 @@ public abstract class Component implements ComponentInterface {
       return numberOfMoles * getMolarMass() * 60.0;
     } else if (flowunit.equals("kg/hr")) {
       return numberOfMoles * getMolarMass() * 3600.0;
-    } else if (flowunit.equals("mole/sec")) {
+    } else if (flowunit.equals("mole/sec") || flowunit.equals("mol/sec")) {
       return numberOfMoles;
-    } else if (flowunit.equals("mole/min")) {
+    } else if (flowunit.equals("mole/min") || flowunit.equals("mol/min")) {
       return numberOfMoles * 60.0;
-    } else if (flowunit.equals("mole/hr")) {
+    } else if (flowunit.equals("mole/hr") || flowunit.equals("mol/hr")) {
       return numberOfMoles * 3600.0;
+    } else if (flowunit.equals("kmole/sec") || flowunit.equals("kmol/sec")) {
+      return numberOfMoles / 1000.0;
+    } else if (flowunit.equals("kmole/min") || flowunit.equals("kmol/min")) {
+      return numberOfMoles * 60.0 / 1000.0;
+    } else if (flowunit.equals("kmole/hr") || flowunit.equals("kmol/hr")) {
+      return numberOfMoles * 3600.0 / 1000.0;
+    } else if (flowunit.equals("kmole/day") || flowunit.equals("kmol/day")) {
+      return numberOfMoles * 3600.0 * 24.0 / 1000.0;
+    } else if (flowunit.equals("lbmole/hr") || flowunit.equals("lbmol/hr")) {
+      return numberOfMoles * 3600.0 / 1000.0 * 2.20462262;
+    } else if (flowunit.equals("lb/hr")) {
+      return numberOfMoles * getMolarMass() * 3600.0 * 2.20462262;
+    } else if (flowunit.equals("barrel/day") || flowunit.equals("bbl/day")) {
+      return numberOfMoles * getMolarMass() * 3600.0 * 24.0 * 2.20462262 * 0.068;
     } else {
-      throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
+      throw new RuntimeException(
+          "failed.. unit: " + flowunit + " not supported. Supported units: kg/sec, kg/min, "
+              + "kg/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, "
+              + "kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, "
+              + "kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, barrel/day, bbl/day");
     }
   }
 
@@ -2501,6 +2802,15 @@ public abstract class Component implements ComponentInterface {
    */
   public final double[] getMatiascopemanParamsUMRPRU() {
     return matiascopemanParamsUMRPRU;
+  }
+
+  /**
+   * Getter for the five-parameter Mathias-Copeman coefficients of the UMR-CPA model.
+   *
+   * @return array of five doubles with the UMR-CPA Mathias-Copeman coefficients c1..c5
+   */
+  public final double[] getMatiascopemanParamsUMRCPA() {
+    return matiascopemanParamsUMRCPA;
   }
 
   /** {@inheritDoc} */

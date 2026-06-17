@@ -1,6 +1,7 @@
 ---
 title: PipeBeggsAndBrills - Multiphase Pipeline Simulation
 description: The `PipeBeggsAndBrills` class implements the Beggs and Brill (1973) empirical correlations for pressure drop and liquid holdup prediction in multiphase pipeline flow. It supports single-phase (gas or...
+keywords: "Beggs and Brill, multiphase, pipeline, pressure drop, liquid holdup, flow regime, slug, annular, stratified, pipe flow, wellbore, horizontal, vertical, inclined"
 ---
 
 # PipeBeggsAndBrills - Multiphase Pipeline Simulation
@@ -237,14 +238,14 @@ Given:
 
 Calculate:
   r_i = 0.0762 m
-  r_o = 0.0862 m  
+  r_o = 0.0862 m
   r_ins = 0.1362 m
-  
+
   1/h_inner = 0.002 m²K/W
   R_wall = 0.0762 × ln(0.0862/0.0762) / 45 = 0.0002 m²K/W
   R_ins = 0.0762 × ln(0.1362/0.0862) / 0.04 = 0.87 m²K/W
   1/h_outer = 0.002 m²K/W
-  
+
   1/U = 0.002 + 0.0002 + 0.87 + 0.002 = 0.874 m²K/W
   U = 1.14 W/(m²·K)
 ```
@@ -336,7 +337,7 @@ pipe.initTransientSimulation();
 double dt = 1.0;  // seconds
 for (int step = 0; step < 1000; step++) {
     pipe.runTransient(dt);
-    
+
     // Access profiles
     double outletT = pipe.getTransientTemperatureProfile().get(
         pipe.getTransientTemperatureProfile().size() - 1);
@@ -447,7 +448,7 @@ riser.setNumberOfIncrements(50);
 riser.run();
 
 // Hydrostatic pressure difference
-double hydrostaticHead = riser.getSegmentPressure(0) - 
+double hydrostaticHead = riser.getSegmentPressure(0) -
                          riser.getSegmentPressure(riser.getNumberOfIncrements());
 System.out.println("Hydrostatic head: " + hydrostaticHead + " bar");
 ```
@@ -469,7 +470,7 @@ gasLine.run();
 
 // For 20 bar pressure drop in natural gas:
 // Expected JT cooling: ~8-10 K
-double tempDrop = hpGasStream.getTemperature("C") - 
+double tempDrop = hpGasStream.getTemperature("C") -
                   gasLine.getOutletStream().getTemperature("C");
 System.out.println("Temperature drop from JT: " + tempDrop + " °C");
 ```
@@ -491,7 +492,7 @@ pipe.setFlowConvergenceTolerance(1e-5);
 
 pipe.run();
 
-System.out.println("Calculated flow rate: " + 
+System.out.println("Calculated flow rate: " +
     pipe.getOutletStream().getFlowRate("kg/hr") + " kg/hr");
 ```
 

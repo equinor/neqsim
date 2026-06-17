@@ -14,7 +14,7 @@ import java.io.Serializable;
  * <p>
  * <b>Typical Usage:</b>
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * EquipmentFailureMode tripMode = EquipmentFailureMode.builder().name("Compressor Trip")

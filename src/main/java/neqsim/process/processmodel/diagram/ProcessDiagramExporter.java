@@ -18,7 +18,6 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.dexpi.DexpiProcessUnit;
 import neqsim.process.processmodel.dexpi.DexpiStream;
-import neqsim.process.processmodel.diagram.EquipmentRole;
 import neqsim.process.processmodel.graph.ProcessEdge;
 import neqsim.process.processmodel.graph.ProcessGraph;
 import neqsim.process.processmodel.graph.ProcessGraphBuilder;
@@ -982,14 +981,14 @@ public class ProcessDiagramExporter implements Serializable {
     if (detailLevel.useCompactLabels()) {
       label.append(name);
     } else {
-      label.append(name).append("\\n");
+      label.append(name).append("\n");
       label.append("(").append(type).append(")");
 
       if (detailLevel.showConditions()) {
         try {
           SystemInterface fluid = equipment.getFluid();
           if (fluid != null) {
-            label.append("\\n");
+            label.append("\n");
             label.append(String.format("%.1f °C / %.1f bar", fluid.getTemperature("C"),
                 fluid.getPressure("bara")));
           }
@@ -1003,7 +1002,7 @@ public class ProcessDiagramExporter implements Serializable {
           if (equipment instanceof StreamInterface) {
             StreamInterface stream = (StreamInterface) equipment;
             double flowRate = stream.getFlowRate("kg/hr");
-            label.append("\\n");
+            label.append("\n");
             label.append(String.format("%.1f kg/hr", flowRate));
           }
         } catch (Exception e) {
@@ -1038,11 +1037,11 @@ public class ProcessDiagramExporter implements Serializable {
       String fluidCode = dexpiUnit.getFluidCode();
 
       if (lineNumber != null && !lineNumber.trim().isEmpty()) {
-        label.append("\\n");
+        label.append("\n");
         label.append("Line: ").append(lineNumber);
       }
       if (fluidCode != null && !fluidCode.trim().isEmpty()) {
-        label.append("\\n");
+        label.append("\n");
         label.append("Fluid: ").append(fluidCode);
       }
     } else if (equipment instanceof DexpiStream) {
@@ -1051,11 +1050,11 @@ public class ProcessDiagramExporter implements Serializable {
       String fluidCode = dexpiStream.getFluidCode();
 
       if (lineNumber != null && !lineNumber.trim().isEmpty()) {
-        label.append("\\n");
+        label.append("\n");
         label.append("Line: ").append(lineNumber);
       }
       if (fluidCode != null && !fluidCode.trim().isEmpty()) {
-        label.append("\\n");
+        label.append("\n");
         label.append("Fluid: ").append(fluidCode);
       }
     }
@@ -1190,7 +1189,7 @@ public class ProcessDiagramExporter implements Serializable {
       try {
         SystemInterface fluid = stream.getFluid();
         if (fluid != null) {
-          label.append("\\n");
+          label.append("\n");
           label.append(String.format("%.1f°C, %.1f bar", fluid.getTemperature("C"),
               fluid.getPressure("bara")));
         }
@@ -1202,7 +1201,7 @@ public class ProcessDiagramExporter implements Serializable {
     if (detailLevel.showFlowRates()) {
       try {
         double flowRate = stream.getFlowRate("kg/hr");
-        label.append("\\n");
+        label.append("\n");
         label.append(String.format("%.0f kg/hr", flowRate));
       } catch (Exception e) {
         // Ignore

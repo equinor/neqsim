@@ -14,6 +14,7 @@ description: "Copy-paste code patterns for every common NeqSim task. Covers flui
 - [Reading Properties](#reading-properties)
 - [Oil Characterization](#oil-characterization)
 - [Process Equipment](#process-equipment)
+- [Distillation Column](#distillation-column-temperature-specs)
 - [Stream Introspection](#stream-introspection)
 - [Named Controllers and Connections](#named-controllers-and-connections)
 - [Complete Process Flowsheet](#complete-process-flowsheet)
@@ -120,7 +121,10 @@ ops.PSflash(entropy);
 
 // Phase envelope
 ops.calcPTphaseEnvelope();
-double[][] phaseEnvelope = ops.get2phaseTVPdata();
+double[] dewT = ops.get("dewT");
+double[] dewP = ops.get("dewP");
+double[] bubT = ops.get("bubT");
+double[] bubP = ops.get("bubP");
 ```
 
 ---
@@ -130,8 +134,17 @@ double[][] phaseEnvelope = ops.get2phaseTVPdata();
 ```java
 // CRITICAL: call initProperties() after flash — this initializes BOTH
 // thermodynamic properties (Cp, enthalpy, entropy) AND transport properties
-// (viscosity, thermal conductivity, density). Using init(3) alone will NOT
-// initialize transport properties — they will return zero!
+// (viscosity, thermal conductivity, density with volume correction).
+//
+// WHY THIS IS NEEDED: Flash calculations (TPflash, PHflash, PSflash) only solve
+// phase equilibrium (compositions, phase fractions, Z-factor). They do NOT compute
+// transport properties automatically — this is by design for performance, since
+// many internal NeqSim loops (stability analysis, phase envelope) only need
+// equilibrium results. Without initProperties(), getViscosity() and
+// getThermalConductivity() will return ZERO.
+//
+// NOTE: When using ProcessSystem.run(), initProperties() is called internally
+// by each equipment's run() method — no separate call needed for process streams.
 fluid.initProperties();
 
 // System-level
@@ -216,6 +229,46 @@ double power = comp.getPower("kW");
 double outletT = comp.getOutletStream().getTemperature("C");
 ```
 
+### Compressor Casing Mechanical Design (API 617 / ASME VIII)
+
+```java
+// Via CompressorMechanicalDesign (after process run)
+Compressor comp = new Compressor("K-100", gasStream);
+comp.setOutletPressure(120.0, "bara");
+comp.setIsentropicEfficiency(0.75);
+process.add(comp);
+process.run();
+
+comp.initMechanicalDesign();
+CompressorMechanicalDesign design =
+    (CompressorMechanicalDesign) comp.getMechanicalDesign();
+design.setCasingMaterialGrade("SA-516-70");
+design.setCasingCorrosionAllowanceMm(3.0);
+// For sour service:
+// design.setH2sPartialPressureKPa(0.5);
+design.calcDesign();
+
+CompressorCasingDesignCalculator casing = design.getCasingDesignCalculator();
+double wallMm = casing.getRequiredWallThicknessMm();
+double mawpBarg = casing.getMawpBarg();
+String flangeClass = casing.getSelectedFlangeClass();
+boolean naceOk = casing.isNaceCompliant();
+String json = casing.toJson();
+```
+
+```java
+// Standalone calculator (without process simulation)
+CompressorCasingDesignCalculator calc = new CompressorCasingDesignCalculator();
+calc.setDesignPressureBarg(135.0);
+calc.setDesignTemperatureC(200.0);
+calc.setInnerDiameterMm(800.0);
+calc.setMaterialGrade("F316L");
+calc.setCorrosionAllowanceMm(1.5);
+calc.setJointEfficiency(0.85);
+calc.setCasingType("horizontally-split");
+calc.calculate();
+```
+
 ### Cooler / Heater
 
 ```java
@@ -287,6 +340,245 @@ pipe.setPipeWallRoughness(5e-5); // meters
 double outP = pipe.getOutletStream().getPressure("bara");
 ```
 
+### Two-Fluid Pipe (Transient Multiphase)
+
+```java
+TwoFluidPipe pipe = new TwoFluidPipe("Flowline", feedStream);
+pipe.setLength(5000);            // meters
+pipe.setDiameter(0.3);           // meters
+pipe.setNumberOfSections(100);   // computational cells
+pipe.setRoughness(4.5e-5);       // wall roughness (m)
+
+// Steady-state initialization
+pipe.run();
+
+// Transient simulation
+UUID simId = UUID.randomUUID();
+for (int step = 0; step < 600; step++) {
+    pipe.runTransient(0.5, simId);  // 0.5 s time step
+}
+
+// Results
+double[] pressures = pipe.getPressureProfile();
+double[] holdups = pipe.getLiquidHoldupProfile();
+double inventory = pipe.getLiquidInventory("m3");
+```
+
+### Two-Fluid Pipe Benchmark (Cross-Validate vs Beggs & Brill)
+
+```java
+// Compare TwoFluidPipe pressure drop against PipeBeggsAndBrills
+PipeBeggsAndBrills bbPipe = new PipeBeggsAndBrills("BB", feedStream);
+bbPipe.setLength(5000); bbPipe.setDiameter(0.3);
+bbPipe.setAngle(0); bbPipe.setPipeWallRoughness(4.5e-5);
+
+TwoFluidPipe tfPipe = new TwoFluidPipe("TF", feedStream);
+tfPipe.setLength(5000); tfPipe.setDiameter(0.3);
+tfPipe.setNumberOfSections(50); tfPipe.setRoughness(4.5e-5);
+
+// Run both
+bbPipe.run(); tfPipe.run();
+double dpBB = feedStream.getPressure() - bbPipe.getOutletStream().getPressure();
+double dpTF = feedStream.getPressure() - tfPipe.getOutletStream().getPressure();
+double ratio = dpTF / dpBB;
+// Expect ratio 0.8–1.3 for engineering accuracy
+```
+
+### Two-Fluid Pipe with Virtual Mass Force
+
+```java
+// Enable virtual mass force for improved slug dynamics and pressure surge prediction
+TwoFluidPipe pipe = new TwoFluidPipe("Pipeline", feedStream);
+pipe.setLength(5000);
+pipe.setDiameter(0.3);
+pipe.setNumberOfSections(100);
+
+// Enable virtual mass force (Drew & Lahey 1987)
+pipe.getEquations().setEnableVirtualMassForce(true);
+pipe.getEquations().setVirtualMassCoefficient(0.5);  // Default for spheres
+pipe.getEquations().setTimestep(0.1);  // Required for dv/dt calculation
+
+pipe.run();
+```
+
+### Two-Fluid Pipe with Junction/Bend Losses
+
+```java
+// Add local loss coefficients for fittings
+TwoFluidPipe pipe = new TwoFluidPipe("Pipeline", feedStream);
+pipe.setLength(5000);
+pipe.setDiameter(0.3);
+pipe.setNumberOfSections(100);
+
+// Add named K-factor losses
+pipe.addLocalLoss("Tee junction", 0.9);
+pipe.addLocalLoss("Gate valve", 0.17);
+pipe.addLocalLoss("Check valve", 2.0);
+
+// Use convenience methods for standard bends
+pipe.setNumberOf90DegreeBends(4);   // K=0.3 each
+pipe.setNumberOf45DegreeBends(2);   // K=0.16 each
+pipe.setInletLossCoefficient(0.5);  // Sharp entrance
+pipe.setOutletLossCoefficient(1.0); // Exit to tank
+
+pipe.run();
+
+// Get pressure drop breakdown
+double dpFriction = pipe.getPressureDrop();
+double dpLocal = pipe.calculateLocalLossPressureDrop();
+double dpTotal = pipe.getTotalPressureDrop();
+System.out.println(pipe.getLocalLossSummary());
+```
+
+### Interfacial Friction Correlations
+
+```java
+// Use Hart correlation for oil-gas stratified wavy flow
+double fi = InterfacialFriction.calcHartCorrelation(
+    liquidHoldup, diameter, gasVelocity, liquidVelocity);
+
+// Use Andreussi-Persen (OLGA-style) with inclination
+double fi = InterfacialFriction.calcAndreussiPersenCorrelation(
+    liquidHoldup, diameter, gasVelocity, liquidVelocity,
+    gasDensity, liquidDensity, surfaceTension, inclinationRadians);
+```
+
+### Transient Boundary Conditions
+
+```java
+// Configure boundary conditions for transient two-fluid simulation
+TwoFluidPipe pipe = new TwoFluidPipe("Pipeline", feedStream);
+pipe.setLength(10000);
+pipe.setDiameter(0.25);
+pipe.setNumberOfSections(50);
+
+// Default: flow from stream, fixed outlet pressure
+pipe.setOutletPressure(30.0, "bara");
+
+// Option 1: Explicit mass flow (decoupled from stream)
+pipe.setInletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CONSTANT_FLOW);
+pipe.setInletMassFlow(50.0);  // kg/s
+// or with unit: pipe.setInletMassFlow(180000, "kg/hr");
+
+// Option 2: Fixed pressures at both ends (flow computed)
+pipe.setInletBoundaryCondition(TwoFluidPipe.BoundaryCondition.CONSTANT_PRESSURE);
+pipe.setInletPressure(60.0, "bara");
+pipe.setOutletPressure(30.0, "bara");
+
+// Query current BC types
+TwoFluidPipe.BoundaryCondition inletBC = pipe.getInletBoundaryCondition();
+TwoFluidPipe.BoundaryCondition outletBC = pipe.getOutletBoundaryCondition();
+
+// Initialize and run transient
+pipe.run();
+for (int t = 0; t < 120; t++) {
+    // Can change flow rate during simulation
+    if (t == 60) {
+        pipe.setInletMassFlow(75.0);  // Step increase at 60s
+    }
+    pipe.runTransient(1.0);
+}
+```
+
+### Shut-In and Surge Scenarios
+
+```java
+// Close outlet for shut-in / pressure surge analysis
+TwoFluidPipe pipe = new TwoFluidPipe("Pipeline", feedStream);
+pipe.setLength(10000);
+pipe.setDiameter(0.25);
+pipe.setNumberOfSections(100);
+pipe.setOutletPressure(30.0, "bara");
+pipe.run();
+
+// Shut-in: close outlet valve
+pipe.closeOutlet();  // Sets BC to CLOSED (zero velocity, pressure floats)
+
+for (int t = 0; t < 60; t++) {
+    pipe.runTransient(1.0);
+    double[] pressures = pipe.getPressureProfile();
+    System.out.printf("t=%ds: inlet=%.2f bara, outlet=%.2f bara%n",
+        t, pressures[0]/1e5, pressures[pressures.length-1]/1e5);
+}
+
+// Reopen outlet
+pipe.openOutlet(30.0, "bara");  // Opens with specified back-pressure
+
+// Blowdown: close inlet, open outlet
+pipe.closeInlet();
+pipe.openOutlet(1.0, "bara");  // Vent to atmospheric
+
+// Check closure state
+if (pipe.isOutletClosed()) {
+    System.out.println("Outlet is blocked");
+}
+```
+
+### Distillation Column (Temperature Specs)
+
+```java
+DistillationColumn column = new DistillationColumn("Deethanizer", 25, true, true);
+column.addFeedStream(feed, 12);
+column.setTopPressure(25.0, "bara");
+column.setCondenserTemperature(-10.0, "C");
+column.setReboilerTemperature(100.0, "C");
+column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
+column.run();
+
+Stream overhead = column.getGasOutStream();
+Stream bottoms = column.getLiquidOutStream();
+```
+
+For larger hydrocarbon columns where an inside-out warm start is useful, use
+`DistillationColumn.SolverType.MATRIX_INSIDE_OUT`. The solver adaptively bypasses the matrix
+warm-start setup on small columns and exposes `wasMatrixInsideOutWarmStartUsed()` and
+`wasMatrixInsideOutWarmStartBypassed()` diagnostics after `run()`.
+
+When the best solver is not obvious, use `DistillationColumn.SolverType.AUTO`. It runs a
+feasibility pre-screen, warms a copied base case with damped substitution, probes candidate solvers,
+and records the selected concrete solver in `getLastSolverTypeUsed()`. For difficult purity,
+recovery, or product-flow targets, configure `setSpecificationHomotopySteps(steps)`; `AUTO` uses
+three stages by default for adjustable product specifications. Inspect `getLastAutoSolverSummary()`,
+`getLastSpecificationHomotopyStepCount()`, and `getConvergenceDiagnostics()` after `run()`.
+
+### Distillation Column (Product Purity Specs)
+
+```java
+// ColumnSpecification adjusts condenser/reboiler T via secant outer loop
+DistillationColumn column = new DistillationColumn("Deethanizer", 25, true, true);
+column.addFeedStream(feed, 12);
+column.setTopPressure(25.0, "bara");
+column.setTopProductPurity("ethane", 0.95);       // 95 mol% ethane overhead
+column.setBottomProductPurity("propane", 0.98);    // 98 mol% propane bottoms
+column.run();
+```
+
+### Distillation Column (Component Recovery Spec)
+
+```java
+DistillationColumn column = new DistillationColumn("Deethanizer", 25, true, true);
+column.addFeedStream(feed, 12);
+column.setTopPressure(25.0, "bara");
+column.setTopComponentRecovery("ethane", 0.99);    // 99% ethane recovery overhead
+column.setReboilerTemperature(100.0, "C");         // Fix reboiler, adjust condenser
+column.run();
+```
+
+### Distillation Column (Builder with Specs)
+
+```java
+DistillationColumn column = DistillationColumn.builder("Deethanizer")
+    .numberOfTrays(25)
+    .withCondenserAndReboiler()
+    .topPressure(25.0, "bara")
+    .insideOut()
+    .addFeedStream(feed, 12)
+    .topProductPurity("ethane", 0.95)
+    .bottomProductPurity("propane", 0.98)
+    .build();
+column.run();
+```
+
 ---
 
 ## Stream Introspection
@@ -355,6 +647,206 @@ List<ProcessElementInterface> all = process.getAllElements();
 
 ---
 
+## Automation API (String-Addressable Variables)
+
+The `ProcessAutomation` facade provides string-addressable variable access — ideal
+for agents that need to discover, read, and write simulation variables without
+navigating Java class hierarchies.
+
+### Discover Units and Variables
+
+```java
+ProcessAutomation auto = process.getAutomation();
+
+// List all equipment names
+List<String> units = auto.getUnitList();
+// ["Feed Gas", "HP Separator", "Compressor Stage 1", ...]
+
+// List all variables for an equipment unit
+List<SimulationVariable> vars = auto.getVariableList("HP Separator");
+// Each SimulationVariable has: address, name, type (INPUT/OUTPUT), defaultUnit, description
+
+// Get equipment type
+String type = auto.getEquipmentType("HP Separator");  // "Separator"
+```
+
+### Read Variable Values
+
+```java
+// Dot-notation addressing: "UnitName.streamOrProperty"
+double temp = auto.getVariableValue("HP Separator.gasOutStream.temperature", "C");
+double press = auto.getVariableValue("HP Separator.pressure", "bara");
+double flow = auto.getVariableValue("HP Separator.gasOutStream.flowRate", "kg/hr");
+```
+
+### Write Input Variables and Re-run
+
+```java
+// Only INPUT-type variables are writable
+auto.setVariableValue("Compressor.outletPressure", 150.0, "bara");
+process.run();  // propagate changes through the flowsheet
+```
+
+### Multi-Area ProcessModel
+
+```java
+ProcessAutomation plantAuto = plant.getAutomation();
+List<String> areas = plantAuto.getAreaList();  // ["Separation", "Compression"]
+
+// Area-qualified addresses use "::" separator
+double t = plantAuto.getVariableValue("Separation::HP Sep.gasOutStream.temperature", "C");
+plantAuto.setVariableValue("Compression::Compressor.outletPressure", 170.0, "bara");
+plant.run();
+```
+
+### Python / Jupyter Usage
+
+```python
+auto = process.getAutomation()
+units = list(auto.getUnitList())
+vars_list = list(auto.getVariableList("HP Separator"))
+temp = auto.getVariableValue("HP Separator.gasOutStream.temperature", "C")
+auto.setVariableValue("Compressor.outletPressure", 150.0, "bara")
+process.run()
+```
+
+### Self-Healing: Fuzzy Matching and Auto-Correction
+
+When agents use wrong names (typos, case differences, partial names), the safe
+accessors automatically diagnose the error and attempt correction:
+
+```java
+ProcessAutomation auto = process.getAutomation();
+
+// Safe get — returns JSON with value on success, or diagnostics + suggestions on failure
+String result = auto.getVariableValueSafe("hp separator.temperature", "C");
+// If "HP Sep" exists: {"status":"auto_corrected","originalAddress":"hp separator.temperature",
+//                      "correctedAddress":"HP Sep.temperature","value":25.0,"unit":"C"}
+
+// Safe set — also validates physical bounds before writing
+String setResult = auto.setVariableValueSafe("Compressor.outletPressure", 150.0, "bara");
+
+// Access diagnostics for insights and learning
+AutomationDiagnostics diag = auto.getDiagnostics();
+
+// Fuzzy name matching
+List<String> suggestions = diag.findClosestNames("HP Separator", auto.getUnitList(), 5);
+
+// Auto-correction (case, whitespace, partial names, edit distance ≤ 2)
+String corrected = diag.autoCorrectName("hp sep", auto.getUnitList());
+
+// Physical bounds validation
+AutomationDiagnostics.DiagnosticResult boundsCheck =
+    diag.validatePhysicalBounds("temperature", -300.0, "C");  // catches impossible values
+
+// Operation tracking and learning
+String report = diag.getLearningReport();  // JSON with stats, error patterns, recommendations
+```
+
+### Python / Jupyter Self-Healing
+
+```python
+auto = process.getAutomation()
+
+# Safe accessors return JSON (not exceptions)
+result = auto.getVariableValueSafe("hp separator.temperature", "C")
+import json
+data = json.loads(str(result))
+if data["status"] == "auto_corrected":
+    print(f"Corrected: {data['originalAddress']} -> {data['correctedAddress']}")
+    print(f"Value: {data['value']}")
+elif data["status"] == "success":
+    print(f"Value: {data['value']}")
+else:
+    print(f"Error: {data['errorMessage']}")
+    print(f"Suggestions: {data['suggestions']}")
+
+# Diagnostics
+diag = auto.getDiagnostics()
+report = json.loads(str(diag.getLearningReport()))
+print(f"Success rate: {report['successRate']:.0%}")
+```
+
+---
+
+## Lifecycle State (Save / Restore / Compare)
+
+JSON snapshots for reproducibility, version tracking, and agent-to-agent handoff.
+
+### Save ProcessSystem State
+
+```java
+ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+state.setName("Gas Processing v1");
+state.setVersion("1.0.0");
+state.saveToFile("model_v1.json");               // human-readable JSON
+state.saveToCompressedFile("model_v1.json.gz");   // smaller for archival
+```
+
+### Load and Validate
+
+```java
+ProcessSystemState loaded = ProcessSystemState.loadFromFile("model_v1.json");
+ProcessSystemState.ValidationResult result = loaded.validate();
+if (result.isValid()) {
+    // State is consistent and can be restored
+}
+```
+
+### Multi-Area ProcessModel State
+
+```java
+ProcessModelState modelState = ProcessModelState.fromProcessModel(plant);
+modelState.setVersion("1.0.0");
+modelState.saveToFile("plant_v1.json");
+```
+
+### Version Comparison (Design Reviews, Change Tracking)
+
+```java
+ProcessModelState v1 = ProcessModelState.fromProcessModel(plant);
+v1.setVersion("1.0");
+// ... make changes ...
+ProcessModelState v2 = ProcessModelState.fromProcessModel(plant);
+v2.setVersion("2.0");
+
+ProcessModelState.ModelDiff diff = ProcessModelState.compare(v1, v2);
+if (diff.hasChanges()) {
+    // diff.getModifiedParameters()   — what changed
+    // diff.getAddedEquipment()       — new equipment in v2
+    // diff.getRemovedEquipment()     — removed from v1
+}
+```
+
+### Compressed Bytes for Network / API Transfer
+
+```java
+byte[] bytes = modelState.toCompressedBytes();
+ProcessModelState restored = ProcessModelState.fromCompressedBytes(bytes);
+```
+
+### Python / Jupyter Usage
+
+```python
+import jpype
+ProcessSystemState = jpype.JClass(
+    "neqsim.process.processmodel.lifecycle.ProcessSystemState")
+ProcessModelState = jpype.JClass(
+    "neqsim.process.processmodel.lifecycle.ProcessModelState")
+
+state = ProcessSystemState.fromProcessSystem(process)
+state.setName("Gas Processing")
+state.setVersion("1.0.0")
+state.saveToFile("model_v1.json")
+
+# Load
+loaded = ProcessSystemState.loadFromFile("model_v1.json")
+result = loaded.validate()
+print(f"Valid: {result.isValid()}")
+```
+
+---
+
 ## Complete Process Flowsheet
 
 ### Gas Compression Train
@@ -414,11 +906,10 @@ process.add(recycle);
 ### Adjuster (Match a Spec)
 
 ```java
-// Adjust one variable to match a target
-Adjuster adj = new Adjuster("water dew point adj");
-adj.setAdjustedVariable(tegStream, "flow rate", "kg/hr");  // what to vary
-adj.setTargetVariable(gasOut, "waterDewPointTemperature", "C"); // what to match
-adj.setTargetValue(-18.0);  // target value
+// Adjust flow to match a target outlet pressure
+Adjuster adj = new Adjuster("pressure adj");
+adj.setAdjustedVariable(stream1, "flow", "MSm3/day");  // what to vary
+adj.setTargetVariable(outletStream, "pressure", 50.0, "bara"); // target spec
 adj.setMaxAdjustmentSteps(50);
 process.add(adj);
 ```

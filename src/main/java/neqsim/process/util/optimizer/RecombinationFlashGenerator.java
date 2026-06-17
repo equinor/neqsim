@@ -34,7 +34,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * FluidMagicInput input = FluidMagicInput.fromE300File("FLUID.E300");
  * input.setGORRange(250, 10000);

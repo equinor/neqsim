@@ -30,6 +30,7 @@ The `fluidmechanics` package provides models for pipeline flow, pressure drop ca
 | [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial) | **Practical tutorial** for liquid evaporation and gas dissolution with worked examples |
 | [MASS_TRANSFER_MODEL_IMPROVEMENTS.md](MASS_TRANSFER_MODEL_IMPROVEMENTS) | **Technical review** of mass transfer model with improvement recommendations |
 | [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer) | Complete theory for interphase mass and heat transfer |
+| [droplet_flow_correlations.md](droplet_flow_correlations) | Ranz-Marshall, Kronig-Brink, Abramzon-Sirignano for droplet/bubble flow |
 | [mass_transfer.md](mass_transfer) | Diffusivity models, correlations, and reactive mass transfer |
 | [heat_transfer.md](heat_transfer) | Heat transfer correlations and wall boundary conditions |
 | [TwoPhasePipeFlowModel.md](TwoPhasePipeFlowModel) | Two-phase flow governing equations and numerical methods |
@@ -64,7 +65,7 @@ The `fluidmechanics` package provides models for pipeline flow, pressure drop ca
 
 The fluid mechanics module in NeqSim is based on the work presented in:
 
-> **Solbraa, E. (2002).** *Equilibrium and Non-Equilibrium Thermodynamics of Natural Gas Processing.* 
+> **Solbraa, E. (2002).** *Equilibrium and Non-Equilibrium Thermodynamics of Natural Gas Processing.*
 > Dr.ing. thesis, Norwegian University of Science and Technology (NTNU).
 > ISBN: 978-82-471-5541-7. [Available at NVA](https://hdl.handle.net/11250/231326)
 
@@ -441,7 +442,7 @@ For multicomponent systems, the mass transfer coefficients form a matrix $[k]$:
 // In KrishnaStandartFilmModel
 public double calcMassTransferCoefficients(int phaseNum) {
     int n = getNumberOfComponents() - 1;
-    
+
     for (int i = 0; i < n; i++) {
         double tempVar = 0;
         for (int j = 0; j < getNumberOfComponents(); j++) {
@@ -480,7 +481,7 @@ $$Sc_{ij} = \frac{\nu}{D_{ij}}$$
 // Calculation in KrishnaStandartFilmModel
 for (int i = 0; i < nComponents; i++) {
     for (int j = 0; j < nComponents; j++) {
-        binarySchmidtNumber[phase][i][j] = 
+        binarySchmidtNumber[phase][i][j] =
             kinematicViscosity / diffusionCoefficient[i][j];
     }
 }
@@ -591,7 +592,7 @@ double N_CO2 = E * k_L * (C_interface - C_bulk);
 
 NeqSim includes specific models for CO₂ absorption into:
 - **MDEA** (methyldiethanolamine)
-- **MEA** (monoethanolamine)  
+- **MEA** (monoethanolamine)
 - **DEA** (diethanolamine)
 - **Activated MDEA** (with piperazine)
 
@@ -639,10 +640,10 @@ double timeStep = 1.0;           // 1 second
 
 for (double t = 0; t < simulationTime; t += timeStep) {
     flowSystem.solveTransient(1);
-    
+
     // Get time series data
     TimeSeries data = flowSystem.getTimeSeries();
-    
+
     // Log results
     for (int i = 0; i < flowSystem.getNumberOfNodes(); i++) {
         double x = flowSystem.getNode(i).getPosition();
@@ -837,11 +838,11 @@ See [TwoPhasePipeFlowSystem_Development_Plan.md](TwoPhasePipeFlowSystem_Developm
 
 ## References
 
-1. **Solbraa, E. (2002).** *Equilibrium and Non-Equilibrium Thermodynamics of Natural Gas Processing.* 
-   Dr.ing. thesis, NTNU. ISBN: 978-82-471-5541-7. 
+1. **Solbraa, E. (2002).** *Equilibrium and Non-Equilibrium Thermodynamics of Natural Gas Processing.*
+   Dr.ing. thesis, NTNU. ISBN: 978-82-471-5541-7.
    [Available at NVA](https://hdl.handle.net/11250/231326)
 
-2. **Krishna, R., Standart, G.L. (1976).** Mass and energy transfer in multicomponent systems. 
+2. **Krishna, R., Standart, G.L. (1976).** Mass and energy transfer in multicomponent systems.
    *Chemical Engineering Communications*, 3(4-5), 201-275.
 
 3. **Taylor, R., Krishna, R. (1993).** *Multicomponent Mass Transfer*. Wiley.

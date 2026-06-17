@@ -2,6 +2,7 @@ package neqsim.process.costestimation.tank;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import neqsim.process.costestimation.CostEstimationCalculator;
 import neqsim.process.costestimation.UnitCostEstimateBaseClass;
 import neqsim.process.mechanicaldesign.tank.TankMechanicalDesign;
 
@@ -294,7 +295,8 @@ public class TankCostEstimate extends UnitCostEstimateBaseClass {
 
     // Apply pressure factor
     if (designPressure > 0) {
-      baseCost *= getCostCalculator().getPressureFactor(designPressure);
+      getCostCalculator();
+      baseCost *= CostEstimationCalculator.getPressureFactor(designPressure);
     }
 
     return baseCost * (getCostCalculator().getCurrentCepci() / 607.5);

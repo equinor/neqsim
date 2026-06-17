@@ -4,3 +4,10 @@ Version: 0.1.0
 Summary: JVM bootstrap helpers for NeqSim Jupyter development notebooks
 Requires-Python: >=3.8
 Requires-Dist: jpype1
+Provides-Extra: pdf
+Requires-Dist: pymupdf>=1.22.0; extra == "pdf"
+Provides-Extra: ocr
+Requires-Dist: pymupdf>=1.22.0; extra == "ocr"
+Requires-Dist: ocrmypdf>=15.0.0; extra == "ocr"
+Requires-Dist: pytesseract>=0.3.10; extra == "ocr"
+Requires-Dist: pdf2image>=1.16.0; extra == "ocr"

@@ -5,17 +5,17 @@ description: "This document compares the conventional Norwegian handbook method 
 
 # NeqSim vs Norwegian Handbook: Emission Calculation Methods Comparison
 
-> **📖 Related Documentation:**  
-> - [Produced Water Emissions Tutorial](ProducedWaterEmissions_Tutorial) - Complete implementation guide  
-> - [Examples Index](index) - All tutorials and examples  
+> **📖 Related Documentation:**
+> - [Produced Water Emissions Tutorial](ProducedWaterEmissions_Tutorial) - Complete implementation guide
+> - [Examples Index](index) - All tutorials and examples
 > - [REFERENCE_MANUAL_INDEX - Chapter 43](../REFERENCE_MANUAL_INDEX#chapter-43-sustainability--emissions) - Full API documentation
 
 ## Overview
 
 This document compares the **conventional Norwegian handbook method** for emission reporting with the **NeqSim thermodynamic method** implemented via NeqSimLive. The comparison is based on the methodology presented in:
 
-> **"Virtual Measurement of Emissions from Produced Water Using an Online Process Simulator"**  
-> Kristiansen et al., Global Flow Measurement Workshop (GFMW), October 2023  
+> **"Virtual Measurement of Emissions from Produced Water Using an Online Process Simulator"**
+> Kristiansen et al., Global Flow Measurement Workshop (GFMW), October 2023
 > *Paper presented at GFMW 2023 conference*
 
 ---
@@ -49,7 +49,7 @@ The Norwegian Continental Shelf (NCS) is one of the world's most strictly regula
 
 ### 1. Norwegian Handbook Method (Conventional)
 
-**Reference:** [Håndbok for kvantifisering av direkte metan- og nmVOC-utslipp (Retningslinje 044)](vedlegg-b----handbok_voc-utslipp_retningslinje-044-ver-22.pdf)
+**Reference:** Håndbok for kvantifisering av direkte metan- og nmVOC-utslipp (Norwegian Environment Agency, Retningslinje 044, ver. 2.2)
 
 #### Formulas
 

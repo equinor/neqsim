@@ -26,9 +26,12 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
   ArrayList<ProcessEquipmentInterface> inputVariable = new ArrayList<ProcessEquipmentInterface>();
   private ProcessEquipmentInterface outputVariable;
-  private BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface> calculationMethod;
+  private transient BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface> calculationMethod;
   private Runnable simpleCalculationMethod;
   String type = "sumTEG";
+
+  /** Anti-surge: emit a warning if compressor stays below this fraction of surge after update. */
+  private static final double ANTI_SURGE_STUCK_THRESHOLD = 0.98;
 
   /**
    * <p>
@@ -99,20 +102,59 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
     Splitter antiSurgeSplitter = (Splitter) outputVariable;
 
-    double inletFlow = compressor.getInletStream().getFlowRate("Sm3/hr");
-    double currentRecycleFlow = antiSurgeSplitter.getSplitStream(1).getFlowRate("MSm3/day");
-    if (!Double.isFinite(inletFlow) || !Double.isFinite(currentRecycleFlow)) {
-      logger.warn("Invalid flow rate detected during anti-surge calculation");
+    double inletFlow = compressor.getInletStream().getFlowRate("m3/hr");
+    double surgeFlow = compressor.getSurgeFlowRate();
+    double currentRecycle = antiSurgeSplitter.getSplitStream(1).getFlowRate("m3/hr");
+
+    // Guard against non-finite state coming from a failed compressor run or an
+    // inactive surge curve. Without this the proportional update below can
+    // propagate NaN into the splitter setpoint and deadlock the recycle loop.
+    if (!Double.isFinite(inletFlow) || !Double.isFinite(surgeFlow)
+        || !Double.isFinite(currentRecycle) || surgeFlow <= 0.0) {
+      logger.warn("Anti-surge calc skipped: non-finite input (inlet=" + inletFlow + " m3/hr"
+          + ", surge=" + surgeFlow + " m3/hr, current=" + currentRecycle + " m3/hr)");
+      setCalculationIdentifier(id);
       return;
     }
 
-    double flowAntiSurge = antiSurgeSplitter.getSplitStream(1).getFlowRate("m3/hr")
-        + 0.5 * (compressor.getSurgeFlowRate() - compressor.getInletStream().getFlowRate("m3/hr"));
-    flowAntiSurge = Math.max(flowAntiSurge, compressor.getInletStream().getFlowRate("m3/hr") / 1e6);
+    // If we are comfortably above the surge line, close the recycle valve to
+    // (effectively) zero. This short-circuit avoids the proportional step
+    // overshooting when the compressor is operating far from surge.
+    if (inletFlow > 1.2 * surgeFlow) {
+      double minRecycle = Math.max(inletFlow / 1.0e6, 1.0e-6);
+      antiSurgeSplitter.setFlowRates(new double[] {-1, minRecycle}, "m3/hr");
+      antiSurgeSplitter.getSplitStream(1).setFlowRate(minRecycle, "m3/hr");
+      antiSurgeSplitter.getSplitStream(1).run();
+      antiSurgeSplitter.setCalculationIdentifier(id);
+      return;
+    }
+
+    // Proportional anti-surge step with a per-iteration bound. The step is
+    // proportional to the surge-inlet gap (NOT to (gap - currentRecycle)) so
+    // the fixed point is inletFlow == surgeFlow regardless of the recycle
+    // path topology. This matches the legacy formula exactly while adding a
+    // 25%-of-max-flow per-iteration cap to prevent single-step overshoot.
+    double rawStep = 0.5 * (surgeFlow - inletFlow);
+    double maxStep = 0.25 * Math.max(currentRecycle, Math.max(inletFlow, surgeFlow));
+    double cappedStep = Math.max(-maxStep, Math.min(maxStep, rawStep));
+    double flowAntiSurge = Math.max(currentRecycle + cappedStep, inletFlow / 1.0e6);
+
     antiSurgeSplitter.setFlowRates(new double[] {-1, flowAntiSurge}, "m3/hr");
     antiSurgeSplitter.getSplitStream(1).setFlowRate(flowAntiSurge, "m3/hr");
     antiSurgeSplitter.getSplitStream(1).run();
     antiSurgeSplitter.setCalculationIdentifier(id);
+
+    // Diagnostic: if (inletFlow + flowAntiSurge) is still well below surge
+    // after this update, the loop is likely stuck (e.g. recycle path is not
+    // wired back into the compressor inlet, or outer iteration cap is too
+    // low). Surfacing this is much friendlier than a silent in-surge result.
+    double projected = inletFlow + flowAntiSurge;
+    if (projected < ANTI_SURGE_STUCK_THRESHOLD * surgeFlow) {
+      logger.warn("Anti-surge: compressor still below surge after recycle update "
+          + "(projected total=" + projected + " m3/hr, surge=" + surgeFlow
+          + " m3/hr). Check that the recycle stream feeds back into the compressor "
+          + "inlet and that the outer recycle iteration cap is sufficient.");
+    }
   }
 
   /** {@inheritDoc} */

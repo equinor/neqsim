@@ -24,7 +24,7 @@ import neqsim.thermo.system.SystemPrEos;
 
 /**
  * Oil and Gas Process Simulation and Optimization Example.
- * 
+ *
  * <p>
  * This class implements a comprehensive oil and gas separation process simulation based on the
  * workflow presented in:
@@ -32,7 +32,7 @@ import neqsim.thermo.system.SystemPrEos;
  * <li>Andreasen, A. Applied Process Simulation-Driven Oil and Gas Separation Plant Optimization
  * Using Surrogate Modeling and Evolutionary Algorithms. ChemEngineering 2020, 4, 11.</li>
  * </ul>
- * 
+ *
  * <p>
  * The process consists of:
  * <ul>
@@ -41,7 +41,7 @@ import neqsim.thermo.system.SystemPrEos;
  * <li>Export gas compression with dew point control</li>
  * <li>Export oil pumping</li>
  * </ul>
- * 
+ *
  * @author NeqSim Development Team
  * @version 1.0
  */
@@ -68,12 +68,12 @@ public class OilGasProcessSimulationOptimization {
 
   /**
    * Data class to hold process input parameters.
-   * 
+   *
    * <p>
    * This class contains all input parameters required for running the oil and gas separation
    * process simulation, including flow rates, temperatures, pressures, and pressure drops.
    * </p>
-   * 
+   *
    * @author NeqSim Development Team
    * @version 1.0
    */
@@ -382,7 +382,7 @@ public class OilGasProcessSimulationOptimization {
 
   /**
    * Data class to hold process output results.
-   * 
+   *
    * @author NeqSim Development Team
    * @version 1.0
    */
@@ -541,7 +541,7 @@ public class OilGasProcessSimulationOptimization {
 
     /**
      * Get total power consumption (compressors + pumps) in kW.
-     * 
+     *
      * @return total power consumption in kW
      */
     public double getTotalPowerConsumption() {
@@ -592,7 +592,7 @@ public class OilGasProcessSimulationOptimization {
   /**
    * Creates the well fluid using Peng-Robinson EOS with the fluid characterization from the
    * reference paper.
-   * 
+   *
    * <p>
    * The fluid composition is based on the characterization given in:
    * https://onlinelibrary.wiley.com/doi/abs/10.1002/apj.159
@@ -634,7 +634,7 @@ public class OilGasProcessSimulationOptimization {
 
   /**
    * Creates the oil and gas separation process system.
-   * 
+   *
    * <p>
    * The process includes:
    * <ul>
@@ -643,7 +643,7 @@ public class OilGasProcessSimulationOptimization {
    * <li>Export gas compression with dew point control</li>
    * <li>Export oil pumping</li>
    * </ul>
-   * 
+   *
    * @return the configured ProcessSystem
    */
   public ProcessSystem createProcess() {
@@ -972,7 +972,7 @@ public class OilGasProcessSimulationOptimization {
 
   /**
    * Updates the process model with the given input parameters.
-   * 
+   *
    * @param params the input parameters to apply
    */
   public void updateInput(ProcessInputParameters params) {
@@ -1075,7 +1075,7 @@ public class OilGasProcessSimulationOptimization {
 
   /**
    * Retrieves simulation results from the process.
-   * 
+   *
    * @return ProcessOutputResults containing all simulation results
    */
   public ProcessOutputResults getOutput() {
@@ -1268,7 +1268,7 @@ public class OilGasProcessSimulationOptimization {
 
   /**
    * Runs the simulation with the current input parameters.
-   * 
+   *
    * @return ProcessOutputResults containing simulation results
    */
   public ProcessOutputResults runSimulation() {
@@ -1279,7 +1279,7 @@ public class OilGasProcessSimulationOptimization {
 
   /**
    * Runs the simulation with custom input parameters.
-   * 
+   *
    * @param params the input parameters to use
    * @return ProcessOutputResults containing simulation results
    */
@@ -1291,12 +1291,12 @@ public class OilGasProcessSimulationOptimization {
 
   /**
    * Performs a simple optimization to minimize total power consumption.
-   * 
+   *
    * <p>
    * This is a basic grid search optimization that varies key parameters to find the minimum total
    * power consumption.
    * </p>
-   * 
+   *
    * @param baseParams the base input parameters to start from
    * @return the optimized input parameters
    */
@@ -1394,12 +1394,12 @@ public class OilGasProcessSimulationOptimization {
 
   /**
    * Optimizes for maximum production (feed rate) while respecting separator capacity constraints.
-   * 
+   *
    * <p>
    * This optimization finds the highest possible feed rate that does not overload any separator. It
    * reports which separator becomes the bottleneck and at what utilization.
    * </p>
-   * 
+   *
    * @param baseParams the base input parameters to start from
    * @return OptimizationResult containing optimal parameters and bottleneck information
    */
@@ -1709,7 +1709,7 @@ public class OilGasProcessSimulationOptimization {
 
   /**
    * Gets the input parameters.
-   * 
+   *
    * @return the current input parameters
    */
   public ProcessInputParameters getInputParameters() {
@@ -1718,7 +1718,7 @@ public class OilGasProcessSimulationOptimization {
 
   /**
    * Sets the input parameters.
-   * 
+   *
    * @param inputParameters the input parameters to set
    */
   public void setInputParameters(ProcessInputParameters inputParameters) {
@@ -1727,7 +1727,7 @@ public class OilGasProcessSimulationOptimization {
 
   /**
    * Gets the process system.
-   * 
+   *
    * @return the process system
    */
   public ProcessSystem getOilProcess() {
@@ -1736,7 +1736,7 @@ public class OilGasProcessSimulationOptimization {
 
   /**
    * Gets the well fluid.
-   * 
+   *
    * @return the well fluid system interface
    */
   public SystemInterface getWellFluid() {
@@ -1745,7 +1745,7 @@ public class OilGasProcessSimulationOptimization {
 
   /**
    * Main method to demonstrate the simulation and optimization.
-   * 
+   *
    * @param args command line arguments (not used)
    */
   public static void main(String[] args) {

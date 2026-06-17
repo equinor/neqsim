@@ -1,11 +1,13 @@
 package neqsim.process.equipment.valve;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.physicalproperties.PhysicalPropertyType;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
@@ -51,6 +53,18 @@ public class ThrottlingValve extends TwoPortEquipment
   private double valveClosingTravelTimeSec = Double.NaN;
   private double valveTimeConstantSec = 0.0;
   private ValveTravelModel travelModel = ValveTravelModel.NONE;
+  /** Valve deadband in percent — signal changes smaller than this are ignored. */
+  private double valveDeadband = 0.0;
+  /** Valve stiction band in percent — valve sticks until force overcomes this threshold. */
+  private double valveStiction = 0.0;
+  /** Hysteresis band in percent — position offset between increasing/decreasing signal. */
+  private double valveHysteresis = 0.0;
+  /** Last direction the valve moved: +1 = opening, -1 = closing, 0 = initial. */
+  private int lastMoveDirection = 0;
+  /** Whether the valve is currently stuck due to stiction. */
+  private boolean isStuck = true;
+  /** The valve position when it last became stuck. */
+  private double stuckPosition = Double.NaN;
   double molarFlow = 0.0;
   private String pressureUnit = "bara";
   private boolean acceptNegativeDP = true;
@@ -62,6 +76,25 @@ public class ThrottlingValve extends TwoPortEquipment
   private boolean allowChoked = false;
   private boolean allowLaminar = true;
   private double xt = 0.6; // critical pressure drop ratio for choked flow
+  private double lastInletTemperature = Double.NaN;
+  private double lastInletPressure = Double.NaN;
+  private double lastInletFlowRate = Double.NaN;
+  private double[] lastInletComposition = null;
+  private double lastOutletPressure = Double.NaN;
+  private double lastKv = Double.NaN;
+  private double lastPercentValveOpening = Double.NaN;
+  private double lastRequestedValveOpening = Double.NaN;
+  private double lastDeltaPressure = Double.NaN;
+  private double lastFp = Double.NaN;
+  private double lastXt = Double.NaN;
+  private String lastPressureUnit = null;
+  private String lastSpecification = null;
+  private boolean lastValveKvSet = false;
+  private boolean lastIsoThermal = false;
+  private boolean lastAcceptNegativeDP = false;
+  private boolean lastIsCalcPressure = false;
+  private boolean lastAllowChoked = false;
+  private boolean lastAllowLaminar = false;
 
   /** Flag indicating if valve has been auto-sized. */
   private boolean autoSized = false;
@@ -136,6 +169,34 @@ public class ThrottlingValve extends TwoPortEquipment
     return getInletStream().getThermoSystem().getPressure();
   }
 
+  /**
+   * Run a choke-collapse diagnostic on this valve. Convenience wrapper around
+   * {@link ChokeCollapseAnalyzer}. The valve must have been run at least once.
+   *
+   * @return analysis result with flow regime, collapse mode, pressure ratio margin and
+   *         recommendations
+   */
+  public ChokeCollapseResult analyseChokeCollapse() {
+    return new ChokeCollapseAnalyzer(this).analyze();
+  }
+
+  /**
+   * Run an inadvertent valve operation (IVO) diagnostic on this valve. Convenience wrapper around
+   * {@link InadvertentValveOperationAnalyzer}. The valve must have been run at least once.
+   * Defaults: role = BLOCK, mode = SPURIOUS_CLOSE.
+   *
+   * @param role functional role of the valve
+   * @param mode inadvertent operation mode to evaluate
+   * @param designPressureBara MAWP (bara) of the segment that becomes exposed by the IVO
+   * @return analysis result with severity, frequency, overpressure factor and recommendations
+   */
+  public InadvertentValveOperationResult analyseInadvertentOperation(
+      InadvertentValveOperationResult.ValveRole role, InadvertentValveOperationResult.IvoMode mode,
+      double designPressureBara) {
+    return new InadvertentValveOperationAnalyzer(this).setRole(role).setMode(mode)
+        .setDesignPressure(designPressureBara, "bara").analyze();
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setPressure(double pressure) {
@@ -169,6 +230,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * @param pressure a double
    * @param unit a {@link java.lang.String} object
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     pressureUnit = unit;
     this.pressure = pressure;
@@ -178,15 +240,72 @@ public class ThrottlingValve extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
-    if (getInletStream().getThermoSystem().getTemperature() == thermoSystem.getTemperature()
-        && getInletStream().getThermoSystem().getPressure() == thermoSystem.getPressure()
-        && getInletStream().getThermoSystem().getFlowRate("kg/hr") == thermoSystem
-            .getFlowRate("kg/hr")
-        && getOutletPressure() == getOutletStream().getPressure()) {
-      return false;
-    } else {
+    if (thermoSystem == null || getInletStream() == null
+        || getInletStream().getThermoSystem() == null || lastInletComposition == null) {
       return true;
     }
+    SystemInterface inThermo = getInletStream().getThermoSystem();
+    if (inThermo.getTemperature() != lastInletTemperature
+        || inThermo.getPressure() != lastInletPressure || pressure != lastOutletPressure
+        || Kv != lastKv || percentValveOpening != lastPercentValveOpening
+        || requestedValveOpening != lastRequestedValveOpening || deltaPressure != lastDeltaPressure
+        || Fp != lastFp || xt != lastXt || valveKvSet != lastValveKvSet
+        || isoThermal != lastIsoThermal || acceptNegativeDP != lastAcceptNegativeDP
+        || isCalcPressure != lastIsCalcPressure || allowChoked != lastAllowChoked
+        || allowLaminar != lastAllowLaminar
+        || !java.util.Objects.equals(pressureUnit, lastPressureUnit)
+        || !java.util.Objects.equals(getSpecification(), lastSpecification)) {
+      return true;
+    }
+    double flow = inThermo.getFlowRate("kg/hr");
+    if (flow <= 0.0 || lastInletFlowRate <= 0.0
+        || Math.abs(flow - lastInletFlowRate) / flow >= 1e-6) {
+      return true;
+    }
+    neqsim.thermo.phase.PhaseInterface phase = inThermo.getPhase(0);
+    int numberOfComponents = phase.getNumberOfComponents();
+    if (numberOfComponents != lastInletComposition.length) {
+      return true;
+    }
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (phase.getComponent(i).getz() != lastInletComposition[i]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void updateRecalculationState() {
+    if (getInletStream() == null || getInletStream().getThermoSystem() == null) {
+      lastInletComposition = null;
+      return;
+    }
+    SystemInterface inThermo = getInletStream().getThermoSystem();
+    lastInletTemperature = inThermo.getTemperature();
+    lastInletPressure = inThermo.getPressure();
+    lastInletFlowRate = inThermo.getFlowRate("kg/hr");
+    lastInletComposition = inThermo.getMolarComposition();
+    lastOutletPressure = pressure;
+    lastKv = Kv;
+    lastPercentValveOpening = percentValveOpening;
+    lastRequestedValveOpening = requestedValveOpening;
+    lastDeltaPressure = deltaPressure;
+    lastFp = Fp;
+    lastXt = xt;
+    lastPressureUnit = pressureUnit;
+    lastSpecification = getSpecification();
+    lastValveKvSet = valveKvSet;
+    lastIsoThermal = isoThermal;
+    lastAcceptNegativeDP = acceptNegativeDP;
+    lastIsCalcPressure = isCalcPressure;
+    lastAllowChoked = allowChoked;
+    lastAllowLaminar = allowLaminar;
+  }
+
+  private void finishRun(UUID id) {
+    updateRecalculationState();
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
   }
 
   /**
@@ -250,7 +369,7 @@ public class ThrottlingValve extends TwoPortEquipment
       return;
     }
 
-    thermoSystem.initProperties();
+    thermoSystem.init(2);
 
     if (thermoSystem.hasPhaseType(PhaseType.GAS) && thermoSystem.getVolumeFraction(0) > 0.5) {
       setGasValve(true);
@@ -259,10 +378,11 @@ public class ThrottlingValve extends TwoPortEquipment
     }
 
     if (!valveKvSet) {
+      thermoSystem.initPhysicalProperties("density");
       calcKv();
       valveKvSet = true;
     }
-    inStream.getThermoSystem().initProperties();
+    // inStream.getThermoSystem().initProperties();
     double enthalpy = thermoSystem.getEnthalpy();
 
     double outPres = getOutletStream().getThermoSystem().getPressure();
@@ -309,11 +429,54 @@ public class ThrottlingValve extends TwoPortEquipment
       thermoSystem.setPressure(outPres, pressureUnit);
       thermoOps.TPflash();
     } else {
-      thermoOps.PHflash(enthalpy, 0);
+      runPHflashWithNaNRetry(thermoOps, enthalpy);
     }
     outStream.setThermoSystem(thermoSystem);
 
-    setCalculationIdentifier(id);
+    finishRun(id);
+  }
+
+  /**
+   * Run an isenthalpic (PH) flash and recover gracefully when the default first-order solver raises
+   * an IsNaN-derived RuntimeException. The default {@code PHflash} (type 0) damped Newton iteration
+   * on 1/T is fragile for low-flow, single-phase gas at high reduced pressure: an intermediate
+   * temperature can drive the cubic EOS into a region with no positive compressibility-factor root,
+   * producing {@code PhasePrEos:molarVolumeAnalytical} NaN. The second-order solver (type 1,
+   * {@code SysNewtonRhapsonPHflash}) re-initialises from a fresh TP flash and converges robustly on
+   * the same well-posed problem, so it is used as the primary recovery. A
+   * multi-phase-check-disabled retry is kept as a final fallback.
+   *
+   * @param thermoOps thermodynamic operations bound to the valve thermo system
+   * @param enthalpy target total enthalpy in J
+   */
+  private void runPHflashWithNaNRetry(ThermodynamicOperations thermoOps, double enthalpy) {
+    double preFlashTemperature = thermoSystem.getTemperature();
+    try {
+      thermoOps.PHflash(enthalpy, 0);
+    } catch (RuntimeException ex) {
+      Throwable cause = ex.getCause();
+      boolean isNaN = (ex.getMessage() != null && ex.getMessage().contains("NaN"))
+          || (cause != null && cause.getMessage() != null && cause.getMessage().contains("NaN"));
+      if (!isNaN) {
+        throw ex;
+      }
+      logger.debug("PHflash (type 0) produced NaN; retrying with second-order solver (type 1)");
+      try {
+        thermoSystem.setTemperature(preFlashTemperature);
+        thermoOps.PHflash(enthalpy, 1);
+      } catch (RuntimeException ex2) {
+        logger.debug("Second-order PHflash also failed; retrying with multi-phase check disabled");
+        boolean savedMpc = thermoSystem.doMultiPhaseCheck();
+        thermoSystem.setMultiPhaseCheck(false);
+        try {
+          thermoSystem.setTemperature(preFlashTemperature);
+          thermoSystem.init(0);
+          thermoOps.PHflash(enthalpy, 1);
+        } finally {
+          thermoSystem.setMultiPhaseCheck(savedMpc);
+        }
+      }
+    }
   }
 
   /** {@inheritDoc} */
@@ -388,7 +551,7 @@ public class ThrottlingValve extends TwoPortEquipment
     if (isIsoThermal()) {
       thermoOps.TPflash();
     } else {
-      thermoOps.PHflash(enthalpy, 0);
+      runPHflashWithNaNRetry(thermoOps, enthalpy);
     }
     thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     outStream.setThermoSystem(thermoSystem);
@@ -416,7 +579,7 @@ public class ThrottlingValve extends TwoPortEquipment
     } catch (Exception ex) {
       logger.error(ex.getMessage());
     }
-    setCalculationIdentifier(id);
+    finishRun(id);
   }
 
   private static final double minimumMolarFlow = 1e-12;
@@ -426,7 +589,6 @@ public class ThrottlingValve extends TwoPortEquipment
       if (flow > minimumMolarFlow) {
         return flow;
       }
-      return 0.0;
     }
     return 0.0;
   }
@@ -457,7 +619,7 @@ public class ThrottlingValve extends TwoPortEquipment
 
     thermoSystem.setPressure(targetPressure, pressureUnit);
     outStream.setThermoSystem(thermoSystem);
-    setCalculationIdentifier(id);
+    finishRun(id);
   }
 
   /**
@@ -486,37 +648,77 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   private double applyTravelDynamics(double current, double target, double dt) {
+    // Step 1: Apply deadband — ignore small signal changes
+    double effectiveTarget = target;
+    if (valveDeadband > 0.0 && Math.abs(target - current) < valveDeadband) {
+      effectiveTarget = current;
+    }
+
+    // Step 2: Apply stiction — valve sticks until force exceeds stiction band
+    if (valveStiction > 0.0) {
+      if (Double.isNaN(stuckPosition)) {
+        stuckPosition = current;
+        isStuck = true;
+      }
+      if (isStuck) {
+        if (Math.abs(effectiveTarget - stuckPosition) >= valveStiction) {
+          isStuck = false;
+          // Valve breaks free — jump to target
+        } else {
+          effectiveTarget = stuckPosition;
+        }
+      } else {
+        // Valve is moving — check if it should re-stick
+        if (Math.abs(effectiveTarget - current) < valveStiction * 0.1) {
+          isStuck = true;
+          stuckPosition = current;
+          effectiveTarget = current;
+        }
+      }
+    }
+
+    // Step 3: Apply hysteresis — offset position based on direction
+    if (valveHysteresis > 0.0 && Math.abs(effectiveTarget - current) > 1e-12) {
+      int direction = effectiveTarget > current ? 1 : -1;
+      if (direction != lastMoveDirection && lastMoveDirection != 0) {
+        // Direction reversal — apply half hysteresis band as offset
+        effectiveTarget = effectiveTarget - direction * valveHysteresis / 2.0;
+      }
+      lastMoveDirection = direction;
+    }
+
+    // Step 4: Apply rate limiting / lag as before
     if (travelModel == null || travelModel == ValveTravelModel.NONE) {
-      return target;
+      return effectiveTarget;
     }
 
     double effectiveDt = Math.max(0.0, dt);
     switch (travelModel) {
       case LINEAR_RATE_LIMIT:
-        double delta = target - current;
+        double delta = effectiveTarget - current;
         if (Math.abs(delta) < 1e-12 || effectiveDt <= 0.0) {
-          return target;
+          return effectiveTarget;
         }
         double travelTime =
             delta >= 0.0 ? getEffectiveOpeningTravelTime() : getEffectiveClosingTravelTime();
         if (travelTime <= 0.0) {
-          return target;
+          return effectiveTarget;
         }
         double maxRate = 100.0 / travelTime;
         double maxChange = maxRate * effectiveDt;
         if (Math.abs(delta) <= maxChange) {
-          return target;
+          return effectiveTarget;
         }
         return current + Math.copySign(maxChange, delta);
       case FIRST_ORDER_LAG:
         double tau = valveTimeConstantSec > 0.0 ? valveTimeConstantSec : valveTravelTimeSec;
         if (tau <= 0.0 || effectiveDt <= 0.0) {
-          return target;
+          return effectiveTarget;
         }
         double alpha = 1.0 - Math.exp(-effectiveDt / tau);
-        return current + alpha * (target - current);
+        return current + alpha * (effectiveTarget - current);
       default:
-        return target;
+        return effectiveTarget;
     }
   }
 
@@ -565,6 +767,62 @@ public class ThrottlingValve extends TwoPortEquipment
    */
   public double getMaximumValveOpening() {
     return maxValveOpening;
+  }
+
+  /**
+   * Sets the valve deadband in percent. Signal changes smaller than this are ignored.
+   *
+   * @param deadband deadband in percent (0 to 100)
+   */
+  public void setValveDeadband(double deadband) {
+    this.valveDeadband = Math.max(0.0, deadband);
+  }
+
+  /**
+   * Gets the valve deadband in percent.
+   *
+   * @return deadband in percent
+   */
+  public double getValveDeadband() {
+    return valveDeadband;
+  }
+
+  /**
+   * Sets the valve stiction band in percent. The valve sticks until the requested change exceeds
+   * this threshold, then jumps to the target position.
+   *
+   * @param stiction stiction band in percent (0 to 100)
+   */
+  public void setValveStiction(double stiction) {
+    this.valveStiction = Math.max(0.0, stiction);
+  }
+
+  /**
+   * Gets the valve stiction band in percent.
+   *
+   * @return stiction band in percent
+   */
+  public double getValveStiction() {
+    return valveStiction;
+  }
+
+  /**
+   * Sets the valve hysteresis band in percent. This models the positional offset between increasing
+   * and decreasing signal directions.
+   *
+   * @param hysteresis hysteresis band in percent (0 to 100)
+   */
+  public void setValveHysteresis(double hysteresis) {
+    this.valveHysteresis = Math.max(0.0, hysteresis);
+  }
+
+  /**
+   * Gets the valve hysteresis band in percent.
+   *
+   * @return hysteresis band in percent
+   */
+  public double getValveHysteresis() {
+    return valveHysteresis;
   }
 
   /**
@@ -699,6 +957,25 @@ public class ThrottlingValve extends TwoPortEquipment
   @Override
   public double getPercentValveOpening() {
     return percentValveOpening;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit,
+      String pressureUnit, String flowUnit) {
+    Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
+    state.put("percent_opening",
+        ProcessEquipmentInterface.createStateEntry(percentValveOpening, "%"));
+    StreamInterface out = getOutletStream();
+    if (out != null) {
+      state.put("temperature", ProcessEquipmentInterface
+          .createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
+      state.put("pressure",
+          ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
+      state.put("flow",
+          ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
+    }
+    return state;
   }
 
   /** {@inheritDoc} */

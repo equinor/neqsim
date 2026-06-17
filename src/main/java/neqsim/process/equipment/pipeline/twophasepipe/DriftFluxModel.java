@@ -294,7 +294,7 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Estimate liquid level in stratified flow.
-   * 
+   *
    * @param U_SL superficial liquid velocity (m/s)
    * @param U_SG superficial gas velocity (m/s)
    * @param D pipe diameter (m)
@@ -665,7 +665,7 @@ public class DriftFluxModel implements Serializable {
    * <p>
    * The energy equation for steady-state pipe flow is:
    * </p>
-   * 
+   *
    * <pre>
    * ṁ·Cp·dT/dx = Q̇_wall + Q̇_friction - ṁ·μ_JT·Cp·dP/dx - ṁ·g·sin(θ)·dz/dx
    * </pre>

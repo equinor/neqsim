@@ -168,6 +168,7 @@ public class PLEMMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate cost estimate for the PLEM.
    */
+  @Override
   public void calculateCostEstimate() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
@@ -207,6 +208,7 @@ public class PLEMMechanicalDesign extends MechanicalDesign {
    *
    * @return list of BOM items
    */
+  @Override
   public List<Map<String, Object>> generateBillOfMaterials() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();

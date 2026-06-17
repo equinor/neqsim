@@ -2,6 +2,7 @@
 layout: default
 title: Condition-Based Reliability
 parent: Risk Framework
+description: "Condition-based reliability monitoring and predictive maintenance using NeqSim process simulation data. Weibull degradation models, condition indicators, and inspection planning."
 ---
 
 # P6: Condition-Based Reliability
@@ -42,19 +43,19 @@ Define monitoring parameters with their healthy and failure thresholds:
 // addIndicator(name, healthyValue, failureThreshold, degradationModel)
 
 // Vibration (increasing is bad)
-cbr.addIndicator("vibration", 5.0, 15.0, 
+cbr.addIndicator("vibration", 5.0, 15.0,
     ConditionBasedReliability.DegradationModel.LINEAR);
 
-// Bearing temperature (increasing is bad)  
-cbr.addIndicator("bearing_temp", 60.0, 90.0, 
+// Bearing temperature (increasing is bad)
+cbr.addIndicator("bearing_temp", 60.0, 90.0,
     ConditionBasedReliability.DegradationModel.EXPONENTIAL);
 
 // Oil particulate count (increasing is bad)
-cbr.addIndicator("oil_particulates", 0.0, 100.0, 
+cbr.addIndicator("oil_particulates", 0.0, 100.0,
     ConditionBasedReliability.DegradationModel.LINEAR);
 
 // Efficiency (decreasing is bad)
-cbr.addIndicator("efficiency", 85.0, 70.0, 
+cbr.addIndicator("efficiency", 85.0, 70.0,
     ConditionBasedReliability.DegradationModel.LINEAR);
 ```
 
@@ -128,13 +129,13 @@ if (healthIndex > 0.8) {
 ```java
 for (ConditionBasedReliability.ConditionIndicator indicator : cbr.getIndicators()) {
     double normalized = indicator.getNormalizedValue();  // 0 = healthy, 1 = failed
-    
+
     String status;
     if (normalized < 0.3) status = "🟢 Good";
     else if (normalized < 0.7) status = "🟡 Warning";
     else status = "🔴 Critical";
-    
-    System.out.println(indicator.getName() + ": " + 
+
+    System.out.println(indicator.getName() + ": " +
         indicator.getCurrentValue() + " (" + status + ")");
 }
 ```
@@ -147,7 +148,7 @@ double baseline = cbr.getBaselineMTBF();
 
 System.out.println("Baseline MTBF: " + baseline + " hours");
 System.out.println("Adjusted MTBF: " + adjustedMTBF + " hours");
-System.out.println("Reliability reduction: " + 
+System.out.println("Reliability reduction: " +
     ((1 - adjustedMTBF/baseline) * 100) + "%");
 ```
 
@@ -257,7 +258,7 @@ Map<String, Integer> sparesNeeded = new HashMap<>();
 
 for (ConditionBasedReliability eq : equipmentList) {
     double failProb90d = eq.calculateFailureProbability(90 * 24);
-    
+
     if (failProb90d > 0.3) {
         // High probability of needing spares
         String[] parts = getEquipmentParts(eq.getEquipmentId());
@@ -277,9 +278,9 @@ List<InspectionTask> inspections = new ArrayList<>();
 for (ConditionBasedReliability eq : equipmentList) {
     double health = eq.calculateHealthIndex();
     double degradationRate = eq.calculateTrend("vibration").getRateOfChange();
-    
+
     double priority = (1 - health) * 0.6 + degradationRate * 0.4;
-    
+
     InspectionTask task = new InspectionTask();
     task.equipment = eq.getEquipmentId();
     task.priority = priority;

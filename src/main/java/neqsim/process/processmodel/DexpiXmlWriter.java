@@ -137,10 +137,14 @@ public final class DexpiXmlWriter {
 
   private static Element createPlantInformation(Document document) {
     Element plantInformation = document.createElement("PlantInformation");
+    String applicationVersion = ProcessSystem.class.getPackage().getImplementationVersion() == null
+        ? "1.0"
+        : ProcessSystem.class.getPackage().getImplementationVersion();
     plantInformation.setAttribute("Application", "NeqSim");
-    plantInformation.setAttribute("ApplicationVersion",
-        ProcessSystem.class.getPackage().getImplementationVersion() == null ? "1.0"
-            : ProcessSystem.class.getPackage().getImplementationVersion());
+    plantInformation.setAttribute("ApplicationVersion", applicationVersion);
+    plantInformation.setAttribute("OriginatingSystem", "NeqSim");
+    plantInformation.setAttribute("OriginatingSystemVendor", "Equinor / NeqSim");
+    plantInformation.setAttribute("OriginatingSystemVersion", applicationVersion);
     LocalDate date = LocalDate.now();
     LocalTime time = LocalTime.now();
     plantInformation.setAttribute("Date", date.toString());
@@ -175,11 +179,43 @@ public final class DexpiXmlWriter {
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.FLUID_CODE,
         processUnit.getFluidCode());
 
+    // Append IEC 81346 reference designation attributes if available
+    appendIEC81346Attributes(document, genericAttributes, processUnit);
+
     if (genericAttributes.hasChildNodes()) {
       element.appendChild(genericAttributes);
     }
 
     parent.appendChild(element);
+  }
+
+  /**
+   * Appends IEC 81346 reference designation attributes to a GenericAttributes element for a process
+   * unit. This mirrors the approach in
+   * {@link neqsim.process.processmodel.dexpi.DexpiXmlWriter#appendIEC81346Attributes}.
+   *
+   * @param document the XML document
+   * @param parent the GenericAttributes element to append to
+   * @param unit the process equipment to extract IEC 81346 data from
+   */
+  private static void appendIEC81346Attributes(Document document, Element parent,
+      ProcessEquipmentInterface unit) {
+    neqsim.process.equipment.iec81346.ReferenceDesignation refDes = unit.getReferenceDesignation();
+    if (refDes == null || !refDes.isSet()) {
+      return;
+    }
+    appendGenericAttribute(document, parent, "IEC81346_ReferenceDesignation",
+        refDes.toReferenceDesignationString());
+    appendGenericAttribute(document, parent, "IEC81346_FunctionDesignation",
+        refDes.getFunctionDesignation());
+    appendGenericAttribute(document, parent, "IEC81346_ProductDesignation",
+        refDes.getProductDesignation());
+    appendGenericAttribute(document, parent, "IEC81346_LocationDesignation",
+        refDes.getLocationDesignation());
+    if (refDes.getLetterCode() != null) {
+      appendGenericAttribute(document, parent, "IEC81346_LetterCode",
+          refDes.getLetterCode().name());
+    }
   }
 
   private static void appendPipingNetworkSystem(Document document, Element parent, String key,

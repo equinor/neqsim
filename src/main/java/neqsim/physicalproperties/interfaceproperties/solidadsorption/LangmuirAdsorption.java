@@ -56,7 +56,6 @@ public class LangmuirAdsorption extends AbstractAdsorptionModel {
    * Default constructor.
    */
   public LangmuirAdsorption() {
-    super();
   }
 
   /**

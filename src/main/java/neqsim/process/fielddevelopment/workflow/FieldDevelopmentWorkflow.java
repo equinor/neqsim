@@ -10,8 +10,6 @@ import neqsim.process.fielddevelopment.economics.CashFlowEngine;
 import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator;
 import neqsim.process.fielddevelopment.economics.SensitivityAnalyzer;
 import neqsim.process.fielddevelopment.evaluation.ConceptEvaluator;
-import neqsim.process.fielddevelopment.evaluation.ConceptKPIs;
-import neqsim.process.fielddevelopment.facility.FacilityBuilder;
 import neqsim.process.fielddevelopment.facility.FacilityConfig;
 import neqsim.process.fielddevelopment.screening.EconomicsEstimator;
 import neqsim.process.fielddevelopment.screening.EmissionsTracker;
@@ -25,7 +23,6 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.reservoir.WellSystem;
-import neqsim.process.mechanicaldesign.FieldDevelopmentDesignOrchestrator;
 import neqsim.process.mechanicaldesign.SystemMechanicalDesign;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
@@ -79,19 +76,19 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Quick screening study for gas tieback
  * FieldDevelopmentWorkflow workflow =
  *     FieldDevelopmentWorkflow.quickGasTieback("Satellite Discovery", 50.0, 25.0, 4, 2.0, "NO");
  * WorkflowResult result = workflow.run();
  * System.out.println(result.getSummary());
- * 
+ *
  * // Progress to conceptual with EOS-tuned fluid
  * workflow.setFidelityLevel(FidelityLevel.CONCEPTUAL);
  * workflow.setFluid(tunedFluid); // From PVT regression
  * result = workflow.run();
- * 
+ *
  * // Full detailed study with Monte Carlo
  * workflow.setFidelityLevel(FidelityLevel.DETAILED);
  * workflow.setMonteCarloIterations(1000);

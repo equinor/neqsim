@@ -49,7 +49,7 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
   private static final double PRESSURE_TOLERANCE = 0.1;
 
   /** Initial pressure step for search (bara). */
-  private double pressureStep = 10.0;
+  private double pressureStep = 5.0;
 
   /** Starting pressure for search (bara). */
   private double startPressure;

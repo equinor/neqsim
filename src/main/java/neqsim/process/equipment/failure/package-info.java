@@ -13,15 +13,15 @@
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * {@code
  * // Create a trip failure mode
  * EquipmentFailureMode tripMode = EquipmentFailureMode.trip("compressor");
- * 
+ *
  * // Apply to equipment
  * compressor.setFailureMode(tripMode);
- * 
+ *
  * // Simulate with ProductionImpactAnalyzer
  * ProductionImpactAnalyzer analyzer = new ProductionImpactAnalyzer(process);
  * ProductionImpactResult result = analyzer.analyzeFailureImpact("Compressor 1");

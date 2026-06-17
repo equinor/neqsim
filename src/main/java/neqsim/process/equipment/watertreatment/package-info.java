@@ -13,10 +13,18 @@
  * treatment train with multiple stages</li>
  * <li>{@link neqsim.process.equipment.watertreatment.Hydrocyclone} - Centrifugal oil/water
  * separation</li>
+ * <li>{@link neqsim.process.equipment.watertreatment.DemulsifierDoseResponseModel} - Calibrated
+ * demulsifier dose-response curves with overdose behavior</li>
+ * <li>{@link neqsim.process.equipment.watertreatment.ChemicalDoseLagModel} - Chemical accumulation
+ * and lag after setpoint changes</li>
+ * <li>{@link neqsim.process.equipment.watertreatment.OilInWaterAnalyzerDriftModel} - OIW analyzer
+ * drift and calibration correction</li>
+ * <li>{@link neqsim.process.equipment.watertreatment.OilInWaterDoseOptimizer} - Monthly weighted
+ * OIW warning and demulsifier dose recommendation</li>
  * </ul>
  *
  * <h2>Typical Treatment Train</h2>
- * 
+ *
  * <pre>
  * Production Separator → Hydrocyclone → Flotation → Skim Tank → Discharge
  *       1000 mg/L           50 mg/L      10 mg/L     &lt;30 mg/L

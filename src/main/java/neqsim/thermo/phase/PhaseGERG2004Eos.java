@@ -16,7 +16,7 @@ public class PhaseGERG2004Eos extends PhaseEos {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  private GERG2004EOS gergEOS = new GERG2004EOS();
+  private transient GERG2004EOS gergEOS = new GERG2004EOS();
   double[] xFracGERG = new double[18];
 
   int IPHASE = 0;

@@ -361,6 +361,12 @@ public class OptimizerPluginArchitectureTest {
     fullProcess.add(compressor);
     fullProcess.run();
 
+    // The compressor runs chartless, so the chart-dependent constraints (surge, speed,
+    // stonewall) are disabled and utilization is power-driven. Give the power constraint a
+    // basis so it reports a meaningful, non-zero utilization for bottleneck identification.
+    compressor.getMechanicalDesign().setMaxDesignPower(compressor.getPower("kW") / 0.8);
+    compressor.reinitializeCapacityConstraints();
+
     // Evaluate with optimization engine
     ProcessOptimizationEngine engine = new ProcessOptimizationEngine(fullProcess);
     ProcessOptimizationEngine.ConstraintReport report = engine.evaluateAllConstraints();

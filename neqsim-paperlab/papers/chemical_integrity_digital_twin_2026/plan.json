@@ -1,0 +1,79 @@
+{
+  "title": "Open Standards-Traceable Digital Twin for Chemical Integrity Management in Oil and Gas, CCS and Hydrogen Systems",
+  "target_journal": "computers_chemical_engineering",
+  "paper_type": "application_with_methodology",
+  "created": "2026-05-09T11:07:51.937490",
+  "status": "drafting",
+  "novelty_statement": "We present an open-source, standards-traceable digital twin for chemical integrity management that couples (a) Davies activity-coefficient electrolyte scale prediction, (b) mechanistic CO2 corrosion combining NORSOK M-506 with a Nesic Sherwood mass-transfer correlation and a temperature-dependent Langmuir inhibitor isotherm, (c) closed-loop deposition coupling with Beggs-and-Brills hydraulics, (d) 1-D plug-flow H2S scavenger breakthrough, and (e) Bayesian root-cause inference, all exposed via the Model Context Protocol so that AI agents can drive integrity workflows. Openly available frameworks typically address only a subset of these capability areas and rarely expose an agent-ready, machine-readable interface; the present framework is open, traceable to source standards, fully reproducible (47 JUnit regression tests), and extensible to plant historian data (PI, IP.21) and the OSDU subsurface data platform.",
+  "research_questions": [
+    {
+      "id": "RQ1",
+      "question": "Can a single open-source framework reproduce industry benchmark results for the four dominant chemical integrity threats?",
+      "hypothesis": "Yes — Davies SI for CaCO3/BaSO4/CaSO4/SrSO4 reproduces NACE TM0374 reference brines within 0.2 SI units; NORSOK M-506 + Nesic mass-transfer reproduces the M-506 Annex B benchmark within 15 percent; Langmuir kinetics reproduce published inhibitor dose-response curves; packed-bed scavenger breakthrough matches the reactive-transport analytic solution within 5 percent.",
+      "method": "Run 47 JUnit regression tests covering each routine; cross-check published examples.",
+      "acceptance_criterion": "All 47 tests pass; benchmark deviations within stated bounds."
+    },
+    {
+      "id": "RQ2",
+      "question": "Does coupling deposition with hydraulics change the predicted time-to-blockage versus an uncoupled calculation?",
+      "hypothesis": "Yes — closed-loop coupling raises predicted velocities and shortens predicted time to a 5-percent restriction threshold for high-supersaturation brines.",
+      "method": "Run ClosedLoopDepositionSolver vs single-pass ScaleDepositionAccumulator for an anonymised tieback case.",
+      "acceptance_criterion": "Quantified difference reported and discussed."
+    },
+    {
+      "id": "RQ3",
+      "question": "Can AI agents drive integrity workflows reliably through the Model Context Protocol?",
+      "hypothesis": "Yes — the runChemistry MCP tool exposes JSON-in / JSON-out access to every chemistry routine with structured error envelopes that agents can act on.",
+      "method": "Demonstrate four MCP analyses (electrolyteScale, mechanisticCorrosion, langmuirInhibitor, packedBedScavenger).",
+      "acceptance_criterion": "All four analyses return well-formed JSON with status, data and provenance fields."
+    },
+    {
+      "id": "RQ4",
+      "question": "Is the framework extensible to plant historian and subsurface data platforms used by operating companies?",
+      "hypothesis": "Yes — the existing tagreader integration (PI / IP.21) and the OSDU well/reservoir API can be wired into the chemistry runners through the same JSON contract used by MCP.",
+      "method": "Discuss architecture and provide future-work integration sketches.",
+      "acceptance_criterion": "Concrete adapter contracts described."
+    }
+  ],
+  "benchmark_design": {
+    "algorithms": ["NeqSim chemistry stack v1"],
+    "eos_models": ["SRK", "PR", "CPA"],
+    "fluid_families": ["produced_water_brines", "wet_gas", "co2_rich", "h2s_sour"],
+    "metrics": ["saturation_index", "corrosion_rate_mmYr", "breakthrough_time_days", "restricted_diameter_m", "test_pass_rate"]
+  },
+  "manuscript_outline": {
+    "sections": [
+      "Abstract", "Keywords", "Highlights", "Introduction",
+      "Related Work and Gap Analysis", "Framework Architecture",
+      "Electrolyte Scale Prediction",
+      "Mechanistic CO2 Corrosion with Inhibitor Coupling",
+      "Closed-Loop Deposition with Hydraulics",
+      "Packed-Bed H2S Scavenger Breakthrough",
+      "Bayesian Root-Cause Analysis",
+      "Standards Traceability",
+      "Model Context Protocol Integration for AI Agents",
+      "Case Study: Subsea Tieback Digital Twin",
+      "Reproducibility and Open Source",
+      "Future Work: Plant Historian and OSDU Integration",
+      "Conclusions", "Acknowledgements", "References"
+    ],
+    "key_figures": [
+      "F1: Framework architecture diagram",
+      "F2: Davies activity coefficients vs ionic strength",
+      "F3: CO2 corrosion rate vs inhibitor dose",
+      "F4: Closed-loop deposition diameter and velocity history",
+      "F5: H2S scavenger breakthrough curve and bed utilisation",
+      "F6: AI-agent-driven integrity workflow over MCP"
+    ],
+    "key_tables": [
+      "T1: Capability-area coverage and standards traceability",
+      "T2: Standards traceability per routine",
+      "T3: 47-test regression summary",
+      "T4: MCP runChemistry JSON schema"
+    ]
+  },
+  "workflow_log": [
+    {"stage": "plan", "status": "created", "date": "2026-05-09T11:07:51.937490"},
+    {"stage": "plan", "status": "filled", "date": "2026-05-09T12:00:00.000000"}
+  ]
+}

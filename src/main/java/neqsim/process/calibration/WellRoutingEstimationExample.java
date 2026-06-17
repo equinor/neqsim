@@ -109,15 +109,15 @@ public class WellRoutingEstimationExample {
    * <p>
    * Network topology:
    * </p>
-   * 
+   *
    * <pre>
    * Well1 ─── Pipe1 ─── Splitter1 ──┬── HP Manifold ─── HP Outlet
-   * Well2 ─── Pipe2 ─── Splitter2 ──┤                     
-   * Well3 ─── Pipe3 ─── Splitter3 ──┤                     
-   * Well4 ─── Pipe4 ─── Splitter4 ──┤                     
-   * Well5 ─── Pipe5 ─── Splitter5 ──┤                     
-   * Well6 ─── Pipe6 ─── Splitter6 ──┤                     
-   * Well7 ─── Pipe7 ─── Splitter7 ──┤                     
+   * Well2 ─── Pipe2 ─── Splitter2 ──┤
+   * Well3 ─── Pipe3 ─── Splitter3 ──┤
+   * Well4 ─── Pipe4 ─── Splitter4 ──┤
+   * Well5 ─── Pipe5 ─── Splitter5 ──┤
+   * Well6 ─── Pipe6 ─── Splitter6 ──┤
+   * Well7 ─── Pipe7 ─── Splitter7 ──┤
    * Well8 ─── Pipe8 ─── Splitter8 ──┴── LP Manifold ─── LP Outlet
    * </pre>
    */

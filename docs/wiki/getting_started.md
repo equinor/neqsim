@@ -82,12 +82,20 @@ public class FirstCalculation {
         gas.addComponent("propane", 0.03);
         gas.addComponent("n-butane", 0.01);
         gas.setMixingRule("classic");
-        
+
         // 2. Perform flash calculation
         ThermodynamicOperations ops = new ThermodynamicOperations(gas);
         ops.TPflash();
-        
-        // 3. Print results
+
+        // 3. Initialize properties — REQUIRED before reading physical properties.
+        // TPflash only solves phase equilibrium (compositions, phase fractions).
+        // Physical and transport properties (density, viscosity, thermal conductivity)
+        // are NOT calculated automatically by TPflash — this is by design to improve
+        // performance, since many workflows only need equilibrium results.
+        // Call initProperties() to compute both thermodynamic and transport properties.
+        gas.initProperties();
+
+        // 4. Print results
         System.out.println("Number of phases: " + gas.getNumberOfPhases());
         System.out.println("Density: " + gas.getDensity("kg/m3") + " kg/m³");
         System.out.println("Z-factor: " + gas.getPhase("gas").getZ());
@@ -114,28 +122,28 @@ public class FirstProcess {
         fluid.addComponent("propane", 0.05);
         fluid.addComponent("n-pentane", 0.05);
         fluid.setMixingRule("classic");
-        
+
         // 2. Create stream
         Stream feed = new Stream("Feed", fluid);
         feed.setFlowRate(10000.0, "kg/hr");
         feed.setTemperature(50.0, "C");
         feed.setPressure(100.0, "bara");
-        
+
         // 3. Add equipment
         ThrottlingValve valve = new ThrottlingValve("Valve", feed);
         valve.setOutletPressure(20.0, "bara");
-        
+
         Separator separator = new Separator("Separator", valve.getOutletStream());
-        
+
         // 4. Build and run process
         ProcessSystem process = new ProcessSystem();
         process.add(feed);
         process.add(valve);
         process.add(separator);
-        
+
         // Use runOptimized() for best performance (auto-selects strategy)
         process.runOptimized();
-        
+
         // 5. Results
         System.out.println("Gas rate: " + separator.getGasOutStream().getFlowRate("kg/hr") + " kg/hr");
         System.out.println("Liquid rate: " + separator.getLiquidOutStream().getFlowRate("kg/hr") + " kg/hr");

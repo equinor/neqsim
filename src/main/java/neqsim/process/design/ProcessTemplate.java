@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * Example implementation:
  * </p>
- * 
+ *
  * <pre>
  * public class ThreeStageSeparationTemplate implements ProcessTemplate {
  *   &#64;Override

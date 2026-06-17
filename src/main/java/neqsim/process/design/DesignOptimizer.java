@@ -28,7 +28,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * DesignResult result = DesignOptimizer.forProcess(process).autoSizeEquipment(1.2)
  *     .applyDefaultConstraints().setObjective(ObjectiveType.MAXIMIZE_PRODUCTION).optimize();

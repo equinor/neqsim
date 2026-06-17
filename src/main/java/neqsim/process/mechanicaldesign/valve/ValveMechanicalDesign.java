@@ -223,7 +223,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
 
   /**
    * Sets the valve characterization type.
-   * 
+   *
    * <p>
    * Available valve characteristics:
    * </p>

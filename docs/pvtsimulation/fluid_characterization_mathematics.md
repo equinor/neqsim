@@ -480,9 +480,9 @@ fluid.getCharacterization()
 fluid.getCharacterization().characterisePlusFraction();
 
 // Check the estimated alpha
-double alpha = ((PlusFractionModel.WhitsonGammaModel) 
+double alpha = ((PlusFractionModel.WhitsonGammaModel)
     fluid.getCharacterization().getPlusFractionModel()).getAlpha();
-double watsonK = ((PlusFractionModel.WhitsonGammaModel) 
+double watsonK = ((PlusFractionModel.WhitsonGammaModel)
     fluid.getCharacterization().getPlusFractionModel()).getWatsonKFactor();
 
 System.out.println("Estimated alpha: " + alpha);
@@ -570,9 +570,9 @@ This section documents the PVT regression framework for automatic EOS model tuni
 | Class | Description |
 |-------|-------------|
 | `PVTRegression` | Main regression framework class |
-| `RegressionParameter` | Enum defining tunable parameters (BIPs, volume shifts, critical properties) |
+| `RegressionParameter` | Enum defining tunable parameters (BIPs, volume shifts, critical properties, CSP viscosity factors) |
 | `ExperimentType` | Enum for experiment types (CCE, CVD, DLE, SEPARATOR, etc.) |
-| `CCEDataPoint`, `CVDDataPoint`, `DLEDataPoint`, `SeparatorDataPoint` | Data point classes for each experiment type |
+| `CCEDataPoint`, `CVDDataPoint`, `DLEDataPoint`, `SeparatorDataPoint`, `ViscosityDataPoint` | Data point classes for each experiment type |
 | `RegressionParameterConfig` | Configuration for each regression parameter with bounds |
 | `PVTRegressionFunction` | Objective function extending LevenbergMarquardtFunction |
 | `RegressionResult` | Result container with tuned fluid and uncertainty analysis |
@@ -642,6 +642,10 @@ $$F_{SEP} = \left(\frac{GOR^{calc} - GOR^{exp}}{GOR^{exp}}\right)^2 + \left(\fra
 #### Viscosity (Optional)
 
 $$F_{\mu} = \sum_{i} \left(\frac{\mu_i^{calc} - \mu_i^{exp}}{\mu_i^{exp}}\right)^2$$
+
+Viscosity data are added with `PVTRegression.addViscosityData(...)`. The framework flashes the fluid at each pressure and temperature, initializes physical properties, and compares the selected phase viscosity in Pa s. Supported phase names are `gas`, `vapor`, `oil`, `liquid`, `aqueous`, and `water`.
+
+When the regression parameters include `VISCOSITY_CSP_1` through `VISCOSITY_CSP_4`, NeqSim activates the PFCT/CSP viscosity model on each phase and fits the four CSP viscosity correction factors. The helper `addCspViscosityRegressionParameters()` registers all four factors with their default bounds.
 
 ---
 
@@ -844,6 +848,10 @@ System.out.println(summary);
 | `PLUS_MOLAR_MASS_MULTIPLIER` | Plus fraction MW multiplier | [0.90, 1.10, 1.0] |
 | `GAMMA_ALPHA` | Gamma distribution shape parameter | [0.5, 4.0, 1.0] |
 | `GAMMA_ETA` | Gamma distribution minimum MW | [75.0, 95.0, 84.0] |
+| `VISCOSITY_CSP_1` | PFCT/CSP critical-temperature scaling correction | [0.2, 2.0, 1.0] |
+| `VISCOSITY_CSP_2` | PFCT/CSP critical-pressure scaling correction | [0.2, 2.0, 1.0] |
+| `VISCOSITY_CSP_3` | PFCT/CSP molar-mass scaling correction | [0.2, 2.0, 1.0] |
+| `VISCOSITY_CSP_4` | PFCT/CSP alpha correction scaling | [0.2, 2.0, 1.0] |
 
 ### Data Input Format (CSV)
 
@@ -865,6 +873,14 @@ Pressure(bara),Rs(Sm3/Sm3),Bo(m3/Sm3),OilDensity(kg/m3),GasGravity
 150.0,85.6,1.312,761.5,0.79
 ```
 
+**Viscosity Data:**
+```csv
+Pressure(bara),Temperature(K),Viscosity(Pa s),Phase
+1.0,320.0,0.000312,oil
+5.0,320.0,0.000331,oil
+15.0,320.0,0.000370,oil
+```
+
 ---
 
 ### Implementation Status
@@ -878,7 +894,8 @@ Pressure(bara),Rs(Sm3/Sm3),Bo(m3/Sm3),OilDensity(kg/m3),GasGravity
 | 5 | Critical property correlation tuning | ✅ Implemented |
 | 6 | Multi-objective optimization framework | ✅ Implemented |
 | 7 | Uncertainty quantification | ✅ Implemented |
-| 8 | GUI/Report generation | 🔲 Future work |
+| 8 | Viscosity data and CSP/PFCT parameter regression | ✅ Implemented |
+| 9 | GUI/Report generation | 🔲 Future work |
 
 ---
 
@@ -953,7 +970,7 @@ fluid.getCharacterization()
 The `CharacterizationValidationReport` provides before/after comparison:
 
 ```java
-CharacterizationValidationReport report = 
+CharacterizationValidationReport report =
     PseudoComponentCombiner.generateValidationReport(sourceFluid, matchedFluid);
 
 System.out.println("Mass conserved: " + report.isMassConserved());

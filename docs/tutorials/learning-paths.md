@@ -67,6 +67,14 @@ Choose the learning path that matches your role and goals.
 2. **[Wax Characterization](../thermo/characterization/wax_characterization)** - Wax modeling
 3. **[Asphaltene Modeling](../pvtsimulation/flowassurance/asphaltene_modeling)** - Asphaltene precipitation
 
+### Level 6: AI-Assisted Studies (30 min)
+
+1. **[Solve an Engineering Task](solve-engineering-task)** — Let AI agents handle the workflow
+2. **[Task Solving Guide](../development/TASK_SOLVING_GUIDE)** — How the multi-agent system works
+3. **Try it**: Type `@solve.task hydrate formation temperature for rich gas at 100 bara` in VS Code
+
+The AI workflow automates the process around PVT calculations — scoping, running simulations, validating against benchmarks, and generating Word/HTML reports — so you can focus on interpreting results.
+
 ### 📚 PVT Reference Materials
 
 - [JavaDoc: SystemInterface](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/thermo/system/SystemInterface.html)
@@ -111,6 +119,14 @@ Choose the learning path that matches your role and goals.
 1. **[Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW)** - Process optimization
 2. **[Controllers](../process/controllers)** - Process control
 3. **Run**: [Production Optimizer Tutorial](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/ProductionOptimizer_Tutorial.ipynb)
+
+### Level 6: AI-Assisted Studies (30 min)
+
+1. **[Solve an Engineering Task](solve-engineering-task)** — Let AI agents handle the workflow
+2. **[Task Solving Guide](../development/TASK_SOLVING_GUIDE)** — How the multi-agent system works
+3. **Try it**: Type `@solve.task TEG dehydration sizing for 50 MMSCFD wet gas` in VS Code
+
+The AI workflow automates the work around process simulation — scoping, literature review, building flowsheets, validating against benchmarks, uncertainty analysis, and generating engineering reports — so you can focus on design decisions.
 
 ### 📚 Process Reference Materials
 
@@ -173,6 +189,7 @@ Use this to track your progress:
 - [ ] Can characterize plus fractions
 - [ ] Can calculate phase envelopes
 - [ ] Can model hydrates/wax
+- [ ] Can use `@solve.task` to run a PVT study end-to-end
 
 ### Process Engineer
 - [ ] Can build a simple process flowsheet
@@ -181,6 +198,7 @@ Use this to track your progress:
 - [ ] Can use adjusters for specifications
 - [ ] Can model pipelines
 - [ ] Can optimize processes
+- [ ] Can use `@solve.task` to produce a validated engineering report
 
 ### Developer
 - [ ] Can build NeqSim from source

@@ -14,6 +14,7 @@ This document provides a detailed description of the theoretical models and nume
 - [mass_transfer.md](mass_transfer) - Diffusivity correlations
 - [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial) - Practical tutorial
 - [heat_transfer.md](heat_transfer) - Heat transfer correlations
+- [droplet_flow_correlations.md](droplet_flow_correlations) - Ranz-Marshall, Kronig-Brink, and Abramzon-Sirignano for dispersed flow
 
 **Key Concepts:**
 - Phases exchange mass and heat across the interface
@@ -77,7 +78,7 @@ $$-\frac{x_i}{RT}\nabla\mu_i = \sum_{j=1, j\neq i}^{n} \frac{x_i N_j - x_j N_i}{
 > - **Gas phase:** Chapman-Enskog kinetic theory
 > - **Liquid phase:** Siddiqi-Lucas, Hayduk-Minhas (hydrocarbons), CO2-water (Tamimi)
 > - **High pressure:** Mathur-Thodos correction for P > 100 bar
-> 
+>
 > See the [Model Selection Guide](mass_transfer#model-selection-guide) for recommendations.
 
 ### 2.2 Matrix Formulation
@@ -150,13 +151,23 @@ $$k_G = \frac{Sh \cdot D_G}{D_h}$$
 
 $$k_L = \frac{Sh \cdot D_L}{D_h}$$
 
-**Sherwood Number Correlations:**
+**Sherwood Number Correlations (Stratified / Annular Flow):**
 
 | Flow Regime | Correlation |
 |------------|-------------|
 | Turbulent (Re > 10,000) | $Sh = 0.023 \cdot Re^{0.83} \cdot Sc^{0.44}$ |
 | Transitional | Interpolation |
 | Laminar (Re < 2,300) | $Sh = 3.66$ (constant wall) |
+
+**Sherwood Number Correlations (Dispersed Flow — Droplet/Bubble):**
+
+For droplet and bubble flow regimes, the characteristic length is the **particle diameter** $d_p$ (not the pipe hydraulic diameter), and the Ranz-Marshall correlation is used:
+
+$$Sh = 2 + 0.6 \cdot Re_p^{0.5} \cdot Sc^{0.33}$$
+
+where $Re_p = u_{rel} \cdot d_p / \nu_c$ is the particle Reynolds number. For the dispersed phase interior (internal circulation), the Kronig-Brink asymptote is used: $Sh_{KB} = 17.66$. An optional Abramzon-Sirignano correction accounts for Stefan flow (blowing) during vigorous evaporation.
+
+> See [droplet_flow_correlations.md](droplet_flow_correlations) for the full derivation and API usage.
 
 ### 2.6 Interface Composition Calculation
 
@@ -337,7 +348,7 @@ $$\mathbf{F}(\mathbf{X}) = \mathbf{0}$$
 Where:
 $$\mathbf{X} = [T^{int}, x_1^{int}, x_2^{int}, ..., x_{n-1}^{int}]^T$$
 
-$$\mathbf{F} = \begin{bmatrix} 
+$$\mathbf{F} = \begin{bmatrix}
 Q^G - Q^L \\
 N_1^G - N_1^L \\
 N_2^G - N_2^L \\
@@ -526,7 +537,7 @@ public class HeatMassTransferExample {
         fluid.addComponent("water", 0.10, 1);
         fluid.createDatabase(true);
         fluid.setMixingRule(2);
-        
+
         // Build pipe with heat/mass transfer using builder
         TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder()
             .withFluid(fluid)
@@ -536,16 +547,16 @@ public class HeatMassTransferExample {
             .withFlowPattern(FlowPattern.ANNULAR)
             .withConvectiveBoundary(278.15, "K", 15.0)  // Cold ambient
             .build();
-        
+
         // Solve with heat and mass transfer, get structured results
         PipeFlowResult result = pipe.solveWithHeatAndMassTransfer();
-        
+
         // Access results via PipeFlowResult container
         System.out.println("Temperature change: " + result.getTemperatureChange() + " K");
         System.out.println("Pressure drop: " + result.getTotalPressureDrop() + " bar");
         System.out.println("Total heat loss: " + result.getTotalHeatLoss() + " W");
         System.out.println(result);  // Formatted summary
-        
+
         // Export profiles for analysis
         Map<String, double[]> profiles = result.toMap();
     }

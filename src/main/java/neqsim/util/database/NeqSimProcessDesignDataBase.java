@@ -39,8 +39,8 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
   // "jdbc:ucanaccess://C:/Users/esol/OneDrive -
   // Equinor/programming/neqsimdatabase/MSAccess/NeqSimDataBase.mdb;memory=true";
 
-  private Statement statement = null;
-  protected Connection databaseConnection = null;
+  private transient Statement statement = null;
+  protected transient Connection databaseConnection = null;
 
   /**
    * <p>
@@ -65,7 +65,6 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
     }
   }
 
-  /** {@inheritDoc} */
   public static void updateTable(String tableName) {
     updateTable(tableName, "designdata/" + tableName + ".csv");
   }
@@ -91,6 +90,8 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
       updateTable("Packing");
       updateTable("MaterialPipeProperties");
       updateTable("MaterialPlateProperties");
+      updateTable("CompressorCasingMaterials");
+      updateTable("HeatExchangerTubeMaterials");
       updateTable("Fittings");
 
       // Design standards tables - loaded from standards subdirectory

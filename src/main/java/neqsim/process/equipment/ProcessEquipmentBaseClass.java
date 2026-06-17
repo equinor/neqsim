@@ -15,12 +15,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.SimulationBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
+import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.failure.EquipmentFailureMode;
+import neqsim.process.equipment.iec81346.ReferenceDesignation;
 import neqsim.process.equipment.stream.EnergyStream;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.util.report.Report;
@@ -42,6 +47,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /** Logger for this class hierarchy (used for low-flow propagation diagnostics). */
+  private static final Logger logger = LogManager.getLogger(ProcessEquipmentBaseClass.class);
+
   private ControllerDeviceInterface controller = null;
   ControllerDeviceInterface flowValveController = null;
   public boolean hasController = false;
@@ -58,6 +66,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   private boolean isSetEnergyStream = false;
   protected boolean isSolved = true;
   private boolean isActive = true;
+  private boolean lockedInactive = false;
   private double minimumFlow = 1e-20;
 
   /**
@@ -75,6 +84,19 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * Flag indicating if the equipment is in a failed state.
    */
   private boolean isFailed = false;
+
+  /**
+   * IEC 81346 reference designation for this equipment. Contains the function, product, and
+   * location aspects per IEC 81346 standard.
+   */
+  private ReferenceDesignation referenceDesignation = new ReferenceDesignation();
+
+  /**
+   * Capacity constraints for this equipment, keyed by constraint name. Marked transient because
+   * {@link CapacityConstraint} instances may hold non-serializable lambda value suppliers. After
+   * deserialization, subclasses should call {@link #initializeDefaultConstraints()} to rebuild.
+   */
+  private transient Map<String, CapacityConstraint> capacityConstraints;
 
   /**
    * <p>
@@ -142,9 +164,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     this.controller = controller;
     hasController = controller != null;
     if (controller != null) {
-      String tag = controller instanceof neqsim.util.NamedInterface
-          ? ((neqsim.util.NamedInterface) controller).getName()
-          : "default";
+      String tag =
+          controller instanceof neqsim.util.NamedInterface ? controller.getName() : "default";
       controllerMap.put(tag, controller);
     }
   }
@@ -159,9 +180,8 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   public void setFlowValveController(ControllerDeviceInterface controller) {
     this.flowValveController = controller;
     if (controller != null) {
-      String tag = controller instanceof neqsim.util.NamedInterface
-          ? ((neqsim.util.NamedInterface) controller).getName()
-          : "flowValve";
+      String tag =
+          controller instanceof neqsim.util.NamedInterface ? controller.getName() : "flowValve";
       controllerMap.put(tag, controller);
     }
   }
@@ -430,6 +450,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    *
    * @return a double
    */
+  @Override
   public double getMinimumFlow() {
     return minimumFlow;
   }
@@ -441,6 +462,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    *
    * @param minimumFlow a double
    */
+  @Override
   public void setMinimumFlow(double minimumFlow) {
     this.minimumFlow = minimumFlow;
   }
@@ -452,6 +474,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    *
    * @return a boolean
    */
+  @Override
   public boolean isActive() {
     return isActive;
   }
@@ -463,8 +486,131 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    *
    * @param isActive a boolean
    */
+  @Override
   public void isActive(boolean isActive) {
     this.isActive = isActive;
+  }
+
+  /**
+   * Convenience helper for equipment to auto-bypass when its primary inlet flow is below the
+   * configured low-flow threshold.
+   *
+   * <p>
+   * Typical usage at the start of {@code run(UUID)}:
+   * </p>
+   *
+   * <pre>
+   * if (checkAndHandleLowFlow(getInletStream(), id)) {
+   *   return;
+   * }
+   * </pre>
+   *
+   * <p>
+   * When the inlet mass flow is below {@link #getMinimumFlow()} the equipment is marked inactive
+   * via {@link #isActive(boolean)} and {@link #setCalculationIdentifier(UUID)} is called so the
+   * scheduler treats the unit as solved for the current calculation pass. Otherwise the equipment
+   * is (re)marked active and {@code false} is returned so the caller can continue normal execution.
+   * </p>
+   *
+   * @param inlet primary inlet stream (may be null, in which case no bypass is applied)
+   * @param id current calculation identifier
+   * @return true if the equipment was auto-bypassed and {@code run()} should return immediately,
+   *         false if the equipment should execute normally
+   */
+  protected boolean checkAndHandleLowFlow(neqsim.process.equipment.stream.StreamInterface inlet,
+      UUID id) {
+    if (inlet == null) {
+      return false;
+    }
+    double flow;
+    try {
+      flow = inlet.getFlowRate("kg/hr");
+    } catch (NullPointerException ex) {
+      // Inlet stream has not been solved yet (no thermo system attached). Treat as
+      // "not low flow" so the unit runs normally and surfaces the real error.
+      return false;
+    }
+    if (flow < getMinimumFlow()) {
+      isActive(false);
+      setCalculationIdentifier(id);
+      return true;
+    }
+    isActive(true);
+    return false;
+  }
+
+  /**
+   * Convenience helper for auto-bypassing equipment to propagate zero mass flow to one or more
+   * outlet streams, so downstream equipment also auto-bypasses via
+   * {@link #checkAndHandleLowFlow(neqsim.process.equipment.stream.StreamInterface, UUID)}.
+   *
+   * <p>
+   * Each outlet stream's total flow rate is set to {@code 0.0 kg/hr} and the calculation identifier
+   * {@code id} is stamped onto it so the scheduler treats it as solved for the current pass. Null
+   * outlets are skipped silently. Failures to mutate the thermo system are logged at DEBUG level
+   * and otherwise swallowed so a missing thermo system on one outlet does not abort propagation to
+   * the others.
+   * </p>
+   *
+   * @param id current calculation identifier
+   * @param outlets outlet streams to zero out (may include null entries)
+   */
+  protected void propagateZeroFlow(UUID id,
+      neqsim.process.equipment.stream.StreamInterface... outlets) {
+    if (outlets == null) {
+      return;
+    }
+    for (neqsim.process.equipment.stream.StreamInterface outlet : outlets) {
+      if (outlet == null) {
+        continue;
+      }
+      try {
+        outlet.getThermoSystem().setTotalFlowRate(0.0, "kg/hr");
+        outlet.setCalculationIdentifier(id);
+      } catch (NullPointerException ex) {
+        logger.debug("Could not propagate zero flow from inactive '" + getName()
+            + "' (outlet has no thermo system attached)", ex);
+      }
+    }
+  }
+
+  /**
+   * Returns whether this equipment has been explicitly (manually) deactivated and should remain
+   * bypassed across simulation runs.
+   *
+   * <p>
+   * Unlike the transient {@link #isActive()} flag — which is set automatically by
+   * {@link #checkAndHandleLowFlow} based on the current inlet flow — {@code lockedInactive} is a
+   * user-controlled "hard bypass" flag. {@link neqsim.process.processmodel.ProcessSystem} resets
+   * {@code isActive} to {@code true} at the start of each run for every unit where
+   * {@code lockedInactive == false}; locked units remain inactive and their {@code run()} method is
+   * never invoked.
+   * </p>
+   *
+   * @return true if the equipment is manually locked in the inactive state
+   */
+  @Override
+  public boolean isLockedInactive() {
+    return lockedInactive;
+  }
+
+  /**
+   * Manually lock or unlock this equipment in the inactive (bypassed) state. When set to
+   * {@code true} the equipment is also marked inactive ({@link #isActive(boolean)}) so the next
+   * scheduler pass skips it; when set to {@code false} the equipment is re-marked active and will
+   * be evaluated on the next simulation run.
+   *
+   * @param lockedInactive true to bypass this equipment indefinitely; false to allow normal
+   *        execution (default)
+   */
+  @Override
+  public void setLockedInactive(boolean lockedInactive) {
+    this.lockedInactive = lockedInactive;
+    if (lockedInactive) {
+      isActive(false);
+    } else {
+      isActive(true);
+    }
   }
 
   /**
@@ -576,6 +722,19 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     this.capacityAnalysisEnabled = true;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public ReferenceDesignation getReferenceDesignation() {
+    return referenceDesignation;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setReferenceDesignation(ReferenceDesignation referenceDesignation) {
+    this.referenceDesignation =
+        referenceDesignation != null ? referenceDesignation : new ReferenceDesignation();
+  }
+
   /**
    * Gets the effective capacity factor considering any failure mode.
    *
@@ -586,5 +745,234 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
       return 1.0;
     }
     return failureMode.getCapacityFactor();
+  }
+
+  // ============================================================
+  // Capacity Constraint Support (universal base implementation)
+  // ============================================================
+
+  /**
+   * Ensures the capacity constraints map is initialized.
+   *
+   * <p>
+   * The map is transient (not serialized) so it may be null after deserialization. This method
+   * lazily initializes it and calls {@link #initializeDefaultConstraints()} to let subclasses
+   * re-attach their lambda value suppliers.
+   * </p>
+   */
+  private void ensureCapacityConstraintsInitialized() {
+    if (capacityConstraints == null) {
+      capacityConstraints = new LinkedHashMap<String, CapacityConstraint>();
+      initializeDefaultConstraints();
+    }
+  }
+
+  /**
+   * Hook for subclasses to set up default capacity constraints.
+   *
+   * <p>
+   * Called lazily when constraints are first accessed, and after deserialization. Subclasses should
+   * override this to add equipment-specific constraints using
+   * {@link #addCapacityConstraint(CapacityConstraint)}. The default implementation does nothing.
+   * </p>
+   */
+  protected void initializeDefaultConstraints() {
+    // Default no-op — subclasses override to add equipment-specific constraints
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, CapacityConstraint> getCapacityConstraints() {
+    ensureCapacityConstraintsInitialized();
+    return Collections.unmodifiableMap(capacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(CapacityConstraint constraint) {
+    ensureCapacityConstraintsInitialized();
+    if (constraint != null) {
+      capacityConstraints.put(constraint.getName(), constraint);
+    }
+  }
+
+  /**
+   * Derives capacity constraints from this equipment's mechanical-design limits and registers them
+   * for capacity/utilization analysis.
+   *
+   * <p>
+   * This is the opt-in bridge that makes the limits configured on the equipment's
+   * {@link neqsim.process.mechanicaldesign.MechanicalDesign} (for example
+   * {@code getMechanicalDesign().setMaxDesignPower(kW)} or {@code setMaxDesignVolumeFlow(...)})
+   * surface in {@link #getMaxUtilization()}, {@link #getBottleneckConstraint()} and the utilization
+   * snapshot. Call it after the design limits have been set and after the process has run, since
+   * the derived metrics depend on live stream conditions.
+   * </p>
+   *
+   * <p>
+   * The constraints are added through the polymorphic
+   * {@link #addCapacityConstraint(CapacityConstraint)} method so they are registered in the correct
+   * constraint map even for equipment types (such as heat exchangers, valves and compressors) that
+   * maintain their own capacity-constraint storage. The derived constraints use stable names (for
+   * example {@code "design pressure drop"}), so the method is idempotent: re-invoking it overwrites
+   * the previous values rather than creating duplicates. Call it again whenever design limits or
+   * operating conditions change. It never throws — failures to read the mechanical design are
+   * treated as "no derived constraints".
+   * </p>
+   *
+   * @return the number of mechanical-design-derived constraints that were registered
+   */
+  @Override
+  public int applyMechanicalDesignCapacityConstraints() {
+    int added = 0;
+    try {
+      MechanicalDesign design = getMechanicalDesign();
+      if (design != null) {
+        List<CapacityConstraint> derived = design.getDesignCapacityConstraints();
+        if (derived != null) {
+          for (CapacityConstraint constraint : derived) {
+            if (constraint != null) {
+              addCapacityConstraint(constraint);
+              added++;
+            }
+          }
+        }
+      }
+    } catch (RuntimeException ex) {
+      logger.debug("Could not derive mechanical-design capacity constraints", ex);
+    }
+    return added;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public CapacityConstraint getBottleneckConstraint() {
+    ensureCapacityConstraintsInitialized();
+    CapacityConstraint bottleneck = null;
+    double maxUtil = -1.0;
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isEnabled()) {
+        double util = c.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+          bottleneck = c;
+        }
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    ensureCapacityConstraintsInitialized();
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isEnabled() && c.isViolated()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    ensureCapacityConstraintsInitialized();
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isEnabled() && c.isHardLimitExceeded()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    ensureCapacityConstraintsInitialized();
+    double maxUtil = 0.0;
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isEnabled()) {
+        double util = c.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+        }
+      }
+    }
+    return maxUtil;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilizationPercent() {
+    return getMaxUtilization() * 100.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getAvailableMargin() {
+    return 1.0 - getMaxUtilization();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getAvailableMarginPercent() {
+    return getAvailableMargin() * 100.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isNearCapacityLimit() {
+    ensureCapacityConstraintsInitialized();
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isEnabled() && c.isNearLimit()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, Double> getUtilizationSummary() {
+    ensureCapacityConstraintsInitialized();
+    Map<String, Double> summary = new java.util.LinkedHashMap<String, Double>();
+    for (Map.Entry<String, CapacityConstraint> entry : capacityConstraints.entrySet()) {
+      CapacityConstraint c = entry.getValue();
+      if (c.isEnabled()) {
+        summary.put(entry.getKey(), c.getUtilization() * 100.0);
+      }
+    }
+    return summary;
+  }
+
+  /**
+   * Evaluates all capacity constraints and returns a summary string.
+   *
+   * <p>
+   * Useful for logging and diagnostics. Each enabled constraint is evaluated and its utilization is
+   * reported. Constraints that are violated or near their limit are flagged.
+   * </p>
+   *
+   * @return multi-line summary of constraint status
+   */
+  public String getConstraintEvaluationReport() {
+    ensureCapacityConstraintsInitialized();
+    StringBuilder sb = new StringBuilder();
+    sb.append("Capacity constraints for ").append(getName()).append(":\n");
+    for (Map.Entry<String, CapacityConstraint> entry : capacityConstraints.entrySet()) {
+      CapacityConstraint c = entry.getValue();
+      if (c.isEnabled()) {
+        sb.append("  ").append(entry.getKey());
+        sb.append(": ").append(String.format("%.1f%%", c.getUtilization() * 100.0));
+        if (c.isViolated()) {
+          sb.append(" [VIOLATED]");
+        } else if (c.isNearLimit()) {
+          sb.append(" [WARNING]");
+        }
+        sb.append("\n");
+      }
+    }
+    return sb.toString();
   }
 }

@@ -74,17 +74,29 @@ NeqSim provides comprehensive unit handling capabilities:
 | Unit | Symbol | Description |
 |------|--------|-------------|
 | kg/s | `kg/sec` | SI mass flow |
+| kg/min | `kg/min` | Mass flow per minute |
 | kg/hr | `kg/hr` | Metric mass flow (default) |
 | kg/day | `kg/day` | Daily mass flow |
-| mol/s | `mol/sec` | SI molar flow |
-| mol/hr | `mole/hr` | Metric molar flow |
-| kmol/hr | `kmole/hr` | Kilomoles per hour |
+| mol/s | `mol/sec` or `mole/sec` | SI molar flow |
+| mol/min | `mol/min` or `mole/min` | Molar flow per minute |
+| mol/hr | `mol/hr` or `mole/hr` | Metric molar flow |
+| kmol/s | `kmol/sec` or `kmole/sec` | Kilomoles per second |
+| kmol/min | `kmol/min` or `kmole/min` | Kilomoles per minute |
+| kmol/hr | `kmol/hr` or `kmole/hr` | Kilomoles per hour |
+| kmol/day | `kmol/day` or `kmole/day` | Kilomoles per day |
+| m³/s | `m3/sec` | Actual volume flow |
+| m³/min | `m3/min` | Actual volume per minute |
 | m³/hr | `m3/hr` | Volume flow |
+| Sm³/s | `Sm3/sec` | Standard volume flow per second |
 | Sm³/hr | `Sm3/hr` | Standard volume flow |
 | Sm³/day | `Sm3/day` | Standard daily flow |
 | MSm³/day | `MSm3/day` | Million Sm³/day |
-| bbl/day | `bbl/day` | Barrels per day |
+| MSm³/hr | `MSm3/hr` | Million Sm³/hr |
+| idSm³/hr | `idSm3/hr` | Ideal liquid Sm³/hr |
+| gal/min | `gallons/min` | US gallons per minute |
+| bbl/day | `barrel/day` | Barrels per day |
 | lb/hr | `lb/hr` | Pounds per hour |
+| lbmol/hr | `lbmole/hr` | Pound-moles per hour |
 
 ### Energy Units
 
@@ -195,13 +207,13 @@ double p_bara = gas.getPressure("bara");    // 50.0
 double p_Pa = gas.getPressure("Pa");        // 5000000.0
 double p_psia = gas.getPressure("psia");    // 725.19
 
-// Temperature  
+// Temperature
 double T_K = gas.getTemperature("K");       // 298.15
 double T_C = gas.getTemperature("C");       // 25.0
 double T_F = gas.getTemperature("F");       // 77.0
 
 // Density
-double rho_kgm3 = gas.getDensity("kg/m3");  
+double rho_kgm3 = gas.getDensity("kg/m3");
 double rho_lbft3 = gas.getDensity("lb/ft3");
 
 // Flow rates (for streams)
@@ -228,6 +240,8 @@ stream.setPressure(725.0, "psia");
 stream.setFlowRate(1000.0, "kg/hr");
 stream.setFlowRate(5.0, "MSm3/day");
 stream.setFlowRate(10000.0, "bbl/day");
+stream.setFlowRate(45.36, "kmole/hr");
+fluid.setTotalFlowRate(45.36, "mole/hr");
 ```
 
 ### Direct Unit Conversion
@@ -255,9 +269,9 @@ import neqsim.util.unit.Units;
 Units.activateFieldUnits();
 
 // All subsequent property output uses field units
-System.out.println("Temperature: " + 
+System.out.println("Temperature: " +
     Units.activeUnits.get("temperature").symbol);  // "F"
-System.out.println("Pressure: " + 
+System.out.println("Pressure: " +
     Units.activeUnits.get("pressure").symbol);     // "psia"
 
 // Switch back to metric

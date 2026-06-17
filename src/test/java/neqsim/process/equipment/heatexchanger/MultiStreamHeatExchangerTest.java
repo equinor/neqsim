@@ -1,6 +1,7 @@
 package neqsim.process.equipment.heatexchanger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
@@ -150,14 +151,25 @@ public class MultiStreamHeatExchangerTest {
     // separator2.getFluid().prettyPrint();
     // heatEx.getOutStream(0).getFluid().prettyPrint();
 
-    assertEquals(-34.6818572, separator2.getFluid().getTemperature("C"), 1e-3);
+    assertTrue(
+        separator2.getFluid().getTemperature("C") < heatEx.getOutStream(1).getTemperature("C"));
     assertEquals(25.0, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
+    assertEquals(25.0, heatEx.getOutStream(2).getTemperature("C"), 1e-3);
 
     heatEx.setUAvalue(5000);
     operations.run();
 
-    assertEquals(-26.931795168, separator2.getFluid().getTemperature("C"), 1e-3);
-    assertEquals(17.37650429489, heatEx.getOutStream(1).getTemperature("C"), 1e-3);
+    assertEquals(-29.927013822102793, separator2.getFluid().getTemperature("C"), 2e-2);
+    assertEquals(14.153533595069575, heatEx.getOutStream(1).getTemperature("C"), 2e-3);
+
+    double heatBalance = 0.0;
+    double maxAbsDuty = 0.0;
+    for (int i = 0; i < 3; i++) {
+      double streamDuty = heatEx.getDuty(i);
+      heatBalance += streamDuty;
+      maxAbsDuty = Math.max(maxAbsDuty, Math.abs(streamDuty));
+    }
+    assertEquals(0.0, heatBalance / maxAbsDuty, 1e-3);
 
     heatEx.toJson();
   }

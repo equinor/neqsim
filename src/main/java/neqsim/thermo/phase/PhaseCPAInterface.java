@@ -7,7 +7,7 @@ import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
  * <p>
  * PhaseCPAInterface interface.
  * </p>
- * 
+ *
  * <p>
  * This interface defines the contract for CPA (Cubic Plus Association) phase implementations. It
  * provides default implementations for the radial distribution function and its derivatives, which
@@ -111,11 +111,11 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
 
   /**
    * Calculate radial distribution function g at contact using simplified Carnahan-Starling.
-   * 
+   *
    * <p>
    * g = (2 - b/4V) / (2 * (1 - b/4V)³)
    * </p>
-   * 
+   *
    * <p>
    * This formula is the same for all cubic EOS (SRK, PR, UMR) since it depends only on the
    * co-volume parameter b, not on the attraction parameter a.
@@ -134,7 +134,7 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
 
   /**
    * Calculate first volume derivative of ln(g).
-   * 
+   *
    * <p>
    * d(ln g)/dV
    * </p>
@@ -153,7 +153,7 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
 
   /**
    * Calculate second volume derivative of ln(g).
-   * 
+   *
    * <p>
    * d²(ln g)/dV²
    * </p>
@@ -178,7 +178,7 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
 
   /**
    * Calculate third volume derivative of ln(g).
-   * 
+   *
    * <p>
    * d³(ln g)/dV³
    * </p>

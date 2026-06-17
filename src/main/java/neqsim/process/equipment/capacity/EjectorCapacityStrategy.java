@@ -93,7 +93,7 @@ public class EjectorCapacityStrategy implements EquipmentCapacityStrategy {
 
     // Check if ejector implements CapacityConstrainedEquipment
     if (ejector instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) ejector).getMaxUtilization();
+      return ejector.getMaxUtilization();
     }
 
     // Calculate entrainment ratio as primary capacity indicator
@@ -133,7 +133,7 @@ public class EjectorCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If ejector already implements CapacityConstrainedEquipment, use its constraints
     if (ejector instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) ejector).getCapacityConstraints();
+      return ejector.getCapacityConstraints();
     }
 
     // Entrainment ratio constraint

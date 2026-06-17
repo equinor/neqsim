@@ -35,7 +35,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Create tubing model
  * TubingPerformance tubing = new TubingPerformance("tubing");
@@ -821,6 +821,7 @@ public class TubingPerformance extends Pipeline {
    *
    * @return diameter in meters
    */
+  @Override
   public double getDiameter() {
     return diameter;
   }
@@ -830,6 +831,7 @@ public class TubingPerformance extends Pipeline {
    *
    * @param diameter diameter in meters
    */
+  @Override
   public void setDiameter(double diameter) {
     this.diameter = diameter;
   }
@@ -839,6 +841,7 @@ public class TubingPerformance extends Pipeline {
    *
    * @return length in meters
    */
+  @Override
   public double getLength() {
     return length;
   }
@@ -848,6 +851,7 @@ public class TubingPerformance extends Pipeline {
    *
    * @param length length in meters
    */
+  @Override
   public void setLength(double length) {
     this.length = length;
   }
@@ -911,6 +915,7 @@ public class TubingPerformance extends Pipeline {
    *
    * @return pressure drop in bar
    */
+  @Override
   public double getPressureDrop() {
     return pressureDrop;
   }

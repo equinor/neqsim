@@ -29,7 +29,7 @@ import java.util.Arrays;
  * <p>
  * By the implicit function theorem:
  * </p>
- * 
+ *
  * <pre>
  * dy/dθ = -(∂F/∂y)^(-1) * (∂F/∂θ)
  * </pre>

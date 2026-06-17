@@ -30,6 +30,9 @@ Get up and running with NeqSim in 5 minutes! Choose your platform:
 ├─────────────────────────────────────────────────────────────┤
 │  "I want to extend or contribute to NeqSim"                  │
 │  ➜ Java Quickstart + Developer Setup                         │
+├─────────────────────────────────────────────────────────────┤
+│  "I want AI to solve an engineering problem for me"           │
+│  ➜ AI-Assisted Task Solving Tutorial                         │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -38,9 +41,10 @@ Get up and running with NeqSim in 5 minutes! Choose your platform:
 Once you've completed a quickstart, continue with:
 
 1. **[Learning Paths](../tutorials/learning-paths)** - Structured tutorials for your role
-2. **[Cookbook](../cookbook/index)** - Quick recipes for common tasks
-3. **[Reading Fluid Properties](../thermo/reading_fluid_properties)** - Understanding init levels and property access
-4. **[Examples](../examples/index)** - Jupyter notebooks and Java examples
+2. **[Solve an Engineering Task](../tutorials/solve-engineering-task)** - Let AI agents run simulations, validate results, and generate reports
+3. **[Cookbook](../cookbook/index)** - Quick recipes for common tasks
+4. **[Reading Fluid Properties](../thermo/reading_fluid_properties)** - Understanding init levels and property access
+5. **[Examples](../examples/index)** - Jupyter notebooks and Java examples
 
 ## API Reference
 

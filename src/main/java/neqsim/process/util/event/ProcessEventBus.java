@@ -35,8 +35,8 @@ public class ProcessEventBus implements Serializable {
 
   private static volatile ProcessEventBus instance;
 
-  private final List<ProcessEventListener> globalListeners;
-  private final Map<ProcessEvent.EventType, List<ProcessEventListener>> typeListeners;
+  private final transient List<ProcessEventListener> globalListeners;
+  private final transient Map<ProcessEvent.EventType, List<ProcessEventListener>> typeListeners;
   private final List<ProcessEvent> eventHistory;
   private int maxHistorySize = 1000;
   private boolean asyncDelivery = false;

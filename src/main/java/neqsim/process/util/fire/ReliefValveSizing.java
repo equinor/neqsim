@@ -142,7 +142,7 @@ public final class ReliefValveSizing {
    *
    * <p>
    * Uses the API 520 equation for critical (sonic) flow:
-   * 
+   *
    * <pre>
    * A = W / (C * Kd * P1 * Kb * Kc) * sqrt(T * Z / M)
    * </pre>

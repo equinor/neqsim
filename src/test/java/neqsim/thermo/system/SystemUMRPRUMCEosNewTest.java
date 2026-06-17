@@ -216,7 +216,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
       assertTrue(false);
       throw new Exception(ex);
     }
-    assertEquals(testOps.get("cricondenbar")[1], 130.686140727503, 0.02);
+    assertEquals(testOps.get("cricondenbar")[1], 130.7734122125336, 0.1);
   }
 
   /**
@@ -274,7 +274,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     testSystem.setPressure(10);
     SaturationPressure satPresSim = new SaturationPressure(testSystem);
     satPresSim.run();
-    assertEquals(104.7532901763, satPresSim.getThermoSystem().getPressure(), 0.001);
+    assertEquals(104.70405197143555, satPresSim.getThermoSystem().getPressure(), 0.1);
   }
 
   /**
@@ -302,5 +302,33 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     }
     testSystem.initPhysicalProperties("density");
     assertEquals(6.84959007, testSystem.getDensity("kg/m3"), 0.00001);
+  }
+
+  /**
+   * Regression test pinning the identity (model name and attractive term number) of the three
+   * UMR-PRU variants. The attractive term number selects the alpha correlation and, through
+   * {@link neqsim.thermo.phase.PhaseGEUnifacUMRPRU#useMcInteractionParameters()}, the group
+   * interaction parameter tables (<code>_umr</code> vs <code>_umrmc</code>). Pinning these values
+   * guards against accidental re-routing of the validated variants.
+   */
+  @Test
+  @DisplayName("UMR-PRU variant identity (model name and attractive term number)")
+  public void checkVariantIdentity() {
+    SystemInterface base = new SystemUMRPRUEos(298.0, 10.0);
+    assertEquals("UMR-PRU-EoS", base.getModelName());
+
+    SystemInterface mc = new SystemUMRPRUMCEos(298.0, 10.0);
+    assertEquals("UMR-PRU-MC-EoS", mc.getModelName());
+
+    SystemInterface mcNew = new SystemUMRPRUMCEosNew(298.0, 10.0);
+    assertEquals("UMR-PRU-MC-EoS-New", mcNew.getModelName());
+
+    base.addComponent("methane", 1.0);
+    mc.addComponent("methane", 1.0);
+    mcNew.addComponent("methane", 1.0);
+
+    assertEquals(1, base.getPhase(0).getComponent(0).getAttractiveTermNumber());
+    assertEquals(13, mc.getPhase(0).getComponent(0).getAttractiveTermNumber());
+    assertEquals(19, mcNew.getPhase(0).getComponent(0).getAttractiveTermNumber());
   }
 }

@@ -1,6 +1,7 @@
 ---
 title: "DEXPI P&ID Import, Export and Visualization"
 description: "Complete DEXPI integration for NeqSim — import P&ID XML into runnable process models, export professional P&ID drawings with ISO 10628 symbols, auto-layout, instruments, mechanical design data, and configurable visualization."
+keywords: "DEXPI, P&ID, piping and instrumentation diagram, XML import, XML export, ISO 10628, process flow diagram, PFD, visualization"
 ---
 
 # DEXPI P&ID Import, Export and Visualization
@@ -96,27 +97,72 @@ process.run();
 DexpiXmlWriter.write(process, new File("output.xml"));
 ```
 
-### Export with layout configuration
+### Layout and visualization features
+
+The export path applies NeqSim's built-in auto-layout and visualization defaults: equipment tag
+labels, nozzles, routed connection lines, service labels, flow arrows, stream tables, battery-limit
+connectors, symbol legends, and equipment bar labels when simulation data is available. `DexpiLayoutConfig`
+collects the tunable layout fields used by the DEXPI layout workstream; check the writer API before
+using custom layout configuration from application code, because the stable public export calls are the
+`write(...)`, `writeForPyDexpi(...)`, and `writeSheets(...)` overloads shown below.
+
+### Exporting a multi-area ProcessModel
+
+A whole `ProcessModel` (several process areas) can be exported in a single call. All areas are
+flattened into one drawing; equipment is added by object identity so a stream shared between two
+areas is registered once, and genuine name collisions are skipped with a logged warning.
 
 ```java
-DexpiLayoutConfig config = new DexpiLayoutConfig()
-    .setXSpacing(120.0)
-    .setYBranchOffset(70.0)
-    .setFontName("Arial")
-    .setTagFontHeight(5.0)
-    .setProcessLineWeight(0.6)
-    .setShowStreamTable(true)
-    .setShowSymbolLegend(true)
-    .setShowRevisionHistory(true)
-    .setShowBatteryLimit(true)
-    .setShowFlowArrows(true)
-    .setShowEquipmentBars(true)
-    .setShowFailPositionMarkers(true)
-    .setShowSilMarkers(true)
-    .setShowInsulationMarks(true);
+ProcessModel plant = new ProcessModel();
+plant.add("Inlet", inletArea);
+plant.add("Compression", compressionArea);
 
-DexpiXmlWriter.write(process, new File("output.xml"), config);
+// One call writes a single combined P&ID for the whole plant
+DexpiXmlWriter.write(plant, new File("plant.xml"));
+
+// Or split into one DEXPI sheet per area
+List<File> sheets = DexpiXmlWriter.writeSheets(plant, new File("sheets"));
 ```
+
+### pyDEXPI-friendly export (namespace omitted)
+
+[pyDEXPI](https://github.com/process-intelligence-research/pyDEXPI) and other Proteus readers that
+perform *unqualified* tag look-ups cannot resolve elements when the default
+`xmlns="http://sandbox.dexpi.org/xml"` namespace is present. Use `writeForPyDexpi` (or the
+`DexpiDiagramBridge.exportForPyDexpi` convenience method) to write content-identical XML with the
+default namespace omitted while preserving the `OriginatingSystem*` `PlantInformation` metadata that
+Proteus loaders expect, so the file loads directly without a namespace-stripping pre-pass.
+
+```java
+// Java — writer
+DexpiXmlWriter.writeForPyDexpi(process, new File("plant.pydexpi.xml"));
+
+// Java — diagram bridge convenience
+DexpiDiagramBridge.exportForPyDexpi(process, Paths.get("plant.pydexpi.xml"));
+```
+
+The `examples/notebooks/professional_process_flow_diagrams.ipynb` notebook wraps this in a reusable
+`render_dexpi_pid(process, name)` helper that exports the DEXPI file and renders genuine ISA-5.1
+symbols via `pydexpi.loaders.svg_loader.DrawDiagram`, degrading gracefully when pyDEXPI is absent.
+
+The same notebook also shows the **most compact recipe** — a P&ID figure in four working lines
+(export → load → draw → display):
+
+```python
+from pydexpi.loaders.svg_loader import DrawDiagram
+from IPython.display import SVG, display
+
+DexpiDiagramBridge.exportForPyDexpi(process, JPaths.get("compact.dexpi.xml"))
+model = ProteusSerializer().load(out_dir, "compact.dexpi.xml")
+DrawDiagram(model.diagram, padding=5.0, pretty=True).save_svg("compact", str(out_dir))
+display(SVG(filename=str(out_dir / "compact.svg")))
+```
+
+For a standalone, importable end-to-end pipeline (NeqSim build → DEXPI export → pyDEXPI render),
+see [`examples/neqsim/render_neqsim_dexpi_with_pydexpi.py`](../../examples/neqsim/render_neqsim_dexpi_with_pydexpi.py).
+Its `build_process`, `export_dexpi`, and `render` functions can be imported directly into a notebook
+or run as a script via `python render_neqsim_dexpi_with_pydexpi.py`. The example uses
+`writeForPyDexpi`, so it no longer needs a separate namespace-stripping compatibility pass.
 
 ### Round-trip (import, simulate, re-export)
 
@@ -140,24 +186,42 @@ The writer produces namespace-aware DEXPI XML:
 - Document factory is configured with `setNamespaceAware(true)`
 - Equipment elements carry `ComponentClassURI` attributes mapped to RDL (Reference Data Library) URIs
 
+For consumers that require *unqualified* tag look-ups (such as pyDEXPI), use
+`writeForPyDexpi` / `DexpiDiagramBridge.exportForPyDexpi`, which emit the same content with the
+default `xmlns` omitted (see *pyDEXPI-friendly export* above).
+
+### Line data and NORSOK line numbers
+
+Each piping connection carries operating line data and a NORSOK Z-003 line-identification label:
+
+- A `FluidCode` generic attribute (service code: `PG` process gas, `PL` process liquid, `FL` flare,
+  `DR` drain, `FG` fuel gas, `UT` utility) derived by `DexpiServiceClassifier`
+- Operating pressure, temperature and flow generic attributes when available on the stream
+- A line-number text label (e.g. `PG-001`) composed by `NorsokLineNumber`
+
+Battery-limit feeds and products that are not wired to another unit on the sheet are marked with
+off-page connector symbols carrying `FEED` / `PRODUCT` cross references, and instrument tags are
+checked against ISA-5.1 with a `TagConformanceWarning` attribute added for non-conforming tags.
+
+
 ### Equipment mapping (native NeqSim to DEXPI)
 
 The writer reverse-maps Java classes to DEXPI `ComponentClass` strings:
 
 | NeqSim class | DEXPI ComponentClass | RDL URI suffix |
 |---|---|---|
-| `ThreePhaseSeparator` | `ThreePhaseSeparator` | `RDS327127` |
-| `Separator` | `Separator` | `RDS327127` |
-| `Compressor` | `CentrifugalCompressor` | `RDS414578` |
-| `Pump` | `CentrifugalPump` | `RDS414578` |
-| `Cooler` | `AirCooledHeatExchanger` | `RDS414578` |
-| `HeatExchanger` | `ShellAndTubeHeatExchanger` | `RDS414578` |
-| `Heater` | `FiredHeater` | `RDS414578` |
-| `ThrottlingValve` | `GlobeValve` | `RDS414578` |
-| `Expander` | `Expander` | `RDS327127` |
-| `Mixer` | `Mixer` | `RDS327127` |
-| `Splitter` | `Splitter` | `RDS327127` |
-| `DistillationColumn` | `DistillationColumn` | `RDS327127` |
+| `ThreePhaseSeparator` | `ThreePhaseSeparator` | `RDS327962` |
+| `Separator` | `Separator` | `RDS327962` |
+| `Compressor` | `CentrifugalCompressor` | `RDS414622` |
+| `Pump` | `CentrifugalPump` | `RDS415550` |
+| `Cooler` | `AirCoolingSystem` | `RDS327938` |
+| `HeatExchanger` | `ShellAndTubeHeatExchanger` | `RDS327918` |
+| `Heater` | `FiredHeater` | `RDS327914` |
+| `ThrottlingValve` | `GlobeValve` (tag prefix may map to gate/ball/check/butterfly) | `RDS415212` |
+| `Expander` | `Expander` | `RDS414776` |
+| `Mixer` | `Mixer` | `RDS4149564` |
+| `Splitter` | `Splitter` | `RDS4112354` |
+| `DistillationColumn` | `DistillationColumn` | `RDS327902` |
 
 Valve types are further distinguished by tag name prefix: `XV-` (gate valve), `BV-` (ball valve),
 `NRV-` / `CV-` (check valve), `BFV-` (butterfly valve), or globe valve (default).
@@ -244,8 +308,12 @@ registration number via a `ComponentName` attribute.
 
 ### Auto-layout features
 
-The layout engine automatically arranges equipment left-to-right with liquid branches flowing
-downward and produces the following visual elements:
+The layout engine automatically arranges equipment left-to-right following process flow topology.
+Per ISO 10628 drafting practice, a separator's **gas/overhead branch routes to the upper part** of
+the sheet and the **liquid/bottoms branch to the lower part**, with the inlet train and any
+recombined streams kept on the centre line. This keeps the gas train (compressors, coolers,
+scrubbers) visually above the liquid train (pumps, oil/water treatment) and stops bottoms lines
+from crossing gas equipment. The engine produces the following visual elements:
 
 **Drawing frame and border:**
 - Auto-fit sheet size (A4 to A0) based on process extent

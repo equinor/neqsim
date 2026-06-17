@@ -52,17 +52,17 @@ import com.google.gson.JsonParser;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Get Norway parameters
  * FiscalParameters norway = TaxModelRegistry.getParameters("NO");
- * 
+ *
  * // Create a tax model
  * TaxModel model = TaxModelRegistry.createModel("NO");
- * 
+ *
  * // Get all available countries
  * List<String> countries = TaxModelRegistry.getAvailableCountries();
- * 
+ *
  * // Register custom parameters
  * FiscalParameters custom = FiscalParameters.builder("CUSTOM").countryName("Custom Country")
  *     .corporateTaxRate(0.30).build();

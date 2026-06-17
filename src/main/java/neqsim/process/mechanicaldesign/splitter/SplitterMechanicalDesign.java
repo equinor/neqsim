@@ -11,7 +11,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 
 /**
  * Mechanical design class for splitter equipment.
- * 
+ *
  * <p>
  * Handles design calculations for flow splitters, distribution headers, and manifolds including
  * header sizing, branch connections, and pressure drop calculations.

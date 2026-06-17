@@ -425,13 +425,13 @@ redundant.addPipe("J4", "Industry", "Dist-4", 1500.0, 0.3);
 
 // Solve normal operation
 redundant.run();
-System.out.println("Normal operation - Industry pressure: " + 
+System.out.println("Normal operation - Industry pressure: " +
     redundant.getNodePressure("Industry") + " bar");
 
 // Simulate Station-A outage
 redundant.setSourceFlow("Station-A", 0.0);
 redundant.run();
-System.out.println("Station-A outage - Industry pressure: " + 
+System.out.println("Station-A outage - Industry pressure: " +
     redundant.getNodePressure("Industry") + " bar");
 ```
 
@@ -479,6 +479,7 @@ String json = network.toJson();
 
 ## Related Documentation
 
+- [Production Well Networks](production_well_networks) - IPR, choke, tubing, and multiphase elements in production networks
 - [Pipeline Networks (Basic)](networks) - Non-looped networks
 - [Pipelines](pipelines) - Individual pipeline modeling
 - [Process Systems](../processmodel/) - System integration

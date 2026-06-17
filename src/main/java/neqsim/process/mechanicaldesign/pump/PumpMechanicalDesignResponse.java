@@ -147,7 +147,6 @@ public class PumpMechanicalDesignResponse extends MechanicalDesignResponse {
    * Default constructor.
    */
   public PumpMechanicalDesignResponse() {
-    super();
     setEquipmentType("Pump");
     setDesignStandard("API 610");
   }

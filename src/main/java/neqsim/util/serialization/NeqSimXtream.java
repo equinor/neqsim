@@ -15,7 +15,7 @@ import java.util.zip.ZipOutputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider;
+import com.thoughtworks.xstream.mapper.CannotResolveClassException;
 import com.thoughtworks.xstream.mapper.MapperWrapper;
 import com.thoughtworks.xstream.security.AnyTypePermission;
 
@@ -33,6 +33,7 @@ import com.thoughtworks.xstream.security.AnyTypePermission;
  * <li>Automatic ThreadLocal field exclusion</li>
  * <li>ZIP compression for compact storage</li>
  * <li>Full object graph preservation with ID references</li>
+ * <li>Graceful handling of unknown fields/classes for cross-version compatibility</li>
  * </ul>
  *
  * @author esol
@@ -60,7 +61,6 @@ public class NeqSimXtream {
     }
 
     XStream xstream = createConfiguredXStream();
-    xstream.addPermission(AnyTypePermission.ANY);
 
     try (BufferedInputStream fin = new BufferedInputStream(new FileInputStream(filename));
         ZipInputStream zin = new ZipInputStream(fin)) {
@@ -75,6 +75,15 @@ public class NeqSimXtream {
         }
       }
       throw new FileNotFoundException("process.xml not found in zip file: " + filename);
+    } catch (ExceptionInInitializerError e) {
+      throw new IOException(
+          "Failed to deserialize: a class static initializer failed. "
+              + "Ensure JVM has --add-opens flags for java.base modules. Caused by: "
+              + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()),
+          e);
+    } catch (NoClassDefFoundError e) {
+      throw new IOException(
+          "Failed to deserialize: required class not found: " + e.getMessage(), e);
     }
   }
 
@@ -110,7 +119,6 @@ public class NeqSimXtream {
     }
 
     XStream xstream = createConfiguredXStream();
-    xstream.allowTypesByWildcard(new String[] {"neqsim.**"});
 
     try (BufferedOutputStream fout = new BufferedOutputStream(new FileOutputStream(filename));
         ZipOutputStream zout = new ZipOutputStream(fout);
@@ -130,41 +138,98 @@ public class NeqSimXtream {
     }
   }
 
+  /**
+   * Creates a configured XStream instance with sensible defaults for NeqSim serialization.
+   *
+   * <p>
+   * Uses the default reflection provider (sun.misc.Unsafe when available) to avoid
+   * ExceptionInInitializerError that occurs with PureJavaReflectionProvider on JDK 11+. Includes
+   * mapper wrappers to skip ThreadLocal fields and gracefully ignore unknown elements for
+   * cross-version compatibility.
+   * </p>
+   *
+   * @return a configured XStream instance
+   */
   private static XStream createConfiguredXStream() {
-    XStream xstream = new XStream(new PureJavaReflectionProvider()) {
+    XStream xstream = new XStream() {
       @Override
       protected MapperWrapper wrapMapper(MapperWrapper next) {
-        return new MapperWrapper(next) {
-          @Override
-          public boolean shouldSerializeMember(Class definedIn, String fieldName) {
-            // Skip ThreadLocal fields - they cannot be serialized
-            try {
-              java.lang.reflect.Field field = definedIn.getDeclaredField(fieldName);
-              if (ThreadLocal.class.isAssignableFrom(field.getType())) {
-                return false;
-              }
-            } catch (NoSuchFieldException e) {
-              // Field not found in this class, check parent classes
-              Class<?> parent = definedIn.getSuperclass();
-              while (parent != null) {
-                try {
-                  java.lang.reflect.Field field = parent.getDeclaredField(fieldName);
-                  if (ThreadLocal.class.isAssignableFrom(field.getType())) {
-                    return false;
-                  }
-                  break;
-                } catch (NoSuchFieldException ex) {
-                  parent = parent.getSuperclass();
-                }
-              }
-            }
-            return super.shouldSerializeMember(definedIn, fieldName);
-          }
-        };
+        return new ThreadLocalSkipMapper(new UnknownElementIgnorer(next));
       }
     };
     xstream.setMode(XStream.ID_REFERENCES);
     xstream.addPermission(AnyTypePermission.ANY);
+    xstream.allowTypesByWildcard(new String[] {"neqsim.**"});
     return xstream;
+  }
+
+  /**
+   * Mapper that skips ThreadLocal fields during serialization. ThreadLocal fields cannot be
+   * serialized and would cause errors.
+   */
+  private static class ThreadLocalSkipMapper extends MapperWrapper {
+    /**
+     * Creates a ThreadLocalSkipMapper.
+     *
+     * @param wrapped the wrapped mapper
+     */
+    ThreadLocalSkipMapper(MapperWrapper wrapped) {
+      super(wrapped);
+    }
+
+    @Override
+    public boolean shouldSerializeMember(Class definedIn, String fieldName) {
+      if (isThreadLocalField(definedIn, fieldName)) {
+        return false;
+      }
+      return super.shouldSerializeMember(definedIn, fieldName);
+    }
+
+    private boolean isThreadLocalField(Class<?> definedIn, String fieldName) {
+      Class<?> clazz = definedIn;
+      while (clazz != null) {
+        try {
+          java.lang.reflect.Field field = clazz.getDeclaredField(fieldName);
+          return ThreadLocal.class.isAssignableFrom(field.getType());
+        } catch (NoSuchFieldException e) {
+          clazz = clazz.getSuperclass();
+        }
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Mapper that silently ignores unknown elements during deserialization. This allows .neqsim files
+   * saved with newer versions (containing additional fields or classes) to be loaded by older
+   * versions without errors.
+   */
+  private static class UnknownElementIgnorer extends MapperWrapper {
+    /**
+     * Creates an UnknownElementIgnorer.
+     *
+     * @param wrapped the wrapped mapper
+     */
+    UnknownElementIgnorer(MapperWrapper wrapped) {
+      super(wrapped);
+    }
+
+    @Override
+    public Class realClass(String elementName) {
+      try {
+        return super.realClass(elementName);
+      } catch (CannotResolveClassException e) {
+        logger.debug("Ignoring unknown class during deserialization: " + elementName);
+        return null;
+      }
+    }
+
+    @Override
+    public boolean shouldSerializeMember(Class definedIn, String fieldName) {
+      if (definedIn == null) {
+        return false;
+      }
+      return super.shouldSerializeMember(definedIn, fieldName);
+    }
   }
 }

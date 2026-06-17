@@ -83,7 +83,7 @@ public class TankCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If equipment implements CapacityConstrainedEquipment, use its constraints
     if (tank instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) tank).getMaxUtilization();
+      return tank.getMaxUtilization();
     }
 
     // Fall back to basic evaluation
@@ -130,7 +130,7 @@ public class TankCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If tank implements CapacityConstrainedEquipment, use its constraints
     if (tank instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) tank).getCapacityConstraints();
+      return tank.getCapacityConstraints();
     }
 
     // Liquid level constraint

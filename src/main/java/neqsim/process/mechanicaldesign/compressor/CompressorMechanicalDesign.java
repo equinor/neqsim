@@ -129,6 +129,18 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   /** Mechanical losses model reference. */
   private CompressorMechanicalLosses mechanicalLosses = null;
 
+  /** Casing design calculator per API 617 / ASME VIII. */
+  private CompressorCasingDesignCalculator casingDesignCalculator = null;
+
+  /** Material grade for casing design. */
+  private String casingMaterialGrade = "SA-516-70";
+
+  /** Corrosion allowance for casing [mm]. */
+  private double casingCorrosionAllowanceMm = 1.5;
+
+  /** H2S partial pressure for NACE assessment [kPa]. */
+  private double h2sPartialPressureKPa = 0.0;
+
   // ============================================================================
   // Process Design Parameters (Industry Standards)
   // ============================================================================
@@ -306,6 +318,64 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
       mechanicalLosses = compressor.getMechanicalLosses();
       mechanicalLosses.setShaftDiameter(shaftDiameter);
     }
+
+    // Run casing mechanical design per API 617 / ASME Section VIII
+    calculateCasingDesign(compressor, shaftPowerKW);
+  }
+
+  /**
+   * Run detailed casing mechanical design using the CompressorCasingDesignCalculator.
+   *
+   * <p>
+   * Transfers operating conditions from the compressor to the calculator and runs all
+   * casing design checks per API 617, ASME VIII, ASME B16.5, and NACE MR0175.
+   * </p>
+   *
+   * @param compressor the compressor equipment
+   * @param shaftPowerKW shaft power in kW
+   */
+  private void calculateCasingDesign(Compressor compressor, double shaftPowerKW) {
+    casingDesignCalculator = new CompressorCasingDesignCalculator();
+
+    // Transfer operating conditions
+    casingDesignCalculator.setDesignPressureBara(designPressure);
+    casingDesignCalculator.setDesignTemperatureC(designTemperature);
+    casingDesignCalculator.setMaxOperatingPressureMPa(
+        compressor.getOutletStream().getPressure("bara") / 10.0);
+    casingDesignCalculator.setMaxOperatingTemperatureC(
+        compressor.getOutletStream().getTemperature("C"));
+    casingDesignCalculator.setMinOperatingTemperatureC(
+        compressor.getInletStream().getTemperature("C"));
+
+    // Transfer geometry from process design
+    double casingID = impellerDiameter * 1.3; // Casing ID ~1.3x impeller OD
+    casingDesignCalculator.setCasingInnerDiameterMm(casingID);
+    casingDesignCalculator.setCasingLengthMm(bearingSpan * 1.3);
+    casingDesignCalculator.setNumberOfStages(numberOfStages);
+    casingDesignCalculator.setImpellerDiameterMm(impellerDiameter);
+
+    // Transfer casing type
+    casingDesignCalculator.setCasingType(casingType);
+
+    // Transfer material and corrosion settings
+    casingDesignCalculator.setMaterialGrade(casingMaterialGrade);
+    casingDesignCalculator.setCorrosionAllowanceMm(casingCorrosionAllowanceMm);
+
+    // NACE settings
+    casingDesignCalculator.setSourService(naceCompliance);
+    casingDesignCalculator.setH2sPartialPressureKPa(h2sPartialPressureKPa);
+
+    // Nozzle sizes - estimate from volume flow
+    double volumeFlowM3s =
+        compressor.getInletStream().getFlowRate("m3/hr") / 3600.0;
+    double suctionNozzleMm = Math.max(100.0,
+        Math.sqrt(volumeFlowM3s / (Math.PI * 15.0)) * 2000.0); // ~15 m/s velocity
+    double dischargeNozzleMm = suctionNozzleMm * 0.8; // Typically smaller
+    casingDesignCalculator.setSuctionNozzleSizeMm(suctionNozzleMm);
+    casingDesignCalculator.setDischargeNozzleSizeMm(dischargeNozzleMm);
+
+    // Run all calculations
+    casingDesignCalculator.calculate();
   }
 
   /**
@@ -1401,6 +1471,69 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
     result.setValid(result.getIssues().isEmpty());
     return result;
+  }
+
+  /**
+   * Gets the casing design calculator.
+   *
+   * @return casing design calculator with all results, or null if not yet calculated
+   */
+  public CompressorCasingDesignCalculator getCasingDesignCalculator() {
+    return casingDesignCalculator;
+  }
+
+  /**
+   * Gets the casing material grade.
+   *
+   * @return material grade string (e.g., "SA-516-70")
+   */
+  public String getCasingMaterialGrade() {
+    return casingMaterialGrade;
+  }
+
+  /**
+   * Sets the casing material grade for mechanical design.
+   *
+   * @param grade material grade per ASME II (e.g., "SA-516-70", "SA-182-F316L", "Inconel-718")
+   */
+  public void setCasingMaterialGrade(String grade) {
+    this.casingMaterialGrade = grade;
+  }
+
+  /**
+   * Gets the casing corrosion allowance.
+   *
+   * @return corrosion allowance in mm
+   */
+  public double getCasingCorrosionAllowanceMm() {
+    return casingCorrosionAllowanceMm;
+  }
+
+  /**
+   * Sets the casing corrosion allowance.
+   *
+   * @param mm corrosion allowance in mm (typically 1.5-3.0 mm)
+   */
+  public void setCasingCorrosionAllowanceMm(double mm) {
+    this.casingCorrosionAllowanceMm = mm;
+  }
+
+  /**
+   * Gets the H2S partial pressure for NACE assessment.
+   *
+   * @return H2S partial pressure in kPa
+   */
+  public double getH2sPartialPressureKPa() {
+    return h2sPartialPressureKPa;
+  }
+
+  /**
+   * Sets the H2S partial pressure for NACE assessment.
+   *
+   * @param kpa H2S partial pressure in kPa
+   */
+  public void setH2sPartialPressureKPa(double kpa) {
+    this.h2sPartialPressureKPa = kpa;
   }
 
   /**

@@ -14,8 +14,8 @@ import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.process.mechanicaldesign.pipeline.PipelineMechanicalDesign;
 import neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator;
+import neqsim.process.mechanicaldesign.pipeline.PipelineMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -1324,8 +1324,8 @@ public class Pipeline extends TwoPortEquipment
    * </p>
    *
    * <p>
-   * Requires that the pipeline has been run (i.e., the inlet stream has valid fluid data).
-   * If the mechanical design has not been initialised, it will be created automatically.
+   * Requires that the pipeline has been run (i.e., the inlet stream has valid fluid data). If the
+   * mechanical design has not been initialised, it will be created automatically.
    * </p>
    */
   public void runCorrosionAnalysis() {
@@ -1509,7 +1509,9 @@ public class Pipeline extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {}
+  public void displayResult() {
+    system.display(name);
+  }
 
   // ============================================================================
   // TIME SERIES (for transient simulations)

@@ -12,7 +12,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
-import neqsim.process.equipment.failure.EquipmentFailureMode;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProductionImpactAnalyzer;
 import neqsim.process.util.optimizer.ProductionImpactResult;

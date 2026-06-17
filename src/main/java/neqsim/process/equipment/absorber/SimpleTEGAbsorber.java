@@ -593,4 +593,188 @@ public class SimpleTEGAbsorber extends SimpleAbsorber {
   public void isSetWaterInDryGas(boolean isSetwaterInDryGas) {
     this.isSetWaterInDryGas = isSetwaterInDryGas;
   }
+
+  /**
+   * Calculates the Fs factor (gas capacity factor) for structured packing in the contactor.
+   *
+   * <p>
+   * The Fs factor is defined as:
+   * </p>
+   *
+   * <pre>
+   * Fs = Vs * sqrt(rho_gas)
+   * </pre>
+   *
+   * <p>
+   * where Vs is the superficial gas velocity (m/s) and rho_gas is the gas density (kg/m3). The Fs
+   * factor is proportional to the aerodynamic lift exerted by the gas on the liquid flowing down
+   * the packing. Typical maximum design value for structured packing is 3.0 m/s*sqrt(kg/m3).
+   * </p>
+   *
+   * @return Fs factor in m/s*sqrt(kg/m3), or 0 if streams are not initialized
+   */
+  @Override
+  public double getFsFactor() {
+    if (getGasOutStream() == null || getGasOutStream().getThermoSystem() == null) {
+      return 0.0;
+    }
+    double intArea = Math.PI * getInternalDiameter() * getInternalDiameter() / 4.0;
+    if (intArea <= 0.0) {
+      return 0.0;
+    }
+    double vs = getGasOutStream().getThermoSystem().getFlowRate("m3/sec") / intArea;
+    double rhoGas =
+        getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    return vs * Math.sqrt(rhoGas);
+  }
+
+  /**
+   * Calculates the maximum allowable Fs factor for the contactor packing.
+   *
+   * <p>
+   * For structured packing in glycol contactors, the maximum Fs factor is typically limited to 3.0
+   * m/s*sqrt(kg/m3) to ensure sufficient hydraulic packing capacity and robustness for protection
+   * of downstream equipment.
+   * </p>
+   *
+   * @return maximum allowable Fs factor in m/s*sqrt(kg/m3)
+   */
+  public double getMaxAllowableFsFactor() {
+    return 3.0;
+  }
+
+  /**
+   * Checks whether the current Fs factor is within the design limit.
+   *
+   * @return true if Fs factor is within the maximum allowable limit
+   */
+  public boolean isFsFactorWithinDesignLimit() {
+    return getFsFactor() <= getMaxAllowableFsFactor();
+  }
+
+  /**
+   * Calculates the Fs factor utilization as a fraction of the maximum.
+   *
+   * @return utilization ratio (0.0-1.0+). Values above 1.0 indicate the design limit is exceeded.
+   */
+  public double getFsFactorUtilization() {
+    double maxFs = getMaxAllowableFsFactor();
+    if (maxFs <= 0.0) {
+      return 0.0;
+    }
+    return getFsFactor() / maxFs;
+  }
+
+  /**
+   * Calculates the minimum vessel internal diameter to meet the Fs factor limit at the current gas
+   * flow rate.
+   *
+   * <p>
+   * From Fs = Vs * sqrt(rho_gas) and Vs = Q / A, the minimum diameter is:
+   * </p>
+   *
+   * <pre>
+   * D_min = sqrt(4 * Q * sqrt(rho_gas) / (pi * Fs_max))
+   * </pre>
+   *
+   * @return minimum internal diameter in metres, or 0 if streams are not initialized
+   */
+  public double getMinimumDiameterForFsLimit() {
+    if (getGasOutStream() == null || getGasOutStream().getThermoSystem() == null) {
+      return 0.0;
+    }
+    double gasFlowM3s = getGasOutStream().getThermoSystem().getFlowRate("m3/sec");
+    double rhoGas =
+        getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double maxFs = getMaxAllowableFsFactor();
+    if (maxFs <= 0.0) {
+      return 0.0;
+    }
+    return Math.sqrt(4.0 * gasFlowM3s * Math.sqrt(rhoGas) / (Math.PI * maxFs));
+  }
+
+  /**
+   * Calculates the lean TEG equilibrium water dew point temperature at the contactor pressure.
+   *
+   * <p>
+   * Returns the water dew point that the lean TEG can achieve in equilibrium. This is used to
+   * verify that the lean TEG quality provides sufficient margin below the treated gas dew point
+   * specification.
+   * </p>
+   *
+   * @return equilibrium water dew point in Kelvin, or 0 if solvent stream is not available
+   */
+  public double getLeanTEGEquilibriumWaterDewPoint() {
+    if (solventInStream == null || solventInStream.getThermoSystem() == null) {
+      return 0.0;
+    }
+    try {
+      SystemInterface tempSystem = solventInStream.getThermoSystem().clone();
+      tempSystem.setTemperature(273.15 + 20.0);
+      ThermodynamicOperations ops = new ThermodynamicOperations(tempSystem);
+      ops.waterDewPointTemperatureFlash();
+      return tempSystem.getTemperature();
+    } catch (Exception ex) {
+      logger.error("Failed to calculate lean TEG equilibrium water dew point", ex);
+      return 0.0;
+    }
+  }
+
+  /**
+   * Checks if the lean TEG equilibrium water dew point is at least the specified margin below the
+   * target dew point.
+   *
+   * <p>
+   * Industry practice requires that the equilibrium water dew point of the lean TEG be at least 10
+   * degC below the treated gas dew point specification.
+   * </p>
+   *
+   * @param targetDewPointC treated gas water dew point specification in degrees Celsius
+   * @param marginC required margin in degrees Celsius (typically 10)
+   * @return true if the lean TEG equilibrium dew point has sufficient margin
+   */
+  public boolean hasAdequateTEGQualityMargin(double targetDewPointC, double marginC) {
+    double eqDewPointK = getLeanTEGEquilibriumWaterDewPoint();
+    if (eqDewPointK <= 0.0) {
+      return false;
+    }
+    double eqDewPointC = eqDewPointK - 273.15;
+    return eqDewPointC <= (targetDewPointC - marginC);
+  }
+
+  /**
+   * Validates the TEG contactor design by checking Fs factor, gas load factor, and lean TEG
+   * quality. Returns a summary string with all design checks.
+   *
+   * @return design validation summary string
+   */
+  public String validateContactorDesign() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("TEG Contactor Design Validation\n");
+    sb.append("================================\n");
+
+    double fs = getFsFactor();
+    double maxFs = getMaxAllowableFsFactor();
+    sb.append(String.format("Fs factor: %.3f m/s*sqrt(kg/m3) (max: %.1f)\n", fs, maxFs));
+    sb.append(String.format("Fs utilization: %.1f%%\n", getFsFactorUtilization() * 100.0));
+    sb.append(
+        String.format("Fs within limit: %s\n", isFsFactorWithinDesignLimit() ? "OK" : "EXCEEDED"));
+
+    if (!isFsFactorWithinDesignLimit()) {
+      sb.append(String.format("Minimum diameter needed: %.3f m\n", getMinimumDiameterForFsLimit()));
+    }
+
+    double gasLoadFactor = 0.0;
+    if (getGasOutStream() != null && getGasOutStream().getThermoSystem() != null
+        && getSolventOutStream() != null && getSolventOutStream().getThermoSystem() != null) {
+      gasLoadFactor = getGasLoadFactor();
+    }
+    sb.append(String.format("Gas load factor (Ks): %.4f m/s\n", gasLoadFactor));
+
+    sb.append(String.format("NTU: %.2f\n", getNTU()));
+    sb.append(
+        String.format("Number of theoretical stages: %.2f\n", getNumberOfTheoreticalStages()));
+
+    return sb.toString();
+  }
 }

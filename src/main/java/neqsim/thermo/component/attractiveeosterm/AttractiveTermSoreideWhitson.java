@@ -58,7 +58,7 @@ public class AttractiveTermSoreideWhitson extends AttractiveTermPr1978 {
 
   /**
    * Gets the salinity value set for calculations.
-   * 
+   *
    * @return the salinity value, or 0.0 if not set
    */
   private double getSalinityFromPhase() {

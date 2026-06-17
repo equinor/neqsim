@@ -26,7 +26,7 @@ import neqsim.process.equipment.valve.ValveInterface;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Valve opening as MV
@@ -331,7 +331,6 @@ public class ManipulatedVariable extends MPCVariable {
         } else {
           currentValue = stream.getPressure("bara");
         }
-        return currentValue;
       }
     }
 
@@ -408,7 +407,6 @@ public class ManipulatedVariable extends MPCVariable {
         } else {
           stream.setPressure(clampedValue, "bara");
         }
-        return;
       }
     }
   }

@@ -27,7 +27,7 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Network Topology</h2>
- * 
+ *
  * <pre>
  * Well-1 (IPR+VLP) ──┬─ Flowline-1 ──┐
  * Well-2 (IPR+VLP) ──┼─ Flowline-2 ──┼── Manifold ── Export
@@ -47,19 +47,19 @@ import neqsim.thermo.system.SystemInterface;
  * </ol>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * NetworkSolver network = new NetworkSolver("Subsea Gathering");
- * 
+ *
  * // Add wells
  * network.addWell(well1, 5.0); // 5 km flowline
  * network.addWell(well2, 8.0); // 8 km flowline
  * network.addWell(well3, 3.0); // 3 km flowline
- * 
+ *
  * // Set constraints
  * network.setManifoldPressure(50.0, "bara");
  * network.setMaxTotalRate(15.0e6, "Sm3/day");
- * 
+ *
  * // Solve
  * NetworkResult result = network.solve();
  * System.out.println("Total rate: " + result.getTotalRate("MSm3/day"));
@@ -536,7 +536,6 @@ public class NetworkSolver implements Serializable {
 
   private double convertRateToSm3PerDay(double rate, String unit) {
     if (unit.equalsIgnoreCase("Sm3/day") || unit.equalsIgnoreCase("Sm3/d")) {
-      return rate;
     } else if (unit.equalsIgnoreCase("MSm3/day") || unit.equalsIgnoreCase("MSm3/d")) {
       return rate * 1e6;
     } else if (unit.equalsIgnoreCase("bbl/day") || unit.equalsIgnoreCase("bpd")) {

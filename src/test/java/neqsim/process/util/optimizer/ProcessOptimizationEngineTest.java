@@ -18,12 +18,12 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Unit tests for ProcessOptimizationEngine.
- * 
+ *
  * <p>
  * Tests the gradient-based optimization, sensitivity analysis, and FlowRateOptimizer integration
  * features.
  * </p>
- * 
+ *
  * @author NeqSim Development Team
  * @version 1.0
  */

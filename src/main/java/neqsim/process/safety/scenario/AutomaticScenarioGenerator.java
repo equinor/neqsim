@@ -32,7 +32,7 @@ import neqsim.process.safety.ProcessSafetyScenario;
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * ProcessSystem process = new ProcessSystem();
  * // ... configure process ...

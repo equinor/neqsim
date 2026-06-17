@@ -11,12 +11,12 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for OptimizationResultBase.
- * 
+ *
  * <p>
  * Tests the unified result base class including status, constraint violations, timing, and
  * sensitivity tracking.
  * </p>
- * 
+ *
  * @author NeqSim Development Team
  * @version 1.0
  */

@@ -36,11 +36,11 @@ Instantiate `ThermodynamicOperations` with the configured fluid to access flash 
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
 fluid.initProperties();
-System.out.println("Vapor fraction: " + fluid.getPhaseFraction(0));
+System.out.println("Vapor fraction: " + fluid.getPhaseFraction("gas", "mole"));
 ```
 Common operations include:
-- `PSflash(pressure, entropy)`, `PHflash(pressure, enthalpy)` for process simulators.
-- `dewPointTemperature(pressure)` and `bubblePointPressure(temperature)` for PVT lab matches.
+- `PHflash(enthalpy)`, `PSflash(entropy)` for process simulators (set pressure on the fluid before calling).
+- `dewPointTemperatureFlash()` and `bubblePointPressureFlash()` for PVT lab matches.
 - `calcPTphaseEnvelope()` and `calcPseudocriticalTemperature()` for compositional screening.
 
 ## 4. Save and Reuse States

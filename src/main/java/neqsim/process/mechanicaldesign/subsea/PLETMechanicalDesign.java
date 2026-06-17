@@ -69,7 +69,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
 
   // ============ Cost Estimation ============
   /** Cost estimator instance. */
-  private SubseaCostEstimator costEstimator;
+  private transient SubseaCostEstimator costEstimator;
 
   /** Total project cost in USD. */
   private double totalCostUSD = 0.0;
@@ -344,6 +344,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate cost estimate for PLET.
    */
+  @Override
   public void calculateCostEstimate() {
     costEstimator = new SubseaCostEstimator(SubseaCostEstimator.Region.NORWAY);
 
@@ -374,6 +375,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
    *
    * @return list of BOM items
    */
+  @Override
   public List<Map<String, Object>> generateBillOfMaterials() {
     if (costEstimator == null) {
       calculateCostEstimate();

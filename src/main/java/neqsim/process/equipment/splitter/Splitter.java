@@ -185,6 +185,24 @@ public class Splitter extends ProcessEquipmentBaseClass
   }
 
   /**
+   * Gets the configured outlet flow rates used to calculate split factors.
+   *
+   * @return a copy of the configured flow rates, or null if the splitter uses fixed split factors
+   */
+  public double[] getFlowRates() {
+    return flowRates == null ? null : Arrays.copyOf(flowRates, flowRates.length);
+  }
+
+  /**
+   * Gets the unit used for configured outlet flow rates.
+   *
+   * @return the flow-rate unit string used by {@link #setFlowRates(double[], String)}
+   */
+  public String getFlowUnit() {
+    return flowUnit;
+  }
+
+  /**
    * <p>
    * calcSplitFactors.
    * </p>
@@ -261,11 +279,16 @@ public class Splitter extends ProcessEquipmentBaseClass
     if (inletStream.needRecalculation()) {
       return true;
     }
+    if (lastComposition == null || inletStream.getFluid().getFlowRate("kg/hr") <= 0.0
+        || lastFlowRate <= 0.0) {
+      return true;
+    }
     if (inletStream.getFluid().getTemperature() == lastTemperature
         && inletStream.getFluid().getPressure() == lastPressure
         && Math.abs(inletStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
             / inletStream.getFluid().getFlowRate("kg/hr") < 1e-6
-        && Arrays.equals(splitFactor, oldSplitFactor)) {
+        && Arrays.equals(splitFactor, oldSplitFactor)
+        && Arrays.equals(inletStream.getFluid().getMolarComposition(), lastComposition)) {
       return false;
     } else {
       return true;
@@ -275,6 +298,11 @@ public class Splitter extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (checkAndHandleLowFlow(inletStream, id)) {
+      // Propagate zero flow to all split outlets so downstream equipment also auto-bypasses.
+      propagateZeroFlow(id, splitStream);
+      return;
+    }
     double totSplit = 0.0;
 
     if (flowRates != null) {
@@ -313,7 +341,7 @@ public class Splitter extends ProcessEquipmentBaseClass
     lastFlowRate = inletStream.getFluid().getFlowRate("kg/hr");
     lastTemperature = inletStream.getFluid().getTemperature();
     lastPressure = inletStream.getFluid().getPressure();
-    lastComposition = inletStream.getFluid().getMolarComposition();
+    lastComposition = inletStream.getFluid().getMolarComposition().clone();
     oldSplitFactor = Arrays.copyOf(splitFactor, splitFactor.length);
 
     setCalculationIdentifier(id);

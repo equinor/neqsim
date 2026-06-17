@@ -36,10 +36,9 @@ public class WilkeLeeDiffusivity extends Diffusivity {
   /** {@inheritDoc} */
   @Override
   public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
-    // method - estimation method
-    // if(method==? then)
-    // remember this is the Fick's diffusion coefficients
-    // to get the Maxwell-Stefan coefficient - multiply by gamma
+    // Wilke-Lee (1955) modification of Chapman-Enskog theory
+    // D_AB = [3.03 - (0.98 / sqrt(M_AB))] * 1e-3 * T^1.5 / (P * sqrt(M_AB) * sigma_AB^2 * Omega_D)
+    // where D_AB in cm²/s, T in K, P in atm, M_AB in g/mol, sigma_AB in Angstrom
     double A2 = 1.06036;
     double B2 = 0.15610;
     double C2 = 0.19300;
@@ -48,13 +47,18 @@ public class WilkeLeeDiffusivity extends Diffusivity {
     double F2 = 1.52996;
     double G2 = 1.76474;
     double H2 = 3.89411;
-    double tempVar2 = gasPhase.getPhase().getTemperature() / binaryEnergyParameter[i][j];
+    double T = gasPhase.getPhase().getTemperature();
+    double tempVar2 = T / binaryEnergyParameter[i][j];
     binaryLennardJonesOmega[i][j] = A2 / Math.pow(tempVar2, B2) + C2 / Math.exp(D2 * tempVar2)
         + E2 / Math.exp(F2 * tempVar2) + G2 / Math.exp(H2 * tempVar2);
-    binaryDiffusionCoefficients[i][j] = (3.03 - (0.98 / Math.sqrt(binaryMolecularMass[i][j]))
-        * 1.0e-3 * Math.pow(gasPhase.getPhase().getTemperature(), 1.5))
-        / (gasPhase.getPhase().getPressure() * Math.sqrt(binaryMolecularMass[i][j])
-            * Math.pow(binaryMolecularDiameter[i][j], 2.0) * binaryLennardJonesOmega[i][j]);
-    return binaryDiffusionCoefficients[i][j] * 1e-4;
+    // Note: the (3.03 - 0.98/sqrt(M_AB)) * 1e-3 is the Wilke-Lee prefactor replacing
+    // the Chapman-Enskog 0.00266 constant
+    binaryDiffusionCoefficients[i][j] =
+        (3.03 - 0.98 / Math.sqrt(binaryMolecularMass[i][j])) * 1.0e-3 * Math.pow(T, 1.5)
+            / (gasPhase.getPhase().getPressure() * Math.sqrt(binaryMolecularMass[i][j])
+                * Math.pow(binaryMolecularDiameter[i][j], 2.0) * binaryLennardJonesOmega[i][j]);
+    // Convert from cm²/s to m²/s
+    binaryDiffusionCoefficients[i][j] *= 1e-4;
+    return binaryDiffusionCoefficients[i][j];
   }
 }

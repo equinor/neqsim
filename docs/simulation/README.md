@@ -46,6 +46,15 @@ This folder contains guides for advanced process simulation topics including pro
 | [differentiable_thermodynamics.md](differentiable_thermodynamics) | Auto-differentiation for optimization |
 | [INTEGRATED_WORKFLOW_GUIDE.md](INTEGRATED_WORKFLOW_GUIDE) | Integrated workflow guide |
 
+
+### Process Automation Deep Dives
+
+| Document | Description |
+|----------|-------------|
+| [automation/automation_foundations.md](automation/automation_foundations) | Addressing, variable catalogs, unit handling, and safe accessor schema |
+| [automation/automation_integrations.md](automation/automation_integrations) | Multi-area patterns plus optimizer and digital-twin integration |
+| [automation/automation_operations.md](automation/automation_operations) | Diagnostics, bounds validation, and troubleshooting playbook |
+
 ### Equipment Modeling
 
 | Document | Description |

@@ -1,0 +1,137 @@
+# Geoenergy Science and Engineering — Journal Profile
+# Elsevier — ISSN: 2949-8910 (formerly Journal of Natural Gas Science and Engineering)
+# https://www.sciencedirect.com/journal/geoenergy-science-and-engineering
+
+journal_name: "Geoenergy Science and Engineering"
+journal_abbrev: "Geoenergy Sci. Eng."
+publisher: "Elsevier"
+issn: "2949-8910"
+eissn: "2949-8929"
+url: "https://www.sciencedirect.com/journal/geoenergy-science-and-engineering"
+submit_url: "https://www.editorialmanager.com/petrol/"
+impact_factor: 4.9
+citescore: 7.1
+former_name: "Journal of Natural Gas Science and Engineering"
+former_issn: "1875-5100"
+scope: >
+  Research on the exploration, development, and utilization of geoenergy
+  resources: natural gas, geothermal, hydrogen storage, and CO2 geological
+  storage. Covers reservoir engineering, flow assurance, well design,
+  processing, pipeline transport, subsea systems, and economics. The
+  journal rebranded in 2023 from JNGSE to include geothermal and subsurface
+  energy storage alongside petroleum and gas.
+
+# Structure
+abstract_words_max: 250
+keywords_min: 3
+keywords_max: 6
+section_order:
+  - Abstract
+  - Keywords
+  - Highlights
+  - Introduction
+  - Theory / Mathematical Framework
+  - Materials and Methods
+  - Results and Discussion
+  - Conclusions
+  - Nomenclature
+  - Acknowledgements
+  - CRediT Author Contributions
+  - Declaration of Competing Interest
+  - Declaration of Generative AI Use
+  - Data Availability
+  - References
+  - Appendices
+
+# Formatting
+latex_class: "elsarticle"
+latex_options: "review,3p"
+reference_style: "elsarticle-num"
+citation_style: "numbered"  # [1], [2], [3-5]
+figure_formats:
+  - "pdf"
+  - "eps"
+  - "tif"
+  - "png"
+  - "jpeg"
+figure_dpi_min: 300
+figure_dpi_line_art: 1000
+table_style: "three-line"
+equation_numbering: "sequential"
+line_numbering_required: true
+double_spacing_required: true
+
+# Requirements
+highlights_required: true
+highlights_max: 5
+highlights_min: 3
+highlights_max_chars_each: 85
+graphical_abstract_required: false
+cover_letter_required: true
+conflict_of_interest_required: true
+data_availability_required: true
+credit_statement_required: true
+ai_disclosure_required: true
+nomenclature_section: "optional"
+
+# Page/Content Limits
+pages_max: null
+figures_max: null
+tables_max: null
+references_max: null
+word_count_typical: "6000-12000"
+
+# Submission Types
+paper_types:
+  - "Research Article"
+  - "Review Article"
+  - "Short Communication"
+  - "Technical Note"
+
+# Peer Review
+peer_review_model: "single_anonymous"
+
+# Typical Topics for NeqSim Papers
+relevant_topics:
+  - "Natural gas processing and conditioning"
+  - "Gas dehydration (TEG, molecular sieves)"
+  - "Multiphase pipeline flow modeling"
+  - "Subsea production system design"
+  - "Gas hydrate prediction and management"
+  - "Wax and asphaltene deposition in pipelines"
+  - "Mineral scale prediction in produced water"
+  - "CO2 geological storage and injection"
+  - "Hydrogen underground storage"
+  - "Well design and casing integrity"
+  - "Digital twin applications in upstream operations"
+  - "Reservoir fluid characterization (PVT modeling)"
+  - "Gas condensate well deliverability"
+  - "Acid gas injection"
+  - "Geothermal energy extraction and reservoir modeling"
+
+# Distinctive Features
+distinctive_features:
+  - "Highest IF among petroleum/gas-focused journals (~4.9)"
+  - "Broader scope post-rebrand: gas + geothermal + H2 storage + CCS"
+  - "Strong home for process simulation + field application papers"
+  - "Accepts both fundamental and applied/case-study work"
+  - "Large readership in gas processing and subsea communities"
+  - "Good venue for multiphase flow, pipeline, and well design papers"
+
+# Key Policies
+policies:
+  ai_disclosure: "Must declare generative AI use in dedicated section"
+  preprints: "Allowed on recognized preprint servers"
+  data_sharing: "Encouraged via data repositories"
+  open_access: "Hybrid journal — gold OA option available"
+
+# Reviewer Expertise
+reviewer_expertise:
+  - "Natural gas processing and transport"
+  - "Reservoir engineering and PVT modeling"
+  - "Flow assurance (hydrate, wax, corrosion)"
+  - "Subsea production systems"
+  - "Well design and integrity"
+  - "CO2 storage and geothermal energy"
+  - "Pipeline and multiphase flow"
+  - "Digital twins and process simulation"

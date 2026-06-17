@@ -7,20 +7,20 @@ import org.apache.logging.log4j.Logger;
 /**
  * CPAContribution provides utility methods for CPA (Cubic Plus Association) calculations that are
  * common across different cubic EOS implementations (SRK-CPA, PR-CPA, UMR-CPA, etc.).
- * 
+ *
  * <p>
  * In CPA theory, the radial distribution function at contact is based on the Carnahan-Starling
  * hard-sphere model and is the same for all cubic equations of state. The formulas depend only on
  * the co-volume parameter (b) and volume, not on the attraction parameter (a) which differs between
  * SRK and PR.
  * </p>
- * 
+ *
  * <p>
  * This class provides methods for calculating the radial distribution function and its volume
  * derivatives, which can be used for verification and comparison between different CPA
  * implementations.
  * </p>
- * 
+ *
  * @author Even Solbraa
  * @version 1.0
  */
@@ -51,7 +51,7 @@ public class CPAContribution implements Serializable {
 
   /**
    * Calculate radial distribution function g at contact.
-   * 
+   *
    * <p>
    * Uses the simplified Carnahan-Starling expression: g = (2 - η/2) / (2 * (1 - η/2)³) where η =
    * b/(4V) is the packing fraction.
@@ -132,7 +132,7 @@ public class CPAContribution implements Serializable {
 
   /**
    * Calculate radial distribution function g given molar volume and molar b parameter.
-   * 
+   *
    * <p>
    * This is a static utility method for standalone calculations.
    * </p>

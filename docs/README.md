@@ -26,6 +26,7 @@ gas.setMixingRule("classic");
 // Perform flash calculation
 ThermodynamicOperations ops = new ThermodynamicOperations(gas);
 ops.TPflash();
+gas.initProperties();
 
 // Get properties
 System.out.println("Density: " + gas.getDensity("kg/m3") + " kg/m³");

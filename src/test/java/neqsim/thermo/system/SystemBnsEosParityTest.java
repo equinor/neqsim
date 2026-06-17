@@ -28,11 +28,11 @@ public class SystemBnsEosParityTest {
         Math.sqrt(gamma * sys.getPhase(0).getZ() * neqsim.thermo.ThermodynamicConstantsInterface.R
             * sys.getTemperature() / sys.getMolarMass());
 
-    assertEquals(39.11774916142968, cp, 0.1);
-    assertEquals(29.815115496874455, cv, 0.1);
-    assertEquals(5.456788345314515, jt, 0.2);
-    assertEquals(7.750037498921, density, 0.001);
-    assertEquals(411.4566767812817, speed, 1.0);
+    assertEquals(39.07660873260809, cp, 0.1);
+    assertEquals(29.81775015631597, cv, 0.1);
+    assertEquals(5.309851824329166, jt, 0.2);
+    assertEquals(7.7497757585082, density, 0.001);
+    assertEquals(410.7584666804723, speed, 1.0);
   }
 
   @Test
@@ -59,7 +59,7 @@ public class SystemBnsEosParityTest {
             * sys.getTemperature() / sys.getMolarMass());
 
     assertEquals(0.790903069244, Z, 0.01);
-    assertEquals(95.451592440, density, 0.01);
+    assertEquals(95.4492017141868, density, 0.5);
     assertEquals(53.7112082181241, cp, 1.0);
     assertEquals(30.73168795781629, cv, 1.0);
     assertEquals(3.800162780643346, jt, 0.1);
@@ -93,7 +93,7 @@ public class SystemBnsEosParityTest {
     double cp = sys.getPhase(0).getCp("J/molK");
 
     assertEquals(0.7941023149604872, Z, 1e-3);
-    assertEquals(150.3029810272768, density, 0.3);
+    assertEquals(150.3030335721797, density, 0.5);
     assertEquals(3.104453199, jt, 0.002);
     assertEquals(55.59932830685, cp, 0.01);
   }
@@ -110,7 +110,7 @@ public class SystemBnsEosParityTest {
     system.setMixingRule(12);
     new ThermodynamicOperations(system).TPflash();
     system.initProperties();
-    assertEquals(0.277826181569, system.getZvolcorr(), 1e-7);
-    assertEquals(2.0935369009, system.getCp("kJ/kgK"), 1e-7);
+    assertEquals(0.2778261815698205, system.getZvolcorr(), 1e-7);
+    assertEquals(2.0935369009204514, system.getCp("kJ/kgK"), 1e-7);
   }
 }

@@ -13,6 +13,7 @@ import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.heatexchanger.UtilityStreamSpecification;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.heatexchanger.TEMAStandard.TEMAClass;
 
 /**
  * Mechanical design for a generic heat exchanger. Provides detailed sizing estimates for supported
@@ -133,6 +134,25 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
   /** Baffle spacing as fraction of shell diameter (typically 0.2-1.0). */
   private double baffleSpacingRatio = 0.4;
 
+  // ============================================================================
+  // Material and NACE Parameters
+  // ============================================================================
+
+  /** Shell material grade for property lookup from HeatExchangerTubeMaterials table. */
+  private String shellMaterialGrade = "SA-516-70";
+
+  /** Tube material grade for property lookup from HeatExchangerTubeMaterials table. */
+  private String tubeMaterialGrade = "SA-179";
+
+  /** H2S partial pressure in bar for NACE sour service determination. */
+  private double h2sPartialPressure = 0.0;
+
+  /** Whether to perform NACE MR0175 sour service assessment. */
+  private boolean sourServiceAssessment = false;
+
+  /** Shell joint efficiency per ASME VIII (0.65-1.0). */
+  private double shellJointEfficiency = 0.85;
+
   /**
    * Ranking metric for automatic exchanger-type selection.
    */
@@ -149,8 +169,9 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
       new ArrayList<>(Arrays.asList(HeatExchangerType.values()));
   private SelectionCriterion selectionCriterion = SelectionCriterion.MIN_AREA;
   private HeatExchangerType manualSelection;
-  private List<HeatExchangerSizingResult> sizingResults = new ArrayList<>();
-  private HeatExchangerSizingResult selectedSizingResult;
+  private transient List<HeatExchangerSizingResult> sizingResults = new ArrayList<>();
+  private transient HeatExchangerSizingResult selectedSizingResult;
+  private transient ShellAndTubeDesignCalculator shellAndTubeCalculator;
 
   /**
    * Constructor for HeatExchangerMechanicalDesign.
@@ -192,6 +213,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
 
     selectPreferredResult();
     applySelectedSizing();
+    runShellAndTubeCalculator(equipment);
   }
 
   private void handleTwoStreamThermalData(HeatExchanger exchanger, double duty) {
@@ -1011,6 +1033,221 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    */
   public void setBaffleSpacingRatio(double ratio) {
     this.baffleSpacingRatio = ratio;
+  }
+
+  /**
+   * Runs the ShellAndTubeDesignCalculator with current settings to perform ASME VIII and NACE
+   * calculations.
+   *
+   * @param equipment the process equipment
+   */
+  private void runShellAndTubeCalculator(ProcessEquipmentInterface equipment) {
+    shellAndTubeCalculator = new ShellAndTubeDesignCalculator(equipment);
+    shellAndTubeCalculator.setTemaDesignation(getTemaDesignation());
+
+    TEMAClass temaClassEnum = TEMAClass.R;
+    if ("C".equals(temaClass)) {
+      temaClassEnum = TEMAClass.C;
+    } else if ("B".equals(temaClass)) {
+      temaClassEnum = TEMAClass.B;
+    }
+    shellAndTubeCalculator.setTemaClass(temaClassEnum);
+
+    // Transfer process conditions
+    double maxPressure = getMaxOperationPressure();
+    if (maxPressure > 0) {
+      shellAndTubeCalculator.setShellSidePressure(maxPressure * designPressureMargin);
+      shellAndTubeCalculator.setTubeSidePressure(maxPressure * designPressureMargin);
+    }
+    double maxTemp = getMaxOperationTemperature();
+    if (maxTemp > 0) {
+      shellAndTubeCalculator.setDesignTemperature(maxTemp - 273.15 + designTemperatureMarginC);
+    }
+
+    // Transfer area from sizing results
+    if (selectedSizingResult != null && selectedSizingResult.getRequiredArea() > 0) {
+      shellAndTubeCalculator.setRequiredArea(selectedSizingResult.getRequiredArea() * areaMargin);
+    }
+
+    // Transfer material grades
+    shellAndTubeCalculator.setShellMaterialGrade(shellMaterialGrade);
+    shellAndTubeCalculator.setTubeMaterialGrade(tubeMaterialGrade);
+    shellAndTubeCalculator.setShellJointEfficiency(shellJointEfficiency);
+
+    // Transfer NACE settings
+    shellAndTubeCalculator.setSourServiceAssessment(sourServiceAssessment);
+    shellAndTubeCalculator.setH2sPartialPressure(h2sPartialPressure);
+
+    // Transfer fluid properties from streams for thermal-hydraulic calculation
+    transferFluidProperties(equipment);
+
+    // Transfer fouling resistances
+    shellAndTubeCalculator.setFoulingTube(foulingResistanceTubeHC);
+    shellAndTubeCalculator.setFoulingShell(foulingResistanceShellHC);
+
+    // Run the full calculation
+    shellAndTubeCalculator.calculate();
+  }
+
+  /**
+   * Extracts fluid properties from the heat exchanger streams and passes them to the
+   * ShellAndTubeDesignCalculator for thermal-hydraulic analysis.
+   *
+   * @param equipment the process equipment
+   */
+  private void transferFluidProperties(ProcessEquipmentInterface equipment) {
+    if (!(equipment instanceof HeatExchanger)) {
+      return;
+    }
+
+    HeatExchanger hx = (HeatExchanger) equipment;
+
+    // Stream 0 = tube side (process), Stream 1 = shell side (utility)
+    try {
+      neqsim.process.equipment.stream.StreamInterface tubeStream = hx.getInStream(0);
+      if (tubeStream != null && tubeStream.getThermoSystem() != null) {
+        neqsim.thermo.system.SystemInterface tubeFluid = tubeStream.getThermoSystem();
+        tubeFluid.initProperties();
+        double density = tubeFluid.getDensity("kg/m3");
+        double viscosity = tubeFluid.getViscosity("kg/msec");
+        double cp = tubeFluid.getCp("J/kgK");
+        double conductivity = tubeFluid.getThermalConductivity("W/mK");
+        double massFlow = tubeFluid.getFlowRate("kg/sec");
+        boolean heating = false;
+        if (hx.getOutStream(0) != null) {
+          heating = hx.getOutStream(0).getTemperature() > tubeStream.getTemperature();
+        }
+        if (density > 0 && viscosity > 0 && cp > 0 && conductivity > 0 && massFlow > 0) {
+          shellAndTubeCalculator.setTubeSideFluidProperties(density, viscosity, cp, conductivity,
+              massFlow, heating);
+        }
+      }
+    } catch (Exception ex) {
+      // Fluid property extraction can fail for unconfigured streams
+    }
+
+    try {
+      neqsim.process.equipment.stream.StreamInterface shellStream = hx.getInStream(1);
+      if (shellStream != null && shellStream.getThermoSystem() != null) {
+        neqsim.thermo.system.SystemInterface shellFluid = shellStream.getThermoSystem();
+        shellFluid.initProperties();
+        double density = shellFluid.getDensity("kg/m3");
+        double viscosity = shellFluid.getViscosity("kg/msec");
+        double cp = shellFluid.getCp("J/kgK");
+        double conductivity = shellFluid.getThermalConductivity("W/mK");
+        double massFlow = shellFluid.getFlowRate("kg/sec");
+        if (density > 0 && viscosity > 0 && cp > 0 && conductivity > 0 && massFlow > 0) {
+          shellAndTubeCalculator.setShellSideFluidProperties(density, viscosity, cp, conductivity,
+              massFlow);
+        }
+      }
+    } catch (Exception ex) {
+      // Fluid property extraction can fail for unconfigured streams
+    }
+  }
+
+  /**
+   * Gets the ShellAndTubeDesignCalculator for accessing ASME VIII results, MAWP, hydro test, and
+   * NACE assessment.
+   *
+   * @return the calculator, or null if calcDesign has not been called
+   */
+  public ShellAndTubeDesignCalculator getShellAndTubeCalculator() {
+    return shellAndTubeCalculator;
+  }
+
+  // ============================================================================
+  // Material and NACE Getters/Setters
+  // ============================================================================
+
+  /**
+   * Gets the shell material grade.
+   *
+   * @return shell material grade (e.g., "SA-516-70")
+   */
+  public String getShellMaterialGrade() {
+    return shellMaterialGrade;
+  }
+
+  /**
+   * Sets the shell material grade for property lookup from HeatExchangerTubeMaterials.
+   *
+   * @param grade material grade
+   */
+  public void setShellMaterialGrade(String grade) {
+    this.shellMaterialGrade = grade;
+  }
+
+  /**
+   * Gets the tube material grade.
+   *
+   * @return tube material grade
+   */
+  public String getTubeMaterialGrade() {
+    return tubeMaterialGrade;
+  }
+
+  /**
+   * Sets the tube material grade for property lookup from HeatExchangerTubeMaterials.
+   *
+   * @param grade material grade (e.g., "SA-179", "SA-213-TP316")
+   */
+  public void setTubeMaterialGrade(String grade) {
+    this.tubeMaterialGrade = grade;
+  }
+
+  /**
+   * Gets the H2S partial pressure for sour service determination.
+   *
+   * @return H2S partial pressure in bar
+   */
+  public double getH2sPartialPressure() {
+    return h2sPartialPressure;
+  }
+
+  /**
+   * Sets the H2S partial pressure for NACE assessment.
+   *
+   * @param pressure H2S partial pressure in bar
+   */
+  public void setH2sPartialPressure(double pressure) {
+    this.h2sPartialPressure = pressure;
+  }
+
+  /**
+   * Gets whether NACE sour service assessment is enabled.
+   *
+   * @return true if enabled
+   */
+  public boolean isSourServiceAssessment() {
+    return sourServiceAssessment;
+  }
+
+  /**
+   * Enables or disables NACE MR0175 sour service assessment.
+   *
+   * @param enabled true to enable
+   */
+  public void setSourServiceAssessment(boolean enabled) {
+    this.sourServiceAssessment = enabled;
+  }
+
+  /**
+   * Gets the shell joint efficiency per ASME VIII.
+   *
+   * @return joint efficiency (0.65 to 1.0)
+   */
+  public double getShellJointEfficiency() {
+    return shellJointEfficiency;
+  }
+
+  /**
+   * Sets the shell joint efficiency per ASME VIII.
+   *
+   * @param efficiency joint efficiency (0.65 to 1.0)
+   */
+  public void setShellJointEfficiency(double efficiency) {
+    this.shellJointEfficiency = efficiency;
   }
 
   /**

@@ -1793,7 +1793,6 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     double maopVal = getMaop();
     String lowerUnit = unit.toLowerCase().trim();
     if ("mpa".equals(lowerUnit)) {
-      return maopVal;
     } else if ("bar".equals(lowerUnit) || "bara".equals(lowerUnit)) {
       return maopVal * 10;
     } else if ("psi".equals(lowerUnit) || "psig".equals(lowerUnit)) {

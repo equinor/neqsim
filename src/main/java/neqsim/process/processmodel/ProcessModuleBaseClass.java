@@ -205,7 +205,7 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public double getEntropyProduction(String unit) {
-    return 0.0;
+    return getOperations().getEntropyProduction(unit);
   }
 
   /** {@inheritDoc} */
@@ -217,7 +217,19 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public double getExergyChange(String unit, double surroundingTemperature) {
-    return 0.0;
+    return getOperations().getExergyChange(unit, surroundingTemperature);
+  }
+
+  /**
+   * Exergy destruction rate aggregated over all unit operations contained in this module.
+   *
+   * @param unit energy / power unit of the returned value
+   * @param surroundingTemperature dead-state temperature in K
+   * @return total exergy destruction in the requested unit
+   */
+  @Override
+  public double getExergyDestruction(String unit, double surroundingTemperature) {
+    return getOperations().getExergyDestruction(unit, surroundingTemperature);
   }
 
   /** {@inheritDoc} */

@@ -131,14 +131,6 @@ public class ComponentDesmukhMather extends ComponentGE {
     return fugacityCoefficient;
   }
 
-  /**
-   * Getter for property lngamma.
-   *
-   * @return Value of property lngamma.
-   */
-  public double getLngamma() {
-    return lngamma;
-  }
 
   /** {@inheritDoc} */
   @Override

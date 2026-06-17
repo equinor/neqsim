@@ -1,6 +1,7 @@
 ---
 title: Heat Exchanger Equipment
 description: Documentation for heat transfer equipment in NeqSim process simulation.
+keywords: "heat exchanger, heater, cooler, shell and tube, plate, TEMA, LMTD, UA, duty, condenser, reboiler, intercooler, aftercooler, air cooler"
 ---
 
 # Heat Exchanger Equipment
@@ -12,6 +13,15 @@ Documentation for heat transfer equipment in NeqSim process simulation.
 - [Equipment Types](#equipment-types)
 - [Usage Examples](#usage-examples)
 - [Heat Exchanger Networks](#heat-exchanger-networks)
+
+> **Thermal-Hydraulic Design:** For detailed tube-side/shell-side HTC calculations,
+> pressure drops, LMTD correction factors, Bell-Delaware method, vibration screening,
+> and rating mode, see the
+> [Thermal-Hydraulic Design Guide](../mechanical_design/thermal_hydraulic_design).
+
+> **Two-Phase Services:** For condensation, boiling, two-phase pressure drop,
+> dynamic fouling, and tube insert enhancement, see the
+> [Two-Phase Heat Transfer Guide](../mechanical_design/two_phase_heat_transfer).
 
 ---
 
@@ -246,6 +256,31 @@ System.out.println("Trim cooler duty: " + trimDuty + " MW");
 HeatExchanger hx = new HeatExchanger("E-400", hotIn, coldIn);
 hx.setUAvalue(ua);
 hx.run();
+```
+
+### Thermal-Hydraulic Design (Shell-and-Tube)
+
+For rigorous tube-side and shell-side heat transfer coefficient calculations,
+pressure drops, LMTD correction factors, Bell-Delaware method, flow-induced
+vibration screening, and TEMA-level mechanical design, see the dedicated guide:
+
+> **[Thermal-Hydraulic Design Guide](../mechanical_design/thermal_hydraulic_design)**
+
+Key classes in `neqsim.process.mechanicaldesign.heatexchanger`:
+
+| Class | Purpose |
+|-------|---------|
+| `ThermalDesignCalculator` | Tube/shell-side HTCs (Gnielinski, Kern, Bell-Delaware), overall U, pressure drops |
+| `BellDelawareMethod` | Shell-side HTC with J-factor corrections (Jc, Jl, Jb, Js, Jr) |
+| `LMTDcorrectionFactor` | F_t for multi-pass configurations (Bowman-Mueller-Nagle 1940) |
+| `VibrationAnalysis` | Vortex shedding, fluid-elastic instability, acoustic resonance per TEMA RCB-4.6 |
+| `ShellAndTubeDesignCalculator` | Full TEMA + ASME VIII Div.1 design with NACE sour service, cost, BOM |
+
+### Mechanical Design
+
+For equipment sizing (area, weight, type selection), see:
+
+> **[Heat Exchanger Mechanical Design](../../wiki/heat_exchanger_mechanical_design)**
 
 double LMTD = hx.getLMTD();
 double duty = hx.getDuty();

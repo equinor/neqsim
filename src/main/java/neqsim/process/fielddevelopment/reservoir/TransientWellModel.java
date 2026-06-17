@@ -45,7 +45,7 @@ import java.util.List;
  * </p>
  *
  * <h2>Usage Example - Drawdown Analysis</h2>
- * 
+ *
  * <pre>{@code
  * TransientWellModel well = new TransientWellModel();
  * well.setReservoirPressure(250.0, "bara");
@@ -56,19 +56,19 @@ import java.util.List;
  * well.setFluidViscosity(0.5, "cP");
  * well.setWellboreRadius(0.1, "m");
  * well.setSkinFactor(2.0);
- * 
+ *
  * // Calculate flowing pressure after 10 hours at 1000 Sm3/day
  * DrawdownResult result = well.calculateDrawdown(1000.0, 10.0);
  * System.out.println("Pwf after 10 hours: " + result.flowingPressure + " bara");
  * }</pre>
  *
  * <h2>Usage Example - Buildup Analysis (Horner Method)</h2>
- * 
+ *
  * <pre>{@code
  * // Well flowed at 1500 Sm3/day for 100 hours before shut-in
  * well.addRateChange(0.0, 1500.0); // Start production
  * well.addRateChange(100.0, 0.0); // Shut-in
- * 
+ *
  * BuildupResult buildup = well.calculateBuildup(24.0); // After 24 hrs shut-in
  * System.out.println("Pws: " + buildup.shutInPressure + " bara");
  * System.out.println("Permeability from slope: " + buildup.permeabilityFromSlope + " mD");

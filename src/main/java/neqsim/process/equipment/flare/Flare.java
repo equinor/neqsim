@@ -92,7 +92,7 @@ public class Flare extends TwoPortEquipment {
 
   /**
    * Update cumulative values for dynamic/transient operation.
-   * 
+   *
    * @param timeStep time step in seconds
    */
   public void updateCumulative(double timeStep) {
@@ -123,7 +123,7 @@ public class Flare extends TwoPortEquipment {
 
   /**
    * Get cumulative heat released.
-   * 
+   *
    * @param unit engineering unit, e.g. "GJ", "MJ", "MMBtu"
    * @return cumulative heat released in specified unit
    */
@@ -141,7 +141,7 @@ public class Flare extends TwoPortEquipment {
 
   /**
    * Get cumulative gas burned.
-   * 
+   *
    * @param unit engineering unit, e.g. "kg", "tonnes"
    * @return cumulative gas burned in specified unit
    */
@@ -157,7 +157,7 @@ public class Flare extends TwoPortEquipment {
 
   /**
    * Get cumulative CO2 emissions.
-   * 
+   *
    * @param unit engineering unit, e.g. "kg", "tonnes"
    * @return cumulative CO2 emissions in specified unit
    */
@@ -173,7 +173,7 @@ public class Flare extends TwoPortEquipment {
 
   /**
    * Get total transient simulation time tracked.
-   * 
+   *
    * @return time in seconds
    */
   public double getTransientTime() {
@@ -187,6 +187,18 @@ public class Flare extends TwoPortEquipment {
    */
   public double getHeatDuty() {
     return heatDuty;
+  }
+
+  /**
+   * Gets the lower calorific value of the inlet gas in J/kg.
+   *
+   * @return LCV in J/kg, or 0 if inlet stream is not set
+   */
+  public double getLCV() {
+    if (inStream != null) {
+      return inStream.LCV();
+    }
+    return 0.0;
   }
 
   /**

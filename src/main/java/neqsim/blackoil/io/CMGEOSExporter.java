@@ -34,7 +34,7 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * {@code
  * SystemInterface fluid = new SystemSrkEos(373.15, 200.0);
@@ -57,11 +57,11 @@ public final class CMGEOSExporter {
    * CMG Simulator target.
    */
   public enum Simulator {
-    /** IMEX - Black oil simulator */
+    /** IMEX - Black oil simulator. */
     IMEX,
-    /** GEM - Compositional simulator */
+    /** GEM - Compositional simulator. */
     GEM,
-    /** STARS - Thermal/advanced processes simulator */
+    /** STARS - Thermal/advanced processes simulator. */
     STARS
   }
 
@@ -69,9 +69,9 @@ public final class CMGEOSExporter {
    * Unit system for CMG export.
    */
   public enum Units {
-    /** SI units: kPa, kg/m³, m³/m³, mPa·s */
+    /** SI units: kPa, kg/m³, m³/m³, mPa·s. */
     SI,
-    /** Field units: psia, lb/ft³, scf/stb, cp */
+    /** Field units: psia, lb/ft³, scf/stb, cp. */
     FIELD
   }
 

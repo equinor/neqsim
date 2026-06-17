@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Tests for viscosity correction feature in PumpChart.
- * 
+ *
  * <p>
  * Tests the Hydraulic Institute (HI) method for correcting pump performance when pumping viscous
  * fluids.

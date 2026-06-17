@@ -45,7 +45,7 @@ NeqSim provides a comprehensive **Digital Field Twin** capability that links fie
 
 ```java
 // Create unified model from reservoir to export
-FieldConcept concept = FieldConcept.builder("Johan Sverdrup Phase 2")
+FieldConcept concept = FieldConcept.builder("Offshore Development Phase 2")
     .reservoir(ReservoirInput.builder()
         .fluidType(FluidType.MEDIUM_OIL)
         .gor(150.0)                    // Sm³/Sm³
@@ -407,7 +407,7 @@ BatchResults results = runner.runParallel(4);
 
 // Compare KPIs
 for (ConceptKPIs kpis : results.getAllKpis()) {
-    System.out.println(kpis.getConceptName() + ": NPV = " + kpis.getNpv() 
+    System.out.println(kpis.getConceptName() + ": NPV = " + kpis.getNpv()
         + " MUSD, CO2 = " + kpis.getCo2Intensity() + " kg/boe");
 }
 
@@ -533,7 +533,7 @@ liftScreener.setCurrentConditions(
 
 List<MethodResult> liftOptions = liftScreener.screenAllMethods();
 for (MethodResult option : liftOptions) {
-    System.out.println(option.getMethod() + ": " 
+    System.out.println(option.getMethod() + ": "
         + (option.isFeasible() ? "Feasible" : "Not feasible")
         + " - " + option.getRationale());
 }
@@ -704,16 +704,16 @@ Each SURF equipment type has a dedicated mechanical design class:
 ```java
 // Tree Mechanical Design
 tree.initMechanicalDesign();
-SubseaTreeMechanicalDesign treeDesign = 
+SubseaTreeMechanicalDesign treeDesign =
     (SubseaTreeMechanicalDesign) tree.getMechanicalDesign();
 treeDesign.setMaxOperationPressure(690.0);
 treeDesign.setDesignStandardCode("API-17D");
 treeDesign.setRegion(SubseaCostEstimator.Region.NORWAY);
 treeDesign.calcDesign();
 
-// PLET Mechanical Design  
+// PLET Mechanical Design
 exportPLET.initMechanicalDesign();
-PLETMechanicalDesign pletDesign = 
+PLETMechanicalDesign pletDesign =
     (PLETMechanicalDesign) exportPLET.getMechanicalDesign();
 pletDesign.setMaxOperationPressure(250.0);
 pletDesign.setMaterialGrade("X65");
@@ -730,7 +730,7 @@ System.out.println("Required Mudmat Area: " + mudmatArea + " m²");
 
 // Flexible Pipe Design
 riser.initMechanicalDesign();
-FlexiblePipeMechanicalDesign riserDesign = 
+FlexiblePipeMechanicalDesign riserDesign =
     (FlexiblePipeMechanicalDesign) riser.getMechanicalDesign();
 riserDesign.setMaxOperationPressure(200.0);
 riserDesign.setDesignStandardCode("API-17J");
@@ -758,7 +758,7 @@ estimator.calculatePLETCost(
 );
 double pletCost = estimator.getTotalCost();
 
-// Tree Cost  
+// Tree Cost
 estimator.calculateTreeCost(
     10000.0,   // pressure rating (psi)
     7.0,       // bore size (inches)
@@ -807,7 +807,7 @@ SubseaCostEstimator.Region[] regions = SubseaCostEstimator.Region.values();
 for (SubseaCostEstimator.Region region : regions) {
     SubseaCostEstimator regional = new SubseaCostEstimator(region);
     regional.calculateManifoldCost(6, 80.0, 400.0, true);
-    System.out.println(region.name() + ": $" + 
+    System.out.println(region.name() + ": $" +
         String.format("%,.0f", regional.getTotalCost()));
 }
 ```
@@ -822,16 +822,16 @@ design.calcDesign();
 
 // Cost breakdown
 Map<String, Object> costBreakdown = design.getCostBreakdown();
-System.out.println("Equipment Cost: $" + 
+System.out.println("Equipment Cost: $" +
     ((Map)costBreakdown.get("directCosts")).get("equipmentCostUSD"));
-System.out.println("Installation Cost: $" + 
+System.out.println("Installation Cost: $" +
     ((Map)costBreakdown.get("directCosts")).get("installationCostUSD"));
 System.out.println("Total Cost: $" + costBreakdown.get("totalCostUSD"));
 
 // Bill of Materials
 List<Map<String, Object>> bom = design.generateBillOfMaterials();
 for (Map<String, Object> item : bom) {
-    System.out.println(item.get("item") + ": " + 
+    System.out.println(item.get("item") + ": " +
         item.get("quantity") + " " + item.get("unit") +
         " @ $" + item.get("unitCost"));
 }
@@ -896,7 +896,7 @@ evaluator.setSubseaSystem(subseaSystem);
 ConceptKPIs kpis = evaluator.evaluate(concept);
 System.out.println("NPV: $" + String.format("%,.0f", kpis.getNpv()) + " MUSD");
 System.out.println("IRR: " + String.format("%.1f", kpis.getIrr() * 100) + "%");
-System.out.println("Breakeven Oil Price: $" + 
+System.out.println("Breakeven Oil Price: $" +
     String.format("%.1f", kpis.getBreakevenOilPrice()) + "/bbl");
 ```
 

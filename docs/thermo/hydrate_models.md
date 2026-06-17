@@ -1,6 +1,7 @@
 ---
 title: "Hydrate Models in NeqSim"
 description: "This document describes the gas hydrate thermodynamic models implemented in NeqSim for predicting hydrate formation, stability, and phase equilibrium."
+keywords: "hydrate, gas hydrate, hydrate formation, hydrate curve, hydrate inhibitor, MEG, methanol, flow assurance, van der Waals, Platteeuw, hydrate equilibrium"
 ---
 
 # Hydrate Models in NeqSim
@@ -338,7 +339,7 @@ for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
         ComponentHydrate comp = (ComponentHydrate) hydratePhase.getComponent(i);
         double smallCavity = comp.calcYKI(0, 0, hydratePhase);  // Structure I, small cavity
         double largeCavity = comp.calcYKI(0, 1, hydratePhase);  // Structure I, large cavity
-        System.out.println(comp.getName() + 
+        System.out.println(comp.getName() +
             " - Small: " + smallCavity + ", Large: " + largeCavity);
     }
 }

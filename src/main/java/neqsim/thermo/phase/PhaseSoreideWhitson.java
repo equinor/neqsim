@@ -17,7 +17,6 @@ public class PhaseSoreideWhitson extends PhasePrEos {
    * Constructs a PhaseSoreideWhitson object and initializes EoS parameters.
    */
   public PhaseSoreideWhitson() {
-    super();
     thermoPropertyModelName = "Soreide-Whitson-PR-EoS";
   }
 

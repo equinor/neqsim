@@ -28,20 +28,20 @@ import neqsim.process.util.optimizer.ProductionImpactResult;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * OperationalRiskSimulator simulator = new OperationalRiskSimulator(processSystem);
  * simulator.setFeedStreamName("Well Feed");
  * simulator.setProductStreamName("Export Gas");
- * 
+ *
  * // Add equipment with failure rates
  * simulator.addEquipmentReliability("HP Compressor", 0.02, 24.0); // 2% failures/year, 24hr MTTR
  * simulator.addEquipmentReliability("LP Compressor", 0.02, 24.0);
- * 
+ *
  * // Run simulation
  * OperationalRiskResult result = simulator.runSimulation(1000, 365.0); // 1000 iterations, 1 year
- * 
+ *
  * System.out.println("Expected Availability: " + result.getAvailability() + "%");
  * System.out.println("P50 Production: " + result.getP50Production() + " kg");
  * }

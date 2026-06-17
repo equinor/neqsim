@@ -325,4 +325,153 @@ public class TurboExpanderCompressorTest {
     Assertions.assertEquals(compressorInletFlow, compressorOutletFlow, 1e-6);
     Assertions.assertEquals(0.0, turboExpander.getMassBalance("kg/hr"), 1e-6);
   }
+
+  /**
+   * Build a fully configured TurboExpanderCompressor matching the reference test cases (curves,
+   * impeller, speed, design efficiencies). The expander feed and compressor feed streams are
+   * created internally so each invocation is independent.
+   *
+   * @return a configured TurboExpanderCompressor ready to run
+   */
+  private TurboExpanderCompressor buildReferenceMachine() {
+    neqsim.thermo.system.SystemInterface feedGas =
+        new neqsim.thermo.system.SystemSrkEos(273.15 + 42.0, 10.00);
+    feedGas.addComponent("nitrogen", 0.006);
+    feedGas.addComponent("CO2", 0.014);
+    feedGas.addComponent("methane", 0.862);
+    feedGas.addComponent("ethane", 0.08);
+    feedGas.addComponent("propane", 0.03);
+    feedGas.addComponent("i-butane", 0.0024);
+    feedGas.addComponent("n-butane", 0.004);
+    feedGas.addComponent("n-hexane", 0.0015);
+    feedGas.setMixingRule(2);
+    feedGas.init(0);
+
+    Stream feedStream = new Stream("dry feed gas Smorbukk", feedGas);
+    feedStream.setFlowRate(456000.0, "kg/hr");
+    feedStream.setTemperature(-23.0, "C");
+    feedStream.setPressure(60.95, "bara");
+    feedStream.run();
+
+    Stream feedStream2 = new Stream("dry feed gas Smorbukk2", feedGas.clone());
+    feedStream2.setFlowRate(423448.0, "kg/hr");
+    feedStream2.setTemperature(17.0, "C");
+    feedStream2.setPressure(42.0, "bara");
+    feedStream2.run();
+
+    TurboExpanderCompressor turboExpander =
+        new TurboExpanderCompressor("TurboExpander", feedStream);
+    turboExpander.setCompressorFeedStream(feedStream2);
+
+    turboExpander.setUCcurve(
+        new double[] {0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
+            0.9552460269880922, 1.0},
+        new double[] {0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364,
+            0.9943181818181818, 1.0});
+
+    turboExpander.setQNEfficiencycurve(new double[] {0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6},
+        new double[] {0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6});
+
+    turboExpander.setQNHeadcurve(new double[] {0.5, 0.8, 1.0, 1.2, 1.4, 1.6},
+        new double[] {1.1, 1.05, 1.0, 0.9, 0.7, 0.4});
+
+    turboExpander.setImpellerDiameter(0.424); // m
+    turboExpander.setDesignSpeed(6850.0); // rpm
+    turboExpander.setExpanderDesignIsentropicEfficiency(0.88);
+    turboExpander.setDesignUC(0.7); // m/s
+    turboExpander.setDesignQn(0.03328);
+    turboExpander.setExpanderOutPressure(42.0);
+    turboExpander.setCompressorDesignPolytropicEfficiency(0.81);
+    turboExpander.setCompressorDesignPolytropicHead(20.47); // kJ/kg
+    turboExpander.setMaximumIGVArea(1.637e4); // mm2
+    return turboExpander;
+  }
+
+  /**
+   * Round-trip consistency test for the expander outlet-temperature specification.
+   *
+   * <p>
+   * First the machine is run in the standard mode with a fixed design isentropic efficiency,
+   * yielding an outlet temperature and an actual (off-design) isentropic efficiency. Then a second
+   * identical machine is run with the outlet temperature specified to exactly that value. The
+   * solver must:
+   * </p>
+   *
+   * <ul>
+   * <li>reproduce the target outlet temperature,</li>
+   * <li>back-calculate the original design isentropic efficiency,</li>
+   * <li>and reproduce the same actual isentropic efficiency, speed, and power.</li>
+   * </ul>
+   */
+  @Test
+  void testOutletTemperatureSpecConsistency() {
+    // --- Forward run: design efficiency given, outlet temperature is a result ---
+    TurboExpanderCompressor machineA = buildReferenceMachine();
+    machineA.run();
+
+    double targetOutT = machineA.getExpanderOutletStream().getTemperature("C");
+    double actualEta = machineA.getExpanderIsentropicEfficiency();
+    double designEta = machineA.getExpanderDesignIsentropicEfficiency();
+    double speed = machineA.getSpeed();
+    double powerExp = machineA.getPowerExpander();
+
+    Assertions.assertEquals(0.88, designEta, 1e-9,
+        "Forward run should keep the specified design efficiency");
+
+    // --- Inverse run: outlet temperature specified, design efficiency is back-calculated ---
+    TurboExpanderCompressor machineB = buildReferenceMachine();
+    machineB.setExpanderOutTemperature(targetOutT, "C");
+    Assertions.assertTrue(machineB.isUseOutTemperatureSpec());
+    machineB.run();
+
+    // 1) Outlet temperature must match the requested target.
+    Assertions.assertEquals(targetOutT, machineB.getExpanderOutletStream().getTemperature("C"),
+        1e-2, "Specified outlet temperature must be reproduced");
+
+    // 2) Back-calculated design efficiency must equal the original design efficiency.
+    Assertions.assertEquals(designEta, machineB.getExpanderDesignIsentropicEfficiency(), 1e-3,
+        "Back-calculated design efficiency must match the forward design efficiency");
+
+    // 3) Actual efficiency, speed and power must be the same in both directions.
+    Assertions.assertEquals(actualEta, machineB.getExpanderIsentropicEfficiency(), 1e-3);
+    Assertions.assertEquals(speed, machineB.getSpeed(), 1.0);
+    Assertions.assertEquals(powerExp, machineB.getPowerExpander(), powerExp * 1e-3);
+
+    // Toggle the spec off again -> behaves like the standard machine.
+    machineB.setUseOutTemperatureSpec(false);
+    Assertions.assertFalse(machineB.isUseOutTemperatureSpec());
+  }
+
+  /**
+   * Verify that requesting a different outlet temperature changes the implied design efficiency in
+   * the physically expected direction: a warmer outlet temperature (less cooling) corresponds to a
+   * lower expander efficiency, and a colder outlet temperature corresponds to a higher efficiency.
+   */
+  @Test
+  void testOutletTemperatureSpecMonotonic() {
+    TurboExpanderCompressor baseline = buildReferenceMachine();
+    baseline.run();
+    double baseOutT = baseline.getExpanderOutletStream().getTemperature("C");
+    double baseDesignEta = baseline.getExpanderDesignIsentropicEfficiency();
+
+    // Warmer outlet (less work extracted) -> lower efficiency.
+    TurboExpanderCompressor warmer = buildReferenceMachine();
+    warmer.setExpanderOutTemperature(baseOutT + 3.0, "C");
+    warmer.run();
+    Assertions.assertEquals(baseOutT + 3.0, warmer.getExpanderOutletStream().getTemperature("C"),
+        1e-2);
+    Assertions.assertTrue(warmer.getExpanderDesignIsentropicEfficiency() < baseDesignEta,
+        "Warmer outlet must imply a lower design efficiency");
+
+    // Colder outlet (more work extracted) -> higher efficiency.
+    TurboExpanderCompressor colder = buildReferenceMachine();
+    colder.setExpanderOutTemperature(baseOutT - 3.0, "C");
+    colder.run();
+    Assertions.assertEquals(baseOutT - 3.0, colder.getExpanderOutletStream().getTemperature("C"),
+        1e-2);
+    Assertions.assertTrue(colder.getExpanderDesignIsentropicEfficiency() > baseDesignEta,
+        "Colder outlet must imply a higher design efficiency");
+  }
 }
+
+

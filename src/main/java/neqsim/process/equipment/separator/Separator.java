@@ -29,8 +29,12 @@ import neqsim.process.equipment.separator.sectiontype.NozzleSection;
 import neqsim.process.equipment.separator.sectiontype.SeparatorSection;
 import neqsim.process.equipment.separator.sectiontype.ValveSection;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.electricaldesign.separator.SeparatorElectricalDesign;
+import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
+import neqsim.process.equipment.separator.entrainment.MultiphaseFlowRegime;
+import neqsim.process.equipment.separator.entrainment.SeparatorPerformanceCalculator;
 import neqsim.process.instrumentdesign.separator.SeparatorInstrumentDesign;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
 import neqsim.process.ml.StateVector;
@@ -98,6 +102,50 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class Separator extends ProcessEquipmentBaseClass
     implements SeparatorInterface, StateVectorProvider, CapacityConstrainedEquipment, AutoSizeable {
+  /**
+   * Lazily initializes {@link #gasOutStream} and {@link #liquidOutStream} from the inlet stream
+   * mixer if they have not yet been created.
+   *
+   * <p>
+   * The constructor {@code Separator(String name)} does not create the gas/liquid outlet streams —
+   * they are normally created by {@link #setInletStream(StreamInterface)}. Some construction paths
+   * (notably the JSON process builder used by the MCP server's {@code runDynamic} tool, and code
+   * that takes a separator's outlet stream before any inlet has been wired) can therefore trigger
+   * an NPE when the dynamic engine calls {@link #runTransient(double, UUID)} or when downstream
+   * equipment dereferences {@code separator.getGasOutStream().getFluid()}.
+   * </p>
+   *
+   * <p>
+   * This helper makes that initialization defensive: if at least one inlet stream is present in
+   * {@link #inletStreamMixer}, both outlet streams are created from a clone of the first inlet's
+   * thermo system. If no inlet has been wired, an {@link IllegalStateException} with an actionable
+   * message is thrown instead of a silent NPE further down the call stack.
+   * </p>
+   */
+  private void ensureOutputStreamsInitialized() {
+    if (gasOutStream != null && liquidOutStream != null) {
+      return;
+    }
+    if (inletStreamMixer.getNumberOfInputStreams() == 0) {
+      throw new IllegalStateException("Separator '" + getName()
+          + "' has no inlet stream — gas/liquid outlet streams cannot be initialized. Wire an"
+          + " inlet via setInletStream(...) (Java) or the 'inlet' field on the separator (JSON"
+          + " process builder) before accessing gasOutStream/liquidOutStream or running transient.");
+    }
+    StreamInterface inlet = inletStreamMixer.getStream(0);
+    SystemInterface inletFluid = inlet.getThermoSystem();
+    if (inletFluid == null) {
+      throw new IllegalStateException("Separator '" + getName() + "' inlet stream '"
+          + inlet.getName() + "' has no thermo system — cannot initialize outlet streams.");
+    }
+    if (gasOutStream == null) {
+      gasOutStream = new Stream("gasOutStream", inletFluid.clone());
+    }
+    if (liquidOutStream == null) {
+      liquidOutStream = new Stream("liquidOutStream", inletFluid.clone());
+    }
+  }
+
   /**
    * Initializes separator for transient calculations.
    */
@@ -181,14 +229,10 @@ public class Separator extends ProcessEquipmentBaseClass
   private double gasInLiquid = 0.0;
   private String gasInLiquidSpec = "mole";
 
-  /** Length of separator volume. */
-  private double separatorLength = 5.0;
-  /** Inner diameter/height of separator volume. */
-  private double internalDiameter = 1.0;
-  private double internalRadius = internalDiameter / 2;
-
-  /** Liquid level height in meters (default set to 50% of internal diameter). */
-  protected double liquidLevel = 0.5 * internalDiameter;
+  /**
+   * Liquid level height in meters. Initialised to 50% of internal diameter during construction.
+   */
+  protected double liquidLevel = 0.0;
 
   private static final double MIN_HEADSPACE_FRACTION = 0.05;
   private static final double MIN_HEADSPACE_VOLUME = 1.0e-6;
@@ -198,12 +242,6 @@ public class Separator extends ProcessEquipmentBaseClass
    * water density for conservative sizing.
    */
   public static final double DEFAULT_LIQUID_DENSITY_FOR_SIZING = 1000.0;
-
-  /** Separator cross sectional area. */
-  private double sepCrossArea = Math.PI * internalDiameter * internalDiameter / 4.0;
-
-  /** Separator volume. */
-  private double separatorVolume = sepCrossArea * separatorLength;
 
   double liquidVolume;
   double gasVolume;
@@ -233,6 +271,18 @@ public class Separator extends ProcessEquipmentBaseClass
   private double designLiquidLevelFraction = 0.8;
   /** Maximum gas volumetric flow rate from design [m3/s]. */
   private double maxDesignGasFlowRate = Double.MAX_VALUE;
+
+  // Separator internals parameters
+  /** Weir height in meters — liquid spills over the weir to the outlet. */
+  private double weirHeight = 0.0;
+  /** Weir length (crest length) in meters across the separator. */
+  private double weirLength = 0.0;
+  /** Boot (sump) volume in m3 for water/heavy liquid collection. */
+  private double bootVolume = 0.0;
+  /** Mist eliminator pressure drop coefficient (dP = coeff * rho * v^2 / 2). */
+  private double mistEliminatorDpCoeff = 0.0;
+  /** Mist eliminator thickness in meters. */
+  private double mistEliminatorThickness = 0.0;
   /** Whether to enforce capacity limits during simulation. */
   private boolean enforceCapacityLimits = false;
 
@@ -241,16 +291,34 @@ public class Separator extends ProcessEquipmentBaseClass
       new LinkedHashMap<String, CapacityConstraint>();
 
   /**
+   * Optional detailed performance calculator using droplet size distributions and grade efficiency
+   * curves. When enabled, this replaces the simple entrainment fractions with physics-based
+   * calculations. Marked transient because it is not serializable by default.
+   */
+  private transient SeparatorPerformanceCalculator performanceCalculator;
+
+  /**
+   * Whether to use the detailed performance calculator for entrainment computation. When false
+   * (default), the simple entrainment fraction model is used.
+   */
+  private boolean useDetailedEntrainmentCalculation = false;
+
+  /**
    * Constructor for Separator.
    *
    * @param name Name of separator
    */
   public Separator(String name) {
     super(name);
+    initMechanicalDesign();
+    // Set backward-compatible geometry defaults on MechanicalDesign (single source
+    // of truth)
+    separatorMechanicalDesign.setInnerDiameter(1.0);
+    separatorMechanicalDesign.setTantanLength(5.0);
+    liquidLevel = 0.5 * getInternalDiameter();
     liquidVolume = calcLiquidVolume();
     enforceHeadspace();
     setCalculateSteadyState(true);
-    initMechanicalDesign();
     initElectricalDesign();
     initInstrumentDesign();
     initializeCapacityConstraints();
@@ -277,7 +345,16 @@ public class Separator extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public void initMechanicalDesign() {
+    // Preserve existing geometry when re-initializing
+    double prevDiameter = getInternalDiameter();
+    double prevLength = getSeparatorLength();
     separatorMechanicalDesign = new SeparatorMechanicalDesign(this);
+    if (prevDiameter > 0) {
+      separatorMechanicalDesign.setInnerDiameter(prevDiameter);
+    }
+    if (prevLength > 0) {
+      separatorMechanicalDesign.setTantanLength(prevLength);
+    }
   }
 
   /** {@inheritDoc} */
@@ -346,6 +423,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public StreamInterface getLiquidOutStream() {
+    ensureOutputStreamsInitialized();
     if (liquidOutStream.getFluid().getClass().getName()
         .equals("neqsim.thermo.system.SystemSoreideWhitson")) {
       if (!liquidOutStream.getFluid().hasPhaseType("aqueous")) {
@@ -363,6 +441,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public StreamInterface getGasOutStream() {
+    ensureOutputStreamsInitialized();
     if (gasOutStream.getFluid().getClass().getName()
         .equals("neqsim.thermo.system.SystemSoreideWhitson")) {
       // if the fluid is a soreide whitson system, we need to clone it to avoid
@@ -415,6 +494,28 @@ public class Separator extends ProcessEquipmentBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit,
+      String pressureUnit, String flowUnit) {
+    Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
+    if (gasOutStream != null) {
+      state.put("gas flow",
+          ProcessEquipmentInterface.createStateEntry(gasOutStream.getFlowRate(flowUnit), flowUnit));
+    }
+    if (liquidOutStream != null) {
+      state.put("liquid flow", ProcessEquipmentInterface
+          .createStateEntry(liquidOutStream.getFlowRate(flowUnit), flowUnit));
+    }
+    if (gasOutStream != null) {
+      state.put("pressure", ProcessEquipmentInterface
+          .createStateEntry(gasOutStream.getPressure(pressureUnit), pressureUnit));
+      state.put("temperature", ProcessEquipmentInterface
+          .createStateEntry(gasOutStream.getTemperature(temperatureUnit), temperatureUnit));
+    }
+    return state;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public SystemInterface getThermoSystem() {
     return thermoSystem;
   }
@@ -447,16 +548,103 @@ public class Separator extends ProcessEquipmentBaseClass
     }
   }
 
+  /**
+   * Updates the entrainment fractions from the detailed performance calculator. Called during
+   * {@code run()} when detailed entrainment calculation is enabled. Extracts fluid properties from
+   * the flashed thermodynamic system and runs the performance calculator.
+   */
+  protected void updateEntrainmentFromPerformanceCalculator() {
+    thermoSystem2.initPhysicalProperties();
+
+    double gasDensity = 0.0;
+    double gasViscosity = 0.0;
+    double oilDensity = 0.0;
+    double oilViscosity = 0.0;
+    double waterDensity = 0.0;
+    double waterViscosity = 0.0;
+
+    if (thermoSystem2.hasPhaseType("gas")) {
+      gasDensity = thermoSystem2.getPhase("gas").getPhysicalProperties().getDensity();
+      gasViscosity = thermoSystem2.getPhase("gas").getPhysicalProperties().getViscosity();
+    }
+    if (thermoSystem2.hasPhaseType("oil")) {
+      oilDensity = thermoSystem2.getPhase("oil").getPhysicalProperties().getDensity();
+      oilViscosity = thermoSystem2.getPhase("oil").getPhysicalProperties().getViscosity();
+    }
+    if (thermoSystem2.hasPhaseType("aqueous")) {
+      waterDensity = thermoSystem2.getPhase("aqueous").getPhysicalProperties().getDensity();
+      waterViscosity = thermoSystem2.getPhase("aqueous").getPhysicalProperties().getViscosity();
+    }
+
+    double gasVelocity = 0.0;
+    if (gasDensity > 0) {
+      gasVelocity = getGasSuperficialVelocity();
+    }
+
+    double liquidLevelFrac = liquidLevel / getInternalDiameter();
+    if (liquidLevelFrac < 0.0) {
+      liquidLevelFrac = 0.0;
+    }
+    if (liquidLevelFrac > 1.0) {
+      liquidLevelFrac = 1.0;
+    }
+
+    // Compute actual oil volume fraction for three-phase calculations.
+    // Using molar flow * molar volume (= volumetric flow) gives the correct split
+    // even when oil and water densities differ significantly.
+    double oilVolFlow = 0.0;
+    double waterVolFlow = 0.0;
+    if (thermoSystem2.hasPhaseType("oil")) {
+      int oilPhaseIdx = thermoSystem2.getPhaseIndex("oil");
+      oilVolFlow = thermoSystem2.getPhase(oilPhaseIdx).getNumberOfMolesInPhase()
+          * thermoSystem2.getPhase(oilPhaseIdx).getMolarVolume();
+    }
+    if (thermoSystem2.hasPhaseType("aqueous")) {
+      int aqPhaseIdx = thermoSystem2.getPhaseIndex("aqueous");
+      waterVolFlow = thermoSystem2.getPhase(aqPhaseIdx).getNumberOfMolesInPhase()
+          * thermoSystem2.getPhase(aqPhaseIdx).getMolarVolume();
+    }
+    double totalLiqVol = oilVolFlow + waterVolFlow;
+    if (totalLiqVol > 1e-30) {
+      performanceCalculator.setOilVolumeFraction(oilVolFlow / totalLiqVol);
+    }
+
+    performanceCalculator.calculate(gasDensity, oilDensity, waterDensity, gasViscosity,
+        oilViscosity, waterViscosity, gasVelocity, getInternalDiameter(), getSeparatorLength(),
+        orientation, liquidLevelFrac);
+
+    // Update entrainment fractions — use "volume" spec type for physics-based
+    // results
+    if (performanceCalculator.getOilInGasFraction() > 0) {
+      oilInGas = performanceCalculator.getOilInGasFraction();
+      oilInGasSpec = "volume";
+    }
+    if (performanceCalculator.getWaterInGasFraction() > 0) {
+      waterInGas = performanceCalculator.getWaterInGasFraction();
+      waterInGasSpec = "volume";
+    }
+    if (performanceCalculator.getGasInOilFraction() > 0) {
+      gasInLiquid = performanceCalculator.getGasInOilFraction();
+      gasInLiquidSpec = "volume";
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     inletStreamMixer.run(id);
+    if (checkAndHandleLowFlow(inletStreamMixer.getOutletStream(), id)) {
+      // Propagate zero flow to both outlet products so downstream equipment also auto-bypasses.
+      propagateZeroFlow(id, gasOutStream, liquidOutStream);
+      return;
+    }
     double enthalpy = inletStreamMixer.getOutletStream().getFluid().getEnthalpy();
     double flow = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
     double pres = inletStreamMixer.getOutletStream().getPressure();
     if (Math.abs((lastEnthalpy - enthalpy) / enthalpy) < 1e-6
         && Math.abs((lastFlowRate - flow) / flow) < 1e-6
         && Math.abs((lastPressure - pres) / pres) < 1e-6) {
+      setCalculationIdentifier(id);
       return;
     }
     lastEnthalpy = inletStreamMixer.getOutletStream().getFluid().getEnthalpy();
@@ -480,6 +668,13 @@ public class Separator extends ProcessEquipmentBaseClass
       ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
       ops.TPflash();
       thermoSystem2.initProperties();
+    }
+
+    // If detailed entrainment model is enabled, compute entrainment from droplet
+    // physics
+    if (useDetailedEntrainmentCalculation && performanceCalculator != null
+        && thermoSystem2.getNumberOfPhases() >= 2) {
+      updateEntrainmentFromPerformanceCalculator();
     }
 
     thermoSystem2.addPhaseFractionToPhase(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
@@ -528,20 +723,17 @@ public class Separator extends ProcessEquipmentBaseClass
       emptyLiquidSystem.init(0);
       liquidOutStream.setThermoSystem(emptyLiquidSystem);
     }
-    if (thermoSystem2.hasPhaseType("gas") && thermoSystem2.getNumberOfComponents() > 1) {
+    if (thermoSystem2.hasPhaseType("gas") && thermoSystem2.getNumberOfComponents() > 1
+        && (oilInGas != 0.0 || waterInGas != 0.0)) {
       gasOutStream.run(id);
-    } else if (thermoSystem2.hasPhaseType("gas")) {
-      gasOutStream.getFluid().init(3);
+    } else {
+      finalizePhaseOutlet(gasOutStream, id);
     }
     if (thermoSystem2.hasPhaseType("aqueous")
         || thermoSystem2.hasPhaseType("oil") && thermoSystem2.getNumberOfComponents() > 1) {
       liquidOutStream.run(id);
-    } else if (thermoSystem2.hasPhaseType("aqueous") || thermoSystem2.hasPhaseType("oil")) {
-      try {
-        liquidOutStream.getFluid().init(3);
-      } catch (Exception e) {
-        logger.error(e.getMessage());
-      }
+    } else {
+      finalizePhaseOutlet(liquidOutStream, id);
     }
     if (getCalculateSteadyState()) {
       thermoSystem = thermoSystem2;
@@ -549,6 +741,28 @@ public class Separator extends ProcessEquipmentBaseClass
       initializeTransientCalculation();
     }
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Initialize an outlet already created from the flashed separator phases without running another
+   * stream flash.
+   *
+   * @param outletStream phase outlet stream
+   * @param id calculation identifier
+   */
+  protected void finalizePhaseOutlet(StreamInterface outletStream, UUID id) {
+    if (outletStream == null || outletStream.getFluid() == null) {
+      return;
+    }
+    try {
+      if (outletStream.getFluid().getNumberOfPhases() > 0) {
+        outletStream.getFluid().init(3);
+        outletStream.getFluid().initProperties();
+      }
+    } catch (Exception e) {
+      logger.error(e.getMessage(), e);
+    }
+    outletStream.setCalculationIdentifier(id);
   }
 
   /** {@inheritDoc} */
@@ -564,6 +778,97 @@ public class Separator extends ProcessEquipmentBaseClass
     return thermoSystem.getResultTable();
   }
 
+  /**
+   * Updates entrainment fractions from the performance calculator using the live vessel state. This
+   * method is used during transient simulation where {@code thermoSystem} (the vessel inventory) is
+   * the post-VU-flash system, as opposed to steady-state which uses {@code thermoSystem2}. Gas
+   * velocity is estimated from the gas outlet stream throughput rather than the vessel inventory
+   * flow rate. The method updates {@code oilInGas}, {@code waterInGas}, and {@code gasInLiquid}
+   * fields in the same way as the steady-state version.
+   */
+  protected void updateEntrainmentForTransient() {
+    thermoSystem.initPhysicalProperties();
+
+    double gasDensity = 0.0;
+    double gasViscosity = 0.0;
+    double oilDensity = 0.0;
+    double oilViscosity = 0.0;
+    double waterDensity = 0.0;
+    double waterViscosity = 0.0;
+
+    if (thermoSystem.hasPhaseType("gas")) {
+      gasDensity = thermoSystem.getPhase("gas").getPhysicalProperties().getDensity();
+      gasViscosity = thermoSystem.getPhase("gas").getPhysicalProperties().getViscosity();
+    }
+    if (thermoSystem.hasPhaseType("oil")) {
+      oilDensity = thermoSystem.getPhase("oil").getPhysicalProperties().getDensity();
+      oilViscosity = thermoSystem.getPhase("oil").getPhysicalProperties().getViscosity();
+    }
+    if (thermoSystem.hasPhaseType("aqueous")) {
+      waterDensity = thermoSystem.getPhase("aqueous").getPhysicalProperties().getDensity();
+      waterViscosity = thermoSystem.getPhase("aqueous").getPhysicalProperties().getViscosity();
+    }
+
+    // Estimate gas velocity from the outlet stream throughput (previous timestep).
+    // Using thermoSystem.getPhase(0).getFlowRate() would give the vessel inventory,
+    // not the throughput, so the outlet stream is a better proxy.
+    double gasVelocity = 0.0;
+    if (gasDensity > 0 && gasOutStream != null) {
+      try {
+        double gasVolFlow = gasOutStream.getFluid().getFlowRate("m3/sec");
+        double crossArea;
+        if (orientation.equals("horizontal")) {
+          crossArea = getSepCrossArea() - liquidArea(liquidLevel);
+        } else {
+          crossArea = getSepCrossArea();
+        }
+        if (crossArea > 1e-10) {
+          gasVelocity = gasVolFlow / crossArea;
+        }
+      } catch (Exception ex) {
+        gasVelocity = 0.0;
+      }
+    }
+
+    double liquidLevelFrac = liquidLevel / getInternalDiameter();
+    liquidLevelFrac = Math.max(0.0, Math.min(1.0, liquidLevelFrac));
+
+    // Compute oil volume fraction from vessel inventory phase volumes.
+    double oilVolFlow = 0.0;
+    double waterVolFlow = 0.0;
+    if (thermoSystem.hasPhaseType("oil")) {
+      int oilIdx = thermoSystem.getPhaseIndex("oil");
+      oilVolFlow = thermoSystem.getPhase(oilIdx).getNumberOfMolesInPhase()
+          * thermoSystem.getPhase(oilIdx).getMolarVolume();
+    }
+    if (thermoSystem.hasPhaseType("aqueous")) {
+      int aqIdx = thermoSystem.getPhaseIndex("aqueous");
+      waterVolFlow = thermoSystem.getPhase(aqIdx).getNumberOfMolesInPhase()
+          * thermoSystem.getPhase(aqIdx).getMolarVolume();
+    }
+    double totalLiqVol = oilVolFlow + waterVolFlow;
+    if (totalLiqVol > 1e-30) {
+      performanceCalculator.setOilVolumeFraction(oilVolFlow / totalLiqVol);
+    }
+
+    performanceCalculator.calculate(gasDensity, oilDensity, waterDensity, gasViscosity,
+        oilViscosity, waterViscosity, gasVelocity, getInternalDiameter(), getSeparatorLength(),
+        orientation, liquidLevelFrac);
+
+    if (performanceCalculator.getOilInGasFraction() > 0) {
+      oilInGas = performanceCalculator.getOilInGasFraction();
+      oilInGasSpec = "volume";
+    }
+    if (performanceCalculator.getWaterInGasFraction() > 0) {
+      waterInGas = performanceCalculator.getWaterInGasFraction();
+      waterInGasSpec = "volume";
+    }
+    if (performanceCalculator.getGasInOilFraction() > 0) {
+      gasInLiquid = performanceCalculator.getGasInOilFraction();
+      gasInLiquidSpec = "volume";
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
@@ -572,6 +877,10 @@ public class Separator extends ProcessEquipmentBaseClass
       increaseTime(dt);
       setCalculationIdentifier(id);
     } else {
+      // Defensive: outlet streams must exist before any dynamic step uses them. They are normally
+      // created by setInletStream(); ensureOutputStreamsInitialized() handles construction paths
+      // (e.g. JSON/MCP runDynamic) that may have skipped that wiring.
+      ensureOutputStreamsInitialized();
       if (!isInitTransient) {
         initializeTransientCalculation();
       }
@@ -648,19 +957,104 @@ public class Separator extends ProcessEquipmentBaseClass
       thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J");
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
+      // Update entrainment fractions from performance calculator during transient
+      if (useDetailedEntrainmentCalculation && performanceCalculator != null
+          && thermoSystem.getNumberOfPhases() >= 2) {
+        updateEntrainmentForTransient();
+      }
+
+      // Determine whether entrainment corrections apply to outlet compositions
+      boolean applyEntrainment = (oilInGas > 1e-10 || waterInGas > 1e-10 || gasInLiquid > 1e-10)
+          && thermoSystem.getNumberOfPhases() >= 2;
+
       if (thermoSystem.getNumberOfComponents() > 1) {
-        if (thermoSystem.hasPhaseType("gas")) {
-          gasOutStream.getFluid()
-              .setMolarComposition(thermoSystem.getPhase("gas").getMolarComposition());
-        }
-        if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
-          if (thermoSystem.getNumberOfPhases() > 1) {
-            liquidOutStream.getFluid()
-                .setMolarComposition(thermoSystem.getPhase(1).getMolarComposition());
+        if (applyEntrainment) {
+          // Clone the vessel state and redistribute moles to model imperfect separation.
+          // The original thermoSystem (vessel inventory) remains unmodified.
+          SystemInterface entrainedSystem = thermoSystem.clone();
+          entrainedSystem.addPhaseFractionToPhase(oilInGas, oilInGasSpec, specifiedStream, "oil",
+              "gas");
+          entrainedSystem.addPhaseFractionToPhase(waterInGas, waterInGasSpec, specifiedStream,
+              "aqueous", "gas");
+          if (entrainedSystem.hasPhaseType("liquid")) {
+            entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream,
+                "gas", "liquid");
+          } else if (entrainedSystem.hasPhaseType("oil")
+              && entrainedSystem.hasPhaseType("aqueous")) {
+            double oilMoles = entrainedSystem.getPhase("oil").getNumberOfMolesInPhase();
+            double waterMoles = entrainedSystem.getPhase("aqueous").getNumberOfMolesInPhase();
+            double totalMoles = oilMoles + waterMoles;
+            if (totalMoles > 0.0) {
+              double oilShare = oilMoles / totalMoles;
+              double waterShare = waterMoles / totalMoles;
+              entrainedSystem.addPhaseFractionToPhase(gasInLiquid * oilShare, gasInLiquidSpec,
+                  specifiedStream, "gas", "oil");
+              entrainedSystem.addPhaseFractionToPhase(gasInLiquid * waterShare, gasInLiquidSpec,
+                  specifiedStream, "gas", "aqueous");
+            }
+          } else if (entrainedSystem.hasPhaseType("oil")) {
+            entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream,
+                "gas", "oil");
+          } else if (entrainedSystem.hasPhaseType("aqueous")) {
+            entrainedSystem.addPhaseFractionToPhase(gasInLiquid, gasInLiquidSpec, specifiedStream,
+                "gas", "aqueous");
+          }
+          if (entrainedSystem.hasPhaseType("gas")) {
+            gasOutStream.getFluid()
+                .setMolarComposition(entrainedSystem.getPhase("gas").getMolarComposition());
+          }
+          if (entrainedSystem.hasPhaseType("oil") || entrainedSystem.hasPhaseType("aqueous")) {
+            if (entrainedSystem.getNumberOfPhases() > 1) {
+              liquidOutStream.getFluid()
+                  .setMolarComposition(entrainedSystem.getPhase(1).getMolarComposition());
+            }
+          }
+        } else {
+          if (thermoSystem.hasPhaseType("gas")) {
+            gasOutStream.getFluid()
+                .setMolarComposition(thermoSystem.getPhase("gas").getMolarComposition());
+          }
+          if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+            if (thermoSystem.getNumberOfPhases() > 1) {
+              liquidOutStream.getFluid()
+                  .setMolarComposition(thermoSystem.getPhase(1).getMolarComposition());
+            }
           }
         }
       }
       setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
+
+      // --- Separator internals: weir-controlled liquid outflow ---
+      // When weir geometry is configured, limit the liquid outlet flow rate to the
+      // Francis weir overflow rate. This models the physical constraint of liquid
+      // flowing over the weir to the outlet nozzle.
+      if (weirHeight > 0.0 && weirLength > 0.0
+          && (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous"))) {
+        double weirFlowRate = getWeirOverflowRate(); // m3/s
+        if (weirFlowRate > 0.0) {
+          double currentLiqOutRate = liquidOutStream.getThermoSystem().getFlowRate("m3/sec");
+          if (currentLiqOutRate > weirFlowRate) {
+            double scaleFactor = weirFlowRate / currentLiqOutRate;
+            liquidOutStream.setFlowRate(
+                liquidOutStream.getThermoSystem().getFlowRate("kg/hr") * scaleFactor, "kg/hr");
+          }
+        } else {
+          // Liquid below weir — no outflow
+          liquidOutStream.setFlowRate(0.0, "kg/hr");
+        }
+      }
+
+      // --- Separator internals: mist eliminator pressure drop ---
+      // When a mist eliminator is configured, apply a pressure drop to the gas outlet
+      // stream. This gives the controller a realistic pressure signal.
+      if (mistEliminatorDpCoeff > 0.0 && thermoSystem.hasPhaseType("gas")) {
+        double meDp = getMistEliminatorPressureDrop(); // Pa
+        double meDpBar = meDp / 1.0e5;
+        double gasPres = gasOutStream.getPressure();
+        if (meDpBar > 0.0 && meDpBar < gasPres * 0.5) {
+          gasOutStream.setPressure(gasPres - meDpBar, "bara");
+        }
+      }
 
       liquidLevel = 0.0;
       if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
@@ -784,6 +1178,148 @@ public class Separator extends ProcessEquipmentBaseClass
     this.gasCarryunderFraction = gasCarryunderFraction;
   }
 
+  /**
+   * Enables or disables the detailed droplet-based entrainment calculation. When enabled, the
+   * separator uses a {@link SeparatorPerformanceCalculator} with droplet size distributions and
+   * grade efficiency curves instead of simple entrainment fractions.
+   *
+   * @param enabled true to enable detailed calculation, false to use simple fractions
+   */
+  public void setDetailedEntrainmentCalculation(boolean enabled) {
+    this.useDetailedEntrainmentCalculation = enabled;
+    if (enabled && performanceCalculator == null) {
+      performanceCalculator = new SeparatorPerformanceCalculator();
+    }
+  }
+
+  /**
+   * Returns whether detailed entrainment calculation is enabled.
+   *
+   * @return true if detailed calculation is enabled
+   */
+  public boolean isDetailedEntrainmentCalculation() {
+    return useDetailedEntrainmentCalculation;
+  }
+
+  /**
+   * Gets the detailed performance calculator. Creates one if it does not exist.
+   *
+   * @return the performance calculator
+   */
+  public SeparatorPerformanceCalculator getPerformanceCalculator() {
+    if (performanceCalculator == null) {
+      performanceCalculator = new SeparatorPerformanceCalculator();
+    }
+    return performanceCalculator;
+  }
+
+  /**
+   * Sets the detailed performance calculator.
+   *
+   * @param calculator the performance calculator to use
+   */
+  public void setPerformanceCalculator(SeparatorPerformanceCalculator calculator) {
+    this.performanceCalculator = calculator;
+  }
+
+  /**
+   * Enables the enhanced (state-of-the-art) entrainment calculation with flow regime prediction,
+   * inlet device modeling, detailed vessel geometry, and database-driven internals. This
+   * automatically enables the detailed entrainment calculation.
+   *
+   * @param enabled true to enable enhanced calculation
+   */
+  public void setEnhancedEntrainmentCalculation(boolean enabled) {
+    setDetailedEntrainmentCalculation(enabled);
+    getPerformanceCalculator().setUseEnhancedCalculation(enabled);
+  }
+
+  /**
+   * Returns whether the enhanced entrainment calculation is enabled.
+   *
+   * @return true if enhanced calculation is enabled
+   */
+  public boolean isEnhancedEntrainmentCalculation() {
+    return useDetailedEntrainmentCalculation && performanceCalculator != null
+        && performanceCalculator.isUseEnhancedCalculation();
+  }
+
+  /**
+   * Sets the inlet device type for the enhanced entrainment calculation.
+   *
+   * @param deviceType the inlet device type
+   */
+  public void setInletDeviceType(InletDeviceModel.InletDeviceType deviceType) {
+    getPerformanceCalculator().setInletDeviceModel(new InletDeviceModel(deviceType));
+  }
+
+  /**
+   * Sets the inlet pipe diameter for flow regime calculation. This affects the DSD generated from
+   * inlet pipe flow regime correlations.
+   *
+   * @param diameter inlet pipe internal diameter [m]
+   */
+  public void setInletPipeDiameter(double diameter) {
+    getPerformanceCalculator().setInletPipeDiameter(diameter);
+  }
+
+  /**
+   * Sets the gas-liquid interfacial tension for DSD generation in the enhanced model.
+   *
+   * @param sigma interfacial tension [N/m]
+   */
+  public void setGasLiquidSurfaceTension(double sigma) {
+    getPerformanceCalculator().setSurfaceTension(sigma);
+  }
+
+  /**
+   * Gets the predicted inlet flow regime from the last enhanced calculation.
+   *
+   * @return flow regime enum or null if not calculated
+   */
+  public MultiphaseFlowRegime.FlowRegime getInletFlowRegime() {
+    if (performanceCalculator != null) {
+      return performanceCalculator.getInletFlowRegime();
+    }
+    return null;
+  }
+
+  /**
+   * Gets the K-factor (Souders-Brown) from the last enhanced calculation.
+   *
+   * @return K-factor [m/s] or 0 if not calculated
+   */
+  public double getKFactor() {
+    if (performanceCalculator != null) {
+      return performanceCalculator.getKFactor();
+    }
+    return 0.0;
+  }
+
+  /**
+   * Gets the K-factor utilization from the last enhanced calculation.
+   *
+   * @return utilization ratio (operating/design), values above 1.0 indicate flooding
+   */
+  public double getKFactorUtilization() {
+    if (performanceCalculator != null) {
+      return performanceCalculator.getKFactorUtilization();
+    }
+    return 0.0;
+  }
+
+  /**
+   * Returns whether the mist eliminator was detected as flooded in the last calculation.
+   *
+   * @return true if flooded
+   */
+  public boolean isMistEliminatorFlooded() {
+    if (performanceCalculator != null) {
+      return performanceCalculator.isMistEliminatorFlooded();
+    }
+    return false;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setLiquidLevel(double liquidlev) {
@@ -834,44 +1370,86 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
-   * Getter for the field <code>internalDiameter</code>.
-   * </p>
+   * Returns the vessel internal diameter [m]. The value is stored in the MechanicalDesign (single
+   * source of truth) and accessed here via delegation.
    *
-   * @return the diameter
+   * @return internal diameter in metres
    */
   public double getInternalDiameter() {
-    return internalDiameter;
+    return separatorMechanicalDesign != null ? separatorMechanicalDesign.getInnerDiameter() : 0.0;
   }
 
   /** {@inheritDoc} */
   @Override
   public void setInternalDiameter(double diameter) {
     double levelFraction = getLiquidLevel();
-    this.internalDiameter = diameter;
-    this.internalRadius = diameter / 2;
-    this.sepCrossArea = Math.PI * internalDiameter * internalDiameter / 4.0;
-    this.separatorVolume = sepCrossArea * separatorLength;
+    if (separatorMechanicalDesign != null) {
+      separatorMechanicalDesign.setInnerDiameter(diameter);
+    }
     this.liquidLevel = clampLiquidHeight(levelFraction * getMaxLiquidHeight());
     updateHoldupVolumes();
   }
 
   /**
+   * Returns the internal radius [m], computed from the internal diameter.
+   *
+   * @return half of the internal diameter
+   */
+  private double getInternalRadius() {
+    return getInternalDiameter() / 2.0;
+  }
+
+  /**
+   * Returns the cross-sectional area of the separator [m2], computed from the internal diameter.
+   *
+   * @return pi/4 * D^2
+   */
+  private double getSepCrossArea() {
+    double d = getInternalDiameter();
+    return Math.PI * d * d / 4.0;
+  }
+
+  /**
+   * Returns the total separator volume [m3], computed from cross-sectional area and length.
+   *
+   * @return cross-sectional area * length
+   */
+  private double getSeparatorVolume() {
+    return getSepCrossArea() * getSeparatorLength();
+  }
+
+  /**
+   * Checks whether vessel geometry has been explicitly set on this separator. When false, methods
+   * that depend on geometry (capacity utilization, gas velocity, dynamic volumes) may return NaN or
+   * zero.
+   *
+   * @return true if internal diameter is greater than zero
+   */
+  public boolean hasGeometry() {
+    return getInternalDiameter() > 0.0;
+  }
+
+  /**
    * <p>
-   * getGasSuperficialVelocity.
+   * getGasSuperficialVelocity. Uses design liquid level fraction to determine available gas area,
+   * independent of operating liquid level.
    * </p>
    *
-   * @return a double
+   * @return gas superficial velocity [m/s]
    */
   public double getGasSuperficialVelocity() {
+    double gasArea;
     if (orientation.equals("horizontal")) {
-      return thermoSystem.getPhase(0).getFlowRate("m3/sec")
-          / (sepCrossArea - liquidArea(liquidLevel));
+      gasArea = getSepCrossArea() * (1.0 - designLiquidLevelFraction);
     } else if (orientation.equals("vertical")) {
-      return thermoSystem.getPhase(0).getFlowRate("m3/sec") / sepCrossArea;
+      gasArea = getSepCrossArea();
     } else {
       return 0;
     }
+    if (gasArea <= 0) {
+      return 0;
+    }
+    return thermoSystem.getPhase(0).getFlowRate("m3/sec") / gasArea;
   }
 
   /**
@@ -907,7 +1485,7 @@ public class Separator extends ProcessEquipmentBaseClass
   public double getGasLoadFactor(int phaseNumber) {
     double gasAreaFraction = 1.0;
     if (orientation.equals("horizontal")) {
-      gasAreaFraction = 1.0 - (liquidVolume / separatorVolume);
+      gasAreaFraction = 1.0 - (liquidVolume / getSeparatorVolume());
     }
     thermoSystem.initPhysicalProperties();
     double gasDensity = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
@@ -1061,11 +1639,11 @@ public class Separator extends ProcessEquipmentBaseClass
     double maxVelocity = getMaxAllowableGasVelocity();
     double gasArea;
     if (orientation.equals("horizontal")) {
-      // For horizontal, gas flows through upper section (above liquid level)
-      gasArea = sepCrossArea - liquidArea(liquidLevel);
+      // For horizontal, gas flows through upper section above design liquid level
+      gasArea = getSepCrossArea() * (1.0 - designLiquidLevelFraction);
     } else {
       // For vertical separator
-      gasArea = sepCrossArea * (1.0 - designLiquidLevelFraction);
+      gasArea = getSepCrossArea() * (1.0 - designLiquidLevelFraction);
     }
     return maxVelocity * gasArea;
   }
@@ -1428,8 +2006,8 @@ public class Separator extends ProcessEquipmentBaseClass
 
     autoSized = true;
     logger.info("Separator " + getName() + " auto-sized: diameter="
-        + String.format("%.3f", internalDiameter) + " m, length="
-        + String.format("%.3f", separatorLength) + " m");
+        + String.format("%.3f", getInternalDiameter()) + " m, length="
+        + String.format("%.3f", getSeparatorLength()) + " m");
   }
 
   /** {@inheritDoc} */
@@ -1483,8 +2061,9 @@ public class Separator extends ProcessEquipmentBaseClass
     sb.append("=== Separator Auto-Sizing Report ===\n");
     sb.append("Equipment: ").append(getName()).append("\n");
     sb.append("Auto-sized: ").append(autoSized).append("\n");
-    sb.append("Internal Diameter: ").append(String.format("%.3f m", internalDiameter)).append("\n");
-    sb.append("Length: ").append(String.format("%.3f m", separatorLength)).append("\n");
+    sb.append("Internal Diameter: ").append(String.format("%.3f m", getInternalDiameter()))
+        .append("\n");
+    sb.append("Length: ").append(String.format("%.3f m", getSeparatorLength())).append("\n");
     sb.append("Design K-factor: ").append(String.format("%.4f m/s", designGasLoadFactor))
         .append("\n");
     sb.append("Orientation: ").append(orientation).append("\n");
@@ -1504,7 +2083,7 @@ public class Separator extends ProcessEquipmentBaseClass
       double gasVolumeFlow = thermoSystem.getPhase("gas").getFlowRate("m3/hr");
       double maxVelocity = designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
       double actualVelocity = gasVolumeFlow / 3600.0
-          / (Math.PI * Math.pow(internalDiameter / 2, 2) * (1.0 - designLiquidLevelFraction));
+          / (Math.PI * Math.pow(getInternalDiameter() / 2, 2) * (1.0 - designLiquidLevelFraction));
 
       sb.append("\n--- Operating Conditions ---\n");
       sb.append("Gas Volume Flow: ").append(String.format("%.1f m3/hr", gasVolumeFlow))
@@ -1531,8 +2110,8 @@ public class Separator extends ProcessEquipmentBaseClass
     Map<String, Object> report = new LinkedHashMap<>();
     report.put("equipmentName", getName());
     report.put("autoSized", autoSized);
-    report.put("internalDiameter_m", internalDiameter);
-    report.put("length_m", separatorLength);
+    report.put("internalDiameter_m", getInternalDiameter());
+    report.put("length_m", getSeparatorLength());
     report.put("designKFactor_mps", designGasLoadFactor);
     report.put("orientation", orientation);
 
@@ -1554,7 +2133,7 @@ public class Separator extends ProcessEquipmentBaseClass
       double gasVolumeFlow = thermoSystem.getPhase("gas").getFlowRate("m3/hr");
       double maxVelocity = designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
       double actualVelocity = gasVolumeFlow / 3600.0
-          / (Math.PI * Math.pow(internalDiameter / 2, 2) * (1.0 - designLiquidLevelFraction));
+          / (Math.PI * Math.pow(getInternalDiameter() / 2, 2) * (1.0 - designLiquidLevelFraction));
 
       report.put("gasVolumeFlow_m3hr", gasVolumeFlow);
       report.put("gasDensity_kgm3", gasDensity);
@@ -1624,36 +2203,36 @@ public class Separator extends ProcessEquipmentBaseClass
 
     if (level <= 0) {
       return 0;
-    } else if (level >= internalDiameter) {
-      return sepCrossArea;
+    } else if (level >= getInternalDiameter()) {
+      return getSepCrossArea();
     }
 
     if (orientation.equals("horizontal")) {
-      if (level < internalRadius) {
-        double d = internalRadius - level;
-        double theta = Math.acos(d / internalRadius);
-        double a = internalRadius * Math.sin(theta);
+      if (level < getInternalRadius()) {
+        double d = getInternalRadius() - level;
+        double theta = Math.acos(d / getInternalRadius());
+        double a = getInternalRadius() * Math.sin(theta);
         double triArea = a * d;
-        double circArea = theta * Math.pow(internalRadius, 2);
+        double circArea = theta * Math.pow(getInternalRadius(), 2);
         lArea = circArea - triArea;
         // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n",
-        // internalRadius, d,
+        // getInternalRadius(), d,
         // theta, a, lArea);
-      } else if (level > internalRadius) {
-        double d = level - internalRadius;
-        double theta = Math.acos(d / internalRadius);
-        double a = internalRadius * Math.sin(theta);
+      } else if (level > getInternalRadius()) {
+        double d = level - getInternalRadius();
+        double theta = Math.acos(d / getInternalRadius());
+        double a = getInternalRadius() * Math.sin(theta);
         double triArea = a * d;
-        double circArea = (Math.PI - theta) * Math.pow(internalRadius, 2);
+        double circArea = (Math.PI - theta) * Math.pow(getInternalRadius(), 2);
         lArea = circArea + triArea;
         // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n",
-        // internalRadius, d,
+        // getInternalRadius(), d,
         // theta, a, lArea);
       } else {
-        lArea = 0.5 * Math.PI * Math.pow(internalRadius, 2);
+        lArea = 0.5 * Math.PI * Math.pow(getInternalRadius(), 2);
       }
     } else if (orientation.equals("vertical")) {
-      lArea = sepCrossArea;
+      lArea = getSepCrossArea();
     } else {
       lArea = 0;
     }
@@ -1672,11 +2251,11 @@ public class Separator extends ProcessEquipmentBaseClass
     double lVolume = 0.0;
 
     if (orientation.equals("horizontal")) {
-      lVolume = liquidArea(liquidLevel) * separatorLength;
+      lVolume = liquidArea(liquidLevel) * getSeparatorLength();
       // System.out.printf("from function: LVL %f Area %f\n", liquidLevel,
       // liquidArea(liquidLevel));
     } else if (orientation.equals("vertical")) {
-      lVolume = sepCrossArea * liquidLevel;
+      lVolume = getSepCrossArea() * liquidLevel;
     } else {
       lVolume = 0;
     }
@@ -1693,12 +2272,12 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   protected void enforceHeadspace() {
-    double rawGasVolume = separatorVolume - liquidVolume;
+    double rawGasVolume = getSeparatorVolume() - liquidVolume;
     double minGasVolume = getMinGasVolume();
     if (rawGasVolume < minGasVolume) {
       gasVolume = Math.max(minGasVolume, 0.0);
-      if (separatorVolume > 0.0) {
-        double adjustedLiquidVolume = Math.max(separatorVolume - gasVolume, 0.0);
+      if (getSeparatorVolume() > 0.0) {
+        double adjustedLiquidVolume = Math.max(getSeparatorVolume() - gasVolume, 0.0);
         if (Math.abs(adjustedLiquidVolume - liquidVolume) > 1.0e-12) {
           liquidLevel = levelFromVolume(adjustedLiquidVolume);
           liquidVolume = calcLiquidVolume();
@@ -1713,18 +2292,19 @@ public class Separator extends ProcessEquipmentBaseClass
 
   private double getMaxLiquidHeight() {
     if ("vertical".equalsIgnoreCase(orientation)) {
-      return separatorLength > 0.0 ? separatorLength : internalDiameter;
+      return getSeparatorLength() > 0.0 ? getSeparatorLength() : getInternalDiameter();
     }
-    return internalDiameter;
+    return getInternalDiameter();
   }
 
   private double getMinGasVolume() {
-    if (separatorVolume <= 0.0) {
+    if (getSeparatorVolume() <= 0.0) {
       return 0.0;
     }
-    double candidate = Math.max(separatorVolume * MIN_HEADSPACE_FRACTION, MIN_HEADSPACE_VOLUME);
-    if (candidate >= separatorVolume) {
-      return 0.5 * separatorVolume;
+    double candidate =
+        Math.max(getSeparatorVolume() * MIN_HEADSPACE_FRACTION, MIN_HEADSPACE_VOLUME);
+    if (candidate >= getSeparatorVolume()) {
+      return 0.5 * getSeparatorVolume();
     }
     return candidate;
   }
@@ -1751,11 +2331,11 @@ public class Separator extends ProcessEquipmentBaseClass
    * @return inner surface area in square meters
    */
   public double getInnerSurfaceArea() {
-    if (internalRadius <= 0.0 || separatorLength <= 0.0) {
+    if (getInternalRadius() <= 0.0 || getSeparatorLength() <= 0.0) {
       return 0.0;
     }
-    double shellArea = 2.0 * Math.PI * internalRadius * separatorLength;
-    double headArea = 2.0 * sepCrossArea;
+    double shellArea = 2.0 * Math.PI * getInternalRadius() * getSeparatorLength();
+    double headArea = 2.0 * getSepCrossArea();
     return shellArea + headArea;
   }
 
@@ -1770,7 +2350,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * @return wetted area in square meters
    */
   public double getWettedArea() {
-    if (internalRadius <= 0.0 || separatorLength <= 0.0) {
+    if (getInternalRadius() <= 0.0 || getSeparatorLength() <= 0.0) {
       return 0.0;
     }
 
@@ -1780,11 +2360,11 @@ public class Separator extends ProcessEquipmentBaseClass
         return 0.0;
       }
 
-      double r = internalRadius;
+      double r = getInternalRadius();
       double cappedLevel = Math.min(level, 2.0 * r);
       double theta = 2.0 * Math.acos((r - cappedLevel) / r); // central angle of liquid segment
 
-      double wettedShellArea = r * theta * separatorLength; // arc length * length
+      double wettedShellArea = r * theta * getSeparatorLength(); // arc length * length
       double wettedHeadArea = 2.0 * liquidArea(cappedLevel);
       return wettedShellArea + wettedHeadArea;
     }
@@ -1795,10 +2375,10 @@ public class Separator extends ProcessEquipmentBaseClass
         return 0.0;
       }
 
-      double wettedShellArea = 2.0 * Math.PI * internalRadius * level;
-      double wettedHeadArea = sepCrossArea; // bottom head is always wetted when level > 0
-      if (level >= separatorLength) {
-        wettedHeadArea += sepCrossArea; // top head becomes wetted when full
+      double wettedShellArea = 2.0 * Math.PI * getInternalRadius() * level;
+      double wettedHeadArea = getSepCrossArea(); // bottom head is always wetted when level > 0
+      if (level >= getSeparatorLength()) {
+        wettedHeadArea += getSepCrossArea(); // top head becomes wetted when full
       }
       return wettedShellArea + wettedHeadArea;
     }
@@ -1861,22 +2441,22 @@ public class Separator extends ProcessEquipmentBaseClass
 
     double headspace = getMinGasVolume();
     double maxLiquidVolume =
-        separatorVolume > 0.0 ? Math.max(separatorVolume - headspace, 0.0) : 0.0;
+        getSeparatorVolume() > 0.0 ? Math.max(getSeparatorVolume() - headspace, 0.0) : 0.0;
     double limitedVolume = Math.max(0.0, Math.min(volumeTarget, maxLiquidVolume));
 
     double a = 0.0;
-    double b = internalDiameter;
+    double b = getInternalDiameter();
 
     if (orientation.equalsIgnoreCase("horizontal")) {
-      if (internalDiameter <= 0.0) {
+      if (getInternalDiameter() <= 0.0) {
         return 0.0;
       }
 
-      if (separatorLength <= 0.0) {
+      if (getSeparatorLength() <= 0.0) {
         return 0.0;
       }
 
-      double areaTarget = limitedVolume / separatorLength;
+      double areaTarget = limitedVolume / getSeparatorLength();
 
       double fa = liquidArea(a) - areaTarget;
       double fb = liquidArea(b) - areaTarget;
@@ -1914,41 +2494,177 @@ public class Separator extends ProcessEquipmentBaseClass
 
       return 0.5 * (a + b);
     } else if (orientation.equalsIgnoreCase("vertical")) {
-      if (sepCrossArea <= 0.0) {
+      if (getSepCrossArea() <= 0.0) {
         return 0.0;
       }
 
-      return clampLiquidHeight(limitedVolume / sepCrossArea);
+      return clampLiquidHeight(limitedVolume / getSepCrossArea());
     } else {
       return 0.0;
     }
   }
 
   /**
-   * <p>
-   * Getter for the field <code>separatorLength</code>.
-   * </p>
+   * Returns the separator tan-tan length [m]. The value is stored in the MechanicalDesign (single
+   * source of truth).
    *
-   * @return the separatorLength
+   * @return separator length in metres
    */
 
   public double getSeparatorLength() {
-    return separatorLength;
+    return separatorMechanicalDesign != null ? separatorMechanicalDesign.getTantanLength() : 0.0;
   }
 
   /**
-   * <p>
-   * Setter for the field <code>separatorLength</code>.
-   * </p>
+   * Sets the separator tan-tan length [m]. The value is stored in the MechanicalDesign (single
+   * source of truth).
    *
-   * @param separatorLength the separatorLength to set
+   * @param length the separator length to set [m]
    */
-  public void setSeparatorLength(double separatorLength) {
+  public void setSeparatorLength(double length) {
     double levelFraction = getLiquidLevel();
-    this.separatorLength = separatorLength;
-    this.separatorVolume = sepCrossArea * separatorLength;
+    if (separatorMechanicalDesign != null) {
+      separatorMechanicalDesign.setTantanLength(length);
+    }
     this.liquidLevel = clampLiquidHeight(levelFraction * getMaxLiquidHeight());
     updateHoldupVolumes();
+  }
+
+  /**
+   * Sets the weir height in meters. Liquid overflows the weir to the outlet. The liquid outlet flow
+   * is modelled as Francis weir flow: Q = Cw * Lw * h_ow^1.5 where h_ow is the liquid height above
+   * the weir.
+   *
+   * @param height weir height in meters (must be positive, less than internal diameter)
+   */
+  public void setWeirHeight(double height) {
+    this.weirHeight = Math.max(0.0, Math.min(height, getInternalDiameter()));
+  }
+
+  /**
+   * Gets the weir height in meters.
+   *
+   * @return the weir height
+   */
+  public double getWeirHeight() {
+    return weirHeight;
+  }
+
+  /**
+   * Sets the weir length (crest length) in meters.
+   *
+   * @param length the weir crest length in meters
+   */
+  public void setWeirLength(double length) {
+    this.weirLength = Math.max(0.0, length);
+  }
+
+  /**
+   * Gets the weir length in meters.
+   *
+   * @return the weir length
+   */
+  public double getWeirLength() {
+    return weirLength;
+  }
+
+  /**
+   * Sets the boot (sump) volume in cubic meters. The boot is used for water or heavy liquid
+   * collection below the main separator body.
+   *
+   * @param volume boot volume in m3
+   */
+  public void setBootVolume(double volume) {
+    this.bootVolume = Math.max(0.0, volume);
+  }
+
+  /**
+   * Gets the boot volume in cubic meters.
+   *
+   * @return the boot volume
+   */
+  public double getBootVolume() {
+    return bootVolume;
+  }
+
+  /**
+   * Sets the mist eliminator pressure drop coefficient. The pressure drop across the mist
+   * eliminator is calculated as dP = coeff * 0.5 * rho_gas * v_gas^2.
+   *
+   * @param coefficient the pressure drop coefficient (dimensionless)
+   */
+  public void setMistEliminatorDpCoeff(double coefficient) {
+    this.mistEliminatorDpCoeff = Math.max(0.0, coefficient);
+  }
+
+  /**
+   * Gets the mist eliminator pressure drop coefficient.
+   *
+   * @return the pressure drop coefficient
+   */
+  public double getMistEliminatorDpCoeff() {
+    return mistEliminatorDpCoeff;
+  }
+
+  /**
+   * Sets the mist eliminator thickness in meters.
+   *
+   * @param thickness the mist eliminator pad thickness in meters
+   */
+  public void setMistEliminatorThickness(double thickness) {
+    this.mistEliminatorThickness = Math.max(0.0, thickness);
+  }
+
+  /**
+   * Gets the mist eliminator thickness in meters.
+   *
+   * @return the thickness in meters
+   */
+  public double getMistEliminatorThickness() {
+    return mistEliminatorThickness;
+  }
+
+  /**
+   * Calculates the liquid overflow rate over the weir using the Francis weir formula. Q = Cw * Lw *
+   * h_ow^1.5 where Cw is the weir coefficient (1.84 for SI units), Lw is the weir crest length, and
+   * h_ow is the liquid height above the weir.
+   *
+   * @return the volumetric overflow rate in m3/s, or 0 if liquid is below the weir
+   */
+  public double getWeirOverflowRate() {
+    if (weirHeight <= 0.0 || weirLength <= 0.0) {
+      return 0.0;
+    }
+    double howOver = liquidLevel - weirHeight;
+    if (howOver <= 0.0) {
+      return 0.0;
+    }
+    double cw = 1.84; // Francis weir coefficient for SI units
+    return cw * weirLength * Math.pow(howOver, 1.5);
+  }
+
+  /**
+   * Calculates the mist eliminator pressure drop in Pascal based on the current gas velocity and
+   * density.
+   *
+   * @return pressure drop in Pa, or 0 if no mist eliminator is configured
+   */
+  public double getMistEliminatorPressureDrop() {
+    if (mistEliminatorDpCoeff <= 0.0) {
+      return 0.0;
+    }
+    if (thermoSystem == null || !thermoSystem.hasPhaseType("gas")) {
+      return 0.0;
+    }
+    double rhoGas = thermoSystem.getPhase("gas").getDensity("kg/m3");
+    double gasVol = gasVolume > 0 ? gasVolume : getSeparatorVolume() * 0.5;
+    double crossArea = getSepCrossArea();
+    if (crossArea <= 0 || gasVol <= 0) {
+      return 0.0;
+    }
+    double gasFlowRate = gasOutStream.getThermoSystem().getFlowRate("m3/sec");
+    double vGas = gasFlowRate / crossArea;
+    return mistEliminatorDpCoeff * 0.5 * rhoGas * vGas * vGas;
   }
 
   /**
@@ -2139,10 +2855,10 @@ public class Separator extends ProcessEquipmentBaseClass
     int result = super.hashCode();
     result = prime * result + Objects.hash(designLiquidLevelFraction, efficiency,
         gasCarryunderFraction, gasInLiquid, gasInLiquidSpec, gasOutStream, gasSystem, gasVolume,
-        inletStreamMixer, internalDiameter, liquidCarryoverFraction, liquidLevel, liquidOutStream,
-        liquidSystem, liquidVolume, numberOfInputStreams, oilInGas, oilInGasSpec, orientation,
-        pressureDrop, separatorLength, separatorSection, specifiedStream, thermoSystem,
-        thermoSystem2, thermoSystemCloned, waterInGas, waterInGasSpec, waterSystem);
+        inletStreamMixer, getInternalDiameter(), liquidCarryoverFraction, liquidLevel,
+        liquidOutStream, liquidSystem, liquidVolume, numberOfInputStreams, oilInGas, oilInGasSpec,
+        orientation, pressureDrop, getSeparatorLength(), separatorSection, specifiedStream,
+        thermoSystem, thermoSystem2, thermoSystemCloned, waterInGas, waterInGasSpec, waterSystem);
     return result;
   }
 
@@ -2170,8 +2886,8 @@ public class Separator extends ProcessEquipmentBaseClass
         && Objects.equals(gasSystem, other.gasSystem)
         && Double.doubleToLongBits(gasVolume) == Double.doubleToLongBits(other.gasVolume)
         && Objects.equals(inletStreamMixer, other.inletStreamMixer)
-        && Double.doubleToLongBits(internalDiameter) == Double
-            .doubleToLongBits(other.internalDiameter)
+        && Double.doubleToLongBits(getInternalDiameter()) == Double
+            .doubleToLongBits(other.getInternalDiameter())
         && Double.doubleToLongBits(liquidCarryoverFraction) == Double
             .doubleToLongBits(other.liquidCarryoverFraction)
         && Double.doubleToLongBits(liquidLevel) == Double.doubleToLongBits(other.liquidLevel)
@@ -2183,8 +2899,8 @@ public class Separator extends ProcessEquipmentBaseClass
         && Objects.equals(oilInGasSpec, other.oilInGasSpec)
         && Objects.equals(orientation, other.orientation)
         && Double.doubleToLongBits(pressureDrop) == Double.doubleToLongBits(other.pressureDrop)
-        && Double.doubleToLongBits(separatorLength) == Double
-            .doubleToLongBits(other.separatorLength)
+        && Double.doubleToLongBits(getSeparatorLength()) == Double
+            .doubleToLongBits(other.getSeparatorLength())
         && Objects.equals(separatorSection, other.separatorSection)
         && Objects.equals(specifiedStream, other.specifiedStream)
         && Objects.equals(thermoSystem, other.thermoSystem)
@@ -2229,6 +2945,7 @@ public class Separator extends ProcessEquipmentBaseClass
    *
    * @param heatInput heat duty in watts
    */
+  @Override
   public void setHeatInput(double heatInput) {
     this.heatInput = heatInput;
     this.heatInputUnit = "W";
@@ -2241,6 +2958,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * @param heatInput heat duty value
    * @param unit heat duty unit (W, kW, MW, J/s, etc.)
    */
+  @Override
   public void setHeatInput(double heatInput, String unit) {
     this.heatInputUnit = unit;
     // Convert to watts for internal calculations
@@ -2303,6 +3021,7 @@ public class Separator extends ProcessEquipmentBaseClass
    *
    * @return heat input in watts
    */
+  @Override
   public double getHeatInput() {
     return heatInput;
   }
@@ -2313,6 +3032,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * @param unit desired unit (W, kW, MW)
    * @return heat input in specified unit
    */
+  @Override
   public double getHeatInput(String unit) {
     switch (unit.toLowerCase()) {
       case "kw":
@@ -2350,6 +3070,7 @@ public class Separator extends ProcessEquipmentBaseClass
    *
    * @return true if heat input is explicitly set
    */
+  @Override
   public boolean isSetHeatInput() {
     return setHeatInput;
   }
@@ -2395,8 +3116,8 @@ public class Separator extends ProcessEquipmentBaseClass
       return mechMax;
     }
     // Fall back to gas load factor based capacity if mechanical design not set
-    if (designGasLoadFactor > 0 && internalDiameter > 0) {
-      double area = Math.PI * Math.pow(internalDiameter / 2.0, 2);
+    if (designGasLoadFactor > 0 && getInternalDiameter() > 0) {
+      double area = Math.PI * Math.pow(getInternalDiameter() / 2.0, 2);
       return designGasLoadFactor * area * 3600.0; // Convert m/s * m² to m³/hr
     }
     return 0.0;
@@ -2503,22 +3224,25 @@ public class Separator extends ProcessEquipmentBaseClass
     }
 
     // Check: Separator dimensions are positive
-    if (separatorLength <= 0) {
-      result.addError("dimensions", "Separator length must be positive: " + separatorLength + " m",
+    if (getSeparatorLength() <= 0) {
+      result.addError("dimensions",
+          "Separator length must be positive: " + getSeparatorLength() + " m",
           "Set positive length: separator.setSeparatorLength(5.0)");
     }
 
-    if (internalDiameter <= 0) {
+    if (getInternalDiameter() <= 0) {
       result.addError("dimensions",
-          "Separator diameter must be positive: " + internalDiameter + " m",
+          "Separator diameter must be positive: " + getInternalDiameter() + " m",
           "Set positive diameter: separator.setInternalDiameter(1.0)");
     }
 
     // Check: Liquid level is within valid range (0-1)
-    if (liquidLevel < 0 || liquidLevel > internalDiameter) {
-      result.addWarning("level", "Liquid level may be outside valid range: " + liquidLevel
-          + " m (diameter: " + internalDiameter + " m)",
-          "Set liquid level between 0 and separator diameter");
+    if (liquidLevel < 0 || liquidLevel > getInternalDiameter()) {
+      result
+          .addWarning("level",
+              "Liquid level may be outside valid range: " + liquidLevel + " m (diameter: "
+                  + getInternalDiameter() + " m)",
+              "Set liquid level between 0 and separator diameter");
     }
 
     // Check: Pressure drop is non-negative
@@ -3010,17 +3734,17 @@ public class Separator extends ProcessEquipmentBaseClass
   public double calcGasAreaAboveLevel(double liquidLevelHeight) {
     if (!orientation.equalsIgnoreCase("horizontal")) {
       // For vertical separator, gas area is above the liquid
-      return sepCrossArea;
+      return getSepCrossArea();
     }
-    double h = Math.min(liquidLevelHeight, internalDiameter);
+    double h = Math.min(liquidLevelHeight, getInternalDiameter());
     if (h <= 0) {
-      return sepCrossArea; // Full cross-section is gas
+      return getSepCrossArea(); // Full cross-section is gas
     }
-    if (h >= internalDiameter) {
+    if (h >= getInternalDiameter()) {
       return 0.0; // No gas area
     }
     // Gas area = total area - liquid area
-    return sepCrossArea - liquidArea(h);
+    return getSepCrossArea() - liquidArea(h);
   }
 
   /**
@@ -3081,7 +3805,7 @@ public class Separator extends ProcessEquipmentBaseClass
     double hll = getMechanicalDesign().getHLL();
     if (hll <= 0) {
       // Default to 70% of internal diameter if not set
-      hll = internalDiameter * 0.70;
+      hll = getInternalDiameter() * 0.70;
     }
     return calcKValue(hll);
   }
@@ -3130,7 +3854,7 @@ public class Separator extends ProcessEquipmentBaseClass
     double temperature = thermoSystem.getTemperature() - 273.15; // Celsius
 
     // Gas velocity above liquid
-    double gasVelocity = calcGasVelocityAboveLevel(internalDiameter - freeHeightAboveLiquid);
+    double gasVelocity = calcGasVelocityAboveLevel(getInternalDiameter() - freeHeightAboveLiquid);
     if (gasVelocity <= 0 || effectiveGasLength <= 0) {
       return 0.0;
     }
@@ -3158,12 +3882,12 @@ public class Separator extends ProcessEquipmentBaseClass
   public double calcDropletCutSizeAtHLL() {
     double hll = getMechanicalDesign().getHLL();
     if (hll <= 0) {
-      hll = internalDiameter * 0.70;
+      hll = getInternalDiameter() * 0.70;
     }
-    double freeHeight = internalDiameter - hll;
+    double freeHeight = getInternalDiameter() - hll;
     double effGasLength = getMechanicalDesign().getEffectiveLengthGas();
     if (effGasLength <= 0) {
-      effGasLength = separatorLength * 0.64; // Default 64% of length
+      effGasLength = getSeparatorLength() * 0.64; // Default 64% of length
     }
     return calcDropletCutSize(effGasLength, freeHeight);
   }
@@ -3249,7 +3973,7 @@ public class Separator extends ProcessEquipmentBaseClass
     double nozzleID = getMechanicalDesign().getInletNozzleID();
     if (nozzleID <= 0) {
       // Estimate nozzle size if not set
-      nozzleID = internalDiameter * 0.15; // Rough estimate: 15% of vessel ID
+      nozzleID = getInternalDiameter() * 0.15; // Rough estimate: 15% of vessel ID
     }
     return calcInletMomentumFlux(nozzleID);
   }
@@ -3315,18 +4039,18 @@ public class Separator extends ProcessEquipmentBaseClass
     double effLiquidLength = getMechanicalDesign().getEffectiveLengthLiquid();
 
     if (nll <= 0) {
-      nll = internalDiameter * 0.50;
+      nll = getInternalDiameter() * 0.50;
     }
     if (nil <= 0) {
-      nil = internalDiameter * 0.20;
+      nil = getInternalDiameter() * 0.20;
     }
     if (effLiquidLength <= 0) {
-      effLiquidLength = separatorLength * 0.82;
+      effLiquidLength = getSeparatorLength() * 0.82;
     }
 
     // Oil volume between NIL and NLL
     double oilArea =
-        calcSegmentArea(internalDiameter, nll) - calcSegmentArea(internalDiameter, nil);
+        calcSegmentArea(getInternalDiameter(), nll) - calcSegmentArea(getInternalDiameter(), nil);
     double oilVolume = oilArea * effLiquidLength; // m³
 
     // Oil flow rate
@@ -3355,14 +4079,14 @@ public class Separator extends ProcessEquipmentBaseClass
     double effLiquidLength = getMechanicalDesign().getEffectiveLengthLiquid();
 
     if (nil <= 0) {
-      nil = internalDiameter * 0.20;
+      nil = getInternalDiameter() * 0.20;
     }
     if (effLiquidLength <= 0) {
-      effLiquidLength = separatorLength * 0.82;
+      effLiquidLength = getSeparatorLength() * 0.82;
     }
 
     // Water volume below NIL
-    double waterArea = calcSegmentArea(internalDiameter, nil);
+    double waterArea = calcSegmentArea(getInternalDiameter(), nil);
     double waterVolume = waterArea * effLiquidLength; // m³
 
     // Water flow rate

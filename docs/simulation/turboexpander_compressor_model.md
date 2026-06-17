@@ -116,6 +116,46 @@ The iteration continues until the power mismatch is negligible or iteration limi
 
 ---
 
+## Specifying the Expander Outlet Temperature
+
+By default the expander outlet temperature is a **result** — it falls out of the actual isentropic efficiency $\eta_s$ (design efficiency × curve corrections). In some workflows the outlet temperature is known from plant data or a process target, and the **base (design) efficiency should be adjusted to reproduce it**. The model supports this inverse mode.
+
+### Activating the Mode
+
+```java
+turboExpanderComp.setExpanderOutTemperature(-40.8, "C");
+```
+
+This stores the target temperature (converted to Kelvin internally), sets `useOutTemperatureSpec = true`, and triggers the back-calculation during `run()`. The supported units are `"K"`, `"C"`, `"F"`, and `"R"`. The mode can be toggled with `setUseOutTemperatureSpec(boolean)` and queried with `isUseOutTemperatureSpec()`.
+
+### How It Works
+
+1. **Required actual efficiency.** Before the speed iteration, the actual isentropic efficiency needed to reach the target outlet temperature $T_{target}$ at the configured outlet pressure is computed from the inlet state, an isentropic flash, and an isothermal (TP) flash at the target:
+
+$$
+\eta_{s,req} = \frac{h_{in} - h_{out}(T_{target}, P_{out})}{h_{in} - h_{out,s}(P_{out})}
+$$
+
+Because both enthalpy drops depend only on the inlet state and the outlet pressure, $\eta_{s,req}$ is independent of shaft speed.
+
+2. **Fixed efficiency during speed matching.** The actual efficiency is held at $\eta_{s,req}$ throughout the Newton-Raphson iteration. The expander power $W_{expander} = \dot{m}\,\Delta h_s\,\eta_{s,req}$ is therefore constant, and the iteration simply finds the speed where the compressor plus bearing power balances it.
+
+3. **Back-calculated design efficiency.** After convergence the base (design) isentropic efficiency is recovered from the converged off-design correction factor $CF_{total} = f_{UC}(u_c)\cdot f_{Q/N}$:
+
+$$
+\eta_{s,design} = \frac{\eta_{s,req}}{CF_{total}}
+$$
+
+so that the standard forward relation $\eta_s = \eta_{s,design}\cdot CF_{total}$ reproduces the required efficiency. The value is available through `getExpanderDesignIsentropicEfficiency()`.
+
+### Round-Trip Consistency
+
+The forward and inverse modes are exact inverses of one another: running with a given design efficiency yields an outlet temperature, and running with that outlet temperature specified recovers the original design efficiency (and the same actual efficiency, speed, and power). This is verified by `TurboExpanderCompressorTest#testOutletTemperatureSpecConsistency`.
+
+> **Physical caveat:** A target temperature that implies $\eta_{s,req} > 1$ or $\eta_{s,req} < 0$ (e.g. an outlet colder than the isentropic outlet) is not physically achievable; the back-calculated design efficiency will reflect that and should be sanity-checked.
+
+---
+
 ## Reference Curves
 
 Three types of reference curves tune performance away from the design point:
@@ -241,6 +281,8 @@ double compressorPowerMW = turboExpanderComp.getPowerCompressor("MW");
 | Parameter | Description |
 |-----------|-------------|
 | `setExpanderOutPressure(P)` | Target outlet pressure for the isentropic flash that produces $\Delta h_s$ |
+| `setExpanderOutTemperature(T, unit)` | Specify the expander outlet temperature; the design isentropic efficiency is back-calculated to match it (see [Specifying the Expander Outlet Temperature](#specifying-the-expander-outlet-temperature)) |
+| `setUseOutTemperatureSpec(flag)` | Enable/disable the outlet-temperature specification mode |
 
 ### IGV Geometry
 

@@ -3,7 +3,6 @@ package neqsim.process.instrumentdesign.separator;
 import neqsim.process.instrumentdesign.InstrumentDesign;
 import neqsim.process.instrumentdesign.InstrumentSpecification;
 import neqsim.process.equipment.ProcessEquipmentInterface;
-import neqsim.process.equipment.separator.Separator;
 
 /**
  * Instrument design for separators.

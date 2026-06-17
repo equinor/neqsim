@@ -33,7 +33,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * Usage example:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * ProcessSystem process = new ProcessSystem();
@@ -908,7 +908,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
    * <p>
    * Usage example:
    * </p>
-   * 
+   *
    * <pre>
    * {@code
    * SystemMechanicalDesign mecDesign = new SystemMechanicalDesign(process);
@@ -1012,7 +1012,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
    * <p>
    * Example:
    * </p>
-   * 
+   *
    * <pre>
    * {@code
    * SystemMechanicalDesign mecDesign = new SystemMechanicalDesign(process);

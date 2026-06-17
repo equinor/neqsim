@@ -20,7 +20,7 @@ public class EquipmentStateAdapter implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   private final ProcessEquipmentInterface equipment;
-  private Function<ProcessEquipmentInterface, StateVector> customExtractor;
+  private transient Function<ProcessEquipmentInterface, StateVector> customExtractor;
 
   /**
    * Create adapter for equipment.

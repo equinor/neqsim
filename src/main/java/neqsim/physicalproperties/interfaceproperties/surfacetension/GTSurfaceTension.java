@@ -164,7 +164,12 @@ public class GTSurfaceTension extends SurfaceTension {
       int refcompIndex) {
     GTSurfaceTensionODE odesystem;
     double yscale = 20.0;
-    double t, t0, minstep, maxstep, reltol, abstol;
+    double t;
+    double t0;
+    double minstep;
+    double maxstep;
+    double reltol;
+    double abstol;
     double[] y0 = new double[1];
     double[] y = new double[1];
     double surftens;

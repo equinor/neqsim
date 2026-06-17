@@ -31,37 +31,37 @@ import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMar
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * {@code
  * // 1. Build your process
  * ProcessSystem process = buildProductionNetwork();
- * 
+ *
  * // 2. Create batch estimator
  * BatchParameterEstimator estimator = new BatchParameterEstimator(process);
- * 
+ *
  * // 3. Define parameters to estimate
  * estimator.addTunableParameter("Pipe1.heatTransferCoefficient", "W/(m2·K)", 1.0, 100.0, 15.0);
  * estimator.addTunableParameter("Pipe2.heatTransferCoefficient", "W/(m2·K)", 1.0, 100.0, 15.0);
- * 
+ *
  * // 4. Define measurements
  * estimator.addMeasuredVariable("Manifold.outletStream.temperature", "C", 0.5);
- * 
+ *
  * // 5. Add historical data points
  * for (HistoricalRecord record : historicalData) {
  *   Map<String, Double> conditions = new HashMap<>();
  *   conditions.put("feedStream.flowRate", record.getFlowRate());
- * 
+ *
  *   Map<String, Double> measurements = new HashMap<>();
  *   measurements.put("Manifold.outletStream.temperature", record.getOutletTemp());
- * 
+ *
  *   estimator.addDataPoint(conditions, measurements);
  * }
- * 
+ *
  * // 6. Configure and solve
  * estimator.setMaxIterations(100);
  * BatchResult result = estimator.solve();
- * 
+ *
  * // 7. Use results
  * result.printSummary();
  * double[] estimates = result.getEstimates();
@@ -100,10 +100,10 @@ public class BatchParameterEstimator implements Serializable {
   private boolean useAnalyticalJacobian = false;
 
   /** The underlying function for the optimizer. */
-  private ProcessSimulationFunction function;
+  private transient ProcessSimulationFunction function;
 
   /** The Levenberg-Marquardt optimizer. */
-  private LevenbergMarquardt optimizer;
+  private transient LevenbergMarquardt optimizer;
 
   /** Result from the last solve. */
   private BatchResult lastResult;

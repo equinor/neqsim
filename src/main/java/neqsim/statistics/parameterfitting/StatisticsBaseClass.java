@@ -145,8 +145,8 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
           newParameters.set(0, i, sampleSet.getSample(0).getFunction().getUpperBound(i));
         }
       }
-      System.out.println("bounds checked - errors: " + errors);
-      System.out.println(okstring);
+      logger.debug("bounds checked - errors: {}{}", errors,
+          okstring.trim().isEmpty() ? "" : "\n" + okstring);
     }
   }
 
@@ -348,7 +348,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   public void calcCoVarianceMatrix() {
     double old = multiFactor;
     multiFactor = 0.0;
-    calcAlphaMatrix();
+    alpha = calcAlphaMatrix();
     coVarianceMatrix = new Matrix(alpha).inverse();
     multiFactor = old;
   }
@@ -676,20 +676,17 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     setFittingParameters(sampleSet.getSample(0).getFunction().getFittingParams());
     init();
 
-    System.out.println("");
-    System.out.println("Co-variance matrix : ");
+    logger.debug("Calculating covariance matrix");
 
     calcCoVarianceMatrix();
     // coVarianceMatrix.print(2,10);
 
-    System.out.println("");
-    System.out.println("Parameter uncertanty : ");
+    logger.debug("Calculating parameter uncertainty");
     calcParameterUncertainty();
     // parameterUncertaintyMatrix = new Matrix(parameterUncertainty,1);
     // parameterUncertaintyMatrix.print(2,10);
 
-    System.out.println("");
-    System.out.println("Parameter std deviation : ");
+    logger.debug("Calculating parameter standard deviation");
     calcParameterStandardDeviation();
     // parameterStdDevMatrix = new Matrix(parameterStandardDeviation,1);
     // parameterStdDevMatrix.print(2,10);

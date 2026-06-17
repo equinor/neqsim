@@ -205,4 +205,89 @@ public class PumpTest extends neqsim.NeqSimTest {
     double utilization = pump.getMaxUtilization();
     Assertions.assertTrue(utilization >= 0);
   }
+
+  @Test
+  void testSetOutletTemperatureWithUnit() {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkEos(273.15 + 20.0, 10.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.setTemperature(20.0, "C");
+    feed.setPressure(5.0, "bara");
+    feed.run();
+
+    // Test setOutletTemperature with Celsius unit
+    Pump pump1 = new Pump("pump-C", feed);
+    pump1.setOutletPressure(10.0, "bara");
+    pump1.setOutletTemperature(35.0, "C");
+    pump1.run();
+
+    double outTemp1_C = pump1.getOutletStream().getTemperature("C");
+    Assertions.assertEquals(35.0, outTemp1_C, 0.5,
+        "Outlet temperature should be ~35 C when set with unit 'C'");
+
+    // Test setOutletTemperature with Kelvin (no unit)
+    Pump pump2 = new Pump("pump-K", feed);
+    pump2.setOutletPressure(10.0, "bara");
+    pump2.setOutletTemperature(273.15 + 35.0);
+    pump2.run();
+
+    double outTemp2_C = pump2.getOutletStream().getTemperature("C");
+    Assertions.assertEquals(35.0, outTemp2_C, 0.5,
+        "Outlet temperature should be ~35 C when set in Kelvin");
+
+    // Test setOutletTemperature with Fahrenheit
+    Pump pump3 = new Pump("pump-F", feed);
+    pump3.setOutletPressure(10.0, "bara");
+    pump3.setOutletTemperature(95.0, "F");
+    pump3.run();
+
+    double outTemp3_C = pump3.getOutletStream().getTemperature("C");
+    Assertions.assertEquals(35.0, outTemp3_C, 0.5,
+        "Outlet temperature should be ~35 C when set with unit 'F'");
+
+    // Test setOutletTemperature with Kelvin unit string
+    Pump pumpK = new Pump("pump-K-unit", feed);
+    pumpK.setOutletPressure(10.0, "bara");
+    pumpK.setOutletTemperature(273.15 + 35.0, "K");
+    pumpK.run();
+
+    double outTempK_C = pumpK.getOutletStream().getTemperature("C");
+    Assertions.assertEquals(35.0, outTempK_C, 0.5,
+        "Outlet temperature should be ~35 C when set with unit 'K'");
+
+    // Test setOutletTemperature with Rankine
+    // 35 C = 308.15 K = 308.15 * 9/5 R = 554.67 R
+    Pump pumpR = new Pump("pump-R", feed);
+    pumpR.setOutletPressure(10.0, "bara");
+    pumpR.setOutletTemperature(554.67, "R");
+    pumpR.run();
+
+    double outTempR_C = pumpR.getOutletStream().getTemperature("C");
+    Assertions.assertEquals(35.0, outTempR_C, 0.5,
+        "Outlet temperature should be ~35 C when set with unit 'R'");
+
+    // All five approaches should produce the same outlet temperature
+    Assertions.assertEquals(outTemp1_C, outTemp2_C, 0.5,
+        "Celsius and Kelvin (no unit) setters should give same result");
+    Assertions.assertEquals(outTemp1_C, outTemp3_C, 0.5,
+        "Celsius and Fahrenheit setters should give same result");
+    Assertions.assertEquals(outTemp1_C, outTempK_C, 0.5,
+        "Celsius and Kelvin (unit string) setters should give same result");
+    Assertions.assertEquals(outTemp1_C, outTempR_C, 0.5,
+        "Celsius and Rankine setters should give same result");
+
+    // Test deprecated setOutTemperature still works
+    Pump pump4 = new Pump("pump-deprecated", feed);
+    pump4.setOutletPressure(10.0, "bara");
+    pump4.setOutTemperature(273.15 + 35.0);
+    pump4.run();
+
+    double outTemp4_C = pump4.getOutletStream().getTemperature("C");
+    Assertions.assertEquals(35.0, outTemp4_C, 0.5,
+        "Deprecated setOutTemperature should still work");
+  }
 }

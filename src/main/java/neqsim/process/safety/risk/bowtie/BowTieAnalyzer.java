@@ -21,7 +21,7 @@ import neqsim.process.safety.risk.sis.SafetyInstrumentedFunction;
  * </p>
  *
  * <h2>Bow-Tie Structure</h2>
- * 
+ *
  * <pre>
  *   THREATS           TOP EVENT           CONSEQUENCES
  *     │                  │                    │

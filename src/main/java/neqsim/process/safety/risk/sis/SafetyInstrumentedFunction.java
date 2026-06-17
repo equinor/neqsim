@@ -51,7 +51,7 @@ import com.google.gson.GsonBuilder;
  * </table>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * SafetyInstrumentedFunction hipps = SafetyInstrumentedFunction.builder().name("HIPPS-001")

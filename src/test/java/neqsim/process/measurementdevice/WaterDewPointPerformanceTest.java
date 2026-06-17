@@ -1,6 +1,7 @@
 package neqsim.process.measurementdevice;
 
 import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -9,10 +10,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Performance test for WaterDewPointAnalyser to identify bottlenecks.
- * 
+ *
  * @author ESOL
  * @version 1.0
  */
+@Tag("slow")
 public class WaterDewPointPerformanceTest {
 
   /**

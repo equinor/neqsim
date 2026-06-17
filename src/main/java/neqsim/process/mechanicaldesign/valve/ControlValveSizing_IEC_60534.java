@@ -17,6 +17,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
+  private static final long serialVersionUID = 1L;
   // === IEC 60534 Constants (Units: Q[m^3/h], P[kPa], rho[kg/m^3]) ===
   /** Constant for liquids (flow in m^3/h, pressure in kPa). */
   static final double N1 = 0.1;
@@ -28,6 +29,10 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   static final double R = 8.314462;
   /** Conversion factor from Kv to Cv. */
   static final double KV_TO_CV_FACTOR = 1.156;
+  /** Standard temperature for IEC 60534 gas volumetric flow [K]. */
+  static final double T_STD = 273.15;
+  /** Standard pressure for IEC 60534 gas volumetric flow [kPa]. */
+  static final double P_STD_KPA = 101.325;
 
   // === Valve Parameters ===
   double FL = 0.9;
@@ -47,11 +52,13 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    *
    * @return a boolean
    */
+  @Override
   public boolean isAllowChoked() {
     return allowChoked;
   }
 
   /** {@inheritDoc} */
+  @Override
   public void setAllowChoked(boolean allowChoked) {
     this.allowChoked = allowChoked;
   }
@@ -110,7 +117,6 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * </p>
    */
   public ControlValveSizing_IEC_60534() {
-    super();
   }
 
   /**
@@ -237,6 +243,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
   // === Main API ===
   /** {@inheritDoc} */
+  @Override
   public Map<String, Object> calcValveSize(double percentOpening) {
     SystemInterface fluid =
         ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream().getFluid();
@@ -359,6 +366,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * inlet/outlet streams.
    * </p>
    */
+  @Override
   public double calculateFlowRateFromValveOpening(double adjustedKv, StreamInterface inletStream,
       StreamInterface outletStream) {
     if (inletStream.getThermoSystem().hasPhaseType(PhaseType.GAS)) {
@@ -602,6 +610,11 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     double locP1 = P1 / 1000.0;
     double locP2 = P2 / 1000.0;
     double Qloc = Q * 3600.0;
+
+    // IEC 60534-2-1 requires Q at standard conditions (273.15 K, 101.325 kPa)
+    // Convert actual volumetric flow to standard volumetric flow
+    double Qloc_std = Qloc * (locP1 / P_STD_KPA) * (T_STD / T) / Z;
+
     double dP = locP1 - locP2;
     double x = dP / locP1;
 
@@ -612,11 +625,11 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
     double Kv;
     if (choked && isAllowChoked()) {
-      // Choked flow formula, CORRECTED with Fgamma
-      Kv = Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / (this.xT * Fgamma));
+      // Choked flow formula per IEC 60534, using standard volumetric flow
+      Kv = Qloc_std / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / (this.xT * Fgamma));
     } else {
-      // Non-choked flow formula
-      Kv = Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / x);
+      // Non-choked flow formula per IEC 60534, using standard volumetric flow
+      Kv = Qloc_std / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / x);
     }
 
     if (valveMechanicalDesign != null) {
@@ -669,13 +682,16 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     double Y = Math.max(1 - x / (3 * Fgamma * xT), 2.0 / 3.0); // Expansion factor
     boolean choked = isChokedTurbulentG(x, Fgamma, xT);
 
-    // Calculate flow rate in m^3/h
-    double Qloc;
+    // IEC 60534 formula yields standard volumetric flow [m^3/h at 273.15 K, 101.325 kPa]
+    double Qloc_std;
     if (choked && allowChoked) {
-      Qloc = effectiveKv * N9 * locP1 * Y / Math.sqrt(MW * T * Z / xT / Fgamma);
+      Qloc_std = effectiveKv * N9 * locP1 * Y / Math.sqrt(MW * T * Z / xT / Fgamma);
     } else {
-      Qloc = effectiveKv * N9 * locP1 * Y / Math.sqrt(MW * T * Z / x);
+      Qloc_std = effectiveKv * N9 * locP1 * Y / Math.sqrt(MW * T * Z / x);
     }
+
+    // Convert standard volumetric flow back to actual volumetric flow at (P1, T, Z)
+    double Qloc = Qloc_std * (P_STD_KPA / locP1) * (T / T_STD) * Z;
 
     // Convert flow rate from m^3/h to m^3/s
     return Qloc / 3600.0;
@@ -728,6 +744,9 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     // Convert flow rate from m^3/s to m^3/h
     double Qloc = Q * 3600.0;
 
+    // IEC 60534-2-1 requires Q at standard conditions (273.15 K, 101.325 kPa)
+    double Qloc_std = Qloc * (locP1 / P_STD_KPA) * (T_STD / T) / Z;
+
     // Gas properties
     double Vm = Z * R * T / (locP1 * 1000.0); // Molar volume (m^3/kmol)
     double rho = MW * 1e-3 / Vm; // Gas density (kg/m^3)
@@ -739,12 +758,12 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     double Y = Math.max(1 - x / (3 * Fgamma * xT), 2.0 / 3.0); // Expansion factor
     boolean choked = isChokedTurbulentG(x, Fgamma, xT);
 
-    // Calculate the effective Kv required for the given flow rate
+    // Calculate the effective Kv required for the given flow rate (using standard flow)
     double effectiveKv;
     if (choked && allowChoked) {
-      effectiveKv = Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / xT / Fgamma);
+      effectiveKv = Qloc_std / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / xT / Fgamma);
     } else {
-      effectiveKv = Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / x);
+      effectiveKv = Qloc_std / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / x);
     }
 
     // Calculate valve opening percentage
@@ -885,6 +904,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * Finds the outlet pressure for a given flow rate and fixed Kv, for both gas and liquid.
    * </p>
    */
+  @Override
   public double findOutletPressureForFixedKv(double actualKv, StreamInterface inletStream) {
     if (inletStream.getThermoSystem().hasPhaseType(PhaseType.GAS)) {
       return findOutletPressureForFixedKvGas(actualKv, inletStream);

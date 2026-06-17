@@ -24,7 +24,7 @@ import org.apache.logging.log4j.Logger;
  * </p>
  *
  * <h2>Format 1: Standards-focused (standards.csv)</h2>
- * 
+ *
  * <pre>
  * PROJECT_ID,PROJECT_NAME,COMPANY,DESIGN_CATEGORY,STANDARD_CODE,VERSION,PRIORITY
  * PROJ-001,Offshore Platform,Equinor,pressure vessel design code,ASME-VIII-Div1,2021,1
@@ -33,7 +33,7 @@ import org.apache.logging.log4j.Logger;
  * </pre>
  *
  * <h2>Format 2: Full TORG (torg_master.csv)</h2>
- * 
+ *
  * <pre>
  * PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,ISSUE_DATE,MIN_AMBIENT_TEMP,MAX_AMBIENT_TEMP,...
  * PROJ-001,Offshore Platform,Equinor,2,-40,45,...

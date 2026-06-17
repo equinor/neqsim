@@ -16,7 +16,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * Test class for simulating a choke valve collapse scenario where a throttle valve suddenly fails
  * open (100%), causing rapid pressure rise that triggers a downstream PSD valve to close for
  * protection.
- * 
+ *
  * <p>
  * Scenario:
  * <ul>

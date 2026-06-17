@@ -277,7 +277,6 @@ public class H2SScavenger extends TwoPortEquipment {
     } else if (injectionRateUnit.equals("gal/hr")) {
       return scavengerInjectionRate * 3.78541 * densityKgPerL;
     } else if (injectionRateUnit.equals("kg/hr")) {
-      return scavengerInjectionRate;
     } else if (injectionRateUnit.equals("lb/hr")) {
       return scavengerInjectionRate / 2.20462;
     }
@@ -621,7 +620,6 @@ public class H2SScavenger extends TwoPortEquipment {
    */
   public double getH2SRemoved(String unit) {
     if (unit.equals("kg/hr")) {
-      return h2sRemoved;
     } else if (unit.equals("lb/hr")) {
       return h2sRemoved * 2.20462;
     } else if (unit.equals("kg/day")) {

@@ -36,8 +36,8 @@ public class NeqSimGERG2008 {
   private static final ConcurrentHashMap<GERG2008Type, GERG2008> MODEL_CACHE =
       new ConcurrentHashMap<>();
 
-  double[] normalizedGERGComposition = new double[21 + 1];
-  double[] notNormalizedGERGComposition = new double[21 + 1];
+  double[] normalizedGERGComposition = new double[22 + 1];
+  double[] notNormalizedGERGComposition = new double[22 + 1];
   PhaseInterface phase = null;
   GERG2008 GERG2008;
   private GERG2008Type modelType = GERG2008Type.STANDARD;
@@ -108,6 +108,8 @@ public class NeqSimGERG2008 {
     switch (type) {
       case HYDROGEN_ENHANCED:
         return new GERG2008H2();
+      case AMMONIA_EXTENDED:
+        return new GERG2008NH3();
       case STANDARD:
       default:
         return new GERG2008();
@@ -390,6 +392,9 @@ public class NeqSimGERG2008 {
           break;
         case "argon":
           notNormalizedGERGComposition[21] = phase.getComponent(i).getx();
+          break;
+        case "ammonia":
+          notNormalizedGERGComposition[22] = phase.getComponent(i).getx();
           break;
 
         default:

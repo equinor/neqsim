@@ -264,6 +264,9 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     if (returnParameter.equals("LCV")) {
       returnParameter = "InferiorCalorificValue";
     }
+    if (returnParameter.equals("WI") || returnParameter.equals("WobbeIndex")) {
+      returnParameter = "SuperiorWobbeIndex";
+    }
 
     double returnValue = 0.0;
 

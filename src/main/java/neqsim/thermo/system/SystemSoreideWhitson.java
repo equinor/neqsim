@@ -198,7 +198,7 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
               if (comp != null && comp.getClass().getName()
                   .equals("neqsim.thermo.component.ComponentEosInterface")) {
                 neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface attractiveTerm =
-                    ((neqsim.thermo.component.ComponentEosInterface) comp).getAttractiveTerm();
+                    comp.getAttractiveTerm();
                 if (attractiveTerm != null && attractiveTerm.getClass().getName().equals(
                     "neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson")) {
                   ((neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson) attractiveTerm)

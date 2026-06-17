@@ -471,7 +471,7 @@ public class FacilityCapacity implements Serializable {
     private final String rateUnit;
     private final String currentBottleneck;
     private final double bottleneckUtilization;
-    private final List<UtilizationRecord> utilizationRecords;
+    private final transient List<UtilizationRecord> utilizationRecords;
     private final List<String> nearBottlenecks;
     private final List<DebottleneckOption> debottleneckOptions;
     private final Map<String, Double> equipmentHeadroom;

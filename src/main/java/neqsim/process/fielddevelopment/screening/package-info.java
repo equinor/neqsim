@@ -61,16 +61,16 @@
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * // Flow assurance screening
  * FlowAssuranceScreener faScreener = new FlowAssuranceScreener();
  * FlowAssuranceReport faReport = faScreener.screen(concept, 4.0, 150.0);
- * 
+ *
  * // Economics estimation
  * EconomicsEstimator econ = new EconomicsEstimator();
  * EconomicsEstimator.EconomicsReport econReport = econ.estimate(concept, facilityConfig);
- * 
+ *
  * // Emissions tracking
  * EmissionsTracker emissions = new EmissionsTracker();
  * EmissionsTracker.EmissionsReport emissionsReport = emissions.calculate(concept, facilityConfig);

@@ -32,7 +32,7 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicoperati
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(OLGApropertyTableGeneratorWater.class);
 
-  BicubicInterpolator interpolationFunc = new BicubicInterpolator();
+  transient BicubicInterpolator interpolationFunc = new BicubicInterpolator();
   SystemInterface thermoSystem = null;
   SystemInterface gasSystem = null;
   SystemInterface oilSystem = null;
@@ -323,7 +323,7 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicoperati
           logger.info("fail temperature " + thermoSystem.getTemperature() + " fail pressure "
               + thermoSystem.getPressure());
 
-          thermoSystem.display();
+          // thermoSystem.display();
           logger.error(ex.getMessage(), ex);
         }
 

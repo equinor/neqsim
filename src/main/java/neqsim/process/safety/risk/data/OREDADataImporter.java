@@ -25,7 +25,7 @@ import org.apache.logging.log4j.Logger;
  * </p>
  *
  * <h2>CSV Format</h2> The expected CSV format is:
- * 
+ *
  * <pre>
  * EquipmentType,EquipmentClass,FailureMode,FailureRate,MTBF_hours,MTTR_hours,DataSource,Confidence
  * Compressor,Centrifugal,All modes,1.14e-4,8772,72,OREDA-2015,High
@@ -33,11 +33,11 @@ import org.apache.logging.log4j.Logger;
  * </pre>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * OREDADataImporter importer = new OREDADataImporter();
  * importer.loadFromResource("/reliabilitydata/oreda_equipment.csv");
- * 
+ *
  * ReliabilityRecord record = importer.getRecord("Compressor", "Centrifugal");
  * double mtbf = record.getMtbfHours();
  * double failureRate = record.getFailureRate();

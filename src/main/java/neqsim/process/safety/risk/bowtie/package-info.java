@@ -16,7 +16,7 @@
  * </ul>
  *
  * <h2>Bow-Tie Structure</h2>
- * 
+ *
  * <pre>
  *   THREATS           TOP EVENT           CONSEQUENCES
  *     │                  │                    │
@@ -28,7 +28,7 @@
  * </pre>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * // Create analyzer
  * BowTieAnalyzer analyzer = new BowTieAnalyzer("Platform Safety Analysis", processSystem);

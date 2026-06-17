@@ -1,6 +1,7 @@
 ---
 title: Pipeline Simulation Guide
 description: Comprehensive documentation for pipeline simulation in NeqSim, covering all pipeline types, common interface, flow modeling, and integration with mechanical design.
+keywords: "pipeline simulation, multiphase flow, Beggs and Brill, pressure drop, pipe flow, gas pipeline, oil pipeline, subsea, heat transfer, elevation, slug, holdup"
 ---
 
 # Pipeline Simulation Guide

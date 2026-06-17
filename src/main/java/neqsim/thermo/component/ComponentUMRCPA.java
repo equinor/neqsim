@@ -105,14 +105,14 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   @Override
   public void createComponent(String name, double moles, double molesInPhase, int compIndex) {
     super.createComponent(name, moles, molesInPhase, compIndex);
-    // criticalTemperature = 305.4;
-    // criticalPressure = 135.62;
-    // acentricFactor = 0.1609;
-    criticalTemperature = 647;
-    criticalPressure = 220.64;
-    acentricFactor = 0.3443;
-    associationEnergy = 15059.15;
-    associationVolume = 0.109;
+    // Use the CPA-regressed energy parameter and co-volume for associating compounds so the
+    // physical PR term is consistent with the association term. Pure-component critical
+    // properties, association energy/volume, scheme and the aCPA_PR/bCPA_PR/mCPA_PR parameters
+    // are read from the component database (see Component.createComponent).
+    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
+      a = aCPA;
+      b = bCPA;
+    }
   }
 
   /** {@inheritDoc} */
@@ -143,11 +143,30 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   /** {@inheritDoc} */
   @Override
   public double getVolumeCorrection() {
-    if ((getRacketZCPA() < 1.0e-10) && cpaon == 1) {
+    // The Peneloux volume translation for the PR-based UMR-CPA model uses a Rackett Z that is
+    // regressed specifically for this model (UMRCPA_racketZ / UMRCPA_volcorr_T columns), because
+    // the PR Peneloux shift constants differ from the SRK ones used by SRK-CPA. When no dedicated
+    // UMR-CPA value is available the model falls back to the SRK-CPA racketZCPA so that existing
+    // behaviour is preserved until the UMR-CPA values are regressed (Tasios et al. 2025).
+    double racketZused;
+    double volumeCorrectionTused;
+    if (Math.abs(umrCpaRacketZ) > 1.0e-10) {
+      racketZused = umrCpaRacketZ;
+      volumeCorrectionTused = umrCpaVolumeCorrectionT;
+    } else {
+      racketZused = getRacketZCPA();
+      volumeCorrectionTused = getVolumeCorrectionT_CPA();
+    }
+    if ((racketZused < 1.0e-10) && cpaon == 1 && numberOfAssociationSites != 0) {
+      // Associating components (water, alcohols, glycols) without a regressed UMR-CPA / SRK-CPA
+      // Rackett Z keep zero translation until their value is regressed. Non-associating components
+      // (hydrocarbons, N2, CO2) fall through to the inherited PR Peneloux shift so that they are
+      // volume-corrected exactly like the standard PR EOS (Z_RA from the acentric-factor
+      // correlation when no tabulated Rackett Z exists).
       return 0.0;
     } else {
-      setVolumeCorrectionT(getVolumeCorrectionT_CPA());
-      setRacketZ(getRacketZCPA());
+      setVolumeCorrectionT(volumeCorrectionTused);
+      setRacketZ(racketZused);
       return super.getVolumeCorrection();
     }
   }
@@ -155,10 +174,46 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   /** {@inheritDoc} */
   @Override
   public void setAttractiveTerm(int i) {
-    super.setAttractiveTerm(i);
-    // if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-    // getAttractiveTerm().setm(mCPA);
-    // }
+    double[] umrcpaMc = getMatiascopemanParamsUMRCPA();
+    boolean hasUmrcpaMc = false;
+    if (umrcpaMc != null) {
+      for (int k = 0; k < umrcpaMc.length; k++) {
+        if (Math.abs(umrcpaMc[k]) > 1e-20) {
+          hasUmrcpaMc = true;
+          break;
+        }
+      }
+    }
+    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
+      // Associating compounds (water, glycols, ...). When a dedicated UMR-CPA Mathias-Copeman
+      // alpha is available (UMRCPA_MC columns, see Tasios et al., Fluid Phase Equilibria 2025),
+      // install the five-parameter Mathias-Copeman term (term 22) so the energy parameter uses
+      // the regressed UMR-CPA alpha. Otherwise fall back to the standard PR alpha with the
+      // CPA-regressed m parameter.
+      if (hasUmrcpaMc) {
+        super.setAttractiveTerm(22);
+      } else {
+        super.setAttractiveTerm(1);
+        getAttractiveTerm().setm(mCPA);
+      }
+    } else {
+      // Non-associating compounds use the five-parameter Mathias-Copeman alpha of the UMR-CPA
+      // model (Tasios et al., Fluid Phase Equilibria 2025) when the dedicated UMRCPA_MC
+      // coefficients are available. When no UMR-CPA fit exists for the component, the model
+      // reduces to the UMR-PRU-new alpha (term 19), which is the identical Mathias-Copeman
+      // functional form seeded with the UMR-PRU coefficients (MCPR1..MCPR3). Both terms (19 and
+      // 22) are accepted by the GE reference phase (PhaseGEUnifacUMRPRU), which rebuilds the
+      // attractive term from the term number, so consistency between the main and reference
+      // phases is preserved in either case.
+      if (hasUmrcpaMc) {
+        // Install the five-parameter Mathias-Copeman UMR-CPA term (term 22).
+        super.setAttractiveTerm(22);
+      } else {
+        // No dedicated UMR-CPA fit: reduce to UMR-PRU-new (term 19) for this non-associating
+        // component instead of the generic requested attractive term.
+        super.setAttractiveTerm(19);
+      }
+    }
   }
 
   /** {@inheritDoc} */
@@ -176,21 +231,19 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   /** {@inheritDoc} */
   @Override
   public double calca() {
-    // if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-    // return aCPA;
-    // } else {
+    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
+      return aCPA;
+    }
     return super.calca();
-    // }
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcb() {
-    // if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
-    // return bCPA;
-    // } else {
+    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
+      return bCPA;
+    }
     return super.calcb();
-    // }
   }
 
   /** {@inheritDoc} */

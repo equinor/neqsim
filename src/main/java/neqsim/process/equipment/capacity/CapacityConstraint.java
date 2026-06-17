@@ -15,7 +15,7 @@ import java.util.function.DoubleSupplier;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * CapacityConstraint speedConstraint = new CapacityConstraint("speed", "RPM", ConstraintType.HARD)
  *     .setDesignValue(10000.0).setMaxValue(11000.0).setWarningThreshold(0.9)
@@ -60,7 +60,7 @@ public class CapacityConstraint implements Serializable {
 
   /**
    * Enum defining the severity level of constraint violations.
-   * 
+   *
    * <p>
    * Used by the optimizer to determine how to handle constraint violations:
    * <ul>
@@ -138,6 +138,36 @@ public class CapacityConstraint implements Serializable {
 
   /** Whether this constraint is enabled for capacity analysis. */
   private boolean enabled = true;
+
+  /**
+   * Describes the source of the design value used in this constraint.
+   *
+   * <p>
+   * Typical values:
+   * </p>
+   * <ul>
+   * <li>"equipment" — set directly on the equipment object via API</li>
+   * <li>"designCapacities" — supplied via JSON designCapacities input</li>
+   * <li>"mechanicalDesign" — derived from mechanical design calculations</li>
+   * <li>"default" — a strategy-level default (not from actual equipment data)</li>
+   * <li>"not_set" — no design value has been provided</li>
+   * </ul>
+   */
+  private String dataSource = "not_set";
+
+  /**
+   * Marginal economic value (shadow price) of relaxing this constraint.
+   *
+   * <p>
+   * The shadow price is the incremental objective improvement obtained per unit of additional
+   * capacity when this constraint is binding — for example currency-per-day gained per extra unit
+   * of design rate, or per percentage point of utilisation headroom unlocked. It is zero by default
+   * and is populated by a debottlenecking study (see
+   * {@code neqsim.process.optimization.valuechain.DebottleneckingAdvisor}). A non-binding
+   * constraint has a shadow price of zero.
+   * </p>
+   */
+  private double shadowPrice = 0.0;
 
   /**
    * Creates a new capacity constraint.
@@ -533,6 +563,59 @@ public class CapacityConstraint implements Serializable {
    */
   public CapacityConstraint setEnabled(boolean enabled) {
     this.enabled = enabled;
+    return this;
+  }
+
+  /**
+   * Gets the data source that provided the design value for this constraint.
+   *
+   * <p>
+   * The data source indicates where the design/limit value came from, helping operators and agents
+   * understand the basis of utilization calculations. Common values: "equipment",
+   * "designCapacities", "mechanicalDesign", "default", "not_set".
+   * </p>
+   *
+   * @return the data source string
+   */
+  public String getDataSource() {
+    return dataSource;
+  }
+
+  /**
+   * Sets the data source that provided the design value for this constraint.
+   *
+   * @param dataSource the data source string (e.g., "equipment", "designCapacities", "default")
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setDataSource(String dataSource) {
+    this.dataSource = dataSource != null ? dataSource : "not_set";
+    return this;
+  }
+
+  /**
+   * Gets the marginal economic value (shadow price) of relaxing this constraint.
+   *
+   * <p>
+   * Returns the incremental objective improvement obtainable per unit of additional capacity while
+   * this constraint is binding. The value is zero unless it has been populated by a debottlenecking
+   * study. See {@code neqsim.process.optimization.valuechain.DebottleneckingAdvisor} for the
+   * companion analysis that computes and sets this value.
+   * </p>
+   *
+   * @return the shadow price (objective units per unit of relaxed capacity); zero if not set
+   */
+  public double getShadowPrice() {
+    return shadowPrice;
+  }
+
+  /**
+   * Sets the marginal economic value (shadow price) of relaxing this constraint.
+   *
+   * @param shadowPrice the shadow price in objective units per unit of relaxed capacity
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setShadowPrice(double shadowPrice) {
+    this.shadowPrice = shadowPrice;
     return this;
   }
 

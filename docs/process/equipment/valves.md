@@ -1,6 +1,7 @@
 ---
 title: Valve Equipment
 description: Documentation for valve equipment in NeqSim process simulation.
+keywords: "valve, throttling valve, control valve, JT valve, Joule-Thomson, Cv, pressure drop, valve sizing, choke, relief valve, PSV"
 ---
 
 # Valve Equipment
@@ -32,7 +33,7 @@ Documentation for valve equipment in NeqSim process simulation.
 
 > **📖 Additional Valve Documentation:**
 > - [Control Valves Guide](control_valves) - CheckValve, LevelControlValve, PressureControlValve, ESD/PSD valves
-> - [HIPPS Implementation](../safety/hipps_implementation) - High Integrity Pressure Protection
+> - [HIPPS Implementation](../../safety/hipps_implementation) - High Integrity Pressure Protection
 
 **Mechanical Design:** `neqsim.process.mechanicaldesign.valve`
 - `ValveMechanicalDesign` - Body sizing, weight, actuator calculations
@@ -207,19 +208,24 @@ double calculatedFlow = choke.getOutletStream().getFlowRate("kg/hr");
 
 ### IEC 60534 Gas Sizing
 
-For compressible fluids (gas/vapor):
+For compressible fluids (gas/vapor), per IEC 60534-2-1 Section 6.2:
 
-$$K_v = \frac{Q}{N_9 \cdot P_1 \cdot Y} \sqrt{\frac{M \cdot T \cdot Z}{x}}$$
+$$K_v = \frac{Q_{std}}{N_9 \cdot P_1 \cdot Y} \sqrt{\frac{M \cdot T \cdot Z}{x}}$$
 
 Where:
-- $Q$ = actual volumetric flow at inlet (m³/h)
-- $N_9$ = 24.6 (SI constant)
+- $Q_{std}$ = volumetric flow at **standard conditions** (273.15 K, 101.325 kPa) [m³/h]
+- $N_9$ = 24.6 (SI constant for Q in m³/h, P in kPa)
 - $P_1$ = inlet pressure (kPa abs)
 - $Y$ = expansion factor
 - $M$ = molecular weight (g/mol)
-- $T$ = temperature (K)
-- $Z$ = compressibility factor
+- $T$ = inlet temperature (K)
+- $Z$ = compressibility factor at inlet
 - $x$ = $\Delta P / P_1$
+
+> **Important:** The flow rate $Q_{std}$ must be at standard conditions, not at operating
+> conditions. NeqSim automatically converts actual flow to standard flow internally
+> when sizing gas valves. See [GitHub issue #1918](https://github.com/equinor/neqsim/issues/1918)
+> for details on this correction.
 
 ### Choked Flow Detection
 

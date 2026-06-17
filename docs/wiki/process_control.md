@@ -25,7 +25,7 @@ of how the controllers and control structures are used in simulations.
 
 ## Model predictive control
 
-The [`ModelPredictiveController`](../../src/main/java/neqsim/process/controllerdevice/ModelPredictiveController.java)
+The [`ModelPredictiveController`](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/controllerdevice/ModelPredictiveController.java)
 class adds multivariable model predictive control (MPC) to the framework. The
 controller uses a first-order process model with configurable gain, time
 constant, bias and prediction horizon to calculate an optimal control move that

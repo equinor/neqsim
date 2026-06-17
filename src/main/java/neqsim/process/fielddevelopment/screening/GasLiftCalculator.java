@@ -38,7 +38,7 @@ import java.util.List;
  * </p>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * GasLiftCalculator calc = new GasLiftCalculator();
  * calc.setReservoirPressure(250.0, "bara");
@@ -50,7 +50,7 @@ import java.util.List;
  * calc.setOilGravity(35.0, "API");
  * calc.setWaterCut(0.3);
  * calc.setFormationGOR(100.0); // Sm3/Sm3
- * 
+ *
  * GasLiftResult result = calc.calculate();
  * System.out.println("Optimal GLR: " + result.getOptimalGLR() + " Sm3/Sm3");
  * System.out.println("Oil rate: " + result.getOilRate() + " Sm3/day");

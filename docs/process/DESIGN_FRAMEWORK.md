@@ -11,7 +11,6 @@ The Design Framework provides an integrated workflow for automated equipment siz
 
 | Document | Description |
 |----------|-------------|
-| [OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](OPTIMIZATION_IMPROVEMENT_PROPOSAL) | Implementation roadmap and status |
 | [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE) | Production optimization examples |
 | [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK) | Multi-constraint equipment framework |
 | [process_design_guide.md](process_design_guide) | Complete process design workflow |
@@ -165,7 +164,7 @@ spec.setKFactor(0.08);
 spec.setDiameter(2.5, "m");
 spec.setLength(7.5, "m");
 
-// Valve  
+// Valve
 spec.setCv(150.0);
 spec.setMaxValveOpening(90.0);
 
@@ -192,19 +191,19 @@ ProcessBasis basis = ProcessBasis.builder()
     .setFeedFlowRate(50000.0, "kg/hr")
     .setFeedPressure(85.0, "bara")
     .setFeedTemperature(50.0, "C")
-    
+
     // Stage pressures
     .addStagePressure(1, 80.0, "bara")
     .addStagePressure(2, 20.0, "bara")
     .addStagePressure(3, 2.0, "bara")
-    
+
     // Company standards
     .setCompanyStandard("Equinor", "TR2000")
     .setSafetyFactor(1.15)
-    
+
     // Ambient conditions
     .setAmbientTemperature(15.0, "C")
-    
+
     .build();
 ```
 
@@ -270,7 +269,7 @@ DesignResult result = optimizer.optimize();  // Full optimization
 
 **ProcessModule Support:**
 - Use `forProcess(ProcessModule)` for modular process structures
-- Check mode with `optimizer.isModuleMode()` 
+- Check mode with `optimizer.isModuleMode()`
 - Access the module with `optimizer.getModule()`
 - All child ProcessSystems are automatically evaluated for constraints
 
@@ -293,18 +292,18 @@ if (result.isConverged()) {
     // Get metrics
     int iterations = result.getIterations();
     double objective = result.getObjectiveValue();
-    
+
     // Get optimized values
     double gasFlow = result.getOptimizedFlowRate("Export Gas");
-    
+
     // Get equipment sizes
     Map<String, Double> sizes = result.getEquipmentSizes("HP-Separator");
     double diameter = sizes.get("diameter");
-    
+
     // Check constraints
     boolean violated = result.hasViolations();
     List<String> warnings = result.getWarnings();
-    
+
     // Get summary report
     String summary = result.getSummary();
 }
@@ -454,8 +453,8 @@ sep.autoSize("Equinor", "NORSOK-P-001");
 **Example query flow:**
 ```java
 // When Separator.autoSize("Equinor", "NORSOK-P-001") is called:
-SELECT SPECIFICATION, MAXVALUE, MINVALUE 
-FROM TechnicalRequirements_Process 
+SELECT SPECIFICATION, MAXVALUE, MINVALUE
+FROM TechnicalRequirements_Process
 WHERE EQUIPMENTTYPE='Separator' AND Company='Equinor'
 
 // Returns: GasLoadFactor = 0.12-0.15, LiquidRetentionTime = 2-5 min, etc.
@@ -656,7 +655,7 @@ System.out.println("Bottleneck equipment: " + bottleneck.getName());
 if (bottleneck instanceof CapacityConstrainedEquipment) {
     CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) bottleneck;
     CapacityConstraint activeConstraint = constrained.getBottleneckConstraint();
-    
+
     System.out.println("Active constraint: " + activeConstraint.getName());
     System.out.println("Current value: " + activeConstraint.getCurrentValue());
     System.out.println("Design limit: " + activeConstraint.getDesignValue());
@@ -682,8 +681,10 @@ sep.autoSize(1.2);  // Sets gasLoadFactor constraint based on design K-factor
 // Method 2: Manual constraint setup
 Compressor comp = new Compressor("Export Comp", gasStream);
 comp.setMaximumSpeed(11000.0);   // Sets HARD speed constraint
-comp.setMaximumPower(2000.0);    // Sets HARD power constraint
-comp.setSurgeMargin(10.0);       // Sets SOFT surge margin constraint
+comp.initMechanicalDesign();
+comp.getMechanicalDesign().setMaxDesignPower(2000.0);  // kW power limit (HARD)
+// Surge / stonewall margins come from the compressor performance curve
+// (set via autoSize() or setCompressorChart())
 
 // Method 3: Programmatic constraint addition
 Pipeline pipe = new Pipeline("Export Line", compOutput);
@@ -704,15 +705,15 @@ pipe.addCapacityConstraint(new CapacityConstraint("velocity", "m/s", ConstraintT
 
 ```java
 // Setting constraint types
-CapacityConstraint speedLimit = new CapacityConstraint("speed", ConstraintType.HARD)
+CapacityConstraint speedLimit = new CapacityConstraint("speed", "rpm", ConstraintType.HARD)
     .setDesignValue(10000.0)   // Normal operating speed
     .setMaxValue(11000.0);      // Trip point - HARD limit
 
-CapacityConstraint surgeMargin = new CapacityConstraint("surgeMargin", ConstraintType.SOFT)
+CapacityConstraint surgeMargin = new CapacityConstraint("surgeMargin", "%", ConstraintType.SOFT)
     .setDesignValue(10.0)      // 10% margin from surge
     .setMinValue(5.0);         // Absolute minimum - warning
 
-CapacityConstraint kFactor = new CapacityConstraint("gasLoadFactor", ConstraintType.DESIGN)
+CapacityConstraint kFactor = new CapacityConstraint("gasLoadFactor", "m/s", ConstraintType.DESIGN)
     .setDesignValue(0.08)      // Design basis
     .setWarningThreshold(0.9); // Warn at 90% utilization
 ```
@@ -754,11 +755,12 @@ process.add(pipe);
 OptimizationConfig config = new OptimizationConfig(1000.0, 50000.0)
     .defaultUtilizationLimit(0.95);
 
-OptimizationResult result = ProductionOptimizer.optimize(process, feed, config);
+OptimizationResult result = new ProductionOptimizer().optimize(process, feed, config, null, null);
 
 // The bottleneck could be ANY of: separator, valve, compressor, or pipeline
 System.out.println("Bottleneck: " + result.getBottleneck().getName());
-System.out.println("Active constraint: " + result.getActiveConstraintName());
+System.out.println("Bottleneck utilization: "
+    + String.format("%.1f%%", result.getBottleneckUtilization() * 100));
 System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
 ```
 
@@ -768,9 +770,9 @@ System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
 // Get all constrained equipment
 for (CapacityConstrainedEquipment equip : process.getConstrainedEquipment()) {
     System.out.println("\n" + equip.getName() + ":");
-    
+
     for (CapacityConstraint c : equip.getCapacityConstraints().values()) {
-        String status = c.isViolated() ? "⚠️ EXCEEDED" : 
+        String status = c.isViolated() ? "⚠️ EXCEEDED" :
                        c.isNearLimit() ? "⚡ NEAR LIMIT" : "✓ OK";
         System.out.printf("  %-20s: %6.1f / %6.1f %s (%5.1f%%) %s%n",
             c.getName(),

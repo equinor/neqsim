@@ -84,7 +84,7 @@ public class SeparatorCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If separator implements CapacityConstrainedEquipment, use its max utilization
     if (sep instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) sep).getMaxUtilization();
+      return sep.getMaxUtilization();
     }
 
     // Fallback: use liquid level as primary capacity indicator
@@ -121,7 +121,7 @@ public class SeparatorCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If separator already implements CapacityConstrainedEquipment, use its constraints
     if (sep instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) sep).getCapacityConstraints();
+      return sep.getCapacityConstraints();
     }
 
     // Liquid level constraint

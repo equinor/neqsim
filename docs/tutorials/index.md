@@ -25,6 +25,7 @@ Get up and running fast:
 | Guide | Time | Platform |
 |-------|------|----------|
 | **[Solve an Engineering Task](solve-engineering-task)** | **15-60 min** | **Any (VS Code, Codex, manual)** |
+| **[Introduction to Agentic Engineering](../integration/ai_agentic_programming_intro)** | **20 min** | **VS Code + Copilot** |
 | [Java Quickstart](../quickstart/java-quickstart) | 10 min | Java/Maven |
 | [Python Quickstart](../quickstart/python-quickstart) | 5 min | Python/pip |
 | [Colab Quickstart](../quickstart/colab-quickstart) | 1 min | Browser |
@@ -39,6 +40,7 @@ Complete walkthroughs for common applications:
 | **[Gas-Oil Separation Plant (GOSP)](gosp_tutorial)** | Multi-stage separation with compression | Intermediate |
 | **[PVT Lab Test Simulations](../pvtsimulation/pvt_lab_tests)** | CCE, CVD, DL, separator tests | Intermediate |
 | **[Flow Assurance Overview](../pvtsimulation/flow_assurance_overview)** | Hydrates, wax, asphaltenes screening | Intermediate |
+| **[UniSim/HYSYS to NeqSim Conversion](../process/unisim-to-neqsim-conversion)** | Convert UniSim `.usc` models to NeqSim | Intermediate |
 
 ## Video Tutorials
 

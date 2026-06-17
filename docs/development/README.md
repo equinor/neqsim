@@ -33,12 +33,29 @@ This folder contains documentation for:
 
 | Document | Description |
 |----------|-------------|
-| [TASK_SOLVING_GUIDE.md](TASK_SOLVING_GUIDE) | Complete workflow for solving tasks with AI while developing the physics engine |
+| [TASK_SOLVING_GUIDE.md](TASK_SOLVING_GUIDE) | Complete workflow for solving tasks with AI while developing the physics engine, including `study_config.yaml`, intake pauses, document inputs, and deep multi-notebook studies |
 | [Solve an Engineering Task](../tutorials/solve-engineering-task) | Hands-on tutorial: from blank screen to validated report |
 | [CODE_PATTERNS.md](CODE_PATTERNS) | Copy-paste code starters for every common task type |
 | [TASK_LOG.md](TASK_LOG) | Persistent memory — searchable log of all solved tasks |
+| [LESSONS_LEARNED.md](LESSONS_LEARNED) | Practical lessons from 45+ solved tasks (EOS, convergence, API gotchas) |
+| [image_tools_agents_skills.md](image_tools_agents_skills) | Inventory of image-related tools, agents, and skills for P&IDs, drawings, scanned PDFs, maps, and screenshots |
+| [AGENT_SKILL_MAP.md](AGENT_SKILL_MAP) | Auto-generated map of which skills each NeqSim agent loads at invocation time |
 
 Start with `CONTEXT.md` in the repo root for a 60-second orientation.
+
+For detailed engineering studies, create tasks with explicit depth controls:
+
+```powershell
+neqsim new-task "field development study" --type G --scale comprehensive --report-depth detailed --notebooks 5 --intake-pause always
+```
+
+The generated `study_config.yaml` controls notebook count and names, supervised
+NeqSim Runner execution, report sections, benchmark validation,
+uncertainty/risk requirements, figure minimums, document inputs, and
+consistency-check gates. Task input can also be provided as markdown prompt files or engineering documents in
+`step1_scope_and_research/references/`. The intake pause creates the task folder
+first, then lets you add or edit input files before notebooks are created. See
+[TASK_SOLVING_GUIDE.md](TASK_SOLVING_GUIDE) for the full configuration schema and examples.
 
 ---
 
@@ -89,6 +106,16 @@ public class SystemMyEos extends SystemEos {
 from neqsim import jneqsim
 fluid = jneqsim.thermo.system.SystemSrkEos(300.0, 50.0)
 ```
+
+---
+
+## Performance & Standards Integration
+
+| Document | Description |
+|----------|-------------|
+| [Performance Tuning Guide](performance_tuning) | Speed up simulations — warm-start K-values, flowsheet routing, stability short-circuit, and when to enable each optimization |
+| [TR/NORSOK Integration Recommendations](TR_NORSOK_integration_recommendations) | Synthesis of Equinor TR and NORSOK standard review with concrete recommendations for skills, agents, Java code, and data access |
+| [AI Extraction Skill Proposal](GITHUB_ISSUE_json_extraction_skill) | Feature proposal: extract process data from unstructured documents (text, PFDs, data sheets) into NeqSim JSON |
 
 ---
 

@@ -271,7 +271,7 @@ public class ProcessSystemGraphvizExporter {
   }
 
   private void export(ProcessSystem system, PrintWriter writer, GraphvizExportOptions options) {
-    writer.println("digraph process {");
+    writer.print("digraph process {\n");
 
     List<List<StreamReference>> streamUsage = collectStreamUsage(system);
     Set<String> nodeLines = new LinkedHashSet<>();
@@ -362,13 +362,13 @@ public class ProcessSystemGraphvizExporter {
     }
 
     for (String nodeLine : nodeLines) {
-      writer.println(nodeLine);
+      writer.print(nodeLine + "\n");
     }
     for (String edgeLine : edgeLines) {
-      writer.println(edgeLine);
+      writer.print(edgeLine + "\n");
     }
 
-    writer.println("}");
+    writer.print("}\n");
   }
 
   private static String selectStreamLabel(StreamReference source, StreamReference sink) {
@@ -875,7 +875,7 @@ public class ProcessSystemGraphvizExporter {
 
     String labelLocation =
         options.getTablePlacement() == GraphvizExportOptions.TablePlacement.BELOW ? "b" : "t";
-    writer.println("  graph [label=<" + tableLabel + ">, labelloc=\"" + labelLocation + "\"];");
+    writer.print("  graph [label=<" + tableLabel + ">, labelloc=\"" + labelLocation + "\"];\n");
   }
 
   private String buildStreamPropertyTable(List<List<StreamReference>> streamUsage,

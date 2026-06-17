@@ -31,14 +31,14 @@ import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>{@code
  * List<ObjectiveFunction> objectives =
  *     Arrays.asList(StandardObjective.MAXIMIZE_THROUGHPUT, StandardObjective.MINIMIZE_POWER);
- * 
+ *
  * MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer();
  * ParetoFront front = moo.optimizeWeightedSum(process, feedStream, objectives, baseConfig, 20);
- * 
+ *
  * ParetoSolution knee = front.findKneePoint();
  * System.out.println("Best trade-off: " + knee);
  * }</pre>
@@ -67,13 +67,13 @@ public class MultiObjectiveOptimizer implements Serializable {
   private static final int MAX_OBJECTIVES_EFFICIENT = 5;
 
   /** Inner single-objective optimizer. */
-  private final ProductionOptimizer singleObjectiveOptimizer;
+  private final transient ProductionOptimizer singleObjectiveOptimizer;
 
   /** Whether to include infeasible solutions in the front. */
   private boolean includeInfeasible = false;
 
   /** Callback for progress reporting. */
-  private ProgressCallback progressCallback;
+  private transient ProgressCallback progressCallback;
 
   /**
    * Progress callback interface.

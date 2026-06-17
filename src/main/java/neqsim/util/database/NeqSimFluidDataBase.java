@@ -25,11 +25,11 @@ public class NeqSimFluidDataBase
   static Logger logger = LogManager.getLogger(NeqSimFluidDataBase.class);
 
   static boolean started = false;
-  protected Connection databaseConnection;
+  protected transient Connection databaseConnection;
   /** Constant <code>useOnlineBase=false</code>. */
   public static boolean useOnlineBase = false;
   static int numb = 0;
-  Statement statement = null;
+  transient Statement statement = null;
 
   /**
    * <p>

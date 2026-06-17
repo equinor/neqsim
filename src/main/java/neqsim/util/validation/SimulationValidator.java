@@ -12,14 +12,14 @@ import neqsim.util.validation.contracts.ThermodynamicSystemContract;
 
 /**
  * AI-friendly validation helper for NeqSim simulations.
- * 
+ *
  * <p>
  * Provides a unified interface for validating NeqSim objects. AI agents can use this class to
  * validate setup before execution and get actionable remediation advice.
  * </p>
- * 
+ *
  * <h2>Usage:</h2>
- * 
+ *
  * <pre>
  * {@code
  * // Validate before running
@@ -28,13 +28,13 @@ import neqsim.util.validation.contracts.ThermodynamicSystemContract;
  *   // Parse result.getReport() for fixes
  *   System.out.println(result.getReport());
  * }
- * 
+ *
  * // Validate after running
  * stream.run();
  * ValidationResult postResult = SimulationValidator.validateOutput(stream);
  * }
  * </pre>
- * 
+ *
  * @author NeqSim
  * @version 1.0
  */
@@ -45,11 +45,11 @@ public final class SimulationValidator {
 
   /**
    * Validate any NeqSim object before execution.
-   * 
+   *
    * <p>
    * Automatically detects the object type and applies appropriate validation.
    * </p>
-   * 
+   *
    * @param obj object to validate (SystemInterface, StreamInterface, ProcessSystem, etc.)
    * @return validation result with errors/warnings and remediation hints
    */
@@ -89,11 +89,11 @@ public final class SimulationValidator {
 
   /**
    * Validate object output after execution.
-   * 
+   *
    * <p>
    * Checks postconditions to ensure the calculation produced valid results.
    * </p>
-   * 
+   *
    * @param obj object to validate (after run() has been called)
    * @return validation result with any output issues
    */
@@ -126,11 +126,11 @@ public final class SimulationValidator {
 
   /**
    * Validate and run if valid.
-   * 
+   *
    * <p>
    * Convenience method that validates preconditions, runs if valid, then validates output.
    * </p>
-   * 
+   *
    * @param equipment process equipment to validate and run
    * @return combined validation result (pre + post)
    */
@@ -163,7 +163,7 @@ public final class SimulationValidator {
 
   /**
    * Validate and run a process system.
-   * 
+   *
    * @param processSystem process system to validate and run
    * @return validation result
    */
@@ -195,7 +195,7 @@ public final class SimulationValidator {
 
   /**
    * Get remediation advice for an exception.
-   * 
+   *
    * @param e the exception
    * @return remediation string
    */
@@ -223,7 +223,7 @@ public final class SimulationValidator {
 
   /**
    * Quick check if an object is ready for simulation.
-   * 
+   *
    * @param obj object to check
    * @return true if valid, false otherwise
    */
@@ -233,7 +233,7 @@ public final class SimulationValidator {
 
   /**
    * Get a summary report for multiple objects.
-   * 
+   *
    * @param objects objects to validate
    * @return combined report
    */
