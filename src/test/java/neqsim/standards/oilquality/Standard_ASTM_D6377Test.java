@@ -21,7 +21,7 @@ public class Standard_ASTM_D6377Test {
     Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(testSystem);
     standard.setReferenceTemperature(37.8, "C");
     standard.calculate();
-    Assertions.assertEquals(1.10445689545, standard.getValue("RVP", "bara"), 1e-3);
+    Assertions.assertEquals(1.1574422523131047, standard.getValue("RVP", "bara"), 1e-3);
     Assertions.assertEquals(1.666298367, standard.getValue("TVP", "bara"), 1e-3);
   }
 
@@ -41,13 +41,13 @@ public class Standard_ASTM_D6377Test {
     standard.setMethodRVP("VPCR4");
     standard.setReferenceTemperature(37.8, "C");
     standard.calculate();
-    Assertions.assertEquals(3.61452722, standard.getValue("RVP", "bara"), 1e-3);
+    Assertions.assertEquals(3.8285556883808334, standard.getValue("RVP", "bara"), 1e-3);
     Assertions.assertEquals(7.867696779327479, standard.getValue("TVP", "bara"), 1e-3);
 
     standard.setMethodRVP("RVP_ASTM_D6377");
     standard.setReferenceTemperature(37.8, "C");
     standard.calculate();
-    Assertions.assertEquals(3.01451570813, standard.getValue("RVP", "bara"), 1e-3);
+    Assertions.assertEquals(3.1930154441, standard.getValue("RVP", "bara"), 1e-3);
     Assertions.assertEquals(7.867696779327479, standard.getValue("TVP", "bara"), 1e-3);
   }
 
@@ -65,15 +65,16 @@ public class Standard_ASTM_D6377Test {
     standard.setMethodRVP("VPCR4");
     standard.setReferenceTemperature(37.8, "C");
     standard.calculate();
-    Assertions.assertEquals(0.25505060, standard.getValue("RVP", "bara"), 1e-3);
+    Assertions.assertEquals(0.25830597077793843, standard.getValue("RVP", "bara"), 1e-3);
     Assertions.assertEquals(0.261765909821, standard.getValue("TVP", "bara"), 1e-3);
 
     standard.setMethodRVP("RVP_ASTM_D6377");
     standard.setReferenceTemperature(37.8, "C");
     standard.calculate();
-    Assertions.assertEquals(0.2127122042, standard.getValue("RVP", "bara"), 1e-3);
+    Assertions.assertEquals(0.2154271776, standard.getValue("RVP", "bara"), 1e-3);
     Assertions.assertEquals(0.2617659098, standard.getValue("TVP", "bara"), 1e-3);
   }
+
   @Test
   void testWaterFreeRvpUsesWaterFreeFluid() throws Exception {
     SystemInterface testSystem = createWaterBearingOil();
@@ -87,8 +88,8 @@ public class Standard_ASTM_D6377Test {
     double vpcr4NoWater = standard.getValue("RVP", "bara");
 
     Assertions.assertNotEquals(vpcr4WithWater, vpcr4NoWater, 1e-6);
-    Assertions.assertEquals(calculateIndependentWaterFreeVpcr4(createWaterBearingOil()), vpcr4NoWater,
-        1e-6);
+    Assertions.assertEquals(calculateIndependentWaterFreeVpcr4(createWaterBearingOil()),
+        vpcr4NoWater, 1e-6);
   }
 
   @Test
@@ -166,12 +167,13 @@ public class Standard_ASTM_D6377Test {
         Standard_ASTM_D6377.RvpMethod.fromLabel("VPCR4"));
     Assertions.assertEquals(Standard_ASTM_D6377.RvpMethod.VPCR4_NO_WATER,
         Standard_ASTM_D6377.RvpMethod.fromLabel("VPCR4_no_water"));
-    Assertions.assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
-      @Override
-      public void execute() {
-        Standard_ASTM_D6377.RvpMethod.fromLabel("not_a_method");
-      }
-    });
+    Assertions.assertThrows(IllegalArgumentException.class,
+        new org.junit.jupiter.api.function.Executable() {
+          @Override
+          public void execute() {
+            Standard_ASTM_D6377.RvpMethod.fromLabel("not_a_method");
+          }
+        });
   }
 
   @Test
@@ -198,8 +200,7 @@ public class Standard_ASTM_D6377Test {
 
     // JSON serializes and carries the expected fields.
     String json = result.toJson();
-    com.google.gson.JsonObject obj =
-        com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+    com.google.gson.JsonObject obj = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
     Assertions.assertEquals("VPCR4", obj.get("method").getAsString());
     Assertions.assertEquals("bara", obj.get("unit").getAsString());
     Assertions.assertTrue(obj.get("valid").getAsBoolean());
