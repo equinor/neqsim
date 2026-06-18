@@ -172,8 +172,7 @@ public final class PseudoComponentCombiner {
     Objects.requireNonNull(source, "source");
     Objects.requireNonNull(reference, "reference");
 
-    SystemInterface characterized = source.clone();
-    removeAllComponents(characterized);
+    SystemInterface characterized = createEmptyCharacterizedFluid(source);
 
     FluidExtraction sourceExtraction = extractComponents(source);
     FluidExtraction referenceExtraction = extractComponents(reference);
@@ -425,6 +424,41 @@ public final class PseudoComponentCombiner {
     }
     for (String name : names) {
       system.removeComponent(name);
+    }
+  }
+
+  /**
+   * Build an empty fluid that the characterized (re-binned) composition can be added to. The fluid
+   * is created as a fresh instance of the source system's class so that its equation of state and
+   * mixing rule match the source, but it starts with no components and a single, internally
+   * consistent set of phase component arrays.
+   *
+   * <p>
+   * A fresh system is used instead of {@code source.clone()} followed by component removal because a
+   * source fluid that has been flashed with multi-phase check enabled can hold inactive phase slots
+   * whose component arrays are inconsistent with the active phase (e.g.
+   * {@code maxNumberOfPhases = 3} while {@code numberOfPhases = 1}). Stripping components from such a
+   * fluid leaves orphan components in the inactive phase slots, which later collide when the
+   * reference components are added back ({@code addComponent - component with same name already
+   * exists in phase}). Starting from a fresh, empty system avoids that inconsistency entirely.
+   * </p>
+   *
+   * @param source fluid whose class, temperature, pressure and mixing rule are mirrored
+   * @return an empty fluid ready to receive the characterized composition
+   */
+  private static SystemInterface createEmptyCharacterizedFluid(SystemInterface source) {
+    try {
+      SystemInterface fresh = source.getClass()
+          .getConstructor(double.class, double.class)
+          .newInstance(Double.valueOf(source.getTemperature()), Double.valueOf(source.getPressure()));
+      fresh.setMixingRule(source.getMixingRule());
+      return fresh;
+    } catch (ReflectiveOperationException | RuntimeException ex) {
+      // Fallback for system classes without a (T, P) constructor: clone and strip in place.
+      logger.warn("Falling back to clone-and-strip for {}", source.getClass().getName(), ex);
+      SystemInterface fresh = source.clone();
+      removeAllComponents(fresh);
+      return fresh;
     }
   }
 

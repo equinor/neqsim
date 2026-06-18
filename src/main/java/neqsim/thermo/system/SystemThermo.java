@@ -4483,8 +4483,17 @@ public abstract class SystemThermo implements SystemInterface {
     setTotalNumberOfMoles(
         getTotalNumberOfMoles() - phaseArray[0].getComponent(name).getNumberOfmoles());
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+      // When maxNumberOfPhases has been raised above the active numberOfPhases
+      // (e.g. setMultiPhaseCheck(true) followed by a single-phase TPflash), a phase
+      // slot referenced through getPhase(i) may not contain this component. Guard
+      // against the resulting null dereference; an absent component has nothing to
+      // remove from that phase.
+      ComponentInterface phaseComponent = getPhase(i).getComponent(name);
+      if (phaseComponent == null) {
+        continue;
+      }
       getPhase(i).removeComponent(name, getTotalNumberOfMoles(),
-          getPhase(i).getComponent(name).getNumberOfMolesInPhase());
+          phaseComponent.getNumberOfMolesInPhase());
     }
 
     componentNames.remove(name);
