@@ -37,12 +37,12 @@ jobs:
           cache: 'maven'
 
       - name: Install NeqSim core to local Maven repo
-        run: mvn -B install -DskipTests -Dmaven.javadoc.skip=true
+        run: mvn -B install -DskipTests -Dmaven.javadoc.skip=true -ntp
 
       - name: Build MCP server uber-jar
         run: |
           NEQSIM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          cd neqsim-mcp-server && mvn -B package -Dneqsim.version="$NEQSIM_VERSION" -DskipTests -Dmaven.javadoc.skip=true
+          cd neqsim-mcp-server && mvn -B package -Dneqsim.version="$NEQSIM_VERSION" -DskipTests -Dmaven.javadoc.skip=true -ntp
 
       - name: Run MCP JSON-RPC integration tests
         run: cd neqsim-mcp-server && python test_mcp_server.py
@@ -61,7 +61,6 @@ jobs:
           cd neqsim-mcp-server/target
           cp neqsim-mcp-server-*-runner.jar "neqsim-mcp-server-${NEQSIM_VERSION}-runner.jar"
           sha256sum "neqsim-mcp-server-${NEQSIM_VERSION}-runner.jar" > "neqsim-mcp-server-${NEQSIM_VERSION}-runner.jar.sha256"
-          cat "neqsim-mcp-server-${NEQSIM_VERSION}-runner.jar.sha256"
 
       - name: Upload MCP server jar
         uses: actions/upload-artifact@v7

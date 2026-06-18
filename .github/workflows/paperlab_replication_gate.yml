@@ -95,7 +95,7 @@ jobs:
           key: m2-${{ hashFiles('pom.xml') }}
 
       - name: Build NeqSim
-        run: ./mvnw -B -DskipTests -Dmaven.javadoc.skip=true package
+        run: ./mvnw -B -DskipTests -Dmaven.javadoc.skip=true -ntp package
 
       - name: Install Python deps
         run: |

@@ -38,7 +38,7 @@ jobs:
 
       - name: Build with Maven (no tests)
         run: >
-          ./mvnw -B -V -e -ntp
+          ./mvnw -B -e -ntp -q
           -DskipTests -Dmaven.test.skip=true
           -Dfindbugs.skip=true -Dcheckstyle.skip=true -Dpmd.skip=true -Dspotbugs.skip=true
           -Denforcer.skip=true -Dmaven.javadoc.skip=true -Dlicense.skip=true -Drat.skip=true

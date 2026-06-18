@@ -28,7 +28,7 @@ jobs:
           java-version: '21'
           cache: 'maven'
       - name: Generate javadoc
-        run: mvn javadoc:javadoc "-Daether.connector.basic.retries=5"
+        run: mvn -B javadoc:javadoc -ntp "-Daether.connector.basic.retries=5"
       - name: Run tests and generate JaCoCo report
         run: mvn -B test --file pom.xml -ntp -DskipITs "-Daether.connector.basic.retries=5"
       - name: Verify JaCoCo report exists
