@@ -33,6 +33,12 @@ public class TVfractionFlash extends Flash {
   private boolean reportedUncountableState = false;
   /** Flag indicating if the flash calculation converged successfully. */
   private boolean converged = false;
+  /**
+   * Whether the vapor volume fraction objective uses the Peneloux volume-corrected phase volumes.
+   * Enabled by default so vapor/liquid volume ratios (for example the ASTM D6377 VPCR4 4:1 ratio)
+   * reflect the corrected liquid density.
+   */
+  private boolean useVolumeCorrection = true;
 
   /**
    * <p>
@@ -46,6 +52,26 @@ public class TVfractionFlash extends Flash {
     this.system = system;
     this.tpFlash = new TPflash(system);
     this.Vfractionspec = Vfractionspec;
+  }
+
+  /**
+   * Returns whether the vapor volume fraction objective uses Peneloux volume-corrected phase
+   * volumes.
+   *
+   * @return true if volume correction is applied to the vapor fraction objective
+   */
+  public boolean isUseVolumeCorrection() {
+    return useVolumeCorrection;
+  }
+
+  /**
+   * Sets whether the vapor volume fraction objective uses Peneloux volume-corrected phase volumes.
+   *
+   * @param useVolumeCorrection true to apply volume correction (default), false to use raw EOS
+   *        volumes
+   */
+  public void setUseVolumeCorrection(boolean useVolumeCorrection) {
+    this.useVolumeCorrection = useVolumeCorrection;
   }
 
   /**
@@ -69,6 +95,14 @@ public class TVfractionFlash extends Flash {
    * @return a double
    */
   public double calcdQdV() {
+    if (useVolumeCorrection) {
+      // Use Peneloux volume-corrected phase volumes so the vapor/liquid volume ratio reflects the
+      // corrected liquid density (ASTM D6377 VPCR4 is defined on a real 4:1 vapor/liquid volume
+      // ratio).
+      system.initPhysicalProperties("density");
+      double dQ = system.getCorrectedVolumeFraction(0) - Vfractionspec;
+      return dQ;
+    }
     double dQ = system.getPhase(0).getVolume() / system.getVolume() - Vfractionspec;
     return dQ;
   }
