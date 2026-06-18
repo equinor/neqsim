@@ -171,7 +171,7 @@ When writing documentation that includes Java or Python code examples:
 - **Self-Healing Automation (PREFERRED for agents)**: Use `getVariableValueSafe()` and `setVariableValueSafe()` instead of direct get/set. These return JSON with the value on success, or diagnostics with suggestions, auto-corrections, and remediation hints on failure. Access `auto.getDiagnostics()` for fuzzy name matching (`autoCorrectName()`), physical bounds validation (`validatePhysicalBounds()`), and operation tracking (`getLearningReport()`). The `AutomationDiagnostics` class learns from past failures â€” corrections are cached and reused automatically.
 - **Lifecycle State (Save/Restore/Compare)**: Use `ProcessSystemState.fromProcessSystem(process)` and `ProcessModelState.fromProcessModel(plant)` to create portable JSON snapshots. Save with `state.saveToFile("model.json")`, load with `ProcessSystemState.loadFromFile("model.json")`, validate with `state.validate()`. Compare versions with `ProcessModelState.compare(v1, v2)` returning a `ModelDiff` (modified parameters, added/removed equipment). Use `toCompressedBytes()`/`fromCompressedBytes()` for network transfer. All state classes live in `neqsim.process.processmodel.lifecycle`.
 - **Data & Resources**: Component metadata lives under `src/main/resources`; heavy datasets (e.g., `neqsim_component_names.txt`) must remain synchronized with thermodynamic model expectations before publishing new components.
-- **Logging & Diagnostics**: log4j2 powers runtime logging; tests often assert solver convergence instead of inspecting logs, so prefer returning residuals over printing when adding instrumentation.
+- **Logging & Diagnostics (MANDATORY)**: log4j2 powers runtime logging, and all Java logging/output must use a logger (`org.apache.logging.log4j.Logger`). **NEVER** introduce `System.out.println` or `System.err.println` in Java code (including tests, examples, and generated snippets). Use parameterized logger calls such as `logger.info("message {}", value)`.
 - **Build & Test Workflow**: Use `./mvnw install` for a full build (Windows: `mvnw.cmd install`); run the entire suite with `./mvnw test` and checkstyle/spotbugs/pmd with `./mvnw checkstyle:check spotbugs:check pmd:check`.
 - **Focused Tests**: Use the Maven `-Dtest` flag to run individual classes or methods; this keeps solver regressions quick to triage.
 - **Style & Formatting**: Java code follows Google style with project overrides from `.config/checkstyle_neqsim.xml` and formatter profiles (`.config/neqsim_formatter.xml`); keep indentation at two spaces and respect existing comment minimalism.
@@ -280,7 +280,7 @@ private void writeData(Appendable out, String data) throws IOException {
 ### Lambda Expressions in JavaDoc Examples
 - **NEVER** use lambda arrow syntax (`->`) in JavaDoc code examples - it causes HTML parsing errors
 - Instead, use anonymous inner class syntax or escape the arrow
-- Wrong: `list.forEach(item -> System.out.println(item));`
+- Wrong: `list.forEach(item -> doSomething(item));`
 - Correct: `list.forEach(new Consumer() { public void accept(Object item) { ... } });`
 - For comparisons, use `&gt;` entity: `if (value &gt; threshold)`
 
