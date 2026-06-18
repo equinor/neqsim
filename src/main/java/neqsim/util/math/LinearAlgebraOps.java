@@ -1,5 +1,7 @@
 package neqsim.util.math;
 
+import java.util.Map;
+import Jama.Matrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
@@ -154,6 +156,26 @@ public final class LinearAlgebraOps {
         outSetter.set(i, j, sol.get(i, j));
       }
     }
+  }
+
+  /**
+   * Builds a dense {@link Matrix} from sparse row/column map storage.
+   *
+   * @param rows number of matrix rows
+   * @param columns number of matrix columns
+   * @param sparseValues sparse matrix values keyed by row and then column
+   * @return dense matrix representation
+   */
+  public static Matrix toDenseMatrix(int rows, int columns,
+      Map<Integer, Map<Integer, Double>> sparseValues) {
+    double[][] dense = new double[rows][columns];
+    for (Map.Entry<Integer, Map<Integer, Double>> rowEntry : sparseValues.entrySet()) {
+      int row = rowEntry.getKey().intValue();
+      for (Map.Entry<Integer, Double> columnEntry : rowEntry.getValue().entrySet()) {
+        dense[row][columnEntry.getKey().intValue()] = columnEntry.getValue().doubleValue();
+      }
+    }
+    return new Matrix(dense);
   }
 
   /**
