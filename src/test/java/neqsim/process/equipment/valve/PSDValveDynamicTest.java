@@ -93,7 +93,8 @@ public class PSDValveDynamicTest extends neqsim.NeqSimTest {
     double dt = 1.0;
 
     // Simulate normal operation at 50 bara
-    System.out.printf("Initial state: PSD outlet pressure = %.2f bara%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Initial state: PSD outlet pressure = %.2f bara%n",
         psdValve.getOutletStream().getPressure("bara"));
     pressureTransmitter.evaluateAlarm(50.0, dt, time);
     psdValve.runTransient(dt, UUID.randomUUID());
@@ -118,7 +119,7 @@ public class PSDValveDynamicTest extends neqsim.NeqSimTest {
         alarmStatus = pressureTransmitter.getAlarmState().getActiveLevel().toString();
       }
 
-      System.out.printf(
+      logger.printf(org.apache.logging.log4j.Level.INFO,
           "Time: %5.1f s | Pressure: %5.2f bara | Alarm: %4s | "
               + "PSD Opening: %5.1f %% | Tripped: %3s%n",
           time, pressure, alarmStatus, psdValve.getPercentValveOpening(),
@@ -138,7 +139,8 @@ public class PSDValveDynamicTest extends neqsim.NeqSimTest {
               pressureTransmitter.getAlarmState().getActiveLevel(), "Active alarm should be HIHI");
 
           logger.info("\n✓ PSD valve successfully tripped on HIHI alarm!");
-          System.out.printf("Trip occurred when pressure reached %.2f bara%n", pressure);
+          logger.printf(org.apache.logging.log4j.Level.INFO,
+              "Trip occurred when pressure reached %.2f bara%n", pressure);
           logger.info("======================================");
           return; // Test passed
         }
@@ -215,22 +217,26 @@ public class PSDValveDynamicTest extends neqsim.NeqSimTest {
       psdValve.runTransient(dt, UUID.randomUUID());
 
       if (time % 5 < dt || psdValve.hasTripped() != psdTripped) {
-        System.out.printf("Time: %5.1f s | Pressure: %5.2f bara | PSD: %5.1f %% | Tripped: %3s%n",
-            time, measuredPressure, psdValve.getPercentValveOpening(),
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "Time: %5.1f s | Pressure: %5.2f bara | PSD: %5.1f %% | Tripped: %3s%n", time,
+            measuredPressure, psdValve.getPercentValveOpening(),
             psdValve.hasTripped() ? "YES" : "NO");
       }
 
       if (psdValve.hasTripped() && !psdTripped) {
         psdTripped = true;
-        System.out.printf("%n✓ PSD valve tripped at %.1f s when pressure reached %.2f bara%n", time,
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%n✓ PSD valve tripped at %.1f s when pressure reached %.2f bara%n", time,
             measuredPressure);
         logger.info("Pressure rise stopped by PSD valve closure\n");
       }
     }
 
     logger.info("\n===== TEST SUMMARY =====");
-    System.out.printf("Maximum measured pressure: %.2f bara%n", maxMeasuredPressure);
-    System.out.printf("PSD valve tripped: %s%n", psdTripped ? "YES" : "NO");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum measured pressure: %.2f bara%n",
+        maxMeasuredPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSD valve tripped: %s%n",
+        psdTripped ? "YES" : "NO");
 
     // The PSD valve should have tripped, limiting downstream pressure
     assertTrue(psdTripped, "PSD valve should have tripped to protect separator");

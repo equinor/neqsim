@@ -1,14 +1,14 @@
 package neqsim.process.equipment.separator;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Demo: steady-state run of a separator, then dynamic blowdown.
@@ -60,9 +60,11 @@ class BlowdownDemoTest {
     double tStart = sep.getThermoSystem().getTemperature("C");
 
     logger.info("=== STEADY STATE ===");
-    System.out.printf("Separator pressure   : %7.2f bara%n", pStart);
-    System.out.printf("Separator temperature: %7.2f C%n", tStart);
-    System.out.printf("Vessel volume        : %7.2f m3%n", Math.PI / 4.0 * 2.0 * 2.0 * 6.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Separator pressure   : %7.2f bara%n",
+        pStart);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Separator temperature: %7.2f C%n", tStart);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Vessel volume        : %7.2f m3%n",
+        Math.PI / 4.0 * 2.0 * 2.0 * 6.0);
 
     // ---------- 2. Switch to dynamic, isolate inlet, open BDV ----------
     sep.setCalculateSteadyState(false);
@@ -73,8 +75,8 @@ class BlowdownDemoTest {
     // ---------- 3. Time-step blowdown ----------
 
     logger.info("=== BLOWDOWN ===");
-    System.out.printf("%6s  %10s  %10s  %12s  %12s%n", "t [s]", "P [bara]", "T [C]", "BDV [kg/hr]",
-        "n [kmol]");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%6s  %10s  %10s  %12s  %12s%n", "t [s]",
+        "P [bara]", "T [C]", "BDV [kg/hr]", "n [kmol]");
 
     double dt = 5.0;
     int steps = 60; // 5 min total
@@ -90,7 +92,8 @@ class BlowdownDemoTest {
       double mFlow = bdValve.getOutletStream().getFlowRate("kg/hr");
       double moles = sep.getThermoSystem().getTotalNumberOfMoles() / 1000.0;
       if (i % 4 == 0) {
-        System.out.printf("%6.1f  %10.2f  %10.2f  %12.1f  %12.3f%n", i * dt, p, t, mFlow, moles);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%6.1f  %10.2f  %10.2f  %12.1f  %12.3f%n", i * dt, p, t, mFlow, moles);
       }
       if (i > 0 && p < pPrev - 1e-6) {
         decreasing++;
@@ -100,8 +103,8 @@ class BlowdownDemoTest {
 
     double pEnd = sep.getThermoSystem().getPressure("bara");
 
-    System.out.printf("Pressure dropped: %.2f -> %.2f bara (%.2f bar)%n", pStart, pEnd,
-        pStart - pEnd);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Pressure dropped: %.2f -> %.2f bara (%.2f bar)%n", pStart, pEnd, pStart - pEnd);
 
     // Sanity: pressure must drop monotonically over the blowdown
     assertTrue(pEnd < pStart,

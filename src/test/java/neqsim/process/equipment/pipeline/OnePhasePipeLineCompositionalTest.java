@@ -264,7 +264,7 @@ public class OnePhasePipeLineCompositionalTest {
     logger.info("------------------------|-------|---------|---------------------");
 
     for (AdvectionScheme scheme : AdvectionScheme.values()) {
-      System.out.printf("%-23s | %5d | %7.1f | %dx%n", scheme.getDisplayName(), scheme.getOrder(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-23s | %5d | %7.1f | %dx%n", scheme.getDisplayName(), scheme.getOrder(),
           scheme.getMaxCFL(), Math.round(1.0 / scheme.getDispersionReductionFactor()));
     }
 

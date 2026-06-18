@@ -625,7 +625,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
       ops.hydrateFormationTemperature();
       hydrateTemps[i] = fluid.getTemperature() - 273.15;
 
-      System.out.printf("P = %.0f bara: Hydrate T = %.2f °C%n", pressures[i], hydrateTemps[i]);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "P = %.0f bara: Hydrate T = %.2f °C%n", pressures[i], hydrateTemps[i]);
     }
 
     // Verify hydrate temperature increases with pressure (thermodynamic expectation)

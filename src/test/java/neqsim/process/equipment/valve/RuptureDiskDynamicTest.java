@@ -3,6 +3,8 @@ package neqsim.process.equipment.valve;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
@@ -10,8 +12,6 @@ import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Dynamic test for rupture disk behavior in blocked outlet scenarios. Tests the one-time bursting
@@ -145,8 +145,9 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
       // Optional: Print progress for key time points
       if (i % 40 == 0 || (currentTime >= 49.5 && currentTime <= 100.0 && i % 4 == 0)
           || (currentTime >= 199.5 && currentTime <= 250.0 && i % 4 == 0)) {
-        System.out.printf("Time: %6.1f s | Sep Press: %6.2f bara | PCV Opening: %5.1f %% | "
-            + "Disk Opening: %5.1f %% | PCV Flow: %7.1f kg/hr | Disk Flow: %7.1f kg/hr | Ruptured: %s%n",
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "Time: %6.1f s | Sep Press: %6.2f bara | PCV Opening: %5.1f %% | "
+                + "Disk Opening: %5.1f %% | PCV Flow: %7.1f kg/hr | Disk Flow: %7.1f kg/hr | Ruptured: %s%n",
             currentTime, separatorPressure, pressureControlValve.getPercentValveOpening(),
             ruptureDisk.getPercentValveOpening(), pcvFlowRates.get(i), diskFlowRates.get(i),
             ruptureDisk.hasRuptured() ? "YES" : "NO");
@@ -211,14 +212,21 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
 
     // Print summary
     logger.info("\n===== RUPTURE DISK TEST SUMMARY =====");
-    System.out.printf("Feed flow rate: %.1f kg/hr%n", feedStream.getFlowRate("kg/hr"));
-    System.out.printf("Rupture disk burst pressure: %.1f bara%n", burstPressure);
-    System.out.printf("Rupture disk full open pressure: %.1f bara%n", fullOpenPressure);
-    System.out.printf("Maximum separator pressure: %.2f bara%n", maxPressure);
-    System.out.printf("Maximum disk relief flow: %.1f kg/hr%n", maxDiskFlow);
-    System.out.printf("Disk ruptured: %s%n", ruptureDisk.hasRuptured() ? "YES" : "NO");
-    System.out.printf("Final disk opening: %.1f %%%n", diskOpenings.get(diskOpenings.size() - 1));
-    System.out.printf("Final pressure: %.2f bara%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Feed flow rate: %.1f kg/hr%n",
+        feedStream.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Rupture disk burst pressure: %.1f bara%n",
+        burstPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Rupture disk full open pressure: %.1f bara%n", fullOpenPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum separator pressure: %.2f bara%n",
+        maxPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum disk relief flow: %.1f kg/hr%n",
+        maxDiskFlow);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Disk ruptured: %s%n",
+        ruptureDisk.hasRuptured() ? "YES" : "NO");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Final disk opening: %.1f %%%n",
+        diskOpenings.get(diskOpenings.size() - 1));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Final pressure: %.2f bara%n",
         separatorPressures.get(separatorPressures.size() - 1));
     logger.info(
         "Key behavior: Disk remains FULLY OPEN even though pressure dropped below burst pressure!");
@@ -266,8 +274,9 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
 
       disk.runTransient(0.5, id);
 
-      System.out.printf("Pressure: %5.1f bara | Disk Opening: %6.1f %% | Has Ruptured: %s%n",
-          testPressures[i], disk.getPercentValveOpening(), disk.hasRuptured() ? "YES" : "NO");
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "Pressure: %5.1f bara | Disk Opening: %6.1f %% | Has Ruptured: %s%n", testPressures[i],
+          disk.getPercentValveOpening(), disk.hasRuptured() ? "YES" : "NO");
 
       // Verify behavior
       if (i < 2) {

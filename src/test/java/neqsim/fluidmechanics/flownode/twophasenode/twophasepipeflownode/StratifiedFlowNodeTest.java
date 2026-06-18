@@ -287,10 +287,13 @@ public class StratifiedFlowNodeTest {
     double totalWallContact = gasWallContact + liquidWallContact;
     double pipeCircumference = Math.PI * pipe.getDiameter();
 
-    System.out.printf("Gas fraction: %.4f, Liquid fraction: %.4f%n", gasFraction, liquidFraction);
-    System.out.printf("Gas wall contact: %.6f m, Liquid wall contact: %.6f m%n", gasWallContact,
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Gas fraction: %.4f, Liquid fraction: %.4f%n", gasFraction, liquidFraction);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Gas wall contact: %.6f m, Liquid wall contact: %.6f m%n", gasWallContact,
         liquidWallContact);
-    System.out.printf("Total wall contact: %.6f m, Pipe circumference: %.6f m%n", totalWallContact,
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Total wall contact: %.6f m, Pipe circumference: %.6f m%n", totalWallContact,
         pipeCircumference);
 
     // Verify we have two phases

@@ -90,11 +90,14 @@ public class TransientPipeHeatTransferExample {
 
     // Initial steady-state run
     process.run();
-    System.out.printf("Pipe: %.0f m long, %.3f m diameter%n", pipeLength, pipeDiameter);
-    System.out.printf("Sea temperature: %.1f °C%n", seaTemperature);
-    System.out.printf("Heat transfer coefficient: %.1f W/(m²·K)%n", heatTransferCoeff);
-    System.out.printf("Flow rate: %.0f kg/hr%n", flowRate);
-    System.out.printf("Time step: %.1f seconds%n", dt);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Pipe: %.0f m long, %.3f m diameter%n",
+        pipeLength, pipeDiameter);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Sea temperature: %.1f °C%n",
+        seaTemperature);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Heat transfer coefficient: %.1f W/(m²·K)%n",
+        heatTransferCoeff);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Flow rate: %.0f kg/hr%n", flowRate);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Time step: %.1f seconds%n", dt);
 
 
     // ========================================
@@ -146,8 +149,9 @@ public class TransientPipeHeatTransferExample {
       // Print every 10 steps or at key transitions
       if (step % 10 == 0 || step == rampUpSteps || step == rampUpSteps + holdHighSteps
           || step == rampUpSteps + holdHighSteps + rampDownSteps) {
-        System.out.printf("%7.0f    %8.2f     %8.2f      %6.2f    %s%n", currentTime,
-            currentInletTemp, outletTemp, deltaT, phase);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%7.0f    %8.2f     %8.2f      %6.2f    %s%n", currentTime, currentInletTemp,
+            outletTemp, deltaT, phase);
       }
 
       currentTime += dt;
@@ -168,9 +172,11 @@ public class TransientPipeHeatTransferExample {
     double NTU = heatTransferCoeff * area / (massFlowKgS * cp);
     double effectiveness = 1 - Math.exp(-NTU);
 
-    System.out.printf("Heat transfer area: %.1f m²%n", area);
-    System.out.printf("NTU (Number of Transfer Units): %.3f%n", NTU);
-    System.out.printf("Effectiveness (1-e^-NTU): %.3f%n", effectiveness);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Heat transfer area: %.1f m²%n", area);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "NTU (Number of Transfer Units): %.3f%n",
+        NTU);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Effectiveness (1-e^-NTU): %.3f%n",
+        effectiveness);
 
 
     // Expected outlet temperatures at different inlet temps
@@ -180,7 +186,8 @@ public class TransientPipeHeatTransferExample {
     for (double Tin : testInletTemps) {
       double expectedTout = seaTemperature + (Tin - seaTemperature) * Math.exp(-NTU);
       double cooling = Tin - expectedTout;
-      System.out.printf("%.1f°C     %.2f°C              %.2f°C%n", Tin, expectedTout, cooling);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%.1f°C     %.2f°C              %.2f°C%n",
+          Tin, expectedTout, cooling);
     }
 
 

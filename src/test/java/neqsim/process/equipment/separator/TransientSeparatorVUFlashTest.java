@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,8 +18,6 @@ import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Test class for transient separator simulation using improved VU flash calculations. This test
@@ -184,8 +184,8 @@ public class TransientSeparatorVUFlashTest {
     double initialLevel = v001.getLiquidLevel();
     double initialPressure = v001.getThermoSystem().getPressure();
 
-    System.out.printf("Initial conditions: Level=%.3f, Pressure=%.3f bar%n", initialLevel,
-        initialPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Initial conditions: Level=%.3f, Pressure=%.3f bar%n", initialLevel, initialPressure);
 
     // Data collection for monitoring
     List<Double> timeData = new ArrayList<>();
@@ -217,7 +217,7 @@ public class TransientSeparatorVUFlashTest {
 
         // Print progress every 5 steps
         if (i % 5 == 0) {
-          System.out.printf(
+          logger.printf(org.apache.logging.log4j.Level.INFO,
               "Step %d: Time=%.1f s, Level=%.3f, Pressure=%.3f bar, "
                   + "LiqVol=%.3f m³, ValveOpening=%.1f%%%n",
               i, currentTime, currentLevel, currentPressure, liquidVolume, valveOpening);
@@ -263,17 +263,19 @@ public class TransientSeparatorVUFlashTest {
     double finalPressure = pressureData.get(pressureData.size() - 1);
     double finalVolume = liquidVolumeData.get(liquidVolumeData.size() - 1);
 
-    System.out.printf("%nSimulation completed successfully:%n");
-    System.out.printf("Final conditions: Level=%.3f, Pressure=%.3f bar, LiqVol=%.3f m³%n",
-        finalLevel, finalPressure, finalVolume);
-    System.out.printf("Total simulation time: %.1f seconds (%d steps)%n", finalTime, steps);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%nSimulation completed successfully:%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Final conditions: Level=%.3f, Pressure=%.3f bar, LiqVol=%.3f m³%n", finalLevel,
+        finalPressure, finalVolume);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Total simulation time: %.1f seconds (%d steps)%n", finalTime, steps);
 
     // Test that the enhanced VU flash provided stable results
     double levelVariance = calculateVariance(levelData);
     double pressureVariance = calculateVariance(pressureData);
 
-    System.out.printf("Level variance: %.6f, Pressure variance: %.6f%n", levelVariance,
-        pressureVariance);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Level variance: %.6f, Pressure variance: %.6f%n", levelVariance, pressureVariance);
 
     // The enhanced VU flash should provide stable results with reasonable variance
     assertTrue(levelVariance < 1.0, "Level variance should be reasonable");

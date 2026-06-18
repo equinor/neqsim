@@ -194,9 +194,9 @@ public class CompressorCurveOptimizationTest {
     logger.info("\n=== Compressor Capacity Constraints ===");
     for (java.util.Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
       CapacityConstraint c = entry.getValue();
-      System.out.printf("%s: current=%.2f, design=%.2f, max=%.2f, utilization=%.1f%%%n",
-          c.getName(), c.getCurrentValue(), c.getDesignValue(), c.getMaxValue(),
-          c.getUtilization() * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%s: current=%.2f, design=%.2f, max=%.2f, utilization=%.1f%%%n", c.getName(),
+          c.getCurrentValue(), c.getDesignValue(), c.getMaxValue(), c.getUtilization() * 100);
     }
 
     // Check speed constraint uses curve limits
@@ -339,10 +339,11 @@ public class CompressorCurveOptimizationTest {
 
       if (speedOk && surgeOk) {
         maxAchievableFlow = feedStream.getFlowRate("kg/hr");
-        System.out.printf("Flow factor %.1f: %.0f kg/hr - OK (surge margin: %.1f%%)%n", flowFactor,
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "Flow factor %.1f: %.0f kg/hr - OK (surge margin: %.1f%%)%n", flowFactor,
             maxAchievableFlow, surgeMargin);
       } else {
-        System.out.printf(
+        logger.printf(org.apache.logging.log4j.Level.INFO,
             "Flow factor %.1f: %.0f kg/hr - LIMIT (speed OK: %b, surge OK: %b, margin: %.1f%%)%n",
             flowFactor, feedStream.getFlowRate("kg/hr"), speedOk, surgeOk, surgeMargin);
         break;
@@ -386,7 +387,7 @@ public class CompressorCurveOptimizationTest {
       boolean withinCurve = compressor.isSpeedWithinRange();
       double surgeMargin = compressor.getDistanceToSurge();
 
-      System.out.printf(
+      logger.printf(org.apache.logging.log4j.Level.INFO,
           "Flow %.0f kg/hr: Speed=%.0f RPM, P=%.1f bara, " + "withinCurve=%b, surgeMargin=%.1f%%%n",
           flow, solvedSpeed, actualPressure, withinCurve, surgeMargin);
 
@@ -463,7 +464,8 @@ public class CompressorCurveOptimizationTest {
     logger.info("\nAll constraints:");
     for (CapacityConstraint c : compressor.getCapacityConstraints().values()) {
       String status = c.isViolated() ? "VIOLATED" : (c.isNearLimit() ? "WARNING" : "OK");
-      System.out.printf("  %-20s: %6.1f%% [%s]%n", c.getName(), c.getUtilization() * 100, status);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %-20s: %6.1f%% [%s]%n", c.getName(),
+          c.getUtilization() * 100, status);
     }
   }
 }

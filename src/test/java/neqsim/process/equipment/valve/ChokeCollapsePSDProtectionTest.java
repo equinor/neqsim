@@ -130,9 +130,12 @@ public class ChokeCollapsePSDProtectionTest {
     separator.run();
 
     double initialPressure = chokeOutlet.getPressure("bara");
-    System.out.printf("Initial steady state pressure: %.2f bara%n", initialPressure);
-    System.out.printf("Initial choke opening: %.1f%%%n", chokeValve.getPercentValveOpening());
-    System.out.printf("Initial PSD opening: %.1f%%%n", psdValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Initial steady state pressure: %.2f bara%n",
+        initialPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Initial choke opening: %.1f%%%n",
+        chokeValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Initial PSD opening: %.1f%%%n",
+        psdValve.getPercentValveOpening());
 
 
     // Verify initial conditions
@@ -199,7 +202,7 @@ public class ChokeCollapsePSDProtectionTest {
         tripTime = time;
       }
 
-      System.out.printf(
+      logger.printf(org.apache.logging.log4j.Level.INFO,
           "%7.1f  |    %6.1f%%    |     %6.2f      |   %-6s    |   %6.1f%%   |    %s%n", time,
           chokeValve.getPercentValveOpening(), currentPressure, alarmState,
           psdValve.getPercentValveOpening(), psdValve.hasTripped() ? "YES" : "NO");
@@ -212,13 +215,15 @@ public class ChokeCollapsePSDProtectionTest {
 
 
     logger.info("===== SCENARIO SUMMARY =====");
-    System.out.printf("Choke valve failed open at: 0.0 s%n");
-    System.out.printf("PSD valve tripped at: %.1f s%n", tripTime);
-    System.out.printf("Maximum pressure reached: %.2f bara%n", maxPressure);
-    System.out.printf("HIHI setpoint: 55.0 bara%n");
-    System.out.printf("PSD valve status: %s%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Choke valve failed open at: 0.0 s%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSD valve tripped at: %.1f s%n", tripTime);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum pressure reached: %.2f bara%n",
+        maxPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "HIHI setpoint: 55.0 bara%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSD valve status: %s%n",
         psdValve.hasTripped() ? "TRIPPED (CLOSED)" : "OPEN");
-    System.out.printf("Final PSD opening: %.1f%%%n", psdValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Final PSD opening: %.1f%%%n",
+        psdValve.getPercentValveOpening());
 
 
     // Verify that PSD valve tripped
@@ -270,7 +275,8 @@ public class ChokeCollapsePSDProtectionTest {
       time += 0.5;
 
       if (psdValve.hasTripped()) {
-        System.out.printf("  PSD tripped at %.1f bara%n", pressure);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  PSD tripped at %.1f bara%n",
+            pressure);
         break;
       }
     }
@@ -308,7 +314,8 @@ public class ChokeCollapsePSDProtectionTest {
     psdValve.run();
 
     assertEquals(100.0, psdValve.getPercentValveOpening(), 0.1, "PSD should open after reset");
-    System.out.printf("  ✓ PSD successfully opened to %.1f%%%n", psdValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  ✓ PSD successfully opened to %.1f%%%n",
+        psdValve.getPercentValveOpening());
 
 
     logger.info("===== RESET TEST SUMMARY =====");

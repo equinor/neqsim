@@ -897,7 +897,7 @@ public class TwoFluidPipeLedaFlowParityTest {
         proc.run();
 
         double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
-        System.out.printf("  %10.0f | %8.3f%n", flow, dp);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  %10.0f | %8.3f%n", flow, dp);
 
         if (prevDp > 0) {
           assertTrue(dp > prevDp * 0.8,
@@ -986,7 +986,7 @@ public class TwoFluidPipeLedaFlowParityTest {
         proc.run();
 
         double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
-        System.out.printf("  %13.0f | %8.3f%n", d * 1000, dp);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  %13.0f | %8.3f%n", d * 1000, dp);
 
         // dP should decrease with increasing diameter
         assertTrue(dp < prevDp,

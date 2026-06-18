@@ -221,7 +221,7 @@ public class ProductionImpactAnalyzerTest {
     logger.info("=== Equipment Criticality Ranking ===");
     for (int i = 0; i < ranking.size(); i++) {
       ProductionImpactResult result = ranking.get(i);
-      System.out.printf("%d. %s: %.1f%% loss%n", i + 1, result.getEquipmentName(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%d. %s: %.1f%% loss%n", i + 1, result.getEquipmentName(),
           result.getPercentLoss());
     }
 
@@ -318,7 +318,7 @@ public class ProductionImpactAnalyzerTest {
 
     logger.info("=== Optimized Setpoints ===");
     for (java.util.Map.Entry<String, Double> entry : result.getOptimizedSetpoints().entrySet()) {
-      System.out.printf("  %s: %.2f%n", entry.getKey(), entry.getValue());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: %.2f%n", entry.getKey(), entry.getValue());
     }
   }
 }

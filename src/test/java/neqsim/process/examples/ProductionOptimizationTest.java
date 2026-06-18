@@ -39,20 +39,20 @@ public class ProductionOptimizationTest {
     ProcessOutputResults initialResults = simulation.runSimulation();
 
     logger.info("=== Initial Process Results ===");
-    System.out.printf("Gas Export Rate: %.2f kmole/hr\n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Gas Export Rate: %.2f kmole/hr\n",
         initialResults.getGasExportRate() / 1000.0);
-    System.out.printf("Oil Export Rate: %.2f kmole/hr\n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Oil Export Rate: %.2f kmole/hr\n",
         initialResults.getOilExportRate() / 1000.0);
-    System.out.printf("Feed Rate: %.2f kmol/hr\n", simulation.getInputParameters().getFeedRate());
-    System.out.printf("Total Power: %.2f kW\n", initialResults.getTotalPowerConsumption());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Feed Rate: %.2f kmol/hr\n", simulation.getInputParameters().getFeedRate());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total Power: %.2f kW\n", initialResults.getTotalPowerConsumption());
 
     // Print separator utilization
     logger.info("\n=== Separator Capacity Utilization (Initial) ===");
     Map<String, Double> sepCapacity = initialResults.getSeparatorCapacityUtilization();
     for (Map.Entry<String, Double> entry : sepCapacity.entrySet()) {
-      System.out.printf("  %s: %.1f%%\n", entry.getKey(), entry.getValue() * 100.0);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: %.1f%%\n", entry.getKey(), entry.getValue() * 100.0);
     }
-    System.out.printf("Any separator overloaded: %s\n", initialResults.isAnySeparatorOverloaded());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Any separator overloaded: %s\n", initialResults.isAnySeparatorOverloaded());
 
     // Print compressor speed utilization
     logger.info("\n=== Compressor Speed Utilization (Initial) ===");
@@ -66,10 +66,10 @@ public class ProductionOptimizationTest {
       double utilization = entry.getValue();
       String status =
           utilization > 1.0 ? " <-- OVERSPEED!" : (utilization > 0.95 ? " <-- NEAR LIMIT" : "");
-      System.out.printf("  %s: Speed=%.0f RPM, Max=%.0f RPM, Utilization=%.1f%%%s\n", compName,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: Speed=%.0f RPM, Max=%.0f RPM, Utilization=%.1f%%%s\n", compName,
           speed, maxSpeed, utilization * 100.0, status);
     }
-    System.out.printf("Any compressor overspeed: %s\n", initialResults.isAnyCompressorOverspeed());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Any compressor overspeed: %s\n", initialResults.isAnyCompressorOverspeed());
 
     // Print detailed separator/scrubber design information
     printSeparatorDesignInfo(simulation.getOilProcess(), "Initial");
@@ -80,17 +80,17 @@ public class ProductionOptimizationTest {
         simulation.optimizeMaxProduction(simulation.getInputParameters());
 
     logger.info("\n=== Optimization Results ===");
-    System.out.printf("Maximum Feed Rate: %.2f kmol/hr\n", maxProdResult.getMaxFeedRate());
-    System.out.printf("Gas Export Rate: %.2f kmole/hr\n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum Feed Rate: %.2f kmol/hr\n", maxProdResult.getMaxFeedRate());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Gas Export Rate: %.2f kmole/hr\n",
         maxProdResult.getMaxGasExportRate() / 1000.0);
-    System.out.printf("Oil Export Rate: %.2f kmole/hr\n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Oil Export Rate: %.2f kmole/hr\n",
         maxProdResult.getMaxOilExportRate() / 1000.0);
-    System.out.printf("Bottleneck Separator: %s\n", maxProdResult.getBottleneckSeparator());
-    System.out.printf("Bottleneck Utilization: %.1f%%\n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Bottleneck Separator: %s\n", maxProdResult.getBottleneckSeparator());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Bottleneck Utilization: %.1f%%\n",
         maxProdResult.getBottleneckUtilization() * 100.0);
-    System.out.printf("Limiting Separator: %s\n", maxProdResult.getLimitingSeparator());
-    System.out.printf("Successful Iterations: %d\n", maxProdResult.getSuccessfulIterations());
-    System.out.printf("Total Failures: %d\n", maxProdResult.getTotalFailures());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Limiting Separator: %s\n", maxProdResult.getLimitingSeparator());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Successful Iterations: %d\n", maxProdResult.getSuccessfulIterations());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total Failures: %d\n", maxProdResult.getTotalFailures());
 
     // Print separator capacities at max production
     if (maxProdResult.getSeparatorCapacities() != null) {
@@ -98,7 +98,7 @@ public class ProductionOptimizationTest {
       for (Map.Entry<String, Double> entry : maxProdResult.getSeparatorCapacities().entrySet()) {
         String status = entry.getValue() > 0.95 ? " <-- NEAR LIMIT"
             : (entry.getValue() > 1.0 ? " <-- OVERLOADED" : "");
-        System.out.printf("  %s: %.1f%%%s\n", entry.getKey(), entry.getValue() * 100.0, status);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: %.1f%%%s\n", entry.getKey(), entry.getValue() * 100.0, status);
       }
     }
 
@@ -109,7 +109,7 @@ public class ProductionOptimizationTest {
           .entrySet()) {
         String status = entry.getValue() > 1.0 ? " <-- OVERSPEED!"
             : (entry.getValue() > 0.95 ? " <-- NEAR LIMIT" : "");
-        System.out.printf("  %s: %.1f%%%s\n", entry.getKey(), entry.getValue() * 100.0, status);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: %.1f%%%s\n", entry.getKey(), entry.getValue() * 100.0, status);
       }
     }
 
@@ -131,8 +131,8 @@ public class ProductionOptimizationTest {
             / initialResults.getOilExportRate() * 100;
 
     logger.info("\n=== Improvement ===");
-    System.out.printf("Feed Rate Increase: %.1f%%\n", feedImprovement);
-    System.out.printf("Oil Production Increase: %.1f%%\n", oilImprovement);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Feed Rate Increase: %.1f%%\n", feedImprovement);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Oil Production Increase: %.1f%%\n", oilImprovement);
 
     // Print optimization summary
     logger.info(maxProdResult);
@@ -170,56 +170,56 @@ public class ProductionOptimizationTest {
   }
 
   private void printThreePhaseSeparatorInfo(ThreePhaseSeparator sep) {
-    System.out.printf("\n--- %s (Three-Phase Separator) ---\n", sep.getName());
-    System.out.printf("  Temperature: %.1f °C\n", sep.getTemperature() - 273.15);
-    System.out.printf("  Pressure: %.2f bara\n", sep.getPressure());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "\n--- %s (Three-Phase Separator) ---\n", sep.getName());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Temperature: %.1f °C\n", sep.getTemperature() - 273.15);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure: %.2f bara\n", sep.getPressure());
 
     // Gas outlet
     if (sep.getGasOutStream() != null && sep.getGasOutStream().getFluid() != null) {
       double gasFlow = sep.getGasOutStream().getFlowRate("kg/hr");
-      System.out.printf("  Gas Out: %.2f kg/hr (%.2f Am3/hr)\n", gasFlow,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Gas Out: %.2f kg/hr (%.2f Am3/hr)\n", gasFlow,
           sep.getGasOutStream().getFlowRate("Am3/hr"));
     }
 
     // Oil outlet
     if (sep.getOilOutStream() != null && sep.getOilOutStream().getFluid() != null) {
       double oilFlow = sep.getOilOutStream().getFlowRate("kg/hr");
-      System.out.printf("  Oil Out: %.2f kg/hr\n", oilFlow);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Out: %.2f kg/hr\n", oilFlow);
     }
 
     // Water outlet
     if (sep.getWaterOutStream() != null && sep.getWaterOutStream().getFluid() != null) {
       double waterFlow = sep.getWaterOutStream().getFlowRate("kg/hr");
-      System.out.printf("  Water Out: %.2f kg/hr\n", waterFlow);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Water Out: %.2f kg/hr\n", waterFlow);
     }
 
     // Utilization (using base class methods)
     double gasUtil = sep.getGasLoadFactor() * 100.0;
-    System.out.printf("  Gas Load Factor: %.3f %s\n", sep.getGasLoadFactor(),
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Gas Load Factor: %.3f %s\n", sep.getGasLoadFactor(),
         gasUtil > 100 ? "<-- OVERLOADED" : (gasUtil > 90 ? "<-- HIGH" : ""));
   }
 
   private void printSeparatorInfo(Separator sep) {
-    System.out.printf("\n--- %s (Scrubber/Separator) ---\n", sep.getName());
-    System.out.printf("  Temperature: %.1f °C\n", sep.getTemperature() - 273.15);
-    System.out.printf("  Pressure: %.2f bara\n", sep.getPressure());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "\n--- %s (Scrubber/Separator) ---\n", sep.getName());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Temperature: %.1f °C\n", sep.getTemperature() - 273.15);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure: %.2f bara\n", sep.getPressure());
 
     // Gas outlet
     if (sep.getGasOutStream() != null && sep.getGasOutStream().getFluid() != null) {
       double gasFlow = sep.getGasOutStream().getFlowRate("kg/hr");
-      System.out.printf("  Gas Out: %.2f kg/hr (%.2f Am3/hr)\n", gasFlow,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Gas Out: %.2f kg/hr (%.2f Am3/hr)\n", gasFlow,
           sep.getGasOutStream().getFlowRate("Am3/hr"));
     }
 
     // Liquid outlet
     if (sep.getLiquidOutStream() != null && sep.getLiquidOutStream().getFluid() != null) {
       double liqFlow = sep.getLiquidOutStream().getFlowRate("kg/hr");
-      System.out.printf("  Liquid Out: %.2f kg/hr\n", liqFlow);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Liquid Out: %.2f kg/hr\n", liqFlow);
     }
 
     // Utilization
     double gasUtil = sep.getGasLoadFactor() * 100.0;
-    System.out.printf("  Gas Load Factor: %.3f %s\n", sep.getGasLoadFactor(),
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Gas Load Factor: %.3f %s\n", sep.getGasLoadFactor(),
         gasUtil > 100 ? "<-- OVERLOADED" : (gasUtil > 90 ? "<-- HIGH" : ""));
   }
 }

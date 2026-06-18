@@ -37,7 +37,7 @@ public class GERG2008NH3DiagnosticTest {
     logger.info("GERG-2008-NH3 vs NIST WebBook — Pure Ammonia Deviations");
     logger.info("(Tillner-Roth SFE-12 amplitudes + Gao critical params)");
     logger.info("========================================================");
-    System.out.printf("%-6s %-8s %-12s %-12s %-8s %-10s %-10s %-8s%n", "T(K)", "P(MPa)", "rho_NIST",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-6s %-8s %-12s %-12s %-8s %-10s %-10s %-8s%n", "T(K)", "P(MPa)", "rho_NIST",
         "rho_calc", "err(%)", "Cp_calc", "W_calc", "Z_calc");
     logger.info("------------------------------------------------------------------------");
 
@@ -69,7 +69,7 @@ public class GERG2008NH3DiagnosticTest {
       gerg.DensityGERG(0, T, P_kPa, x, D, ierr, herr);
 
       if (ierr.val != 0 || D.val > 20.0) {
-        System.out.printf("%-6.0f %-8.1f %-12.5f %-12s %-8s%n", T, P_kPa / 1000, rhoNIST, "FAILED",
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-6.0f %-8.1f %-12.5f %-12s %-8s%n", T, P_kPa / 1000, rhoNIST, "FAILED",
             "---");
         continue;
       }
@@ -96,7 +96,7 @@ public class GERG2008NH3DiagnosticTest {
       gerg.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
           Kappa, A);
 
-      System.out.printf("%-6.0f %-8.1f %-12.5f %-12.5f %-+8.2f %-10.3f %-10.2f %-8.5f%n", T,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-6.0f %-8.1f %-12.5f %-12.5f %-+8.2f %-10.3f %-10.2f %-8.5f%n", T,
           P_kPa / 1000, rhoNIST, D.val, relErr, Cp.val, W.val, Z.val);
     }
 

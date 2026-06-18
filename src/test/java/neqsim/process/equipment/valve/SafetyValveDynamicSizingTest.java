@@ -147,7 +147,7 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
 
       // Optional: Print progress for key time points
       if (i % 40 == 0 || (currentTime >= 49.5 && currentTime <= 100.0 && i % 4 == 0)) {
-        System.out.printf(
+        logger.printf(org.apache.logging.log4j.Level.INFO,
             "Time: %6.1f s | Sep Press: %6.2f bara | PCV Opening: %5.1f %% | "
                 + "PSV Opening: %5.1f %% | PCV Flow: %7.1f kg/hr | PSV Flow: %7.1f kg/hr%n",
             currentTime, separatorPressure, pressureControlValve.getPercentValveOpening(),
@@ -233,12 +233,18 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
 
     // Print summary
     logger.info("\n===== PSV SIZING SUMMARY =====");
-    System.out.printf("Feed flow rate: %.1f kg/hr%n", feedFlowRate);
-    System.out.printf("PSV set pressure: %.1f bara%n", setPressure);
-    System.out.printf("PSV full open pressure: %.1f bara%n", fullOpenPressure);
-    System.out.printf("Maximum separator pressure: %.2f bara%n", maxPressure);
-    System.out.printf("Maximum PSV relief flow: %.1f kg/hr%n", maxPSVFlow);
-    System.out.printf("PSV Cv required (from simulation): %.2f%n", pressureSafetyValve.getCv());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Feed flow rate: %.1f kg/hr%n",
+        feedFlowRate);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV set pressure: %.1f bara%n",
+        setPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV full open pressure: %.1f bara%n",
+        fullOpenPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum separator pressure: %.2f bara%n",
+        maxPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum PSV relief flow: %.1f kg/hr%n",
+        maxPSVFlow);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV Cv required (from simulation): %.2f%n",
+        pressureSafetyValve.getCv());
     logger.info("==============================");
 
     // Additional assertion: Verify PSV prevented catastrophic overpressure
@@ -298,7 +304,7 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
       psv.setPercentValveOpening(opening);
       psv.run();
 
-      System.out.printf(
+      logger.printf(org.apache.logging.log4j.Level.INFO,
           "Pressure: %.1f bara | Expected Opening: %.1f %% | Actual Opening: %.1f %%%n",
           testPressures[i], expectedOpenings[i], opening);
 

@@ -2079,7 +2079,7 @@ class LoopedPipeNetworkTest {
     // Debug output
     logger.info("Nodal debug: wellhead P=" + network.getNodePressure("wellhead"));
     for (int i = 0; i < Math.min(5, bhps.length); i++) {
-      System.out.printf("  BHP=%.1f: IPR=%.0f, VLP=%.0f%n", bhps[i], iprRates[i], vlpRates[i]);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  BHP=%.1f: IPR=%.0f, VLP=%.0f%n", bhps[i], iprRates[i], vlpRates[i]);
     }
 
     // Operating point should exist

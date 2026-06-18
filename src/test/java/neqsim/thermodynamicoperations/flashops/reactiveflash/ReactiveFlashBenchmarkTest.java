@@ -1872,7 +1872,7 @@ public class ReactiveFlashBenchmarkTest {
       String name = system.getPhase(0).getComponent(i).getComponentName();
       double xi = system.getPhase(0).getComponent(i).getx();
       if (xi > 1.0e-20) {
-        System.out.printf("  %-12s  x=%.6e%n", name, xi);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  %-12s  x=%.6e%n", name, xi);
       }
     }
 
@@ -1932,7 +1932,7 @@ public class ReactiveFlashBenchmarkTest {
     for (int i = 0; i < ncAfter; i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName();
       double xi = system.getPhase(0).getComponent(i).getx();
-      System.out.printf("  %-12s  x=%.6e%n", name, xi);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %-12s  x=%.6e%n", name, xi);
     }
   }
 }

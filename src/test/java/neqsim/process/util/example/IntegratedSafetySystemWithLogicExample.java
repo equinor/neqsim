@@ -284,7 +284,8 @@ public class IntegratedSafetySystemWithLogicExample {
     public void runScenario(String scenarioName, ProcessSafetyScenario scenario, double duration,
         double timeStep) {
       logger.info("╔══════════════════════════════════════════════════════════════╗");
-      System.out.printf("║  RUNNING SCENARIO: %-42s ║%n", scenarioName);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "║  RUNNING SCENARIO: %-42s ║%n",
+          scenarioName);
       logger.info("╚══════════════════════════════════════════════════════════════╝");
 
       // Apply scenario perturbations
@@ -335,7 +336,8 @@ public class IntegratedSafetySystemWithLogicExample {
       String hippsStatus = getLogicStatus(hippsLogic);
       String esdStatus = getLogicStatus(esdLogic);
 
-      System.out.printf("%7.1f | %11.1f | %5s | %3s | %7s | %8s | %13.0f | %10s%n", time,
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%7.1f | %11.1f | %5s | %3s | %7s | %8s | %13.0f | %10s%n", time,
           separatorPT.getMeasuredValue(), hippsStatus, esdStatus, "N/A", "N/A",
           bdValve.getOutletStream().getFlowRate("kg/hr"),
           psv.getPercentValveOpening() > 0 ? "RELIEVING" : "CLOSED");

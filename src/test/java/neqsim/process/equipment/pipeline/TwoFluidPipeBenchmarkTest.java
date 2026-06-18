@@ -840,7 +840,7 @@ public class TwoFluidPipeBenchmarkTest {
         proc.run();
 
         double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
-        System.out.printf("  %10.0f | %8.3f%n", flowRate, dp);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  %10.0f | %8.3f%n", flowRate, dp);
 
         if (prevDp > 0) {
           assertTrue(dp > prevDp * 0.5, "dP should generally increase with flow rate. Current: "
@@ -1040,7 +1040,7 @@ public class TwoFluidPipeBenchmarkTest {
         avgH /= holdup.length;
 
         if (step % 5 == 0 || step == nSteps - 1) {
-          System.out.printf("    t=%.1fs: P_in=%.3f, P_out=%.3f, dP=%.4f, avg_holdup=%.4f%n",
+          logger.printf(org.apache.logging.log4j.Level.INFO, "    t=%.1fs: P_in=%.3f, P_out=%.3f, dP=%.4f, avg_holdup=%.4f%n",
               (step + 1) * dt, inletP, outP, dP, avgH);
         }
 
@@ -1145,11 +1145,11 @@ public class TwoFluidPipeBenchmarkTest {
           if (match) {
             matchCount++;
           }
-          System.out.printf("  %.2f    | %11.3f | %11.3f | %5.2f | %s%n", gasFrac, dpTF, dpBB,
+          logger.printf(org.apache.logging.log4j.Level.INFO, "  %.2f    | %11.3f | %11.3f | %5.2f | %s%n", gasFrac, dpTF, dpBB,
               ratio, status);
         } else {
           matchCount++; // Skip counts as OK
-          System.out.printf("  %.2f    | %11.3f | %11.3f |   -   | %s%n", gasFrac, dpTF, dpBB,
+          logger.printf(org.apache.logging.log4j.Level.INFO, "  %.2f    | %11.3f | %11.3f |   -   | %s%n", gasFrac, dpTF, dpBB,
               status);
         }
       }
@@ -1267,7 +1267,7 @@ public class TwoFluidPipeBenchmarkTest {
         }
         avgHoldups[i] = sumH / holdups.length;
 
-        System.out.printf("  Flow=%5.0f kg/hr: avg holdup=%.4f%n", flowRates[i], avgHoldups[i]);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow=%5.0f kg/hr: avg holdup=%.4f%n", flowRates[i], avgHoldups[i]);
       }
 
       // Physical law: higher gas velocity sweeps liquid out → lower holdup
@@ -1416,7 +1416,7 @@ public class TwoFluidPipeBenchmarkTest {
         proc.run();
 
         pressureDrops[i] = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
-        System.out.printf("  D=%.3fm (%.0f\"): dP=%.3f bar%n", diameters[i], diameters[i] / 0.0254,
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  D=%.3fm (%.0f\"): dP=%.3f bar%n", diameters[i], diameters[i] / 0.0254,
             pressureDrops[i]);
       }
 
@@ -1431,7 +1431,7 @@ public class TwoFluidPipeBenchmarkTest {
       // dP_small / dP_large ≈ (D_large / D_small)^5
       double ratio_6to12 = pressureDrops[1] / pressureDrops[3]; // 6" vs 12"
       double expected_ratio = Math.pow(diameters[3] / diameters[1], 5.0); // (12/6)^5 = 32
-      System.out.printf("  6\"/12\" ratio: %.1f (expected ~%.0f for D^-5 scaling)%n", ratio_6to12,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  6\"/12\" ratio: %.1f (expected ~%.0f for D^-5 scaling)%n", ratio_6to12,
           expected_ratio);
 
       // Ratio should be at least 5x (even though D^-5 would give 32x,

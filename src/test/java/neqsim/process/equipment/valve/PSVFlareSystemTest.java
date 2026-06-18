@@ -173,9 +173,9 @@ public class PSVFlareSystemTest {
     psv.run();
 
     double initialPressure = separator.getGasOutStream().getPressure("bara");
-    System.out.printf("Separator pressure: %.2f bara%n", initialPressure);
-    System.out.printf("Outlet valve opening: %.1f%%%n", outletValve.getPercentValveOpening());
-    System.out.printf("PSV status: CLOSED (pressure below set point)%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Separator pressure: %.2f bara%n", initialPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Outlet valve opening: %.1f%%%n", outletValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV status: CLOSED (pressure below set point)%n");
 
 
     // Dynamic simulation parameters
@@ -259,7 +259,7 @@ public class PSVFlareSystemTest {
 
       // Print every 10 seconds
       if (time % 10.0 < dt) {
-        System.out.printf("%7.0f  | %9.2f | %10.1f | %8.1f | %11.1f | %12.3f | %14.3f%n", time,
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%7.0f  | %9.2f | %10.1f | %8.1f | %11.1f | %12.3f | %14.3f%n", time,
             sepPressure, outletValve.getPercentValveOpening(), psv.getPercentValveOpening(),
             reliefFlow, heatReleaseRate, flare.getCumulativeHeatReleased("GJ"));
       }
@@ -270,34 +270,34 @@ public class PSVFlareSystemTest {
     logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     logger.info("═══ TIMELINE ═══");
-    System.out.printf("Incident start (outlet valve fails): %.0f s%n", incidentStart);
-    System.out.printf("PSV opened: %.0f s%n", psvOpenTime);
-    System.out.printf("Incident end (outlet valve reopened): %.0f s%n", incidentEnd);
-    System.out.printf("Total incident duration: %.0f s (%.1f minutes)%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Incident start (outlet valve fails): %.0f s%n", incidentStart);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV opened: %.0f s%n", psvOpenTime);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Incident end (outlet valve reopened): %.0f s%n", incidentEnd);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total incident duration: %.0f s (%.1f minutes)%n",
         incidentEnd - incidentStart, (incidentEnd - incidentStart) / 60.0);
 
 
     logger.info("═══ PRESSURE PROFILE ═══");
-    System.out.printf("Initial separator pressure: %.2f bara%n", initialPressure);
-    System.out.printf("PSV set pressure: 55.0 bara%n");
-    System.out.printf("Maximum separator pressure: %.2f bara%n", maxPressure);
-    System.out.printf("PSV full open pressure: 60.5 bara%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Initial separator pressure: %.2f bara%n", initialPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV set pressure: 55.0 bara%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum separator pressure: %.2f bara%n", maxPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV full open pressure: 60.5 bara%n");
 
 
     logger.info("═══ PSV RELIEF PERFORMANCE ═══");
-    System.out.printf("Maximum relief flow: %.1f kg/hr (%.2f kg/s)%n", maxReliefFlow,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum relief flow: %.1f kg/hr (%.2f kg/s)%n", maxReliefFlow,
         maxReliefFlow / 3600.0);
-    System.out.printf("Total gas relieved: %.1f kg%n", flare.getCumulativeGasBurned("kg"));
-    System.out.printf("Average relief rate: %.1f kg/hr%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total gas relieved: %.1f kg%n", flare.getCumulativeGasBurned("kg"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Average relief rate: %.1f kg/hr%n",
         flare.getCumulativeGasBurned("kg") / ((incidentEnd - psvOpenTime) / 3600.0));
-    System.out.printf("Required PSV Cv: %.1f%n", psv.getCv());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Required PSV Cv: %.1f%n", psv.getCv());
 
 
     logger.info("═══ FLARE SYSTEM PERFORMANCE ═══");
-    System.out.printf("Peak heat release rate: %.2f MW%n", peakHeatReleaseRate);
-    System.out.printf("Total heat released: %.2f GJ (%.2f MMBtu)%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Peak heat release rate: %.2f MW%n", peakHeatReleaseRate);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total heat released: %.2f GJ (%.2f MMBtu)%n",
         flare.getCumulativeHeatReleased("GJ"), flare.getCumulativeHeatReleased("MMBtu"));
-    System.out.printf("Average heat release rate: %.2f MW%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Average heat release rate: %.2f MW%n",
         flare.getCumulativeHeatReleased("GJ") * 1000.0 / (incidentEnd - psvOpenTime));
 
     // Gas composition to flare
@@ -308,14 +308,14 @@ public class PSVFlareSystemTest {
       String compName = reliefGas.getPhase(0).getComponent(i).getComponentName();
       double moleFrac = reliefGas.getPhase(0).getComponent(i).getz() * 100.0;
       if (moleFrac > 0.01) {
-        System.out.printf("%-15s: %6.2f mol%%%n", compName, moleFrac);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s: %6.2f mol%%%n", compName, moleFrac);
       }
     }
 
 
     logger.info("═══ ENVIRONMENTAL IMPACT ═══");
     // Get CO2 emissions from flare unit operation
-    System.out.printf("Estimated CO2 emissions: %.1f kg (%.2f tonnes)%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Estimated CO2 emissions: %.1f kg (%.2f tonnes)%n",
         flare.getCumulativeCO2Emission("kg"), flare.getCumulativeCO2Emission("tonnes"));
 
 
@@ -326,10 +326,10 @@ public class PSVFlareSystemTest {
     assertTrue(flare.getCumulativeHeatReleased("GJ") > 0,
         "Heat should have been released from flare");
     logger.info("✓ PSV opened and relieved gas to flare");
-    System.out.printf("✓ Maximum pressure (%.2f bara) within acceptable limits%n", maxPressure);
-    System.out.printf("✓ Total %.1f kg of gas burned in flare%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "✓ Maximum pressure (%.2f bara) within acceptable limits%n", maxPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "✓ Total %.1f kg of gas burned in flare%n",
         flare.getCumulativeGasBurned("kg"));
-    System.out.printf("✓ Total %.2f GJ heat released to atmosphere%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "✓ Total %.2f GJ heat released to atmosphere%n",
         flare.getCumulativeHeatReleased("GJ"));
 
     logger.info("\n╔════════════════════════════════════════════════════════════════╗");
@@ -404,18 +404,18 @@ public class PSVFlareSystemTest {
     // Get combined heat release from flare unit operation
     double heatRelease = flare.getHeatDuty("MW"); // MW
 
-    System.out.printf("PSV-101 relief flow: %.1f kg/hr%n", psvRelief.getFlowRate("kg/hr"));
-    System.out.printf("PSV-102 relief flow: %.1f kg/hr%n", psv2Relief.getFlowRate("kg/hr"));
-    System.out.printf("Total relief to flare: %.1f kg/hr (%.2f kg/s)%n", totalReliefFlow,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV-101 relief flow: %.1f kg/hr%n", psvRelief.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV-102 relief flow: %.1f kg/hr%n", psv2Relief.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total relief to flare: %.1f kg/hr (%.2f kg/s)%n", totalReliefFlow,
         totalReliefFlow / 3600.0);
-    System.out.printf("Combined heat release rate: %.2f MW%n", heatRelease);
-    System.out.printf("Flare header pressure: %.2f bara%n", flareHeaderOutlet.getPressure("bara"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Combined heat release rate: %.2f MW%n", heatRelease);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Flare header pressure: %.2f bara%n", flareHeaderOutlet.getPressure("bara"));
 
 
     assertTrue(totalReliefFlow > 0, "Combined relief flow should be positive");
     assertTrue(heatRelease > 0, "Heat release should be positive");
     logger.info("✓ Multiple PSV sources successfully combined in flare header");
-    System.out.printf("✓ Total %.2f MW heat release from combined relief%n", heatRelease);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "✓ Total %.2f MW heat release from combined relief%n", heatRelease);
 
     logger.info("\n╔════════════════════════════════════════════════════════════════╗");
     logger.info("║          MULTIPLE SOURCE TEST COMPLETED SUCCESSFULLY           ║");

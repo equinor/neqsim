@@ -153,13 +153,17 @@ public class ESDLogicExample {
     blowdownStream.run();
     bdValve.run();
 
-    System.out.printf("ESD valve: %s, %.1f%% open%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD valve: %s, %.1f%% open%n",
         esdInletValve.isEnergized() ? "ENERGIZED" : "DE-ENERGIZED",
         esdInletValve.getPercentValveOpening());
-    System.out.printf("Process flow: %.1f kg/hr%n", processStream.getFlowRate("kg/hr"));
-    System.out.printf("Blowdown flow: %.1f kg/hr%n", blowdownStream.getFlowRate("kg/hr"));
-    System.out.printf("BD valve: %s%n", bdValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED");
-    System.out.printf("ESD Logic: %s%n", esdLogic.getStatusDescription());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Process flow: %.1f kg/hr%n",
+        processStream.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Blowdown flow: %.1f kg/hr%n",
+        blowdownStream.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "BD valve: %s%n",
+        bdValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n",
+        esdLogic.getStatusDescription());
 
 
     // Trigger ESD
@@ -171,8 +175,10 @@ public class ESDLogicExample {
     // Switch separator to dynamic mode
     separator.setCalculateSteadyState(false);
 
-    System.out.printf("Button state: %s%n", esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
-    System.out.printf("ESD Logic: %s%n", esdLogic.getStatusDescription());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Button state: %s%n",
+        esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n",
+        esdLogic.getStatusDescription());
 
 
     // Simulate with logic execution
@@ -218,7 +224,8 @@ public class ESDLogicExample {
       String logicStatus = esdLogic.isComplete() ? "COMPLETED"
           : "Step " + (esdLogic.getCurrentActionIndex() + 1) + "/" + esdLogic.getActionCount();
 
-      System.out.printf("%8.1f | %-30s | %13.1f | %12.1f | %12.1f | %8.1f%n", time, logicStatus,
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%8.1f | %-30s | %13.1f | %12.1f | %12.1f | %8.1f%n", time, logicStatus,
           esdInletValve.getPercentValveOpening(), bdValve.getPercentValveOpening(),
           processStream.getFlowRate("kg/hr"), blowdownStream.getFlowRate("kg/hr"));
     }
@@ -226,13 +233,17 @@ public class ESDLogicExample {
 
     logger.info("═══ FINAL STATUS ═══");
     logger.info(esdButton.toString());
-    System.out.printf("ESD Logic: %s%n", esdLogic.getStatusDescription());
-    System.out.printf("ESD valve: %.1f%% open (%s)%n", esdInletValve.getPercentValveOpening(),
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n",
+        esdLogic.getStatusDescription());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD valve: %.1f%% open (%s)%n",
+        esdInletValve.getPercentValveOpening(),
         esdInletValve.hasTripCompleted() ? "TRIP COMPLETED" : "CLOSING");
-    System.out.printf("BD valve: %.1f%% open (%s)%n", bdValve.getPercentValveOpening(),
-        bdValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED");
-    System.out.printf("Process flow: %.1f kg/hr%n", processStream.getFlowRate("kg/hr"));
-    System.out.printf("Blowdown flow: %.1f kg/hr%n", blowdownStream.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "BD valve: %.1f%% open (%s)%n",
+        bdValve.getPercentValveOpening(), bdValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Process flow: %.1f kg/hr%n",
+        processStream.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Blowdown flow: %.1f kg/hr%n",
+        blowdownStream.getFlowRate("kg/hr"));
 
 
     // Verification

@@ -41,7 +41,8 @@ import org.apache.logging.log4j.Logger;
  * @version 1.0
  */
 class TwoPhasePressureDropValidationTest {
-  private static final Logger logger = LogManager.getLogger(TwoPhasePressureDropValidationTest.class);
+  private static final Logger logger =
+      LogManager.getLogger(TwoPhasePressureDropValidationTest.class);
 
   // Tolerance for validation (Beggs & Brill claim ±10% for most cases)
   private static final double BEGGS_BRILL_TOLERANCE = 0.30; // 30% tolerance for empirical
@@ -387,13 +388,14 @@ class TwoPhasePressureDropValidationTest {
         double glr = gasFlow / liquidFlowRate;
         String trend = (dp > prevDp) ? "↑" : (dp < prevDp) ? "↓" : "→";
 
-        System.out.printf("%15.0f | %19.0f | %5.2f | %8.4f | %s%n", gasFlow, liquidFlowRate, glr,
-            dp, trend);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%15.0f | %19.0f | %5.2f | %8.4f | %s%n",
+            gasFlow, liquidFlowRate, glr, dp, trend);
 
         prevDp = dp;
 
       } catch (Exception e) {
-        System.out.printf("%15.0f | %19.0f | ERROR: %s%n", gasFlow, liquidFlowRate, e.getMessage());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%15.0f | %19.0f | ERROR: %s%n", gasFlow,
+            liquidFlowRate, e.getMessage());
       }
     }
 
@@ -466,11 +468,12 @@ class TwoPhasePressureDropValidationTest {
           comment = "Horizontal (baseline)";
         }
 
-        System.out.printf("%9.0f | %8.4f | %14.4f | %11.4f | %s%n", angle, dp, dpHydro, dpFric,
-            comment);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%9.0f | %8.4f | %14.4f | %11.4f | %s%n",
+            angle, dp, dpHydro, dpFric, comment);
 
       } catch (Exception e) {
-        System.out.printf("%9.0f | ERROR: %s%n", angle, e.getMessage());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%9.0f | ERROR: %s%n", angle,
+            e.getMessage());
       }
     }
 
@@ -842,10 +845,12 @@ class TwoPhasePressureDropValidationTest {
           PipeBeggsAndBrills.FlowRegime regime = pipe.getFlowRegimeEnum();
           double glr = gasRate / liquidRate;
 
-          System.out.printf("%11.0f | %14.0f | %6.2f | %s%n", gasRate, liquidRate, glr, regime);
+          logger.printf(org.apache.logging.log4j.Level.INFO, "%11.0f | %14.0f | %6.2f | %s%n",
+              gasRate, liquidRate, glr, regime);
 
         } catch (Exception e) {
-          System.out.printf("%11.0f | %14.0f | ERROR: %s%n", gasRate, liquidRate, e.getMessage());
+          logger.printf(org.apache.logging.log4j.Level.INFO, "%11.0f | %14.0f | ERROR: %s%n",
+              gasRate, liquidRate, e.getMessage());
         }
       }
     }

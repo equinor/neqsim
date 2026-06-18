@@ -251,7 +251,7 @@ public class HydrateFormationTemperatureFlashTest {
       ops.hydrateFormationTemperature();
 
       temperatures[p] = fluid.getTemperature() - 273.15;
-      System.out.printf("%15.1f | %16.2f%n", pressures[p], temperatures[p]);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%15.1f | %16.2f%n", pressures[p], temperatures[p]);
 
       // Verify temperature is in reasonable range
       assertTrue(temperatures[p] > -35.0 && temperatures[p] < 25.0, "Hydrate temperature at "

@@ -699,10 +699,10 @@ class ThreePhaseSeparatorTest {
     logger.info(
         "Time(s)\tWaterLvl(m)\tOilLvl(m)\tOilThick(m)\tGas(kg/hr)\tOil(kg/hr)\tWater(kg/hr)\tPressure(bara)");
     for (int i = 0; i < timePoints.size(); i += 10) { // Print every 10th point
-      System.out.printf("%.1f\t%.4f\t\t%.4f\t\t%.4f\t\t%.2f\t\t%.2f\t\t%.2f\t\t%.4f%n",
-          timePoints.get(i), waterLevels.get(i), oilLevels.get(i),
-          oilLevels.get(i) - waterLevels.get(i), gasFlowRates.get(i), oilFlowRates.get(i),
-          waterFlowRates.get(i), pressures.get(i));
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%.1f\t%.4f\t\t%.4f\t\t%.4f\t\t%.2f\t\t%.2f\t\t%.2f\t\t%.4f%n", timePoints.get(i),
+          waterLevels.get(i), oilLevels.get(i), oilLevels.get(i) - waterLevels.get(i),
+          gasFlowRates.get(i), oilFlowRates.get(i), waterFlowRates.get(i), pressures.get(i));
     }
 
     // Verify basic constraints
@@ -730,20 +730,23 @@ class ThreePhaseSeparatorTest {
     // When oil valve is closed (t=20-40), oil level should increase
     double oilLevelAt20 = oilLevels.get(20);
     double oilLevelAt39 = oilLevels.get(39);
-    System.out.printf("\nOil level at t=20s: %.4f m, at t=39s: %.4f m (oil valve closed)%n",
-        oilLevelAt20, oilLevelAt39);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "\nOil level at t=20s: %.4f m, at t=39s: %.4f m (oil valve closed)%n", oilLevelAt20,
+        oilLevelAt39);
 
     // When water valve is closed (t=40-60), water level should increase
     double waterLevelAt40 = waterLevels.get(40);
     double waterLevelAt59 = waterLevels.get(59);
-    System.out.printf("Water level at t=40s: %.4f m, at t=59s: %.4f m (water valve closed)%n",
-        waterLevelAt40, waterLevelAt59);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Water level at t=40s: %.4f m, at t=59s: %.4f m (water valve closed)%n", waterLevelAt40,
+        waterLevelAt59);
 
     // When gas valve is closed (t=60-80), pressure should rise
     double pressureAt60 = pressures.get(60);
     double pressureAt79 = pressures.get(79);
-    System.out.printf("Pressure at t=60s: %.4f bara, at t=79s: %.4f bara (gas valve closed)%n",
-        pressureAt60, pressureAt79);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Pressure at t=60s: %.4f bara, at t=79s: %.4f bara (gas valve closed)%n", pressureAt60,
+        pressureAt79);
 
     // Verify pressure increases when gas valve is closed
     // The flow restriction should cause accumulation of gas, increasing pressure
@@ -788,11 +791,11 @@ class ThreePhaseSeparatorTest {
         "Water stream should have negligible flow for gas-only inlet");
 
     logger.info("\nTest 1: Single-phase gas inlet");
-    System.out.printf("Gas flow: %.6f kg/hr%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Gas flow: %.6f kg/hr%n",
         gasOnlySeparator.getGasOutStream().getFlowRate("kg/hr"));
-    System.out.printf("Oil flow: %.6e kg/hr%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Oil flow: %.6e kg/hr%n",
         gasOnlySeparator.getOilOutStream().getFlowRate("kg/hr"));
-    System.out.printf("Water flow: %.6e kg/hr%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Water flow: %.6e kg/hr%n",
         gasOnlySeparator.getWaterOutStream().getFlowRate("kg/hr"));
 
     // Test 2: Two-phase gas-oil inlet (no water)
@@ -824,11 +827,11 @@ class ThreePhaseSeparatorTest {
         "Water stream should have negligible flow for gas-oil inlet");
 
     logger.info("\nTest 2: Two-phase gas-oil inlet");
-    System.out.printf("Gas flow: %.6f kg/hr%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Gas flow: %.6f kg/hr%n",
         gasOilSeparator.getGasOutStream().getFlowRate("kg/hr"));
-    System.out.printf("Oil flow: %.6f kg/hr%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Oil flow: %.6f kg/hr%n",
         gasOilSeparator.getOilOutStream().getFlowRate("kg/hr"));
-    System.out.printf("Water flow: %.6e kg/hr%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Water flow: %.6e kg/hr%n",
         gasOilSeparator.getWaterOutStream().getFlowRate("kg/hr"));
 
     // Test 3: Two-phase gas-water inlet (no oil)
@@ -860,11 +863,11 @@ class ThreePhaseSeparatorTest {
         "Oil stream should have negligible flow for gas-water inlet");
 
     logger.info("\nTest 3: Two-phase gas-water inlet");
-    System.out.printf("Gas flow: %.6f kg/hr%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Gas flow: %.6f kg/hr%n",
         gasWaterSeparator.getGasOutStream().getFlowRate("kg/hr"));
-    System.out.printf("Oil flow: %.6e kg/hr%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Oil flow: %.6e kg/hr%n",
         gasWaterSeparator.getOilOutStream().getFlowRate("kg/hr"));
-    System.out.printf("Water flow: %.6f kg/hr%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Water flow: %.6f kg/hr%n",
         gasWaterSeparator.getWaterOutStream().getFlowRate("kg/hr"));
   }
 
@@ -914,15 +917,19 @@ class ThreePhaseSeparatorTest {
     separator.run();
 
     logger.info("Initial Conditions:");
-    System.out.printf("  Separator Pressure: %.2f bara%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Separator Pressure: %.2f bara%n",
         separator.getThermoSystem().getPressure("bara"));
-    System.out.printf("  Water Level: %.3f m%n", separator.getWaterLevel());
-    System.out.printf("  Oil Level: %.3f m%n", separator.getOilLevel());
-    System.out.printf("  Oil Thickness: %.3f m%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Water Level: %.3f m%n",
+        separator.getWaterLevel());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Level: %.3f m%n",
+        separator.getOilLevel());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Thickness: %.3f m%n",
         separator.getOilLevel() - separator.getWaterLevel());
-    System.out.printf("  Gas Flow: %.1f kg/hr%n", separator.getGasOutStream().getFlowRate("kg/hr"));
-    System.out.printf("  Oil Flow: %.1f kg/hr%n", separator.getOilOutStream().getFlowRate("kg/hr"));
-    System.out.printf("  Water Flow: %.1f kg/hr%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Gas Flow: %.1f kg/hr%n",
+        separator.getGasOutStream().getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Flow: %.1f kg/hr%n",
+        separator.getOilOutStream().getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Water Flow: %.1f kg/hr%n",
         separator.getWaterOutStream().getFlowRate("kg/hr"));
 
     // ===== CONTROL SETUP =====
@@ -951,14 +958,19 @@ class ThreePhaseSeparatorTest {
     double gasValveOpening = 50.0;
 
     logger.info("\nControl Set Points:");
-    System.out.printf("  Water Level (LC-01): %.2f m%n", waterLevelSP);
-    System.out.printf("  Oil Level (LC-02): %.2f m%n", oilLevelSP);
-    System.out.printf("  Pressure (PC-01): %.2f bara%n", pressureSP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Water Level (LC-01): %.2f m%n",
+        waterLevelSP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Level (LC-02): %.2f m%n", oilLevelSP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure (PC-01): %.2f bara%n",
+        pressureSP);
 
     logger.info("\nPID Parameters:");
-    System.out.printf("  LC-01: Kp=%.1f, Ti=%.1f s%n", waterLevelKp, waterLevelTi);
-    System.out.printf("  LC-02: Kp=%.1f, Ti=%.1f s%n", oilLevelKp, oilLevelTi);
-    System.out.printf("  PC-01: Kp=%.1f, Ti=%.1f s%n", pressureKp, pressureTi);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-01: Kp=%.1f, Ti=%.1f s%n",
+        waterLevelKp, waterLevelTi);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-02: Kp=%.1f, Ti=%.1f s%n", oilLevelKp,
+        oilLevelTi);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  PC-01: Kp=%.1f, Ti=%.1f s%n", pressureKp,
+        pressureTi);
 
     // ===== TRANSIENT SIMULATION WITH CONTROL =====
 
@@ -1049,12 +1061,13 @@ class ThreePhaseSeparatorTest {
 
       // Print status every 10 steps
       if (i % 10 == 0) {
-        System.out.printf(
+        logger.printf(org.apache.logging.log4j.Level.INFO,
             "\nt=%.0fs | P=%.2f bara (err=%.2f) | WLvl=%.3fm (err=%.3f) | OLvl=%.3fm (err=%.3f)%n",
             currentTime, pressureData.get(i), pressureError, waterLevelData.get(i), waterLevelError,
             oilLevelData.get(i), oilLevelError);
-        System.out.printf("       | LCV-01=%.1f%% | LCV-02=%.1f%% | PCV-01=%.1f%%%n",
-            waterValveData.get(i), oilValveData.get(i), gasValveData.get(i));
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "       | LCV-01=%.1f%% | LCV-02=%.1f%% | PCV-01=%.1f%%%n", waterValveData.get(i),
+            oilValveData.get(i), gasValveData.get(i));
       }
 
       // Verify physical constraints
@@ -1068,7 +1081,8 @@ class ThreePhaseSeparatorTest {
     // ===== FINAL RESULTS =====
 
     logger.info("\n\n=== Simulation Results Summary ===");
-    System.out.printf("Total simulation time: %.0f seconds%n", currentTime);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total simulation time: %.0f seconds%n",
+        currentTime);
 
     // Final values
     double finalPressure = pressureData.get(pressureData.size() - 1);
@@ -1076,17 +1090,24 @@ class ThreePhaseSeparatorTest {
     double finalOilLevel = oilLevelData.get(oilLevelData.size() - 1);
 
     logger.info("\nFinal Conditions:");
-    System.out.printf("  Pressure: %.2f bara (SP: %.2f bara)%n", finalPressure, pressureSP);
-    System.out.printf("  Water Level: %.3f m (SP: %.2f m)%n", finalWaterLevel, waterLevelSP);
-    System.out.printf("  Oil Level: %.3f m (SP: %.2f m)%n", finalOilLevel, oilLevelSP);
-    System.out.printf("  Oil Thickness: %.3f m%n", finalOilLevel - finalWaterLevel);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure: %.2f bara (SP: %.2f bara)%n",
+        finalPressure, pressureSP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Water Level: %.3f m (SP: %.2f m)%n",
+        finalWaterLevel, waterLevelSP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Level: %.3f m (SP: %.2f m)%n",
+        finalOilLevel, oilLevelSP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Thickness: %.3f m%n",
+        finalOilLevel - finalWaterLevel);
 
     logger.info("\nFinal Valve Positions:");
-    System.out.printf("  LCV-01 (Water): %.1f%%  (Flow Fraction: %.3f)%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "  LCV-01 (Water): %.1f%%  (Flow Fraction: %.3f)%n",
         waterValveData.get(waterValveData.size() - 1), separator.getWaterOutletFlowFraction());
-    System.out.printf("  LCV-02 (Oil): %.1f%%  (Flow Fraction: %.3f)%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "  LCV-02 (Oil): %.1f%%  (Flow Fraction: %.3f)%n",
         oilValveData.get(oilValveData.size() - 1), separator.getOilOutletFlowFraction());
-    System.out.printf("  PCV-01 (Gas): %.1f%%  (Flow Fraction: %.3f)%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "  PCV-01 (Gas): %.1f%%  (Flow Fraction: %.3f)%n",
         gasValveData.get(gasValveData.size() - 1), separator.getGasOutletFlowFraction());
 
     // Verify control performance
@@ -1095,9 +1116,12 @@ class ThreePhaseSeparatorTest {
     double oilLevelError = Math.abs(finalOilLevel - oilLevelSP);
 
     logger.info("\nControl Errors:");
-    System.out.printf("  Pressure Error: %.3f bara%n", pressureError);
-    System.out.printf("  Water Level Error: %.3f m%n", waterLevelError);
-    System.out.printf("  Oil Level Error: %.3f m%n", oilLevelError);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure Error: %.3f bara%n",
+        pressureError);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Water Level Error: %.3f m%n",
+        waterLevelError);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Level Error: %.3f m%n",
+        oilLevelError);
 
     // Basic assertions - controllers should help manage the system
     // Allow wide tolerance since this is a demonstration of the concept
@@ -1170,18 +1194,22 @@ class ThreePhaseSeparatorTest {
     pt01.setUnit("bara");
 
     logger.info("Transmitters Created:");
-    System.out.printf("  LT-01 (Water Level): Range %.1f-%.1f m%n", lt01.getMinimumValue(),
-        lt01.getMaximumValue());
-    System.out.printf("  LT-02 (Oil Level): Range %.1f-%.1f m%n", lt02.getMinimumValue(),
-        lt02.getMaximumValue());
-    System.out.printf("  PT-01 (Pressure): Range %.1f-%.1f bara%n", pt01.getMinimumValue(),
-        pt01.getMaximumValue());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LT-01 (Water Level): Range %.1f-%.1f m%n",
+        lt01.getMinimumValue(), lt01.getMaximumValue());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LT-02 (Oil Level): Range %.1f-%.1f m%n",
+        lt02.getMinimumValue(), lt02.getMaximumValue());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  PT-01 (Pressure): Range %.1f-%.1f bara%n",
+        pt01.getMinimumValue(), pt01.getMaximumValue());
 
     logger.info("\nInitial Measurements:");
-    System.out.printf("  LT-01 Reading: %.3f m (water level)%n", lt01.getMeasuredValue("m"));
-    System.out.printf("  LT-02 Reading: %.3f m (oil level)%n", lt02.getMeasuredValue("m"));
-    System.out.printf("  Oil Thickness: %.3f m%n", lt02.getOilThickness());
-    System.out.printf("  PT-01 Reading: %.2f bara%n", pt01.getMeasuredValue("bara"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LT-01 Reading: %.3f m (water level)%n",
+        lt01.getMeasuredValue("m"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LT-02 Reading: %.3f m (oil level)%n",
+        lt02.getMeasuredValue("m"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Thickness: %.3f m%n",
+        lt02.getOilThickness());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  PT-01 Reading: %.2f bara%n",
+        pt01.getMeasuredValue("bara"));
 
     // ===== PID CONTROLLERS WITH SPECIALIZED TRANSMITTERS =====
 
@@ -1215,11 +1243,14 @@ class ThreePhaseSeparatorTest {
     pc01.setOutputLimits(0.0, 100.0);
 
     logger.info("\nController Configuration:");
-    System.out.printf("  LC-01: SP=%.2f m, Kp=%.1f, Ti=%.1f s (Water Level Control)%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "  LC-01: SP=%.2f m, Kp=%.1f, Ti=%.1f s (Water Level Control)%n",
         lc01.getControllerSetPoint(), 15.0, 500.0);
-    System.out.printf("  LC-02: SP=%.2f m, Kp=%.1f, Ti=%.1f s (Oil Level Control)%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "  LC-02: SP=%.2f m, Kp=%.1f, Ti=%.1f s (Oil Level Control)%n",
         lc02.getControllerSetPoint(), 15.0, 500.0);
-    System.out.printf("  PC-01: SP=%.2f bara, Kp=%.1f, Ti=%.1f s (Pressure Control)%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "  PC-01: SP=%.2f bara, Kp=%.1f, Ti=%.1f s (Pressure Control)%n",
         pc01.getControllerSetPoint(), 3.0, 350.0);
 
     // ===== TRANSIENT SIMULATION =====
@@ -1279,10 +1310,12 @@ class ThreePhaseSeparatorTest {
 
       // Print every 10 steps
       if (i % 10 == 0) {
-        System.out.printf("\nt=%.0fs | WLvl=%.3fm | OLvl=%.3fm | OilThick=%.3fm | P=%.2f bara%n",
-            currentTime, waterLevel, oilLevel, oilThickness, pressure);
-        System.out.printf("       | LC-01=%.1f%% | LC-02=%.1f%% | PC-01=%.1f%%%n",
-            lc01.getResponse(), lc02.getResponse(), pc01.getResponse());
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "\nt=%.0fs | WLvl=%.3fm | OLvl=%.3fm | OilThick=%.3fm | P=%.2f bara%n", currentTime,
+            waterLevel, oilLevel, oilThickness, pressure);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "       | LC-01=%.1f%% | LC-02=%.1f%% | PC-01=%.1f%%%n", lc01.getResponse(),
+            lc02.getResponse(), pc01.getResponse());
       }
     }
 
@@ -1297,20 +1330,27 @@ class ThreePhaseSeparatorTest {
     double finalPressure = pressureData.get(pressureData.size() - 1);
 
     logger.info("\nFinal Transmitter Readings:");
-    System.out.printf("  LT-01 (Water Level): %.3f m%n", finalWaterLevel);
-    System.out.printf("  LT-02 (Oil Level): %.3f m%n", finalOilLevel);
-    System.out.printf("  Oil Thickness: %.3f m%n", finalOilThickness);
-    System.out.printf("  PT-01 (Pressure): %.2f bara%n", finalPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LT-01 (Water Level): %.3f m%n",
+        finalWaterLevel);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LT-02 (Oil Level): %.3f m%n",
+        finalOilLevel);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Oil Thickness: %.3f m%n",
+        finalOilThickness);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  PT-01 (Pressure): %.2f bara%n",
+        finalPressure);
 
     logger.info("\nControl Setpoints:");
-    System.out.printf("  LC-01: %.2f m%n", waterLevelSP);
-    System.out.printf("  LC-02: %.2f m%n", oilLevelSP);
-    System.out.printf("  PC-01: %.2f bara%n", pressureSP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-01: %.2f m%n", waterLevelSP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-02: %.2f m%n", oilLevelSP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  PC-01: %.2f bara%n", pressureSP);
 
     logger.info("\nFinal Controller Outputs:");
-    System.out.printf("  LC-01: %.1f%% (Water valve)%n", lc01.getResponse());
-    System.out.printf("  LC-02: %.1f%% (Oil valve)%n", lc02.getResponse());
-    System.out.printf("  PC-01: %.1f%% (Gas valve)%n", pc01.getResponse());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-01: %.1f%% (Water valve)%n",
+        lc01.getResponse());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  LC-02: %.1f%% (Oil valve)%n",
+        lc02.getResponse());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  PC-01: %.1f%% (Gas valve)%n",
+        pc01.getResponse());
 
     // Assertions
     Assertions.assertTrue(lt01.getMeasuredValue("m") >= 0.0,

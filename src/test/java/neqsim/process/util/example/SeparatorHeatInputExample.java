@@ -65,15 +65,16 @@ public class SeparatorHeatInputExample {
     // Run initial calculations
     processOps.run();
 
-    System.out.printf("Initial separator temperature: %.2f °C%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Initial separator temperature: %.2f °C%n",
         separator.getThermoSystem().getTemperature("C"));
 
     // Add external heat input (e.g., from nearby equipment)
     separator.setHeatInput(75.0, "kW");
     threePhaseSep.setHeatInput(50.0, "kW");
 
-    System.out.printf("Heat input to main separator: %.1f kW%n", separator.getHeatInput("kW"));
-    System.out.printf("Heat input to 3-phase separator: %.1f kW%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Heat input to main separator: %.1f kW%n",
+        separator.getHeatInput("kW"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Heat input to 3-phase separator: %.1f kW%n",
         threePhaseSep.getHeatInput("kW"));
 
     // Run separators with heat input
@@ -87,12 +88,14 @@ public class SeparatorHeatInputExample {
     // Calculate flare heat release
     flare.run();
     double flareHeatDuty = flare.getHeatDuty("MW");
-    System.out.printf("Flare heat release: %.3f MW%n", flareHeatDuty);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Flare heat release: %.3f MW%n",
+        flareHeatDuty);
 
     // Calculate radiation heat flux at separator location
     double separatorDistance = 40.0; // meters from flare
     double radiationFlux = flare.estimateRadiationHeatFlux(separatorDistance);
-    System.out.printf("Radiation heat flux at %sm: %.2f W/m²%n", separatorDistance, radiationFlux);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Radiation heat flux at %sm: %.2f W/m²%n",
+        separatorDistance, radiationFlux);
 
     // Calculate heat input to separator
     double separatorSurfaceArea = 80.0; // m² exposed to flare
@@ -100,7 +103,8 @@ public class SeparatorHeatInputExample {
 
     // Apply flare radiation to separator
     separator.setHeatInput(radiationHeatInput, "W");
-    System.out.printf("Radiation heat input to separator: %.2f kW%n", radiationHeatInput / 1000.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Radiation heat input to separator: %.2f kW%n", radiationHeatInput / 1000.0);
 
     // Run separator with flare radiation
     separator.run();
@@ -116,10 +120,14 @@ public class SeparatorHeatInputExample {
     double totalHeatInput = ambientHeating + processHeating + flareRadiation;
     threePhaseSep.setHeatInput(totalHeatInput, "kW");
 
-    System.out.printf("Ambient heating: %.1f kW%n", ambientHeating);
-    System.out.printf("Process heating: %.1f kW%n", processHeating);
-    System.out.printf("Flare radiation: %.2f kW%n", flareRadiation);
-    System.out.printf("Total heat input: %.2f kW%n", totalHeatInput);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Ambient heating: %.1f kW%n",
+        ambientHeating);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Process heating: %.1f kW%n",
+        processHeating);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Flare radiation: %.2f kW%n",
+        flareRadiation);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total heat input: %.2f kW%n",
+        totalHeatInput);
 
     threePhaseSep.run();
     logger.info("✓ Multiple heat sources successfully combined");
@@ -128,18 +136,19 @@ public class SeparatorHeatInputExample {
 
     // Demonstrate unit conversion capabilities
     separator.setHeatInput(0.1, "MW");
-    System.out.printf("Heat input: %.1f MW = %.0f kW = %.0f W%n", separator.getHeatInput("MW"),
-        separator.getHeatInput("kW"), separator.getHeatInput("W"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Heat input: %.1f MW = %.0f kW = %.0f W%n",
+        separator.getHeatInput("MW"), separator.getHeatInput("kW"), separator.getHeatInput("W"));
 
     separator.setHeatInput(250.0, "kW");
-    System.out.printf("Heat input: %.3f MW = %.0f kW = %.0f W%n", separator.getHeatInput("MW"),
-        separator.getHeatInput("kW"), separator.getHeatInput("W"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Heat input: %.3f MW = %.0f kW = %.0f W%n",
+        separator.getHeatInput("MW"), separator.getHeatInput("kW"), separator.getHeatInput("W"));
 
     logger.info("\n═══ SCENARIO 5: TRANSIENT HEAT INPUT EFFECTS ═══");
 
     // Show how heat input affects energy balance in transient mode
     separator.setHeatInput(100.0, "kW");
-    System.out.printf("Separator with %.0f kW heat input ready for transient simulation%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Separator with %.0f kW heat input ready for transient simulation%n",
         separator.getHeatInput("kW"));
 
     // In actual transient simulation, the heat input would affect temperature/pressure evolution
@@ -150,21 +159,27 @@ public class SeparatorHeatInputExample {
     logger.info("\n═══ PERFORMANCE SUMMARY ═══");
 
     // Summary of capabilities
-    System.out.printf("Main Separator:%n");
-    System.out.printf("  - Heat input set: %s%n", separator.isSetHeatInput() ? "YES" : "NO");
-    System.out.printf("  - Heat input: %.2f kW%n", separator.getHeatInput("kW"));
-    System.out.printf("  - Gas outlet flow: %.0f kg/hr%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Main Separator:%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  - Heat input set: %s%n",
+        separator.isSetHeatInput() ? "YES" : "NO");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  - Heat input: %.2f kW%n",
+        separator.getHeatInput("kW"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  - Gas outlet flow: %.0f kg/hr%n",
         separator.getGasOutStream().getFlowRate("kg/hr"));
 
-    System.out.printf("3-Phase Separator:%n");
-    System.out.printf("  - Heat input set: %s%n", threePhaseSep.isSetHeatInput() ? "YES" : "NO");
-    System.out.printf("  - Heat input: %.2f kW%n", threePhaseSep.getHeatInput("kW"));
-    System.out.printf("  - Gas outlet flow: %.0f kg/hr%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "3-Phase Separator:%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  - Heat input set: %s%n",
+        threePhaseSep.isSetHeatInput() ? "YES" : "NO");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  - Heat input: %.2f kW%n",
+        threePhaseSep.getHeatInput("kW"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  - Gas outlet flow: %.0f kg/hr%n",
         threePhaseSep.getGasOutStream().getFlowRate("kg/hr"));
 
-    System.out.printf("Flare:%n");
-    System.out.printf("  - Heat duty: %.3f MW%n", flare.getHeatDuty("MW"));
-    System.out.printf("  - CO2 emissions: %.2f kg/hr%n", flare.getCO2Emission());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Flare:%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  - Heat duty: %.3f MW%n",
+        flare.getHeatDuty("MW"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  - CO2 emissions: %.2f kg/hr%n",
+        flare.getCO2Emission());
 
     logger.info("\n═══ KEY FEATURES DEMONSTRATED ═══");
     logger.info("✓ Separator.setHeatInput(double, String) - Set heat input with units");

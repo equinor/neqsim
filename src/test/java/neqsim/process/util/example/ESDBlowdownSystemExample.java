@@ -153,17 +153,22 @@ public class ESDBlowdownSystemExample {
     blowdownStream.run();
     bdValve.run();
 
-    System.out.printf("Control valve: %.1f%% open, outlet P=%.2f bara%n",
-        controlValve.getPercentValveOpening(), afterControlValve.getPressure("bara"));
-    System.out.printf("ESD inlet valve: %s, %.1f%% open%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Control valve: %.1f%% open, outlet P=%.2f bara%n", controlValve.getPercentValveOpening(),
+        afterControlValve.getPressure("bara"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD inlet valve: %s, %.1f%% open%n",
         esdInletValve.isEnergized() ? "ENERGIZED" : "DE-ENERGIZED",
         esdInletValve.getPercentValveOpening());
-    System.out.printf("Separator inlet flow: %.1f kg/hr%n", separatorInlet.getFlowRate("kg/hr"));
-    System.out.printf("Process flow: %.1f kg/hr%n", processStream.getFlowRate("kg/hr"));
-    System.out.printf("Blowdown flow: %.1f kg/hr%n", blowdownStream.getFlowRate("kg/hr"));
-    System.out.printf("BD valve state: %s%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Separator inlet flow: %.1f kg/hr%n",
+        separatorInlet.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Process flow: %.1f kg/hr%n",
+        processStream.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Blowdown flow: %.1f kg/hr%n",
+        blowdownStream.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "BD valve state: %s%n",
         bdValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED");
-    System.out.printf("ESD button state: %s%n", esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD button state: %s%n",
+        esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
 
 
     // Simulate ESD activation - operator pushes button
@@ -182,10 +187,14 @@ public class ESDBlowdownSystemExample {
     // Now switch separator to dynamic/transient mode
     separator.setCalculateSteadyState(false);
 
-    System.out.printf("ESD button state: %s%n", esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
-    System.out.printf("ESD inlet valve: %s%n", esdInletValve.isClosing() ? "CLOSING" : "CLOSED");
-    System.out.printf("ESD inlet valve opening: %.1f%%%n", esdInletValve.getPercentValveOpening());
-    System.out.printf("BD valve activated: %s%n", bdValve.isActivated() ? "YES" : "NO");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD button state: %s%n",
+        esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD inlet valve: %s%n",
+        esdInletValve.isClosing() ? "CLOSING" : "CLOSED");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD inlet valve opening: %.1f%%%n",
+        esdInletValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "BD valve activated: %s%n",
+        bdValve.isActivated() ? "YES" : "NO");
 
 
     // Simulate blowdown over time with pressure monitoring
@@ -247,29 +256,38 @@ public class ESDBlowdownSystemExample {
         pressureAtEnd = currentPressure;
       }
 
-      System.out.printf("%8.1f | %16.2f | %13.1f | %14.1f | %15.1f | %15.2f%n", time,
-          currentPressure, esdInletValve.getPercentValveOpening(), bdValve.getPercentValveOpening(),
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%8.1f | %16.2f | %13.1f | %14.1f | %15.1f | %15.2f%n", time, currentPressure,
+          esdInletValve.getPercentValveOpening(), bdValve.getPercentValveOpening(),
           toFlare.getFlowRate("kg/hr"), flare.getHeatDuty("MW"));
     }
 
 
     logger.info("═══ BLOWDOWN SUMMARY ═══");
-    System.out.printf("ESD inlet valve: %s (%.1f%% open)%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD inlet valve: %s (%.1f%% open)%n",
         esdInletValve.hasTripCompleted() ? "TRIP COMPLETED" : "CLOSING",
         esdInletValve.getPercentValveOpening());
-    System.out.printf("BD valve final opening: %.1f%%%n", bdValve.getPercentValveOpening());
-    System.out.printf("Total gas blown down: %.1f kg%n", flare.getCumulativeGasBurned("kg"));
-    System.out.printf("Total heat released: %.2f GJ%n", flare.getCumulativeHeatReleased("GJ"));
-    System.out.printf("Total CO2 emissions: %.1f kg%n", flare.getCumulativeCO2Emission("kg"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "BD valve final opening: %.1f%%%n",
+        bdValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total gas blown down: %.1f kg%n",
+        flare.getCumulativeGasBurned("kg"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total heat released: %.2f GJ%n",
+        flare.getCumulativeHeatReleased("GJ"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total CO2 emissions: %.1f kg%n",
+        flare.getCumulativeCO2Emission("kg"));
 
 
     logger.info("═══ PRESSURE RELIEF VERIFICATION ═══");
-    System.out.printf("Initial separator pressure: %.2f bara%n", initialPressure);
-    System.out.printf("Minimum pressure during blowdown: %.2f bara%n", minPressure);
-    System.out.printf("Maximum pressure during blowdown: %.2f bara%n", maxPressure);
-    System.out.printf("Final separator pressure: %.2f bara%n", pressureAtEnd);
-    System.out.printf("Pressure drop: %.2f bar (%.1f%% reduction)%n",
-        initialPressure - pressureAtEnd,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Initial separator pressure: %.2f bara%n",
+        initialPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Minimum pressure during blowdown: %.2f bara%n", minPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Maximum pressure during blowdown: %.2f bara%n", maxPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Final separator pressure: %.2f bara%n",
+        pressureAtEnd);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Pressure drop: %.2f bar (%.1f%% reduction)%n", initialPressure - pressureAtEnd,
         100.0 * (initialPressure - pressureAtEnd) / initialPressure);
 
     // Verification checks

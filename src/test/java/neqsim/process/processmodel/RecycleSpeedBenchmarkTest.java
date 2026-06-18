@@ -119,9 +119,11 @@ public class RecycleSpeedBenchmarkTest {
     }
     double optMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
-    System.out.printf("  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs,
-        optMs, seqMs / optMs);
-    System.out.printf("  hasRecycles: %b  |  Max parallelism: %d%n", opt.hasRecycles(),
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs, optMs,
+        seqMs / optMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "  hasRecycles: %b  |  Max parallelism: %d%n", opt.hasRecycles(),
         opt.getParallelPartition().getMaxParallelism());
   }
 }

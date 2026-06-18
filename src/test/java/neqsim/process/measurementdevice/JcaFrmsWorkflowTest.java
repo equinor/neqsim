@@ -166,7 +166,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
         double pressure = basePressure * (1.0 + (random.nextGaussian() * 0.1));
         double temperature = baseTemperature * (1.0 + (random.nextGaussian() * 0.1));
 
-        // System.out.printf(
+        // logger.printf(org.apache.logging.log4j.Level.INFO,
         // "Iteration %d: gasFlow=%.12f, oilFlow=%.12f, waterFlow=%.12f, "
         // + "pressure=%.12f, temperature=%.12f%n",
         // i, gasFlow, oilFlow, waterFlow, pressure, temperature);

@@ -272,11 +272,11 @@ public class DistillationSolverBenchmarkTest {
 
     // Print solver timing summary (Status surfaces silent FALLBACK_PRODUCTS;
     // SolverUsed surfaces accelerator-to-damped fallbacks).
-    System.out.printf("%n%-25s %6s %10s %10s %10s %-22s %-22s%n", "Solver", "Iters", "Time(s)",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%n%-25s %6s %10s %10s %10s %-22s %-22s%n", "Solver", "Iters", "Time(s)",
         "GasFlow", "LiqFlow", "Status", "SolverUsed");
     logger.info(org.apache.commons.lang3.StringUtils.repeat("-", 115));
     for (int i = 0; i < solvers.length; i++) {
-      System.out.printf("%-25s %6d %10.3f %10.2f %10.2f %-22s %-22s%n", solvers[i].name(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s %6d %10.3f %10.2f %10.2f %-22s %-22s%n", solvers[i].name(),
           iterations[i], times[i], gasFlows[i], liquidFlows[i],
           statuses[i] == null ? "null" : statuses[i].name(),
           solversUsed[i] == null ? "null" : solversUsed[i].name());

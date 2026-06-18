@@ -98,9 +98,10 @@ public class ThermoHotspotBreakdownTest {
       fluids[i].init(3);
     }
 
-    System.out.printf("%nCores: %d   N=%d fluids   iters=%d%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%nCores: %d   N=%d fluids   iters=%d%n",
         Runtime.getRuntime().availableProcessors(), N, ITERS);
-    System.out.printf("%-35s %10s %10s %8s%n", "phase", "serial_ms", "par_ms", "speedup");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-35s %10s %10s %8s%n", "phase",
+        "serial_ms", "par_ms", "speedup");
     logger.info("---------------------------------------------------------------------");
 
     Task[] tasks = new Task[] {
@@ -147,8 +148,8 @@ public class ThermoHotspotBreakdownTest {
     for (int k = 0; k < tasks.length; k++) {
       double serial = timeSerial(fluids, tasks[k], ITERS);
       double parallel = timeParallel(fluids, tasks[k], ITERS);
-      System.out.printf("%-35s %10.3f %10.3f %7.2fx%n", names[k], serial, parallel,
-          serial / parallel);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-35s %10.3f %10.3f %7.2fx%n", names[k],
+          serial, parallel, serial / parallel);
     }
   }
 }

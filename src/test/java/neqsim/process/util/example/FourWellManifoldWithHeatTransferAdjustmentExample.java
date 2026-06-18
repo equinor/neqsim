@@ -208,11 +208,13 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     // Set overall heat transfer coefficient directly (SPECIFIED_U mode)
     pipe4.setHeatTransferCoefficient(initialHeatTransferCoeff);
 
-    System.out.printf("Created 4 pipes, length: %.0f m (%.0f km), diameter: %.4f m%n", pipeLength,
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Created 4 pipes, length: %.0f m (%.0f km), diameter: %.4f m%n", pipeLength,
         pipeLength / 1000.0, pipeDiameter);
-    System.out.printf("Sea temperature: %.1f °C, initial U-value: %.1f W/(m²·K)%n", seaTemperature,
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Sea temperature: %.1f °C, initial U-value: %.1f W/(m²·K)%n", seaTemperature,
         initialHeatTransferCoeff);
-    System.out.printf(
+    logger.printf(org.apache.logging.log4j.Level.INFO,
         "Heat transfer mode: %s (adjuster will modify U-value to match target temp)%n",
         heatTransferMode);
 
@@ -307,8 +309,10 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     lpAdjuster.setMinAdjustedValue(0.01); // Min heat transfer coefficient
     lpAdjuster.setTolerance(0.5); // Temperature tolerance in °C
 
-    System.out.printf("HP Adjuster: Target temperature = %.1f °C%n", measuredHPTemp);
-    System.out.printf("LP Adjuster: Target temperature = %.1f °C%n", measuredLPTemp);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "HP Adjuster: Target temperature = %.1f °C%n", measuredHPTemp);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "LP Adjuster: Target temperature = %.1f °C%n", measuredLPTemp);
 
     // ========================================
     // BUILD AND RUN THE PROCESS SYSTEM
@@ -356,73 +360,86 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     logger.info("╚══════════════════════════════════════════════════════════════════════╝");
 
     logger.info("\n=== Well Inlet Conditions ===");
-    System.out.printf("%-15s %15s %15s %15s%n", "Well", "Temperature(°C)", "Pressure(bara)",
-        "FlowRate(kg/hr)");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15s %15s %15s%n", "Well",
+        "Temperature(°C)", "Pressure(bara)", "FlowRate(kg/hr)");
     logger.info("─────────────────────────────────────────────────────────────────────────");
-    System.out.printf("%-15s %15.2f %15.2f %15.0f%n", "Well 1", well1Stream.getTemperature("C"),
-        well1Stream.getPressure("bara"), well1Stream.getFlowRate("kg/hr"));
-    System.out.printf("%-15s %15.2f %15.2f %15.0f%n", "Well 2", well2Stream.getTemperature("C"),
-        well2Stream.getPressure("bara"), well2Stream.getFlowRate("kg/hr"));
-    System.out.printf("%-15s %15.2f %15.2f %15.0f%n", "Well 3", well3Stream.getTemperature("C"),
-        well3Stream.getPressure("bara"), well3Stream.getFlowRate("kg/hr"));
-    System.out.printf("%-15s %15.2f %15.2f %15.0f%n", "Well 4", well4Stream.getTemperature("C"),
-        well4Stream.getPressure("bara"), well4Stream.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15.2f %15.2f %15.0f%n", "Well 1",
+        well1Stream.getTemperature("C"), well1Stream.getPressure("bara"),
+        well1Stream.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15.2f %15.2f %15.0f%n", "Well 2",
+        well2Stream.getTemperature("C"), well2Stream.getPressure("bara"),
+        well2Stream.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15.2f %15.2f %15.0f%n", "Well 3",
+        well3Stream.getTemperature("C"), well3Stream.getPressure("bara"),
+        well3Stream.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15.2f %15.2f %15.0f%n", "Well 4",
+        well4Stream.getTemperature("C"), well4Stream.getPressure("bara"),
+        well4Stream.getFlowRate("kg/hr"));
 
     logger.info("\n=== Pipe Outlet Conditions ===");
-    System.out.printf("%-15s %15s %15s %20s%n", "Pipe", "Outlet Temp(°C)", "Outlet P(bara)",
-        "Heat Transfer(W/m²K)");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15s %15s %20s%n", "Pipe",
+        "Outlet Temp(°C)", "Outlet P(bara)", "Heat Transfer(W/m²K)");
     logger.info("─────────────────────────────────────────────────────────────────────────");
-    System.out.printf("%-15s %15.2f %15.2f %20.2f%n", "Pipe 1",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15.2f %15.2f %20.2f%n", "Pipe 1",
         pipe1.getOutletTemperature() - 273.15, pipe1.getOutletPressure(),
         pipe1.getHeatTransferCoefficient());
-    System.out.printf("%-15s %15.2f %15.2f %20.2f%n", "Pipe 2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15.2f %15.2f %20.2f%n", "Pipe 2",
         pipe2.getOutletTemperature() - 273.15, pipe2.getOutletPressure(),
         pipe2.getHeatTransferCoefficient());
-    System.out.printf("%-15s %15.2f %15.2f %20.2f%n", "Pipe 3",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15.2f %15.2f %20.2f%n", "Pipe 3",
         pipe3.getOutletTemperature() - 273.15, pipe3.getOutletPressure(),
         pipe3.getHeatTransferCoefficient());
-    System.out.printf("%-15s %15.2f %15.2f %20.2f%n", "Pipe 4",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15.2f %15.2f %20.2f%n", "Pipe 4",
         pipe4.getOutletTemperature() - 273.15, pipe4.getOutletPressure(),
         pipe4.getHeatTransferCoefficient());
 
     logger.info("\n=== Pipe Hydraulics (Pressure Drop) ===");
-    System.out.printf("%-15s %18s %20s%n", "Pipe", "Pressure Drop (bar)", "dP/Length (bar/km)");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %18s %20s%n", "Pipe",
+        "Pressure Drop (bar)", "dP/Length (bar/km)");
     logger.info("─────────────────────────────────────────────────────────────────────────");
     double dp1 = well1Stream.getPressure("bara") - pipe1.getOutletPressure();
-    System.out.printf("%-15s %18.2f %20.2f%n", "Pipe 1", dp1, dp1 / (pipeLength / 1000.0));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %18.2f %20.2f%n", "Pipe 1", dp1,
+        dp1 / (pipeLength / 1000.0));
     double dp2 = well2Stream.getPressure("bara") - pipe2.getOutletPressure();
-    System.out.printf("%-15s %18.2f %20.2f%n", "Pipe 2", dp2, dp2 / (pipeLength / 1000.0));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %18.2f %20.2f%n", "Pipe 2", dp2,
+        dp2 / (pipeLength / 1000.0));
     double dp3 = well3Stream.getPressure("bara") - pipe3.getOutletPressure();
-    System.out.printf("%-15s %18.2f %20.2f%n", "Pipe 3", dp3, dp3 / (pipeLength / 1000.0));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %18.2f %20.2f%n", "Pipe 3", dp3,
+        dp3 / (pipeLength / 1000.0));
     double dp4 = well4Stream.getPressure("bara") - pipe4.getOutletPressure();
-    System.out.printf("%-15s %18.2f %20.2f%n", "Pipe 4", dp4, dp4 / (pipeLength / 1000.0));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %18.2f %20.2f%n", "Pipe 4", dp4,
+        dp4 / (pipeLength / 1000.0));
     logger.info("\nTypical acceptable ranges:");
     logger.info("  Pressure drop: <1-2 bar/km for gas pipelines");
 
     logger.info("\n=== Manifold Outlet Conditions ===");
-    System.out.printf("%-15s %15s %15s %15s%n", "Manifold", "Temperature(°C)", "Pressure(bara)",
-        "FlowRate(kg/hr)");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15s %15s %15s%n", "Manifold",
+        "Temperature(°C)", "Pressure(bara)", "FlowRate(kg/hr)");
     logger.info("─────────────────────────────────────────────────────────────────────────");
-    System.out.printf("%-15s %15.2f %15.2f %15.0f%n", "HP Manifold",
-        hpManifold.getOutletStream().getTemperature("C"),
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15.2f %15.2f %15.0f%n",
+        "HP Manifold", hpManifold.getOutletStream().getTemperature("C"),
         hpManifold.getOutletStream().getPressure("bara"),
         hpManifold.getOutletStream().getFlowRate("kg/hr"));
-    System.out.printf("%-15s %15.2f %15.2f %15.0f%n", "LP Manifold",
-        lpManifold.getOutletStream().getTemperature("C"),
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15.2f %15.2f %15.0f%n",
+        "LP Manifold", lpManifold.getOutletStream().getTemperature("C"),
         lpManifold.getOutletStream().getPressure("bara"),
         lpManifold.getOutletStream().getFlowRate("kg/hr"));
 
     logger.info("\n=== Adjuster Status ===");
-    System.out.printf("HP Adjuster: Target=%.1f°C, Achieved=%.2f°C, Error=%.4f, Solved=%s%n",
-        measuredHPTemp, hpManifold.getOutletStream().getTemperature("C"), hpAdjuster.getError(),
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "HP Adjuster: Target=%.1f°C, Achieved=%.2f°C, Error=%.4f, Solved=%s%n", measuredHPTemp,
+        hpManifold.getOutletStream().getTemperature("C"), hpAdjuster.getError(),
         hpAdjuster.solved());
-    System.out.printf("LP Adjuster: Target=%.1f°C, Achieved=%.2f°C, Error=%.4f, Solved=%s%n",
-        measuredLPTemp, lpManifold.getOutletStream().getTemperature("C"), lpAdjuster.getError(),
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "LP Adjuster: Target=%.1f°C, Achieved=%.2f°C, Error=%.4f, Solved=%s%n", measuredLPTemp,
+        lpManifold.getOutletStream().getTemperature("C"), lpAdjuster.getError(),
         lpAdjuster.solved());
 
     logger.info("\n=== Adjusted Heat Transfer Coefficients ===");
-    System.out.printf("HP Pipes (1 & 2): %.2f W/(m²·K)%n", pipe1.getHeatTransferCoefficient());
-    System.out.printf("LP Pipes (3 & 4): %.2f W/(m²·K)%n", pipe3.getHeatTransferCoefficient());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "HP Pipes (1 & 2): %.2f W/(m²·K)%n",
+        pipe1.getHeatTransferCoefficient());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "LP Pipes (3 & 4): %.2f W/(m²·K)%n",
+        pipe3.getHeatTransferCoefficient());
 
     // ========================================
     // DEMONSTRATE ROUTING CHANGE
@@ -446,21 +463,23 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     process.run();
 
     logger.info("\n=== Updated Manifold Outlet Conditions ===");
-    System.out.printf("%-15s %15s %15s %15s%n", "Manifold", "Temperature(°C)", "Pressure(bara)",
-        "FlowRate(kg/hr)");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15s %15s %15s%n", "Manifold",
+        "Temperature(°C)", "Pressure(bara)", "FlowRate(kg/hr)");
     logger.info("─────────────────────────────────────────────────────────────────────────");
-    System.out.printf("%-15s %15.2f %15.2f %15.0f%n", "HP Manifold",
-        hpManifold.getOutletStream().getTemperature("C"),
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15.2f %15.2f %15.0f%n",
+        "HP Manifold", hpManifold.getOutletStream().getTemperature("C"),
         hpManifold.getOutletStream().getPressure("bara"),
         hpManifold.getOutletStream().getFlowRate("kg/hr"));
-    System.out.printf("%-15s %15.2f %15.2f %15.0f%n", "LP Manifold",
-        lpManifold.getOutletStream().getTemperature("C"),
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %15.2f %15.2f %15.0f%n",
+        "LP Manifold", lpManifold.getOutletStream().getTemperature("C"),
         lpManifold.getOutletStream().getPressure("bara"),
         lpManifold.getOutletStream().getFlowRate("kg/hr"));
 
     logger.info("\n=== Updated Adjusted Heat Transfer Coefficients ===");
-    System.out.printf("HP Pipes (1 & 2): %.2f W/(m²·K)%n", pipe1.getHeatTransferCoefficient());
-    System.out.printf("LP Pipes (3 & 4): %.2f W/(m²·K)%n", pipe3.getHeatTransferCoefficient());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "HP Pipes (1 & 2): %.2f W/(m²·K)%n",
+        pipe1.getHeatTransferCoefficient());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "LP Pipes (3 & 4): %.2f W/(m²·K)%n",
+        pipe3.getHeatTransferCoefficient());
 
     System.out
         .println("\n════════════════════════════════════════════════════════════════════════");

@@ -798,10 +798,12 @@ public class FlowRateOptimizerTest {
     logger.info("\nCapacity Curve at Pin=80 bara:");
     for (int i = 0; i < outletPressures.length; i++) {
       if (curve[i] != null && curve[i].isFeasible()) {
-        System.out.printf("Pout=%.0f: Max Flow=%.0f kg/hr, Power=%.0f kW\n", outletPressures[i],
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "Pout=%.0f: Max Flow=%.0f kg/hr, Power=%.0f kW\n", outletPressures[i],
             curve[i].getFlowRate(), curve[i].getTotalPower());
       } else {
-        System.out.printf("Pout=%.0f: Infeasible\n", outletPressures[i]);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Pout=%.0f: Infeasible\n",
+            outletPressures[i]);
       }
     }
   }

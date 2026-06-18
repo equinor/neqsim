@@ -41,7 +41,7 @@ public class WaterDewPointPerformanceTest {
     SystemInterface feedGas = new SystemSrkCPAstatoil(298.15, 1.01325);
 
     long afterSystemCreate = System.nanoTime();
-    System.out.printf("1. System creation:                    %8.2f ms%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "1. System creation:                    %8.2f ms%n",
         (afterSystemCreate - start) / 1e6);
 
     // Add Kristin gas composition
@@ -58,7 +58,7 @@ public class WaterDewPointPerformanceTest {
     feedGas.addComponent("water", 0.05);
 
     long afterComponents = System.nanoTime();
-    System.out.printf("2. Adding components:                  %8.2f ms%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "2. Adding components:                  %8.2f ms%n",
         (afterComponents - start) / 1e6);
 
     // ==========================================
@@ -68,7 +68,7 @@ public class WaterDewPointPerformanceTest {
     feedGas.setMixingRule(10); // CPA mixing rule - THIS IS EXPENSIVE!
 
     long afterMixingRule = System.nanoTime();
-    System.out.printf("3. Setting CPA mixing rule (10):       %8.2f ms%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "3. Setting CPA mixing rule (10):       %8.2f ms%n",
         (afterMixingRule - start) / 1e6);
 
     feedGas.setMultiPhaseCheck(false);
@@ -83,14 +83,14 @@ public class WaterDewPointPerformanceTest {
     feedGasStream.setPressure(referencePressure, "bara");
 
     long afterStreamCreate = System.nanoTime();
-    System.out.printf("4. Stream creation:                    %8.2f ms%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "4. Stream creation:                    %8.2f ms%n",
         (afterStreamCreate - start) / 1e6);
 
     start = System.nanoTime();
     feedGasStream.run();
 
     long afterStreamRun = System.nanoTime();
-    System.out.printf("5. Stream.run() [TP flash]:            %8.2f ms%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "5. Stream.run() [TP flash]:            %8.2f ms%n",
         (afterStreamRun - start) / 1e6);
 
     // ==========================================
@@ -103,7 +103,7 @@ public class WaterDewPointPerformanceTest {
     analyzer.setReferencePressure(referencePressure);
 
     long afterAnalyzerCreate = System.nanoTime();
-    System.out.printf("6. Analyzer creation:                  %8.2f ms%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "6. Analyzer creation:                  %8.2f ms%n",
         (afterAnalyzerCreate - start) / 1e6);
 
     // ==========================================
@@ -113,20 +113,20 @@ public class WaterDewPointPerformanceTest {
     double waterDewPointC = analyzer.getMeasuredValue("C");
 
     long afterGetValue = System.nanoTime();
-    System.out.printf("7. getMeasuredValue() [SLOW]:          %8.2f ms%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "7. getMeasuredValue() [SLOW]:          %8.2f ms%n",
         (afterGetValue - start) / 1e6);
 
     long totalTime = System.nanoTime() - startTotal;
 
     logger.info(StringUtils.repeat("-", 60));
-    System.out.printf("TOTAL TIME:                            %8.2f ms%n", totalTime / 1e6);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "TOTAL TIME:                            %8.2f ms%n", totalTime / 1e6);
     logger.info(StringUtils.repeat("=", 60));
 
     // Results
     double waterContentPpm =
         1e6 * feedGasStream.getFluid().getPhase("gas").getComponent("water").getz();
-    System.out.printf("Water Dew Point:      %.2f °C%n", waterDewPointC);
-    System.out.printf("Water Content:        %.2f ppm%n", waterContentPpm);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Water Dew Point:      %.2f °C%n", waterDewPointC);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Water Content:        %.2f ppm%n", waterContentPpm);
     logger.info(StringUtils.repeat("=", 60));
   }
 
@@ -182,11 +182,11 @@ public class WaterDewPointPerformanceTest {
     double multiphaseResult = analyzerMultiphase.getMeasuredValue("C");
     long multiphaseTime = System.nanoTime() - start;
 
-    System.out.printf("Bukacek method:     %.2f °C in %8.2f ms%n", bukacekResult,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Bukacek method:     %.2f °C in %8.2f ms%n", bukacekResult,
         bukacekTime / 1e6);
-    System.out.printf("Multiphase method:  %.2f °C in %8.2f ms%n", multiphaseResult,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Multiphase method:  %.2f °C in %8.2f ms%n", multiphaseResult,
         multiphaseTime / 1e6);
-    System.out.printf("Speedup factor:     %.1fx faster with Bukacek%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Speedup factor:     %.1fx faster with Bukacek%n",
         (double) multiphaseTime / bukacekTime);
     logger.info(StringUtils.repeat("=", 60));
   }
@@ -225,12 +225,12 @@ public class WaterDewPointPerformanceTest {
     long start = System.nanoTime();
     thermoOps.TPflash();
     long singleFlashTime = System.nanoTime() - start;
-    System.out.printf("Single TP flash time: %.2f ms%n", singleFlashTime / 1e6);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Single TP flash time: %.2f ms%n", singleFlashTime / 1e6);
 
     // The waterDewPointTemperatureMultiphaseFlash runs up to 350 iterations
     // Each iteration does a TPflash
-    System.out.printf("Estimated time for 100 iterations: %.2f ms%n", 100 * singleFlashTime / 1e6);
-    System.out.printf("Estimated time for 350 iterations: %.2f ms%n", 350 * singleFlashTime / 1e6);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Estimated time for 100 iterations: %.2f ms%n", 100 * singleFlashTime / 1e6);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Estimated time for 350 iterations: %.2f ms%n", 350 * singleFlashTime / 1e6);
     logger.info(StringUtils.repeat("=", 60));
   }
 
@@ -275,7 +275,7 @@ public class WaterDewPointPerformanceTest {
     double bukacekEstimate = analyzerBukacek.getMeasuredValue("C");
     long bukacekTime = System.nanoTime() - start;
 
-    System.out.printf("Bukacek estimate: %.2f °C (%.2f ms)%n", bukacekEstimate, bukacekTime / 1e6);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Bukacek estimate: %.2f °C (%.2f ms)%n", bukacekEstimate, bukacekTime / 1e6);
 
     // Use Bukacek estimate as starting point for rigorous calculation
     start = System.nanoTime();
@@ -307,7 +307,7 @@ public class WaterDewPointPerformanceTest {
     long optimizedTime = System.nanoTime() - start;
 
     double optimizedResult = tempFluid.getTemperature("C");
-    System.out.printf("Optimized result: %.2f °C (%.2f ms, %d iterations)%n", optimizedResult,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Optimized result: %.2f °C (%.2f ms, %d iterations)%n", optimizedResult,
         optimizedTime / 1e6, i);
 
     // Compare with standard multiphase
@@ -319,8 +319,8 @@ public class WaterDewPointPerformanceTest {
     double standardResult = analyzerStandard.getMeasuredValue("C");
     long standardTime = System.nanoTime() - start;
 
-    System.out.printf("Standard result:  %.2f °C (%.2f ms)%n", standardResult, standardTime / 1e6);
-    System.out.printf("Speedup: %.1fx faster with optimized approach%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Standard result:  %.2f °C (%.2f ms)%n", standardResult, standardTime / 1e6);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Speedup: %.1fx faster with optimized approach%n",
         (double) standardTime / (bukacekTime + optimizedTime));
     logger.info(StringUtils.repeat("=", 60));
   }
@@ -343,7 +343,7 @@ public class WaterDewPointPerformanceTest {
     fluid1.addComponent("water", 0.1);
     fluid1.setMixingRule("classic"); // String version
     long classicTime = System.nanoTime() - start;
-    System.out.printf("Classic mixing rule: %.2f ms%n", classicTime / 1e6);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Classic mixing rule: %.2f ms%n", classicTime / 1e6);
 
     // Test with CPA mixing rule (slower)
     start = System.nanoTime();
@@ -354,8 +354,8 @@ public class WaterDewPointPerformanceTest {
     fluid2.addComponent("water", 0.1);
     fluid2.setMixingRule(10); // CPA mixing rule
     long cpaTime = System.nanoTime() - start;
-    System.out.printf("CPA mixing rule (10): %.2f ms%n", cpaTime / 1e6);
-    System.out.printf("CPA is %.1fx slower than classic%n", (double) cpaTime / classicTime);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "CPA mixing rule (10): %.2f ms%n", cpaTime / 1e6);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "CPA is %.1fx slower than classic%n", (double) cpaTime / classicTime);
     logger.info(StringUtils.repeat("=", 60));
   }
 }

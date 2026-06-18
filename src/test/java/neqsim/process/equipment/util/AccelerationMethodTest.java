@@ -6,12 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for convergence acceleration methods (Wegstein, Broyden).
@@ -422,7 +422,8 @@ class AccelerationMethodTest {
       // For g(x) = 0.5x + 1, the slope s = 0.5 everywhere
       double s = 0.5;
       double q = s / (s - 1); // q = 0.5 / -0.5 = -1
-      System.out.printf("For this linear function: s = %.1f, q = %.1f%n", s, q);
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "For this linear function: s = %.1f, q = %.1f%n", s, q);
 
 
       logger.info("With q = -1:");
@@ -434,7 +435,8 @@ class AccelerationMethodTest {
       for (int i = 0; i < 5; i++) {
         double gx = 0.5 * x + 1;
         double xAccel = q * gx + (1 - q) * x;
-        System.out.printf("  Iter %d: x=%.4f, g(x)=%.4f, x_accel=%.4f%n", i + 1, x, gx, xAccel);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "  Iter %d: x=%.4f, g(x)=%.4f, x_accel=%.4f%n", i + 1, x, gx, xAccel);
         x = xAccel;
       }
 
@@ -467,7 +469,8 @@ class AccelerationMethodTest {
 
       logger.info("  Input: [0, 0]");
       logger.info("  g(x):  [1, 1]");
-      System.out.printf("  Next:  [%.4f, %.4f]%n", xNew[0], xNew[1]);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Next:  [%.4f, %.4f]%n", xNew[0],
+          xNew[1]);
       logger.info("====================================\n");
     }
 
@@ -732,23 +735,30 @@ class AccelerationMethodTest {
 
       logger.info("Results (averaged over " + runs + " runs):");
       logger.info("=========================================");
-      System.out.printf("  DIRECT:   %6.0f ms, %d total recycle iterations%n",
-          directTime / (double) runs, directIters / runs);
-      System.out.printf("  WEGSTEIN: %6.0f ms, %d total recycle iterations%n",
-          wegsteinTime / (double) runs, wegsteinIters / runs);
-      System.out.printf("  BROYDEN:  %6.0f ms, %d total recycle iterations%n",
-          broydenTime / (double) runs, broydenIters / runs);
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "  DIRECT:   %6.0f ms, %d total recycle iterations%n", directTime / (double) runs,
+          directIters / runs);
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "  WEGSTEIN: %6.0f ms, %d total recycle iterations%n", wegsteinTime / (double) runs,
+          wegsteinIters / runs);
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "  BROYDEN:  %6.0f ms, %d total recycle iterations%n", broydenTime / (double) runs,
+          broydenIters / runs);
 
 
       if (wegsteinTime < directTime) {
-        System.out.printf("Wegstein speedup: %.2fx%n", directTime / (double) wegsteinTime);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Wegstein speedup: %.2fx%n",
+            directTime / (double) wegsteinTime);
       } else {
-        System.out.printf("Wegstein slowdown: %.2fx%n", wegsteinTime / (double) directTime);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Wegstein slowdown: %.2fx%n",
+            wegsteinTime / (double) directTime);
       }
       if (broydenTime < directTime) {
-        System.out.printf("Broyden speedup:  %.2fx%n", directTime / (double) broydenTime);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Broyden speedup:  %.2fx%n",
+            directTime / (double) broydenTime);
       } else {
-        System.out.printf("Broyden slowdown:  %.2fx%n", broydenTime / (double) directTime);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "Broyden slowdown:  %.2fx%n",
+            broydenTime / (double) directTime);
       }
 
       logger.info("=============================================\n");

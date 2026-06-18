@@ -70,7 +70,7 @@ public class StabilityProfileTest {
         new SystemInterface[] {makeLightFluid(), makeHeavyFluid(), makeWetGas()};
     String[] caseNames = new String[] {"Light 5c gas (1ph)", "Heavy 13c gas", "Wet gas 2ph"};
 
-    System.out.printf("%n%-22s %12s %12s %12s %12s %12s%n", "case", "flash_noStab", "flash_stab",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%n%-22s %12s %12s %12s %12s %12s%n", "case", "flash_noStab", "flash_stab",
         "stab_delta", "stab_only", "multiPh+stab");
     logger.info(
         "--------------------------------------------------------------------------------------");
@@ -145,7 +145,7 @@ public class StabilityProfileTest {
         e = (System.nanoTime() - t0) / (double) ITERS / 1e6;
       }
 
-      System.out.printf("%-22s %12.3f %12.3f %12.3f %12.3f %12.3f%n", caseNames[c], a, b, (b - a),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-22s %12.3f %12.3f %12.3f %12.3f %12.3f%n", caseNames[c], a, b, (b - a),
           d, e);
     }
 

@@ -61,7 +61,7 @@ public class ParallelBenchmarkTest {
         opt.run();
       double optMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
-      System.out.printf("  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs,
           optMs, seqMs / optMs);
     }
 
@@ -83,9 +83,9 @@ public class ParallelBenchmarkTest {
         opt.run();
       double optMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
-      System.out.printf("  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs,
           optMs, seqMs / optMs);
-      System.out.printf("  hasMultiInputEquipment: %b  |  Max parallelism: %d%n",
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  hasMultiInputEquipment: %b  |  Max parallelism: %d%n",
           opt.hasMultiInputEquipment(), opt.getParallelPartition().getMaxParallelism());
     }
 
@@ -106,9 +106,9 @@ public class ParallelBenchmarkTest {
         opt.run();
       double optMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
-      System.out.printf("  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs,
           optMs, seqMs / optMs);
-      System.out.printf("  Max parallelism: %d%n", opt.getParallelPartition().getMaxParallelism());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Max parallelism: %d%n", opt.getParallelPartition().getMaxParallelism());
     }
 
     // ---- SCENARIO 4: 8 independent heavy trains ----
@@ -128,9 +128,9 @@ public class ParallelBenchmarkTest {
         opt.run();
       double optMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
-      System.out.printf("  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs,
           optMs, seqMs / optMs);
-      System.out.printf("  Max parallelism: %d%n", opt.getParallelPartition().getMaxParallelism());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Max parallelism: %d%n", opt.getParallelPartition().getMaxParallelism());
     }
 
     // ---- SCENARIO 5: HP/LP sep with HeatExchanger (previously forced sequential) ----
@@ -151,9 +151,9 @@ public class ParallelBenchmarkTest {
         opt.run();
       double optMs = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
-      System.out.printf("  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Sequential: %.1f ms  |  Optimized: %.1f ms  |  Speedup: %.2fx%n", seqMs,
           optMs, seqMs / optMs);
-      System.out.printf("  hasMultiInputEquipment: %b  |  Max parallelism: %d%n",
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  hasMultiInputEquipment: %b  |  Max parallelism: %d%n",
           opt.hasMultiInputEquipment(), opt.getParallelPartition().getMaxParallelism());
     }
 

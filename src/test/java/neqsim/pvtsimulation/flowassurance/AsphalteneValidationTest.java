@@ -116,9 +116,9 @@ public class AsphalteneValidationTest {
     int correctPredictions = 0;
     int totalCases = DE_BOER_FIELD_DATA.length;
 
-    System.out.printf("%-30s | %6s | %6s | %6s | %-16s | %-8s%n", "Field", "ΔP", "ρ", "Risk",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s | %6s | %6s | %6s | %-16s | %-8s%n", "Field", "ΔP", "ρ", "Risk",
         "Predicted", "Actual");
-    System.out.printf("%-30s | %6s | %6s | %6s | %-16s | %-8s%n", "", "[bar]", "[kg/m³]", "Index",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s | %6s | %6s | %6s | %-16s | %-8s%n", "", "[bar]", "[kg/m³]", "Index",
         "", "");
     logger.info(StringUtils.repeat("-", 70));
 
@@ -145,13 +145,13 @@ public class AsphalteneValidationTest {
       String actualStatus = hadProblems ? "PROBLEMS" : "OK";
       String marker = correct ? "✓" : "✗";
 
-      System.out.printf("%-30s | %6.0f | %6.0f | %6.2f | %-16s | %-8s %s%n", DE_BOER_FIELD_NAMES[i],
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s | %6.0f | %6.0f | %6.2f | %-16s | %-8s %s%n", DE_BOER_FIELD_NAMES[i],
           deltaP, density, riskIndex, riskLevel, actualStatus, marker);
     }
 
     logger.info(StringUtils.repeat("-", 70));
     double accuracy = 100.0 * correctPredictions / totalCases;
-    System.out.printf("Prediction Accuracy: %d/%d (%.1f%%)%n", correctPredictions, totalCases,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Prediction Accuracy: %d/%d (%.1f%%)%n", correctPredictions, totalCases,
         accuracy);
 
 
@@ -169,7 +169,7 @@ public class AsphalteneValidationTest {
     logger.info("Sources: Akbarzadeh et al. (2007), Oilfield Review");
 
 
-    System.out.printf("%-25s | %5s | %5s | %5s | %5s | %5s | %5s | %-10s%n", "Crude Oil", "S", "A",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s | %5s | %5s | %5s | %5s | %5s | %5s | %-10s%n", "Crude Oil", "S", "A",
         "R", "Asp", "CII", "R/A", "Status");
     logger.info(StringUtils.repeat("-", 70));
 
@@ -209,14 +209,14 @@ public class AsphalteneValidationTest {
 
       String status = expectedStable ? "Stable" : "Unstable";
 
-      System.out.printf("%-25s | %5.2f | %5.2f | %5.2f | %5.2f | %5.2f | %5.1f | %-10s%n", name,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-25s | %5.2f | %5.2f | %5.2f | %5.2f | %5.2f | %5.1f | %-10s%n", name,
           sara[0], sara[1], sara[2], sara[3], cii, ra, status);
     }
 
     logger.info(StringUtils.repeat("-", 70));
-    System.out.printf("CII Prediction Accuracy: %d/%d (%.1f%%)%n", correctCII, total,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "CII Prediction Accuracy: %d/%d (%.1f%%)%n", correctCII, total,
         100.0 * correctCII / total);
-    System.out.printf("R/A Prediction Accuracy: %d/%d (%.1f%%)%n", correctRA, total,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "R/A Prediction Accuracy: %d/%d (%.1f%%)%n", correctRA, total,
         100.0 * correctRA / total);
 
 
@@ -250,7 +250,7 @@ public class AsphalteneValidationTest {
     double density = 720.0;
     double pBub = 100.0;
 
-    System.out.printf("%-15s | %-15s | %-10s | %-20s%n", "P_res [bar]", "ΔP [bar]", "Risk Index",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s | %-15s | %-10s | %-20s%n", "P_res [bar]", "ΔP [bar]", "Risk Index",
         "Risk Level");
     logger.info(StringUtils.repeat("-", 65));
 
@@ -263,7 +263,7 @@ public class AsphalteneValidationTest {
       DeBoerRisk riskLevel = screening.evaluateRisk();
       double deltaP = pRes - pBub;
 
-      System.out.printf("%15.0f | %15.0f | %10.3f | %-20s%n", pRes, deltaP, riskIndex, riskLevel);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%15.0f | %15.0f | %10.3f | %-20s%n", pRes, deltaP, riskIndex, riskLevel);
 
       // Risk should increase with undersaturation
       if (previousRiskIndex >= 0) {
@@ -291,7 +291,7 @@ public class AsphalteneValidationTest {
     double pRes = 350.0;
     double pBub = 150.0;
 
-    System.out.printf("%-15s | %-10s | %-20s%n", "Density [kg/m³]", "Risk Index", "Risk Level");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s | %-10s | %-20s%n", "Density [kg/m³]", "Risk Index", "Risk Level");
     logger.info(StringUtils.repeat("-", 50));
 
     double previousRiskIndex = Double.MAX_VALUE;
@@ -302,7 +302,7 @@ public class AsphalteneValidationTest {
       double riskIndex = screening.calculateRiskIndex();
       DeBoerRisk riskLevel = screening.evaluateRisk();
 
-      System.out.printf("%15.0f | %10.3f | %-20s%n", density, riskIndex, riskLevel);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%15.0f | %10.3f | %-20s%n", density, riskIndex, riskLevel);
 
       // Risk should decrease with increasing density
       assertTrue(riskIndex <= previousRiskIndex, "Risk should decrease with increasing density");
@@ -333,8 +333,8 @@ public class AsphalteneValidationTest {
     double indexAtBubble = atBubble.calculateRiskIndex();
 
     logger.info("At Bubble Point (ΔP = 0):");
-    System.out.printf("  Risk Level: %s%n", riskAtBubble);
-    System.out.printf("  Risk Index: %.3f%n", indexAtBubble);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Risk Level: %s%n", riskAtBubble);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Risk Index: %.3f%n", indexAtBubble);
 
 
     // Should be low/no risk at bubble point
@@ -345,8 +345,8 @@ public class AsphalteneValidationTest {
         new DeBoerAsphalteneScreening(pBub + 10.0, pBub, density);
 
     logger.info("Just Above Bubble Point (ΔP = 10 bar):");
-    System.out.printf("  Risk Level: %s%n", nearBubble.evaluateRisk());
-    System.out.printf("  Risk Index: %.3f%n", nearBubble.calculateRiskIndex());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Risk Level: %s%n", nearBubble.evaluateRisk());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Risk Index: %.3f%n", nearBubble.calculateRiskIndex());
 
 
     logger.info("✓ Verified: Minimal risk at/near bubble point");
@@ -372,9 +372,9 @@ public class AsphalteneValidationTest {
     DeBoerAsphalteneScreening heavyOil = new DeBoerAsphalteneScreening(pRes, pBub, heavyDensity);
 
     logger.info("Same pressures, different densities:");
-    System.out.printf("  Light oil (ρ=%.0f kg/m³, ~45° API): %s, Index=%.3f%n", lightDensity,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Light oil (ρ=%.0f kg/m³, ~45° API): %s, Index=%.3f%n", lightDensity,
         lightOil.evaluateRisk(), lightOil.calculateRiskIndex());
-    System.out.printf("  Heavy oil (ρ=%.0f kg/m³, ~22° API): %s, Index=%.3f%n", heavyDensity,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Heavy oil (ρ=%.0f kg/m³, ~22° API): %s, Index=%.3f%n", heavyDensity,
         heavyOil.evaluateRisk(), heavyOil.calculateRiskIndex());
 
     // Light oil should have higher risk
@@ -408,14 +408,14 @@ public class AsphalteneValidationTest {
     double riskIndex = screening.calculateRiskIndex();
 
     logger.info("Field Conditions:");
-    System.out.printf("  Reservoir Pressure: %.0f bar%n", pRes);
-    System.out.printf("  Bubble Point: %.0f bar%n", pBub);
-    System.out.printf("  Undersaturation: %.0f bar%n", pRes - pBub);
-    System.out.printf("  In-situ Density: %.0f kg/m³%n", density);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Reservoir Pressure: %.0f bar%n", pRes);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Bubble Point: %.0f bar%n", pBub);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Undersaturation: %.0f bar%n", pRes - pBub);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  In-situ Density: %.0f kg/m³%n", density);
 
     logger.info("De Boer Prediction:");
-    System.out.printf("  Risk Level: %s%n", riskLevel);
-    System.out.printf("  Risk Index: %.3f%n", riskIndex);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Risk Level: %s%n", riskLevel);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Risk Index: %.3f%n", riskIndex);
 
     logger.info("Field Experience: SEVERE PROBLEMS (confirmed)");
 
@@ -443,7 +443,7 @@ public class AsphalteneValidationTest {
     Object[][] stableCases = {{"Brent", 138.0, 103.0, 850.0}, {"Statfjord", 172.0, 138.0, 830.0},
         {"Forties", 207.0, 172.0, 790.0}};
 
-    System.out.printf("%-15s | %8s | %8s | %8s | %-16s | %8s%n", "Field", "P_res", "P_bub",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s | %8s | %8s | %8s | %-16s | %8s%n", "Field", "P_res", "P_bub",
         "Density", "Risk Level", "Index");
     logger.info(StringUtils.repeat("-", 70));
 
@@ -458,7 +458,7 @@ public class AsphalteneValidationTest {
       DeBoerRisk riskLevel = screening.evaluateRisk();
       double riskIndex = screening.calculateRiskIndex();
 
-      System.out.printf("%-15s | %8.0f | %8.0f | %8.0f | %-16s | %8.3f%n", name, pRes, pBub,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s | %8.0f | %8.0f | %8.0f | %-16s | %8.3f%n", name, pRes, pBub,
           density, riskLevel, riskIndex);
 
       // These should show low risk
@@ -511,14 +511,14 @@ public class AsphalteneValidationTest {
     logger.info("Confusion Matrix:");
     logger.info("                    Actual");
     logger.info("                 Problem  No Problem");
-    System.out.printf("Predicted Problem    %d         %d%n", truePositive, falsePositive);
-    System.out.printf("Predicted OK         %d         %d%n", falseNegative, trueNegative);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Predicted Problem    %d         %d%n", truePositive, falsePositive);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Predicted OK         %d         %d%n", falseNegative, trueNegative);
 
     logger.info("Performance Metrics:");
-    System.out.printf("  Accuracy:    %.1f%% (%d/%d correct)%n", accuracy,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Accuracy:    %.1f%% (%d/%d correct)%n", accuracy,
         truePositive + trueNegative, total);
-    System.out.printf("  Sensitivity: %.1f%% (detects actual problems)%n", sensitivity);
-    System.out.printf("  Specificity: %.1f%% (avoids false alarms)%n", specificity);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Sensitivity: %.1f%% (detects actual problems)%n", sensitivity);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Specificity: %.1f%% (avoids false alarms)%n", specificity);
 
 
     // The method should have high sensitivity (not miss real problems)
@@ -586,7 +586,7 @@ public class AsphalteneValidationTest {
     try {
       ops.bubblePointPressureFlash(false);
       double bubblePoint = fluid.getPressure();
-      System.out.printf("Bubble Point Pressure: %.1f bar%n", bubblePoint);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Bubble Point Pressure: %.1f bar%n", bubblePoint);
 
       // Bubble point should be reasonable (typically 50-300 bar for live oils)
       assertTrue(bubblePoint > 10.0 && bubblePoint < 400.0,
@@ -620,9 +620,9 @@ public class AsphalteneValidationTest {
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 
-    System.out.printf("%-12s | %-12s | %-12s | %-15s%n", "Pressure", "Phases", "Vapor Frac",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %-12s | %-12s | %-15s%n", "Pressure", "Phases", "Vapor Frac",
         "Liquid Density");
-    System.out.printf("%-12s | %-12s | %-12s | %-15s%n", "[bar]", "", "", "[kg/m³]");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %-12s | %-12s | %-15s%n", "[bar]", "", "", "[kg/m³]");
     logger.info(StringUtils.repeat("-", 60));
 
     double previousDensity = 0;
@@ -652,7 +652,7 @@ public class AsphalteneValidationTest {
           liquidDensity = fluid.getPhase(0).getDensity("kg/m3");
         }
 
-        System.out.printf("%12.0f | %12d | %12.3f | %15.1f%n", pressure, numPhases, vaporFrac,
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%12.0f | %12d | %12.3f | %15.1f%n", pressure, numPhases, vaporFrac,
             liquidDensity);
 
         // As pressure drops below bubble point, remaining liquid should become denser
@@ -666,7 +666,7 @@ public class AsphalteneValidationTest {
           previousDensity = liquidDensity;
         }
       } catch (Exception e) {
-        System.out.printf("%12.0f | Error: %s%n", pressure, e.getMessage());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%12.0f | Error: %s%n", pressure, e.getMessage());
       }
     }
 
@@ -690,8 +690,8 @@ public class AsphalteneValidationTest {
 
     double[] methaneContents = {0.20, 0.30, 0.40, 0.50, 0.60};
 
-    System.out.printf("%-15s | %-15s | %-15s%n", "Methane Frac", "Bubble Point", "Liquid Density");
-    System.out.printf("%-15s | %-15s | %-15s%n", "", "[bar]", "[kg/m³]");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s | %-15s | %-15s%n", "Methane Frac", "Bubble Point", "Liquid Density");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s | %-15s | %-15s%n", "", "[bar]", "[kg/m³]");
     logger.info(StringUtils.repeat("-", 50));
 
     double previousBubblePoint = 0;
@@ -720,7 +720,7 @@ public class AsphalteneValidationTest {
         ops.TPflash();
         double density = fluid.getDensity("kg/m3");
 
-        System.out.printf("%15.2f | %15.1f | %15.1f%n", methane, bubblePoint, density);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%15.2f | %15.1f | %15.1f%n", methane, bubblePoint, density);
 
         // More methane should mean higher bubble point
         if (previousBubblePoint > 0 && bubblePoint < previousBubblePoint) {
@@ -729,7 +729,7 @@ public class AsphalteneValidationTest {
         previousBubblePoint = bubblePoint;
 
       } catch (Exception e) {
-        System.out.printf("%15.2f | Error: %s%n", methane, e.getMessage());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%15.2f | Error: %s%n", methane, e.getMessage());
       }
     }
 
@@ -751,8 +751,8 @@ public class AsphalteneValidationTest {
 
     double[] temperatures = {323.15, 348.15, 373.15, 398.15, 423.15}; // 50-150°C
 
-    System.out.printf("%-12s | %-15s | %-15s%n", "Temp [°C]", "Bubble Point", "Density");
-    System.out.printf("%-12s | %-15s | %-15s%n", "", "[bar]", "[kg/m³]");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %-15s | %-15s%n", "Temp [°C]", "Bubble Point", "Density");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %-15s | %-15s%n", "", "[bar]", "[kg/m³]");
     logger.info(StringUtils.repeat("-", 45));
 
     for (double temp : temperatures) {
@@ -777,11 +777,11 @@ public class AsphalteneValidationTest {
         double density = fluid.getDensity("kg/m3");
 
         double tempC = temp - 273.15;
-        System.out.printf("%12.0f | %15.1f | %15.1f%n", tempC, bubblePoint, density);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%12.0f | %15.1f | %15.1f%n", tempC, bubblePoint, density);
 
       } catch (Exception e) {
         double tempC = temp - 273.15;
-        System.out.printf("%12.0f | Error: %s%n", tempC, e.getMessage());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%12.0f | Error: %s%n", tempC, e.getMessage());
       }
     }
 
@@ -858,8 +858,8 @@ public class AsphalteneValidationTest {
     }
 
     logger.info("CPA Predictions:");
-    System.out.printf("  Light Oil: P_bub = %.1f bar, ρ = %.1f kg/m³%n", lightBubble, lightDensity);
-    System.out.printf("  Heavy Oil: P_bub = %.1f bar, ρ = %.1f kg/m³%n", heavyBubble, heavyDensity);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Light Oil: P_bub = %.1f bar, ρ = %.1f kg/m³%n", lightBubble, lightDensity);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Heavy Oil: P_bub = %.1f bar, ρ = %.1f kg/m³%n", heavyBubble, heavyDensity);
 
 
     // De Boer screening for comparison
@@ -870,9 +870,9 @@ public class AsphalteneValidationTest {
         new DeBoerAsphalteneScreening(pRes, heavyBubble, heavyDensity);
 
     logger.info("De Boer Risk Assessment (using CPA bubble point and density):");
-    System.out.printf("  Light Oil: ΔP = %.1f bar, Risk = %s, Index = %.2f%n", pRes - lightBubble,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Light Oil: ΔP = %.1f bar, Risk = %s, Index = %.2f%n", pRes - lightBubble,
         lightScreen.evaluateRisk(), lightScreen.calculateRiskIndex());
-    System.out.printf("  Heavy Oil: ΔP = %.1f bar, Risk = %s, Index = %.2f%n", pRes - heavyBubble,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Heavy Oil: ΔP = %.1f bar, Risk = %s, Index = %.2f%n", pRes - heavyBubble,
         heavyScreen.evaluateRisk(), heavyScreen.calculateRiskIndex());
 
 
@@ -924,7 +924,7 @@ public class AsphalteneValidationTest {
     String[] alkanes = {"n-pentane", "n-heptane", "nC10"};
     int[] carbonNumbers = {5, 7, 10};
 
-    System.out.printf("%-12s | %-10s | %-15s | %-15s%n", "Alkane", "C-Number", "Bubble Pt [bar]",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %-10s | %-15s | %-15s%n", "Alkane", "C-Number", "Bubble Pt [bar]",
         "Density [kg/m³]");
     logger.info(StringUtils.repeat("-", 60));
 
@@ -950,11 +950,11 @@ public class AsphalteneValidationTest {
         ops.TPflash();
         densities[i] = fluid.getDensity("kg/m3");
 
-        System.out.printf("%-12s | %10d | %15.1f | %15.1f%n", alkanes[i], carbonNumbers[i],
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %10d | %15.1f | %15.1f%n", alkanes[i], carbonNumbers[i],
             bubblePoints[i], densities[i]);
 
       } catch (Exception e) {
-        System.out.printf("%-12s | %10d | Error: %s%n", alkanes[i], carbonNumbers[i],
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %10d | Error: %s%n", alkanes[i], carbonNumbers[i],
             e.getMessage());
       }
     }
@@ -1017,7 +1017,7 @@ public class AsphalteneValidationTest {
       ops.bubblePointPressureFlash(false);
       double bubblePoint = fluid.getPressure();
 
-      System.out.printf("Bubble Point Pressure: %.1f bar%n", bubblePoint);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Bubble Point Pressure: %.1f bar%n", bubblePoint);
 
       // Validate bubble point is in reasonable range
       assertTrue(bubblePoint > 50 && bubblePoint < 400,
@@ -1030,11 +1030,11 @@ public class AsphalteneValidationTest {
 
       // Get density from the liquid phase
       double density = fluid.getDensity("kg/m3");
-      System.out.printf("Density at P_bub + 50 bar: %.1f kg/m³%n", density);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Density at P_bub + 50 bar: %.1f kg/m³%n", density);
 
       // Check number of phases
       int nPhases = fluid.getNumberOfPhases();
-      System.out.printf("Number of phases: %d%n", nPhases);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Number of phases: %d%n", nPhases);
       assertTrue(nPhases >= 1, "Should have at least one phase");
 
       // Validate density is reasonable for crude with asphaltenes
@@ -1081,7 +1081,7 @@ public class AsphalteneValidationTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 
     logger.info("Pressure Depletion Study:");
-    System.out.printf("%-15s | %-15s | %-15s%n", "Pressure [bar]", "# Phases", "Oil Density");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s | %-15s | %-15s%n", "Pressure [bar]", "# Phases", "Oil Density");
     logger.info(StringUtils.repeat("-", 50));
 
     double[] pressures = {400, 300, 200, 150, 100};
@@ -1095,9 +1095,9 @@ public class AsphalteneValidationTest {
         fluid.initPhysicalProperties();
         nPhases[i] = fluid.getNumberOfPhases();
         densities[i] = fluid.getDensity("kg/m3");
-        System.out.printf("%15.0f | %15d | %15.1f%n", pressures[i], nPhases[i], densities[i]);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%15.0f | %15d | %15.1f%n", pressures[i], nPhases[i], densities[i]);
       } catch (Exception e) {
-        System.out.printf("%15.0f | Error: %s%n", pressures[i], e.getMessage());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%15.0f | Error: %s%n", pressures[i], e.getMessage());
       }
     }
 
@@ -1151,7 +1151,7 @@ public class AsphalteneValidationTest {
       logger.info("  Error: " + e.getMessage());
     }
 
-    System.out.printf("  CPA Result: P_bub = %.1f bar, ρ = %.1f kg/m³%n", lightBubble,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  CPA Result: P_bub = %.1f bar, ρ = %.1f kg/m³%n", lightBubble,
         lightDensity);
 
     // Test Case 2: Heavy oil with low GOR (like Brent)
@@ -1188,7 +1188,7 @@ public class AsphalteneValidationTest {
       logger.info("  Error: " + e.getMessage());
     }
 
-    System.out.printf("  CPA Result: P_bub = %.1f bar, ρ = %.1f kg/m³%n", heavyBubble,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  CPA Result: P_bub = %.1f bar, ρ = %.1f kg/m³%n", heavyBubble,
         heavyDensity);
 
     // De Boer risk assessment
@@ -1200,9 +1200,9 @@ public class AsphalteneValidationTest {
     DeBoerAsphalteneScreening heavyScreen =
         new DeBoerAsphalteneScreening(200.0, heavyBubble, heavyDensity);
 
-    System.out.printf("  Light Oil: ΔP = %.1f bar, Risk = %s (Index = %.2f)%n", 400.0 - lightBubble,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Light Oil: ΔP = %.1f bar, Risk = %s (Index = %.2f)%n", 400.0 - lightBubble,
         lightScreen.evaluateRisk(), lightScreen.calculateRiskIndex());
-    System.out.printf("  Heavy Oil: ΔP = %.1f bar, Risk = %s (Index = %.2f)%n", 200.0 - heavyBubble,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Heavy Oil: ΔP = %.1f bar, Risk = %s (Index = %.2f)%n", 200.0 - heavyBubble,
         heavyScreen.evaluateRisk(), heavyScreen.calculateRiskIndex());
 
     // Validate physical consistency
@@ -1228,8 +1228,8 @@ public class AsphalteneValidationTest {
     // Light oil with low density should have higher De Boer risk
     double lightRiskIndex = lightScreen.calculateRiskIndex();
     double heavyRiskIndex = heavyScreen.calculateRiskIndex();
-    System.out.printf("  Light oil risk index: %.2f%n", lightRiskIndex);
-    System.out.printf("  Heavy oil risk index: %.2f%n", heavyRiskIndex);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Light oil risk index: %.2f%n", lightRiskIndex);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Heavy oil risk index: %.2f%n", heavyRiskIndex);
 
 
     logger.info("✓ CPA with TBPfraction produces realistic oil densities");

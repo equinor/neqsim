@@ -1,9 +1,9 @@
 package neqsim.chemicalreactions;
 
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -71,7 +71,7 @@ public class MethaneWaterPHTest {
         for (int i = 0; i < system.getPhase(p).getNumberOfComponents(); i++) {
           double x = system.getPhase(p).getComponent(i).getx();
           if (x > 1e-10) {
-            System.out.printf("  %-15s x = %.6f%n",
+            logger.printf(org.apache.logging.log4j.Level.INFO, "  %-15s x = %.6f%n",
                 system.getPhase(p).getComponent(i).getComponentName(), x);
           }
         }
@@ -79,7 +79,7 @@ public class MethaneWaterPHTest {
         // Print pH for aqueous phase
         if (isAqueous) {
           double pH = system.getPhase(p).getpH();
-          System.out.printf("\n  >>> pH = %.4f <<<%n", pH);
+          logger.printf(org.apache.logging.log4j.Level.INFO, "\n  >>> pH = %.4f <<<%n", pH);
         }
       }
 

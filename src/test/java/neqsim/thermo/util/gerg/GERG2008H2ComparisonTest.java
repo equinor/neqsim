@@ -47,9 +47,9 @@ public class GERG2008H2ComparisonTest {
     double T = 300.0; // K
     double P = 10000.0; // kPa (10 MPa)
 
-    System.out.printf("Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
 
-    System.out.printf("%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "ρ GERG-2008", "ρ GERG-2008-H2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "ρ GERG-2008", "ρ GERG-2008-H2",
         "Δρ (mol/L)", "Δρ (%)");
     logger.info(StringUtils.repeat("-", 80));
 
@@ -71,7 +71,7 @@ public class GERG2008H2ComparisonTest {
       double deltaD = D2.val - D1.val;
       double relDiff = (D1.val != 0) ? (deltaD / D1.val) * 100 : 0;
 
-      System.out.printf("%-10.2f %-15.6f %-15.6f %-15.6f %-15.4f%n", xH2, D1.val, D2.val, deltaD,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-15.6f %-15.6f %-15.6f %-15.4f%n", xH2, D1.val, D2.val, deltaD,
           relDiff);
     }
 
@@ -91,9 +91,9 @@ public class GERG2008H2ComparisonTest {
     double T = 300.0; // K
     double P = 20000.0; // kPa (20 MPa)
 
-    System.out.printf("Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
 
-    System.out.printf("%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "Z GERG-2008", "Z GERG-2008-H2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "Z GERG-2008", "Z GERG-2008-H2",
         "ΔZ", "ΔZ (%)");
     logger.info(StringUtils.repeat("-", 80));
 
@@ -122,7 +122,7 @@ public class GERG2008H2ComparisonTest {
       double deltaZ = Z2.val - Z1.val;
       double relDiff = (Z1.val != 0) ? (deltaZ / Z1.val) * 100 : 0;
 
-      System.out.printf("%-10.2f %-15.6f %-15.6f %-15.6f %-15.4f%n", xH2, Z1.val, Z2.val, deltaZ,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-15.6f %-15.6f %-15.6f %-15.4f%n", xH2, Z1.val, Z2.val, deltaZ,
           relDiff);
     }
 
@@ -141,9 +141,9 @@ public class GERG2008H2ComparisonTest {
     double T = 350.0; // K (higher to avoid CO2 liquid)
     double P = 10000.0; // kPa
 
-    System.out.printf("Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
 
-    System.out.printf("%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "ρ GERG-2008", "ρ GERG-2008-H2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "ρ GERG-2008", "ρ GERG-2008-H2",
         "Δρ (mol/L)", "Δρ (%)");
     logger.info(StringUtils.repeat("-", 80));
 
@@ -165,7 +165,7 @@ public class GERG2008H2ComparisonTest {
       double deltaD = D2.val - D1.val;
       double relDiff = (D1.val != 0) ? (deltaD / D1.val) * 100 : 0;
 
-      System.out.printf("%-10.2f %-15.6f %-15.6f %-15.6f %-15.4f%n", xH2, D1.val, D2.val, deltaD,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-15.6f %-15.6f %-15.6f %-15.4f%n", xH2, D1.val, D2.val, deltaD,
           relDiff);
     }
 
@@ -184,9 +184,9 @@ public class GERG2008H2ComparisonTest {
     double T = 300.0; // K
     double P = 5000.0; // kPa
 
-    System.out.printf("Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
 
-    System.out.printf("%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "W GERG-2008", "W GERG-2008-H2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "W GERG-2008", "W GERG-2008-H2",
         "ΔW (m/s)", "ΔW (%)");
     logger.info(StringUtils.repeat("-", 80));
 
@@ -205,7 +205,7 @@ public class GERG2008H2ComparisonTest {
       double deltaW = W2 - W1;
       double relDiff = (W1 != 0) ? (deltaW / W1) * 100 : 0;
 
-      System.out.printf("%-10.2f %-15.4f %-15.4f %-15.4f %-15.4f%n", xH2, W1, W2, deltaW, relDiff);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-15.4f %-15.4f %-15.4f %-15.4f%n", xH2, W1, W2, deltaW, relDiff);
     }
 
   }
@@ -223,9 +223,9 @@ public class GERG2008H2ComparisonTest {
     double T = 300.0;
     double P = 10000.0;
 
-    System.out.printf("Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
 
-    System.out.printf("%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "Cp GERG-2008", "Cp GERG-2008-H2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "Cp GERG-2008", "Cp GERG-2008-H2",
         "ΔCp", "ΔCp (%)");
     logger.info(StringUtils.repeat("-", 80));
 
@@ -244,7 +244,7 @@ public class GERG2008H2ComparisonTest {
       double deltaCp = Cp2 - Cp1;
       double relDiff = (Cp1 != 0) ? (deltaCp / Cp1) * 100 : 0;
 
-      System.out.printf("%-10.2f %-15.4f %-15.4f %-15.4f %-15.4f%n", xH2, Cp1, Cp2, deltaCp,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-15.4f %-15.4f %-15.4f %-15.4f%n", xH2, Cp1, Cp2, deltaCp,
           relDiff);
     }
 
@@ -267,9 +267,9 @@ public class GERG2008H2ComparisonTest {
     x[1] = 0.50; // Methane
     x[15] = 0.50; // Hydrogen
 
-    System.out.printf("Composition: 50%% CH4, 50%% H2 at T = %.1f K%n", T);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Composition: 50%% CH4, 50%% H2 at T = %.1f K%n", T);
 
-    System.out.printf("%-15s %-15s %-15s %-15s %-15s%n", "P (MPa)", "ρ GERG-2008", "ρ GERG-2008-H2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %-15s %-15s %-15s %-15s%n", "P (MPa)", "ρ GERG-2008", "ρ GERG-2008-H2",
         "Δρ (mol/L)", "Δρ (%)");
     logger.info(StringUtils.repeat("-", 80));
 
@@ -287,7 +287,7 @@ public class GERG2008H2ComparisonTest {
       double deltaD = D2.val - D1.val;
       double relDiff = (D1.val != 0) ? (deltaD / D1.val) * 100 : 0;
 
-      System.out.printf("%-15.1f %-15.6f %-15.6f %-15.6f %-15.4f%n", P / 1000.0, D1.val, D2.val,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-15.1f %-15.6f %-15.6f %-15.6f %-15.4f%n", P / 1000.0, D1.val, D2.val,
           deltaD, relDiff);
     }
 
@@ -317,7 +317,7 @@ public class GERG2008H2ComparisonTest {
     System.out
         .println("Composition: 70% CH4, 2% N2, 1% CO2, 5% C2H6, 2% C3H8, 20% H2 at P = 10 MPa");
 
-    System.out.printf("%-15s %-15s %-15s %-15s %-15s%n", "T (K)", "ρ GERG-2008", "ρ GERG-2008-H2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %-15s %-15s %-15s %-15s%n", "T (K)", "ρ GERG-2008", "ρ GERG-2008-H2",
         "Δρ (mol/L)", "Δρ (%)");
     logger.info(StringUtils.repeat("-", 80));
 
@@ -335,7 +335,7 @@ public class GERG2008H2ComparisonTest {
       double deltaD = D2.val - D1.val;
       double relDiff = (D1.val != 0) ? (deltaD / D1.val) * 100 : 0;
 
-      System.out.printf("%-15.1f %-15.6f %-15.6f %-15.6f %-15.4f%n", T, D1.val, D2.val, deltaD,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-15.1f %-15.6f %-15.6f %-15.6f %-15.4f%n", T, D1.val, D2.val, deltaD,
           relDiff);
     }
 
@@ -354,9 +354,9 @@ public class GERG2008H2ComparisonTest {
     double T = 300.0;
     double P = 10000.0;
 
-    System.out.printf("Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
 
-    System.out.printf("%-10s %-18s %-18s %-18s%n", "x(H2)", "JT GERG-2008", "JT GERG-2008-H2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-18s %-18s %-18s%n", "x(H2)", "JT GERG-2008", "JT GERG-2008-H2",
         "ΔJT (%)");
     logger.info(StringUtils.repeat("-", 80));
 
@@ -374,7 +374,7 @@ public class GERG2008H2ComparisonTest {
       double JT2 = props2[2];
       double relDiff = (JT1 != 0) ? ((JT2 - JT1) / Math.abs(JT1)) * 100 : 0;
 
-      System.out.printf("%-10.2f %-18.6e %-18.6e %-18.4f%n", xH2, JT1, JT2, relDiff);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-18.6e %-18.6e %-18.4f%n", xH2, JT1, JT2, relDiff);
     }
 
     logger.info("Note: Negative JT coefficient indicates inverse Joule-Thomson effect");
@@ -402,7 +402,7 @@ public class GERG2008H2ComparisonTest {
 
     logger.info("Binary System Analysis at P = 10 MPa, x(H2) = 0.50");
 
-    System.out.printf("%-20s %-15s %-15s %-15s%n", "System", "Δρ (%)", "ΔZ (%)", "ΔW (%)");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-20s %-15s %-15s %-15s%n", "System", "Δρ (%)", "ΔZ (%)", "ΔW (%)");
     logger.info(StringUtils.repeat("-", 65));
 
     for (int s = 0; s < systems.length; s++) {
@@ -426,7 +426,7 @@ public class GERG2008H2ComparisonTest {
       double relDiffZ = (props1[3] != 0) ? ((props2[3] - props1[3]) / props1[3]) * 100 : 0;
       double relDiffW = (props1[0] != 0) ? ((props2[0] - props1[0]) / props1[0]) * 100 : 0;
 
-      System.out.printf("%-20s %-15.4f %-15.4f %-15.4f%n", systems[s], relDiffD, relDiffZ,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-20s %-15.4f %-15.4f %-15.4f%n", systems[s], relDiffD, relDiffZ,
           relDiffW);
     }
 

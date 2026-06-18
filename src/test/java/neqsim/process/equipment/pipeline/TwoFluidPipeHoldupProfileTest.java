@@ -117,7 +117,7 @@ public class TwoFluidPipeHoldupProfileTest {
     logger.info("\nProfile samples:");
     int step = Math.max(1, n / 10);
     for (int i = 0; i < n; i += step) {
-      System.out.printf("  Section %d: P=%.1f bara, HL=%.2f%%\n", i, pressureProfile[i] / 1e5,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Section %d: P=%.1f bara, HL=%.2f%%\n", i, pressureProfile[i] / 1e5,
           holdupProfile[i] * 100);
     }
 
@@ -437,7 +437,7 @@ public class TwoFluidPipeHoldupProfileTest {
     int step = Math.max(1, tfN / 10);
     for (int i = 0; i < tfN; i += step) {
       double x = i * pipeLength / numSections / 1000.0;
-      System.out.printf("  %.0f km: %.2f%%\n", x, tfHoldup[i] * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %.0f km: %.2f%%\n", x, tfHoldup[i] * 100);
     }
 
     // Print oil and water holdup profiles
@@ -446,7 +446,7 @@ public class TwoFluidPipeHoldupProfileTest {
     logger.info("\nOil & Water holdup breakdown:");
     for (int i = 0; i < Math.min(10, tfN); i += 3) {
       double x = i * pipeLength / numSections / 1000.0;
-      System.out.printf("  %.0f km: Oil=%.2f%%, Water=%.2f%%, Sum=%.2f%%\n", x, oilHoldup[i] * 100,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %.0f km: Oil=%.2f%%, Water=%.2f%%, Sum=%.2f%%\n", x, oilHoldup[i] * 100,
           waterHoldup[i] * 100, (oilHoldup[i] + waterHoldup[i]) * 100);
     }
 

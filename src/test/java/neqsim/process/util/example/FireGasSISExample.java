@@ -224,8 +224,10 @@ public class FireGasSISExample {
     }
 
 
-    System.out.printf("ESD Logic: %s%n", esdLogic.getStatusDescription());
-    System.out.printf("Process flow: %.1f kg/hr%n", processStream.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n",
+        esdLogic.getStatusDescription());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Process flow: %.1f kg/hr%n",
+        processStream.getFlowRate("kg/hr"));
 
 
     // ═══════════════════════════════════════════════════════════════
@@ -258,7 +260,8 @@ public class FireGasSISExample {
     logger.info("  FD-102: " + (fireDetector2.isTripped() ? "TRIPPED" : "NORMAL"));
     logger.info("  FD-103: " + (fireDetector3.isTripped() ? "TRIPPED" : "NORMAL"));
     logger.info("SIF Status: " + (fireSIF.isTripped() ? "TRIPPED - ESD ACTIVATED" : "NOT TRIPPED"));
-    System.out.printf("ESD Logic: %s%n", esdLogic.getStatusDescription());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Logic: %s%n",
+        esdLogic.getStatusDescription());
 
 
     // Switch to dynamic mode
@@ -310,9 +313,10 @@ public class FireGasSISExample {
       String esdStep =
           esdLogic.isComplete() ? "DONE" : "Step " + (esdLogic.getCurrentActionIndex() + 1) + "/3";
 
-      System.out.printf("%8.1f | %8s | %8s | %8s | %13.1f | %12.1f | %12.1f%n", time, fireStatus,
-          gasStatus, esdStep, esdInletValve.getPercentValveOpening(),
-          bdValve.getPercentValveOpening(), processStream.getFlowRate("kg/hr"));
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%8.1f | %8s | %8s | %8s | %13.1f | %12.1f | %12.1f%n", time, fireStatus, gasStatus,
+          esdStep, esdInletValve.getPercentValveOpening(), bdValve.getPercentValveOpening(),
+          processStream.getFlowRate("kg/hr"));
     }
 
 

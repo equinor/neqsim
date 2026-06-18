@@ -110,7 +110,7 @@ public class TPFlashHighTempDiagnostic {
         ops.TPflash();
         double gasFrac = sys.getPhaseFraction("gas", "mole");
         int nph = sys.getNumberOfPhases();
-        System.out.printf("  T=%.0f C  nPhases=%d  gasFrac=%.8f  Gibbs=%.2f%n", t, nph, gasFrac,
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  T=%.0f C  nPhases=%d  gasFrac=%.8f  Gibbs=%.2f%n", t, nph, gasFrac,
             sys.getGibbsEnergy());
       }
     }
@@ -125,7 +125,7 @@ public class TPFlashHighTempDiagnostic {
       sys.setTemperature(268.0, "C");
       ThermodynamicOperations ops = new ThermodynamicOperations(sys);
       ops.TPflash();
-      System.out.printf("  Run %d: gasFrac=%.15f  nPhases=%d  Gibbs=%.6f%n", run,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Run %d: gasFrac=%.15f  nPhases=%d  Gibbs=%.6f%n", run,
           sys.getPhaseFraction("gas", "mole"), sys.getNumberOfPhases(), sys.getGibbsEnergy());
     }
 
@@ -273,11 +273,11 @@ public class TPFlashHighTempDiagnostic {
             worstComp = j;
           }
           if (relErr > 1e-6) {
-            System.out.printf("    %s: fug_ph0=%.6e fug_ph1=%.6e relErr=%.2e%n",
+            logger.printf(org.apache.logging.log4j.Level.INFO, "    %s: fug_ph0=%.6e fug_ph1=%.6e relErr=%.2e%n",
                 sys.getPhase(0).getComponent(j).getComponentName(), fug0, fug1, relErr);
           }
         }
-        System.out.printf("  Max fugacity relative error: %.2e (comp %d)%n", maxRelError,
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  Max fugacity relative error: %.2e (comp %d)%n", maxRelError,
             worstComp);
         logger.info("  " + (maxRelError < 1e-4 ? "OK (converged)" : "POOR CONVERGENCE"));
       }
@@ -302,7 +302,7 @@ public class TPFlashHighTempDiagnostic {
           if (relErr > maxRelError)
             maxRelError = relErr;
         }
-        System.out.printf("  Max fugacity relative error (no-MPC): %.2e%n", maxRelError);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  Max fugacity relative error (no-MPC): %.2e%n", maxRelError);
       }
     }
 

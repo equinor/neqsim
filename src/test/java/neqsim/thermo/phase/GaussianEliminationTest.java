@@ -89,7 +89,7 @@ public class GaussianEliminationTest {
     for (int i = 0; i < 2; i++) {
       for (int j = 0; j < 2; j++) {
         double diff = Math.abs(invGE[i][j] - invEJML.get(i, j));
-        System.out.printf("inv[%d][%d]: GE=%.15e  EJML=%.15e  diff=%.4e%n", i, j, invGE[i][j],
+        logger.printf(org.apache.logging.log4j.Level.INFO, "inv[%d][%d]: GE=%.15e  EJML=%.15e  diff=%.4e%n", i, j, invGE[i][j],
             invEJML.get(i, j), diff);
         assertTrue(diff < 1e-12, "2x2 inv mismatch at [" + i + "][" + j + "]");
       }
@@ -126,7 +126,7 @@ public class GaussianEliminationTest {
 
     logger.info("Hessian matrix:");
     for (int i = 0; i < 4; i++) {
-      System.out.printf("  [%.6f, %.6f, %.6f, %.6f]%n", hess[i][0], hess[i][1], hess[i][2],
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  [%.6f, %.6f, %.6f, %.6f]%n", hess[i][0], hess[i][1], hess[i][2],
           hess[i][3]);
     }
 
@@ -146,11 +146,11 @@ public class GaussianEliminationTest {
       for (int j = 0; j < 4; j++) {
         double diff = Math.abs(invGE[i][j] - invEJML.get(i, j));
         maxDiff = Math.max(maxDiff, diff);
-        System.out.printf("inv[%d][%d]: GE=%.15e  EJML=%.15e  diff=%.4e%n", i, j, invGE[i][j],
+        logger.printf(org.apache.logging.log4j.Level.INFO, "inv[%d][%d]: GE=%.15e  EJML=%.15e  diff=%.4e%n", i, j, invGE[i][j],
             invEJML.get(i, j), diff);
       }
     }
-    System.out.printf("Max difference: %.4e%n", maxDiff);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Max difference: %.4e%n", maxDiff);
     assertTrue(maxDiff < 1e-12, "4x4 CPA Hessian inverse mismatch, max diff = " + maxDiff);
   }
 
@@ -198,7 +198,7 @@ public class GaussianEliminationTest {
     logger.info("Single RHS solve comparison:");
     for (int i = 0; i < 4; i++) {
       double diff = Math.abs(rhsCopy[i] - xvEJML.get(i, 0));
-      System.out.printf("  xv[%d]: GE=%.15e  EJML=%.15e  diff=%.4e%n", i, rhsCopy[i],
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  xv[%d]: GE=%.15e  EJML=%.15e  diff=%.4e%n", i, rhsCopy[i],
           xvEJML.get(i, 0), diff);
       assertTrue(diff < 1e-12, "Single RHS solve mismatch at [" + i + "]");
     }

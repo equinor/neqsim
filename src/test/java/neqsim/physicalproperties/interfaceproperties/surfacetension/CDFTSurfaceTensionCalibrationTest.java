@@ -1,8 +1,8 @@
 package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
-import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
@@ -49,7 +49,8 @@ class CDFTSurfaceTensionCalibrationTest {
   @Test
   void sweepAttractiveRangeFactor() {
     logger.info("\n=== cDFT Kernel Range Calibration ===");
-    System.out.printf("%-8s | %-10s | %-10s | %-8s%n", "lambda", "AAD (%)", "MaxDev(%)", "nOK");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s | %-10s | %-10s | %-8s%n", "lambda",
+        "AAD (%)", "MaxDev(%)", "nOK");
     logger.info("---------|------------|------------|--------");
 
     double bestLambda = 0.5;
@@ -98,7 +99,8 @@ class CDFTSurfaceTensionCalibrationTest {
       }
 
       double aad = (count > 0) ? sumAbsDev / count : 999.0;
-      System.out.printf("%-8.3f | %10.2f | %10.2f | %4d%n", lambda, aad, maxAbsDev, count);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.3f | %10.2f | %10.2f | %4d%n", lambda,
+          aad, maxAbsDev, count);
 
       if (aad < bestAAD) {
         bestAAD = aad;
@@ -107,13 +109,14 @@ class CDFTSurfaceTensionCalibrationTest {
     }
 
 
-    System.out.printf("Optimal lambda = %.3f with AAD = %.2f%%%n", bestLambda, bestAAD);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Optimal lambda = %.3f with AAD = %.2f%%%n",
+        bestLambda, bestAAD);
 
 
     // Print per-component results at optimal lambda
     logger.info("=== Per-component results at optimal lambda ===");
-    System.out.printf("%-12s | %-5s | %6s | %8s | %8s | %8s%n", "Component", "EOS", "T (K)", "Exp",
-        "cDFT", "Dev(%)");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %-5s | %6s | %8s | %8s | %8s%n",
+        "Component", "EOS", "T (K)", "Exp", "cDFT", "Dev(%)");
     logger.info("-------------|-------|--------|----------|----------|--------");
 
     for (Object[] row : DATA) {
@@ -143,11 +146,13 @@ class CDFTSurfaceTensionCalibrationTest {
         double sigmaMNm = sigma * 1000.0;
         double dev = (sigmaMNm - sigmaExp) / sigmaExp * 100.0;
 
-        System.out.printf("%-12s | %-5s | %6.1f | %8.2f | %8.2f | %+7.1f%n", comp, eos, tempK,
-            sigmaExp, sigmaMNm, dev);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%-12s | %-5s | %6.1f | %8.2f | %8.2f | %+7.1f%n", comp, eos, tempK, sigmaExp, sigmaMNm,
+            dev);
       } catch (Exception ex) {
-        System.out.printf("%-12s | %-5s | %6.1f | %8.2f | %8s | %8s%n", comp, eos, tempK, sigmaExp,
-            "FAIL", "N/A");
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%-12s | %-5s | %6.1f | %8.2f | %8s | %8s%n", comp, eos, tempK, sigmaExp, "FAIL",
+            "N/A");
       }
     }
   }
@@ -158,7 +163,8 @@ class CDFTSurfaceTensionCalibrationTest {
   @Test
   void fineSweepAroundOptimal() {
     logger.info("\n=== Fine sweep with both PR and SRK ===");
-    System.out.printf("%-8s | %-12s | %-12s%n", "lambda", "AAD-PR (%)", "AAD-SRK (%)");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s | %-12s | %-12s%n", "lambda",
+        "AAD-PR (%)", "AAD-SRK (%)");
     logger.info("---------|--------------|-------------");
 
     for (double lambda = 0.50; lambda <= 1.60; lambda += 0.025) {
@@ -213,7 +219,8 @@ class CDFTSurfaceTensionCalibrationTest {
 
       double aadPR = (cntPR > 0) ? sumDevPR / cntPR : 999.0;
       double aadSRK = (cntSRK > 0) ? sumDevSRK / cntSRK : 999.0;
-      System.out.printf("%-8.3f | %12.2f | %12.2f%n", lambda, aadPR, aadSRK);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.3f | %12.2f | %12.2f%n", lambda,
+          aadPR, aadSRK);
     }
   }
 }

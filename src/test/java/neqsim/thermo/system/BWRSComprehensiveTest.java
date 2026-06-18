@@ -4,10 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.jupiter.api.Test;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Comprehensive comparison of BWRS (MBWR-32) versus GERG-2008 for methane/ethane systems. Tests
@@ -168,7 +168,7 @@ public class BWRSComprehensiveTest {
     logger.info(
         "------  ------  -----  --------  ------  ------  ------  ------  ------  ------  ------");
     for (PropertyResult r : results) {
-      System.out.printf(
+      logger.printf(org.apache.logging.log4j.Level.INFO,
           "%6.1f  %6.1f  %5.2f  %8.2f  %6.2f  %6.2f  %6.2f  %6.2f  %6.1f  %6.2f  %6.2f%n",
           r.temperature, r.pressure, r.xCH4, r.pctDensity(), r.pctZ(), r.pctCp(), r.pctCv(),
           r.pctSpeed(), r.pctJT(), r.pctH(), r.pctS());
@@ -193,10 +193,10 @@ public class BWRSComprehensiveTest {
       sumJT += r.pctJT();
     }
     logger.info("\n--- Summary ---");
-    System.out.printf(
+    logger.printf(org.apache.logging.log4j.Level.INFO,
         "Max deviation:  Density=%.2f%%  Z=%.2f%%  Cp=%.2f%%  Cv=%.2f%%  Speed=%.2f%%  JT=%.1f%%%n",
         maxDens, maxZ, maxCp, maxCv, maxSpd, maxJT);
-    System.out.printf(
+    logger.printf(org.apache.logging.log4j.Level.INFO,
         "Mean deviation: Density=%.2f%%  Z=%.2f%%  Cp=%.2f%%  Cv=%.2f%%  Speed=%.2f%%  JT=%.1f%%%n",
         sumDens / n, sumZ / n, sumCp / n, sumCv / n, sumSpd / n, sumJT / n);
   }
@@ -351,10 +351,11 @@ public class BWRSComprehensiveTest {
 
     double numericalCp = (hPlus - hMinus) / (2.0 * dT);
 
-    System.out.printf("Analytical Cp = %.6f J/K%n", analyticalCp);
-    System.out.printf("Numerical  Cp = %.6f J/K (from dH/dT)%n", numericalCp);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Analytical Cp = %.6f J/K%n", analyticalCp);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Numerical  Cp = %.6f J/K (from dH/dT)%n",
+        numericalCp);
     double relErr = Math.abs((analyticalCp - numericalCp) / numericalCp) * 100.0;
-    System.out.printf("Relative error = %.4f%%%n", relErr);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Relative error = %.4f%%%n", relErr);
 
     // Cp from analytical derivatives should match numerical Cp within 0.1%
     assertEquals(numericalCp, analyticalCp, Math.abs(numericalCp) * 0.005,
@@ -371,8 +372,8 @@ public class BWRSComprehensiveTest {
     // Ideal gas Cp for methane ~ 35.7 J/(mol K) at 298 K
     for (double T : TEMPERATURES) {
       PropertyResult r = compareAt(T, 10.0, 1.0);
-      System.out.printf("T=%6.1fK: Cp_BWRS=%.2f  Cp_GERG=%.2f  err=%.2f%%%n", T, r.bwrsCp, r.gergCp,
-          r.pctCp());
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "T=%6.1fK: Cp_BWRS=%.2f  Cp_GERG=%.2f  err=%.2f%%%n", T, r.bwrsCp, r.gergCp, r.pctCp());
 
       assertTrue(r.bwrsCp > 0, "Cp should be positive at T=" + T);
       // Cp should be in reasonable range 25-200 J/(mol K) for methane
@@ -390,8 +391,9 @@ public class BWRSComprehensiveTest {
     // Methane speed of sound ~ 450 m/s at 298 K, 10 bar
     for (double T : TEMPERATURES) {
       PropertyResult r = compareAt(T, 10.0, 1.0);
-      System.out.printf("T=%6.1fK: w_BWRS=%.1f  w_GERG=%.1f  err=%.2f%%%n", T, r.bwrsSpeed,
-          r.gergSpeed, r.pctSpeed());
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "T=%6.1fK: w_BWRS=%.1f  w_GERG=%.1f  err=%.2f%%%n", T, r.bwrsSpeed, r.gergSpeed,
+          r.pctSpeed());
 
       assertTrue(r.bwrsSpeed > 0, "Speed of sound should be positive at T=" + T);
       assertTrue(r.bwrsSpeed > 100 && r.bwrsSpeed < 1000,

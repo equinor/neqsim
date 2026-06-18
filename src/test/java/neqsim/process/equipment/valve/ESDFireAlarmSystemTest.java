@@ -272,7 +272,7 @@ class ESDFireAlarmSystemTest {
 
       // Print status every 2 seconds or at key events
       if (time % 2.0 == 0.0 || time == 5.0 || time == 10.0) {
-        System.out.printf(
+        logger.printf(org.apache.logging.log4j.Level.INFO,
             "%8.1f | %6s | %6s | %6d | %11.1f | %15.1f | %15.2f | %15.3f | %15.2f | %14.1f%n", time,
             fireDetector1.isFireDetected() ? "FIRE" : "OK",
             fireDetector2.isFireDetected() ? "FIRE" : "OK", activeAlarms,
@@ -286,10 +286,14 @@ class ESDFireAlarmSystemTest {
 
     // PHASE 5: Summary and verification
     logger.info("═══ BLOWDOWN SUMMARY ═══");
-    System.out.printf("Final BD valve opening: %.1f%%%n", bdValve.getPercentValveOpening());
-    System.out.printf("Total gas blown down: %.1f kg%n", flare.getCumulativeGasBurned("kg"));
-    System.out.printf("Total heat released: %.2f GJ%n", flare.getCumulativeHeatReleased("GJ"));
-    System.out.printf("Total CO2 emissions: %.1f kg%n", flare.getCumulativeCO2Emission("kg"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Final BD valve opening: %.1f%%%n",
+        bdValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total gas blown down: %.1f kg%n",
+        flare.getCumulativeGasBurned("kg"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total heat released: %.2f GJ%n",
+        flare.getCumulativeHeatReleased("GJ"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total CO2 emissions: %.1f kg%n",
+        flare.getCumulativeCO2Emission("kg"));
 
 
     logger.info("═══ FIRE ALARM STATUS ═══");
@@ -633,7 +637,8 @@ class ESDFireAlarmSystemTest {
       flare.run();
       flare.updateCumulative(timeStep);
 
-      System.out.printf("%8.0f | %6.1f%% | %6.1f%% | %5.0f | %15.2f | %14.1f%n", time,
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%8.0f | %6.1f%% | %6.1f%% | %5.0f | %15.2f | %14.1f%n", time,
           gasDetector1.getGasConcentration(), gasDetector2.getGasConcentration(),
           bdValve.getPercentValveOpening(), flare.getHeatDuty("MW"),
           flare.getCumulativeCO2Emission("kg"));

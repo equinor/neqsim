@@ -132,27 +132,27 @@ public class BeggsAndBrillsValidationExample {
 
     // Results
     logger.info("Input Parameters:");
-    System.out.printf("  Pipe length: %.0f m%n", length);
-    System.out.printf("  Pipe diameter: %.3f m (%.0f mm)%n", diameter, diameter * 1000);
-    System.out.printf("  Roughness: %.2e m%n", roughness);
-    System.out.printf("  Flow rate: %.0f kg/hr%n", flowRate);
-    System.out.printf("  Inlet pressure: %.1f bara%n", pressure);
-    System.out.printf("  Temperature: %.1f °C%n", temperature);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe length: %.0f m%n", length);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe diameter: %.3f m (%.0f mm)%n", diameter, diameter * 1000);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Roughness: %.2e m%n", roughness);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow rate: %.0f kg/hr%n", flowRate);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Inlet pressure: %.1f bara%n", pressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Temperature: %.1f °C%n", temperature);
 
 
     logger.info("Fluid Properties:");
-    System.out.printf("  Density: %.2f kg/m³%n", rho);
-    System.out.printf("  Viscosity: %.4e Pa·s%n", mu);
-    System.out.printf("  Velocity: %.2f m/s%n", velocity);
-    System.out.printf("  Reynolds number: %.2e%n", Re);
-    System.out.printf("  Friction factor (Haaland): %.5f%n", f);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Density: %.2f kg/m³%n", rho);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Viscosity: %.4e Pa·s%n", mu);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Velocity: %.2f m/s%n", velocity);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Reynolds number: %.2e%n", Re);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Friction factor (Haaland): %.5f%n", f);
 
 
     logger.info("Pressure Drop Comparison:");
-    System.out.printf("  Analytical (Darcy-Weisbach): %.4f bar%n", dP_analytical);
-    System.out.printf("  Beggs & Brill simulation:   %.4f bar%n", simPressureDrop);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Analytical (Darcy-Weisbach): %.4f bar%n", dP_analytical);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Beggs & Brill simulation:   %.4f bar%n", simPressureDrop);
     double error = Math.abs(simPressureDrop - dP_analytical) / dP_analytical * 100;
-    System.out.printf("  Relative error: %.2f%%%n", error);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Relative error: %.2f%%%n", error);
 
 
     if (error < 10) {
@@ -232,25 +232,25 @@ public class BeggsAndBrillsValidationExample {
 
     // Results
     logger.info("Input Parameters:");
-    System.out.printf("  Pipe length: %.0f m%n", length);
-    System.out.printf("  Pipe diameter: %.3f m%n", diameter);
-    System.out.printf("  Flow rate: %.0f kg/hr%n", flowRate);
-    System.out.printf("  Inlet pressure: %.1f bara%n", pressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe length: %.0f m%n", length);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe diameter: %.3f m%n", diameter);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow rate: %.0f kg/hr%n", flowRate);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Inlet pressure: %.1f bara%n", pressure);
 
 
     logger.info("Fluid Properties (nC10 - decane):");
-    System.out.printf("  Density: %.1f kg/m³%n", rho);
-    System.out.printf("  Viscosity: %.4e Pa·s%n", mu);
-    System.out.printf("  Velocity: %.2f m/s%n", velocity);
-    System.out.printf("  Reynolds number: %.2e%n", Re);
-    System.out.printf("  Friction factor: %.5f%n", f);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Density: %.1f kg/m³%n", rho);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Viscosity: %.4e Pa·s%n", mu);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Velocity: %.2f m/s%n", velocity);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Reynolds number: %.2e%n", Re);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Friction factor: %.5f%n", f);
 
 
     logger.info("Pressure Drop Comparison:");
-    System.out.printf("  Analytical (Darcy-Weisbach): %.4f bar%n", dP_analytical);
-    System.out.printf("  Beggs & Brill simulation:   %.4f bar%n", simPressureDrop);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Analytical (Darcy-Weisbach): %.4f bar%n", dP_analytical);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Beggs & Brill simulation:   %.4f bar%n", simPressureDrop);
     double error = Math.abs(simPressureDrop - dP_analytical) / dP_analytical * 100;
-    System.out.printf("  Relative error: %.2f%%%n", error);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Relative error: %.2f%%%n", error);
 
 
     if (error < 15) {
@@ -333,36 +333,36 @@ public class BeggsAndBrillsValidationExample {
 
     // Results
     logger.info("Input Parameters:");
-    System.out.printf("  Pipe length: %.0f m%n", length);
-    System.out.printf("  Pipe diameter: %.3f m (pipe reports: %.3f m)%n", diameter, pipeInsideDiam);
-    System.out.printf("  Heat transfer area: %.1f m²%n", area);
-    System.out.printf("  Flow rate: %.0f kg/hr (%.3f kg/s)%n", flowRate, massFlow);
-    System.out.printf("  U-value: %.1f W/(m²·K)%n", U);
-    System.out.printf("  Inlet temperature: %.1f °C%n", inletTemp);
-    System.out.printf("  Wall temperature: %.1f °C%n", wallTemp);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe length: %.0f m%n", length);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe diameter: %.3f m (pipe reports: %.3f m)%n", diameter, pipeInsideDiam);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Heat transfer area: %.1f m²%n", area);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow rate: %.0f kg/hr (%.3f kg/s)%n", flowRate, massFlow);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  U-value: %.1f W/(m²·K)%n", U);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Inlet temperature: %.1f °C%n", inletTemp);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Wall temperature: %.1f °C%n", wallTemp);
 
 
     logger.info("Heat Transfer Parameters:");
-    System.out.printf("  Heat capacity (Cp): %.1f J/(kg·K)%n", Cp);
-    System.out.printf("  NTU = U×A/(ṁ×Cp): %.4f%n", NTU);
-    System.out.printf("  Effectiveness = 1-exp(-NTU): %.4f%n", 1 - Math.exp(-NTU));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Heat capacity (Cp): %.1f J/(kg·K)%n", Cp);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  NTU = U×A/(ṁ×Cp): %.4f%n", NTU);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Effectiveness = 1-exp(-NTU): %.4f%n", 1 - Math.exp(-NTU));
 
 
     logger.info("Outlet Temperature Comparison:");
-    System.out.printf("  Analytical (NTU method):  %.2f °C%n", analyticalOutletTemp);
-    System.out.printf("  Beggs & Brill simulation: %.2f °C%n", simOutletTemp);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Analytical (NTU method):  %.2f °C%n", analyticalOutletTemp);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Beggs & Brill simulation: %.2f °C%n", simOutletTemp);
     double error = Math.abs(simOutletTemp - analyticalOutletTemp);
-    System.out.printf("  Absolute error: %.2f °C%n", error);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Absolute error: %.2f °C%n", error);
     double relError = error / (inletTemp - wallTemp) * 100;
-    System.out.printf("  Relative error: %.2f%% of ΔT%n", relError);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Relative error: %.2f%% of ΔT%n", relError);
 
 
     // Heat duty comparison
     double Q_analytical = massFlow * Cp * (inletTemp - analyticalOutletTemp); // W
     double Q_simulation = massFlow * Cp * (inletTemp - simOutletTemp);
     logger.info("Heat Duty Comparison:");
-    System.out.printf("  Analytical: %.1f kW%n", Q_analytical / 1000);
-    System.out.printf("  Simulation: %.1f kW%n", Q_simulation / 1000);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Analytical: %.1f kW%n", Q_analytical / 1000);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Simulation: %.1f kW%n", Q_simulation / 1000);
 
 
     if (error < 2.0) {
@@ -394,8 +394,8 @@ public class BeggsAndBrillsValidationExample {
     double diameter = 0.1; // m
 
     logger.info("Test Configuration:");
-    System.out.printf("  Pipe length: %.0f m, diameter: %.3f m%n", length, diameter);
-    System.out.printf("  Pressure: %.0f bara, Temperature: %.0f °C%n", pressure, temperature);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pipe length: %.0f m, diameter: %.3f m%n", length, diameter);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pressure: %.0f bara, Temperature: %.0f °C%n", pressure, temperature);
 
 
     // Test multiple GOR (Gas-Oil Ratio) conditions
@@ -404,9 +404,9 @@ public class BeggsAndBrillsValidationExample {
 
     logger.info("Two-Phase Flow Results:");
     logger.info(StringUtils.repeat("─", 90));
-    System.out.printf("%-10s %-10s %-8s %-10s %-12s %-10s %-12s %-10s%n", "Gas Flow", "Liq Flow",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-10s %-8s %-10s %-12s %-10s %-12s %-10s%n", "Gas Flow", "Liq Flow",
         "GOR", "λ_liquid", "Flow Regime", "Holdup El", "ΔP (bar)", "ΔP/km");
-    System.out.printf("%-10s %-10s %-8s %-10s %-12s %-10s %-12s %-10s%n", "(kg/hr)", "(kg/hr)",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-10s %-8s %-10s %-12s %-10s %-12s %-10s%n", "(kg/hr)", "(kg/hr)",
         "(-)", "(-)", "(-)", "(-)", "(bar)", "(bar/km)");
     logger.info(StringUtils.repeat("─", 90));
 
@@ -453,11 +453,11 @@ public class BeggsAndBrillsValidationExample {
 
         double gor = gasFlow / liquidFlowRate;
 
-        System.out.printf("%-10.0f %-10.0f %-8.2f %-10.3f %-12s %-10.3f %-12.4f %-10.3f%n", gasFlow,
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.0f %-10.0f %-8.2f %-10.3f %-12s %-10.3f %-12.4f %-10.3f%n", gasFlow,
             liquidFlowRate, gor, lambda, regime, holdup, pressureDrop,
             pressureDrop / length * 1000);
       } catch (Exception e) {
-        System.out.printf("%-10.0f %-10.0f - Error: %s%n", gasFlow, liquidFlowRate, e.getMessage());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.0f %-10.0f - Error: %s%n", gasFlow, liquidFlowRate, e.getMessage());
       }
     }
 

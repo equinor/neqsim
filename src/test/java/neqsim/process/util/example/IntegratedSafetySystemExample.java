@@ -425,16 +425,25 @@ public class IntegratedSafetySystemExample {
 
     // Report status
     logger.info("═══ NORMAL OPERATION STATUS ═══");
-    System.out.printf("Feed pressure: %.1f bara%n", highPressureFeed.getPressure("bara"));
-    System.out.printf("HIPPS PT-101A: %.2f bara%n", hippsPT1.getMeasuredValue());
-    System.out.printf("HIPPS PT-101B: %.2f bara%n", hippsPT2.getMeasuredValue());
-    System.out.printf("Separator pressure (PT-301): %.2f bara%n", separatorPT.getMeasuredValue());
-    System.out.printf("Separator temperature (TT-301): %.1f C%n", separatorTT.getMeasuredValue());
-    System.out.printf("Process flow: %.1f kg/hr%n", processStream.getFlowRate("kg/hr"));
-    System.out.printf("HIPPS status: %s%n", hippsController.isActivated() ? "ACTIVATED" : "NORMAL");
-    System.out.printf("ESD status: %s%n", esdController.isActivated() ? "ACTIVATED" : "NORMAL");
-    System.out.printf("Fire detection: %s%n", fireSystem.isFireDetected() ? "FIRE" : "NORMAL");
-    System.out.printf("PSV status: %s (%.1f%% open)%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Feed pressure: %.1f bara%n",
+        highPressureFeed.getPressure("bara"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "HIPPS PT-101A: %.2f bara%n",
+        hippsPT1.getMeasuredValue());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "HIPPS PT-101B: %.2f bara%n",
+        hippsPT2.getMeasuredValue());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Separator pressure (PT-301): %.2f bara%n",
+        separatorPT.getMeasuredValue());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Separator temperature (TT-301): %.1f C%n",
+        separatorTT.getMeasuredValue());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Process flow: %.1f kg/hr%n",
+        processStream.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "HIPPS status: %s%n",
+        hippsController.isActivated() ? "ACTIVATED" : "NORMAL");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD status: %s%n",
+        esdController.isActivated() ? "ACTIVATED" : "NORMAL");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Fire detection: %s%n",
+        fireSystem.isFireDetected() ? "FIRE" : "NORMAL");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV status: %s (%.1f%% open)%n",
         psv.getPercentValveOpening() > 0 ? "RELIEVING" : "CLOSED", psv.getPercentValveOpening());
     logger.info("\n✓ All systems operating normally\n");
   }
@@ -499,7 +508,8 @@ public class IntegratedSafetySystemExample {
       hippsController.runController(1.0);
       esdController.runController(1.0);
 
-      System.out.printf("%8.1f | %6.1f | %10.1f%% | %5.1f | %12s | %10s%n", time,
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%8.1f | %6.1f | %10.1f%% | %5.1f | %12s | %10s%n", time,
           highPressureFeed.getPressure("bara"), hippsValve.getPercentValveOpening(),
           separatorPT.getMeasuredValue(), hippsController.isActivated() ? "ACTIVATED" : "NORMAL",
           esdController.isActivated() ? "ACTIVATED" : "NORMAL");
@@ -604,16 +614,20 @@ public class IntegratedSafetySystemExample {
       flare.run();
       flare.updateCumulative(timeStep);
 
-      System.out.printf("%8.1f | %5.1f | %8.1f%% | %7.1f%% | %7.0f | %9.2f | %10.1f%n", time,
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%8.1f | %5.1f | %8.1f%% | %7.1f%% | %7.0f | %9.2f | %10.1f%n", time,
           separatorPT.getMeasuredValue(), esdInletValve.getPercentValveOpening(),
           bdValve.getPercentValveOpening(), blowdownStream.getFlowRate("kg/hr"),
           flare.getHeatDuty("MW"), flare.getCumulativeGasBurned("kg"));
     }
 
     logger.info("\n═══ ESD & BLOWDOWN SUMMARY ═══");
-    System.out.printf("Total gas blown down: %.1f kg%n", flare.getCumulativeGasBurned("kg"));
-    System.out.printf("Total heat released: %.2f GJ%n", flare.getCumulativeHeatReleased("GJ"));
-    System.out.printf("Final separator pressure: %.1f bara%n", separatorPT.getMeasuredValue());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total gas blown down: %.1f kg%n",
+        flare.getCumulativeGasBurned("kg"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total heat released: %.2f GJ%n",
+        flare.getCumulativeHeatReleased("GJ"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Final separator pressure: %.1f bara%n",
+        separatorPT.getMeasuredValue());
     logger.info("\n✓ ESD and blowdown completed successfully (SIL-2 protection)\n");
   }
 
@@ -668,9 +682,10 @@ public class IntegratedSafetySystemExample {
           separatorGasOut, gasSplitter, processStream, blowdownStream, bdValve, psv, psvOutlet,
           flareHeader, flareHeaderOutlet, flare);
 
-      System.out.printf("%8.1f | %5.1f | %10s | %8.0f | %10.2f%n", time,
-          separatorPT.getMeasuredValue(), psv.getPercentValveOpening() > 0 ? "RELIEVING" : "CLOSED",
-          psvOutlet.getFlowRate("kg/hr"), flare.getHeatDuty("MW"));
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %5.1f | %10s | %8.0f | %10.2f%n",
+          time, separatorPT.getMeasuredValue(),
+          psv.getPercentValveOpening() > 0 ? "RELIEVING" : "CLOSED", psvOutlet.getFlowRate("kg/hr"),
+          flare.getHeatDuty("MW"));
     }
 
     logger.info("\n✓ PSV provided final mechanical protection\n");

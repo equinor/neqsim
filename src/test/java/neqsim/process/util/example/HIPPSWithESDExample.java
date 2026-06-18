@@ -108,9 +108,12 @@ public class HIPPSWithESDExample {
 
     logger.info("SAFETY SYSTEM CONFIGURATION:");
     logger.info(repeat("-", 80));
-    System.out.printf("Maximum Allowable Operating Pressure (MAOP): %.1f bara\n", maop);
-    System.out.printf("HIPPS Activation Setpoint (95%% MAOP):       %.1f bara\n", hippsSetpoint);
-    System.out.printf("ESD Activation Setpoint (98%% MAOP):         %.1f bara\n", esdSetpoint);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Maximum Allowable Operating Pressure (MAOP): %.1f bara\n", maop);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "HIPPS Activation Setpoint (95%% MAOP):       %.1f bara\n", hippsSetpoint);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "ESD Activation Setpoint (98%% MAOP):         %.1f bara\n", esdSetpoint);
 
 
     // Create HIPPS with 2oo3 voting for high reliability (SIL 3)
@@ -174,8 +177,8 @@ public class HIPPSWithESDExample {
     hipps.update(normalPressure, normalPressure, normalPressure);
 
     logger.info("Status: All systems normal");
-    System.out.printf("Pressure: %.1f bara (%.1f%% of MAOP)\n", normalPressure,
-        normalPressure / maop * 100);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure: %.1f bara (%.1f%% of MAOP)\n",
+        normalPressure, normalPressure / maop * 100);
     logger.info("HIPPS: " + hipps.getStatusDescription());
     logger.info("ESD: " + esdLogic.getStatusDescription());
 
@@ -191,8 +194,8 @@ public class HIPPSWithESDExample {
     double highPressure = 96.0; // Above HIPPS setpoint (95 bara)
 
     logger.info("Simulating pressure excursion...");
-    System.out.printf("Pressure: %.1f bara (%.1f%% of MAOP)\n", highPressure,
-        highPressure / maop * 100);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure: %.1f bara (%.1f%% of MAOP)\n",
+        highPressure, highPressure / maop * 100);
 
 
     // Update HIPPS pressure sensors
@@ -205,9 +208,11 @@ public class HIPPSWithESDExample {
     logger.info("PT-101C: " + hippsPT3.toString());
 
     logger.info("HIPPS: " + hipps.getStatusDescription());
-    System.out.printf("HIPPS Isolation Valve: %.0f%% open\n", hippsValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "HIPPS Isolation Valve: %.0f%% open\n",
+        hippsValve.getPercentValveOpening());
     logger.info("ESD: " + esdLogic.getStatusDescription());
-    System.out.printf("ESD Valve: %.0f%% open\n", esdValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD Valve: %.0f%% open\n",
+        esdValve.getPercentValveOpening());
 
 
     if (hipps.isTripped()) {
@@ -241,7 +246,8 @@ public class HIPPSWithESDExample {
 
     logger.info("t = 0.0s: HIPPS trips");
     logger.info("  HIPPS: " + hipps.getStatusDescription());
-    System.out.printf("  HIPPS Valve: %.0f%% open\n", hippsValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  HIPPS Valve: %.0f%% open\n",
+        hippsValve.getPercentValveOpening());
     logger.info("  ESD: " + esdLogic.getStatusDescription());
 
 
@@ -255,19 +261,21 @@ public class HIPPSWithESDExample {
       hipps.execute(timeStep);
       esdLogic.execute(timeStep);
 
-      System.out.printf("t = %.1fs: ", time);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "t = %.1fs: ", time);
 
       if (hipps.hasEscalated() && !esdLogic.isActive()) {
         logger.info("ESCALATION TRIGGERED - Activating ESD");
       } else if (esdLogic.isActive()) {
         logger.info("ESD ACTIVE");
       } else {
-        System.out.printf("Waiting for escalation (%.1fs / 5.0s)\n", time);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "Waiting for escalation (%.1fs / 5.0s)\n", time);
       }
 
       logger.info("  HIPPS: " + hipps.getStatusDescription());
       logger.info("  ESD: " + esdLogic.getStatusDescription());
-      System.out.printf("  ESD Valve: %.0f%% open\n", esdValve.getPercentValveOpening());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  ESD Valve: %.0f%% open\n",
+          esdValve.getPercentValveOpening());
 
     }
 

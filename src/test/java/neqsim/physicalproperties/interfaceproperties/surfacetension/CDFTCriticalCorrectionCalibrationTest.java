@@ -1,9 +1,9 @@
 package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
@@ -55,7 +55,8 @@ class CDFTCriticalCorrectionCalibrationTest {
   @Test
   void sweepLambdaWithCriticalCorrection() {
     logger.info("\n=== Sweep lambda WITH critical correction (PR) ===");
-    System.out.printf("%-8s | %-12s | %-12s%n", "lambda", "AAD-raw(%)", "AAD-corr(%)");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s | %-12s | %-12s%n", "lambda",
+        "AAD-raw(%)", "AAD-corr(%)");
     logger.info("---------|--------------|-------------");
 
     double bestLambdaCorr = 0.5;
@@ -101,7 +102,8 @@ class CDFTCriticalCorrectionCalibrationTest {
 
       double aadRaw = (cnt > 0) ? sumRaw / cnt : 999.0;
       double aadCorr = (cnt > 0) ? sumCorr / cnt : 999.0;
-      System.out.printf("%-8.3f | %12.2f | %12.2f%n", lambda, aadRaw, aadCorr);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.3f | %12.2f | %12.2f%n", lambda,
+          aadRaw, aadCorr);
 
       if (aadCorr < bestAADCorr) {
         bestAADCorr = aadCorr;
@@ -109,8 +111,8 @@ class CDFTCriticalCorrectionCalibrationTest {
       }
     }
 
-    System.out.printf("%nOptimal lambda (with correction) = %.3f, AAD = %.2f%%%n", bestLambdaCorr,
-        bestAADCorr);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "%nOptimal lambda (with correction) = %.3f, AAD = %.2f%%%n", bestLambdaCorr, bestAADCorr);
 
     // Print per-component at optimal
     printPerComponent("PR", bestLambdaCorr, true);
@@ -122,8 +124,8 @@ class CDFTCriticalCorrectionCalibrationTest {
   @Test
   void perComponentOptimalLambda() {
     logger.info("\n=== Per-component optimal lambda (PR, with correction) ===");
-    System.out.printf("%-12s | %6s | %-10s | %-10s | %-10s%n", "Component", "omega", "lambda_opt",
-        "AAD(%)", "AAD_raw(%)");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %6s | %-10s | %-10s | %-10s%n",
+        "Component", "omega", "lambda_opt", "AAD(%)", "AAD_raw(%)");
     logger.info("-------------|--------|------------|------------|----------");
 
     String[] components =
@@ -185,8 +187,9 @@ class CDFTCriticalCorrectionCalibrationTest {
       }
 
       optLambdas[ci] = bestLam;
-      System.out.printf("%-12s | %6.3f | %10.3f | %10.2f | %10.2f%n", comp, omegas[ci], bestLam,
-          bestAAD, bestAADRaw);
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%-12s | %6.3f | %10.3f | %10.2f | %10.2f%n", comp, omegas[ci], bestLam, bestAAD,
+          bestAADRaw);
     }
 
     // Fit linear correlation: lambda(omega) = A + B*omega
@@ -201,7 +204,8 @@ class CDFTCriticalCorrectionCalibrationTest {
     }
     double slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
     double intercept = (sumY - slope * sumX) / n;
-    System.out.printf("lambda(omega) = %.4f + %.4f * omega%n", intercept, slope);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "lambda(omega) = %.4f + %.4f * omega%n",
+        intercept, slope);
 
     // Compute AAD with the correlation
     double sumAAD = 0.0;
@@ -239,7 +243,8 @@ class CDFTCriticalCorrectionCalibrationTest {
     }
 
     double finalAAD = (totalCount > 0) ? sumAAD / totalCount : 999.0;
-    System.out.printf("AAD with lambda(omega) + critical correction = %.2f%%%n", finalAAD);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "AAD with lambda(omega) + critical correction = %.2f%%%n", finalAAD);
   }
 
   /**
@@ -250,10 +255,11 @@ class CDFTCriticalCorrectionCalibrationTest {
    * @param applyCorrection whether to apply critical exponent correction
    */
   private void printPerComponent(String eos, double lambda, boolean applyCorrection) {
-    System.out.printf("%n=== Per-component at lambda=%.3f (%s, correction=%b) ===%n", lambda, eos,
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "%n=== Per-component at lambda=%.3f (%s, correction=%b) ===%n", lambda, eos,
         applyCorrection);
-    System.out.printf("%-12s | %6s | %8s | %8s | %8s | %7s%n", "Component", "T (K)", "Exp", "Raw",
-        "Corr", "Dev(%)");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %6s | %8s | %8s | %8s | %7s%n",
+        "Component", "T (K)", "Exp", "Raw", "Corr", "Dev(%)");
     logger.info("-------------|--------|----------|----------|----------|--------");
 
     for (Object[] row : DATA) {
@@ -285,11 +291,13 @@ class CDFTCriticalCorrectionCalibrationTest {
         double sigmaCorr = sigmaRaw * corrFactor;
         double dev = (sigmaCorr - sigmaExp) / sigmaExp * 100.0;
 
-        System.out.printf("%-12s | %6.1f | %8.2f | %8.2f | %8.2f | %+7.1f%n", comp, tempK, sigmaExp,
-            sigmaRaw, sigmaCorr, dev);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%-12s | %6.1f | %8.2f | %8.2f | %8.2f | %+7.1f%n", comp, tempK, sigmaExp, sigmaRaw,
+            sigmaCorr, dev);
       } catch (Exception ex) {
-        System.out.printf("%-12s | %6.1f | %8.2f | %8s | %8s | %7s%n", comp, tempK, sigmaExp,
-            "FAIL", "FAIL", "N/A");
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%-12s | %6.1f | %8.2f | %8s | %8s | %7s%n", comp, tempK, sigmaExp, "FAIL", "FAIL",
+            "N/A");
       }
     }
   }
@@ -306,11 +314,13 @@ class CDFTCriticalCorrectionCalibrationTest {
     double slopeB = -0.7403;
 
     logger.info("\n=== FULL OPTIMISED PREDICTION ===");
-    System.out.printf("Correlation: lambda = %.4f + %.4f * omega%n", interceptA, slopeB);
-    System.out.printf("Critical correction: sigma * (1-Tr)^(%.3f)%n%n", DELTA_MU);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Correlation: lambda = %.4f + %.4f * omega%n", interceptA, slopeB);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Critical correction: sigma * (1-Tr)^(%.3f)%n%n", DELTA_MU);
 
-    System.out.printf("%-12s | %6s | %8s | %8s | %7s | %6s%n", "Component", "T (K)", "Exp", "Pred",
-        "Dev(%)", "lambda");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %6s | %8s | %8s | %7s | %6s%n",
+        "Component", "T (K)", "Exp", "Pred", "Dev(%)", "lambda");
     logger.info("-------------|--------|----------|----------|---------|-------");
 
     double sumAbsDev = 0;
@@ -342,19 +352,22 @@ class CDFTCriticalCorrectionCalibrationTest {
         double sigmaPred = sigmaRaw * Math.pow(1.0 - tr, DELTA_MU);
         double dev = (sigmaPred - sigmaExp) / sigmaExp * 100.0;
 
-        System.out.printf("%-12s | %6.1f | %8.2f | %8.2f | %+7.1f | %6.3f%n", comp, tempK, sigmaExp,
-            sigmaPred, dev, lambda);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%-12s | %6.1f | %8.2f | %8.2f | %+7.1f | %6.3f%n", comp, tempK, sigmaExp, sigmaPred,
+            dev, lambda);
 
         sumAbsDev += Math.abs(dev);
         count++;
       } catch (Exception ex) {
-        System.out.printf("%-12s | %6.1f | %8.2f | %8s | %7s | %6.3f%n", comp, tempK, sigmaExp,
-            "FAIL", "N/A", lambda);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%-12s | %6.1f | %8.2f | %8s | %7s | %6.3f%n", comp, tempK, sigmaExp, "FAIL", "N/A",
+            lambda);
       }
     }
 
     double aad = (count > 0) ? sumAbsDev / count : 999.0;
-    System.out.printf("%nOverall AAD = %.2f%% (n=%d)%n", aad, count);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%nOverall AAD = %.2f%% (n=%d)%n", aad,
+        count);
     Assertions.assertTrue(aad < 15.0, "AAD should be below 15% with corrections");
   }
 }

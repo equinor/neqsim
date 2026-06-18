@@ -275,7 +275,7 @@ public class OilGasProcessSimulationOptimizationTest {
     for (java.util.Map.Entry<String, neqsim.process.equipment.capacity.CapacityConstraint> entry : constraints
         .entrySet()) {
       neqsim.process.equipment.capacity.CapacityConstraint c = entry.getValue();
-      System.out.printf("  %s: current=%.2f, design=%.2f, utilization=%.1f%%%n", c.getName(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: current=%.2f, design=%.2f, utilization=%.1f%%%n", c.getName(),
           c.getCurrentValue(), c.getDesignValue(), c.getUtilization() * 100);
     }
 
@@ -384,7 +384,7 @@ public class OilGasProcessSimulationOptimizationTest {
         .getUtilizationRecords()) {
       boolean isBottleneck = result.getBottleneck() != null
           && record.getEquipmentName().equals(result.getBottleneck().getName());
-      System.out.printf("  %-25s: %6.1f%% (limit: %.0f%%) %s%n", record.getEquipmentName(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %-25s: %6.1f%% (limit: %.0f%%) %s%n", record.getEquipmentName(),
           record.getUtilization() * 100, record.getUtilizationLimit() * 100,
           isBottleneck ? " <-- BOTTLENECK" : "");
     }
@@ -699,7 +699,7 @@ public class OilGasProcessSimulationOptimizationTest {
         .getUtilizationRecords()) {
       boolean isBottleneck = result.getBottleneck() != null
           && record.getEquipmentName().equals(result.getBottleneck().getName());
-      System.out.printf("  %-25s: %6.1f%% (limit: %.0f%%) %s%n", record.getEquipmentName(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %-25s: %6.1f%% (limit: %.0f%%) %s%n", record.getEquipmentName(),
           record.getUtilization() * 100, record.getUtilizationLimit() * 100,
           isBottleneck ? " <-- BOTTLENECK" : "");
     }
@@ -746,22 +746,22 @@ public class OilGasProcessSimulationOptimizationTest {
       double designK = separator.getDesignGasLoadFactor();
       double utilization = separator.getCapacityUtilization();
 
-      System.out.printf("  %s:%n", label);
-      System.out.printf("    Gas load factor (K): %.4f m/s (design: %.4f m/s)%n", gasLoadFactor,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s:%n", label);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Gas load factor (K): %.4f m/s (design: %.4f m/s)%n", gasLoadFactor,
           designK);
-      System.out.printf("    Capacity utilization: %.1f%%%n", utilization * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Capacity utilization: %.1f%%%n", utilization * 100);
 
       // Print capacity constraints if available
       java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> constraints =
           separator.getCapacityConstraints();
       if (!constraints.isEmpty()) {
         for (neqsim.process.equipment.capacity.CapacityConstraint c : constraints.values()) {
-          System.out.printf("    Constraint '%s': %.1f%% utilized%n", c.getName(),
+          logger.printf(org.apache.logging.log4j.Level.INFO, "    Constraint '%s': %.1f%% utilized%n", c.getName(),
               c.getUtilization() * 100);
         }
       }
     } catch (Exception e) {
-      System.out.printf("  %s: Unable to calculate status (%s)%n", label, e.getMessage());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: Unable to calculate status (%s)%n", label, e.getMessage());
     }
   }
 
@@ -775,11 +775,11 @@ public class OilGasProcessSimulationOptimizationTest {
       double maxDuty = heaterCooler.getMaxDesignDuty("kW");
       double utilization = maxDuty > 0 ? Math.abs(duty) / maxDuty : 0;
 
-      System.out.printf("  %s:%n", label);
-      System.out.printf("    Duty: %.1f kW (max design: %.1f kW)%n", duty, maxDuty);
-      System.out.printf("    Utilization: %.1f%%%n", utilization * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s:%n", label);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Duty: %.1f kW (max design: %.1f kW)%n", duty, maxDuty);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Utilization: %.1f%%%n", utilization * 100);
     } catch (Exception e) {
-      System.out.printf("  %s: Unable to calculate status (%s)%n", label, e.getMessage());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: Unable to calculate status (%s)%n", label, e.getMessage());
     }
   }
 
@@ -796,13 +796,13 @@ public class OilGasProcessSimulationOptimizationTest {
       double utilization = maxOpening > 0 ? valveOpening / maxOpening : 0;
       double volumeFlow = valve.getOutletStream().getFlowRate("m3/hr");
 
-      System.out.printf("  %s:%n", label);
-      System.out.printf("    Cv: %.1f (Kv: %.1f)%n", cv, kv);
-      System.out.printf("    Valve opening: %.1f%% (max: %.1f%%)%n", valveOpening, maxOpening);
-      System.out.printf("    Volume flow: %.1f m3/hr%n", volumeFlow);
-      System.out.printf("    Capacity utilization: %.1f%%%n", utilization * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s:%n", label);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Cv: %.1f (Kv: %.1f)%n", cv, kv);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Valve opening: %.1f%% (max: %.1f%%)%n", valveOpening, maxOpening);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Volume flow: %.1f m3/hr%n", volumeFlow);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Capacity utilization: %.1f%%%n", utilization * 100);
     } catch (Exception e) {
-      System.out.printf("  %s: Unable to calculate status (%s)%n", label, e.getMessage());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: Unable to calculate status (%s)%n", label, e.getMessage());
     }
   }
 
@@ -836,18 +836,18 @@ public class OilGasProcessSimulationOptimizationTest {
       // to expansion)
       double utilization = maxVelocity > 0 ? outletVelocity / maxVelocity : 0;
 
-      System.out.printf("  %s:%n", label);
-      System.out.printf("    Length: %.0f m, Diameter: %.3f m (%.1f inch)%n", pipeline.getLength(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s:%n", label);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Length: %.0f m, Diameter: %.3f m (%.1f inch)%n", pipeline.getLength(),
           pipeline.getDiameter(), pipeline.getDiameter() / 0.0254);
-      System.out.printf("    Inlet velocity: %.2f m/s%n", inletVelocity);
-      System.out.printf("    Outlet velocity: %.2f m/s (max: %.1f m/s)%n", outletVelocity,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Inlet velocity: %.2f m/s%n", inletVelocity);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Outlet velocity: %.2f m/s (max: %.1f m/s)%n", outletVelocity,
           maxVelocity);
-      System.out.printf("    Pressure drop: %.2f bar (%.1f -> %.1f bara)%n", pressureDrop,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Pressure drop: %.2f bar (%.1f -> %.1f bara)%n", pressureDrop,
           inletPressure, outletPressure);
-      System.out.printf("    Flow regime: %s%n", flowRegime);
-      System.out.printf("    Velocity utilization: %.1f%%%n", utilization * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Flow regime: %s%n", flowRegime);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Velocity utilization: %.1f%%%n", utilization * 100);
     } catch (Exception e) {
-      System.out.printf("  %s: Unable to calculate status (%s)%n", label, e.getMessage());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: Unable to calculate status (%s)%n", label, e.getMessage());
     }
   }
 
@@ -885,13 +885,13 @@ public class OilGasProcessSimulationOptimizationTest {
       }
 
       logger.info("  LOF (Likelihood of Failure) Method:");
-      System.out.printf("    LOF value: %.4f%n", lofValue);
-      System.out.printf("    Risk assessment: %s%n", riskLevel);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    LOF value: %.4f%n", lofValue);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Risk assessment: %s%n", riskLevel);
       logger.info("    (LOF < 1.0 is generally acceptable per Energy Institute guidelines)");
       logger.info("  FRMS Method:");
-      System.out.printf("    FRMS value: %.4f%n", frmsValue);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    FRMS value: %.4f%n", frmsValue);
     } catch (Exception e) {
-      System.out.printf("  FIV Analysis: Unable to calculate (%s)%n", e.getMessage());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  FIV Analysis: Unable to calculate (%s)%n", e.getMessage());
     }
   }
 }

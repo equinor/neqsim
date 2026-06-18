@@ -116,11 +116,11 @@ public class MultiObjectiveOptimizerTest {
             if (solution.isFeasible()) {
               feasibleCount[0]++;
             }
-            System.out.printf("  Iteration %d/%d: Flow=%.0f, Power=%.1f, Feasible=%s%n", iteration,
+            logger.printf(org.apache.logging.log4j.Level.INFO, "  Iteration %d/%d: Flow=%.0f, Power=%.1f, Feasible=%s%n", iteration,
                 total, solution.getRawValue(0), solution.getRawValue(1), solution.isFeasible());
           } else {
             failCount[0]++;
-            System.out.printf("  Iteration %d/%d: FAILED%n", iteration, total);
+            logger.printf(org.apache.logging.log4j.Level.INFO, "  Iteration %d/%d: FAILED%n", iteration, total);
           }
         });
 
@@ -157,7 +157,7 @@ public class MultiObjectiveOptimizerTest {
     logger.info("Pareto Front (Weighted Sum):");
     logger.info("=============================");
     for (ParetoSolution sol : front.getSolutionsSortedBy(0, true)) {
-      System.out.printf("  Flow: %.0f kg/hr, Power: %.1f kW, Feasible: %s%n", sol.getRawValue(0),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow: %.0f kg/hr, Power: %.1f kW, Feasible: %s%n", sol.getRawValue(0),
           sol.getRawValue(1), sol.isFeasible());
     }
     logger.info("\nKnee Point: " + knee);
@@ -190,7 +190,7 @@ public class MultiObjectiveOptimizerTest {
     logger.info("\nPareto Front (Epsilon-Constraint):");
     logger.info("===================================");
     for (ParetoSolution sol : front.getSolutionsSortedBy(0, true)) {
-      System.out.printf("  Flow: %.0f kg/hr, Power: %.1f kW%n", sol.getRawValue(0),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow: %.0f kg/hr, Power: %.1f kW%n", sol.getRawValue(0),
           sol.getRawValue(1));
     }
   }
@@ -216,10 +216,10 @@ public class MultiObjectiveOptimizerTest {
         .onProgress((iteration, total, solution) -> {
           sampleCount[0]++;
           if (solution != null) {
-            System.out.printf("  Sample %d/%d: Flow=%.0f, Power=%.1f kW, Feasible=%s%n", iteration,
+            logger.printf(org.apache.logging.log4j.Level.INFO, "  Sample %d/%d: Flow=%.0f, Power=%.1f kW, Feasible=%s%n", iteration,
                 total, solution.getRawValue(0), solution.getRawValue(1), solution.isFeasible());
           } else {
-            System.out.printf("  Sample %d/%d: FAILED%n", iteration, total);
+            logger.printf(org.apache.logging.log4j.Level.INFO, "  Sample %d/%d: FAILED%n", iteration, total);
           }
         });
 
@@ -248,7 +248,7 @@ public class MultiObjectiveOptimizerTest {
     logger.info("\nSampled Pareto Front:");
     logger.info("======================");
     for (ParetoSolution sol : front.getSolutionsSortedBy(0, true)) {
-      System.out.printf("  Flow: %.0f kg/hr, Power: %.1f kW, Feasible: %s%n", sol.getRawValue(0),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow: %.0f kg/hr, Power: %.1f kW, Feasible: %s%n", sol.getRawValue(0),
           sol.getRawValue(1), sol.isFeasible());
     }
 
@@ -300,7 +300,7 @@ public class MultiObjectiveOptimizerTest {
     logger.info("\nPareto Front (With Power Constraint <= 600 kW):");
     logger.info("===============================================");
     for (ParetoSolution sol : front.getSolutionsSortedBy(0, true)) {
-      System.out.printf("  Flow: %.0f kg/hr, Power: %.1f kW, Feasible: %s%n", sol.getRawValue(0),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow: %.0f kg/hr, Power: %.1f kW, Feasible: %s%n", sol.getRawValue(0),
           sol.getRawValue(1), sol.isFeasible());
     }
   }
@@ -337,7 +337,7 @@ public class MultiObjectiveOptimizerTest {
     logger.info("\nPareto Front (3 Objectives):");
     logger.info("============================");
     for (ParetoSolution sol : front) {
-      System.out.printf("  Flow: %.0f kg/hr, Power: %.1f kW, Specific: %.1f kg/kWh%n",
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Flow: %.0f kg/hr, Power: %.1f kW, Specific: %.1f kg/kWh%n",
           sol.getRawValue(0), sol.getRawValue(1), sol.getRawValue(2));
     }
   }
@@ -368,17 +368,17 @@ public class MultiObjectiveOptimizerTest {
     ParetoSolution minPower = front.findMinimum(1);
 
     if (maxThroughput != null) {
-      System.out.printf("Max Throughput: %.0f kg/hr at %.1f kW%n", maxThroughput.getRawValue(0),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Max Throughput: %.0f kg/hr at %.1f kW%n", maxThroughput.getRawValue(0),
           maxThroughput.getRawValue(1));
     }
     if (minPower != null) {
-      System.out.printf("Min Power: %.1f kW at %.0f kg/hr%n", minPower.getRawValue(1),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Min Power: %.1f kW at %.0f kg/hr%n", minPower.getRawValue(1),
           minPower.getRawValue(0));
     }
 
     ParetoSolution knee = front.findKneePoint();
     if (knee != null) {
-      System.out.printf("Knee Point: %.0f kg/hr at %.1f kW%n", knee.getRawValue(0),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Knee Point: %.0f kg/hr at %.1f kW%n", knee.getRawValue(0),
           knee.getRawValue(1));
     }
 
@@ -401,7 +401,7 @@ public class MultiObjectiveOptimizerTest {
     MultiObjectiveOptimizer moo =
         new MultiObjectiveOptimizer().onProgress((iteration, total, solution) -> {
           progressCalls[0]++;
-          System.out.printf("Progress: %d/%d - %s%n", iteration, total,
+          logger.printf(org.apache.logging.log4j.Level.INFO, "Progress: %d/%d - %s%n", iteration, total,
               solution != null ? String.format("Flow=%.0f", solution.getRawValue(0)) : "N/A");
         });
 

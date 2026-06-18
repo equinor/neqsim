@@ -113,13 +113,13 @@ public class RawTimingBenchmarkTest {
     double parallelPerCall = parallelPerRun / compressors.size();
 
     logger.info("\n===== RAW Compressor timing (8 independent compressors) =====");
-    System.out.printf("cores available:      %d%n", Runtime.getRuntime().availableProcessors());
-    System.out.printf("SERIAL:   wall=%.2f ms   per-call=%.3f ms%n", serialPerRun, serialPerCall);
-    System.out.printf("PARALLEL: wall=%.2f ms   per-call=%.3f ms (effective)%n", parallelPerRun,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "cores available:      %d%n", Runtime.getRuntime().availableProcessors());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "SERIAL:   wall=%.2f ms   per-call=%.3f ms%n", serialPerRun, serialPerCall);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PARALLEL: wall=%.2f ms   per-call=%.3f ms (effective)%n", parallelPerRun,
         parallelPerCall);
-    System.out.printf("Parallel speedup: %.2fx (ideal = %d)%n", serialPerRun / parallelPerRun,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel speedup: %.2fx (ideal = %d)%n", serialPerRun / parallelPerRun,
         compressors.size());
-    System.out.printf("Parallel slowdown per call: %.2fx%n", parallelPerCall / serialPerCall);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel slowdown per call: %.2fx%n", parallelPerCall / serialPerCall);
   }
 
   @Test
@@ -149,8 +149,8 @@ public class RawTimingBenchmarkTest {
     double seqWall = (System.nanoTime() - t0) / (double) RUNS / 1e6;
 
     logger.info("\n===== Framework wall-clock (no profiling) =====");
-    System.out.printf("sequential:  %.2f ms/run%n", seqWall);
-    System.out.printf("optimized:   %.2f ms/run%n", optWall);
-    System.out.printf("speedup:     %.2fx%n", seqWall / optWall);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "sequential:  %.2f ms/run%n", seqWall);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "optimized:   %.2f ms/run%n", optWall);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "speedup:     %.2fx%n", seqWall / optWall);
   }
 }

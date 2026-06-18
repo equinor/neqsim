@@ -308,7 +308,8 @@ class NeqSimThreadPoolTest {
       Separator sep = (Separator) process.getUnit("Separator-" + completedIndex);
       double gasFlow = sep.getGasOutStream().getFlowRate("kg/hr");
 
-      System.out.printf("  Process %d completed: gas flow = %.2f kg/hr%n", completedIndex, gasFlow);
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "  Process %d completed: gas flow = %.2f kg/hr%n", completedIndex, gasFlow);
     }
 
     // Verify all processes completed
@@ -353,7 +354,8 @@ class NeqSimThreadPoolTest {
           Separator sep = (Separator) process.getUnit("Separator-" + i);
           double gasFlow = sep.getGasOutStream().getFlowRate("kg/hr");
 
-          System.out.printf("  Process %d done: gas flow = %.2f kg/hr%n", i, gasFlow);
+          logger.printf(org.apache.logging.log4j.Level.INFO,
+              "  Process %d done: gas flow = %.2f kg/hr%n", i, gasFlow);
 
           reported[i] = true;
           completedCount++;

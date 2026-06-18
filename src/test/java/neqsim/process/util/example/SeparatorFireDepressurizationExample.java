@@ -17,7 +17,8 @@ import org.apache.logging.log4j.Logger;
  * Example combining separator depressurization to a flare with fire heat load and integrity checks.
  */
 public class SeparatorFireDepressurizationExample {
-  private static final Logger logger = LogManager.getLogger(SeparatorFireDepressurizationExample.class);
+  private static final Logger logger =
+      LogManager.getLogger(SeparatorFireDepressurizationExample.class);
 
 
   /**
@@ -123,29 +124,36 @@ public class SeparatorFireDepressurizationExample {
       double ruptureMarginMpa = fireState.ruptureMarginPa() / 1.0e6;
 
       double flareHeatMw = flare.getHeatDuty("MW");
-      System.out.printf("%7.1f | %12.2f | %21.1f | %8.1f | %8.1f | %9.1f | %19.2f%n", time,
-          separatorPressureBara, toFlare.getFlowRate("kg/hr"), separatorTemperatureK,
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%7.1f | %12.2f | %21.1f | %8.1f | %8.1f | %9.1f | %19.2f%n", time, separatorPressureBara,
+          toFlare.getFlowRate("kg/hr"), separatorTemperatureK,
           fireState.wettedWall().outerWallTemperatureK(),
           fireState.unwettedWall().outerWallTemperatureK(), ruptureMarginMpa);
 
       if (time == 0.0) {
-        System.out.printf("  API 521 pool-fire heat load: %.2f MW%n",
-            fireState.poolFireHeatLoad() / 1.0e6);
-        System.out.printf("  Radiative heat flux (SB): %.1f kW/m2%n",
-            fireState.radiativeHeatFlux() / 1000.0);
-        System.out.printf("  Flare radiation flux at %.0f m: %.1f kW/m2%n", flareGroundDistanceM,
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "  API 521 pool-fire heat load: %.2f MW%n", fireState.poolFireHeatLoad() / 1.0e6);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "  Radiative heat flux (SB): %.1f kW/m2%n", fireState.radiativeHeatFlux() / 1000.0);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "  Flare radiation flux at %.0f m: %.1f kW/m2%n", flareGroundDistanceM,
             fireState.flareRadiativeFlux() / 1000.0);
-        System.out.printf("  Wetted / unwetted areas (m2): %.1f / %.1f%n", fireState.wettedArea(),
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "  Wetted / unwetted areas (m2): %.1f / %.1f%n", fireState.wettedArea(),
             fireState.unwettedArea());
-        System.out.printf("  Radiative load on unwetted wall: %.2f MW%n",
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "  Radiative load on unwetted wall: %.2f MW%n",
             fireState.unwettedRadiativeHeat() / 1.0e6);
-        System.out.printf("  Flare-derived heat on shell: %.2f MW%n",
-            fireState.flareRadiativeHeat() / 1.0e6);
-        System.out.printf("  Initial flare heat duty: %.2f MW%n", flareHeatMw);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "  Flare-derived heat on shell: %.2f MW%n", fireState.flareRadiativeHeat() / 1.0e6);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  Initial flare heat duty: %.2f MW%n",
+            flareHeatMw);
       }
     }
 
-    System.out.printf("Total gas to flare: %.1f kg%n", flare.getCumulativeGasBurned("kg"));
-    System.out.printf("Total heat released: %.2f GJ%n", flare.getCumulativeHeatReleased("GJ"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total gas to flare: %.1f kg%n",
+        flare.getCumulativeGasBurned("kg"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total heat released: %.2f GJ%n",
+        flare.getCumulativeHeatReleased("GJ"));
   }
 }

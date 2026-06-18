@@ -2,6 +2,8 @@ package neqsim.process.equipment.valve;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.diffpressure.Orifice;
@@ -13,8 +15,6 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.measurementdevice.PushButton;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Test class for Emergency Shutdown (ESD) system with Blowdown Valve.
@@ -182,11 +182,16 @@ public class BlowdownValveESDSystemTest {
     double initialProcessFlow = processStream.getFlowRate("kg/hr");
     double initialBDFlow = blowdownStream.getFlowRate("kg/hr");
 
-    System.out.printf("Separator gas pressure: %.2f bara%n", initialPressure);
-    System.out.printf("Process flow rate: %.1f kg/hr%n", initialProcessFlow);
-    System.out.printf("Blowdown flow rate: %.1f kg/hr%n", initialBDFlow);
-    System.out.printf("BD valve opening: %.1f%%%n", bdValve.getPercentValveOpening());
-    System.out.printf("ESD button state: %s%n", esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Separator gas pressure: %.2f bara%n",
+        initialPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Process flow rate: %.1f kg/hr%n",
+        initialProcessFlow);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Blowdown flow rate: %.1f kg/hr%n",
+        initialBDFlow);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "BD valve opening: %.1f%%%n",
+        bdValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD button state: %s%n",
+        esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
 
 
     // Dynamic simulation
@@ -266,8 +271,9 @@ public class BlowdownValveESDSystemTest {
 
       // Print every 2 seconds or when ESD activates
       if (time % 2.0 < timeStep || (esdActivated && time - esdStartTime < 10.0)) {
-        System.out.printf("%8.1f | %9.2f | %12.1f | %10.1f | %10.1f | %10.1f | %12.2f%n", time,
-            sepPressure, procesFlow, bdFlow, bdOpening, flareFlow, heatRelease);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%8.1f | %9.2f | %12.1f | %10.1f | %10.1f | %10.1f | %12.2f%n", time, sepPressure,
+            procesFlow, bdFlow, bdOpening, flareFlow, heatRelease);
       }
     }
 
@@ -277,26 +283,33 @@ public class BlowdownValveESDSystemTest {
     logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     logger.info("═══ OPERATIONAL TIMELINE ═══");
-    System.out.printf("ESD activated at: %.1f s%n", esdActivationTime);
-    System.out.printf("BD valve fully open at: %.1f s%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD activated at: %.1f s%n",
+        esdActivationTime);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "BD valve fully open at: %.1f s%n",
         esdActivationTime + bdValve.getOpeningTime());
-    System.out.printf("Simulation duration: %.1f s%n", simulationTime);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Simulation duration: %.1f s%n",
+        simulationTime);
 
 
     logger.info("═══ BLOWDOWN PERFORMANCE ═══");
-    System.out.printf("Maximum blowdown flow: %.1f kg/hr (%.2f kg/s)%n", maxBlowdownFlow,
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Maximum blowdown flow: %.1f kg/hr (%.2f kg/s)%n", maxBlowdownFlow,
         maxBlowdownFlow / 3600.0);
-    System.out.printf("Total gas blown down: %.1f kg%n", flare.getCumulativeGasBurned("kg"));
-    System.out.printf("Average blowdown rate: %.1f kg/hr%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total gas blown down: %.1f kg%n",
+        flare.getCumulativeGasBurned("kg"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Average blowdown rate: %.1f kg/hr%n",
         flare.getCumulativeGasBurned("kg") * 3600.0 / (simulationTime - esdActivationTime));
-    System.out.printf("BD valve final opening: %.1f%%%n", bdValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "BD valve final opening: %.1f%%%n",
+        bdValve.getPercentValveOpening());
 
 
     logger.info("═══ FLARE SYSTEM PERFORMANCE ═══");
-    System.out.printf("Peak heat release rate: %.2f MW%n", peakHeatRelease);
-    System.out.printf("Total heat released: %.2f GJ (%.2f MMBtu)%n",
-        flare.getCumulativeHeatReleased("GJ"), flare.getCumulativeHeatReleased("MMBtu"));
-    System.out.printf("Average heat release rate: %.2f MW%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Peak heat release rate: %.2f MW%n",
+        peakHeatRelease);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Total heat released: %.2f GJ (%.2f MMBtu)%n", flare.getCumulativeHeatReleased("GJ"),
+        flare.getCumulativeHeatReleased("MMBtu"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Average heat release rate: %.2f MW%n",
         flare.getCumulativeHeatReleased("GJ") * 1000.0 / (simulationTime - esdActivationTime));
 
 
@@ -307,14 +320,16 @@ public class BlowdownValveESDSystemTest {
       String compName = bdGas.getPhase(0).getComponent(i).getComponentName();
       double moleFrac = bdGas.getPhase(0).getComponent(i).getz() * 100.0;
       if (moleFrac > 0.01) {
-        System.out.printf("%-15s: %6.2f mol%%%n", compName, moleFrac);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s: %6.2f mol%%%n", compName,
+            moleFrac);
       }
     }
 
 
     logger.info("═══ ENVIRONMENTAL IMPACT ═══");
-    System.out.printf("Total CO2 emissions: %.1f kg (%.2f tonnes)%n",
-        flare.getCumulativeCO2Emission("kg"), flare.getCumulativeCO2Emission("tonnes"));
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Total CO2 emissions: %.1f kg (%.2f tonnes)%n", flare.getCumulativeCO2Emission("kg"),
+        flare.getCumulativeCO2Emission("tonnes"));
 
 
     logger.info("═══ VALIDATION CHECKS ═══");
@@ -328,11 +343,13 @@ public class BlowdownValveESDSystemTest {
 
     logger.info("✓ ESD push button successfully triggered blowdown");
     logger.info("✓ BD valve automatically activated by push button");
-    System.out.printf("✓ BD valve opened to %.1f%% in %.1f seconds%n",
-        bdValve.getPercentValveOpening(), bdValve.getOpeningTime());
-    System.out.printf("✓ Total %.1f kg of gas safely blown down to flare%n",
-        flare.getCumulativeGasBurned("kg"));
-    System.out.printf("✓ Peak flare load: %.2f MW heat release%n", peakHeatRelease);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "✓ BD valve opened to %.1f%% in %.1f seconds%n", bdValve.getPercentValveOpening(),
+        bdValve.getOpeningTime());
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "✓ Total %.1f kg of gas safely blown down to flare%n", flare.getCumulativeGasBurned("kg"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "✓ Peak flare load: %.2f MW heat release%n",
+        peakHeatRelease);
     logger.info("✓ Controlled depressurization through BD orifice");
     logger.info("\n╔════════════════════════════════════════════════════════════════╗");
     logger.info("║              ESD BLOWDOWN SYSTEM TEST COMPLETED                ║");
@@ -351,7 +368,7 @@ public class BlowdownValveESDSystemTest {
     assertTrue(!esdButton.isPushed(), "Button should not be pushed");
     assertTrue(!bdValve.isActivated(), "BD valve should not be activated");
 
-    System.out.printf("Initial state - Button: %s, BD Valve: %s%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Initial state - Button: %s, BD Valve: %s%n",
         esdButton.isPushed() ? "PUSHED" : "NOT PUSHED",
         bdValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED");
 
@@ -362,7 +379,7 @@ public class BlowdownValveESDSystemTest {
     assertTrue(esdButton.isPushed(), "Button should be pushed");
     assertTrue(bdValve.isActivated(), "BD valve should be activated by button push");
 
-    System.out.printf("After push - Button: %s, BD Valve: %s%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "After push - Button: %s, BD Valve: %s%n",
         esdButton.isPushed() ? "PUSHED" : "NOT PUSHED",
         bdValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED");
 
@@ -379,7 +396,8 @@ public class BlowdownValveESDSystemTest {
     assertTrue(bdValve.isActivated(),
         "BD valve should still be activated (requires separate reset)");
 
-    System.out.printf("\nAfter button reset - Button: %s, BD Valve: %s%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "\nAfter button reset - Button: %s, BD Valve: %s%n",
         esdButton.isPushed() ? "PUSHED" : "NOT PUSHED",
         bdValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED");
 
@@ -445,7 +463,8 @@ public class BlowdownValveESDSystemTest {
       bdValve.runTransient(timeStep, java.util.UUID.randomUUID());
       totalTime += timeStep;
 
-      System.out.printf("Time: %.1fs, Opening: %.1f%%, Opening in progress: %s%n", totalTime,
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "Time: %.1fs, Opening: %.1f%%, Opening in progress: %s%n", totalTime,
           bdValve.getPercentValveOpening(), bdValve.isOpening());
     }
 
@@ -527,10 +546,14 @@ public class BlowdownValveESDSystemTest {
     double totalFlareFlow = toFlare.getFlowRate("kg/hr") + toFlare2.getFlowRate("kg/hr");
     double heatRelease = flare.getHeatDuty("MW");
 
-    System.out.printf("BD-101 flow: %.1f kg/hr%n", toFlare.getFlowRate("kg/hr"));
-    System.out.printf("BD-102 flow: %.1f kg/hr%n", toFlare2.getFlowRate("kg/hr"));
-    System.out.printf("Total flare flow: %.1f kg/hr%n", totalFlareFlow);
-    System.out.printf("Combined heat release: %.2f MW%n", heatRelease);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "BD-101 flow: %.1f kg/hr%n",
+        toFlare.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "BD-102 flow: %.1f kg/hr%n",
+        toFlare2.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total flare flow: %.1f kg/hr%n",
+        totalFlareFlow);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Combined heat release: %.2f MW%n",
+        heatRelease);
 
     assertTrue(totalFlareFlow > 0, "Combined flare flow should be positive");
     assertTrue(heatRelease > 0, "Heat release should be positive");
@@ -601,8 +624,10 @@ public class BlowdownValveESDSystemTest {
     hpSepGasOut.run();
     hpOutletValve.run();
 
-    System.out.printf("Separator pressure: %.2f bara%n", hpSeparator.getPressure("bara"));
-    System.out.printf("Outlet valve opening: %.1f%%%n", hpOutletValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Separator pressure: %.2f bara%n",
+        hpSeparator.getPressure("bara"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Outlet valve opening: %.1f%%%n",
+        hpOutletValve.getPercentValveOpening());
 
 
     // Switch to dynamic mode now that we have initial conditions
@@ -689,7 +714,8 @@ public class BlowdownValveESDSystemTest {
           status = "ESD active - depressurizing";
         }
 
-        System.out.printf("%8.1f | %9.2f | %12.1f | %10.1f | %10.1f | %s%n", time, currentPressure,
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%8.1f | %9.2f | %12.1f | %10.1f | %10.1f | %s%n", time, currentPressure,
             hpOutletValve.getPercentValveOpening(), hpBdValve.getPercentValveOpening(),
             hpBlowdownStream.getFlowRate("kg/hr"), status);
       }
@@ -700,22 +726,31 @@ public class BlowdownValveESDSystemTest {
     logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     logger.info("═══ PRESSURE PROFILE ═══");
-    System.out.printf("Initial pressure: %.2f bara%n", initialPressure);
-    System.out.printf("Maximum pressure reached: %.2f bara%n", maxPressure);
-    System.out.printf("Pressure at ESD activation: %.2f bara%n", pressureAtEsdActivation);
-    System.out.printf("Final pressure: %.2f bara%n", finalPressure);
-    System.out.printf("Pressure rise before ESD: %.2f bar (%.1f%% increase)%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Initial pressure: %.2f bara%n",
+        initialPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum pressure reached: %.2f bara%n",
+        maxPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure at ESD activation: %.2f bara%n",
+        pressureAtEsdActivation);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Final pressure: %.2f bara%n",
+        finalPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Pressure rise before ESD: %.2f bar (%.1f%% increase)%n",
         pressureAtEsdActivation - initialPressure,
         100.0 * (pressureAtEsdActivation - initialPressure) / initialPressure);
-    System.out.printf("Pressure drop after ESD: %.2f bar (%.1f%% reduction)%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Pressure drop after ESD: %.2f bar (%.1f%% reduction)%n",
         pressureAtEsdActivation - finalPressure,
         100.0 * (pressureAtEsdActivation - finalPressure) / pressureAtEsdActivation);
 
 
     logger.info("═══ BLOWDOWN PERFORMANCE ═══");
-    System.out.printf("Total gas blown down: %.1f kg%n", hpFlare.getCumulativeGasBurned("kg"));
-    System.out.printf("Total heat to flare: %.2f GJ%n", hpFlare.getCumulativeHeatReleased("GJ"));
-    System.out.printf("BD valve final opening: %.1f%%%n", hpBdValve.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total gas blown down: %.1f kg%n",
+        hpFlare.getCumulativeGasBurned("kg"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total heat to flare: %.2f GJ%n",
+        hpFlare.getCumulativeHeatReleased("GJ"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "BD valve final opening: %.1f%%%n",
+        hpBdValve.getPercentValveOpening());
 
 
     logger.info("═══ VALIDATION CHECKS ═══");
@@ -725,13 +760,15 @@ public class BlowdownValveESDSystemTest {
     assertTrue(hpBdValve.isActivated(), "BD valve should be activated");
     assertTrue(hpFlare.getCumulativeGasBurned("kg") > 0, "Gas should flow to flare");
 
-    System.out.printf("✓ Pressure buildup detected: %.2f bara → %.2f bara%n", initialPressure,
-        maxPressure);
-    System.out.printf("✓ ESD successfully activated at %.2f bara%n", pressureAtEsdActivation);
-    System.out.printf("✓ Pressure relieved to %.2f bara (%.1f%% reduction)%n", finalPressure,
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "✓ Pressure buildup detected: %.2f bara → %.2f bara%n", initialPressure, maxPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "✓ ESD successfully activated at %.2f bara%n", pressureAtEsdActivation);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "✓ Pressure relieved to %.2f bara (%.1f%% reduction)%n", finalPressure,
         100.0 * (pressureAtEsdActivation - finalPressure) / pressureAtEsdActivation);
-    System.out.printf("✓ Total %.1f kg gas safely blown down to flare%n",
-        hpFlare.getCumulativeGasBurned("kg"));
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "✓ Total %.1f kg gas safely blown down to flare%n", hpFlare.getCumulativeGasBurned("kg"));
 
     logger.info("\n╔════════════════════════════════════════════════════════════════╗");
     logger.info("║          PRESSURE RELIEF TEST COMPLETED SUCCESSFULLY           ║");

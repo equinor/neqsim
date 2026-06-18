@@ -1429,23 +1429,28 @@ public class ProcessGraphTest {
     logger.info("Process: " + process.getUnitOperations().size() + " units");
     logger.info("Iterations: " + timedIterations);
 
-    System.out.printf("Insertion-order execution: %.3f ms/run%n", insertionOrderMs);
-    System.out.printf("Graph-based execution:     %.3f ms/run%n", graphBasedMs);
-    System.out.printf("Graph build (one-time):    %.3f ms%n", graphBuildMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Insertion-order execution: %.3f ms/run%n",
+        insertionOrderMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Graph-based execution:     %.3f ms/run%n",
+        graphBasedMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Graph build (one-time):    %.3f ms%n",
+        graphBuildMs);
 
 
     double speedup = insertionOrderMs / graphBasedMs;
     if (speedup > 1.0) {
-      System.out.printf("Graph-based is %.2fx FASTER%n", speedup);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Graph-based is %.2fx FASTER%n", speedup);
     } else {
-      System.out.printf("Insertion-order is %.2fx faster%n", 1.0 / speedup);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Insertion-order is %.2fx faster%n",
+          1.0 / speedup);
     }
 
     // Calculate break-even point (how many runs to amortize graph build cost)
     if (graphBasedMs < insertionOrderMs) {
       double savingsPerRun = insertionOrderMs - graphBasedMs;
       double breakEvenRuns = graphBuildMs / savingsPerRun;
-      System.out.printf("Break-even point: %.1f runs%n", breakEvenRuns);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Break-even point: %.1f runs%n",
+          breakEvenRuns);
     }
     logger.info("======================================\n");
 
@@ -1500,9 +1505,12 @@ public class ProcessGraphTest {
 
     logger.info("\n===== Graph Construction Overhead =====");
     logger.info("Process: " + process.getUnitOperations().size() + " units");
-    System.out.printf("Graph build (fresh):  %.4f ms%n", avgBuildMs);
-    System.out.printf("Graph build (cached): %.4f ms%n", avgCacheMs);
-    System.out.printf("Cache speedup: %.1fx%n", avgBuildMs / avgCacheMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Graph build (fresh):  %.4f ms%n",
+        avgBuildMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Graph build (cached): %.4f ms%n",
+        avgCacheMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Cache speedup: %.1fx%n",
+        avgBuildMs / avgCacheMs);
     logger.info("=======================================\n");
 
     // Cache should be significantly faster
@@ -1554,9 +1562,12 @@ public class ProcessGraphTest {
     logger.info("\n===== Graph Algorithm Performance =====");
     System.out
         .println("Graph: " + graph.getNodeCount() + " nodes, " + graph.getEdgeCount() + " edges");
-    System.out.printf("Topological sort:      %.4f ms%n", avgTopoMs);
-    System.out.printf("SCC analysis:          %.4f ms%n", avgSccMs);
-    System.out.printf("Parallel partitioning: %.4f ms%n", avgPartMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Topological sort:      %.4f ms%n",
+        avgTopoMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "SCC analysis:          %.4f ms%n",
+        avgSccMs);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel partitioning: %.4f ms%n",
+        avgPartMs);
     logger.info("=======================================\n");
 
     // All should be fast for typical process sizes
@@ -1711,8 +1722,8 @@ public class ProcessGraphTest {
       ProcessNode node = graph.getNode(unit);
       int inEdges = node != null ? node.getIncomingEdges().size() : -1;
       int outEdges = node != null ? node.getOutgoingEdges().size() : -1;
-      System.out.printf("  %s [%s]: in=%d, out=%d%n", unit.getName(),
-          unit.getClass().getSimpleName(), inEdges, outEdges);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n",
+          unit.getName(), unit.getClass().getSimpleName(), inEdges, outEdges);
     }
     logger.info("===================================\n");
 
@@ -1845,8 +1856,8 @@ public class ProcessGraphTest {
       ProcessNode node = graph.getNode(unit);
       int in = node != null ? node.getIncomingEdges().size() : -1;
       int out = node != null ? node.getOutgoingEdges().size() : -1;
-      System.out.printf("  %s [%s]: in=%d, out=%d%n", unit.getName(),
-          unit.getClass().getSimpleName(), in, out);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n",
+          unit.getName(), unit.getClass().getSimpleName(), in, out);
     }
     logger.info("==================================\n");
 
@@ -1899,8 +1910,8 @@ public class ProcessGraphTest {
       ProcessNode node = graph.getNode(unit);
       int in = node != null ? node.getIncomingEdges().size() : -1;
       int out = node != null ? node.getOutgoingEdges().size() : -1;
-      System.out.printf("  %s [%s]: in=%d, out=%d%n", unit.getName(),
-          unit.getClass().getSimpleName(), in, out);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n",
+          unit.getName(), unit.getClass().getSimpleName(), in, out);
     }
     logger.info("===============================\n");
 
@@ -2081,8 +2092,8 @@ public class ProcessGraphTest {
       ProcessNode node = graph.getNode(unit);
       int in = node != null ? node.getIncomingEdges().size() : -1;
       int out = node != null ? node.getOutgoingEdges().size() : -1;
-      System.out.printf("  %s [%s]: in=%d, out=%d%n", unit.getName(),
-          unit.getClass().getSimpleName(), in, out);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n",
+          unit.getName(), unit.getClass().getSimpleName(), in, out);
     }
     logger.info("========================================\n");
 
@@ -2148,8 +2159,8 @@ public class ProcessGraphTest {
       ProcessNode node = graph.getNode(unit);
       int in = node != null ? node.getIncomingEdges().size() : -1;
       int out = node != null ? node.getOutgoingEdges().size() : -1;
-      System.out.printf("  %s [%s]: in=%d, out=%d%n", unit.getName(),
-          unit.getClass().getSimpleName(), in, out);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s [%s]: in=%d, out=%d%n",
+          unit.getName(), unit.getClass().getSimpleName(), in, out);
     }
     logger.info("=========================================\n");
 
@@ -2218,7 +2229,7 @@ public class ProcessGraphTest {
 
     int levelNum = 0;
     for (java.util.List<ProcessNode> level : partition.getLevels()) {
-      System.out.printf("  Level %d: ", levelNum++);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Level %d: ", levelNum++);
       for (ProcessNode node : level) {
         System.out.print(node.getName() + " ");
       }
@@ -2239,7 +2250,8 @@ public class ProcessGraphTest {
     assertTrue(sep1.getGasOutStream().getFlowRate("kg/hr") > 0);
     assertTrue(sep2.getGasOutStream().getFlowRate("kg/hr") > 0);
 
-    System.out.printf("Parallel execution time: %.2f ms%n", parallelTime / 1_000_000.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel execution time: %.2f ms%n",
+        parallelTime / 1_000_000.0);
   }
 
   /**
@@ -2295,9 +2307,12 @@ public class ProcessGraphTest {
     }
     long parTime = (System.nanoTime() - startPar) / 3;
 
-    System.out.printf("Sequential avg: %.2f ms%n", seqTime / 1_000_000.0);
-    System.out.printf("Parallel avg:   %.2f ms%n", parTime / 1_000_000.0);
-    System.out.printf("Speedup: %.2fx%n", (double) seqTime / parTime);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Sequential avg: %.2f ms%n",
+        seqTime / 1_000_000.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Parallel avg:   %.2f ms%n",
+        parTime / 1_000_000.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Speedup: %.2fx%n",
+        (double) seqTime / parTime);
     logger.info("==============================================\n");
 
     // Both should complete successfully
@@ -2451,7 +2466,8 @@ public class ProcessGraphTest {
     }
     long avgTime = (System.nanoTime() - start) / 5;
 
-    System.out.printf("runOptimal() avg: %.2f ms%n", avgTime / 1_000_000.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "runOptimal() avg: %.2f ms%n",
+        avgTime / 1_000_000.0);
     logger.info("====================================\n");
 
     assertTrue(avgTime > 0);

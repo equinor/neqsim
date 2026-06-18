@@ -73,9 +73,9 @@ public class HIPPSExample {
     feedStream.setPressure(70.0, "bara");
     feedStream.run();
 
-    System.out.printf("Feed Stream: %.0f kg/hr @ %.1f bara, %.1f °C%n",
-        feedStream.getFlowRate("kg/hr"), feedStream.getPressure("bara"),
-        feedStream.getTemperature("C"));
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Feed Stream: %.0f kg/hr @ %.1f bara, %.1f °C%n", feedStream.getFlowRate("kg/hr"),
+        feedStream.getPressure("bara"), feedStream.getTemperature("C"));
 
     // Create separator (MAWP = 100 bara)
     Separator separator = new Separator("HP Separator", feedStream);
@@ -83,8 +83,9 @@ public class HIPPSExample {
     separator.setSeparatorLength(4.0); // 4m length
     separator.run();
 
-    System.out.printf("Separator MAWP: 100.0 bara%n");
-    System.out.printf("Normal operating pressure: %.1f bara%n", separator.getPressure("bara"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Separator MAWP: 100.0 bara%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Normal operating pressure: %.1f bara%n",
+        separator.getPressure("bara"));
 
     // ========================================
     // 2. CONFIGURE REDUNDANT PRESSURE TRANSMITTERS
@@ -213,7 +214,7 @@ public class HIPPSExample {
       // Print status every second
       if (time % 1.0 < timeStep / 2.0
           || hippsValve.hasTripped() && time > tripTime - timeStep && time < tripTime + 2.0) {
-        System.out.printf(
+        logger.printf(org.apache.logging.log4j.Level.INFO,
             "  %5.1f  |   %6.2f    |    %d/%d    |   %5.1f%%   |  %5.1f%%  | %12s | %10s%n", time,
             currentPressure, hippsValve.getActiveTransmitterCount(), 3,
             hippsValve.getPercentValveOpening(), psv.getPercentValveOpening(),
@@ -234,19 +235,24 @@ public class HIPPSExample {
     logger.info("║                         RESULTS SUMMARY                        ║");
     logger.info("╚════════════════════════════════════════════════════════════════╝");
 
-    System.out.printf("%nHIPPS Performance:%n");
-    System.out.printf("  Trip Time: %.1f seconds%n", tripTime);
-    System.out.printf("  Trip Pressure: %.2f bara%n", tripPressure);
-    System.out.printf("  Active Transmitters at Trip: %d/3%n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%nHIPPS Performance:%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Trip Time: %.1f seconds%n", tripTime);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Trip Pressure: %.2f bara%n",
+        tripPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Active Transmitters at Trip: %d/3%n",
         hippsValve.getActiveTransmitterCount());
-    System.out.printf("  Voting Logic: %s%n", hippsValve.getVotingLogic().getNotation());
-    System.out.printf("  Closure Time: %.1f seconds%n", hippsValve.getClosureTime());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Voting Logic: %s%n",
+        hippsValve.getVotingLogic().getNotation());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Closure Time: %.1f seconds%n",
+        hippsValve.getClosureTime());
 
-    System.out.printf("%nPSV Status:%n");
-    System.out.printf("  PSV Lifted: %s%n", psvLifted ? "YES" : "NO");
-    System.out.printf("  PSV Opening: %.1f%%%n", psv.getPercentValveOpening());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%nPSV Status:%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  PSV Lifted: %s%n",
+        psvLifted ? "YES" : "NO");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  PSV Opening: %.1f%%%n",
+        psv.getPercentValveOpening());
 
-    System.out.printf("%nSafety Analysis:%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%nSafety Analysis:%n");
     if (!psvLifted) {
       logger.info("  ✓ HIPPS successfully prevented overpressure");
       logger.info("  ✓ PSV did not lift - NO FLARING occurred");
@@ -257,7 +263,7 @@ public class HIPPSExample {
       logger.info("  ✗ Flaring occurred");
     }
 
-    System.out.printf("%nHIPPS vs PSV Comparison:%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%nHIPPS vs PSV Comparison:%n");
     logger.info("  HIPPS Action:  Stopped flow BEFORE overpressure (90 bara)");
     logger.info("  PSV Action:    Would relieve AT overpressure (100 bara)");
     logger.info("  Result:        HIPPS prevented flaring and emissions");

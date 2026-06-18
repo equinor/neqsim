@@ -1,12 +1,12 @@
 package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -168,10 +168,12 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
     miqueuAAD.put("CO2", 2.0); // estimated from paper context
 
     // Header
-    System.out.printf("| %-10s | %6s | %6s | %10s | %10s | %10s | %10s |%n", "Component", "T (K)",
-        "Exp", "cDFT", "Full GT", "Parachor", "Miqueu GT");
-    System.out.printf("| %-10s | %6s | %6s | %10s | %10s | %10s | %10s |%n", "", "", "mN/m",
-        "mN/m (%)", "mN/m (%)", "mN/m (%)", "AAD (%)");
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "| %-10s | %6s | %6s | %10s | %10s | %10s | %10s |%n", "Component", "T (K)", "Exp", "cDFT",
+        "Full GT", "Parachor", "Miqueu GT");
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "| %-10s | %6s | %6s | %10s | %10s | %10s | %10s |%n", "", "", "mN/m", "mN/m (%)",
+        "mN/m (%)", "mN/m (%)", "AAD (%)");
     logger.info("|------------|--------|--------|------------|"
         + "------------|------------|------------|");
 
@@ -189,8 +191,9 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
 
       SystemInterface sys = setupVLE(component, tempK);
       if (sys == null) {
-        System.out.printf("| %-10s | %6.1f | %6.2f |  no VLE    |  no VLE    |  no VLE    |%n",
-            component, tempK, sigmaExp);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "| %-10s | %6.1f | %6.2f |  no VLE    |  no VLE    |  no VLE    |%n", component, tempK,
+            sigmaExp);
         continue;
       }
 
@@ -217,7 +220,7 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
       sumPar += devPar;
       nTotal++;
 
-      System.out.printf(
+      logger.printf(org.apache.logging.log4j.Level.INFO,
           "| %-10s | %6.1f | %6.2f | %5.2f (%3.0f%%) | %5.2f (%3.0f%%) | %5.2f (%3.0f%%) |"
               + "            |%n",
           component, tempK, sigmaExp, sigmaCDFT, devCDFT, sigmaGT, devGT, sigmaParachor, devPar);
@@ -229,8 +232,8 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
     // Per-component AAD summary
 
     logger.info("=== Per-Component AAD Comparison (%) ===");
-    System.out.printf("| %-10s | %8s | %8s | %8s | %8s |%n", "Component", "cDFT", "Full GT",
-        "Parachor", "Miqueu GT");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-10s | %8s | %8s | %8s | %8s |%n",
+        "Component", "cDFT", "Full GT", "Parachor", "Miqueu GT");
     logger.info("|------------|----------|----------|----------|----------|");
     for (String comp : cdftDevs.keySet()) {
       double aadCDFT = average(cdftDevs.get(comp));
@@ -238,15 +241,17 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
       double aadPar = average(parDevs.get(comp));
       Double aadMiqueu = miqueuAAD.get(comp);
       String miqStr = aadMiqueu != null ? String.format("%6.1f", aadMiqueu) : "  N/A ";
-      System.out.printf("| %-10s | %6.1f %% | %6.1f %% | %6.1f %% | %s %% |%n", comp, aadCDFT,
-          aadGT, aadPar, miqStr);
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "| %-10s | %6.1f %% | %6.1f %% | %6.1f %% | %s %% |%n", comp, aadCDFT, aadGT, aadPar,
+          miqStr);
     }
     double overallCDFT = nTotal > 0 ? sumCDFT / nTotal : 0;
     double overallGT = nTotal > 0 ? sumGT / nTotal : 0;
     double overallPar = nTotal > 0 ? sumPar / nTotal : 0;
     logger.info("|------------|----------|----------|----------|----------|");
-    System.out.printf("| %-10s | %6.1f %% | %6.1f %% | %6.1f %% | %6.1f %% |%n", "OVERALL",
-        overallCDFT, overallGT, overallPar, 2.2);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "| %-10s | %6.1f %% | %6.1f %% | %6.1f %% | %6.1f %% |%n", "OVERALL", overallCDFT,
+        overallGT, overallPar, 2.2);
 
 
     // Analysis summary
@@ -260,19 +265,22 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
     logger.info("   - With per-component fitted A,B: AAD = 0.4% (essentially exact)");
 
     logger.info("2. NeqSim Full GT (Cachadina influence parameter):");
-    System.out.printf("   - Overall AAD = %.1f%% (this test set, PR EOS)%n", overallGT);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "   - Overall AAD = %.1f%% (this test set, PR EOS)%n", overallGT);
     logger.info("   - Uses correlated influence parameter (semi-predictive)");
     logger.info("   - No volume correction applied (uses standard PR volumes)");
 
     logger.info("3. NeqSim cDFT (fully predictive, v3):");
-    System.out.printf("   - Overall AAD = %.1f%% (this test set, PR EOS)%n", overallCDFT);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "   - Overall AAD = %.1f%% (this test set, PR EOS)%n", overallCDFT);
     logger.info("   - ZERO adjustable parameters (fully predictive)");
     logger.info("   - Uses variational tanh profile with step-function kernel");
     logger.info("   - Splits cubic EOS Helmholtz: local repulsive + non-local attractive");
     logger.info("   - Expected to under-predict: simplified mean-field kernel");
 
     logger.info("4. NeqSim Parachor (empirical correlation):");
-    System.out.printf("   - Overall AAD = %.1f%% (this test set, PR EOS)%n", overallPar);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "   - Overall AAD = %.1f%% (this test set, PR EOS)%n", overallPar);
     logger.info("   - MacLeod-Sugden correlation with fitted exponent");
 
     logger.info("5. Li & Firoozabadi (2009) DFT + PR (literature only):");
@@ -312,8 +320,9 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
         {"propane", "270.0", "8.6"}, {"n-butane", "320.0", "7.6"}, {"n-hexane", "300.0", "16.3"},
         {"nitrogen", "77.0", "9.4"}, {"CO2", "250.0", "8.5"},};
 
-    System.out.printf("| %-10s | %5s | %5s | %9s | %9s | %9s | %9s |%n", "Component", "T(K)", "Exp",
-        "cDFT-PR", "cDFT-SRK", "GT-PR", "GT-SRK");
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "| %-10s | %5s | %5s | %9s | %9s | %9s | %9s |%n", "Component", "T(K)", "Exp", "cDFT-PR",
+        "cDFT-SRK", "GT-PR", "GT-SRK");
     System.out
         .println("|------------|-------|-------|-----------|-----------|-----------|-----------|");
 
@@ -348,7 +357,7 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
       sumGtSRK += devGtSRK;
       n++;
 
-      System.out.printf(
+      logger.printf(org.apache.logging.log4j.Level.INFO,
           "| %-10s | %5.1f | %5.2f | %4.1f(%3.0f%%) | %4.1f(%3.0f%%) |"
               + " %4.1f(%3.0f%%) | %4.1f(%3.0f%%) |%n",
           comp, tK, sigmaExp, cdftPR, devCdftPR, cdftSRK, devCdftSRK, gtPR, devGtPR, gtSRK,
@@ -358,7 +367,7 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
     System.out
         .println("|------------|-------|-------|-----------|-----------|-----------|-----------|");
     if (n > 0) {
-      System.out.printf(
+      logger.printf(org.apache.logging.log4j.Level.INFO,
           "| %-10s |       |       | AAD %3.0f%%  | AAD %3.0f%%  |"
               + " AAD %3.0f%%  | AAD %3.0f%%  |%n",
           "OVERALL", sumCdftPR / n, sumCdftSRK / n, sumGtPR / n, sumGtSRK / n);
@@ -382,17 +391,17 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
     logger.info("==========================================================================="
         + "==============================");
 
-    System.out.printf("| %-5s | %-45s | %8s | %6s | %s |%n", "Rank", "Method", "AAD (%)", "Params",
-        "Source");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-5s | %-45s | %8s | %6s | %s |%n",
+        "Rank", "Method", "AAD (%)", "Params", "Source");
     System.out
         .println("|-------|-----------------------------------------------|----------|--------|"
             + "-----------------------------|");
-    System.out.printf("| %-5s | %-45s | %8s | %6s | %s |%n", "1",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-5s | %-45s | %8s | %6s | %s |%n", "1",
         "GT + vol-corrected PR," + " fitted c per component", "0.4", "2/comp",
         "Miqueu (2003) Table 3");
-    System.out.printf("| %-5s | %-45s | %8s | %6s | %s |%n", "2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-5s | %-45s | %8s | %6s | %s |%n", "2",
         "DFT + PR, WDA+QDE, 1 fitted param/substance", "1-3", "1/comp", "Li & Firoozabadi (2009)");
-    System.out.printf("| %-5s | %-45s | %8s | %6s | %s |%n", "3",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-5s | %-45s | %8s | %6s | %s |%n", "3",
         "GT + vol-corrected PR, generalized c(omega)", "2.2", "0", "Miqueu (2003) Table 4");
 
     // Run our models to get actual AAD values
@@ -422,11 +431,11 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
     double aadPar = n > 0 ? sumPar / n : 0;
     double aadCDFT = n > 0 ? sumCDFT / n : 0;
 
-    System.out.printf("| %-5s | %-45s | %8.1f | %6s | %s |%n", "4",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-5s | %-45s | %8.1f | %6s | %s |%n", "4",
         "NeqSim Full GT (Cachadina c), PR", aadGT, "0", "this work");
-    System.out.printf("| %-5s | %-45s | %8.1f | %6s | %s |%n", "5",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-5s | %-45s | %8.1f | %6s | %s |%n", "5",
         "Parachor (MacLeod-Sugden), NeqSim PR", aadPar, "0", "this work");
-    System.out.printf("| %-5s | %-45s | %8.1f | %6s | %s |%n", "6",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-5s | %-45s | %8.1f | %6s | %s |%n", "6",
         "NeqSim cDFT v3 (fully predictive), PR", aadCDFT, "0", "this work");
     System.out
         .println("|-------|-----------------------------------------------|----------|--------|"
@@ -478,10 +487,12 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
         {"n-hexane", "400.0", "5.8"}, {"nitrogen", "77.0", "9.4"}, {"nitrogen", "90.0", "6.2"},
         {"CO2", "220.0", "15.5"}, {"CO2", "250.0", "8.5"}, {"CO2", "280.0", "2.6"},};
 
-    System.out.printf("| %-10s | %6s | %6s | %10s | %10s | %10s | %10s |%n", "Component", "T (K)",
-        "Exp", "cDFT-raw", "cDFT-pred", "Full GT", "Parachor");
-    System.out.printf("| %-10s | %6s | %6s | %10s | %10s | %10s | %10s |%n", "", "", "mN/m",
-        "mN/m (%)", "mN/m (%)", "mN/m (%)", "mN/m (%)");
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "| %-10s | %6s | %6s | %10s | %10s | %10s | %10s |%n", "Component", "T (K)", "Exp",
+        "cDFT-raw", "cDFT-pred", "Full GT", "Parachor");
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "| %-10s | %6s | %6s | %10s | %10s | %10s | %10s |%n", "", "", "mN/m", "mN/m (%)",
+        "mN/m (%)", "mN/m (%)", "mN/m (%)");
     logger.info("|------------|--------|--------|------------|"
         + "------------|------------|------------|");
 
@@ -534,7 +545,7 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
       sumPar += devPar;
       nTotal++;
 
-      System.out.printf(
+      logger.printf(org.apache.logging.log4j.Level.INFO,
           "| %-10s | %6.1f | %6.2f | %5.2f (%3.0f%%) | %5.2f (%3.0f%%) | %5.2f (%3.0f%%) |"
               + " %5.2f (%3.0f%%) |%n",
           component, tempK, sigmaExp, sigmaRaw, devRaw, sigmaPred, devPred, sigmaGT, devGT,
@@ -547,8 +558,8 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
     // Per-component AAD summary
 
     logger.info("=== Per-Component AAD (%) ===");
-    System.out.printf("| %-10s | %8s | %8s | %8s | %8s | %8s |%n", "Component", "cDFT-raw",
-        "cDFT-pred", "Full GT", "Parachor", "Miqueu GT");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-10s | %8s | %8s | %8s | %8s | %8s |%n",
+        "Component", "cDFT-raw", "cDFT-pred", "Full GT", "Parachor", "Miqueu GT");
     logger.info("|------------|----------|-----------|----------|----------|----------|");
 
     Map<String, Double> miqueuAAD = new LinkedHashMap<String, Double>();
@@ -568,8 +579,9 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
       double aadPar = average(parDevs.get(comp));
       Double aadMiqueu = miqueuAAD.get(comp);
       String miqStr = aadMiqueu != null ? String.format("%6.1f", aadMiqueu) : "  N/A ";
-      System.out.printf("| %-10s | %6.1f %% | %7.1f %% | %6.1f %% | %6.1f %% | %s %% |%n", comp,
-          aadRaw, aadPred, aadGT, aadPar, miqStr);
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "| %-10s | %6.1f %% | %7.1f %% | %6.1f %% | %6.1f %% | %s %% |%n", comp, aadRaw, aadPred,
+          aadGT, aadPar, miqStr);
     }
 
     double overallRaw = nTotal > 0 ? sumRaw / nTotal : 0;
@@ -577,24 +589,26 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
     double overallGT = nTotal > 0 ? sumGT / nTotal : 0;
     double overallPar = nTotal > 0 ? sumPar / nTotal : 0;
     logger.info("|------------|----------|-----------|----------|----------|----------|");
-    System.out.printf("| %-10s | %6.1f %% | %7.1f %% | %6.1f %% | %6.1f %% | %6.1f %% |%n",
-        "OVERALL", overallRaw, overallPred, overallGT, overallPar, 2.2);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "| %-10s | %6.1f %% | %7.1f %% | %6.1f %% | %6.1f %% | %6.1f %% |%n", "OVERALL", overallRaw,
+        overallPred, overallGT, overallPar, 2.2);
 
 
     logger.info("=== Method Ranking (updated with predictive cDFT) ===");
-    System.out.printf("| %-5s | %-50s | %8s | %s |%n", "Rank", "Method", "AAD (%)", "Params");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-5s | %-50s | %8s | %s |%n", "Rank",
+        "Method", "AAD (%)", "Params");
     logger.info("|-------|----------------------------------------------------"
         + "|----------|----------------|");
-    System.out.printf("| %-5s | %-50s | %8.1f | %s |%n", "1", "Miqueu GT + vol-corr PR, c(omega)",
-        2.2, "0 IFT-fitted");
-    System.out.printf("| %-5s | %-50s | %8.1f | %s |%n", "2", "cDFT predictive (this work)",
-        overallPred, "0 (2 universal)");
-    System.out.printf("| %-5s | %-50s | %8.1f | %s |%n", "3", "Full GT (Cachadina c), PR",
-        overallGT, "0 IFT-fitted");
-    System.out.printf("| %-5s | %-50s | %8.1f | %s |%n", "4", "Parachor (MacLeod-Sugden)",
-        overallPar, "0");
-    System.out.printf("| %-5s | %-50s | %8.1f | %s |%n", "5", "cDFT raw (no correction)",
-        overallRaw, "0");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-5s | %-50s | %8.1f | %s |%n", "1",
+        "Miqueu GT + vol-corr PR, c(omega)", 2.2, "0 IFT-fitted");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-5s | %-50s | %8.1f | %s |%n", "2",
+        "cDFT predictive (this work)", overallPred, "0 (2 universal)");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-5s | %-50s | %8.1f | %s |%n", "3",
+        "Full GT (Cachadina c), PR", overallGT, "0 IFT-fitted");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-5s | %-50s | %8.1f | %s |%n", "4",
+        "Parachor (MacLeod-Sugden)", overallPar, "0");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-5s | %-50s | %8.1f | %s |%n", "5",
+        "cDFT raw (no correction)", overallRaw, "0");
 
     logger.info("The predictive cDFT uses two universal constants:");
     System.out

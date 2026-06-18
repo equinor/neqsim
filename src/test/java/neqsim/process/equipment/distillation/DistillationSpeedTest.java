@@ -28,10 +28,10 @@ public class DistillationSpeedTest {
     double insideOutTime = runBenchmark(SolverType.INSIDE_OUT, benchmarkRuns);
 
     logger.info("\n--- Results ---");
-    System.out.printf("DIRECT_SUBSTITUTION avg time: %.2f ms%n", directTime);
-    System.out.printf("INSIDE_OUT avg time:          %.2f ms%n", insideOutTime);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "DIRECT_SUBSTITUTION avg time: %.2f ms%n", directTime);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "INSIDE_OUT avg time:          %.2f ms%n", insideOutTime);
     if (insideOutTime > 0) {
-      System.out.printf("Speedup (IO vs Direct):       %.2fx%n", directTime / insideOutTime);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Speedup (IO vs Direct):       %.2fx%n", directTime / insideOutTime);
     }
   }
 
@@ -51,7 +51,7 @@ public class DistillationSpeedTest {
       }
 
       totalTime += (end - start);
-      System.out.printf("Run %d: %.2f ms%n", i, (end - start) / 1e6);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Run %d: %.2f ms%n", i, (end - start) / 1e6);
     }
 
     return (double) totalTime / runs / 1e6;

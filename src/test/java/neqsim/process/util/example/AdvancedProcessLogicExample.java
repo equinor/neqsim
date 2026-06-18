@@ -103,10 +103,10 @@ public class AdvancedProcessLogicExample {
     double pt2Reading = actualPressure - 0.05;
     double pt3Reading = actualPressure + 0.15;
 
-    System.out.printf("Actual pressure: %.2f bara\n", actualPressure);
-    System.out.printf("PT-101: %.2f bara (Good)\n", pt1Reading);
-    System.out.printf("PT-102: %.2f bara (Good)\n", pt2Reading);
-    System.out.printf("PT-103: %.2f bara (Good)\n", pt3Reading);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Actual pressure: %.2f bara\n", actualPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PT-101: %.2f bara (Good)\n", pt1Reading);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PT-102: %.2f bara (Good)\n", pt2Reading);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PT-103: %.2f bara (Good)\n", pt3Reading);
 
 
     // Analog voting - median selection
@@ -116,8 +116,8 @@ public class AdvancedProcessLogicExample {
     analogVoting.addInput(pt3Reading, false);
 
     double votedPressure = analogVoting.evaluateMedian();
-    System.out.printf("Voted pressure (median): %.2f bara\n", votedPressure);
-    System.out.printf("Valid inputs: %d/%d\n", analogVoting.getValidInputCount(),
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Voted pressure (median): %.2f bara\n", votedPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Valid inputs: %d/%d\n", analogVoting.getValidInputCount(),
         analogVoting.getTotalInputCount());
 
 
@@ -133,7 +133,7 @@ public class AdvancedProcessLogicExample {
     digitalVoting.addInput(pt3High, false);
 
     boolean highPressureAlarm = digitalVoting.evaluateDigital();
-    System.out.printf("High pressure alarm (>%.1f bara): %s\n", alarmSetpoint,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "High pressure alarm (>%.1f bara): %s\n", alarmSetpoint,
         highPressureAlarm ? "ACTIVE" : "INACTIVE");
 
 
@@ -194,7 +194,7 @@ public class AdvancedProcessLogicExample {
       warmupTime.update(timeStep);
       startupLogic.execute(timeStep);
 
-      System.out.printf("%8.1f | %s\n", time, startupLogic.getStatusDescription());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %s\n", time, startupLogic.getStatusDescription());
 
       if (startupLogic.isComplete()) {
         break;
@@ -232,8 +232,8 @@ public class AdvancedProcessLogicExample {
     ConditionalAction conditionalAction =
         new ConditionalAction(highPressure, reduceFlow, increaseFlow, "Pressure Control");
 
-    System.out.printf("Current pressure: %.1f bara\n", feedStream.getPressure());
-    System.out.printf("Condition: Pressure > 12.0 bara? %s\n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Current pressure: %.1f bara\n", feedStream.getPressure());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Condition: Pressure > 12.0 bara? %s\n",
         highPressure.evaluate() ? "YES" : "NO");
 
 
@@ -273,7 +273,7 @@ public class AdvancedProcessLogicExample {
 
     parallelActions.execute();
 
-    System.out.printf("Completion: %d/%d actions (%.0f%%)\n", parallelActions.getCompletedCount(),
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Completion: %d/%d actions (%.0f%%)\n", parallelActions.getCompletedCount(),
         parallelActions.getTotalCount(), parallelActions.getCompletionPercentage());
 
     if (parallelActions.isComplete()) {
@@ -313,8 +313,8 @@ public class AdvancedProcessLogicExample {
     }), 10.0);
 
     logger.info("Shutdown sequence configured:");
-    System.out.printf("  Mode: %s\n", shutdownLogic.isEmergencyMode() ? "EMERGENCY" : "CONTROLLED");
-    System.out.printf("  Duration: %.0f seconds\n", shutdownLogic.getEffectiveShutdownTime());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Mode: %s\n", shutdownLogic.isEmergencyMode() ? "EMERGENCY" : "CONTROLLED");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Duration: %.0f seconds\n", shutdownLogic.getEffectiveShutdownTime());
     logger.info("  Actions: 4 steps");
 
 
@@ -328,7 +328,7 @@ public class AdvancedProcessLogicExample {
     for (double time = 0.0; time <= 12.0; time += timeStep) {
       shutdownLogic.execute(timeStep);
 
-      System.out.printf("%8.1f | %9.1f | %7.0f%% | ", time, feedValve.getPercentValveOpening(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %9.1f | %7.0f%% | ", time, feedValve.getPercentValveOpening(),
           shutdownLogic.getProgress());
 
       if (shutdownLogic.isComplete()) {
@@ -367,8 +367,8 @@ public class AdvancedProcessLogicExample {
     }), 0.0);
 
     logger.info("Emergency shutdown activated...");
-    System.out.printf("  Normal duration: %.0f seconds\n", emergencyShutdown.getRampDownTime());
-    System.out.printf("  Emergency duration: %.0f seconds\n",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Normal duration: %.0f seconds\n", emergencyShutdown.getRampDownTime());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Emergency duration: %.0f seconds\n",
         emergencyShutdown.getEmergencyShutdownTime());
 
 
@@ -380,7 +380,7 @@ public class AdvancedProcessLogicExample {
     for (double time = 0.0; time <= 3.0; time += 0.5) {
       emergencyShutdown.execute(0.5);
 
-      System.out.printf("%8.1f | %9.1f | %s\n", time, feedValve.getPercentValveOpening(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %9.1f | %s\n", time, feedValve.getPercentValveOpening(),
           emergencyShutdown.isComplete() ? "COMPLETED" : "RUNNING");
 
       if (emergencyShutdown.isComplete()) {

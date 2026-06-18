@@ -36,8 +36,8 @@ class CPAImplicitProfilingTest extends neqsim.NeqSimTest {
     standard.initProperties();
 
     logger.info("=== Standard CPA ===");
-    System.out.printf("TPflash time: %.1f ms%n", stdFlashTime / 1e6);
-    System.out.printf("Phases: %d%n", standard.getNumberOfPhases());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "TPflash time: %.1f ms%n", stdFlashTime / 1e6);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Phases: %d%n", standard.getNumberOfPhases());
 
     // --- Implicit solver ---
     PhaseSrkCPAfullyImplicit.resetProfileCounters();
@@ -51,10 +51,10 @@ class CPAImplicitProfilingTest extends neqsim.NeqSimTest {
     implicit.initProperties();
 
     logger.info("\n=== Implicit CPA ===");
-    System.out.printf("TPflash time: %.1f ms%n", implFlashTime / 1e6);
-    System.out.printf("Phases: %d%n", implicit.getNumberOfPhases());
-    System.out.printf("Profile: %s%n", PhaseSrkCPAfullyImplicit.getProfileSummary());
-    System.out.printf("Ratio: %.2f%n", (double) implFlashTime / stdFlashTime);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "TPflash time: %.1f ms%n", implFlashTime / 1e6);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Phases: %d%n", implicit.getNumberOfPhases());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Profile: %s%n", PhaseSrkCPAfullyImplicit.getProfileSummary());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Ratio: %.2f%n", (double) implFlashTime / stdFlashTime);
 
     // --- Now test single molarVolume call timing (no TPflash overhead) ---
     logger.info("\n=== Single init(1) comparison (after TPflash) ===");
@@ -73,10 +73,10 @@ class CPAImplicitProfilingTest extends neqsim.NeqSimTest {
     }
     long implInitTime = System.nanoTime() - t0;
 
-    System.out.printf("Standard 100x init(1): %.1f ms%n", stdInitTime / 1e6);
-    System.out.printf("Implicit 100x init(1): %.1f ms%n", implInitTime / 1e6);
-    System.out.printf("Ratio: %.2f%n", (double) implInitTime / stdInitTime);
-    System.out.printf("Implicit profile: %s%n", PhaseSrkCPAfullyImplicit.getProfileSummary());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Standard 100x init(1): %.1f ms%n", stdInitTime / 1e6);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Implicit 100x init(1): %.1f ms%n", implInitTime / 1e6);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Ratio: %.2f%n", (double) implInitTime / stdInitTime);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Implicit profile: %s%n", PhaseSrkCPAfullyImplicit.getProfileSummary());
 
     // --- Single init(3) comparison ---
     logger.info("\n=== Single init(3) comparison (computes fugacity coefficients) ===");
@@ -94,10 +94,10 @@ class CPAImplicitProfilingTest extends neqsim.NeqSimTest {
     }
     long implInit3Time = System.nanoTime() - t0;
 
-    System.out.printf("Standard 100x init(3): %.1f ms%n", stdInit3Time / 1e6);
-    System.out.printf("Implicit 100x init(3): %.1f ms%n", implInit3Time / 1e6);
-    System.out.printf("Ratio: %.2f%n", (double) implInit3Time / stdInit3Time);
-    System.out.printf("Implicit profile: %s%n", PhaseSrkCPAfullyImplicit.getProfileSummary());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Standard 100x init(3): %.1f ms%n", stdInit3Time / 1e6);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Implicit 100x init(3): %.1f ms%n", implInit3Time / 1e6);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Ratio: %.2f%n", (double) implInit3Time / stdInit3Time);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Implicit profile: %s%n", PhaseSrkCPAfullyImplicit.getProfileSummary());
   }
 
   /**
@@ -118,7 +118,7 @@ class CPAImplicitProfilingTest extends neqsim.NeqSimTest {
     ops.TPflash();
 
     logger.info("=== Pure water implicit profile ===");
-    System.out.printf("Profile: %s%n", PhaseSrkCPAfullyImplicit.getProfileSummary());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Profile: %s%n", PhaseSrkCPAfullyImplicit.getProfileSummary());
   }
 
   /**
@@ -127,7 +127,7 @@ class CPAImplicitProfilingTest extends neqsim.NeqSimTest {
   @Test
   void profileMolarVolumeCounts() {
     logger.info("=== molarVolume call count comparison ===");
-    System.out.printf("%-30s %8s %8s %8s%n", "Case", "Calls", "AvgIter", "Fallback");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %8s %8s %8s%n", "Case", "Calls", "AvgIter", "Fallback");
 
     // Pure water
     profileCase("Pure water", 273.15 + 25, 1.0, new String[] {"water"}, new double[] {1.0}, false);
@@ -164,7 +164,7 @@ class CPAImplicitProfilingTest extends neqsim.NeqSimTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(sys);
     ops.TPflash();
 
-    System.out.printf("%-30s %s%n", label, PhaseSrkCPAfullyImplicit.getProfileSummary());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %s%n", label, PhaseSrkCPAfullyImplicit.getProfileSummary());
   }
 
   private void addOilGasWaterMEG(SystemInterface sys) {

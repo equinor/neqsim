@@ -58,7 +58,7 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
         {100.0, 200.0, 0.0230}, // Duan & Sun model
     };
 
-    System.out.printf("%-8s %-8s %-12s %-12s %-12s %-10s%n", "T(C)", "P(bar)", "x_CO2_exp",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-8s %-12s %-12s %-12s %-10s%n", "T(C)", "P(bar)", "x_CO2_exp",
         "x_CO2_CPA", "error(%)", "kij_eff");
     System.out
         .println("--------------------------------------------------------------" + "--------");
@@ -83,7 +83,7 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
       try {
         ops.TPflash();
       } catch (Exception e) {
-        System.out.printf("%-8.0f %-8.0f FLASH FAILED: %s%n", tempC, pressure, e.getMessage());
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-8.0f FLASH FAILED: %s%n", tempC, pressure, e.getMessage());
         continue;
       }
 
@@ -100,13 +100,13 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
       sumAbsError += Math.abs(errorPct);
       count++;
 
-      System.out.printf("%-8.0f %-8.0f %-12.5f %-12.5f %-12.1f %-10.4f%n", tempC, pressure, xCO2exp,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-8.0f %-12.5f %-12.5f %-12.1f %-10.4f%n", tempC, pressure, xCO2exp,
           co2InAq, errorPct, kijLinear);
     }
 
     System.out
         .println("--------------------------------------------------------------" + "--------");
-    System.out.printf("Mean absolute error: %.1f%%%n", sumAbsError / count);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Mean absolute error: %.1f%%%n", sumAbsError / count);
 
 
     // Also print water in CO2-rich phase
@@ -119,7 +119,7 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
         {100.0, 100.0, 0.0310}, // estimated
     };
 
-    System.out.printf("%-8s %-8s %-12s %-12s %-12s%n", "T(C)", "P(bar)", "y_H2O_exp", "y_H2O_CPA",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-8s %-12s %-12s %-12s%n", "T(C)", "P(bar)", "y_H2O_exp", "y_H2O_CPA",
         "error(%)");
     logger.info("--------------------------------------------------");
 
@@ -140,14 +140,14 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
       try {
         ops.TPflash();
       } catch (Exception e) {
-        System.out.printf("%-8.0f %-8.0f FLASH FAILED%n", tempC, pressure);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-8.0f FLASH FAILED%n", tempC, pressure);
         continue;
       }
 
       double waterInCO2 = getCO2PhaseWater(system);
       double errorPct = (waterInCO2 - yH2Oexp) / yH2Oexp * 100.0;
 
-      System.out.printf("%-8.0f %-8.0f %-12.5f %-12.5f %-12.1f%n", tempC, pressure, yH2Oexp,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-8.0f %-8.0f %-12.5f %-12.5f %-12.1f%n", tempC, pressure, yH2Oexp,
           waterInCO2, errorPct);
     }
   }

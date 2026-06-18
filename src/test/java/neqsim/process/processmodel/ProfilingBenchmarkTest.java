@@ -126,8 +126,8 @@ public class ProfilingBenchmarkTest {
     int[] trainsCases = {1, 4, 8};
 
     logger.info("\n===== PROFILING: Independent trains (where is time spent?) =====");
-    System.out.printf("%-8s %-12s %10s %10s %10s %10s %10s%n", "trains", "mode", "wall_ms",
-        "sumUnit_ms", "framework", "calls/run", "speedup_vs_seq");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %10s %10s %10s %10s %10s%n",
+        "trains", "mode", "wall_ms", "sumUnit_ms", "framework", "calls/run", "speedup_vs_seq");
     logger.info("--------------------------------------------------------------------------------");
 
     for (int nTrains : trainsCases) {
@@ -140,10 +140,12 @@ public class ProfilingBenchmarkTest {
       double seqOverhead = seqT[0] - seqT[1];
       double optOverhead = optT[0] - optT[1];
 
-      System.out.printf("%-8d %-12s %10.2f %10.2f %10.2f %10.1f %10s%n", nTrains, "sequential",
-          seqT[0], seqT[1], seqOverhead, seqT[2], "1.00x");
-      System.out.printf("%-8d %-12s %10.2f %10.2f %10.2f %10.1f %10s%n", nTrains, "optimized",
-          optT[0], optT[1], optOverhead, optT[2], String.format("%.2fx", seqT[0] / optT[0]));
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%-8d %-12s %10.2f %10.2f %10.2f %10.1f %10s%n", nTrains, "sequential", seqT[0], seqT[1],
+          seqOverhead, seqT[2], "1.00x");
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%-8d %-12s %10.2f %10.2f %10.2f %10.1f %10s%n", nTrains, "optimized", optT[0], optT[1],
+          optOverhead, optT[2], String.format("%.2fx", seqT[0] / optT[0]));
     }
 
     // Equipment-class breakdown for a single representative case
@@ -152,16 +154,17 @@ public class ProfilingBenchmarkTest {
     Map<String, double[]> cls = classProfile(probe, RUNS);
     List<Map.Entry<String, double[]>> sorted = new ArrayList<>(cls.entrySet());
     Collections.sort(sorted, (a, b) -> Double.compare(b.getValue()[0], a.getValue()[0]));
-    System.out.printf("%-30s %12s %12s%n", "equipment_class", "total_ms", "calls");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12s %12s%n", "equipment_class",
+        "total_ms", "calls");
     logger.info("------------------------------------------------------------");
     double total = 0.0;
     for (double[] v : cls.values()) {
       total += v[0];
     }
     for (Map.Entry<String, double[]> e : sorted) {
-      System.out.printf("%-30s %12.2f %12.1f  (%.1f%%)%n", e.getKey(), e.getValue()[0],
-          e.getValue()[1], 100.0 * e.getValue()[0] / total);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12.2f %12.1f  (%.1f%%)%n",
+          e.getKey(), e.getValue()[0], e.getValue()[1], 100.0 * e.getValue()[0] / total);
     }
-    System.out.printf("%-30s %12.2f%n", "TOTAL_UNIT_TIME", total);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-30s %12.2f%n", "TOTAL_UNIT_TIME", total);
   }
 }

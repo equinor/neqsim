@@ -3,6 +3,8 @@ package neqsim.thermo.system;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -19,6 +21,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author Even Solbraa
  */
 class SystemKentEisenbergTest {
+  private static final Logger logger = LogManager.getLogger(SystemKentEisenbergTest.class);
 
   /**
    * Test that SystemKentEisenberg can be instantiated and components added.
@@ -301,7 +304,7 @@ class SystemKentEisenbergTest {
     assertTrue(co2Absorbed > 0.0, "CO2 should be absorbed into the amine liquid");
     assertTrue(h2sAbsorbed > 0.0, "H2S should be absorbed into the amine liquid");
 
-    System.out.printf(
+    logger.printf(org.apache.logging.log4j.Level.INFO,
         "Kent-Eisenberg CO2+H2S/MDEA absorber demo:%n"
             + "  Treated-gas pCO2 = %.4e bar, pH2S = %.4e bar%n"
             + "  CO2 loading = %.4f, H2S loading = %.4f (mol acid gas / mol total amine)%n",

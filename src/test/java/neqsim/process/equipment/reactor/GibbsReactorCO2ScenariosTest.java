@@ -42,7 +42,7 @@ public class GibbsReactorCO2ScenariosTest {
     for (int i = 0; i < outSys.getNumberOfComponents(); i++) {
       double ppm = outSys.getComponent(i).getz() * 1e6;
       if (ppm > 1e-6) {
-        System.out.printf("%s: %.6f ppm\n", outSys.getComponent(i).getComponentName(), ppm);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "%s: %.6f ppm\n", outSys.getComponent(i).getComponentName(), ppm);
       }
     }
   }

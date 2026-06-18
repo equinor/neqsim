@@ -763,7 +763,7 @@ public class ProductionOptimizerTest {
     // Print iteration history for debugging
     logger.info("=== ITERATION HISTORY ===");
     for (IterationRecord rec : result.getIterationHistory()) {
-      System.out.printf("  Rate=%.1f, Util=%.1f%%, Feasible=%b%n", rec.getRate(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Rate=%.1f, Util=%.1f%%, Feasible=%b%n", rec.getRate(),
           rec.getBottleneckUtilization() * 100, rec.isFeasible());
     }
 
@@ -929,7 +929,7 @@ public class ProductionOptimizerTest {
     for (Map.Entry<String, CapacityConstraint> entry : separator.getCapacityConstraints()
         .entrySet()) {
       CapacityConstraint c = entry.getValue();
-      System.out.printf("  %s: enabled=%b, value=%.4f %s, maxValue=%.4f, util=%.1f%%%n",
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: enabled=%b, value=%.4f %s, maxValue=%.4f, util=%.1f%%%n",
           c.getName(), c.isEnabled(), c.getCurrentValue(), c.getUnit(), c.getMaxValue(),
           c.getUtilization() * 100);
     }
@@ -969,7 +969,7 @@ public class ProductionOptimizerTest {
     // Print iteration history summary
     logger.info("\n=== ITERATION HISTORY ===");
     for (IterationRecord rec : result.getIterationHistory()) {
-      System.out.printf("  Rate=%.0f, Bottleneck=%s, Util=%.1f%%, Feasible=%b%n", rec.getRate(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Rate=%.0f, Bottleneck=%s, Util=%.1f%%, Feasible=%b%n", rec.getRate(),
           rec.getBottleneckName(), rec.getBottleneckUtilization() * 100, rec.isFeasible());
     }
 
