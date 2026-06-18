@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Temporary warm-JVM A/B benchmark for the phase-split out-stream init level change. NOT part of
@@ -15,6 +17,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class PhaseSplitInitBenchmark {
+  private static final Logger logger = LogManager.getLogger(PhaseSplitInitBenchmark.class);
+
 
   /**
    * Build the deethanizer feed used by the benchmark cases.
@@ -98,7 +102,7 @@ public class PhaseSplitInitBenchmark {
       variance += (times[i] - mean) * (times[i] - mean);
     }
     double sd = Math.sqrt(variance / reps);
-    System.out.println(String.format(Locale.ROOT,
+    logger.info(String.format(Locale.ROOT,
         "BENCH %-16s trays=%2d reps=%d  mean=%8.2f ms  median=%8.2f ms  min=%8.2f ms  sd=%7.2f ms",
         label, trayCount, reps, mean, median, min, sd));
   }
@@ -108,10 +112,10 @@ public class PhaseSplitInitBenchmark {
    */
   @Test
   public void benchmark() {
-    System.out.println("==== PhaseSplitInitBenchmark ====");
+    logger.info("==== PhaseSplitInitBenchmark ====");
     timeCase("INSIDE_OUT_10", 10, DistillationColumn.SolverType.INSIDE_OUT, 12, 40);
     timeCase("MATRIX_IO_14", 14, DistillationColumn.SolverType.MATRIX_INSIDE_OUT, 12, 40);
     timeCase("AUTO_10", 10, DistillationColumn.SolverType.AUTO, 12, 40);
-    System.out.println("==== end ====");
+    logger.info("==== end ====");
   }
 }

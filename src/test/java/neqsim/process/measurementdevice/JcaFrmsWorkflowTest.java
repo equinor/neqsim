@@ -23,8 +23,12 @@ import neqsim.process.equipment.util.FlowRateAdjuster;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(JcaFrmsWorkflowTest.class);
+
   private static final JsonObject FLUID_DATA = loadFluidData();
 
   private static JsonObject loadFluidData() {
@@ -114,7 +118,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
     bubbleFluid.removeComponent("water");
     ThermodynamicOperations bubbleOps = new ThermodynamicOperations(bubbleFluid);
     bubbleOps.bubblePointPressureFlash();
-    // System.out.println("Havis mixture bubble point at " + temperature + " C = "
+    // logger.info("Havis mixture bubble point at " + temperature + " C = "
     // + bubbleFluid.getPressure("bara") + " bara");
 
     assertEquals(temperature, multiphaseFluid.getTemperature("C"), 1e-6);
@@ -154,7 +158,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
 
     for (int i = 0; i < iterations; i++) {
       try {
-        // System.out.println("Starting iteration " + (i + 1));
+        // logger.info("Starting iteration " + (i + 1));
         // Apply 10% random variation to each parameter
         double gasFlow = baseGasFlow * (1.0 + (random.nextGaussian() * 0.1));
         double oilFlow = baseOilFlow * (1.0 + (random.nextGaussian() * 0.1));
@@ -221,7 +225,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
         successfulRuns++;
       } catch (Exception | AssertionError e) {
         // Log failed iteration but continue with others
-        System.out.println("Iteration " + i + " failed: " + e.getMessage());
+        logger.info("Iteration " + i + " failed: " + e.getMessage());
       }
     }
 

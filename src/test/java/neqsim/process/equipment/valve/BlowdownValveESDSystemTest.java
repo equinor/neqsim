@@ -13,6 +13,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.measurementdevice.PushButton;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test class for Emergency Shutdown (ESD) system with Blowdown Valve.
@@ -42,6 +44,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class BlowdownValveESDSystemTest {
+  private static final Logger logger = LogManager.getLogger(BlowdownValveESDSystemTest.class);
+
   SystemInterface separatorGas;
   Stream feedStream;
   Separator separator;
@@ -150,22 +154,22 @@ public class BlowdownValveESDSystemTest {
    */
   @Test
   void testESDBlowdownSystem() {
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║        EMERGENCY SHUTDOWN (ESD) BLOWDOWN SYSTEM TEST          ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║        EMERGENCY SHUTDOWN (ESD) BLOWDOWN SYSTEM TEST          ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
-    System.out.println("═══ SYSTEM CONFIGURATION ═══");
-    System.out.println("Separator operating pressure: 50.0 bara");
-    System.out.println("Gas flow rate: 10000.0 kg/hr");
-    System.out.println("Blowdown valve: BD-101 (normally closed)");
-    System.out.println("ESD Push Button: ESD-PB-101 (linked to BD-101)");
-    System.out.println("BD Orifice Cv: 150.0");
-    System.out.println("Flare header pressure: 1.5 bara");
-    System.out.println("BD valve opening time: 5.0 seconds");
-    System.out.println();
+    logger.info("═══ SYSTEM CONFIGURATION ═══");
+    logger.info("Separator operating pressure: 50.0 bara");
+    logger.info("Gas flow rate: 10000.0 kg/hr");
+    logger.info("Blowdown valve: BD-101 (normally closed)");
+    logger.info("ESD Push Button: ESD-PB-101 (linked to BD-101)");
+    logger.info("BD Orifice Cv: 150.0");
+    logger.info("Flare header pressure: 1.5 bara");
+    logger.info("BD valve opening time: 5.0 seconds");
+
 
     // Run initial steady state
-    System.out.println("═══ INITIAL STEADY STATE (Normal Operation) ═══");
+    logger.info("═══ INITIAL STEADY STATE (Normal Operation) ═══");
     feedStream.run();
     separator.run();
     separatorGasOut.run();
@@ -183,15 +187,15 @@ public class BlowdownValveESDSystemTest {
     System.out.printf("Blowdown flow rate: %.1f kg/hr%n", initialBDFlow);
     System.out.printf("BD valve opening: %.1f%%%n", bdValve.getPercentValveOpening());
     System.out.printf("ESD button state: %s%n", esdButton.isPushed() ? "PUSHED" : "NOT PUSHED");
-    System.out.println();
+
 
     // Dynamic simulation
-    System.out.println("═══ DYNAMIC SIMULATION - ESD ACTIVATION ═══");
-    System.out.println(
+    logger.info("═══ DYNAMIC SIMULATION - ESD ACTIVATION ═══");
+    logger.info(
         "Time (s) | Sep Press | Process Flow | BD Flow    | BD Opening | Flare Flow | Heat Release");
-    System.out.println(
-        "         | (bara)    | (kg/hr)      | (kg/hr)    | (%)        | (kg/hr)    | (MW)");
-    System.out.println(
+    logger
+        .info("         | (bara)    | (kg/hr)      | (kg/hr)    | (%)        | (kg/hr)    | (MW)");
+    logger.info(
         "---------|-----------|--------------|------------|------------|------------|-------------");
 
     double timeStep = 0.5; // 0.5 second time steps
@@ -206,8 +210,8 @@ public class BlowdownValveESDSystemTest {
     for (double time = 0.0; time <= simulationTime; time += timeStep) {
       // Activate ESD at specified time - operator pushes ESD button
       if (!esdActivated && time >= esdActivationTime) {
-        System.out.println("\n>>> OPERATOR PUSHES ESD BUTTON - BLOWDOWN INITIATED <<<");
-        System.out.println(">>> FEED INLET VALVE CLOSES <<<\n");
+        logger.info("\n>>> OPERATOR PUSHES ESD BUTTON - BLOWDOWN INITIATED <<<");
+        logger.info(">>> FEED INLET VALVE CLOSES <<<\n");
         esdButton.push(); // Push button activates BD valve
         // Redirect all flow to blowdown
         gasSplitter.setSplitFactors(new double[] {0.0, 1.0});
@@ -268,36 +272,36 @@ public class BlowdownValveESDSystemTest {
     }
 
     // Summary report
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║                    ESD BLOWDOWN SUMMARY                        ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║                    ESD BLOWDOWN SUMMARY                        ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
-    System.out.println("═══ OPERATIONAL TIMELINE ═══");
+    logger.info("═══ OPERATIONAL TIMELINE ═══");
     System.out.printf("ESD activated at: %.1f s%n", esdActivationTime);
     System.out.printf("BD valve fully open at: %.1f s%n",
         esdActivationTime + bdValve.getOpeningTime());
     System.out.printf("Simulation duration: %.1f s%n", simulationTime);
-    System.out.println();
 
-    System.out.println("═══ BLOWDOWN PERFORMANCE ═══");
+
+    logger.info("═══ BLOWDOWN PERFORMANCE ═══");
     System.out.printf("Maximum blowdown flow: %.1f kg/hr (%.2f kg/s)%n", maxBlowdownFlow,
         maxBlowdownFlow / 3600.0);
     System.out.printf("Total gas blown down: %.1f kg%n", flare.getCumulativeGasBurned("kg"));
     System.out.printf("Average blowdown rate: %.1f kg/hr%n",
         flare.getCumulativeGasBurned("kg") * 3600.0 / (simulationTime - esdActivationTime));
     System.out.printf("BD valve final opening: %.1f%%%n", bdValve.getPercentValveOpening());
-    System.out.println();
 
-    System.out.println("═══ FLARE SYSTEM PERFORMANCE ═══");
+
+    logger.info("═══ FLARE SYSTEM PERFORMANCE ═══");
     System.out.printf("Peak heat release rate: %.2f MW%n", peakHeatRelease);
     System.out.printf("Total heat released: %.2f GJ (%.2f MMBtu)%n",
         flare.getCumulativeHeatReleased("GJ"), flare.getCumulativeHeatReleased("MMBtu"));
     System.out.printf("Average heat release rate: %.2f MW%n",
         flare.getCumulativeHeatReleased("GJ") * 1000.0 / (simulationTime - esdActivationTime));
-    System.out.println();
+
 
     // Gas composition to flare
-    System.out.println("═══ BLOWDOWN GAS COMPOSITION ═══");
+    logger.info("═══ BLOWDOWN GAS COMPOSITION ═══");
     SystemInterface bdGas = toFlare.getFluid();
     for (int i = 0; i < bdGas.getPhase(0).getNumberOfComponents(); i++) {
       String compName = bdGas.getPhase(0).getComponent(i).getComponentName();
@@ -307,13 +311,13 @@ public class BlowdownValveESDSystemTest {
       }
     }
 
-    System.out.println();
-    System.out.println("═══ ENVIRONMENTAL IMPACT ═══");
+
+    logger.info("═══ ENVIRONMENTAL IMPACT ═══");
     System.out.printf("Total CO2 emissions: %.1f kg (%.2f tonnes)%n",
         flare.getCumulativeCO2Emission("kg"), flare.getCumulativeCO2Emission("tonnes"));
-    System.out.println();
 
-    System.out.println("═══ VALIDATION CHECKS ═══");
+
+    logger.info("═══ VALIDATION CHECKS ═══");
     assertTrue(esdActivated, "ESD should have been activated");
     assertTrue(esdButton.isPushed(), "ESD button should be pushed");
     assertTrue(bdValve.isActivated(), "BD valve should be activated");
@@ -322,17 +326,17 @@ public class BlowdownValveESDSystemTest {
     assertTrue(flare.getCumulativeGasBurned("kg") > 0, "Gas should have been blown down to flare");
     assertTrue(flare.getCumulativeHeatReleased("GJ") > 0, "Heat should have been released");
 
-    System.out.println("✓ ESD push button successfully triggered blowdown");
-    System.out.println("✓ BD valve automatically activated by push button");
+    logger.info("✓ ESD push button successfully triggered blowdown");
+    logger.info("✓ BD valve automatically activated by push button");
     System.out.printf("✓ BD valve opened to %.1f%% in %.1f seconds%n",
         bdValve.getPercentValveOpening(), bdValve.getOpeningTime());
     System.out.printf("✓ Total %.1f kg of gas safely blown down to flare%n",
         flare.getCumulativeGasBurned("kg"));
     System.out.printf("✓ Peak flare load: %.2f MW heat release%n", peakHeatRelease);
-    System.out.println("✓ Controlled depressurization through BD orifice");
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║              ESD BLOWDOWN SYSTEM TEST COMPLETED                ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝");
+    logger.info("✓ Controlled depressurization through BD orifice");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║              ESD BLOWDOWN SYSTEM TEST COMPLETED                ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝");
   }
 
   /**
@@ -340,7 +344,7 @@ public class BlowdownValveESDSystemTest {
    */
   @Test
   void testPushButtonOperation() {
-    System.out.println("\n═══ PUSH BUTTON OPERATION TEST ═══");
+    logger.info("\n═══ PUSH BUTTON OPERATION TEST ═══");
 
     // Initially not pushed
     assertEquals(0.0, esdButton.getMeasuredValue(), 0.01, "Button should not be pushed initially");
@@ -363,10 +367,10 @@ public class BlowdownValveESDSystemTest {
         bdValve.isActivated() ? "ACTIVATED" : "NOT ACTIVATED");
 
     // Test display
-    System.out.println("\nButton display output:");
+    logger.info("\nButton display output:");
     esdButton.displayResult();
-    System.out.println("\nButton toString:");
-    System.out.println(esdButton.toString());
+    logger.info("\nButton toString:");
+    logger.info(esdButton.toString());
 
     // Reset button (valve stays activated)
     esdButton.reset();
@@ -383,9 +387,9 @@ public class BlowdownValveESDSystemTest {
     bdValve.reset();
     assertTrue(!bdValve.isActivated(), "BD valve should be reset");
 
-    System.out.println("✓ Push button operation test passed");
-    System.out.println("✓ Button correctly activates linked BD valve");
-    System.out.println("✓ Button reset does not affect valve state (safety feature)");
+    logger.info("✓ Push button operation test passed");
+    logger.info("✓ Button correctly activates linked BD valve");
+    logger.info("✓ Button reset does not affect valve state (safety feature)");
   }
 
   /**
@@ -393,7 +397,7 @@ public class BlowdownValveESDSystemTest {
    */
   @Test
   void testPushButtonManualMode() {
-    System.out.println("\n═══ PUSH BUTTON MANUAL MODE TEST ═══");
+    logger.info("\n═══ PUSH BUTTON MANUAL MODE TEST ═══");
 
     // Create push button with auto-activation disabled
     PushButton manualButton = new PushButton("Manual-PB-101", bdValve);
@@ -408,14 +412,14 @@ public class BlowdownValveESDSystemTest {
     assertTrue(!bdValve.isActivated(),
         "BD valve should NOT be activated (auto-activation disabled)");
 
-    System.out.println("Manual mode: Button pushed but valve not auto-activated");
+    logger.info("Manual mode: Button pushed but valve not auto-activated");
 
     // Manually activate valve
     bdValve.activate();
     assertTrue(bdValve.isActivated(), "BD valve should be activated manually");
 
-    System.out.println("✓ Manual mode test passed");
-    System.out.println("✓ Auto-activation can be disabled for manual control");
+    logger.info("✓ Manual mode test passed");
+    logger.info("✓ Auto-activation can be disabled for manual control");
   }
 
   /**
@@ -423,7 +427,7 @@ public class BlowdownValveESDSystemTest {
    */
   @Test
   void testBlowdownValveOperation() {
-    System.out.println("\n═══ BLOWDOWN VALVE OPERATION TEST ═══");
+    logger.info("\n═══ BLOWDOWN VALVE OPERATION TEST ═══");
 
     // Initially closed
     assertEquals(0.0, bdValve.getPercentValveOpening(), 0.1, "BD valve should start closed");
@@ -455,7 +459,7 @@ public class BlowdownValveESDSystemTest {
         "BD valve should be closed after reset");
     assertTrue(!bdValve.isActivated(), "BD valve should not be activated after reset");
 
-    System.out.println("✓ Blowdown valve operation test passed");
+    logger.info("✓ Blowdown valve operation test passed");
   }
 
   /**
@@ -463,7 +467,7 @@ public class BlowdownValveESDSystemTest {
    */
   @Test
   void testMultipleBlowdownSources() {
-    System.out.println("\n═══ MULTIPLE BLOWDOWN SOURCES TEST ═══");
+    logger.info("\n═══ MULTIPLE BLOWDOWN SOURCES TEST ═══");
 
     // Create second blowdown source
     SystemInterface separatorGas2 = separatorGas.clone();
@@ -530,7 +534,7 @@ public class BlowdownValveESDSystemTest {
 
     assertTrue(totalFlareFlow > 0, "Combined flare flow should be positive");
     assertTrue(heatRelease > 0, "Heat release should be positive");
-    System.out.println("✓ Multiple blowdown sources successfully combined");
+    logger.info("✓ Multiple blowdown sources successfully combined");
   }
 
   /**
@@ -542,9 +546,9 @@ public class BlowdownValveESDSystemTest {
    */
   @Test
   void testPressureReliefViaBlowdown() {
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║        PRESSURE RELIEF VIA BLOWDOWN - MONITORING TEST         ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║        PRESSURE RELIEF VIA BLOWDOWN - MONITORING TEST         ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     // Create a scenario with potential for pressure buildup
     SystemInterface highPressureGas = separatorGas.clone();
@@ -591,7 +595,7 @@ public class BlowdownValveESDSystemTest {
 
     Flare hpFlare = new Flare("HP Flare", hpFlareOut);
 
-    System.out.println("═══ INITIAL STEADY STATE ═══");
+    logger.info("═══ INITIAL STEADY STATE ═══");
     highPressureFeed.run();
     hpSeparator.run();
     hpSepGasOut.run();
@@ -599,7 +603,7 @@ public class BlowdownValveESDSystemTest {
 
     System.out.printf("Separator pressure: %.2f bara%n", hpSeparator.getPressure("bara"));
     System.out.printf("Outlet valve opening: %.1f%%%n", hpOutletValve.getPercentValveOpening());
-    System.out.println();
+
 
     // Switch to dynamic mode now that we have initial conditions
     hpSeparator.setCalculateSteadyState(false);
@@ -614,11 +618,11 @@ public class BlowdownValveESDSystemTest {
     double initialPressure = hpSeparator.getPressure("bara");
 
     // Dynamic simulation with pressure buildup and relief
-    System.out.println("═══ DYNAMIC SIMULATION - PRESSURE BUILDUP AND RELIEF ═══");
-    System.out.println("Time (s) | Sep Press | Outlet Valve | BD Valve   | BD Flow    | Status");
-    System.out.println("         | (bara)    | (%)          | Opening(%) | (kg/hr)    |");
-    System.out.println(
-        "---------|-----------|--------------|------------|------------|------------------");
+    logger.info("═══ DYNAMIC SIMULATION - PRESSURE BUILDUP AND RELIEF ═══");
+    logger.info("Time (s) | Sep Press | Outlet Valve | BD Valve   | BD Flow    | Status");
+    logger.info("         | (bara)    | (%)          | Opening(%) | (kg/hr)    |");
+    logger
+        .info("---------|-----------|--------------|------------|------------|------------------");
 
     double simulationTime = 30.0;
     double blockageTime = 5.0; // Block outlet at 5s
@@ -691,11 +695,11 @@ public class BlowdownValveESDSystemTest {
       }
     }
 
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║              PRESSURE RELIEF VERIFICATION REPORT               ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║              PRESSURE RELIEF VERIFICATION REPORT               ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
-    System.out.println("═══ PRESSURE PROFILE ═══");
+    logger.info("═══ PRESSURE PROFILE ═══");
     System.out.printf("Initial pressure: %.2f bara%n", initialPressure);
     System.out.printf("Maximum pressure reached: %.2f bara%n", maxPressure);
     System.out.printf("Pressure at ESD activation: %.2f bara%n", pressureAtEsdActivation);
@@ -706,15 +710,15 @@ public class BlowdownValveESDSystemTest {
     System.out.printf("Pressure drop after ESD: %.2f bar (%.1f%% reduction)%n",
         pressureAtEsdActivation - finalPressure,
         100.0 * (pressureAtEsdActivation - finalPressure) / pressureAtEsdActivation);
-    System.out.println();
 
-    System.out.println("═══ BLOWDOWN PERFORMANCE ═══");
+
+    logger.info("═══ BLOWDOWN PERFORMANCE ═══");
     System.out.printf("Total gas blown down: %.1f kg%n", hpFlare.getCumulativeGasBurned("kg"));
     System.out.printf("Total heat to flare: %.2f GJ%n", hpFlare.getCumulativeHeatReleased("GJ"));
     System.out.printf("BD valve final opening: %.1f%%%n", hpBdValve.getPercentValveOpening());
-    System.out.println();
 
-    System.out.println("═══ VALIDATION CHECKS ═══");
+
+    logger.info("═══ VALIDATION CHECKS ═══");
     assertTrue(maxPressure > initialPressure, "Pressure should have increased due to blockage");
     assertTrue(finalPressure < pressureAtEsdActivation,
         "Pressure should decrease after ESD activation");
@@ -729,8 +733,8 @@ public class BlowdownValveESDSystemTest {
     System.out.printf("✓ Total %.1f kg gas safely blown down to flare%n",
         hpFlare.getCumulativeGasBurned("kg"));
 
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║          PRESSURE RELIEF TEST COMPLETED SUCCESSFULLY           ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║          PRESSURE RELIEF TEST COMPLETED SUCCESSFULLY           ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝");
   }
 }

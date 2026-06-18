@@ -15,6 +15,8 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Measures where time is being spent inside ProcessSystem.run() — wall-clock vs sum of unit
@@ -22,6 +24,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * seq-vs-optimized speedup numbers.
  */
 public class ProfilingBenchmarkTest {
+  private static final Logger logger = LogManager.getLogger(ProfilingBenchmarkTest.class);
+
 
   private SystemInterface makeHeavyFluid() {
     SystemInterface f = new SystemSrkEos(298.0, 80.0);
@@ -121,11 +125,10 @@ public class ProfilingBenchmarkTest {
     final int RUNS = 20;
     int[] trainsCases = {1, 4, 8};
 
-    System.out.println("\n===== PROFILING: Independent trains (where is time spent?) =====");
+    logger.info("\n===== PROFILING: Independent trains (where is time spent?) =====");
     System.out.printf("%-8s %-12s %10s %10s %10s %10s %10s%n", "trains", "mode", "wall_ms",
         "sumUnit_ms", "framework", "calls/run", "speedup_vs_seq");
-    System.out.println(
-        "--------------------------------------------------------------------------------");
+    logger.info("--------------------------------------------------------------------------------");
 
     for (int nTrains : trainsCases) {
       ProcessSystem seq = buildIndependentTrains(false, nTrains);
@@ -144,13 +147,13 @@ public class ProfilingBenchmarkTest {
     }
 
     // Equipment-class breakdown for a single representative case
-    System.out.println("\n----- Per-class timing (8 trains, optimized, averaged) -----");
+    logger.info("\n----- Per-class timing (8 trains, optimized, averaged) -----");
     ProcessSystem probe = buildIndependentTrains(true, 8);
     Map<String, double[]> cls = classProfile(probe, RUNS);
     List<Map.Entry<String, double[]>> sorted = new ArrayList<>(cls.entrySet());
     Collections.sort(sorted, (a, b) -> Double.compare(b.getValue()[0], a.getValue()[0]));
     System.out.printf("%-30s %12s %12s%n", "equipment_class", "total_ms", "calls");
-    System.out.println("------------------------------------------------------------");
+    logger.info("------------------------------------------------------------");
     double total = 0.0;
     for (double[] v : cls.values()) {
       total += v[0];

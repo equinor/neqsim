@@ -7,6 +7,8 @@ import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Performance profiling test for electrolyte CPA systems.
@@ -17,6 +19,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 @Tag("slow")
 public class ElectrolytePerformanceProfileTest {
+  private static final Logger logger = LogManager.getLogger(ElectrolytePerformanceProfileTest.class);
+
 
   /**
    * Profile init() call times for electrolyte CPA.
@@ -24,7 +28,7 @@ public class ElectrolytePerformanceProfileTest {
   @Test
   @DisplayName("Profile init() call times")
   public void profileInitCallTimes() {
-    System.out.println("=== Profile init() Call Times ===\n");
+    logger.info("=== Profile init() Call Times ===\n");
 
     // Electrolyte CPA system
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 50.0);
@@ -50,8 +54,8 @@ public class ElectrolytePerformanceProfileTest {
       fluid.init(1);
     }
     long elapsed = System.currentTimeMillis() - start;
-    System.out.println("Electrolyte CPA init(1) x " + iterations + ": " + elapsed + " ms");
-    System.out.println("  Average per call: " + (elapsed / (double) iterations) + " ms");
+    logger.info("Electrolyte CPA init(1) x " + iterations + ": " + elapsed + " ms");
+    logger.info("  Average per call: " + (elapsed / (double) iterations) + " ms");
 
     // Profile init(1, 0) for phase 0 only
     start = System.currentTimeMillis();
@@ -59,8 +63,8 @@ public class ElectrolytePerformanceProfileTest {
       fluid.init(1, 0);
     }
     elapsed = System.currentTimeMillis() - start;
-    System.out.println("Electrolyte CPA init(1, 0) x " + iterations + ": " + elapsed + " ms");
-    System.out.println("  Average per call: " + (elapsed / (double) iterations) + " ms");
+    logger.info("Electrolyte CPA init(1, 0) x " + iterations + ": " + elapsed + " ms");
+    logger.info("  Average per call: " + (elapsed / (double) iterations) + " ms");
 
     // Profile init(1, 1) for phase 1 only
     start = System.currentTimeMillis();
@@ -68,11 +72,11 @@ public class ElectrolytePerformanceProfileTest {
       fluid.init(1, 1);
     }
     elapsed = System.currentTimeMillis() - start;
-    System.out.println("Electrolyte CPA init(1, 1) x " + iterations + ": " + elapsed + " ms");
-    System.out.println("  Average per call: " + (elapsed / (double) iterations) + " ms");
+    logger.info("Electrolyte CPA init(1, 1) x " + iterations + ": " + elapsed + " ms");
+    logger.info("  Average per call: " + (elapsed / (double) iterations) + " ms");
 
     // Compare with non-electrolyte CPA
-    System.out.println("\n--- Non-Electrolyte CPA Comparison ---");
+    logger.info("\n--- Non-Electrolyte CPA Comparison ---");
     SystemInterface fluidNoElec = new SystemSrkCPAstatoil(273.15 + 10.0, 50.0);
     fluidNoElec.addComponent("water", 0.494505);
     fluidNoElec.addComponent("MEG", 0.164835);
@@ -90,8 +94,8 @@ public class ElectrolytePerformanceProfileTest {
       fluidNoElec.init(1);
     }
     elapsed = System.currentTimeMillis() - start;
-    System.out.println("Non-Electrolyte CPA init(1) x " + iterations + ": " + elapsed + " ms");
-    System.out.println("  Average per call: " + (elapsed / (double) iterations) + " ms");
+    logger.info("Non-Electrolyte CPA init(1) x " + iterations + ": " + elapsed + " ms");
+    logger.info("  Average per call: " + (elapsed / (double) iterations) + " ms");
   }
 
   /**
@@ -100,7 +104,7 @@ public class ElectrolytePerformanceProfileTest {
   @Test
   @DisplayName("Profile TPflash times")
   public void profileTPflashTimes() {
-    System.out.println("=== Profile TPflash Times ===\n");
+    logger.info("=== Profile TPflash Times ===\n");
 
     // Electrolyte CPA system
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 50.0);
@@ -130,8 +134,8 @@ public class ElectrolytePerformanceProfileTest {
       ops.TPflash();
     }
     long elapsed = System.currentTimeMillis() - start;
-    System.out.println("TPflash (multiPhaseCheck=false) x " + iterations + ": " + elapsed + " ms");
-    System.out.println("  Average per call: " + (elapsed / (double) iterations) + " ms");
+    logger.info("TPflash (multiPhaseCheck=false) x " + iterations + ": " + elapsed + " ms");
+    logger.info("  Average per call: " + (elapsed / (double) iterations) + " ms");
 
     // TPflash WITH multiPhaseCheck
     fluid.setMultiPhaseCheck(true);
@@ -140,11 +144,11 @@ public class ElectrolytePerformanceProfileTest {
       ops.TPflash();
     }
     elapsed = System.currentTimeMillis() - start;
-    System.out.println("TPflash (multiPhaseCheck=true) x " + iterations + ": " + elapsed + " ms");
-    System.out.println("  Average per call: " + (elapsed / (double) iterations) + " ms");
+    logger.info("TPflash (multiPhaseCheck=true) x " + iterations + ": " + elapsed + " ms");
+    logger.info("  Average per call: " + (elapsed / (double) iterations) + " ms");
 
     // Compare with non-electrolyte
-    System.out.println("\n--- Non-Electrolyte CPA Comparison ---");
+    logger.info("\n--- Non-Electrolyte CPA Comparison ---");
     SystemInterface fluidNoElec = new SystemSrkCPAstatoil(273.15 + 10.0, 50.0);
     fluidNoElec.addComponent("water", 0.494505);
     fluidNoElec.addComponent("MEG", 0.164835);
@@ -164,9 +168,8 @@ public class ElectrolytePerformanceProfileTest {
       ops2.TPflash();
     }
     elapsed = System.currentTimeMillis() - start;
-    System.out.println(
-        "Non-Elec TPflash (multiPhaseCheck=true) x " + iterations + ": " + elapsed + " ms");
-    System.out.println("  Average per call: " + (elapsed / (double) iterations) + " ms");
+    logger.info("Non-Elec TPflash (multiPhaseCheck=true) x " + iterations + ": " + elapsed + " ms");
+    logger.info("  Average per call: " + (elapsed / (double) iterations) + " ms");
   }
 
   /**
@@ -175,7 +178,7 @@ public class ElectrolytePerformanceProfileTest {
   @Test
   @DisplayName("Profile stability analysis times")
   public void profileStabilityAnalysisTimes() {
-    System.out.println("=== Profile Stability Analysis Times ===\n");
+    logger.info("=== Profile Stability Analysis Times ===\n");
 
     // Electrolyte CPA system - first flash to establish phases
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 50.0);
@@ -194,35 +197,35 @@ public class ElectrolytePerformanceProfileTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 
     // First flash - this triggers stability analysis
-    System.out.println("First TPflash (includes full stability analysis):");
+    logger.info("First TPflash (includes full stability analysis):");
     long start = System.currentTimeMillis();
     ops.TPflash();
     long elapsed = System.currentTimeMillis() - start;
-    System.out.println("  Time: " + elapsed + " ms");
-    System.out.println("  Phases found: " + fluid.getNumberOfPhases());
+    logger.info("  Time: " + elapsed + " ms");
+    logger.info("  Phases found: " + fluid.getNumberOfPhases());
 
     // Second flash - may still do stability analysis
-    System.out.println("\nSecond TPflash (same conditions):");
+    logger.info("\nSecond TPflash (same conditions):");
     start = System.currentTimeMillis();
     ops.TPflash();
     elapsed = System.currentTimeMillis() - start;
-    System.out.println("  Time: " + elapsed + " ms");
+    logger.info("  Time: " + elapsed + " ms");
 
     // Third flash - with slight temperature change
     fluid.setTemperature(273.15 + 5.0);
-    System.out.println("\nThird TPflash (T changed to 5°C):");
+    logger.info("\nThird TPflash (T changed to 5°C):");
     start = System.currentTimeMillis();
     ops.TPflash();
     elapsed = System.currentTimeMillis() - start;
-    System.out.println("  Time: " + elapsed + " ms");
-    System.out.println("  Phases: " + fluid.getNumberOfPhases());
+    logger.info("  Time: " + elapsed + " ms");
+    logger.info("  Phases: " + fluid.getNumberOfPhases());
 
     // Fourth flash - with multiPhaseCheck disabled
     fluid.setMultiPhaseCheck(false);
-    System.out.println("\nFourth TPflash (multiPhaseCheck=false):");
+    logger.info("\nFourth TPflash (multiPhaseCheck=false):");
     start = System.currentTimeMillis();
     ops.TPflash();
     elapsed = System.currentTimeMillis() - start;
-    System.out.println("  Time: " + elapsed + " ms");
+    logger.info("  Time: " + elapsed + " ms");
   }
 }

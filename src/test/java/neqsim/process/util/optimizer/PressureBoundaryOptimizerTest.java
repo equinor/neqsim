@@ -13,6 +13,8 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Unit tests for PressureBoundaryOptimizer.
@@ -25,6 +27,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 public class PressureBoundaryOptimizerTest {
+  private static final Logger logger = LogManager.getLogger(PressureBoundaryOptimizerTest.class);
+
   private SystemInterface testFluid;
   private Stream feedStream;
   private ProcessSystem simpleProcess;
@@ -97,7 +101,7 @@ public class PressureBoundaryOptimizerTest {
     simpleProcess.run();
 
     double baselineInletP = feedStream.getPressure("bara");
-    System.out.println("Baseline inlet pressure: " + baselineInletP + " bara");
+    logger.info("Baseline inlet pressure: " + baselineInletP + " bara");
 
     // Create optimizer
     PressureBoundaryOptimizer optimizer =
@@ -110,9 +114,9 @@ public class PressureBoundaryOptimizerTest {
     double targetOutlet = 70.0; // bara
     OptimizationResult result = optimizer.findMaxFlowRate(80.0, targetOutlet, "bara");
 
-    System.out.println("Max flow result: " + result.getOptimalRate() + " " + result.getRateUnit());
-    System.out.println("Feasible: " + result.isFeasible());
-    System.out.println("Bottleneck: "
+    logger.info("Max flow result: " + result.getOptimalRate() + " " + result.getRateUnit());
+    logger.info("Feasible: " + result.isFeasible());
+    logger.info("Bottleneck: "
         + (result.getBottleneck() != null ? result.getBottleneck().getName() : "none"));
 
     assertNotNull(result, "Should return a result");
@@ -141,12 +145,12 @@ public class PressureBoundaryOptimizerTest {
     double outletP = 95.0; // Slightly below compressor outlet to account for cooler drop
     OptimizationResult result = optimizer.findMaxFlowRate(inletP, outletP, "bara");
 
-    System.out.println("\nCompressor process result:");
-    System.out.println("  Optimal rate: " + result.getOptimalRate() + " " + result.getRateUnit());
-    System.out.println("  Feasible: " + result.isFeasible());
+    logger.info("\nCompressor process result:");
+    logger.info("  Optimal rate: " + result.getOptimalRate() + " " + result.getRateUnit());
+    logger.info("  Feasible: " + result.isFeasible());
     System.out
         .println("  Total power: " + result.getDecisionVariables().get("totalPower_kW") + " kW");
-    System.out.println("  Bottleneck: "
+    logger.info("  Bottleneck: "
         + (result.getBottleneck() != null ? result.getBottleneck().getName() : "none"));
 
     assertNotNull(result, "Should return a result");
@@ -172,9 +176,9 @@ public class PressureBoundaryOptimizerTest {
     PressureBoundaryOptimizer.LiftCurveTable table =
         optimizer.generateLiftCurveTable(inletPressures, outletPressures, "bara");
 
-    System.out.println("\nLift Curve Table:");
-    System.out.println(table.toEclipseFormat());
-    System.out.println("\nTable summary: " + table);
+    logger.info("\nLift Curve Table:");
+    logger.info(table.toEclipseFormat());
+    logger.info("\nTable summary: " + table);
 
     assertNotNull(table, "Should generate a table");
     assertEquals(3, table.getInletPressures().length, "Should have 3 inlet pressures");
@@ -200,7 +204,7 @@ public class PressureBoundaryOptimizerTest {
 
     double[] flowRates = optimizer.generateCapacityCurve(inletPressure, outletPressures, "bara");
 
-    System.out.println("\nCapacity Curve at Pin=" + inletPressure + " bara:");
+    logger.info("\nCapacity Curve at Pin=" + inletPressure + " bara:");
     for (int i = 0; i < outletPressures.length; i++) {
       System.out
           .println("  Pout=" + outletPressures[i] + " bara -> Flow=" + flowRates[i] + " kg/hr");
@@ -223,8 +227,8 @@ public class PressureBoundaryOptimizerTest {
         "TestTable", inletP, outletP, flows, powers, bottlenecks, "bara", "kg/hr");
 
     String json = table.toJson();
-    System.out.println("\nJSON format:");
-    System.out.println(json);
+    logger.info("\nJSON format:");
+    logger.info(json);
 
     assertTrue(json.contains("\"tableName\": \"TestTable\""), "Should contain table name");
     assertTrue(json.contains("\"pressureUnit\": \"bara\""), "Should contain pressure unit");
@@ -245,9 +249,9 @@ public class PressureBoundaryOptimizerTest {
     // Try infeasible combination (outlet higher than inlet - impossible for valve)
     OptimizationResult result = optimizer.findMaxFlowRate(50.0, 60.0, "bara");
 
-    System.out.println("\nInfeasible result:");
-    System.out.println("  Feasible: " + result.isFeasible());
-    System.out.println("  Rate: " + result.getOptimalRate());
+    logger.info("\nInfeasible result:");
+    logger.info("  Feasible: " + result.isFeasible());
+    logger.info("  Rate: " + result.getOptimalRate());
 
     // For a valve, outlet cannot be higher than inlet
     // The optimizer should either return infeasible or a very low flow rate
@@ -264,7 +268,7 @@ public class PressureBoundaryOptimizerTest {
         (Stream) processWithCompressor.getUnit("Export"));
 
     double power = optimizer.calculateTotalPower();
-    System.out.println("Total compressor power: " + power + " kW");
+    logger.info("Total compressor power: " + power + " kW");
 
     assertTrue(power > 0, "Should have positive power for compression");
   }
@@ -283,10 +287,10 @@ public class PressureBoundaryOptimizerTest {
 
     OptimizationResult result = optimizer.findMaxFlowRate(80.0, 70.0, "bara");
 
-    System.out.println("\nUtilization tracking:");
-    System.out.println("  Feasible: " + result.isFeasible());
+    logger.info("\nUtilization tracking:");
+    logger.info("  Feasible: " + result.isFeasible());
     for (ProductionOptimizer.UtilizationRecord record : result.getUtilizationRecords()) {
-      System.out.println("  " + record.getEquipmentName() + ": "
+      logger.info("  " + record.getEquipmentName() + ": "
           + String.format("%.1f%%", record.getUtilization() * 100) + " (limit: "
           + String.format("%.1f%%", record.getUtilizationLimit() * 100) + ")");
     }
@@ -316,9 +320,9 @@ public class PressureBoundaryOptimizerTest {
     // Find max flow rate
     OptimizationResult result = optimizer.findMaxFlowRate(80.0, 70.0, "bara");
 
-    System.out.println("\nWith external ProductionOptimizer:");
-    System.out.println("  Optimal rate: " + result.getOptimalRate() + " " + result.getRateUnit());
-    System.out.println("  Feasible: " + result.isFeasible());
+    logger.info("\nWith external ProductionOptimizer:");
+    logger.info("  Optimal rate: " + result.getOptimalRate() + " " + result.getRateUnit());
+    logger.info("  Feasible: " + result.isFeasible());
 
     assertNotNull(result, "Should return a result");
     assertTrue(result.getOptimalRate() > 0, "Should find positive flow rate");
@@ -349,8 +353,8 @@ public class PressureBoundaryOptimizerTest {
     optimizer.setMaxUtilization(0.80); // Set utilization via PressureBoundaryOptimizer
     OptimizationResult result = optimizer.findMaxFlowRate(80.0, 70.0, "bara");
 
-    System.out.println("\nWith replaced ProductionOptimizer:");
-    System.out.println("  Optimal rate: " + result.getOptimalRate() + " " + result.getRateUnit());
+    logger.info("\nWith replaced ProductionOptimizer:");
+    logger.info("  Optimal rate: " + result.getOptimalRate() + " " + result.getRateUnit());
 
     assertNotNull(result, "Should return a result");
   }

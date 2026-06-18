@@ -18,9 +18,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class PhaseEnvelope {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
+  private static final Logger logger = LogManager.getLogger(PhaseEnvelope.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.

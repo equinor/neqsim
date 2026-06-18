@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestElectrolyteCPAstatoil {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestElectrolyteCPAstatoil.class);
+  private static final Logger logger = LogManager.getLogger(TestElectrolyteCPAstatoil.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -64,9 +65,9 @@ public class TestElectrolyteCPAstatoil {
       logger.error(ex.getMessage(), ex);
     }
     logger.info("pH" + testSystem.getPhase(1).getpH());
-    // System.out.println("Mean ionic activity coefficient Na+Cl- " +
+    // logger.info("Mean ionic activity coefficient Na+Cl- " +
     // testSystem.getPhase(1).getMeanIonicActivity(2, 3));
-    // System.out.println("Osmotic coefficient " +
+    // logger.info("Osmotic coefficient " +
     // testSystem.getPhase(1).getOsmoticCoefficientOfWater());
     logger.info("water activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1));
     logger

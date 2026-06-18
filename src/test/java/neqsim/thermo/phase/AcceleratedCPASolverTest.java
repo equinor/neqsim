@@ -20,6 +20,8 @@ import neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicit;
 import neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicitReduced;
 import neqsim.thermo.system.SystemSrkCPAstatoilReduced;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for the accelerated CPA solver variants: Broyden quasi-Newton implicit and
@@ -28,6 +30,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author Even Solbraa
  */
 public class AcceleratedCPASolverTest {
+  private static final Logger logger = LogManager.getLogger(AcceleratedCPASolverTest.class);
+
 
   private static final double REL_TOL = 1.0e-6;
 
@@ -311,9 +315,9 @@ public class AcceleratedCPASolverTest {
     }
 
     // Timing benchmark
-    System.out.println("\n=== CPA Solver Benchmark: Pure Water ===");
+    logger.info("\n=== CPA Solver Benchmark: Pure Water ===");
     System.out.printf("%-15s %8s%n", "Solver", "Time(ms)");
-    System.out.println("----------------------------");
+    logger.info("----------------------------");
     for (String type : types) {
       // Warmup
       for (int w = 0; w < warmup; w++) {
@@ -346,9 +350,9 @@ public class AcceleratedCPASolverTest {
 
     String[] types = {"standard", "implicit", "broyden", "anderson"};
 
-    System.out.println("\n=== CPA Solver Benchmark: Water-Methanol ===");
+    logger.info("\n=== CPA Solver Benchmark: Water-Methanol ===");
     System.out.printf("%-15s %8s%n", "Solver", "Time(ms)");
-    System.out.println("----------------------------");
+    logger.info("----------------------------");
     for (String type : types) {
       for (int w = 0; w < warmup; w++) {
         for (double temp : temps) {
@@ -547,7 +551,7 @@ public class AcceleratedCPASolverTest {
 
     double[][] timesMs = new double[systemNames.length][solverTypes.length];
 
-    System.out.println("\n========= COMPREHENSIVE CPA SOLVER BENCHMARK =========\n");
+    logger.info("\n========= COMPREHENSIVE CPA SOLVER BENCHMARK =========\n");
 
     for (int s = 0; s < systemNames.length; s++) {
       final int sIdx = s;
@@ -587,7 +591,7 @@ public class AcceleratedCPASolverTest {
     // Print summary table
     System.out.printf("%-30s %10s %10s %10s %10s | %7s %7s%n", "System", "Standard", "Implicit",
         "Broyden", "Anderson", "SpB/Std", "SpA/Std");
-    System.out.println("---------------------------------------------"
+    logger.info("---------------------------------------------"
         + "-------------------------------------------");
 
     for (int s = 0; s < systemNames.length; s++) {
@@ -602,15 +606,15 @@ public class AcceleratedCPASolverTest {
     }
 
     // Print profiling data for Broyden and Anderson (from last system)
-    System.out.println(
+    logger.info(
         "\n--- Broyden profiling (last system): " + PhaseSrkCPABroydenImplicit.getProfileSummary());
-    System.out.println(
+    logger.info(
         "--- Anderson profiling (last system): " + PhaseSrkCPAandersonMixing.getProfileSummary());
 
     // Run profiling for each system individually
-    System.out.println("\n=== Profiling Data Per System ===");
+    logger.info("\n=== Profiling Data Per System ===");
     System.out.printf("%-30s | %-60s%n", "System", "Broyden Profile");
-    System.out.println("-------------------------------|"
+    logger.info("-------------------------------|"
         + "-------------------------------------------------------------");
     for (int s = 0; s < systemNames.length; s++) {
       PhaseSrkCPABroydenImplicit.resetProfileCounters();
@@ -622,7 +626,7 @@ public class AcceleratedCPASolverTest {
     }
 
     System.out.printf("%n%-30s | %-60s%n", "System", "Anderson Profile");
-    System.out.println("-------------------------------|"
+    logger.info("-------------------------------|"
         + "-------------------------------------------------------------");
     for (int s = 0; s < systemNames.length; s++) {
       PhaseSrkCPAandersonMixing.resetProfileCounters();
@@ -832,7 +836,7 @@ public class AcceleratedCPASolverTest {
 
     double[][] timesMs = new double[systemIndices.length][solverTypes.length];
 
-    System.out.println("\n========= REDUCED SOLVER BENCHMARK =========\n");
+    logger.info("\n========= REDUCED SOLVER BENCHMARK =========\n");
 
     for (int s = 0; s < systemIndices.length; s++) {
       for (int t = 0; t < solverTypes.length; t++) {
@@ -853,7 +857,7 @@ public class AcceleratedCPASolverTest {
 
     System.out.printf("%-25s %10s %10s %10s | %8s %8s%n", "System", "Standard", "Broyden",
         "Reduced", "SpR/Std", "SpR/Broy");
-    System.out.println(
+    logger.info(
         "------------------------------------------------------------------------------------");
 
     for (int s = 0; s < systemIndices.length; s++) {
@@ -1021,7 +1025,7 @@ public class AcceleratedCPASolverTest {
 
     double[][] timesMs = new double[systemIndices.length][solverTypes.length];
 
-    System.out.println("\n========= ANDERSON-REDUCED SOLVER BENCHMARK =========\n");
+    logger.info("\n========= ANDERSON-REDUCED SOLVER BENCHMARK =========\n");
 
     for (int s = 0; s < systemIndices.length; s++) {
       for (int t = 0; t < solverTypes.length; t++) {
@@ -1042,8 +1046,8 @@ public class AcceleratedCPASolverTest {
 
     System.out.printf("%-25s %10s %10s %10s %10s | %8s %8s%n", "System", "Standard", "Anderson",
         "Reduced", "And+Red", "SpAR/Std", "SpAR/And");
-    System.out.println(
-        "------------------------------------------------------------------------------------"
+    logger
+        .info("------------------------------------------------------------------------------------"
             + "------");
 
     for (int s = 0; s < systemIndices.length; s++) {
@@ -1058,7 +1062,7 @@ public class AcceleratedCPASolverTest {
     }
 
     // Print profiling data
-    System.out.println(
+    logger.info(
         "\n--- Anderson-Reduced profiling: " + PhaseSrkCPAandersonReduced.getProfileSummary());
   }
 
@@ -1172,7 +1176,7 @@ public class AcceleratedCPASolverTest {
 
     double[][] timesMs = new double[systemIndices.length][solverTypes.length];
 
-    System.out.println("\n========= IMPLICIT-REDUCED SOLVER BENCHMARK =========\n");
+    logger.info("\n========= IMPLICIT-REDUCED SOLVER BENCHMARK =========\n");
 
     for (int s = 0; s < systemIndices.length; s++) {
       for (int t = 0; t < solverTypes.length; t++) {
@@ -1193,8 +1197,8 @@ public class AcceleratedCPASolverTest {
 
     System.out.printf("%-20s %8s %8s %8s %8s %8s | %7s %7s%n", "System", "Std", "Impl", "Red",
         "And+R", "Impl+R", "IR/Std", "IR/Impl");
-    System.out.println(
-        "------------------------------------------------------------------------------------"
+    logger
+        .info("------------------------------------------------------------------------------------"
             + "-----------");
 
     for (int s = 0; s < systemIndices.length; s++) {
@@ -1337,9 +1341,9 @@ public class AcceleratedCPASolverTest {
     double[] stdResults = runTEGDehydrationProcess("standard");
     double[] implResults = runTEGDehydrationProcess("implicit");
 
-    System.out.println("\n=== TEG Dehydration: Standard vs Fully Implicit ===");
+    logger.info("\n=== TEG Dehydration: Standard vs Fully Implicit ===");
     System.out.printf("%-25s %12s %12s%n", "Property", "Standard", "Implicit");
-    System.out.println("---------------------------------------------------");
+    logger.info("---------------------------------------------------");
     System.out.printf("%-25s %10.2f C %10.2f C%n", "Water dew point", stdResults[0],
         implResults[0]);
     System.out.printf("%-25s %10.4f   %10.4f%n", "Dry gas density (kg/m3)", stdResults[1],
@@ -1375,9 +1379,9 @@ public class AcceleratedCPASolverTest {
     double[] stdResults = runTEGDehydrationProcess("standard");
     double[] irResults = runTEGDehydrationProcess("implicit-reduced");
 
-    System.out.println("\n=== TEG Dehydration: Standard vs Implicit-Reduced ===");
+    logger.info("\n=== TEG Dehydration: Standard vs Implicit-Reduced ===");
     System.out.printf("%-25s %12s %12s%n", "Property", "Standard", "Impl+Red");
-    System.out.println("---------------------------------------------------");
+    logger.info("---------------------------------------------------");
     System.out.printf("%-25s %10.2f C %10.2f C%n", "Water dew point", stdResults[0], irResults[0]);
     System.out.printf("%-25s %10.4f   %10.4f%n", "Dry gas density (kg/m3)", stdResults[1],
         irResults[1]);
@@ -1407,7 +1411,7 @@ public class AcceleratedCPASolverTest {
         {"standard", "implicit", "reduced", "anderson-reduced", "implicit-reduced"};
     double[] timesMs = new double[solverTypes.length];
 
-    System.out.println("\n========= TEG DEHYDRATION PROCESS BENCHMARK =========\n");
+    logger.info("\n========= TEG DEHYDRATION PROCESS BENCHMARK =========\n");
 
     for (int t = 0; t < solverTypes.length; t++) {
       // Warmup
@@ -1424,7 +1428,7 @@ public class AcceleratedCPASolverTest {
     }
 
     System.out.printf("%-20s %10s | %8s%n", "Solver", "Time(ms)", "Speedup");
-    System.out.println("------------------------------------------");
+    logger.info("------------------------------------------");
     for (int t = 0; t < solverTypes.length; t++) {
       double speedup = timesMs[0] / timesMs[t];
       System.out.printf("%-20s %8.0f ms | %6.2fx%n", solverTypes[t], timesMs[t], speedup);

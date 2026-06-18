@@ -30,8 +30,9 @@ import neqsim.thermo.system.SystemPrEos;
 
 @Tag("slow")
 public class LargeCombinedModelsTest {
+  private static final Logger logger = LogManager.getLogger(LargeCombinedModelsTest.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(LargeCombinedModelsTest.class);
   File file = new File("src/test/java/neqsim/process/processmodel");
   String fileFluid1 = file.getAbsolutePath() + "/feedfluid.e300";
   SystemInterface wellFluid = neqsim.thermo.util.readwrite.EclipseFluidReadWrite.read(fileFluid1);
@@ -1307,12 +1308,11 @@ public class LargeCombinedModelsTest {
         recycleCount++;
       }
     }
-    System.out.println("\n=== Process Configuration ===");
-    System.out.println("Well/Manifold has recycles: " + process.hasRecycleLoops());
-    System.out.println("Separation train has recycles: " + sepprocessTrain1.hasRecycleLoops());
-    System.out.println("Separation train recycle count: " + recycleCount);
-    System.out.println(
-        "Separation train equipment units: " + sepprocessTrain1.getUnitOperations().size());
+    logger.info("\n=== Process Configuration ===");
+    logger.info("Well/Manifold has recycles: " + process.hasRecycleLoops());
+    logger.info("Separation train has recycles: " + sepprocessTrain1.hasRecycleLoops());
+    logger.info("Separation train recycle count: " + recycleCount);
+    logger.info("Separation train equipment units: " + sepprocessTrain1.getUnitOperations().size());
 
     // Warm up run
     process.run();
@@ -1370,25 +1370,24 @@ public class LargeCombinedModelsTest {
     double optimizedTemp = ((Separator) sepprocessTrain1.getUnit("dew point scrubber 2"))
         .getGasOutStream().getTemperature("C");
 
-    System.out.println("\n=== Execution Mode Performance (5 runs each) ===");
-    System.out.println("Regular execution:              " + regularTime + " ms");
-    System.out.println("Graph-based execution:          " + graphTime + " ms");
-    System.out.println("runOptimized() (auto-detect):   " + optimizedTime + " ms");
-    System.out.println("Graph speedup:      "
+    logger.info("\n=== Execution Mode Performance (5 runs each) ===");
+    logger.info("Regular execution:              " + regularTime + " ms");
+    logger.info("Graph-based execution:          " + graphTime + " ms");
+    logger.info("runOptimized() (auto-detect):   " + optimizedTime + " ms");
+    logger.info("Graph speedup:      "
         + String.format("%.1f%%", (1.0 - (double) graphTime / regularTime) * 100));
-    System.out.println("Optimized speedup:  "
+    logger.info("Optimized speedup:  "
         + String.format("%.1f%%", (1.0 - (double) optimizedTime / regularTime) * 100));
 
-    System.out.println("\n=== Result Verification (all modes should match) ===");
-    System.out.println("Gas flow (MSm3/day): Regular=" + String.format("%.6f", regularGasFlow)
-        + ", Graph=" + String.format("%.6f", graphGasFlow) + ", Optimized="
+    logger.info("\n=== Result Verification (all modes should match) ===");
+    logger.info("Gas flow (MSm3/day): Regular=" + String.format("%.6f", regularGasFlow) + ", Graph="
+        + String.format("%.6f", graphGasFlow) + ", Optimized="
         + String.format("%.6f", optimizedGasFlow));
-    System.out.println("Oil flow (kg/hr):    Regular=" + String.format("%.2f", regularOilFlow)
-        + ", Graph=" + String.format("%.2f", graphOilFlow) + ", Optimized="
+    logger.info("Oil flow (kg/hr):    Regular=" + String.format("%.2f", regularOilFlow) + ", Graph="
+        + String.format("%.2f", graphOilFlow) + ", Optimized="
         + String.format("%.2f", optimizedOilFlow));
-    System.out.println("Temperature (C):     Regular=" + String.format("%.4f", regularTemp)
-        + ", Graph=" + String.format("%.4f", graphTemp) + ", Optimized="
-        + String.format("%.4f", optimizedTemp));
+    logger.info("Temperature (C):     Regular=" + String.format("%.4f", regularTemp) + ", Graph="
+        + String.format("%.4f", graphTemp) + ", Optimized=" + String.format("%.4f", optimizedTemp));
 
     // Verify all execution modes give the same results
     Assertions.assertEquals(regularGasFlow, graphGasFlow, 1e-6,
@@ -1404,9 +1403,9 @@ public class LargeCombinedModelsTest {
     Assertions.assertEquals(regularTemp, optimizedTemp, 1e-6,
         "Optimized execution should give same temperature as regular");
 
-    System.out.println("\n=== All execution modes produce IDENTICAL results ===");
+    logger.info("\n=== All execution modes produce IDENTICAL results ===");
 
     // Show execution partition info
-    System.out.println("\n" + sepprocessTrain1.getExecutionPartitionInfo());
+    logger.info("\n" + sepprocessTrain1.getExecutionPartitionInfo());
   }
 }

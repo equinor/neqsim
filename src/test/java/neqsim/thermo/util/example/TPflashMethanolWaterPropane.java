@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TPflashMethanolWaterPropane {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TPflashMethanolWaterPropane.class);
+  private static final Logger logger = LogManager.getLogger(TPflashMethanolWaterPropane.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.

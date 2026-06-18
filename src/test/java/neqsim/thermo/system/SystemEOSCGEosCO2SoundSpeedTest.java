@@ -8,8 +8,9 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SystemEOSCGEosCO2SoundSpeedTest extends neqsim.NeqSimTest {
-  static Logger logger = LogManager.getLogger(SystemEOSCGEosCO2SoundSpeedTest.class);
+  private static final Logger logger = LogManager.getLogger(SystemEOSCGEosCO2SoundSpeedTest.class);
 
+  
   @Test
   @DisplayName("Check speed of sound of CO2 with EOS-CG")
   public void testCO2SoundSpeed() {

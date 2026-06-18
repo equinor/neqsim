@@ -3,11 +3,15 @@ package neqsim.thermo.phase;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.ejml.simple.SimpleMatrix;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test Gaussian elimination solver against EJML for matrix inversion.
  */
 public class GaussianEliminationTest {
+  private static final Logger logger = LogManager.getLogger(GaussianEliminationTest.class);
+
 
   /**
    * Solve Ax=b in-place via GE with partial pivoting. Same as PhaseSrkCPAfullyImplicit.
@@ -120,7 +124,7 @@ public class GaussianEliminationTest {
       }
     }
 
-    System.out.println("Hessian matrix:");
+    logger.info("Hessian matrix:");
     for (int i = 0; i < 4; i++) {
       System.out.printf("  [%.6f, %.6f, %.6f, %.6f]%n", hess[i][0], hess[i][1], hess[i][2],
           hess[i][3]);
@@ -136,7 +140,7 @@ public class GaussianEliminationTest {
     SimpleMatrix sm = new SimpleMatrix(hess);
     SimpleMatrix invEJML = sm.invert();
 
-    System.out.println("\nInverse comparison:");
+    logger.info("\nInverse comparison:");
     double maxDiff = 0;
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
@@ -191,7 +195,7 @@ public class GaussianEliminationTest {
     SimpleMatrix rhsSM = new SimpleMatrix(new double[][] {{0.1}, {0.2}, {-0.15}, {-0.25}});
     SimpleMatrix xvEJML = sm.invert().mult(rhsSM);
 
-    System.out.println("Single RHS solve comparison:");
+    logger.info("Single RHS solve comparison:");
     for (int i = 0; i < 4; i++) {
       double diff = Math.abs(rhsCopy[i] - xvEJML.get(i, 0));
       System.out.printf("  xv[%d]: GE=%.15e  EJML=%.15e  diff=%.4e%n", i, rhsCopy[i],

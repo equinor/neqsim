@@ -10,11 +10,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for convergence acceleration methods (Wegstein, Broyden).
  */
 class AccelerationMethodTest {
+  private static final Logger logger = LogManager.getLogger(AccelerationMethodTest.class);
+
   @Nested
   @DisplayName("AccelerationMethod Enum")
   class EnumTests {
@@ -408,24 +412,24 @@ class AccelerationMethodTest {
     @Test
     @DisplayName("Benchmark: Wegstein formula demonstration")
     void demonstrateWegsteinFormula() {
-      System.out.println("\n===== Wegstein Method Demonstration =====");
-      System.out.println("Problem: g(x) = 0.5*x + 1, fixed point at x=2");
-      System.out.println();
-      System.out.println("Wegstein formula: x_{n+1} = q·g(x_n) + (1-q)·x_n");
-      System.out.println("where q = s/(s-1) and s = (g(x_n)-g(x_{n-1}))/(x_n-x_{n-1})");
-      System.out.println();
+      logger.info("\n===== Wegstein Method Demonstration =====");
+      logger.info("Problem: g(x) = 0.5*x + 1, fixed point at x=2");
+
+      logger.info("Wegstein formula: x_{n+1} = q·g(x_n) + (1-q)·x_n");
+      logger.info("where q = s/(s-1) and s = (g(x_n)-g(x_{n-1}))/(x_n-x_{n-1})");
+
 
       // For g(x) = 0.5x + 1, the slope s = 0.5 everywhere
       double s = 0.5;
       double q = s / (s - 1); // q = 0.5 / -0.5 = -1
       System.out.printf("For this linear function: s = %.1f, q = %.1f%n", s, q);
-      System.out.println();
 
-      System.out.println("With q = -1:");
-      System.out.println("  x_{n+1} = -1·g(x_n) + 2·x_n = 2·x_n - (0.5·x_n + 1)");
-      System.out.println("         = 1.5·x_n - 1");
-      System.out.println();
-      System.out.println("Starting from x=0:");
+
+      logger.info("With q = -1:");
+      logger.info("  x_{n+1} = -1·g(x_n) + 2·x_n = 2·x_n - (0.5·x_n + 1)");
+      logger.info("         = 1.5·x_n - 1");
+
+      logger.info("Starting from x=0:");
       double x = 0.0;
       for (int i = 0; i < 5; i++) {
         double gx = 0.5 * x + 1;
@@ -434,10 +438,10 @@ class AccelerationMethodTest {
         x = xAccel;
       }
 
-      System.out.println();
-      System.out.println("Note: With damping bounds q∈[-5,0], Wegstein acts as a damper,");
-      System.out.println("which improves stability but may not accelerate convergence.");
-      System.out.println("==========================================\n");
+
+      logger.info("Note: With damping bounds q∈[-5,0], Wegstein acts as a damper,");
+      logger.info("which improves stability but may not accelerate convergence.");
+      logger.info("==========================================\n");
 
       assertTrue(true); // Demonstration test
     }
@@ -448,7 +452,7 @@ class AccelerationMethodTest {
     @Test
     @DisplayName("Benchmark: Broyden accelerator basic test")
     void benchmarkBroyden() {
-      System.out.println("\n===== Broyden Accelerator Test =====");
+      logger.info("\n===== Broyden Accelerator Test =====");
 
       // Just test that Broyden accelerator works
       BroydenAccelerator acc = new BroydenAccelerator(2);
@@ -461,10 +465,10 @@ class AccelerationMethodTest {
       assertNotNull(xNew);
       assertEquals(2, xNew.length);
 
-      System.out.println("  Input: [0, 0]");
-      System.out.println("  g(x):  [1, 1]");
+      logger.info("  Input: [0, 0]");
+      logger.info("  g(x):  [1, 1]");
       System.out.printf("  Next:  [%.4f, %.4f]%n", xNew[0], xNew[1]);
-      System.out.println("====================================\n");
+      logger.info("====================================\n");
     }
 
     /**
@@ -473,30 +477,30 @@ class AccelerationMethodTest {
     @Test
     @DisplayName("Summary: When acceleration helps")
     void summarizeExpectedBenefits() {
-      System.out.println("\n===== Acceleration Methods: When They Help =====");
-      System.out.println();
-      System.out.println("DIRECT SUBSTITUTION (default):");
-      System.out.println("  - Simple, robust");
-      System.out.println("  - Works well when recycle variables converge quickly");
-      System.out.println("  - May be slow for tightly coupled systems");
-      System.out.println();
-      System.out.println("WEGSTEIN (q bounded in [-5, 0]):");
-      System.out.println("  - Current implementation uses DAMPING mode");
-      System.out.println("  - Improves STABILITY, not necessarily speed");
-      System.out.println("  - Helps when direct substitution oscillates");
-      System.out.println("  - Good for divergent/oscillatory recycles");
-      System.out.println();
-      System.out.println("BROYDEN'S METHOD:");
-      System.out.println("  - Multi-variable quasi-Newton method");
-      System.out.println("  - Best for tightly coupled multi-recycle systems");
-      System.out.println("  - Builds up Jacobian approximation over iterations");
-      System.out.println("  - May accelerate when variables are coupled");
-      System.out.println();
-      System.out.println("RECOMMENDATION:");
-      System.out.println("  1. Start with DIRECT_SUBSTITUTION");
-      System.out.println("  2. If oscillating, try WEGSTEIN (stabilizes)");
-      System.out.println("  3. For coupled recycles, try BROYDEN");
-      System.out.println("================================================\n");
+      logger.info("\n===== Acceleration Methods: When They Help =====");
+
+      logger.info("DIRECT SUBSTITUTION (default):");
+      logger.info("  - Simple, robust");
+      logger.info("  - Works well when recycle variables converge quickly");
+      logger.info("  - May be slow for tightly coupled systems");
+
+      logger.info("WEGSTEIN (q bounded in [-5, 0]):");
+      logger.info("  - Current implementation uses DAMPING mode");
+      logger.info("  - Improves STABILITY, not necessarily speed");
+      logger.info("  - Helps when direct substitution oscillates");
+      logger.info("  - Good for divergent/oscillatory recycles");
+
+      logger.info("BROYDEN'S METHOD:");
+      logger.info("  - Multi-variable quasi-Newton method");
+      logger.info("  - Best for tightly coupled multi-recycle systems");
+      logger.info("  - Builds up Jacobian approximation over iterations");
+      logger.info("  - May accelerate when variables are coupled");
+
+      logger.info("RECOMMENDATION:");
+      logger.info("  1. Start with DIRECT_SUBSTITUTION");
+      logger.info("  2. If oscillating, try WEGSTEIN (stabilizes)");
+      logger.info("  3. For coupled recycles, try BROYDEN");
+      logger.info("================================================\n");
 
       assertTrue(true);
     }
@@ -671,13 +675,13 @@ class AccelerationMethodTest {
     @Test
     @DisplayName("Benchmark: Real separation train with multiple recycles")
     void benchmarkSeparationTrain() {
-      System.out.println("\n===== Real Process Benchmark: Separation Train =====");
-      System.out.println("Process: 3-stage separation with 2 liquid recycles");
-      System.out.println("Units: ~20 process units, 2 recycle loops");
-      System.out.println();
+      logger.info("\n===== Real Process Benchmark: Separation Train =====");
+      logger.info("Process: 3-stage separation with 2 liquid recycles");
+      logger.info("Units: ~20 process units, 2 recycle loops");
+
 
       // Warmup
-      System.out.println("Warming up...");
+      logger.info("Warming up...");
       neqsim.process.processmodel.ProcessSystem warmup =
           createSeparationTrain(AccelerationMethod.DIRECT_SUBSTITUTION);
       warmup.run();
@@ -685,7 +689,7 @@ class AccelerationMethodTest {
       // Benchmark each method
       int runs = 3;
 
-      System.out.println("\nRunning benchmarks (" + runs + " runs each)...\n");
+      logger.info("\nRunning benchmarks (" + runs + " runs each)...\n");
 
       // Direct substitution
       long directTime = 0;
@@ -726,8 +730,8 @@ class AccelerationMethodTest {
         broydenIters += ((Recycle) p.getUnit("MP recycle unit")).getIterations();
       }
 
-      System.out.println("Results (averaged over " + runs + " runs):");
-      System.out.println("=========================================");
+      logger.info("Results (averaged over " + runs + " runs):");
+      logger.info("=========================================");
       System.out.printf("  DIRECT:   %6.0f ms, %d total recycle iterations%n",
           directTime / (double) runs, directIters / runs);
       System.out.printf("  WEGSTEIN: %6.0f ms, %d total recycle iterations%n",
@@ -735,7 +739,7 @@ class AccelerationMethodTest {
       System.out.printf("  BROYDEN:  %6.0f ms, %d total recycle iterations%n",
           broydenTime / (double) runs, broydenIters / runs);
 
-      System.out.println();
+
       if (wegsteinTime < directTime) {
         System.out.printf("Wegstein speedup: %.2fx%n", directTime / (double) wegsteinTime);
       } else {
@@ -747,7 +751,7 @@ class AccelerationMethodTest {
         System.out.printf("Broyden slowdown:  %.2fx%n", broydenTime / (double) directTime);
       }
 
-      System.out.println("=============================================\n");
+      logger.info("=============================================\n");
 
       // Just verify process ran successfully
       assertTrue(directTime > 0);

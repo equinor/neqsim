@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class DewPointCurve {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(DewPointCurve.class);
+  private static final Logger logger = LogManager.getLogger(DewPointCurve.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -70,9 +71,9 @@ public class DewPointCurve {
       // testOps.TPflash();
       // testOps.dewPointTemperatureFlash();
       // testSystem.display();
-      // System.out.println("condensation rate: " +
+      // logger.info("condensation rate: " +
       // testOps.dewPointTemperatureCondensationRate() * 1e6 + " mg/K/Sm^3");
-      // System.out.println("condensation rate: " +
+      // logger.info("condensation rate: " +
       // testOps.dewPointTemperatureCondensationRate() * 1e6 * 1.0 /
       // testSystem.getPressure() * testSystem.getPhase(0).getZ() *
       // testSystem.getTemperature() / 288.15 + " mg/K/Sm^3");
@@ -82,17 +83,15 @@ public class DewPointCurve {
 
     // testSystem.dewPointCondensationRate()
     /*
-     * System.out.println("temp " + (testSystem.getTemperature() - 273.15)); for (int i = 0; i <
+     * logger.info("temp " + (testSystem.getTemperature() - 273.15)); for (int i = 0; i <
      * testSystem.getPhase(0).getNumberOfComponents(); i++) {
-     * System.out.println("unsymetric activity coeff " +
-     * testSystem.getPhase(1).getComponent(i).getName() + " " +
-     * testSystem.getPhase(1).getActivityCoefficientUnSymetric(i)); } for (int i = 0; i <
-     * testSystem.getPhase(0).getNumberOfComponents(); i++) {
-     * System.out.println("symetric activity coeff " +
-     * testSystem.getPhase(1).getComponent(i).getName() + " " +
-     * testSystem.getPhase(1).getActivityCoefficientSymetric(i)); }
-     * System.out.println("activity coeff " + testSystem.getPhase(1).getComponent(1).getName() + " "
-     * + testSystem.getPhase(1).getActivityCoefficient(1, 0));
+     * logger.info("unsymetric activity coeff " + testSystem.getPhase(1).getComponent(i).getName() +
+     * " " + testSystem.getPhase(1).getActivityCoefficientUnSymetric(i)); } for (int i = 0; i <
+     * testSystem.getPhase(0).getNumberOfComponents(); i++) { logger.info("symetric activity coeff "
+     * + testSystem.getPhase(1).getComponent(i).getName() + " " +
+     * testSystem.getPhase(1).getActivityCoefficientSymetric(i)); } logger.info("activity coeff " +
+     * testSystem.getPhase(1).getComponent(1).getName() + " " +
+     * testSystem.getPhase(1).getActivityCoefficient(1, 0));
      */
   }
 }

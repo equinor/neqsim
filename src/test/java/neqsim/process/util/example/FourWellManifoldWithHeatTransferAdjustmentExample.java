@@ -1,5 +1,7 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills.HeatTransferMode;
@@ -47,6 +49,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * </pre>
  */
 public class FourWellManifoldWithHeatTransferAdjustmentExample {
+  private static final Logger logger =
+      LogManager.getLogger(FourWellManifoldWithHeatTransferAdjustmentExample.class);
 
   /**
    * Creates a hydrocarbon gas system for a well.
@@ -75,9 +79,9 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
    * @param args command line arguments (not used)
    */
   public static void main(String[] args) {
-    System.out.println("╔══════════════════════════════════════════════════════════════════════╗");
-    System.out.println("║  FOUR WELL MANIFOLD WITH HEAT TRANSFER ADJUSTMENT EXAMPLE            ║");
-    System.out.println("╚══════════════════════════════════════════════════════════════════════╝");
+    logger.info("╔══════════════════════════════════════════════════════════════════════╗");
+    logger.info("║  FOUR WELL MANIFOLD WITH HEAT TRANSFER ADJUSTMENT EXAMPLE            ║");
+    logger.info("╚══════════════════════════════════════════════════════════════════════╝");
 
     // ========================================
     // CONFIGURATION PARAMETERS
@@ -130,7 +134,7 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     // ========================================
     // CREATE WELL STREAMS
     // ========================================
-    System.out.println("\n=== Creating Well Streams ===");
+    logger.info("\n=== Creating Well Streams ===");
 
     // Well 1
     SystemInterface wellFluid1 = createWellFluid("Well1", wellTemperature, wellPressure1);
@@ -152,12 +156,12 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     Stream well4Stream = new Stream("Well 4 Stream", wellFluid4);
     well4Stream.setFlowRate(flowRate4, "kg/hr");
 
-    System.out.println("Created 4 well streams at " + wellTemperature + " °C");
+    logger.info("Created 4 well streams at " + wellTemperature + " °C");
 
     // ========================================
     // CREATE BEGGS AND BRILL PIPES (WELL PIPES)
     // ========================================
-    System.out.println("\n=== Creating Beggs and Brill Pipes (Heat Transfer to Sea) ===");
+    logger.info("\n=== Creating Beggs and Brill Pipes (Heat Transfer to Sea) ===");
 
     // Pipe 1 - Well 1 pipe
     PipeBeggsAndBrills pipe1 = new PipeBeggsAndBrills("Well 1 Pipe", well1Stream);
@@ -215,7 +219,7 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     // ========================================
     // CREATE SPLITTERS FOR ROUTING
     // ========================================
-    System.out.println("\n=== Creating Splitters for HP/LP Routing ===");
+    logger.info("\n=== Creating Splitters for HP/LP Routing ===");
 
     // Splitter 1 - routes Well 1 output
     Splitter splitter1 = new Splitter("Well 1 Splitter", pipe1.getOutletStream(), 2);
@@ -233,16 +237,16 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     Splitter splitter4 = new Splitter("Well 4 Splitter", pipe4.getOutletStream(), 2);
     splitter4.setSplitFactors(well4SplitFactors);
 
-    System.out.println("Routing configuration:");
-    System.out.println("  Well 1: HP=" + well1SplitFactors[0] + ", LP=" + well1SplitFactors[1]);
-    System.out.println("  Well 2: HP=" + well2SplitFactors[0] + ", LP=" + well2SplitFactors[1]);
-    System.out.println("  Well 3: HP=" + well3SplitFactors[0] + ", LP=" + well3SplitFactors[1]);
-    System.out.println("  Well 4: HP=" + well4SplitFactors[0] + ", LP=" + well4SplitFactors[1]);
+    logger.info("Routing configuration:");
+    logger.info("  Well 1: HP=" + well1SplitFactors[0] + ", LP=" + well1SplitFactors[1]);
+    logger.info("  Well 2: HP=" + well2SplitFactors[0] + ", LP=" + well2SplitFactors[1]);
+    logger.info("  Well 3: HP=" + well3SplitFactors[0] + ", LP=" + well3SplitFactors[1]);
+    logger.info("  Well 4: HP=" + well4SplitFactors[0] + ", LP=" + well4SplitFactors[1]);
 
     // ========================================
     // CREATE HP AND LP MANIFOLDS (MIXERS)
     // ========================================
-    System.out.println("\n=== Creating HP and LP Manifolds ===");
+    logger.info("\n=== Creating HP and LP Manifolds ===");
 
     // HP Manifold - collects HP split streams
     Mixer hpManifold = new Mixer("HP Manifold");
@@ -258,13 +262,13 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     lpManifold.addStream(splitter3.getSplitStream(1)); // LP from Well 3
     lpManifold.addStream(splitter4.getSplitStream(1)); // LP from Well 4
 
-    System.out.println("Created HP Manifold (Wells 1 & 2 routed here)");
-    System.out.println("Created LP Manifold (Wells 3 & 4 routed here)");
+    logger.info("Created HP Manifold (Wells 1 & 2 routed here)");
+    logger.info("Created LP Manifold (Wells 3 & 4 routed here)");
 
     // ========================================
     // CREATE ADJUSTERS FOR HEAT TRANSFER COEFFICIENT
     // ========================================
-    System.out.println("\n=== Creating Adjusters for Heat Transfer Coefficient ===");
+    logger.info("\n=== Creating Adjusters for Heat Transfer Coefficient ===");
 
     // Adjuster for HP manifold outlet temperature
     // Adjusts the heat transfer coefficient of pipes feeding HP manifold (pipe1 and pipe2)
@@ -309,7 +313,7 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     // ========================================
     // BUILD AND RUN THE PROCESS SYSTEM
     // ========================================
-    System.out.println("\n=== Building Process System ===");
+    logger.info("\n=== Building Process System ===");
 
     ProcessSystem process = new ProcessSystem();
 
@@ -339,7 +343,7 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     process.add(hpAdjuster);
     process.add(lpAdjuster);
 
-    System.out.println("Running process simulation with adjusters...");
+    logger.info("Running process simulation with adjusters...");
     process.run();
     process.run();
     process.run();
@@ -348,13 +352,13 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     // ========================================
     System.out
         .println("\n╔══════════════════════════════════════════════════════════════════════╗");
-    System.out.println("║                           SIMULATION RESULTS                          ║");
-    System.out.println("╚══════════════════════════════════════════════════════════════════════╝");
+    logger.info("║                           SIMULATION RESULTS                          ║");
+    logger.info("╚══════════════════════════════════════════════════════════════════════╝");
 
-    System.out.println("\n=== Well Inlet Conditions ===");
+    logger.info("\n=== Well Inlet Conditions ===");
     System.out.printf("%-15s %15s %15s %15s%n", "Well", "Temperature(°C)", "Pressure(bara)",
         "FlowRate(kg/hr)");
-    System.out.println("─────────────────────────────────────────────────────────────────────────");
+    logger.info("─────────────────────────────────────────────────────────────────────────");
     System.out.printf("%-15s %15.2f %15.2f %15.0f%n", "Well 1", well1Stream.getTemperature("C"),
         well1Stream.getPressure("bara"), well1Stream.getFlowRate("kg/hr"));
     System.out.printf("%-15s %15.2f %15.2f %15.0f%n", "Well 2", well2Stream.getTemperature("C"),
@@ -364,10 +368,10 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     System.out.printf("%-15s %15.2f %15.2f %15.0f%n", "Well 4", well4Stream.getTemperature("C"),
         well4Stream.getPressure("bara"), well4Stream.getFlowRate("kg/hr"));
 
-    System.out.println("\n=== Pipe Outlet Conditions ===");
+    logger.info("\n=== Pipe Outlet Conditions ===");
     System.out.printf("%-15s %15s %15s %20s%n", "Pipe", "Outlet Temp(°C)", "Outlet P(bara)",
         "Heat Transfer(W/m²K)");
-    System.out.println("─────────────────────────────────────────────────────────────────────────");
+    logger.info("─────────────────────────────────────────────────────────────────────────");
     System.out.printf("%-15s %15.2f %15.2f %20.2f%n", "Pipe 1",
         pipe1.getOutletTemperature() - 273.15, pipe1.getOutletPressure(),
         pipe1.getHeatTransferCoefficient());
@@ -381,9 +385,9 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
         pipe4.getOutletTemperature() - 273.15, pipe4.getOutletPressure(),
         pipe4.getHeatTransferCoefficient());
 
-    System.out.println("\n=== Pipe Hydraulics (Pressure Drop) ===");
+    logger.info("\n=== Pipe Hydraulics (Pressure Drop) ===");
     System.out.printf("%-15s %18s %20s%n", "Pipe", "Pressure Drop (bar)", "dP/Length (bar/km)");
-    System.out.println("─────────────────────────────────────────────────────────────────────────");
+    logger.info("─────────────────────────────────────────────────────────────────────────");
     double dp1 = well1Stream.getPressure("bara") - pipe1.getOutletPressure();
     System.out.printf("%-15s %18.2f %20.2f%n", "Pipe 1", dp1, dp1 / (pipeLength / 1000.0));
     double dp2 = well2Stream.getPressure("bara") - pipe2.getOutletPressure();
@@ -392,13 +396,13 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     System.out.printf("%-15s %18.2f %20.2f%n", "Pipe 3", dp3, dp3 / (pipeLength / 1000.0));
     double dp4 = well4Stream.getPressure("bara") - pipe4.getOutletPressure();
     System.out.printf("%-15s %18.2f %20.2f%n", "Pipe 4", dp4, dp4 / (pipeLength / 1000.0));
-    System.out.println("\nTypical acceptable ranges:");
-    System.out.println("  Pressure drop: <1-2 bar/km for gas pipelines");
+    logger.info("\nTypical acceptable ranges:");
+    logger.info("  Pressure drop: <1-2 bar/km for gas pipelines");
 
-    System.out.println("\n=== Manifold Outlet Conditions ===");
+    logger.info("\n=== Manifold Outlet Conditions ===");
     System.out.printf("%-15s %15s %15s %15s%n", "Manifold", "Temperature(°C)", "Pressure(bara)",
         "FlowRate(kg/hr)");
-    System.out.println("─────────────────────────────────────────────────────────────────────────");
+    logger.info("─────────────────────────────────────────────────────────────────────────");
     System.out.printf("%-15s %15.2f %15.2f %15.0f%n", "HP Manifold",
         hpManifold.getOutletStream().getTemperature("C"),
         hpManifold.getOutletStream().getPressure("bara"),
@@ -408,7 +412,7 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
         lpManifold.getOutletStream().getPressure("bara"),
         lpManifold.getOutletStream().getFlowRate("kg/hr"));
 
-    System.out.println("\n=== Adjuster Status ===");
+    logger.info("\n=== Adjuster Status ===");
     System.out.printf("HP Adjuster: Target=%.1f°C, Achieved=%.2f°C, Error=%.4f, Solved=%s%n",
         measuredHPTemp, hpManifold.getOutletStream().getTemperature("C"), hpAdjuster.getError(),
         hpAdjuster.solved());
@@ -416,7 +420,7 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
         measuredLPTemp, lpManifold.getOutletStream().getTemperature("C"), lpAdjuster.getError(),
         lpAdjuster.solved());
 
-    System.out.println("\n=== Adjusted Heat Transfer Coefficients ===");
+    logger.info("\n=== Adjusted Heat Transfer Coefficients ===");
     System.out.printf("HP Pipes (1 & 2): %.2f W/(m²·K)%n", pipe1.getHeatTransferCoefficient());
     System.out.printf("LP Pipes (3 & 4): %.2f W/(m²·K)%n", pipe3.getHeatTransferCoefficient());
 
@@ -425,26 +429,26 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     // ========================================
     System.out
         .println("\n╔══════════════════════════════════════════════════════════════════════╗");
-    System.out.println("║           DEMONSTRATING ROUTING CHANGE (SWITCH WELL 3 TO HP)          ║");
-    System.out.println("╚══════════════════════════════════════════════════════════════════════╝");
+    logger.info("║           DEMONSTRATING ROUTING CHANGE (SWITCH WELL 3 TO HP)          ║");
+    logger.info("╚══════════════════════════════════════════════════════════════════════╝");
 
     // Change routing: move Well 3 from LP to HP
     double[] newWell3SplitFactors = {1.0, 0.0}; // Now 100% HP, 0% LP
     splitter3.setSplitFactors(newWell3SplitFactors);
 
-    System.out.println("New routing configuration:");
-    System.out.println("  Well 1: HP=1.0, LP=0.0");
-    System.out.println("  Well 2: HP=1.0, LP=0.0");
-    System.out.println("  Well 3: HP=1.0, LP=0.0 (CHANGED)");
-    System.out.println("  Well 4: HP=0.0, LP=1.0");
+    logger.info("New routing configuration:");
+    logger.info("  Well 1: HP=1.0, LP=0.0");
+    logger.info("  Well 2: HP=1.0, LP=0.0");
+    logger.info("  Well 3: HP=1.0, LP=0.0 (CHANGED)");
+    logger.info("  Well 4: HP=0.0, LP=1.0");
 
-    System.out.println("\nRunning process with new routing...");
+    logger.info("\nRunning process with new routing...");
     process.run();
 
-    System.out.println("\n=== Updated Manifold Outlet Conditions ===");
+    logger.info("\n=== Updated Manifold Outlet Conditions ===");
     System.out.printf("%-15s %15s %15s %15s%n", "Manifold", "Temperature(°C)", "Pressure(bara)",
         "FlowRate(kg/hr)");
-    System.out.println("─────────────────────────────────────────────────────────────────────────");
+    logger.info("─────────────────────────────────────────────────────────────────────────");
     System.out.printf("%-15s %15.2f %15.2f %15.0f%n", "HP Manifold",
         hpManifold.getOutletStream().getTemperature("C"),
         hpManifold.getOutletStream().getPressure("bara"),
@@ -454,12 +458,12 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
         lpManifold.getOutletStream().getPressure("bara"),
         lpManifold.getOutletStream().getFlowRate("kg/hr"));
 
-    System.out.println("\n=== Updated Adjusted Heat Transfer Coefficients ===");
+    logger.info("\n=== Updated Adjusted Heat Transfer Coefficients ===");
     System.out.printf("HP Pipes (1 & 2): %.2f W/(m²·K)%n", pipe1.getHeatTransferCoefficient());
     System.out.printf("LP Pipes (3 & 4): %.2f W/(m²·K)%n", pipe3.getHeatTransferCoefficient());
 
     System.out
         .println("\n════════════════════════════════════════════════════════════════════════");
-    System.out.println("Example completed successfully!");
+    logger.info("Example completed successfully!");
   }
 }

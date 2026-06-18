@@ -7,6 +7,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -18,6 +20,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class oxygenRemovalWater {
+  private static final Logger logger = LogManager.getLogger(oxygenRemovalWater.class);
+
   /**
    * <p>
    * main.
@@ -68,6 +72,6 @@ public class oxygenRemovalWater {
     LP_valve.getThermoSystem().display();
 
     double wtFracO2 = LP_valve.getThermoSystem().getPhase("aqueous").getWtFrac("oxygen") * 1e9;
-    System.out.println("oxygen ppb " + wtFracO2);
+    logger.info("oxygen ppb " + wtFracO2);
   }
 }

@@ -2,6 +2,8 @@ package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -20,6 +22,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 class CDFTMixtureTest {
+  private static final Logger logger = LogManager.getLogger(CDFTMixtureTest.class);
 
   /**
    * Test methane-propane binary IFT at 258 K.
@@ -47,7 +50,7 @@ class CDFTMixtureTest {
       sys.initProperties();
 
       if (sys.getNumberOfPhases() < 2) {
-        System.out.println("CH4/C3 at 258K, 20bar: single phase (supercritical or subcooled)");
+        logger.info("CH4/C3 at 258K, 20bar: single phase (supercritical or subcooled)");
         return;
       }
 
@@ -63,7 +66,7 @@ class CDFTMixtureTest {
       Assertions.assertTrue(sigmaMNm > 0.0, "IFT must be positive");
       Assertions.assertTrue(sigmaMNm < 20.0, "IFT should be less than pure propane");
     } catch (Exception ex) {
-      System.out.println("CH4/C3 test failed: " + ex.getMessage());
+      logger.info("CH4/C3 test failed: " + ex.getMessage());
       ex.printStackTrace();
     }
   }
@@ -93,7 +96,7 @@ class CDFTMixtureTest {
       sys.initProperties();
 
       if (sys.getNumberOfPhases() < 2) {
-        System.out.println("N2/CH4 at 95K, 2bar: single phase");
+        logger.info("N2/CH4 at 95K, 2bar: single phase");
         return;
       }
 
@@ -109,7 +112,7 @@ class CDFTMixtureTest {
       Assertions.assertTrue(sigmaMNm > 0.0, "IFT must be positive");
       Assertions.assertTrue(sigmaMNm < 25.0, "IFT should be physically reasonable");
     } catch (Exception ex) {
-      System.out.println("N2/CH4 test failed: " + ex.getMessage());
+      logger.info("N2/CH4 test failed: " + ex.getMessage());
       ex.printStackTrace();
     }
   }
@@ -127,9 +130,9 @@ class CDFTMixtureTest {
     double temperature = 277.6; // K (equivalent to 4.4C / 40F)
     double lambda = 0.70;
 
-    System.out.println("\n=== CH4/C3 IFT vs Pressure (T=277.6K) ===");
+    logger.info("\n=== CH4/C3 IFT vs Pressure (T=277.6K) ===");
     System.out.printf("%-10s | %-10s | %-10s | %-10s%n", "P (bar)", "IFT(mN/m)", "rhoL", "rhoV");
-    System.out.println("-----------|------------|------------|----------");
+    logger.info("-----------|------------|------------|----------");
 
     // Experimental: Weinaug & Katz (1943): at 277.6K (40F):
     // ~14 bar: sigma ~ 7.0 mN/m, ~34 bar: sigma ~ 4.0 mN/m, ~55 bar: sigma ~ 1.5 mN/m
@@ -180,7 +183,7 @@ class CDFTMixtureTest {
     double pressure = 5.0;
     double lambda = 0.70;
 
-    System.out.println("\n=== Dilute limit consistency check ===");
+    logger.info("\n=== Dilute limit consistency check ===");
 
     // Pure propane IFT
     SystemInterface pureC3 = new SystemPrEos(temperature, 1.0);
@@ -216,10 +219,10 @@ class CDFTMixtureTest {
         // Mixture IFT should be within reasonable range of pure IFT
         System.out.printf("Ratio mix/pure = %.3f (should be close to 1.0)%n", sigmaMix / sigmaPure);
       } else {
-        System.out.println("Binary: single phase at these conditions");
+        logger.info("Binary: single phase at these conditions");
       }
     } catch (Exception ex) {
-      System.out.println("Consistency check failed: " + ex.getMessage());
+      logger.info("Consistency check failed: " + ex.getMessage());
       ex.printStackTrace();
     }
   }
@@ -256,10 +259,10 @@ class CDFTMixtureTest {
     double temperature = 277.6; // K (40 degF)
     double lambda = 0.65; // ~average of CH4 (0.80) and C3 (0.55)
 
-    System.out.println("\n=== Mixture IFT vs Experimental: CH4/C3 at 277.6K ===");
+    logger.info("\n=== Mixture IFT vs Experimental: CH4/C3 at 277.6K ===");
     System.out.printf("%-8s | %8s | %8s | %8s | %8s | %8s%n", "P(bar)", "Exp", "cDFT", "Dev(%)",
         "Parachor", "GT");
-    System.out.println("---------|----------|----------|----------|----------|----------");
+    logger.info("---------|----------|----------|----------|----------|----------");
 
     double sumAbsDev = 0;
     double sumAbsDevParachor = 0;
@@ -341,7 +344,7 @@ class CDFTMixtureTest {
     }
 
     // Summary
-    System.out.println("---------|----------|----------|----------|----------|----------");
+    logger.info("---------|----------|----------|----------|----------|----------");
     if (countCDFT > 0) {
       System.out.printf("cDFT AAD = %.1f%% (n=%d)%n", sumAbsDev / countCDFT, countCDFT);
     }

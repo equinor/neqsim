@@ -1,6 +1,8 @@
 package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +37,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class CDFTSurfaceTensionLiteratureComparisonTest {
+  private static final Logger logger =
+      LogManager.getLogger(CDFTSurfaceTensionLiteratureComparisonTest.class);
 
   /**
    * Computes IFT using a specified model.
@@ -106,29 +110,28 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
    */
   @Test
   void literatureComparisonTable() {
-    System.out.println();
-    System.out.println("==========================================================================="
+
+    logger.info("==========================================================================="
         + "===========================================");
-    System.out.println("  LITERATURE COMPARISON: NeqSim IFT Models vs Published GT/DFT Results");
-    System.out.println("==========================================================================="
+    logger.info("  LITERATURE COMPARISON: NeqSim IFT Models vs Published GT/DFT Results");
+    logger.info("==========================================================================="
         + "===========================================");
-    System.out.println();
-    System.out.println("Reference papers:");
-    System.out.println("  [1] Miqueu et al. (2003) FPE 207, 225-246  "
+
+    logger.info("Reference papers:");
+    logger.info("  [1] Miqueu et al. (2003) FPE 207, 225-246  "
         + " GT + vol-corrected PR, c(omega) correlation");
-    System.out.println("  [2] Zuo & Stenby (1997) FPE 132, 139-158  "
+    logger.info("  [2] Zuo & Stenby (1997) FPE 132, 139-158  "
         + " GT + PR (no vol. corr.), c(omega,Tr) correlation");
-    System.out.println("  [3] Li & Firoozabadi (2009) JCP 130, 154108"
+    logger.info("  [3] Li & Firoozabadi (2009) JCP 130, 154108"
         + " DFT + PR, WDA+QDE, 1 fitted param per substance");
-    System.out.println("  [4] Cachadina et al. (2023) FPE 564, 113600"
+    logger.info("  [4] Cachadina et al. (2023) FPE 564, 113600"
         + " GT + PR, influence parameter expression");
-    System.out.println();
-    System.out
-        .println("Key distinction: Published GT methods [1,2,4] use semi-empirical influence");
-    System.out.println("parameter correlations. [3] uses one adjustable parameter per substance.");
-    System.out.println("NeqSim cDFT is fully predictive (ZERO fitted parameters).");
-    System.out.println("NeqSim Full GT uses Cachadina's influence parameter expression [4].");
-    System.out.println();
+
+    logger.info("Key distinction: Published GT methods [1,2,4] use semi-empirical influence");
+    logger.info("parameter correlations. [3] uses one adjustable parameter per substance.");
+    logger.info("NeqSim cDFT is fully predictive (ZERO fitted parameters).");
+    logger.info("NeqSim Full GT uses Cachadina's influence parameter expression [4].");
+
 
     // Experimental data: same components as Miqueu (2003) Table 4
     // Covering C1-C8, N2, CO2 at multiple temperatures
@@ -169,7 +172,7 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
         "Exp", "cDFT", "Full GT", "Parachor", "Miqueu GT");
     System.out.printf("| %-10s | %6s | %6s | %10s | %10s | %10s | %10s |%n", "", "", "mN/m",
         "mN/m (%)", "mN/m (%)", "mN/m (%)", "AAD (%)");
-    System.out.println("|------------|--------|--------|------------|"
+    logger.info("|------------|--------|--------|------------|"
         + "------------|------------|------------|");
 
     // Collect per-component deviation sums
@@ -220,15 +223,15 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
           component, tempK, sigmaExp, sigmaCDFT, devCDFT, sigmaGT, devGT, sigmaParachor, devPar);
     }
 
-    System.out.println("|------------|--------|--------|------------|"
+    logger.info("|------------|--------|--------|------------|"
         + "------------|------------|------------|");
 
     // Per-component AAD summary
-    System.out.println();
-    System.out.println("=== Per-Component AAD Comparison (%) ===");
+
+    logger.info("=== Per-Component AAD Comparison (%) ===");
     System.out.printf("| %-10s | %8s | %8s | %8s | %8s |%n", "Component", "cDFT", "Full GT",
         "Parachor", "Miqueu GT");
-    System.out.println("|------------|----------|----------|----------|----------|");
+    logger.info("|------------|----------|----------|----------|----------|");
     for (String comp : cdftDevs.keySet()) {
       double aadCDFT = average(cdftDevs.get(comp));
       double aadGT = average(gtDevs.get(comp));
@@ -241,51 +244,51 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
     double overallCDFT = nTotal > 0 ? sumCDFT / nTotal : 0;
     double overallGT = nTotal > 0 ? sumGT / nTotal : 0;
     double overallPar = nTotal > 0 ? sumPar / nTotal : 0;
-    System.out.println("|------------|----------|----------|----------|----------|");
+    logger.info("|------------|----------|----------|----------|----------|");
     System.out.printf("| %-10s | %6.1f %% | %6.1f %% | %6.1f %% | %6.1f %% |%n", "OVERALL",
         overallCDFT, overallGT, overallPar, 2.2);
-    System.out.println();
+
 
     // Analysis summary
-    System.out.println("=== Analysis Summary ===");
-    System.out.println();
-    System.out.println("1. Miqueu et al. (2003) GT + vol-corrected PR:");
-    System.out.println("   - Uses semi-empirical influence parameter c/ab^(2/3) = At + B");
-    System.out.println("   - A and B correlated with acentric factor (Eqs 27-28)");
-    System.out.println("   - Volume correction to improve liquid density predictions");
-    System.out.println("   - Overall AAD = 2.2% (hydrocarbons + gases), 4% (refrigerants)");
-    System.out.println("   - With per-component fitted A,B: AAD = 0.4% (essentially exact)");
-    System.out.println();
-    System.out.println("2. NeqSim Full GT (Cachadina influence parameter):");
+    logger.info("=== Analysis Summary ===");
+
+    logger.info("1. Miqueu et al. (2003) GT + vol-corrected PR:");
+    logger.info("   - Uses semi-empirical influence parameter c/ab^(2/3) = At + B");
+    logger.info("   - A and B correlated with acentric factor (Eqs 27-28)");
+    logger.info("   - Volume correction to improve liquid density predictions");
+    logger.info("   - Overall AAD = 2.2% (hydrocarbons + gases), 4% (refrigerants)");
+    logger.info("   - With per-component fitted A,B: AAD = 0.4% (essentially exact)");
+
+    logger.info("2. NeqSim Full GT (Cachadina influence parameter):");
     System.out.printf("   - Overall AAD = %.1f%% (this test set, PR EOS)%n", overallGT);
-    System.out.println("   - Uses correlated influence parameter (semi-predictive)");
-    System.out.println("   - No volume correction applied (uses standard PR volumes)");
-    System.out.println();
-    System.out.println("3. NeqSim cDFT (fully predictive, v3):");
+    logger.info("   - Uses correlated influence parameter (semi-predictive)");
+    logger.info("   - No volume correction applied (uses standard PR volumes)");
+
+    logger.info("3. NeqSim cDFT (fully predictive, v3):");
     System.out.printf("   - Overall AAD = %.1f%% (this test set, PR EOS)%n", overallCDFT);
-    System.out.println("   - ZERO adjustable parameters (fully predictive)");
-    System.out.println("   - Uses variational tanh profile with step-function kernel");
-    System.out.println("   - Splits cubic EOS Helmholtz: local repulsive + non-local attractive");
-    System.out.println("   - Expected to under-predict: simplified mean-field kernel");
-    System.out.println();
-    System.out.println("4. NeqSim Parachor (empirical correlation):");
+    logger.info("   - ZERO adjustable parameters (fully predictive)");
+    logger.info("   - Uses variational tanh profile with step-function kernel");
+    logger.info("   - Splits cubic EOS Helmholtz: local repulsive + non-local attractive");
+    logger.info("   - Expected to under-predict: simplified mean-field kernel");
+
+    logger.info("4. NeqSim Parachor (empirical correlation):");
     System.out.printf("   - Overall AAD = %.1f%% (this test set, PR EOS)%n", overallPar);
-    System.out.println("   - MacLeod-Sugden correlation with fitted exponent");
-    System.out.println();
-    System.out.println("5. Li & Firoozabadi (2009) DFT + PR (literature only):");
-    System.out.println("   - Uses WDA (weighted density approximation) + QDE");
-    System.out.println("   - One adjustable parameter per substance fitted to single IFT datum");
-    System.out.println("   - Reported AAD ~ 1-3% for alkanes and gases (N2, CO2, H2S, C1-nC10)");
-    System.out.println("   - Semi-predictive (one param fitted per component)");
-    System.out.println();
-    System.out.println("Key insight: The published GT methods achieve ~2% AAD by fitting the");
-    System.out.println("influence parameter to experimental surface tension data. The NeqSim cDFT");
+    logger.info("   - MacLeod-Sugden correlation with fitted exponent");
+
+    logger.info("5. Li & Firoozabadi (2009) DFT + PR (literature only):");
+    logger.info("   - Uses WDA (weighted density approximation) + QDE");
+    logger.info("   - One adjustable parameter per substance fitted to single IFT datum");
+    logger.info("   - Reported AAD ~ 1-3% for alkanes and gases (N2, CO2, H2S, C1-nC10)");
+    logger.info("   - Semi-predictive (one param fitted per component)");
+
+    logger.info("Key insight: The published GT methods achieve ~2% AAD by fitting the");
+    logger.info("influence parameter to experimental surface tension data. The NeqSim cDFT");
     System.out
         .println("uses no such fitting and derives the interfacial Helmholtz energy entirely");
-    System.out.println("from the cubic EOS attractive parameter. The systematic under-prediction");
-    System.out.println("(cDFT values ~40-50% below experiment) is consistent with the mean-field");
-    System.out.println("approximation missing short-range correlation effects that the fitted");
-    System.out.println("influence parameter implicitly captures.");
+    logger.info("from the cubic EOS attractive parameter. The systematic under-prediction");
+    logger.info("(cDFT values ~40-50% below experiment) is consistent with the mean-field");
+    logger.info("approximation missing short-range correlation effects that the fitted");
+    logger.info("influence parameter implicitly captures.");
 
     // Sanity assertions
     assertTrue(nTotal >= 20, "Should compute at least 20 systems");
@@ -297,13 +300,13 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
    */
   @Test
   void eosComparisonForLiterature() {
-    System.out.println();
-    System.out.println("==========================================================================="
+
+    logger.info("==========================================================================="
         + "============================");
-    System.out.println("  EOS Comparison: PR vs SRK for cDFT and Full GT (selected components)");
-    System.out.println("==========================================================================="
+    logger.info("  EOS Comparison: PR vs SRK for cDFT and Full GT (selected components)");
+    logger.info("==========================================================================="
         + "============================");
-    System.out.println();
+
 
     String[][] testCases = {{"methane", "111.0", "14.9"}, {"ethane", "230.0", "9.4"},
         {"propane", "270.0", "8.6"}, {"n-butane", "320.0", "7.6"}, {"n-hexane", "300.0", "16.3"},
@@ -360,9 +363,9 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
               + " AAD %3.0f%%  | AAD %3.0f%%  |%n",
           "OVERALL", sumCdftPR / n, sumCdftSRK / n, sumGtPR / n, sumGtSRK / n);
     }
-    System.out.println();
-    System.out.println("Note: Miqueu et al. (2003) used PR-EOS exclusively. SRK gives different");
-    System.out.println("saturation densities, which affects both GT and cDFT results.");
+
+    logger.info("Note: Miqueu et al. (2003) used PR-EOS exclusively. SRK gives different");
+    logger.info("saturation densities, which affects both GT and cDFT results.");
 
     assertTrue(n >= 6, "At least 6 comparison points should succeed");
   }
@@ -372,13 +375,13 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
    */
   @Test
   void methodRankingSummary() {
-    System.out.println();
-    System.out.println("==========================================================================="
+
+    logger.info("==========================================================================="
         + "==============================");
-    System.out.println("  METHOD RANKING: Surface Tension Prediction Approaches");
-    System.out.println("==========================================================================="
+    logger.info("  METHOD RANKING: Surface Tension Prediction Approaches");
+    logger.info("==========================================================================="
         + "==============================");
-    System.out.println();
+
     System.out.printf("| %-5s | %-45s | %8s | %6s | %s |%n", "Rank", "Method", "AAD (%)", "Params",
         "Source");
     System.out
@@ -428,21 +431,21 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
     System.out
         .println("|-------|-----------------------------------------------|----------|--------|"
             + "-----------------------------|");
-    System.out.println();
-    System.out.println("Notes:");
-    System.out.println("  - 'Params' = number of parameters fitted to IFT data.");
-    System.out.println("    0 = fully predictive from EOS parameters only.");
-    System.out.println("  - Miqueu generalized c(omega) uses 2 universal constants (A, B as");
-    System.out.println("    functions of omega), so '0' IFT-fitted params but the c expression");
-    System.out.println("    was derived from fitting 40+ components' experimental IFT data.");
-    System.out.println("  - NeqSim cDFT systematically under-predicts because the mean-field");
-    System.out.println("    step-function kernel underweights short-range density correlations.");
+
+    logger.info("Notes:");
+    logger.info("  - 'Params' = number of parameters fitted to IFT data.");
+    logger.info("    0 = fully predictive from EOS parameters only.");
+    logger.info("  - Miqueu generalized c(omega) uses 2 universal constants (A, B as");
+    logger.info("    functions of omega), so '0' IFT-fitted params but the c expression");
+    logger.info("    was derived from fitting 40+ components' experimental IFT data.");
+    logger.info("  - NeqSim cDFT systematically under-predicts because the mean-field");
+    logger.info("    step-function kernel underweights short-range density correlations.");
     System.out
         .println("    This is a known limitation of simplified density functional approaches");
-    System.out.println("    when used with cubic EOS (see Gross 2009, Kahl & Winkelmann 2008).");
-    System.out.println("  - Improvement paths for cDFT: (a) use WDA instead of step kernel,");
-    System.out.println("    (b) apply a single scaling factor derived from critical scaling,");
-    System.out.println("    (c) use SAFT-type molecular parameters instead of cubic EOS.");
+    logger.info("    when used with cubic EOS (see Gross 2009, Kahl & Winkelmann 2008).");
+    logger.info("  - Improvement paths for cDFT: (a) use WDA instead of step kernel,");
+    logger.info("    (b) apply a single scaling factor derived from critical scaling,");
+    logger.info("    (c) use SAFT-type molecular parameters instead of cubic EOS.");
 
     assertTrue(n >= 8, "At least 8 of 9 quickTest points should succeed");
   }
@@ -457,14 +460,14 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
    */
   @Test
   void predictiveModeLiteratureComparison() {
-    System.out.println();
-    System.out.println("==========================================================================="
+
+    logger.info("==========================================================================="
         + "================================================================");
     System.out
         .println("  PAPER TABLE: Raw cDFT vs Predictive cDFT vs Full GT vs Parachor vs Miqueu GT");
-    System.out.println("==========================================================================="
+    logger.info("==========================================================================="
         + "================================================================");
-    System.out.println();
+
 
     String[][] testCases = {{"methane", "90.7", "18.9"}, {"methane", "111.0", "14.9"},
         {"methane", "120.0", "13.0"}, {"methane", "150.0", "6.6"}, {"methane", "170.0", "2.8"},
@@ -479,7 +482,7 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
         "Exp", "cDFT-raw", "cDFT-pred", "Full GT", "Parachor");
     System.out.printf("| %-10s | %6s | %6s | %10s | %10s | %10s | %10s |%n", "", "", "mN/m",
         "mN/m (%)", "mN/m (%)", "mN/m (%)", "mN/m (%)");
-    System.out.println("|------------|--------|--------|------------|"
+    logger.info("|------------|--------|--------|------------|"
         + "------------|------------|------------|");
 
     Map<String, List<Double>> rawDevs = new LinkedHashMap<String, List<Double>>();
@@ -538,15 +541,15 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
           sigmaParachor, devPar);
     }
 
-    System.out.println("|------------|--------|--------|------------|"
+    logger.info("|------------|--------|--------|------------|"
         + "------------|------------|------------|");
 
     // Per-component AAD summary
-    System.out.println();
-    System.out.println("=== Per-Component AAD (%) ===");
+
+    logger.info("=== Per-Component AAD (%) ===");
     System.out.printf("| %-10s | %8s | %8s | %8s | %8s | %8s |%n", "Component", "cDFT-raw",
         "cDFT-pred", "Full GT", "Parachor", "Miqueu GT");
-    System.out.println("|------------|----------|-----------|----------|----------|----------|");
+    logger.info("|------------|----------|-----------|----------|----------|----------|");
 
     Map<String, Double> miqueuAAD = new LinkedHashMap<String, Double>();
     miqueuAAD.put("methane", 1.2);
@@ -573,14 +576,14 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
     double overallPred = nTotal > 0 ? sumPred / nTotal : 0;
     double overallGT = nTotal > 0 ? sumGT / nTotal : 0;
     double overallPar = nTotal > 0 ? sumPar / nTotal : 0;
-    System.out.println("|------------|----------|-----------|----------|----------|----------|");
+    logger.info("|------------|----------|-----------|----------|----------|----------|");
     System.out.printf("| %-10s | %6.1f %% | %7.1f %% | %6.1f %% | %6.1f %% | %6.1f %% |%n",
         "OVERALL", overallRaw, overallPred, overallGT, overallPar, 2.2);
-    System.out.println();
 
-    System.out.println("=== Method Ranking (updated with predictive cDFT) ===");
+
+    logger.info("=== Method Ranking (updated with predictive cDFT) ===");
     System.out.printf("| %-5s | %-50s | %8s | %s |%n", "Rank", "Method", "AAD (%)", "Params");
-    System.out.println("|-------|----------------------------------------------------"
+    logger.info("|-------|----------------------------------------------------"
         + "|----------|----------------|");
     System.out.printf("| %-5s | %-50s | %8.1f | %s |%n", "1", "Miqueu GT + vol-corr PR, c(omega)",
         2.2, "0 IFT-fitted");
@@ -592,12 +595,12 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
         overallPar, "0");
     System.out.printf("| %-5s | %-50s | %8.1f | %s |%n", "5", "cDFT raw (no correction)",
         overallRaw, "0");
-    System.out.println();
-    System.out.println("The predictive cDFT uses two universal constants:");
+
+    logger.info("The predictive cDFT uses two universal constants:");
     System.out
         .println("  lambda(omega) = 0.749 - 0.740*omega  (kernel range from acentric factor)");
-    System.out.println("  delta_mu = -0.24                      (Ising critical correction)");
-    System.out.println("Both are physically motivated, not empirically fitted to IFT data.");
+    logger.info("  delta_mu = -0.24                      (Ising critical correction)");
+    logger.info("Both are physically motivated, not empirically fitted to IFT data.");
 
     assertTrue(nTotal >= 20, "Should compute at least 20 systems");
     assertTrue(overallPred < 20, "Predictive cDFT AAD should be < 20%, got " + overallPred);

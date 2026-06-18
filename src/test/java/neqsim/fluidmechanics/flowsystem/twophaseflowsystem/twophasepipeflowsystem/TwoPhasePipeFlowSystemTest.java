@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
@@ -24,6 +26,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ASMF
  */
 public class TwoPhasePipeFlowSystemTest {
+  private static final Logger logger = LogManager.getLogger(TwoPhasePipeFlowSystemTest.class);
   private FlowSystemInterface pipe;
   private SystemInterface testSystem;
 
@@ -744,7 +747,7 @@ public class TwoPhasePipeFlowSystemTest {
     double[] liquidVelocities = twoFluidPipe.getVelocityProfile(1);
 
     // ======== Compare results ========
-    System.out.println("=== Pressure Drop Comparison: TwoPhasePipeFlowSystem vs Beggs-Brill ===");
+    logger.info("=== Pressure Drop Comparison: TwoPhasePipeFlowSystem vs Beggs-Brill ===");
     System.out.printf("Pipe: %.0f m length, %.0f mm diameter, horizontal%n", pipeLength,
         pipeDiameter * 1000);
     System.out.printf("Fluid: methane + n-pentane + n-heptane at %.0f bar, %.1f C%n", pressure,
@@ -755,7 +758,7 @@ public class TwoPhasePipeFlowSystemTest {
     System.out.printf("  Pressure drop:  %.4f bar%n", beggsBrillsPressureDrop);
     System.out.printf("  Outlet pressure: %.4f bar%n",
         beggsBrillsPipe.getOutletStream().getPressure());
-    System.out.println();
+
     System.out.printf("TwoPhasePipeFlowSystem:%n");
     System.out.printf("  Pressure drop:  %.4f bar%n", twoFluidPressureDrop);
     System.out.printf("  Inlet pressure:  %.4f bar%n", pressures[0]);
@@ -763,12 +766,12 @@ public class TwoPhasePipeFlowSystemTest {
     System.out.printf("  Gas velocity (inlet): %.4f m/s%n", gasVelocities[0]);
     System.out.printf("  Liquid velocity (inlet): %.4f m/s%n", liquidVelocities[0]);
     System.out.printf("  Gas holdup (inlet): %.4f%n", twoFluidPipe.getNode(0).getPhaseFraction(0));
-    System.out.println();
+
 
     double percentDiff =
         Math.abs(beggsBrillsPressureDrop - twoFluidPressureDrop) / beggsBrillsPressureDrop * 100;
     System.out.printf("Difference: %.1f%%%n", percentDiff);
-    System.out.println();
+
 
     // Both should give positive pressure drops
     assertTrue(beggsBrillsPressureDrop > 0, "Beggs-Brill should give positive pressure drop");
@@ -886,18 +889,18 @@ public class TwoPhasePipeFlowSystemTest {
     double[] liquidVelocities = twoPhaseFlowSystem.getVelocityProfile(1);
 
     // ======== Compare results ========
-    System.out.println("=== Comparison: TwoPhasePipeFlowSystem vs TwoFluidPipe ===");
+    logger.info("=== Comparison: TwoPhasePipeFlowSystem vs TwoFluidPipe ===");
     System.out.printf("Pipe: %.0f m length, %.0f mm diameter, horizontal%n", pipeLength,
         pipeDiameter * 1000);
     System.out.printf("Fluid: methane + n-pentane + n-heptane at %.0f bar, %.1f C%n", pressure,
         temperature - 273.15);
     System.out.printf("Mass flow rate: %.1f kg/s%n", massFlowRate);
-    System.out.println();
+
     System.out.printf("TwoFluidPipe (process equipment):%n");
     System.out.printf("  Pressure drop:   %.4f bar%n", twoFluidPipePressureDrop);
     System.out.printf("  Outlet pressure: %.4f bar%n",
         twoFluidPipeEquip.getOutletStream().getPressure());
-    System.out.println();
+
     System.out.printf("TwoPhasePipeFlowSystem (fluidmechanics):%n");
     System.out.printf("  Pressure drop:   %.4f bar%n", twoPhaseFlowSystemPressureDrop);
     System.out.printf("  Inlet pressure:  %.4f bar%n", pressures[0]);
@@ -906,12 +909,12 @@ public class TwoPhasePipeFlowSystemTest {
     System.out.printf("  Liquid velocity (inlet): %.4f m/s%n", liquidVelocities[0]);
     System.out.printf("  Gas holdup (inlet): %.4f%n",
         twoPhaseFlowSystem.getNode(0).getPhaseFraction(0));
-    System.out.println();
+
 
     double percentDiff = Math.abs(twoFluidPipePressureDrop - twoPhaseFlowSystemPressureDrop)
         / twoFluidPipePressureDrop * 100;
     System.out.printf("Difference: %.1f%%%n", percentDiff);
-    System.out.println();
+
 
     // Both should give positive pressure drops
     assertTrue(twoFluidPipePressureDrop > 0, "TwoFluidPipe should give positive pressure drop");
@@ -1042,18 +1045,18 @@ public class TwoPhasePipeFlowSystemTest {
     double[] liquidVelocities = twoPhaseFlowSystem.getVelocityProfile(1);
 
     // ======== Compare results ========
-    System.out.println("=== Comparison: TwoPhasePipeFlowSystem vs TransientPipe ===");
+    logger.info("=== Comparison: TwoPhasePipeFlowSystem vs TransientPipe ===");
     System.out.printf("Pipe: %.0f m length, %.0f mm diameter, horizontal%n", pipeLength,
         pipeDiameter * 1000);
     System.out.printf("Fluid: methane + n-pentane + n-heptane at %.0f bar, %.1f C%n", pressure,
         temperature - 273.15);
     System.out.printf("Mass flow rate: %.1f kg/s%n", massFlowRate);
-    System.out.println();
+
     System.out.printf("TransientPipe (process equipment - drift-flux):%n");
     System.out.printf("  Pressure drop:   %.4f bar%n", transientPipePressureDrop);
     System.out.printf("  Outlet pressure: %.4f bar%n",
         transientPipe.getOutletStream().getPressure());
-    System.out.println();
+
     System.out.printf("TwoPhasePipeFlowSystem (fluidmechanics - separated flow):%n");
     System.out.printf("  Pressure drop:   %.4f bar%n", twoPhaseFlowSystemPressureDrop);
     System.out.printf("  Inlet pressure:  %.4f bar%n", pressures[0]);
@@ -1062,12 +1065,12 @@ public class TwoPhasePipeFlowSystemTest {
     System.out.printf("  Liquid velocity (inlet): %.4f m/s%n", liquidVelocities[0]);
     System.out.printf("  Gas holdup (inlet): %.4f%n",
         twoPhaseFlowSystem.getNode(0).getPhaseFraction(0));
-    System.out.println();
+
 
     double percentDiff = Math.abs(transientPipePressureDrop - twoPhaseFlowSystemPressureDrop)
         / Math.max(transientPipePressureDrop, 0.001) * 100;
     System.out.printf("Difference: %.1f%%%n", percentDiff);
-    System.out.println();
+
 
     // Both should give positive pressure drops
     assertTrue(transientPipePressureDrop > 0, "TransientPipe should give positive pressure drop");
@@ -1087,8 +1090,8 @@ public class TwoPhasePipeFlowSystemTest {
     // models produce physically reasonable results (positive pressure drop).
     // For accurate model comparison, users should consult literature on which model
     // is appropriate for their specific flow regime and application.
-    System.out.println("Note: Large difference is expected - these are different physical models");
-    System.out.println("      (drift-flux vs separated flow)");
+    logger.info("Note: Large difference is expected - these are different physical models");
+    logger.info("      (drift-flux vs separated flow)");
   }
 
   /**
@@ -1121,7 +1124,7 @@ public class TwoPhasePipeFlowSystemTest {
     ops.TPflash();
     fluid.initPhysicalProperties();
 
-    System.out.println("=== Gas-Dominated (High GVF) Model Comparison ===");
+    logger.info("=== Gas-Dominated (High GVF) Model Comparison ===");
     System.out.printf("Pipe: %.0f m length, %.0f mm diameter, horizontal%n", pipeLength,
         pipeDiameter * 1000);
     System.out.printf("Fluid: 98%% methane + 2%% ethane at %.0f bar, %.1f C%n", pressure,
@@ -1134,7 +1137,7 @@ public class TwoPhasePipeFlowSystemTest {
       System.out.printf("Gas viscosity: %.6f Pa.s%n",
           fluid.getPhase("gas").getPhysicalProperties().getViscosity());
     }
-    System.out.println();
+
 
     // ======== 1. Beggs-Brill ========
     neqsim.process.equipment.stream.Stream inlet1 =
@@ -1188,12 +1191,12 @@ public class TwoPhasePipeFlowSystemTest {
 
     // ======== Print comparison ========
     System.out.printf("%-30s %12s%n", "Model", "Pressure Drop (bar)");
-    System.out.println("---------------------------------------------");
+    logger.info("---------------------------------------------");
     System.out.printf("%-30s %12.4f%n", "Beggs-Brill", beggsBrillsDp);
     System.out.printf("%-30s %12.4f%n", "TwoFluidPipe", twoFluidPipeDp);
     System.out.printf("%-30s %12.4f%n", "TransientPipe", transientPipeDp);
     System.out.printf("%-30s %12s%n", "TwoPhasePipeFlowSystem", "(N/A - requires 2 phases)");
-    System.out.println();
+
 
     // All should give positive pressure drops
     assertTrue(beggsBrillsDp > 0, "Beggs-Brill should give positive pressure drop");
@@ -1236,7 +1239,7 @@ public class TwoPhasePipeFlowSystemTest {
     ops.TPflash();
     fluid.initPhysicalProperties();
 
-    System.out.println("=== Liquid-Dominated (Low GVF) Model Comparison ===");
+    logger.info("=== Liquid-Dominated (Low GVF) Model Comparison ===");
     System.out.printf("Pipe: %.0f m length, %.0f mm diameter, horizontal%n", pipeLength,
         pipeDiameter * 1000);
     System.out.printf("Fluid: 70%% n-heptane + 30%% n-octane at %.0f bar, %.1f C%n", pressure,
@@ -1253,7 +1256,7 @@ public class TwoPhasePipeFlowSystemTest {
       System.out.printf("Oil viscosity: %.6f Pa.s%n",
           fluid.getPhase("oil").getPhysicalProperties().getViscosity());
     }
-    System.out.println();
+
 
     // ======== 1. Beggs-Brill ========
     neqsim.process.equipment.stream.Stream inlet1 =
@@ -1316,7 +1319,7 @@ public class TwoPhasePipeFlowSystemTest {
     fluid4.initPhysicalProperties();
 
     // Debug: Check phase ordering after TPflash
-    System.out.println("=== Fluid4 after TPflash ===");
+    logger.info("=== Fluid4 after TPflash ===");
     System.out.printf("Number of phases: %d%n", fluid4.getNumberOfPhases());
     System.out.printf("Phase 0 type: %s%n", fluid4.getPhase(0).getType());
     System.out.printf("Phase 0 density: %.2f kg/m3%n",
@@ -1362,7 +1365,7 @@ public class TwoPhasePipeFlowSystemTest {
     double twoPhaseFlowSystemDp = pressures[0] - pressures[pressures.length - 1];
 
     // ======== Debug diagnostic output ========
-    System.out.println("=== Debug Diagnostics ===");
+    logger.info("=== Debug Diagnostics ===");
     System.out.printf("Total number of nodes: %d%n", twoPhaseFlowSystem.getTotalNumberOfNodes());
     System.out.printf("Node 0 velocity[0]: %.6f m/s%n",
         twoPhaseFlowSystem.getNode(0).getVelocity(0));
@@ -1399,16 +1402,16 @@ public class TwoPhasePipeFlowSystemTest {
     System.out.printf("Node 5 pressure: %.6f bar%n", pressures[5]);
     System.out.printf("Node 25 pressure: %.6f bar%n", pressures[25]);
     System.out.printf("Outlet pressure: %.6f bar%n", pressures[pressures.length - 1]);
-    System.out.println();
+
 
     // ======== Print comparison ========
     System.out.printf("%-30s %12s%n", "Model", "Pressure Drop (bar)");
-    System.out.println("---------------------------------------------");
+    logger.info("---------------------------------------------");
     System.out.printf("%-30s %12.4f%n", "Beggs-Brill", beggsBrillsDp);
     System.out.printf("%-30s %12.4f%n", "TwoFluidPipe", twoFluidPipeDp);
     System.out.printf("%-30s %12.4f%n", "TransientPipe", transientPipeDp);
     System.out.printf("%-30s %12.4f%n", "TwoPhasePipeFlowSystem", twoPhaseFlowSystemDp);
-    System.out.println();
+
 
     // All should give positive pressure drops for liquid flow
     assertTrue(beggsBrillsDp > 0, "Beggs-Brill should give positive pressure drop");
@@ -1449,7 +1452,7 @@ public class TwoPhasePipeFlowSystemTest {
     ops.TPflash();
     fluid.initPhysicalProperties();
 
-    System.out.println("=== Single-Phase Gas Model Comparison ===");
+    logger.info("=== Single-Phase Gas Model Comparison ===");
     System.out.printf("Pipe: %.0f m length, %.0f mm diameter, horizontal%n", pipeLength,
         pipeDiameter * 1000);
     System.out.printf("Fluid: pure methane at %.0f bar, %.1f C%n", pressure, temperature - 273.15);
@@ -1461,7 +1464,7 @@ public class TwoPhasePipeFlowSystemTest {
       System.out.printf("Gas viscosity: %.6f Pa.s%n",
           fluid.getPhase("gas").getPhysicalProperties().getViscosity());
     }
-    System.out.println();
+
 
     // ======== 1. Beggs-Brill ========
     neqsim.process.equipment.stream.Stream inlet1 =
@@ -1522,7 +1525,7 @@ public class TwoPhasePipeFlowSystemTest {
     ops.TPflash();
     fluid4.initPhysicalProperties();
 
-    System.out.println("=== Fluid4 after TPflash ===");
+    logger.info("=== Fluid4 after TPflash ===");
     System.out.printf("Number of phases: %d%n", fluid4.getNumberOfPhases());
     System.out.printf("Phase 0 type: %s%n", fluid4.getPhase(0).getType());
     System.out.printf("Phase 0 density: %.2f kg/m3%n",
@@ -1567,7 +1570,7 @@ public class TwoPhasePipeFlowSystemTest {
     double twoPhaseFlowSystemDp = pressures[0] - pressures[pressures.length - 1];
 
     // ======== Debug diagnostic output ========
-    System.out.println("=== Debug Diagnostics ===");
+    logger.info("=== Debug Diagnostics ===");
     System.out.printf("Total number of nodes: %d%n", twoPhaseFlowSystem.getTotalNumberOfNodes());
     System.out.printf("Node 0 velocity[0]: %.6f m/s%n",
         twoPhaseFlowSystem.getNode(0).getVelocity(0));
@@ -1583,16 +1586,16 @@ public class TwoPhasePipeFlowSystemTest {
         twoPhaseFlowSystem.getNode(0).getWallContactLength(0));
     System.out.printf("Inlet pressure: %.6f bar%n", pressures[0]);
     System.out.printf("Outlet pressure: %.6f bar%n", pressures[pressures.length - 1]);
-    System.out.println();
+
 
     // ======== Print comparison ========
     System.out.printf("%-30s %12s%n", "Model", "Pressure Drop (bar)");
-    System.out.println("---------------------------------------------");
+    logger.info("---------------------------------------------");
     System.out.printf("%-30s %12.4f%n", "Beggs-Brill", beggsBrillsDp);
     System.out.printf("%-30s %12.4f%n", "TwoFluidPipe", twoFluidPipeDp);
     System.out.printf("%-30s %12.4f%n", "TransientPipe", transientPipeDp);
     System.out.printf("%-30s %12.4f%n", "TwoPhasePipeFlowSystem", twoPhaseFlowSystemDp);
-    System.out.println();
+
 
     // All should give positive pressure drops for gas flow
     assertTrue(beggsBrillsDp > 0, "Beggs-Brill should give positive pressure drop");
@@ -1640,7 +1643,7 @@ public class TwoPhasePipeFlowSystemTest {
     ops.TPflash();
     fluid.initPhysicalProperties();
 
-    System.out.println("=== Gas with Potential Condensation Test ===");
+    logger.info("=== Gas with Potential Condensation Test ===");
     System.out.printf("Pipe: %.0f m length, %.0f mm diameter%n", pipeLength, pipeDiameter * 1000);
     System.out.printf("Inlet conditions: %.0f bar, %.1f C%n", pressure, inletTemperature - 273.15);
     System.out.printf("Inlet number of phases: %d%n", fluid.getNumberOfPhases());
@@ -1669,7 +1672,7 @@ public class TwoPhasePipeFlowSystemTest {
     ops.TPflash();
     fluid4.initPhysicalProperties();
 
-    System.out.println("\n=== Inlet Fluid State ===");
+    logger.info("\n=== Inlet Fluid State ===");
     System.out.printf("Number of phases: %d%n", fluid4.getNumberOfPhases());
     if (fluid4.getNumberOfPhases() == 1) {
       System.out.printf("Single phase type: %s%n", fluid4.getPhase(0).getType());
@@ -1718,7 +1721,7 @@ public class TwoPhasePipeFlowSystemTest {
     twoPhaseFlowSystem.solveSteadyState(3); // Fewer iterations for faster test
 
     // ======== Analyze results along the pipeline ========
-    System.out.println("\n=== Results Along Pipeline ===");
+    logger.info("\n=== Results Along Pipeline ===");
     System.out.printf("%-8s %-12s %-12s %-12s %-15s%n", "Node", "Pressure", "Temperature",
         "NumPhases", "LiquidFraction");
 

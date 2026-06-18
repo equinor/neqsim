@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Scenario tests (exercise only) for GibbsReactorCO2 using the tables provided in the attachments.
@@ -14,6 +16,8 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 @Tag("slow")
 public class GibbsReactorCO2ScenariosTest {
+  private static final Logger logger = LogManager.getLogger(GibbsReactorCO2ScenariosTest.class);
+
   /**
    * Run reactor and return the outlet thermo system.
    */
@@ -30,9 +34,9 @@ public class GibbsReactorCO2ScenariosTest {
 
   /** Print composition (ppm) of a thermo system for diagnostics. */
   private void printComposition(SystemInterface outSys, String label) {
-    System.out.println("\n--- Scenario: " + label + " ---");
+    logger.info("\n--- Scenario: " + label + " ---");
     if (outSys == null) {
-      System.out.println("Outlet system is null");
+      logger.info("Outlet system is null");
       return;
     }
     for (int i = 0; i < outSys.getNumberOfComponents(); i++) {
@@ -269,7 +273,7 @@ public class GibbsReactorCO2ScenariosTest {
 
     // Verify the density is indeed below threshold
     double density = inlet.getThermoSystem().getDensity("kg/m3");
-    System.out.println("CO2/gas density at inlet: " + density + " kg/m³");
+    logger.info("CO2/gas density at inlet: " + density + " kg/m³");
     Assertions.assertTrue(density < 300.0,
         "Test setup error: density should be below 300 kg/m³ for this scenario");
 

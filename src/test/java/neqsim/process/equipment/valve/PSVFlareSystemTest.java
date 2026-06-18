@@ -10,6 +10,8 @@ import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.flare.Flare;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test class for simulating a complete PSV relief scenario with flare system.
@@ -38,6 +40,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class PSVFlareSystemTest {
+  private static final Logger logger = LogManager.getLogger(PSVFlareSystemTest.class);
+
   SystemInterface feedGas;
   Stream feedStream;
   Compressor feedCompressor;
@@ -145,21 +149,21 @@ public class PSVFlareSystemTest {
    */
   @Test
   void testPSVReliefToFlareWithHeatRelease() {
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║     PSV RELIEF TO FLARE SYSTEM - DYNAMIC SIMULATION           ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║     PSV RELIEF TO FLARE SYSTEM - DYNAMIC SIMULATION           ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
-    System.out.println("═══ SYSTEM CONFIGURATION ═══");
-    System.out.println("Feed flow rate: 5000.0 kg/hr");
-    System.out.println("Compressor discharge: 55.0 bara");
-    System.out.println("Separator design pressure: 60.0 bara");
-    System.out.println("PSV set pressure: 55.0 bara");
-    System.out.println("PSV full open pressure: 60.5 bara (10% overpressure)");
-    System.out.println("Flare header pressure: ~1.5 bara");
-    System.out.println();
+    logger.info("═══ SYSTEM CONFIGURATION ═══");
+    logger.info("Feed flow rate: 5000.0 kg/hr");
+    logger.info("Compressor discharge: 55.0 bara");
+    logger.info("Separator design pressure: 60.0 bara");
+    logger.info("PSV set pressure: 55.0 bara");
+    logger.info("PSV full open pressure: 60.5 bara (10% overpressure)");
+    logger.info("Flare header pressure: ~1.5 bara");
+
 
     // Run initial steady state
-    System.out.println("═══ INITIAL STEADY STATE ═══");
+    logger.info("═══ INITIAL STEADY STATE ═══");
     feedStream.run();
     feedCompressor.run();
     compressorOutlet.run();
@@ -172,7 +176,7 @@ public class PSVFlareSystemTest {
     System.out.printf("Separator pressure: %.2f bara%n", initialPressure);
     System.out.printf("Outlet valve opening: %.1f%%%n", outletValve.getPercentValveOpening());
     System.out.printf("PSV status: CLOSED (pressure below set point)%n");
-    System.out.println();
+
 
     // Dynamic simulation parameters
     double dt = 2.0; // 2 second time steps
@@ -190,24 +194,24 @@ public class PSVFlareSystemTest {
     // Reset flare cumulative values
     flare.resetCumulative();
 
-    System.out.println("═══ DYNAMIC SIMULATION ═══");
-    System.out.println(
+    logger.info("═══ DYNAMIC SIMULATION ═══");
+    logger.info(
         "Time (s) | Sep Press | Outlet Vlv | PSV Open | Relief Flow | Heat Release | Cumulative Heat");
-    System.out.println(
+    logger.info(
         "         |   (bara)  |    (%)     |   (%)    |   (kg/hr)   |     (MW)     |      (GJ)");
-    System.out.println(
+    logger.info(
         "---------|-----------|------------|----------|-------------|--------------|----------------");
 
     for (double time = 0.0; time <= simulationTime; time += dt) {
       // Simulate outlet valve failure (blocks at 50s) and recovery (opens at 200s)
       if (time >= incidentStart && time < incidentEnd) {
         if (time == incidentStart) {
-          System.out.println("\n>>> INCIDENT: Outlet valve FAILS CLOSED <<<\n");
+          logger.info("\n>>> INCIDENT: Outlet valve FAILS CLOSED <<<\n");
         }
         outletValve.setPercentValveOpening(1.0); // Valve stuck nearly closed
       } else if (time >= incidentEnd) {
         if (time == incidentEnd) {
-          System.out.println("\n>>> RECOVERY: Outlet valve REOPENED <<<\n");
+          logger.info("\n>>> RECOVERY: Outlet valve REOPENED <<<\n");
         }
         outletValve.setPercentValveOpening(50.0); // Normal operation restored
       }
@@ -250,7 +254,7 @@ public class PSVFlareSystemTest {
       if (psv.getPercentValveOpening() > 0.1 && !psvHasOpened) {
         psvHasOpened = true;
         psvOpenTime = time;
-        System.out.println("\n>>> PSV OPENED at t=" + time + " s <<<\n");
+        logger.info("\n>>> PSV OPENED at t=" + time + " s <<<\n");
       }
 
       // Print every 10 seconds
@@ -261,35 +265,35 @@ public class PSVFlareSystemTest {
       }
     }
 
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║                    INCIDENT SUMMARY REPORT                     ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║                    INCIDENT SUMMARY REPORT                     ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
-    System.out.println("═══ TIMELINE ═══");
+    logger.info("═══ TIMELINE ═══");
     System.out.printf("Incident start (outlet valve fails): %.0f s%n", incidentStart);
     System.out.printf("PSV opened: %.0f s%n", psvOpenTime);
     System.out.printf("Incident end (outlet valve reopened): %.0f s%n", incidentEnd);
     System.out.printf("Total incident duration: %.0f s (%.1f minutes)%n",
         incidentEnd - incidentStart, (incidentEnd - incidentStart) / 60.0);
-    System.out.println();
 
-    System.out.println("═══ PRESSURE PROFILE ═══");
+
+    logger.info("═══ PRESSURE PROFILE ═══");
     System.out.printf("Initial separator pressure: %.2f bara%n", initialPressure);
     System.out.printf("PSV set pressure: 55.0 bara%n");
     System.out.printf("Maximum separator pressure: %.2f bara%n", maxPressure);
     System.out.printf("PSV full open pressure: 60.5 bara%n");
-    System.out.println();
 
-    System.out.println("═══ PSV RELIEF PERFORMANCE ═══");
+
+    logger.info("═══ PSV RELIEF PERFORMANCE ═══");
     System.out.printf("Maximum relief flow: %.1f kg/hr (%.2f kg/s)%n", maxReliefFlow,
         maxReliefFlow / 3600.0);
     System.out.printf("Total gas relieved: %.1f kg%n", flare.getCumulativeGasBurned("kg"));
     System.out.printf("Average relief rate: %.1f kg/hr%n",
         flare.getCumulativeGasBurned("kg") / ((incidentEnd - psvOpenTime) / 3600.0));
     System.out.printf("Required PSV Cv: %.1f%n", psv.getCv());
-    System.out.println();
 
-    System.out.println("═══ FLARE SYSTEM PERFORMANCE ═══");
+
+    logger.info("═══ FLARE SYSTEM PERFORMANCE ═══");
     System.out.printf("Peak heat release rate: %.2f MW%n", peakHeatReleaseRate);
     System.out.printf("Total heat released: %.2f GJ (%.2f MMBtu)%n",
         flare.getCumulativeHeatReleased("GJ"), flare.getCumulativeHeatReleased("MMBtu"));
@@ -297,8 +301,8 @@ public class PSVFlareSystemTest {
         flare.getCumulativeHeatReleased("GJ") * 1000.0 / (incidentEnd - psvOpenTime));
 
     // Gas composition to flare
-    System.out.println();
-    System.out.println("═══ RELIEF GAS COMPOSITION ═══");
+
+    logger.info("═══ RELIEF GAS COMPOSITION ═══");
     SystemInterface reliefGas = psvRelief.getFluid();
     for (int i = 0; i < reliefGas.getPhase(0).getNumberOfComponents(); i++) {
       String compName = reliefGas.getPhase(0).getComponent(i).getComponentName();
@@ -308,29 +312,29 @@ public class PSVFlareSystemTest {
       }
     }
 
-    System.out.println();
-    System.out.println("═══ ENVIRONMENTAL IMPACT ═══");
+
+    logger.info("═══ ENVIRONMENTAL IMPACT ═══");
     // Get CO2 emissions from flare unit operation
     System.out.printf("Estimated CO2 emissions: %.1f kg (%.2f tonnes)%n",
         flare.getCumulativeCO2Emission("kg"), flare.getCumulativeCO2Emission("tonnes"));
 
-    System.out.println();
-    System.out.println("═══ VALIDATION CHECKS ═══");
+
+    logger.info("═══ VALIDATION CHECKS ═══");
     assertTrue(psvHasOpened, "PSV should have opened during incident");
     assertTrue(maxPressure <= 55.0 * 1.15, "Max pressure should not exceed 115% of set pressure");
     assertTrue(flare.getCumulativeGasBurned("kg") > 0, "Gas should have been relieved to flare");
     assertTrue(flare.getCumulativeHeatReleased("GJ") > 0,
         "Heat should have been released from flare");
-    System.out.println("✓ PSV opened and relieved gas to flare");
+    logger.info("✓ PSV opened and relieved gas to flare");
     System.out.printf("✓ Maximum pressure (%.2f bara) within acceptable limits%n", maxPressure);
     System.out.printf("✓ Total %.1f kg of gas burned in flare%n",
         flare.getCumulativeGasBurned("kg"));
     System.out.printf("✓ Total %.2f GJ heat released to atmosphere%n",
         flare.getCumulativeHeatReleased("GJ"));
 
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║              SIMULATION COMPLETED SUCCESSFULLY                 ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║              SIMULATION COMPLETED SUCCESSFULLY                 ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
   }
 
   /**
@@ -342,9 +346,9 @@ public class PSVFlareSystemTest {
    */
   @Test
   void testMultiplePSVReliefToCommonFlare() {
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║   MULTIPLE PSV RELIEF SOURCES TO COMMON FLARE HEADER          ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║   MULTIPLE PSV RELIEF SOURCES TO COMMON FLARE HEADER          ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     // Create second relief source
     SystemInterface secondSource = feedGas.clone();
@@ -363,14 +367,14 @@ public class PSVFlareSystemTest {
     // Add second PSV to flare header
     flareHeader.addStream(psv2Relief);
 
-    System.out.println("═══ CONFIGURATION ═══");
-    System.out.println("PSV-101: Primary separator (5000 kg/hr capacity)");
-    System.out.println("PSV-102: Secondary source (3000 kg/hr capacity)");
-    System.out.println("Common flare header collecting both relief streams");
-    System.out.println();
+    logger.info("═══ CONFIGURATION ═══");
+    logger.info("PSV-101: Primary separator (5000 kg/hr capacity)");
+    logger.info("PSV-102: Secondary source (3000 kg/hr capacity)");
+    logger.info("Common flare header collecting both relief streams");
+
 
     // Simulate relief event - manually set both PSVs to relieve
-    System.out.println("═══ SIMULTANEOUS RELIEF EVENT ═══");
+    logger.info("═══ SIMULTANEOUS RELIEF EVENT ═══");
 
     // Force both PSVs to open by simulating high pressure
     feedStream.run();
@@ -407,14 +411,14 @@ public class PSVFlareSystemTest {
     System.out.printf("Combined heat release rate: %.2f MW%n", heatRelease);
     System.out.printf("Flare header pressure: %.2f bara%n", flareHeaderOutlet.getPressure("bara"));
 
-    System.out.println();
+
     assertTrue(totalReliefFlow > 0, "Combined relief flow should be positive");
     assertTrue(heatRelease > 0, "Heat release should be positive");
-    System.out.println("✓ Multiple PSV sources successfully combined in flare header");
+    logger.info("✓ Multiple PSV sources successfully combined in flare header");
     System.out.printf("✓ Total %.2f MW heat release from combined relief%n", heatRelease);
 
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║          MULTIPLE SOURCE TEST COMPLETED SUCCESSFULLY           ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║          MULTIPLE SOURCE TEST COMPLETED SUCCESSFULLY           ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
   }
 }

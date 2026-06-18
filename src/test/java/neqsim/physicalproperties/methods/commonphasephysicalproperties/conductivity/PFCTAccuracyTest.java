@@ -3,6 +3,8 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.conducti
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -24,6 +26,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author esol
  */
 public class PFCTAccuracyTest {
+  private static final Logger logger = LogManager.getLogger(PFCTAccuracyTest.class);
 
   private double getConductivity(SystemInterface system, int phaseIdx) {
     return system.getPhase(phaseIdx).getPhysicalProperties().getConductivity();
@@ -48,7 +51,7 @@ public class PFCTAccuracyTest {
     double[][] cases = {{300.0, 1.0, 0.03437}, {300.0, 10.0, 0.03530}, {300.0, 50.0, 0.03823},
         {300.0, 100.0, 0.04436}, {300.0, 200.0, 0.05915}};
 
-    System.out.println("\n=== PFCT Methane Gas at 300 K ===");
+    logger.info("\n=== PFCT Methane Gas at 300 K ===");
     System.out.printf("%-8s %-12s %-12s %-10s%n", "P(bar)", "PFCT", "NIST", "Error%");
 
     for (double[] c : cases) {
@@ -77,7 +80,7 @@ public class PFCTAccuracyTest {
     double[][] cases = {{200.0, 1.0, 0.02168}, {250.0, 1.0, 0.02809}, {300.0, 1.0, 0.03437},
         {350.0, 1.0, 0.04042}, {400.0, 1.0, 0.04624}};
 
-    System.out.println("\n=== PFCT Methane Gas Temperature Series at 1 bar ===");
+    logger.info("\n=== PFCT Methane Gas Temperature Series at 1 bar ===");
     System.out.printf("%-8s %-12s %-12s %-10s%n", "T(K)", "PFCT", "NIST", "Error%");
 
     for (double[] c : cases) {
@@ -103,7 +106,7 @@ public class PFCTAccuracyTest {
    */
   @Test
   void testPFCTMethaneLiquid() {
-    System.out.println("\n=== PFCT Methane Liquid ===");
+    logger.info("\n=== PFCT Methane Liquid ===");
     System.out.printf("%-8s %-8s %-12s %-12s %-10s%n", "T(K)", "P(bar)", "PFCT", "NIST", "Error%");
 
     double[][] cases = {{120.0, 10.0, 0.1857}, {120.0, 50.0, 0.1890}, {110.0, 10.0, 0.1996}};
@@ -137,7 +140,7 @@ public class PFCTAccuracyTest {
    */
   @Test
   void testPFCTPureGases() {
-    System.out.println("\n=== PFCT Pure Gases at 300 K, 1 bar ===");
+    logger.info("\n=== PFCT Pure Gases at 300 K, 1 bar ===");
     System.out.printf("%-12s %-12s %-12s %-10s%n", "Component", "PFCT", "NIST", "Error%");
 
     String[] names = {"ethane", "propane", "n-butane"};
@@ -168,7 +171,7 @@ public class PFCTAccuracyTest {
    */
   @Test
   void testPFCTNonHydrocarbonGases() {
-    System.out.println("\n=== PFCT Non-hydrocarbon Gases at 300 K, 1 bar ===");
+    logger.info("\n=== PFCT Non-hydrocarbon Gases at 300 K, 1 bar ===");
     System.out.printf("%-12s %-12s %-12s %-10s%n", "Component", "PFCT", "NIST", "Error%");
 
     String[] names = {"nitrogen", "CO2"};
@@ -197,7 +200,7 @@ public class PFCTAccuracyTest {
    */
   @Test
   void testPFCTLiquidAlkanes() {
-    System.out.println("\n=== PFCT Liquid Alkanes at 300 K, 10 bar ===");
+    logger.info("\n=== PFCT Liquid Alkanes at 300 K, 10 bar ===");
     System.out.printf("%-12s %-12s %-12s %-10s%n", "Component", "PFCT", "NIST", "Error%");
 
     String[] names = {"n-pentane", "n-hexane", "n-heptane", "n-octane"};
@@ -229,7 +232,7 @@ public class PFCTAccuracyTest {
    */
   @Test
   void testPFCTNaturalGasMixturePressureSeries() {
-    System.out.println("\n=== PFCT Natural Gas Mixture at 300 K ===");
+    logger.info("\n=== PFCT Natural Gas Mixture at 300 K ===");
     System.out.printf("%-8s %-12s%n", "P(bar)", "PFCT");
 
     double[] pressures = {1.0, 10.0, 50.0, 100.0, 200.0};
@@ -267,7 +270,7 @@ public class PFCTAccuracyTest {
    */
   @Test
   void testPFCTMethaneHighTemperature() {
-    System.out.println("\n=== PFCT Methane High Temperature (known limitation) ===");
+    logger.info("\n=== PFCT Methane High Temperature (known limitation) ===");
     System.out.printf("%-8s %-12s %-12s %-10s%n", "T(K)", "PFCT", "NIST", "Error%");
 
     double[][] cases = {{500.0, 1.0, 0.05722}, {600.0, 1.0, 0.06810}};

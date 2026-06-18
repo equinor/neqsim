@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Validation tests for two-phase flow pressure drop calculations against published data.
@@ -39,6 +41,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class TwoPhasePressureDropValidationTest {
+  private static final Logger logger = LogManager.getLogger(TwoPhasePressureDropValidationTest.class);
+
   // Tolerance for validation (Beggs & Brill claim ±10% for most cases)
   private static final double BEGGS_BRILL_TOLERANCE = 0.30; // 30% tolerance for empirical
                                                             // correlation
@@ -159,7 +163,7 @@ class TwoPhasePressureDropValidationTest {
 
   @BeforeEach
   void setUp() {
-    System.out.println("\n" + StringUtils.repeat("=", 70));
+    logger.info("\n" + StringUtils.repeat("=", 70));
   }
 
   /**
@@ -178,18 +182,18 @@ class TwoPhasePressureDropValidationTest {
   @Test
   @DisplayName("Validate against Beggs & Brill (1973) experimental conditions")
   void testBeggsAndBrillExperimentalConditions() {
-    System.out.println("=== Beggs & Brill (1973) Validation ===");
-    System.out.println("Reference: JPT 25(5), 607-617");
-    System.out.println();
+    logger.info("=== Beggs & Brill (1973) Validation ===");
+    logger.info("Reference: JPT 25(5), 607-617");
+
 
     int passed = 0;
     int total = 0;
 
     for (TwoPhaseTestCase testCase : BEGGS_BRILL_CASES) {
       total++;
-      System.out.println("Test: " + testCase.description);
-      System.out.println("  Conditions: D=" + (testCase.diameter * 1000) + " mm, L="
-          + testCase.length + " m, angle=" + testCase.angle + "°");
+      logger.info("Test: " + testCase.description);
+      logger.info("  Conditions: D=" + (testCase.diameter * 1000) + " mm, L=" + testCase.length
+          + " m, angle=" + testCase.angle + "°");
 
       try {
         // Create two-phase fluid (methane + n-decane as gas-oil system)
@@ -229,12 +233,12 @@ class TwoPhasePressureDropValidationTest {
         }
         boolean withinTolerance = error <= BEGGS_BRILL_TOLERANCE;
 
-        System.out.println("  Number of phases: " + numPhases);
-        System.out.println("  Expected ΔP: " + String.format("%.3f", expectedDp) + " bar");
-        System.out.println("  Calculated ΔP: " + String.format("%.3f", calculatedDp) + " bar");
-        System.out.println("  Error: " + String.format("%.1f", error * 100) + "%");
-        System.out.println("  Result: " + (withinTolerance ? "PASS" : "FAIL"));
-        System.out.println();
+        logger.info("  Number of phases: " + numPhases);
+        logger.info("  Expected ΔP: " + String.format("%.3f", expectedDp) + " bar");
+        logger.info("  Calculated ΔP: " + String.format("%.3f", calculatedDp) + " bar");
+        logger.info("  Error: " + String.format("%.1f", error * 100) + "%");
+        logger.info("  Result: " + (withinTolerance ? "PASS" : "FAIL"));
+
 
         if (withinTolerance) {
           passed++;
@@ -247,12 +251,12 @@ class TwoPhasePressureDropValidationTest {
               "Pressure drop should be positive or near-zero for non-downhill flow");
         }
       } catch (Exception e) {
-        System.out.println("  ERROR: " + e.getMessage());
-        System.out.println();
+        logger.info("  ERROR: " + e.getMessage());
+
       }
     }
 
-    System.out.println("Summary: " + passed + "/" + total + " cases within "
+    logger.info("Summary: " + passed + "/" + total + " cases within "
         + (int) (BEGGS_BRILL_TOLERANCE * 100) + "% tolerance");
     assertTrue(passed >= total * 0.5, "At least 50% of test cases should pass");
   }
@@ -270,12 +274,12 @@ class TwoPhasePressureDropValidationTest {
   @Test
   @DisplayName("Validate against Lockhart-Martinelli (1949) two-phase multiplier")
   void testLockhartMartinelliConsistency() {
-    System.out.println("=== Lockhart-Martinelli (1949) Validation ===");
-    System.out.println("Reference: Chem. Eng. Progress 45(1), 39-48");
-    System.out.println();
+    logger.info("=== Lockhart-Martinelli (1949) Validation ===");
+    logger.info("Reference: Chem. Eng. Progress 45(1), 39-48");
+
 
     for (TwoPhaseTestCase testCase : LOCKHART_MARTINELLI_CASES) {
-      System.out.println("Test: " + testCase.description);
+      logger.info("Test: " + testCase.description);
 
       try {
         // Create two-phase fluid
@@ -305,28 +309,28 @@ class TwoPhasePressureDropValidationTest {
         double lmPrediction = calcLockhartMartinelliPressureDrop(inlet.getFluid(), testCase.length,
             testCase.diameter, 4.6e-5);
 
-        System.out.println("  Gas flow: " + testCase.gasFlowRate + " kg/hr");
-        System.out.println("  Liquid flow: " + testCase.liquidFlowRate + " kg/hr");
-        System.out.println("  Beggs & Brill ΔP: " + String.format("%.3f", calculatedDp) + " bar");
+        logger.info("  Gas flow: " + testCase.gasFlowRate + " kg/hr");
+        logger.info("  Liquid flow: " + testCase.liquidFlowRate + " kg/hr");
+        logger.info("  Beggs & Brill ΔP: " + String.format("%.3f", calculatedDp) + " bar");
         System.out
             .println("  Lockhart-Martinelli ΔP: " + String.format("%.3f", lmPrediction) + " bar");
 
         // Compare if L-M gives valid result
         if (lmPrediction > 0.001) {
           double ratio = calculatedDp / lmPrediction;
-          System.out.println("  Ratio (B&B/L-M): " + String.format("%.2f", ratio));
+          logger.info("  Ratio (B&B/L-M): " + String.format("%.2f", ratio));
           // Both correlations should give same order of magnitude
           assertTrue(ratio > 0.1 && ratio < 10.0,
               "B&B and L-M should agree within order of magnitude");
         } else {
-          System.out.println("  L-M calculation returned near-zero (single phase detected)");
+          logger.info("  L-M calculation returned near-zero (single phase detected)");
           assertTrue(calculatedDp > 0, "Beggs & Brill should give positive pressure drop");
         }
-        System.out.println();
+
 
       } catch (Exception e) {
-        System.out.println("  ERROR: " + e.getMessage());
-        System.out.println();
+        logger.info("  ERROR: " + e.getMessage());
+
       }
     }
   }
@@ -346,8 +350,8 @@ class TwoPhasePressureDropValidationTest {
   @Test
   @DisplayName("Test pressure drop scaling with gas-liquid ratio")
   void testPressureDropVsGasLiquidRatio() {
-    System.out.println("=== Pressure Drop vs Gas-Liquid Ratio ===");
-    System.out.println();
+    logger.info("=== Pressure Drop vs Gas-Liquid Ratio ===");
+
 
     double[] gasFlowRates = {100, 500, 1000, 2000, 5000, 10000}; // kg/hr
     double liquidFlowRate = 5000.0; // kg/hr constant
@@ -355,8 +359,8 @@ class TwoPhasePressureDropValidationTest {
     double prevDp = 0;
     boolean monotonicWithGas = true;
 
-    System.out.println("Gas Flow (kg/hr) | Liquid Flow (kg/hr) | GLR | ΔP (bar) | Trend");
-    System.out.println(StringUtils.repeat("-", 70));
+    logger.info("Gas Flow (kg/hr) | Liquid Flow (kg/hr) | GLR | ΔP (bar) | Trend");
+    logger.info(StringUtils.repeat("-", 70));
 
     for (double gasFlow : gasFlowRates) {
       try {
@@ -392,7 +396,7 @@ class TwoPhasePressureDropValidationTest {
         System.out.printf("%15.0f | %19.0f | ERROR: %s%n", gasFlow, liquidFlowRate, e.getMessage());
       }
     }
-    System.out.println();
+
   }
 
   /**
@@ -410,13 +414,13 @@ class TwoPhasePressureDropValidationTest {
   @Test
   @DisplayName("Test pressure drop scaling with pipe inclination")
   void testPressureDropVsInclination() {
-    System.out.println("=== Pressure Drop vs Pipe Inclination ===");
-    System.out.println();
+    logger.info("=== Pressure Drop vs Pipe Inclination ===");
+
 
     double[] angles = {-45, -30, -15, 0, 15, 30, 45, 60, 90};
 
-    System.out.println("Angle (°) | ΔP (bar) | ΔP Hydrostatic | ΔP Friction | Comment");
-    System.out.println(StringUtils.repeat("-", 75));
+    logger.info("Angle (°) | ΔP (bar) | ΔP Hydrostatic | ΔP Friction | Comment");
+    logger.info(StringUtils.repeat("-", 75));
 
     double horizontalDp = 0;
 
@@ -469,7 +473,7 @@ class TwoPhasePressureDropValidationTest {
         System.out.printf("%9.0f | ERROR: %s%n", angle, e.getMessage());
       }
     }
-    System.out.println();
+
 
     // Verify physical consistency
     assertTrue(horizontalDp > 0, "Horizontal pressure drop should be positive");
@@ -486,15 +490,15 @@ class TwoPhasePressureDropValidationTest {
   @Test
   @DisplayName("Validate industrial-scale pipeline conditions")
   void testIndustrialScaleConditions() {
-    System.out.println("=== Industrial-Scale Pipeline Validation ===");
-    System.out.println();
+    logger.info("=== Industrial-Scale Pipeline Validation ===");
+
 
     for (TwoPhaseTestCase testCase : INDUSTRIAL_CASES) {
-      System.out.println("Test: " + testCase.description);
-      System.out.println("  Conditions: D=" + (testCase.diameter * 1000) + " mm, L="
+      logger.info("Test: " + testCase.description);
+      logger.info("  Conditions: D=" + (testCase.diameter * 1000) + " mm, L="
           + (testCase.length / 1000) + " km");
-      System.out.println(
-          "  P=" + testCase.pressure + " bara, T=" + (testCase.temperature - 273.15) + " °C");
+      logger
+          .info("  P=" + testCase.pressure + " bara, T=" + (testCase.temperature - 273.15) + " °C");
 
       try {
         SystemInterface fluid = new SystemSrkEos(testCase.temperature, testCase.pressure);
@@ -523,15 +527,15 @@ class TwoPhasePressureDropValidationTest {
         // Calculate pressure gradient for comparison
         double dpPerKm = calculatedDp / (testCase.length / 1000);
 
-        System.out.println("  Gas flow: " + testCase.gasFlowRate + " kg/hr");
-        System.out.println("  Liquid flow: " + testCase.liquidFlowRate + " kg/hr");
-        System.out.println(
+        logger.info("  Gas flow: " + testCase.gasFlowRate + " kg/hr");
+        logger.info("  Liquid flow: " + testCase.liquidFlowRate + " kg/hr");
+        logger.info(
             "  GOR: " + String.format("%.1f", testCase.gasFlowRate / testCase.liquidFlowRate));
-        System.out.println("  Expected ΔP: " + String.format("%.2f", expectedDp) + " bar");
-        System.out.println("  Calculated ΔP: " + String.format("%.2f", calculatedDp) + " bar");
-        System.out.println("  Pressure gradient: " + String.format("%.2f", dpPerKm) + " bar/km");
-        System.out.println("  Difference: " + String.format("%.1f", error) + "%");
-        System.out.println();
+        logger.info("  Expected ΔP: " + String.format("%.2f", expectedDp) + " bar");
+        logger.info("  Calculated ΔP: " + String.format("%.2f", calculatedDp) + " bar");
+        logger.info("  Pressure gradient: " + String.format("%.2f", dpPerKm) + " bar/km");
+        logger.info("  Difference: " + String.format("%.1f", error) + "%");
+
 
         // Basic sanity checks
         assertTrue(calculatedDp > 0, "Pressure drop should be positive");
@@ -539,9 +543,9 @@ class TwoPhasePressureDropValidationTest {
             "Pressure drop should be less than 50% of inlet pressure");
 
       } catch (Exception e) {
-        System.out.println("  ERROR: " + e.getMessage());
+        logger.info("  ERROR: " + e.getMessage());
         e.printStackTrace();
-        System.out.println();
+
       }
     }
   }
@@ -558,13 +562,13 @@ class TwoPhasePressureDropValidationTest {
   @Test
   @DisplayName("Validate TwoFluidPipe model against test cases")
   void testTwoFluidPipeValidation() {
-    System.out.println("=== TwoFluidPipe Model Validation ===");
-    System.out.println("Comparison with Beggs & Brill (1973) test cases");
-    System.out.println();
+    logger.info("=== TwoFluidPipe Model Validation ===");
+    logger.info("Comparison with Beggs & Brill (1973) test cases");
 
-    System.out.println(String.format("%-30s | %8s | %8s | %8s | %8s | %6s", "Test Case", "D (mm)",
-        "L (m)", "B&B ΔP", "TFP ΔP", "Ratio"));
-    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 85));
+
+    logger.info(String.format("%-30s | %8s | %8s | %8s | %8s | %6s", "Test Case", "D (mm)", "L (m)",
+        "B&B ΔP", "TFP ΔP", "Ratio"));
+    logger.info(org.apache.commons.lang3.StringUtils.repeat("-", 85));
 
     int passed = 0;
     int total = 0;
@@ -624,7 +628,7 @@ class TwoPhasePressureDropValidationTest {
         // Calculate ratio (handle negative/near-zero values)
         double ratio = (Math.abs(dpBeggs) > 0.001) ? dpTwoFluid / dpBeggs : Double.NaN;
 
-        System.out.println(
+        logger.info(
             String.format("%-30s | %8.1f | %8.1f | %8.3f | %8.3f | %6.2f", testCase.description,
                 testCase.diameter * 1000, testCase.length, dpBeggs, dpTwoFluid, ratio));
 
@@ -643,13 +647,13 @@ class TwoPhasePressureDropValidationTest {
       }
     }
 
-    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 85));
-    System.out.println();
-    System.out.println("Summary: " + passed + "/" + total + " cases completed successfully");
-    System.out.println();
-    System.out.println("Note: TwoFluidPipe uses a mechanistic two-fluid model while Beggs & Brill");
-    System.out.println("uses empirical correlations. Differences up to 50% are acceptable.");
-    System.out.println();
+    logger.info(org.apache.commons.lang3.StringUtils.repeat("-", 85));
+
+    logger.info("Summary: " + passed + "/" + total + " cases completed successfully");
+
+    logger.info("Note: TwoFluidPipe uses a mechanistic two-fluid model while Beggs & Brill");
+    logger.info("uses empirical correlations. Differences up to 50% are acceptable.");
+
   }
 
   /**
@@ -658,8 +662,8 @@ class TwoPhasePressureDropValidationTest {
   @Test
   @DisplayName("Compare TwoFluidPipe vs Beggs & Brill for two-phase flow")
   void testTwoFluidPipeVsBeggsAndBrills() {
-    System.out.println("=== TwoFluidPipe vs Beggs & Brill Comparison ===");
-    System.out.println();
+    logger.info("=== TwoFluidPipe vs Beggs & Brill Comparison ===");
+
 
     try {
       // Create two-phase fluid
@@ -705,24 +709,24 @@ class TwoPhasePressureDropValidationTest {
       double dpTwoFluid =
           (inlet2.getPressure("bara") - pressureProfile[pressureProfile.length - 1] / 1e5);
 
-      System.out.println("Pipe: L=1000m, D=150mm, horizontal");
-      System.out.println("Fluid: methane (2000 kg/hr) + nC10 (10000 kg/hr)");
-      System.out.println("Phases detected: " + inlet1.getFluid().getNumberOfPhases());
-      System.out.println();
-      System.out.println("Results:");
-      System.out.println("  Beggs & Brill ΔP: " + String.format("%.4f", dpBeggs) + " bar");
-      System.out.println("  TwoFluidPipe ΔP:  " + String.format("%.4f", dpTwoFluid) + " bar");
+      logger.info("Pipe: L=1000m, D=150mm, horizontal");
+      logger.info("Fluid: methane (2000 kg/hr) + nC10 (10000 kg/hr)");
+      logger.info("Phases detected: " + inlet1.getFluid().getNumberOfPhases());
+
+      logger.info("Results:");
+      logger.info("  Beggs & Brill ΔP: " + String.format("%.4f", dpBeggs) + " bar");
+      logger.info("  TwoFluidPipe ΔP:  " + String.format("%.4f", dpTwoFluid) + " bar");
 
       double ratio = dpTwoFluid / dpBeggs;
-      System.out.println("  Ratio (TwoFluid/B&B): " + String.format("%.2f", ratio));
-      System.out.println();
+      logger.info("  Ratio (TwoFluid/B&B): " + String.format("%.2f", ratio));
+
 
       // Both should give positive pressure drops
       assertTrue(dpBeggs > 0, "Beggs & Brill pressure drop should be positive");
       assertTrue(dpTwoFluid > 0, "TwoFluidPipe pressure drop should be positive");
 
     } catch (Exception e) {
-      System.out.println("ERROR: " + e.getMessage());
+      logger.info("ERROR: " + e.getMessage());
       e.printStackTrace();
       fail("Test failed with exception: " + e.getMessage());
     }
@@ -805,15 +809,15 @@ class TwoPhasePressureDropValidationTest {
   @Test
   @DisplayName("Test flow regime detection across conditions")
   void testFlowRegimeDetection() {
-    System.out.println("=== Flow Regime Detection Test ===");
-    System.out.println();
+    logger.info("=== Flow Regime Detection Test ===");
+
 
     // Matrix of gas and liquid flow rates
     double[] gasRates = {50, 200, 500, 1000, 2000};
     double[] liquidRates = {5000, 2000, 1000, 500, 200};
 
-    System.out.println("Gas (kg/hr) | Liquid (kg/hr) | GLR    | Flow Regime");
-    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 60));
+    logger.info("Gas (kg/hr) | Liquid (kg/hr) | GLR    | Flow Regime");
+    logger.info(org.apache.commons.lang3.StringUtils.repeat("-", 60));
 
     for (double gasRate : gasRates) {
       for (double liquidRate : liquidRates) {
@@ -845,6 +849,6 @@ class TwoPhasePressureDropValidationTest {
         }
       }
     }
-    System.out.println();
+
   }
 }

@@ -7,6 +7,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Example demonstrating transient heat transfer in PipeBeggsAndBrills.
@@ -18,6 +20,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 public class TransientPipeHeatTransferExample {
+  private static final Logger logger = LogManager.getLogger(TransientPipeHeatTransferExample.class);
+
 
   /**
    * Main method to run the transient heat transfer example.
@@ -25,11 +29,11 @@ public class TransientPipeHeatTransferExample {
    * @param args command line arguments (not used)
    */
   public static void main(String[] args) {
-    System.out.println("╔══════════════════════════════════════════════════════════════════════╗");
-    System.out.println("║  TRANSIENT PIPE HEAT TRANSFER EXAMPLE                                ║");
-    System.out.println("║  Inlet temperature varies: UP then DOWN                              ║");
-    System.out.println("╚══════════════════════════════════════════════════════════════════════╝");
-    System.out.println();
+    logger.info("╔══════════════════════════════════════════════════════════════════════╗");
+    logger.info("║  TRANSIENT PIPE HEAT TRANSFER EXAMPLE                                ║");
+    logger.info("║  Inlet temperature varies: UP then DOWN                              ║");
+    logger.info("╚══════════════════════════════════════════════════════════════════════╝");
+
 
     // ========================================
     // CONFIGURATION
@@ -54,7 +58,7 @@ public class TransientPipeHeatTransferExample {
     // ========================================
     // CREATE FLUID
     // ========================================
-    System.out.println("=== Setting Up Simulation ===");
+    logger.info("=== Setting Up Simulation ===");
     SystemInterface fluid = new SystemSrkEos(273.15 + initialInletTemp, inletPressure);
     fluid.addComponent("methane", 0.85);
     fluid.addComponent("ethane", 0.08);
@@ -91,14 +95,14 @@ public class TransientPipeHeatTransferExample {
     System.out.printf("Heat transfer coefficient: %.1f W/(m²·K)%n", heatTransferCoeff);
     System.out.printf("Flow rate: %.0f kg/hr%n", flowRate);
     System.out.printf("Time step: %.1f seconds%n", dt);
-    System.out.println();
+
 
     // ========================================
     // RUN TRANSIENT SIMULATION
     // ========================================
-    System.out.println("=== Transient Simulation Results ===");
-    System.out.println("Time(s)    Inlet T(°C)  Outlet T(°C)  ΔT(°C)    Phase");
-    System.out.println(StringUtils.repeat("─", 70));
+    logger.info("=== Transient Simulation Results ===");
+    logger.info("Time(s)    Inlet T(°C)  Outlet T(°C)  ΔT(°C)    Phase");
+    logger.info(StringUtils.repeat("─", 70));
 
     // Disable steady-state calculation for transient mode
     pipe.setCalculateSteadyState(false);
@@ -149,13 +153,13 @@ public class TransientPipeHeatTransferExample {
       currentTime += dt;
     }
 
-    System.out.println(StringUtils.repeat("─", 70));
-    System.out.println();
+    logger.info(StringUtils.repeat("─", 70));
+
 
     // ========================================
     // ANALYSIS
     // ========================================
-    System.out.println("=== Analysis ===");
+    logger.info("=== Analysis ===");
 
     // Calculate expected steady-state outlet temperature using NTU method
     double massFlowKgS = flowRate / 3600.0;
@@ -167,21 +171,21 @@ public class TransientPipeHeatTransferExample {
     System.out.printf("Heat transfer area: %.1f m²%n", area);
     System.out.printf("NTU (Number of Transfer Units): %.3f%n", NTU);
     System.out.printf("Effectiveness (1-e^-NTU): %.3f%n", effectiveness);
-    System.out.println();
+
 
     // Expected outlet temperatures at different inlet temps
     double[] testInletTemps = {40.0, 60.0, 90.0};
-    System.out.println("Expected steady-state outlet temperatures:");
-    System.out.println("Inlet T    Expected Outlet T    Cooling (ΔT)");
+    logger.info("Expected steady-state outlet temperatures:");
+    logger.info("Inlet T    Expected Outlet T    Cooling (ΔT)");
     for (double Tin : testInletTemps) {
       double expectedTout = seaTemperature + (Tin - seaTemperature) * Math.exp(-NTU);
       double cooling = Tin - expectedTout;
       System.out.printf("%.1f°C     %.2f°C              %.2f°C%n", Tin, expectedTout, cooling);
     }
-    System.out.println();
 
-    System.out.println("╔══════════════════════════════════════════════════════════════════════╗");
-    System.out.println("║  Example completed successfully!                                     ║");
-    System.out.println("╚══════════════════════════════════════════════════════════════════════╝");
+
+    logger.info("╔══════════════════════════════════════════════════════════════════════╗");
+    logger.info("║  Example completed successfully!                                     ║");
+    logger.info("╚══════════════════════════════════════════════════════════════════════╝");
   }
 }

@@ -11,6 +11,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -22,6 +24,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class ActivityCalc {
+  private static final Logger logger = LogManager.getLogger(ActivityCalc.class);
+
   /**
    * <p>
    * main.
@@ -51,6 +55,6 @@ public class ActivityCalc {
     }
 
     // testSystem.display();
-    System.out.println("activity water " + testSystem.getPhase(1).getActivityCoefficient(1));
+    logger.info("activity water " + testSystem.getPhase(1).getActivityCoefficient(1));
   }
 }

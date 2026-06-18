@@ -10,6 +10,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Benchmark tests for TPflash performance analysis.
@@ -25,6 +27,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 @Tag("slow")
 class TPFlashBenchmarkTest {
+  private static final Logger logger = LogManager.getLogger(TPFlashBenchmarkTest.class);
+
 
   /**
    * Creates a simple 3-component natural gas system for benchmarking.
@@ -137,14 +141,14 @@ class TPFlashBenchmarkTest {
     }
     long init3Time = System.nanoTime() - start;
 
-    System.out.println("=== Init Level Benchmark (10-comp SRK, " + N + " iterations) ===");
-    System.out.println("init(0): " + (init0Time / 1_000_000) + " ms total, "
+    logger.info("=== Init Level Benchmark (10-comp SRK, " + N + " iterations) ===");
+    logger.info("init(0): " + (init0Time / 1_000_000) + " ms total, "
         + String.format("%.1f", init0Time / 1000.0 / N) + " us/call");
-    System.out.println("init(1): " + (init1Time / 1_000_000) + " ms total, "
+    logger.info("init(1): " + (init1Time / 1_000_000) + " ms total, "
         + String.format("%.1f", init1Time / 1000.0 / N) + " us/call");
-    System.out.println("init(2): " + (init2Time / 1_000_000) + " ms total, "
+    logger.info("init(2): " + (init2Time / 1_000_000) + " ms total, "
         + String.format("%.1f", init2Time / 1000.0 / N) + " us/call");
-    System.out.println("init(3): " + (init3Time / 1_000_000) + " ms total, "
+    logger.info("init(3): " + (init3Time / 1_000_000) + " ms total, "
         + String.format("%.1f", init3Time / 1000.0 / N) + " us/call");
     System.out
         .println("Ratio init(1)/init(0): " + String.format("%.1f", (double) init1Time / init0Time));
@@ -152,7 +156,7 @@ class TPFlashBenchmarkTest {
         .println("Ratio init(2)/init(1): " + String.format("%.1f", (double) init2Time / init1Time));
     System.out
         .println("Ratio init(3)/init(1): " + String.format("%.1f", (double) init3Time / init1Time));
-    System.out.println();
+
 
     // init(1) should be more expensive than init(0) since it computes fugacity coefficients
     assertTrue(init1Time > init0Time, "init(1) should be more expensive than init(0)");
@@ -190,16 +194,16 @@ class TPFlashBenchmarkTest {
     }
     long phase1Time = System.nanoTime() - start;
 
-    System.out.println("=== Init Single Phase vs All Phases (10-comp SRK) ===");
-    System.out.println("init(1) all phases: " + (allPhaseTime / 1_000_000) + " ms, "
+    logger.info("=== Init Single Phase vs All Phases (10-comp SRK) ===");
+    logger.info("init(1) all phases: " + (allPhaseTime / 1_000_000) + " ms, "
         + String.format("%.1f", allPhaseTime / 1000.0 / N) + " us/call");
-    System.out.println("init(1, 0) phase 0: " + (phase0Time / 1_000_000) + " ms, "
+    logger.info("init(1, 0) phase 0: " + (phase0Time / 1_000_000) + " ms, "
         + String.format("%.1f", phase0Time / 1000.0 / N) + " us/call");
-    System.out.println("init(1, 1) phase 1: " + (phase1Time / 1_000_000) + " ms, "
+    logger.info("init(1, 1) phase 1: " + (phase1Time / 1_000_000) + " ms, "
         + String.format("%.1f", phase1Time / 1000.0 / N) + " us/call");
     System.out
         .println("Ratio all/single: " + String.format("%.1f", (double) allPhaseTime / phase0Time));
-    System.out.println();
+
   }
 
   /**
@@ -225,10 +229,10 @@ class TPFlashBenchmarkTest {
     }
     long elapsed = System.nanoTime() - start;
 
-    System.out.println("=== TPflash Two-Phase (3-comp, -40C, 30bar) ===");
-    System.out.println("Total: " + (elapsed / 1_000_000) + " ms for " + N + " flashes");
-    System.out.println("Per flash: " + String.format("%.1f", elapsed / 1000.0 / N) + " us");
-    System.out.println();
+    logger.info("=== TPflash Two-Phase (3-comp, -40C, 30bar) ===");
+    logger.info("Total: " + (elapsed / 1_000_000) + " ms for " + N + " flashes");
+    logger.info("Per flash: " + String.format("%.1f", elapsed / 1000.0 / N) + " us");
+
   }
 
   /**
@@ -254,10 +258,10 @@ class TPFlashBenchmarkTest {
     }
     long elapsed = System.nanoTime() - start;
 
-    System.out.println("=== TPflash Single-Phase (10-comp, 100C, 10bar - all gas) ===");
-    System.out.println("Total: " + (elapsed / 1_000_000) + " ms for " + N + " flashes");
-    System.out.println("Per flash: " + String.format("%.1f", elapsed / 1000.0 / N) + " us");
-    System.out.println();
+    logger.info("=== TPflash Single-Phase (10-comp, 100C, 10bar - all gas) ===");
+    logger.info("Total: " + (elapsed / 1_000_000) + " ms for " + N + " flashes");
+    logger.info("Per flash: " + String.format("%.1f", elapsed / 1000.0 / N) + " us");
+
   }
 
   /**
@@ -283,10 +287,10 @@ class TPFlashBenchmarkTest {
     }
     long elapsed = System.nanoTime() - start;
 
-    System.out.println("=== TPflash Two-Phase (10-comp, 25C, 50bar) ===");
-    System.out.println("Total: " + (elapsed / 1_000_000) + " ms for " + N + " flashes");
-    System.out.println("Per flash: " + String.format("%.1f", elapsed / 1000.0 / N) + " us");
-    System.out.println();
+    logger.info("=== TPflash Two-Phase (10-comp, 25C, 50bar) ===");
+    logger.info("Total: " + (elapsed / 1_000_000) + " ms for " + N + " flashes");
+    logger.info("Per flash: " + String.format("%.1f", elapsed / 1000.0 / N) + " us");
+
   }
 
   /**
@@ -311,10 +315,10 @@ class TPFlashBenchmarkTest {
     }
     long elapsed = System.nanoTime() - start;
 
-    System.out.println("=== TPflash (20-comp well fluid, 80C, 100bar) ===");
-    System.out.println("Total: " + (elapsed / 1_000_000) + " ms for " + N + " flashes");
-    System.out.println("Per flash: " + String.format("%.1f", elapsed / 1000.0 / N) + " us");
-    System.out.println();
+    logger.info("=== TPflash (20-comp well fluid, 80C, 100bar) ===");
+    logger.info("Total: " + (elapsed / 1_000_000) + " ms for " + N + " flashes");
+    logger.info("Per flash: " + String.format("%.1f", elapsed / 1000.0 / N) + " us");
+
   }
 
   /**
@@ -334,7 +338,7 @@ class TPFlashBenchmarkTest {
 
     String[][] allComponents = {components3, components6, components10, components15};
 
-    System.out.println("=== Component Count Scaling (two-phase, -20C, 30bar) ===");
+    logger.info("=== Component Count Scaling (two-phase, -20C, 30bar) ===");
     for (String[] comps : allComponents) {
       // Warmup
       for (int w = 0; w < 50; w++) {
@@ -359,10 +363,10 @@ class TPFlashBenchmarkTest {
       }
       long elapsed = System.nanoTime() - start;
 
-      System.out.println(comps.length + " components: " + (elapsed / 1_000_000) + " ms total, "
+      logger.info(comps.length + " components: " + (elapsed / 1_000_000) + " ms total, "
           + String.format("%.1f", elapsed / 1000.0 / N) + " us/flash");
     }
-    System.out.println();
+
   }
 
   /**
@@ -392,9 +396,9 @@ class TPFlashBenchmarkTest {
 
     System.out
         .println("=== TPflash with Stability Analysis (10-comp, 150C, 5bar - single phase) ===");
-    System.out.println("Total: " + (elapsed / 1_000_000) + " ms for " + N + " flashes");
-    System.out.println("Per flash: " + String.format("%.1f", elapsed / 1000.0 / N) + " us");
-    System.out.println();
+    logger.info("Total: " + (elapsed / 1_000_000) + " ms for " + N + " flashes");
+    logger.info("Per flash: " + String.format("%.1f", elapsed / 1000.0 / N) + " us");
+
   }
 
   /**
@@ -435,13 +439,13 @@ class TPFlashBenchmarkTest {
     sys.init(1);
     long tInit1Second = System.nanoTime() - t0;
 
-    System.out.println("=== Detailed TPflash Operation Costs (10-comp SRK) ===");
-    System.out.println("init(0):     " + String.format("%7.1f", tInit0 / 1000.0) + " us");
-    System.out.println("init(1) 1st: " + String.format("%7.1f", tInit1First / 1000.0) + " us");
-    System.out.println("Rachford-Rice: " + String.format("%5.1f", tRR / 1000.0) + " us");
-    System.out.println("calc_x_y:    " + String.format("%7.1f", tXY / 1000.0) + " us");
-    System.out.println("init(1) 2nd: " + String.format("%7.1f", tInit1Second / 1000.0) + " us");
-    System.out.println();
+    logger.info("=== Detailed TPflash Operation Costs (10-comp SRK) ===");
+    logger.info("init(0):     " + String.format("%7.1f", tInit0 / 1000.0) + " us");
+    logger.info("init(1) 1st: " + String.format("%7.1f", tInit1First / 1000.0) + " us");
+    logger.info("Rachford-Rice: " + String.format("%5.1f", tRR / 1000.0) + " us");
+    logger.info("calc_x_y:    " + String.format("%7.1f", tXY / 1000.0) + " us");
+    logger.info("init(1) 2nd: " + String.format("%7.1f", tInit1Second / 1000.0) + " us");
+
   }
 
   /**
@@ -463,10 +467,10 @@ class TPFlashBenchmarkTest {
     long elapsed = System.nanoTime() - start;
 
     double flashesPerSec = N * 1e9 / elapsed;
-    System.out.println("=== Molar Volume Solver Throughput ===");
-    System.out.println("init(1) calls/sec: " + String.format("%.0f", flashesPerSec));
-    System.out.println("Per call: " + String.format("%.1f", elapsed / 1000.0 / N) + " us");
-    System.out.println();
+    logger.info("=== Molar Volume Solver Throughput ===");
+    logger.info("init(1) calls/sec: " + String.format("%.0f", flashesPerSec));
+    logger.info("Per call: " + String.format("%.1f", elapsed / 1000.0 / N) + " us");
+
   }
 
   /**
@@ -506,13 +510,13 @@ class TPFlashBenchmarkTest {
     }
     long prTime = System.nanoTime() - start;
 
-    System.out.println("=== PR vs SRK EOS (5-comp, -20C, 30bar) ===");
-    System.out.println("SRK: " + (srkTime / 1_000_000) + " ms, "
+    logger.info("=== PR vs SRK EOS (5-comp, -20C, 30bar) ===");
+    logger.info("SRK: " + (srkTime / 1_000_000) + " ms, "
         + String.format("%.1f", srkTime / 1000.0 / N) + " us/flash");
-    System.out.println("PR:  " + (prTime / 1_000_000) + " ms, "
+    logger.info("PR:  " + (prTime / 1_000_000) + " ms, "
         + String.format("%.1f", prTime / 1000.0 / N) + " us/flash");
-    System.out.println("PR/SRK ratio: " + String.format("%.2f", (double) prTime / srkTime));
-    System.out.println();
+    logger.info("PR/SRK ratio: " + String.format("%.2f", (double) prTime / srkTime));
+
   }
 
   /**

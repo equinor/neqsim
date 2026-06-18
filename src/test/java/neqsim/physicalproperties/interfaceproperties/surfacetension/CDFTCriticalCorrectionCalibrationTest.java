@@ -2,6 +2,8 @@ package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
@@ -21,6 +23,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 class CDFTCriticalCorrectionCalibrationTest {
+  private static final Logger logger =
+      LogManager.getLogger(CDFTCriticalCorrectionCalibrationTest.class);
 
   /** Ising critical exponent for surface tension. */
   private static final double MU_ISING = 1.26;
@@ -50,9 +54,9 @@ class CDFTCriticalCorrectionCalibrationTest {
    */
   @Test
   void sweepLambdaWithCriticalCorrection() {
-    System.out.println("\n=== Sweep lambda WITH critical correction (PR) ===");
+    logger.info("\n=== Sweep lambda WITH critical correction (PR) ===");
     System.out.printf("%-8s | %-12s | %-12s%n", "lambda", "AAD-raw(%)", "AAD-corr(%)");
-    System.out.println("---------|--------------|-------------");
+    logger.info("---------|--------------|-------------");
 
     double bestLambdaCorr = 0.5;
     double bestAADCorr = Double.MAX_VALUE;
@@ -117,10 +121,10 @@ class CDFTCriticalCorrectionCalibrationTest {
    */
   @Test
   void perComponentOptimalLambda() {
-    System.out.println("\n=== Per-component optimal lambda (PR, with correction) ===");
+    logger.info("\n=== Per-component optimal lambda (PR, with correction) ===");
     System.out.printf("%-12s | %6s | %-10s | %-10s | %-10s%n", "Component", "omega", "lambda_opt",
         "AAD(%)", "AAD_raw(%)");
-    System.out.println("-------------|--------|------------|------------|----------");
+    logger.info("-------------|--------|------------|------------|----------");
 
     String[] components =
         {"methane", "ethane", "propane", "n-butane", "n-pentane", "n-hexane", "nitrogen", "CO2"};
@@ -186,7 +190,7 @@ class CDFTCriticalCorrectionCalibrationTest {
     }
 
     // Fit linear correlation: lambda(omega) = A + B*omega
-    System.out.println("\n--- Lambda(omega) linear fit ---");
+    logger.info("\n--- Lambda(omega) linear fit ---");
     double sumX = 0, sumY = 0, sumXX = 0, sumXY = 0;
     int n = components.length;
     for (int i = 0; i < n; i++) {
@@ -250,7 +254,7 @@ class CDFTCriticalCorrectionCalibrationTest {
         applyCorrection);
     System.out.printf("%-12s | %6s | %8s | %8s | %8s | %7s%n", "Component", "T (K)", "Exp", "Raw",
         "Corr", "Dev(%)");
-    System.out.println("-------------|--------|----------|----------|----------|--------");
+    logger.info("-------------|--------|----------|----------|----------|--------");
 
     for (Object[] row : DATA) {
       String comp = (String) row[0];
@@ -301,13 +305,13 @@ class CDFTCriticalCorrectionCalibrationTest {
     double interceptA = 0.7494;
     double slopeB = -0.7403;
 
-    System.out.println("\n=== FULL OPTIMISED PREDICTION ===");
+    logger.info("\n=== FULL OPTIMISED PREDICTION ===");
     System.out.printf("Correlation: lambda = %.4f + %.4f * omega%n", interceptA, slopeB);
     System.out.printf("Critical correction: sigma * (1-Tr)^(%.3f)%n%n", DELTA_MU);
 
     System.out.printf("%-12s | %6s | %8s | %8s | %7s | %6s%n", "Component", "T (K)", "Exp", "Pred",
         "Dev(%)", "lambda");
-    System.out.println("-------------|--------|----------|----------|---------|-------");
+    logger.info("-------------|--------|----------|----------|---------|-------");
 
     double sumAbsDev = 0;
     int count = 0;

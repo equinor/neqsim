@@ -5,11 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @author ESOL
  */
 class TPsolidFlash {
+  private static final Logger logger = LogManager.getLogger(TPsolidFlash.class);
+
   @Test
   void testSolidFLash() {
     neqsim.thermo.system.SystemPrEos testSystem =
@@ -30,7 +34,7 @@ class TPsolidFlash {
     assertEquals(3, testSystem.getNumberOfPhases());
     assertTrue(testSystem.hasPhaseType(PhaseType.SOLID));
 
-    // System.out.println(
+    // logger.info(
     // "kg S8 per kg HC " + (testSystem.getPhase(0).getComponent("S8").getFlowRate("kg/hr")
     // + testSystem.getPhase(1).getComponent("S8").getFlowRate("kg/hr"))
     // / (testSystem.getPhase(0).getFlowRate("kg/hr")
@@ -79,10 +83,10 @@ class TPsolidFlash {
     assertEquals(3, testSystem.getNumberOfPhases());
     assertTrue(testSystem.hasPhaseType(PhaseType.SOLID));
 
-    // System.out.println(
+    // logger.info(
     // "kg S8 per MSm3 gas " + (testSystem.getPhase(0).getComponent("S8").getFlowRate("kg/hr")
     // + testSystem.getPhase(1).getComponent("S8").getFlowRate("kg/hr")));
-    // System.out.println("m3 oil per MSm3 " +
+    // logger.info("m3 oil per MSm3 " +
     // (testSystem.getPhase(PhaseType.OIL).getFlowRate("m3/hr")
     // * 24 / testSystem.getPhase(PhaseType.GAS).getFlowRate("MSm3/day")));
   }

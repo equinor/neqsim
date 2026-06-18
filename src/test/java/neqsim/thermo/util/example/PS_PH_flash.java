@@ -4,6 +4,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -15,6 +17,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class PS_PH_flash {
+  private static final Logger logger = LogManager.getLogger(PS_PH_flash.class);
+
   /**
    * <p>
    * main.
@@ -67,16 +71,15 @@ public class PS_PH_flash {
 
     // testSystem.setPressure(testSystem.getPressure() - 1.2);
     // double entropy = testSystem.getEntropy();
-    // System.out.println("entropy spec" + entropy);
+    // logger.info("entropy spec" + entropy);
     double enthalpy = testSystem.getEnthalpy();
-    // System.out.println("enthalpy spec" + enthalpy);
+    // logger.info("enthalpy spec" + enthalpy);
 
     double entropy = testSystem.getEntropy();
     /*
      * testSystem.setTemperature(273.15 + 0.0); testSystem.setPressure(100.0); try {
      * testOps.TPflash(); // testOps.bubblePointTemperatureFlash(); } catch (Exception ex) { }
-     * testSystem.init(2); testSystem.setPressure(100.0); // System.out.println("entropy spec" +
-     * entropy);
+     * testSystem.init(2); testSystem.setPressure(100.0); // logger.info("entropy spec" + entropy);
      *
      * // testSystem.setPressure(20.894745);
      */
@@ -99,6 +102,6 @@ public class PS_PH_flash {
     // testSystem.setPressure(1.0);
     // testOps.PSflash(entropy);
     testSystem.display();
-    // System.out.println("enthalpy spec" + testSystem.getEnthalpy());
+    // logger.info("enthalpy spec" + testSystem.getEnthalpy());
   }
 }

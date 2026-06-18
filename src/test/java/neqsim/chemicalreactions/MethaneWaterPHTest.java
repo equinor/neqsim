@@ -2,6 +2,8 @@ package neqsim.chemicalreactions;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -11,11 +13,13 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 @Tag("slow")
 public class MethaneWaterPHTest {
+  private static final Logger logger = LogManager.getLogger(MethaneWaterPHTest.class);
+
   @Test
   public void testMethaneWaterPH() {
-    System.out.println("\n=== Methane-Water pH Test ===");
-    System.out.println("Conditions: 50 bara, 20°C (293.15 K)");
-    System.out.println("--------------------------------------------------");
+    logger.info("\n=== Methane-Water pH Test ===");
+    logger.info("Conditions: 50 bara, 20°C (293.15 K)");
+    logger.info("--------------------------------------------------");
 
     double temperature = 293.15; // 20°C in Kelvin
     double pressure = 50.0; // 50 bara
@@ -48,13 +52,13 @@ public class MethaneWaterPHTest {
       ops.TPflash();
 
       // Report results
-      System.out.println("\nResults:");
-      System.out.println("Number of phases: " + system.getNumberOfPhases());
+      logger.info("\nResults:");
+      logger.info("Number of phases: " + system.getNumberOfPhases());
 
       // Print phase information
       for (int p = 0; p < system.getNumberOfPhases(); p++) {
         String phaseType = system.getPhase(p).getPhaseTypeName();
-        System.out.println("\nPhase " + p + " (" + phaseType + "):");
+        logger.info("\nPhase " + p + " (" + phaseType + "):");
 
         // Check if this is the aqueous phase
         boolean isAqueous = "aqueous".equalsIgnoreCase(phaseType);
@@ -79,12 +83,12 @@ public class MethaneWaterPHTest {
         }
       }
 
-      System.out.println("\n--------------------------------------------------");
-      System.out.println("Note: Pure water at 20°C should have pH ≈ 7.0");
-      System.out.println("      (Kw at 20°C is slightly less than at 25°C)");
+      logger.info("\n--------------------------------------------------");
+      logger.info("Note: Pure water at 20°C should have pH ≈ 7.0");
+      logger.info("      (Kw at 20°C is slightly less than at 25°C)");
 
     } catch (Exception e) {
-      System.out.println("Error: " + e.getMessage());
+      logger.info("Error: " + e.getMessage());
       e.printStackTrace();
     }
   }

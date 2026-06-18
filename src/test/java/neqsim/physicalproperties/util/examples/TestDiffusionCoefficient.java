@@ -17,8 +17,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestDiffusionCoefficient {
+  private static final Logger logger = LogManager.getLogger(TestDiffusionCoefficient.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestDiffusionCoefficient.class);
 
   /**
    * <p>
@@ -49,20 +50,20 @@ public class TestDiffusionCoefficient {
     System.out
         .println("binary diffusion coefficient water in nitrogen gas " + testSystem.getPhase("gas")
             .getPhysicalProperties().getDiffusionCoefficient("water", "nitrogen") + " m2/sec");
-    System.out.println(
+    logger.info(
         "binary diffusion coefficient nitrogen in liquid n-heptane " + testSystem.getPhase("oil")
             .getPhysicalProperties().getDiffusionCoefficient("nitrogen", "n-heptane") + " m2/sec");
     System.out
         .println("binary diffusion coefficient nitrogen in water " + testSystem.getPhase("aqueous")
             .getPhysicalProperties().getDiffusionCoefficient("nitrogen", "water") + " m2/sec");
 
-    System.out.println("effective diffusion coefficient water in gas " + testSystem.getPhase("gas")
+    logger.info("effective diffusion coefficient water in gas " + testSystem.getPhase("gas")
         .getPhysicalProperties().getEffectiveDiffusionCoefficient("water") + " m2/sec");
-    System.out.println(
+    logger.info(
         "effective diffusion coefficient nitrogen in liquid n-heptane " + testSystem.getPhase("oil")
             .getPhysicalProperties().getEffectiveDiffusionCoefficient("nitrogen") + " m2/sec");
-    System.out.println(
-        "effective diffusion coefficient nitrogen in water " + testSystem.getPhase("aqueous")
+    logger
+        .info("effective diffusion coefficient nitrogen in water " + testSystem.getPhase("aqueous")
             .getPhysicalProperties().getEffectiveDiffusionCoefficient("nitrogen") + " m2/sec");
   }
 }

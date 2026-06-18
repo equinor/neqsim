@@ -7,11 +7,15 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for emissions calculation utilities.
  */
 public class EmissionsCalculatorTest {
+  private static final Logger logger = LogManager.getLogger(EmissionsCalculatorTest.class);
+
 
   @Test
   void testBasicEmissionsCalculation() {
@@ -66,7 +70,7 @@ public class EmissionsCalculatorTest {
 
     // Get emissions report
     String report = system.getEmissionsReport();
-    System.out.println(report);
+    logger.info(report);
 
     // Verify emissions are calculated
     double totalCO2 = system.getTotalCO2EmissionRate("kg/hr");
@@ -106,8 +110,8 @@ public class EmissionsCalculatorTest {
     EmissionsCalculator calc = new EmissionsCalculator(degasser);
     calc.calculate();
 
-    System.out.println("\n=== Separator Emissions Test ===");
-    System.out.println(calc.generateReport());
+    logger.info("\n=== Separator Emissions Test ===");
+    logger.info(calc.generateReport());
 
     // Gas composition should show emissions
     Map<String, Double> composition = calc.getGasCompositionMass();
@@ -287,7 +291,7 @@ public class EmissionsCalculatorTest {
     assertTrue(gwrResults.containsKey("lab_Sm3_Sm3"), "Should have lab GWR");
     assertTrue(gwrResults.containsKey("deviation_percent"), "Should have deviation");
 
-    System.out.println("Validation results: " + validation);
+    logger.info("Validation results: " + validation);
   }
 
   /**
@@ -314,7 +318,7 @@ public class EmissionsCalculatorTest {
 
     // Get comparison report
     String report = system.getMethodComparisonReport();
-    System.out.println(report);
+    logger.info(report);
 
     // Verify report contains expected sections
     assertTrue(report.contains("METHOD COMPARISON"), "Should have comparison header");

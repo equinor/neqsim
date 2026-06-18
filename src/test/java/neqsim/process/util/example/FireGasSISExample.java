@@ -1,5 +1,7 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.splitter.Splitter;
@@ -48,6 +50,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version 1.0
  */
 public class FireGasSISExample {
+  private static final Logger logger = LogManager.getLogger(FireGasSISExample.class);
 
   /**
    * Main method to run the fire and gas SIS example.
@@ -56,9 +59,9 @@ public class FireGasSISExample {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    System.out.println("╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║    SAFETY INSTRUMENTED SYSTEM (SIS) - FIRE & GAS DETECTION    ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║    SAFETY INSTRUMENTED SYSTEM (SIS) - FIRE & GAS DETECTION    ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     // ═══════════════════════════════════════════════════════════════
     // PROCESS EQUIPMENT SETUP
@@ -164,29 +167,29 @@ public class FireGasSISExample {
     // DISPLAY SYSTEM CONFIGURATION
     // ═══════════════════════════════════════════════════════════════
 
-    System.out.println("═══ SYSTEM CONFIGURATION ═══");
-    System.out.println("Separator: HP Separator at 50 bara");
-    System.out.println("Gas flow rate: 10000 kg/hr");
-    System.out.println();
+    logger.info("═══ SYSTEM CONFIGURATION ═══");
+    logger.info("Separator: HP Separator at 50 bara");
+    logger.info("Gas flow rate: 10000 kg/hr");
 
-    System.out.println("SAFETY INSTRUMENTED FUNCTIONS:");
-    System.out.println("1. Fire Detection SIF:");
-    System.out.println("   - Voting: " + fireSIF.getVotingLogic());
-    System.out.println("   - Detectors: FD-101, FD-102, FD-103");
-    System.out.println("   - Setpoint: 60°C (High)");
-    System.out.println();
 
-    System.out.println("2. Gas Detection SIF:");
-    System.out.println("   - Voting: " + gasSIF.getVotingLogic());
-    System.out.println("   - Detectors: GD-101, GD-102, GD-103");
-    System.out.println("   - Setpoint: 25% LEL (High-High)");
-    System.out.println();
+    logger.info("SAFETY INSTRUMENTED FUNCTIONS:");
+    logger.info("1. Fire Detection SIF:");
+    logger.info("   - Voting: " + fireSIF.getVotingLogic());
+    logger.info("   - Detectors: FD-101, FD-102, FD-103");
+    logger.info("   - Setpoint: 60°C (High)");
 
-    System.out.println("ESD LOGIC ACTIONS:");
-    System.out.println("  1. Trip inlet valve ESD-XV-101 (immediate)");
-    System.out.println("  2. Activate blowdown valve BD-101 (0.5s delay)");
-    System.out.println("  3. Redirect flow to blowdown (0.0s delay)");
-    System.out.println();
+
+    logger.info("2. Gas Detection SIF:");
+    logger.info("   - Voting: " + gasSIF.getVotingLogic());
+    logger.info("   - Detectors: GD-101, GD-102, GD-103");
+    logger.info("   - Setpoint: 25% LEL (High-High)");
+
+
+    logger.info("ESD LOGIC ACTIONS:");
+    logger.info("  1. Trip inlet valve ESD-XV-101 (immediate)");
+    logger.info("  2. Activate blowdown valve BD-101 (0.5s delay)");
+    logger.info("  3. Redirect flow to blowdown (0.0s delay)");
+
 
     // Run initial steady state
     feedStream.run();
@@ -205,68 +208,67 @@ public class FireGasSISExample {
     // SCENARIO 1: NORMAL OPERATION
     // ═══════════════════════════════════════════════════════════════
 
-    System.out.println("═══ SCENARIO 1: NORMAL OPERATION ═══");
+    logger.info("═══ SCENARIO 1: NORMAL OPERATION ═══");
     fireSIF.update(25.0, 27.0, 26.0); // Normal temperatures
     gasSIF.update(0.0, 0.5, 0.3); // No gas detected
 
-    System.out.println(fireSIF.getStatusDescription());
+    logger.info(fireSIF.getStatusDescription());
     for (Detector det : fireSIF.getDetectors()) {
-      System.out.println("  " + det.toString());
+      logger.info("  " + det.toString());
     }
-    System.out.println();
 
-    System.out.println(gasSIF.getStatusDescription());
+
+    logger.info(gasSIF.getStatusDescription());
     for (Detector det : gasSIF.getDetectors()) {
-      System.out.println("  " + det.toString());
+      logger.info("  " + det.toString());
     }
-    System.out.println();
+
 
     System.out.printf("ESD Logic: %s%n", esdLogic.getStatusDescription());
     System.out.printf("Process flow: %.1f kg/hr%n", processStream.getFlowRate("kg/hr"));
-    System.out.println();
+
 
     // ═══════════════════════════════════════════════════════════════
     // SCENARIO 2: SINGLE FIRE DETECTOR TRIP (NO ESD)
     // ═══════════════════════════════════════════════════════════════
 
-    System.out.println("═══ SCENARIO 2: SINGLE FIRE DETECTOR TRIP (1/3) ═══");
-    System.out.println(">>> FD-101 detects elevated temperature <<<");
+    logger.info("═══ SCENARIO 2: SINGLE FIRE DETECTOR TRIP (1/3) ═══");
+    logger.info(">>> FD-101 detects elevated temperature <<<");
     fireSIF.update(75.0, 27.0, 26.0); // Only FD-101 above setpoint
 
-    System.out.println(fireSIF.getStatusDescription());
-    System.out.println("  FD-101: " + (fireDetector1.isTripped() ? "TRIPPED" : "NORMAL"));
-    System.out.println("  FD-102: " + (fireDetector2.isTripped() ? "TRIPPED" : "NORMAL"));
-    System.out.println("  FD-103: " + (fireDetector3.isTripped() ? "TRIPPED" : "NORMAL"));
-    System.out.println("SIF Status: "
+    logger.info(fireSIF.getStatusDescription());
+    logger.info("  FD-101: " + (fireDetector1.isTripped() ? "TRIPPED" : "NORMAL"));
+    logger.info("  FD-102: " + (fireDetector2.isTripped() ? "TRIPPED" : "NORMAL"));
+    logger.info("  FD-103: " + (fireDetector3.isTripped() ? "TRIPPED" : "NORMAL"));
+    logger.info("SIF Status: "
         + (fireSIF.isTripped() ? "TRIPPED (ESD ACTIVATED)" : "NOT TRIPPED (Monitoring)"));
-    System.out.println("Voting requires 2/3 detectors - ESD NOT activated");
-    System.out.println();
+    logger.info("Voting requires 2/3 detectors - ESD NOT activated");
+
 
     // ═══════════════════════════════════════════════════════════════
     // SCENARIO 3: FIRE DETECTED - 2oo3 VOTING SATISFIED
     // ═══════════════════════════════════════════════════════════════
 
-    System.out.println("═══ SCENARIO 3: FIRE DETECTED - 2oo3 VOTING SATISFIED ═══");
-    System.out.println(">>> FD-101 and FD-102 detect fire <<<");
+    logger.info("═══ SCENARIO 3: FIRE DETECTED - 2oo3 VOTING SATISFIED ═══");
+    logger.info(">>> FD-101 and FD-102 detect fire <<<");
     fireSIF.update(75.0, 82.0, 26.0); // FD-101 and FD-102 above setpoint
 
-    System.out.println(fireSIF.getStatusDescription());
-    System.out.println("  FD-101: " + (fireDetector1.isTripped() ? "TRIPPED" : "NORMAL"));
-    System.out.println("  FD-102: " + (fireDetector2.isTripped() ? "TRIPPED" : "NORMAL"));
-    System.out.println("  FD-103: " + (fireDetector3.isTripped() ? "TRIPPED" : "NORMAL"));
-    System.out.println(
-        "SIF Status: " + (fireSIF.isTripped() ? "TRIPPED - ESD ACTIVATED" : "NOT TRIPPED"));
+    logger.info(fireSIF.getStatusDescription());
+    logger.info("  FD-101: " + (fireDetector1.isTripped() ? "TRIPPED" : "NORMAL"));
+    logger.info("  FD-102: " + (fireDetector2.isTripped() ? "TRIPPED" : "NORMAL"));
+    logger.info("  FD-103: " + (fireDetector3.isTripped() ? "TRIPPED" : "NORMAL"));
+    logger.info("SIF Status: " + (fireSIF.isTripped() ? "TRIPPED - ESD ACTIVATED" : "NOT TRIPPED"));
     System.out.printf("ESD Logic: %s%n", esdLogic.getStatusDescription());
-    System.out.println();
+
 
     // Switch to dynamic mode
     separator.setCalculateSteadyState(false);
 
     // Simulate ESD execution
-    System.out.println("═══ ESD SEQUENCE EXECUTION ═══");
-    System.out.println(
+    logger.info("═══ ESD SEQUENCE EXECUTION ═══");
+    logger.info(
         "Time (s) | Fire SIF | Gas SIF  | ESD Step | ESD Valve (%) | BD Valve (%) | Process Flow");
-    System.out.println(
+    logger.info(
         "---------|----------|----------|----------|---------------|--------------|-------------");
 
     double timeStep = 1.0;
@@ -313,14 +315,14 @@ public class FireGasSISExample {
           bdValve.getPercentValveOpening(), processStream.getFlowRate("kg/hr"));
     }
 
-    System.out.println();
+
 
     // ═══════════════════════════════════════════════════════════════
     // SCENARIO 4: GAS DETECTION WITH BYPASS
     // ═══════════════════════════════════════════════════════════════
 
-    System.out.println("═══ SCENARIO 4: DETECTOR BYPASS CAPABILITY ═══");
-    System.out.println(">>> GD-101 bypassed for maintenance <<<");
+    logger.info("═══ SCENARIO 4: DETECTOR BYPASS CAPABILITY ═══");
+    logger.info(">>> GD-101 bypassed for maintenance <<<");
 
     // Reset for new scenario
     fireSIF.reset();
@@ -330,45 +332,45 @@ public class FireGasSISExample {
     gasDetector1.setBypass(true); // Bypass GD-101
     gasSIF.update(0.0, 30.0, 32.0); // GD-102 and GD-103 detect gas
 
-    System.out.println("Gas detectors status:");
-    System.out.println("  GD-101: " + (gasDetector1.isBypassed() ? "BYPASSED" : "ACTIVE") + " ("
+    logger.info("Gas detectors status:");
+    logger.info("  GD-101: " + (gasDetector1.isBypassed() ? "BYPASSED" : "ACTIVE") + " ("
         + (gasDetector1.isTripped() ? "TRIPPED" : "NORMAL") + ")");
-    System.out.println("  GD-102: " + (gasDetector2.isBypassed() ? "BYPASSED" : "ACTIVE") + " ("
+    logger.info("  GD-102: " + (gasDetector2.isBypassed() ? "BYPASSED" : "ACTIVE") + " ("
         + (gasDetector2.isTripped() ? "TRIPPED" : "NORMAL") + ")");
-    System.out.println("  GD-103: " + (gasDetector3.isBypassed() ? "BYPASSED" : "ACTIVE") + " ("
+    logger.info("  GD-103: " + (gasDetector3.isBypassed() ? "BYPASSED" : "ACTIVE") + " ("
         + (gasDetector3.isTripped() ? "TRIPPED" : "NORMAL") + ")");
-    System.out.println();
 
-    System.out.println(gasSIF.getStatusDescription());
-    System.out.println("Note: With 1 bypassed, 2oo3 becomes effectively 2oo2");
-    System.out.println("SIF still provides adequate safety: "
+
+    logger.info(gasSIF.getStatusDescription());
+    logger.info("Note: With 1 bypassed, 2oo3 becomes effectively 2oo2");
+    logger.info("SIF still provides adequate safety: "
         + (gasSIF.isTripped() ? "YES (ESD activated)" : "NO"));
-    System.out.println();
+
 
     // ═══════════════════════════════════════════════════════════════
     // FINAL SUMMARY
     // ═══════════════════════════════════════════════════════════════
 
-    System.out.println("═══ SAFETY SYSTEM SUMMARY ═══");
-    System.out.println();
-    System.out.println("KEY FEATURES DEMONSTRATED:");
-    System.out.println("✓ 2oo3 voting logic for fire detection");
-    System.out.println("✓ 2oo3 voting logic for gas detection");
-    System.out.println("✓ Automatic ESD activation on SIF trip");
-    System.out.println("✓ Detector bypass capability (1 allowed without compromising safety)");
-    System.out.println("✓ Coordinated multi-valve shutdown sequence");
-    System.out.println("✓ IEC 61511 compliant safety architecture");
-    System.out.println();
+    logger.info("═══ SAFETY SYSTEM SUMMARY ═══");
 
-    System.out.println("SAFETY INTEGRITY:");
-    System.out.println("• Redundant detection reduces spurious trips");
-    System.out.println("• One detector can fail without losing safety function");
-    System.out.println("• Maintenance possible with one detector bypassed");
-    System.out.println("• Multiple independent SIFs for different hazards");
-    System.out.println();
+    logger.info("KEY FEATURES DEMONSTRATED:");
+    logger.info("✓ 2oo3 voting logic for fire detection");
+    logger.info("✓ 2oo3 voting logic for gas detection");
+    logger.info("✓ Automatic ESD activation on SIF trip");
+    logger.info("✓ Detector bypass capability (1 allowed without compromising safety)");
+    logger.info("✓ Coordinated multi-valve shutdown sequence");
+    logger.info("✓ IEC 61511 compliant safety architecture");
 
-    System.out.println("╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║         FIRE & GAS SIS EXAMPLE COMPLETED                       ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝");
+
+    logger.info("SAFETY INTEGRITY:");
+    logger.info("• Redundant detection reduces spurious trips");
+    logger.info("• One detector can fail without losing safety function");
+    logger.info("• Maintenance possible with one detector bypassed");
+    logger.info("• Multiple independent SIFs for different hazards");
+
+
+    logger.info("╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║         FIRE & GAS SIS EXAMPLE COMPLETED                       ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝");
   }
 }

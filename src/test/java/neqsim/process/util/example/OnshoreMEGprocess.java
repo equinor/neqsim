@@ -18,6 +18,8 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -29,6 +31,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class OnshoreMEGprocess {
+  private static final Logger logger = LogManager.getLogger(OnshoreMEGprocess.class);
+
   /**
    * <p>
    * main.
@@ -257,39 +261,38 @@ public class OnshoreMEGprocess {
 
     // operations = ProcessSystem.open("c:/temp/onshoreMEGprocess.neqsim");
     operations.run();
-    System.out.println("MEG flow rate " + recycleLeanMEG.getFluid().getFlowRate("kg/hr"));
+    logger.info("MEG flow rate " + recycleLeanMEG.getFluid().getFlowRate("kg/hr"));
 
     // presRedValve4.displayResult();
-    // System.out.println(
+    // logger.info(
     // "temperature after cross cooler " +heatEx.getOutStream(0).getTemperature("C"));
 
-    System.out.println("Heat ex 2 duty " + richMEGstreamHeater2.getDuty() / 1.0e3 + " kW");
-    System.out.println("Heat ex 2 duty2 " + richMEGstreamHeater2.getDuty() / 1.0e3 + " kW");
+    logger.info("Heat ex 2 duty " + richMEGstreamHeater2.getDuty() / 1.0e3 + " kW");
+    logger.info("Heat ex 2 duty2 " + richMEGstreamHeater2.getDuty() / 1.0e3 + " kW");
 
-    System.out.println("MEG flow rate " + richMEGstream.getFluid().getFlowRate("kg/hr"));
-    System.out.println("MEG feed to column rate "
+    logger.info("MEG flow rate " + richMEGstream.getFluid().getFlowRate("kg/hr"));
+    logger.info("MEG feed to column rate "
         + presRedValve4.getOutletStream().getFluid().getFlowRate("kg/hr"));
 
-    System.out.println("MEG flow rate " + recycleLeanMEG.getFluid().getFlowRate("kg/hr"));
-    System.out.println("Reboiler duty [kW] " + ((Reboiler) column.getReboiler()).getDuty() / 1.0e3);
+    logger.info("MEG flow rate " + recycleLeanMEG.getFluid().getFlowRate("kg/hr"));
+    logger.info("Reboiler duty [kW] " + ((Reboiler) column.getReboiler()).getDuty() / 1.0e3);
     System.out
         .println("Condenser duty [kW] " + ((Condenser) column.getCondenser()).getDuty() / 1.0e3);
-    System.out.println(
-        "wt% lean MEG  " + MEGFeed.getFluid().getPhase("aqueous").getWtFrac("MEG") * 100.0);
-    // System.out.println("heat ex out temperature " +
+    logger.info("wt% lean MEG  " + MEGFeed.getFluid().getPhase("aqueous").getWtFrac("MEG") * 100.0);
+    // logger.info("heat ex out temperature " +
     // heatEx.getOutStream(0).getTemperature("C"));
-    System.out.println("cold gas temperature " + coldGasFromSep.getTemperature("C"));
-    System.out.println("column glycol pre heater temperature "
+    logger.info("cold gas temperature " + coldGasFromSep.getTemperature("C"));
+    logger.info("column glycol pre heater temperature "
         + columnPreHeater.getOutStream(0).getTemperature("C"));
-    System.out.println("column glycol pre heater temperature "
+    logger.info("column glycol pre heater temperature "
         + columnPreHeater.getOutStream(1).getTemperature("C"));
 
     // presRedValve4.getOutStream().displayResult();
     gasToFlare.displayResult();
     waterToSea.displayResult();
-    System.out.println("lean MEG wt% "
+    logger.info("lean MEG wt% "
         + column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("MEG") * 100.0);
-    System.out.println("hydrate temperature 1 "
+    logger.info("hydrate temperature 1 "
         + (inletGasCooler.getOutletStream().getHydrateEquilibriumTemperature() - 273.15)
         + " wt% MEG "
         + inletGasCooler.getOutletStream().getFluid().getPhase("aqueous").getWtFrac("MEG") * 100.0);

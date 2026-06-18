@@ -3,6 +3,8 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPCSAFT;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -14,6 +16,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class CalcActivityFromPR {
+  private static final Logger logger = LogManager.getLogger(CalcActivityFromPR.class);
+
   /**
    * <p>
    * main.
@@ -30,7 +34,7 @@ public class CalcActivityFromPR {
     testSystem.createDatabase(true);
     testSystem.init(0);
     testSystem.init(3);
-    // System.out.println("activity coefficient " +
+    // logger.info("activity coefficient " +
     // testSystem.getPhase(1).getActivityCoefficient(1,1));
     testSystem.display();
   }

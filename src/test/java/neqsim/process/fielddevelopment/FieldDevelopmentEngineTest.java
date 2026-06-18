@@ -27,11 +27,15 @@ import neqsim.process.fielddevelopment.screening.FlowAssuranceScreener;
 import neqsim.process.fielddevelopment.screening.SafetyReport;
 import neqsim.process.fielddevelopment.screening.SafetyScreener;
 import neqsim.process.fielddevelopment.reporting.FieldDevelopmentReportExporter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for the Field Development Engine.
  */
 class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(FieldDevelopmentEngineTest.class);
+
   private FieldConcept gasTiebackConcept;
   private FieldConcept oilDevelopmentConcept;
   private FieldConcept highCO2Concept;
@@ -353,7 +357,7 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
 
     // Check for errors - if any, print them for debugging
     if (!results.getErrors().isEmpty()) {
-      System.out.println("Batch errors: " + results.getErrors());
+      logger.info("Batch errors: " + results.getErrors());
     }
 
     assertNotNull(results.getRankedResults());

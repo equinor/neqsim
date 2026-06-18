@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Comprehensive comparison of BWRS (MBWR-32) versus GERG-2008 for methane/ethane systems. Tests
@@ -16,6 +18,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class BWRSComprehensiveTest {
+  private static final Logger logger = LogManager.getLogger(BWRSComprehensiveTest.class);
+
   /** Temperatures [K] to test. */
   private static final double[] TEMPERATURES = {200.0, 250.0, 298.15, 350.0, 400.0};
 
@@ -159,9 +163,9 @@ public class BWRSComprehensiveTest {
    * @param results list of property results
    */
   private void printSummary(List<PropertyResult> results) {
-    System.out.println(
+    logger.info(
         "T(K)    P(bar)  xCH4   Density%  Z%      Cp%     Cv%     Speed%  JT%     H%      S%");
-    System.out.println(
+    logger.info(
         "------  ------  -----  --------  ------  ------  ------  ------  ------  ------  ------");
     for (PropertyResult r : results) {
       System.out.printf(
@@ -188,7 +192,7 @@ public class BWRSComprehensiveTest {
       sumSpd += r.pctSpeed();
       sumJT += r.pctJT();
     }
-    System.out.println("\n--- Summary ---");
+    logger.info("\n--- Summary ---");
     System.out.printf(
         "Max deviation:  Density=%.2f%%  Z=%.2f%%  Cp=%.2f%%  Cv=%.2f%%  Speed=%.2f%%  JT=%.1f%%%n",
         maxDens, maxZ, maxCp, maxCv, maxSpd, maxJT);
@@ -203,7 +207,7 @@ public class BWRSComprehensiveTest {
    */
   @Test
   public void testPureMethane() {
-    System.out.println("\n=== PURE METHANE (BWRS vs GERG-2008) ===");
+    logger.info("\n=== PURE METHANE (BWRS vs GERG-2008) ===");
     List<PropertyResult> results = new ArrayList<PropertyResult>();
 
     for (double T : TEMPERATURES) {
@@ -236,7 +240,7 @@ public class BWRSComprehensiveTest {
    */
   @Test
   public void testPureEthane() {
-    System.out.println("\n=== PURE ETHANE (BWRS vs GERG-2008) ===");
+    logger.info("\n=== PURE ETHANE (BWRS vs GERG-2008) ===");
     List<PropertyResult> results = new ArrayList<PropertyResult>();
 
     // Test only at T >= 400K where volume solver reliably converges to gas root,
@@ -264,7 +268,7 @@ public class BWRSComprehensiveTest {
    */
   @Test
   public void testMixture80_20() {
-    System.out.println("\n=== 80% CH4 / 20% C2H6 MIXTURE (BWRS vs GERG-2008) ===");
+    logger.info("\n=== 80% CH4 / 20% C2H6 MIXTURE (BWRS vs GERG-2008) ===");
     List<PropertyResult> results = new ArrayList<PropertyResult>();
 
     // Use T >= 298K where volume solver reliably finds gas root for 80/20 mixture
@@ -292,7 +296,7 @@ public class BWRSComprehensiveTest {
    */
   @Test
   public void testCompositionSweep() {
-    System.out.println("\n=== COMPOSITION SWEEP at 400 K, 10 bar ===");
+    logger.info("\n=== COMPOSITION SWEEP at 400 K, 10 bar ===");
     List<PropertyResult> results = new ArrayList<PropertyResult>();
 
     for (double xCH4 : CH4_FRACTIONS) {
@@ -315,7 +319,7 @@ public class BWRSComprehensiveTest {
    */
   @Test
   public void testCpConsistency() {
-    System.out.println("\n=== Cp CONSISTENCY CHECK (analytical vs numerical from enthalpy) ===");
+    logger.info("\n=== Cp CONSISTENCY CHECK (analytical vs numerical from enthalpy) ===");
 
     double T = 298.15;
     double P = 10.0;
@@ -363,7 +367,7 @@ public class BWRSComprehensiveTest {
    */
   @Test
   public void testCpAccuracy() {
-    System.out.println("\n=== Cp ACCURACY for pure methane at 10 bar ===");
+    logger.info("\n=== Cp ACCURACY for pure methane at 10 bar ===");
     // Ideal gas Cp for methane ~ 35.7 J/(mol K) at 298 K
     for (double T : TEMPERATURES) {
       PropertyResult r = compareAt(T, 10.0, 1.0);
@@ -382,7 +386,7 @@ public class BWRSComprehensiveTest {
    */
   @Test
   public void testSpeedOfSound() {
-    System.out.println("\n=== SPEED OF SOUND for pure methane at 10 bar ===");
+    logger.info("\n=== SPEED OF SOUND for pure methane at 10 bar ===");
     // Methane speed of sound ~ 450 m/s at 298 K, 10 bar
     for (double T : TEMPERATURES) {
       PropertyResult r = compareAt(T, 10.0, 1.0);

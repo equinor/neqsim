@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestMBWR32 {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestMBWR32.class);
+  private static final Logger logger = LogManager.getLogger(TestMBWR32.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.

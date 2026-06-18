@@ -10,11 +10,15 @@ import neqsim.process.util.fire.SeparatorFireExposure.FireScenarioConfig;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Example combining separator depressurization to a flare with fire heat load and integrity checks.
  */
 public class SeparatorFireDepressurizationExample {
+  private static final Logger logger = LogManager.getLogger(SeparatorFireDepressurizationExample.class);
+
 
   /**
    * Runs a short dynamic blowdown to the flare and evaluates fire effects on the vessel wall.
@@ -89,9 +93,9 @@ public class SeparatorFireDepressurizationExample {
     double duration = 8.0;
     double flareGroundDistanceM = 35.0;
 
-    System.out.println(
+    logger.info(
         "Time (s) | P_sep (bara) | Flow to flare (kg/hr) | Tsep (K) | Twet (K) | Tunwet (K) | Rupture margin (MPa)");
-    System.out.println(
+    logger.info(
         "--------|--------------|-----------------------|----------|----------|-----------|---------------------");
 
     // Keep a representative liquid holdup so wetted-area fire calculations remain defined.

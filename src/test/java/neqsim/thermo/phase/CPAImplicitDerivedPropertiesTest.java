@@ -7,6 +7,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicit;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests verifying that derived thermodynamic properties (enthalpy, entropy, Cp, fugacity
@@ -21,6 +23,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 class CPAImplicitDerivedPropertiesTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(CPAImplicitDerivedPropertiesTest.class);
+
 
   /** Relative tolerance for property comparison. */
   private static final double REL_TOL = 1.0e-6;
@@ -131,7 +135,7 @@ class CPAImplicitDerivedPropertiesTest extends neqsim.NeqSimTest {
     int nPhases = standard.getNumberOfPhases();
     assertEquals(nPhases, implicit.getNumberOfPhases(), "Phase count mismatch");
 
-    System.out.println("\n=== Fugacity Coefficient Comparison ===");
+    logger.info("\n=== Fugacity Coefficient Comparison ===");
     for (int p = 0; p < nPhases; p++) {
       String phName = standard.getPhase(p).getType().toString();
       int nComp = standard.getPhase(p).getNumberOfComponents();
@@ -145,7 +149,7 @@ class CPAImplicitDerivedPropertiesTest extends neqsim.NeqSimTest {
             phName + "/" + compName + " fugacity coefficient mismatch");
       }
     }
-    System.out.println("Fugacity coefficients: ALL MATCH within " + REL_TOL);
+    logger.info("Fugacity coefficients: ALL MATCH within " + REL_TOL);
   }
 
   /**
@@ -165,7 +169,7 @@ class CPAImplicitDerivedPropertiesTest extends neqsim.NeqSimTest {
     int nPhases = standard.getNumberOfPhases();
     assertEquals(nPhases, implicit.getNumberOfPhases(), "Phase count mismatch");
 
-    System.out.println("\n=== Fugacity Derivative Comparison ===");
+    logger.info("\n=== Fugacity Derivative Comparison ===");
     boolean allMatch = true;
     int totalChecks = 0;
     int failCount = 0;
@@ -231,7 +235,7 @@ class CPAImplicitDerivedPropertiesTest extends neqsim.NeqSimTest {
     double[][] conditions =
         {{273.15 + 10, 1.0}, {273.15 + 50, 50.0}, {273.15 + 80, 100.0}, {273.15 + 120, 200.0}};
 
-    System.out.println("\n=== Enthalpy/Entropy Consistency ===");
+    logger.info("\n=== Enthalpy/Entropy Consistency ===");
     System.out.printf("%-12s %12s %12s %12s %12s %12s%n", "T(C)/P(bar)", "H_std(J/mol)", "H_impl",
         "S_std(J/K)", "S_impl", "Cp_match");
 
@@ -307,7 +311,7 @@ class CPAImplicitDerivedPropertiesTest extends neqsim.NeqSimTest {
     int nPhImpl = implicit.getNumberOfPhases();
     assertEquals(nPhStd, nPhImpl, label + " phase count mismatch");
 
-    System.out.println("\n=== " + label + " Phase Properties ===");
+    logger.info("\n=== " + label + " Phase Properties ===");
     for (int p = 0; p < nPhStd; p++) {
       String phName = standard.getPhase(p).getType().toString();
 

@@ -5,8 +5,12 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class CharacteriseTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(CharacteriseTest.class);
+
   static SystemInterface thermoSystem = null;
 
   @Test
@@ -53,7 +57,7 @@ public class CharacteriseTest extends neqsim.NeqSimTest {
     thermoSystem.getCharacterization().characterisePlusFraction();
     // logger.info("number of components " + thermoSystem.getNumberOfComponents());
     // assertEquals(86, thermoSystem.getNumberOfComponents());
-    // System.out.println(thermoSystem.getComponent("C1-2_PC").getz());
+    // logger.info(thermoSystem.getComponent("C1-2_PC").getz());
     // thermoSystem.prettyPrint();
 
     thermoSystem.setPressure(1, "bara");

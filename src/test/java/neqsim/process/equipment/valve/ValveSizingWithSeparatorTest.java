@@ -9,12 +9,16 @@ import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests to verify that Cv/Kv is calculated correctly for valves connected to separator outlets.
  * This ensures proper sizing for both gas and liquid valves in typical process configurations.
  */
 public class ValveSizingWithSeparatorTest {
+  private static final Logger logger = LogManager.getLogger(ValveSizingWithSeparatorTest.class);
+
   /**
    * Test that gas and liquid valves connected to separator outlets get correctly calculated Cv/Kv*
    * values based on their respective flow rates and pressure drops.
@@ -64,28 +68,28 @@ public class ValveSizingWithSeparatorTest {
     double liquidCv = liquidValve.getCv();
 
     // Print values for debugging
-    System.out.println("=== Valve Sizing Results ===");
-    System.out.println("Gas valve:");
-    System.out.println("  Flow rate: " + gasValve.getInletStream().getFlowRate("kg/hr") + " kg/hr");
+    logger.info("=== Valve Sizing Results ===");
+    logger.info("Gas valve:");
+    logger.info("  Flow rate: " + gasValve.getInletStream().getFlowRate("kg/hr") + " kg/hr");
     System.out
         .println("  Flow rate: " + gasValve.getInletStream().getFlowRate("Sm3/hr") + " Sm3/hr");
-    System.out.println("  Inlet P: " + gasValve.getInletStream().getPressure("bara") + " bara");
-    System.out.println("  Outlet P: " + gasValve.getOutletStream().getPressure("bara") + " bara");
-    System.out.println("  Kv: " + gasKv);
-    System.out.println("  Cv: " + gasCv);
-    System.out.println("  isGasValve: " + gasValve.isGasValve());
+    logger.info("  Inlet P: " + gasValve.getInletStream().getPressure("bara") + " bara");
+    logger.info("  Outlet P: " + gasValve.getOutletStream().getPressure("bara") + " bara");
+    logger.info("  Kv: " + gasKv);
+    logger.info("  Cv: " + gasCv);
+    logger.info("  isGasValve: " + gasValve.isGasValve());
 
-    System.out.println("Liquid valve:");
+    logger.info("Liquid valve:");
     System.out
         .println("  Flow rate: " + liquidValve.getInletStream().getFlowRate("kg/hr") + " kg/hr");
     System.out
         .println("  Flow rate: " + liquidValve.getInletStream().getFlowRate("m3/hr") + " m3/hr");
-    System.out.println("  Inlet P: " + liquidValve.getInletStream().getPressure("bara") + " bara");
+    logger.info("  Inlet P: " + liquidValve.getInletStream().getPressure("bara") + " bara");
     System.out
         .println("  Outlet P: " + liquidValve.getOutletStream().getPressure("bara") + " bara");
-    System.out.println("  Kv: " + liquidKv);
-    System.out.println("  Cv: " + liquidCv);
-    System.out.println("  isGasValve: " + liquidValve.isGasValve());
+    logger.info("  Kv: " + liquidKv);
+    logger.info("  Cv: " + liquidCv);
+    logger.info("  isGasValve: " + liquidValve.isGasValve());
 
     // Verify basic sanity checks
     assertTrue(gasKv > 0, "Gas valve Kv should be positive");
@@ -156,8 +160,8 @@ public class ValveSizingWithSeparatorTest {
     process1.run();
 
     double kvAt100 = valve100.getKv();
-    System.out.println("\n=== Kv Scaling Test ===");
-    System.out.println("Kv at 100% opening: " + kvAt100);
+    logger.info("\n=== Kv Scaling Test ===");
+    logger.info("Kv at 100% opening: " + kvAt100);
 
     // Create identical setup at 50% opening
     SystemInterface gasFluid2 = new SystemSrkEos(298.15, 50.0);
@@ -179,7 +183,7 @@ public class ValveSizingWithSeparatorTest {
     process2.run();
 
     double kvAt50 = valve50.getKv();
-    System.out.println("Kv at 50% opening: " + kvAt50);
+    logger.info("Kv at 50% opening: " + kvAt50);
 
     // For linear characteristic: Kv(50%) should be 2x Kv(100%)
     // Because Kv represents the valve coefficient at 100% opening
@@ -212,8 +216,8 @@ public class ValveSizingWithSeparatorTest {
     process.run();
 
     double kvInitial = valve.getKv();
-    System.out.println("\n=== Kv Recalculation Test ===");
-    System.out.println("Initial Kv: " + kvInitial);
+    logger.info("\n=== Kv Recalculation Test ===");
+    logger.info("Initial Kv: " + kvInitial);
 
     // Change flow rate
     gasStream.setFlowRate(10000.0, "Sm3/hr");
@@ -221,7 +225,7 @@ public class ValveSizingWithSeparatorTest {
     // Run again - Kv should NOT change (already set)
     process.run();
     double kvAfterFlowChange = valve.getKv();
-    System.out.println("Kv after flow change (no recalc): " + kvAfterFlowChange);
+    logger.info("Kv after flow change (no recalc): " + kvAfterFlowChange);
     assertEquals(kvInitial, kvAfterFlowChange, 0.001,
         "Kv should not change without explicit recalculation");
 
@@ -229,7 +233,7 @@ public class ValveSizingWithSeparatorTest {
     valve.setValveKvSet(false);
     process.run();
     double kvRecalculated = valve.getKv();
-    System.out.println("Kv after forced recalculation: " + kvRecalculated);
+    logger.info("Kv after forced recalculation: " + kvRecalculated);
 
     // Kv should be approximately 2x now (double the flow)
     assertEquals(kvInitial * 2.0, kvRecalculated, kvInitial * 0.1,
@@ -278,11 +282,11 @@ public class ValveSizingWithSeparatorTest {
     double gasKv = gasValve.getKv();
     double liquidKv = liquidValve.getKv();
 
-    System.out.println("\n=== Steady vs Transient Flow Test ===");
-    System.out.println("Steady state gas flow: " + gasFlowSteady + " kg/hr");
-    System.out.println("Steady state liquid flow: " + liquidFlowSteady + " kg/hr");
-    System.out.println("Gas Kv: " + gasKv);
-    System.out.println("Liquid Kv: " + liquidKv);
+    logger.info("\n=== Steady vs Transient Flow Test ===");
+    logger.info("Steady state gas flow: " + gasFlowSteady + " kg/hr");
+    logger.info("Steady state liquid flow: " + liquidFlowSteady + " kg/hr");
+    logger.info("Gas Kv: " + gasKv);
+    logger.info("Liquid Kv: " + liquidKv);
 
     // Switch to transient mode
     gasValve.setCalculateSteadyState(false);
@@ -298,8 +302,8 @@ public class ValveSizingWithSeparatorTest {
     double gasFlowTransient = gasValve.getOutletStream().getFlowRate("kg/hr");
     double liquidFlowTransient = liquidValve.getOutletStream().getFlowRate("kg/hr");
 
-    System.out.println("Transient gas flow: " + gasFlowTransient + " kg/hr");
-    System.out.println("Transient liquid flow: " + liquidFlowTransient + " kg/hr");
+    logger.info("Transient gas flow: " + gasFlowTransient + " kg/hr");
+    logger.info("Transient liquid flow: " + liquidFlowTransient + " kg/hr");
 
     // Flows should be similar (within 5%) since conditions haven't changed significantly
     assertEquals(gasFlowSteady, gasFlowTransient, gasFlowSteady * 0.05,
@@ -336,13 +340,13 @@ public class ValveSizingWithSeparatorTest {
     double kv = valve.getKv();
     double cv = valve.getCv();
 
-    System.out.println("\n=== IEC 60534 Gas Valve Test ===");
-    System.out.println("Flow: " + gasStream.getFlowRate("Sm3/hr") + " Sm3/hr");
-    System.out.println("Inlet P: " + valve.getInletStream().getPressure("bara") + " bara");
-    System.out.println("Outlet P: " + valve.getOutletStream().getPressure("bara") + " bara");
-    System.out.println("Kv (IEC 60534): " + kv);
-    System.out.println("Cv (IEC 60534): " + cv);
-    System.out.println("Cg: " + valve.getCg());
+    logger.info("\n=== IEC 60534 Gas Valve Test ===");
+    logger.info("Flow: " + gasStream.getFlowRate("Sm3/hr") + " Sm3/hr");
+    logger.info("Inlet P: " + valve.getInletStream().getPressure("bara") + " bara");
+    logger.info("Outlet P: " + valve.getOutletStream().getPressure("bara") + " bara");
+    logger.info("Kv (IEC 60534): " + kv);
+    logger.info("Cv (IEC 60534): " + cv);
+    logger.info("Cg: " + valve.getCg());
 
     assertTrue(kv > 0, "Kv should be positive");
     assertTrue(cv > 0, "Cv should be positive");

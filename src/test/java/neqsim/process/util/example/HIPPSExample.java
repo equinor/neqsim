@@ -1,6 +1,8 @@
 package neqsim.process.util.example;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.alarm.AlarmConfig;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
@@ -32,6 +34,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 public class HIPPSExample {
+  private static final Logger logger = LogManager.getLogger(HIPPSExample.class);
 
   /**
    * Main method to run the HIPPS example.
@@ -39,15 +42,15 @@ public class HIPPSExample {
    * @param args command line arguments (not used)
    */
   public static void main(String[] args) {
-    System.out.println("╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║     HIPPS (High Integrity Pressure Protection System)         ║");
-    System.out.println("║              Blocked Outlet Protection Example                ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║     HIPPS (High Integrity Pressure Protection System)         ║");
+    logger.info("║              Blocked Outlet Protection Example                ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     // ========================================
     // 1. CREATE PROCESS SYSTEM
     // ========================================
-    System.out.println("═══ SYSTEM CONFIGURATION ═══");
+    logger.info("═══ SYSTEM CONFIGURATION ═══");
 
     // Create high-pressure natural gas system
     SystemInterface fluid = new SystemSrkEos(298.15, 70.0);
@@ -86,7 +89,7 @@ public class HIPPSExample {
     // ========================================
     // 2. CONFIGURE REDUNDANT PRESSURE TRANSMITTERS
     // ========================================
-    System.out.println("\n═══ PRESSURE TRANSMITTER CONFIGURATION ═══");
+    logger.info("\n═══ PRESSURE TRANSMITTER CONFIGURATION ═══");
 
     PressureTransmitter PT1 = new PressureTransmitter("PT-101A", separator.getGasOutStream());
     PressureTransmitter PT2 = new PressureTransmitter("PT-101B", separator.getGasOutStream());
@@ -102,15 +105,15 @@ public class HIPPSExample {
     PT2.setAlarmConfig(hippsAlarm);
     PT3.setAlarmConfig(hippsAlarm);
 
-    System.out.println("Redundant transmitters configured: PT-101A, PT-101B, PT-101C");
-    System.out.println("HIHI Alarm Setpoint: 90.0 bara (90% of MAWP)");
-    System.out.println("Alarm Confirmation Delay: 500 ms");
-    System.out.println("Deadband: 2.0 bara");
+    logger.info("Redundant transmitters configured: PT-101A, PT-101B, PT-101C");
+    logger.info("HIHI Alarm Setpoint: 90.0 bara (90% of MAWP)");
+    logger.info("Alarm Confirmation Delay: 500 ms");
+    logger.info("Deadband: 2.0 bara");
 
     // ========================================
     // 3. CREATE HIPPS VALVE
     // ========================================
-    System.out.println("\n═══ HIPPS VALVE CONFIGURATION ═══");
+    logger.info("\n═══ HIPPS VALVE CONFIGURATION ═══");
 
     HIPPSValve hippsValve = new HIPPSValve("HIPPS-XV-001", separator.getGasOutStream());
     hippsValve.addPressureTransmitter(PT1);
@@ -122,39 +125,39 @@ public class HIPPSExample {
     hippsValve.setProofTestInterval(8760.0); // Annual proof test
     hippsValve.setCv(200.0);
 
-    System.out.println("HIPPS Valve: HIPPS-XV-001");
-    System.out.println("SIL Rating: SIL 3");
-    System.out.println("Voting Logic: 2oo3 (2 out of 3 transmitters)");
-    System.out.println("Closure Time: 3.0 seconds");
-    System.out.println("Trip Point: 90.0 bara");
+    logger.info("HIPPS Valve: HIPPS-XV-001");
+    logger.info("SIL Rating: SIL 3");
+    logger.info("Voting Logic: 2oo3 (2 out of 3 transmitters)");
+    logger.info("Closure Time: 3.0 seconds");
+    logger.info("Trip Point: 90.0 bara");
 
     // ========================================
     // 4. CREATE PSV AS BACKUP
     // ========================================
-    System.out.println("\n═══ PSV BACKUP PROTECTION ═══");
+    logger.info("\n═══ PSV BACKUP PROTECTION ═══");
 
     SafetyValve psv = new SafetyValve("PSV-001", separator.getGasOutStream());
     psv.setPressureSpec(100.0); // Set at MAWP
     psv.setFullOpenPressure(110.0); // Full open at 10% overpressure
     psv.setBlowdown(7.0); // 7% blowdown
 
-    System.out.println("PSV: PSV-001 (backup protection)");
-    System.out.println("PSV Set Pressure: 100.0 bara (at MAWP)");
-    System.out.println("Full Open Pressure: 110.0 bara");
-    System.out.println("Blowdown: 7%");
+    logger.info("PSV: PSV-001 (backup protection)");
+    logger.info("PSV Set Pressure: 100.0 bara (at MAWP)");
+    logger.info("Full Open Pressure: 110.0 bara");
+    logger.info("Blowdown: 7%");
 
     // ========================================
     // 5. DYNAMIC SIMULATION - BLOCKED OUTLET SCENARIO
     // ========================================
-    System.out.println("\n═══ DYNAMIC SIMULATION - BLOCKED OUTLET SCENARIO ═══");
-    System.out.println("t=0-5s:    Normal operation at 70 bara");
-    System.out.println("t=5s:      Downstream valve closes (blocked outlet)");
-    System.out.println("t=5-20s:   Pressure ramps at 2 bara/sec");
-    System.out.println("Expected:  HIPPS trips at 90 bara, PSV never lifts\n");
+    logger.info("\n═══ DYNAMIC SIMULATION - BLOCKED OUTLET SCENARIO ═══");
+    logger.info("t=0-5s:    Normal operation at 70 bara");
+    logger.info("t=5s:      Downstream valve closes (blocked outlet)");
+    logger.info("t=5-20s:   Pressure ramps at 2 bara/sec");
+    logger.info("Expected:  HIPPS trips at 90 bara, PSV never lifts\n");
 
-    System.out.println(
+    logger.info(
         "Time (s) | Sep Press | Active PT | HIPPS Open | PSV Open | HIPPS Status | PSV Status");
-    System.out.println(
+    logger.info(
         "---------|-----------|-----------|------------|----------|--------------|------------");
 
     double timeStep = 0.5; // 0.5 second timesteps
@@ -227,9 +230,9 @@ public class HIPPSExample {
     // ========================================
     // 6. RESULTS SUMMARY
     // ========================================
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║                         RESULTS SUMMARY                        ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║                         RESULTS SUMMARY                        ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝");
 
     System.out.printf("%nHIPPS Performance:%n");
     System.out.printf("  Trip Time: %.1f seconds%n", tripTime);
@@ -245,25 +248,25 @@ public class HIPPSExample {
 
     System.out.printf("%nSafety Analysis:%n");
     if (!psvLifted) {
-      System.out.println("  ✓ HIPPS successfully prevented overpressure");
-      System.out.println("  ✓ PSV did not lift - NO FLARING occurred");
-      System.out.println("  ✓ Environmental emissions prevented");
-      System.out.println("  ✓ Pressure remained below MAWP (100 bara)");
+      logger.info("  ✓ HIPPS successfully prevented overpressure");
+      logger.info("  ✓ PSV did not lift - NO FLARING occurred");
+      logger.info("  ✓ Environmental emissions prevented");
+      logger.info("  ✓ Pressure remained below MAWP (100 bara)");
     } else {
-      System.out.println("  ✗ PSV lifted - HIPPS may have failed");
-      System.out.println("  ✗ Flaring occurred");
+      logger.info("  ✗ PSV lifted - HIPPS may have failed");
+      logger.info("  ✗ Flaring occurred");
     }
 
     System.out.printf("%nHIPPS vs PSV Comparison:%n");
-    System.out.println("  HIPPS Action:  Stopped flow BEFORE overpressure (90 bara)");
-    System.out.println("  PSV Action:    Would relieve AT overpressure (100 bara)");
-    System.out.println("  Result:        HIPPS prevented flaring and emissions");
+    logger.info("  HIPPS Action:  Stopped flow BEFORE overpressure (90 bara)");
+    logger.info("  PSV Action:    Would relieve AT overpressure (100 bara)");
+    logger.info("  Result:        HIPPS prevented flaring and emissions");
 
     // Display comprehensive diagnostics
-    System.out.println("\n" + hippsValve.getDiagnostics());
+    logger.info("\n" + hippsValve.getDiagnostics());
 
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║                    SIMULATION COMPLETE                         ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║                    SIMULATION COMPLETE                         ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝");
   }
 }

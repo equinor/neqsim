@@ -10,6 +10,8 @@ import neqsim.pvtsimulation.flowassurance.DeBoerAsphalteneScreening.DeBoerRisk;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Validation tests comparing NeqSim asphaltene predictions against published literature data.
@@ -31,6 +33,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 public class AsphalteneValidationTest {
+  private static final Logger logger = LogManager.getLogger(AsphalteneValidationTest.class);
+
   /**
    * Literature data from De Boer et al. (1995) SPE-24987-PA Table 1. Field cases with known
    * asphaltene problem status.
@@ -104,10 +108,10 @@ public class AsphalteneValidationTest {
   @Test
   @DisplayName("De Boer screening validation against SPE-24987 field data")
   void testDeBoerAgainstPublishedFieldData() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("DE BOER VALIDATION: SPE-24987-PA Field Data (De Boer et al., 1995)");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("DE BOER VALIDATION: SPE-24987-PA Field Data (De Boer et al., 1995)");
+    logger.info(StringUtils.repeat("=", 70));
+
 
     int correctPredictions = 0;
     int totalCases = DE_BOER_FIELD_DATA.length;
@@ -116,7 +120,7 @@ public class AsphalteneValidationTest {
         "Predicted", "Actual");
     System.out.printf("%-30s | %6s | %6s | %6s | %-16s | %-8s%n", "", "[bar]", "[kg/m³]", "Index",
         "", "");
-    System.out.println(StringUtils.repeat("-", 70));
+    logger.info(StringUtils.repeat("-", 70));
 
     for (int i = 0; i < totalCases; i++) {
       double pRes = DE_BOER_FIELD_DATA[i][0];
@@ -145,11 +149,11 @@ public class AsphalteneValidationTest {
           deltaP, density, riskIndex, riskLevel, actualStatus, marker);
     }
 
-    System.out.println(StringUtils.repeat("-", 70));
+    logger.info(StringUtils.repeat("-", 70));
     double accuracy = 100.0 * correctPredictions / totalCases;
     System.out.printf("Prediction Accuracy: %d/%d (%.1f%%)%n", correctPredictions, totalCases,
         accuracy);
-    System.out.println();
+
 
     // De Boer should achieve at least 80% accuracy on its own training data
     assertTrue(accuracy >= 80.0,
@@ -159,15 +163,15 @@ public class AsphalteneValidationTest {
   @Test
   @DisplayName("SARA-based CII validation against literature crude oils")
   void testCIIAgainstLiteratureSARA() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("SARA/CII VALIDATION: Literature Crude Oil Data");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("Sources: Akbarzadeh et al. (2007), Oilfield Review");
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("SARA/CII VALIDATION: Literature Crude Oil Data");
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("Sources: Akbarzadeh et al. (2007), Oilfield Review");
+
 
     System.out.printf("%-25s | %5s | %5s | %5s | %5s | %5s | %5s | %-10s%n", "Crude Oil", "S", "A",
         "R", "Asp", "CII", "R/A", "Status");
-    System.out.println(StringUtils.repeat("-", 70));
+    logger.info(StringUtils.repeat("-", 70));
 
     int correctCII = 0;
     int correctRA = 0;
@@ -209,12 +213,12 @@ public class AsphalteneValidationTest {
           sara[0], sara[1], sara[2], sara[3], cii, ra, status);
     }
 
-    System.out.println(StringUtils.repeat("-", 70));
+    logger.info(StringUtils.repeat("-", 70));
     System.out.printf("CII Prediction Accuracy: %d/%d (%.1f%%)%n", correctCII, total,
         100.0 * correctCII / total);
     System.out.printf("R/A Prediction Accuracy: %d/%d (%.1f%%)%n", correctRA, total,
         100.0 * correctRA / total);
-    System.out.println();
+
 
     // Note: CII values calculated as (S+Asp)/(A+R) give values > 1 for most oils
     // This is because S (saturates) is typically the largest fraction.
@@ -234,13 +238,13 @@ public class AsphalteneValidationTest {
   @Test
   @DisplayName("Undersaturation pressure effect validation")
   void testUndersaturationEffect() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("UNDERSATURATION EFFECT: De Boer Correlation Physics");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
-    System.out.println("Physical basis: Higher undersaturation = greater density change");
-    System.out.println("during production = more asphaltene destabilization");
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("UNDERSATURATION EFFECT: De Boer Correlation Physics");
+    logger.info(StringUtils.repeat("=", 70));
+
+    logger.info("Physical basis: Higher undersaturation = greater density change");
+    logger.info("during production = more asphaltene destabilization");
+
 
     // Fixed density, varying undersaturation
     double density = 720.0;
@@ -248,7 +252,7 @@ public class AsphalteneValidationTest {
 
     System.out.printf("%-15s | %-15s | %-10s | %-20s%n", "P_res [bar]", "ΔP [bar]", "Risk Index",
         "Risk Level");
-    System.out.println(StringUtils.repeat("-", 65));
+    logger.info(StringUtils.repeat("-", 65));
 
     double previousRiskIndex = -1.0;
 
@@ -268,27 +272,27 @@ public class AsphalteneValidationTest {
       previousRiskIndex = riskIndex;
     }
 
-    System.out.println();
-    System.out.println("✓ Verified: Risk increases monotonically with undersaturation");
+
+    logger.info("✓ Verified: Risk increases monotonically with undersaturation");
   }
 
   @Test
   @DisplayName("Density effect validation (inverse relationship)")
   void testDensityEffect() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("DENSITY EFFECT: De Boer Correlation Physics");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
-    System.out.println("Physical basis: Lighter oils (lower density) undergo larger");
-    System.out.println("compositional changes = higher asphaltene precipitation risk");
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("DENSITY EFFECT: De Boer Correlation Physics");
+    logger.info(StringUtils.repeat("=", 70));
+
+    logger.info("Physical basis: Lighter oils (lower density) undergo larger");
+    logger.info("compositional changes = higher asphaltene precipitation risk");
+
 
     // Fixed pressures, varying density
     double pRes = 350.0;
     double pBub = 150.0;
 
     System.out.printf("%-15s | %-10s | %-20s%n", "Density [kg/m³]", "Risk Index", "Risk Level");
-    System.out.println(StringUtils.repeat("-", 50));
+    logger.info(StringUtils.repeat("-", 50));
 
     double previousRiskIndex = Double.MAX_VALUE;
 
@@ -305,17 +309,17 @@ public class AsphalteneValidationTest {
       previousRiskIndex = riskIndex;
     }
 
-    System.out.println();
-    System.out.println("✓ Verified: Risk decreases monotonically with density");
+
+    logger.info("✓ Verified: Risk decreases monotonically with density");
   }
 
   @Test
   @DisplayName("Boundary case validation - bubble point pressure")
   void testBubblePointBoundary() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("BUBBLE POINT BOUNDARY: Edge Case Validation");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("BUBBLE POINT BOUNDARY: Edge Case Validation");
+    logger.info(StringUtils.repeat("=", 70));
+
 
     double pBub = 150.0;
     double density = 750.0;
@@ -328,10 +332,10 @@ public class AsphalteneValidationTest {
     DeBoerRisk riskAtBubble = atBubble.evaluateRisk();
     double indexAtBubble = atBubble.calculateRiskIndex();
 
-    System.out.println("At Bubble Point (ΔP = 0):");
+    logger.info("At Bubble Point (ΔP = 0):");
     System.out.printf("  Risk Level: %s%n", riskAtBubble);
     System.out.printf("  Risk Index: %.3f%n", indexAtBubble);
-    System.out.println();
+
 
     // Should be low/no risk at bubble point
     assertTrue(indexAtBubble <= 0.3, "Risk should be low at bubble point (no undersaturation)");
@@ -340,21 +344,21 @@ public class AsphalteneValidationTest {
     DeBoerAsphalteneScreening nearBubble =
         new DeBoerAsphalteneScreening(pBub + 10.0, pBub, density);
 
-    System.out.println("Just Above Bubble Point (ΔP = 10 bar):");
+    logger.info("Just Above Bubble Point (ΔP = 10 bar):");
     System.out.printf("  Risk Level: %s%n", nearBubble.evaluateRisk());
     System.out.printf("  Risk Index: %.3f%n", nearBubble.calculateRiskIndex());
 
-    System.out.println();
-    System.out.println("✓ Verified: Minimal risk at/near bubble point");
+
+    logger.info("✓ Verified: Minimal risk at/near bubble point");
   }
 
   @Test
   @DisplayName("Extreme case validation - very light vs very heavy oils")
   void testExtremeOilTypes() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("EXTREME CASES: Light vs Heavy Oil Behavior");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("EXTREME CASES: Light vs Heavy Oil Behavior");
+    logger.info(StringUtils.repeat("=", 70));
+
 
     double pRes = 350.0;
     double pBub = 150.0;
@@ -367,7 +371,7 @@ public class AsphalteneValidationTest {
     double heavyDensity = 920.0; // ~22° API
     DeBoerAsphalteneScreening heavyOil = new DeBoerAsphalteneScreening(pRes, pBub, heavyDensity);
 
-    System.out.println("Same pressures, different densities:");
+    logger.info("Same pressures, different densities:");
     System.out.printf("  Light oil (ρ=%.0f kg/m³, ~45° API): %s, Index=%.3f%n", lightDensity,
         lightOil.evaluateRisk(), lightOil.calculateRiskIndex());
     System.out.printf("  Heavy oil (ρ=%.0f kg/m³, ~22° API): %s, Index=%.3f%n", heavyDensity,
@@ -377,21 +381,21 @@ public class AsphalteneValidationTest {
     assertTrue(lightOil.calculateRiskIndex() > heavyOil.calculateRiskIndex(),
         "Light oil should have higher asphaltene risk than heavy oil");
 
-    System.out.println();
-    System.out.println("✓ Verified: Light oils have higher precipitation risk");
-    System.out.println("  (Consistent with field observations - Hassi Messaoud, etc.)");
+
+    logger.info("✓ Verified: Light oils have higher precipitation risk");
+    logger.info("  (Consistent with field observations - Hassi Messaoud, etc.)");
   }
 
   @Test
   @DisplayName("Known problematic field: Hassi Messaoud validation")
   void testHassiMessaoudCase() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("CASE STUDY: Hassi Messaoud Field (Algeria)");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
-    System.out.println("Reference: De Boer et al. (1995), SPE-24987-PA");
-    System.out.println("Known for severe asphaltene problems during production");
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("CASE STUDY: Hassi Messaoud Field (Algeria)");
+    logger.info(StringUtils.repeat("=", 70));
+
+    logger.info("Reference: De Boer et al. (1995), SPE-24987-PA");
+    logger.info("Known for severe asphaltene problems during production");
+
 
     // Hassi Messaoud conditions from De Boer paper
     double pRes = 414.0; // bar
@@ -403,37 +407,37 @@ public class AsphalteneValidationTest {
     DeBoerRisk riskLevel = screening.evaluateRisk();
     double riskIndex = screening.calculateRiskIndex();
 
-    System.out.println("Field Conditions:");
+    logger.info("Field Conditions:");
     System.out.printf("  Reservoir Pressure: %.0f bar%n", pRes);
     System.out.printf("  Bubble Point: %.0f bar%n", pBub);
     System.out.printf("  Undersaturation: %.0f bar%n", pRes - pBub);
     System.out.printf("  In-situ Density: %.0f kg/m³%n", density);
-    System.out.println();
-    System.out.println("De Boer Prediction:");
+
+    logger.info("De Boer Prediction:");
     System.out.printf("  Risk Level: %s%n", riskLevel);
     System.out.printf("  Risk Index: %.3f%n", riskIndex);
-    System.out.println();
-    System.out.println("Field Experience: SEVERE PROBLEMS (confirmed)");
+
+    logger.info("Field Experience: SEVERE PROBLEMS (confirmed)");
 
     // Hassi Messaoud should be flagged as problematic
     assertTrue(riskLevel != DeBoerRisk.NO_PROBLEM,
         "Hassi Messaoud should be flagged as having asphaltene risk");
     assertTrue(riskIndex > 0.5, "Hassi Messaoud risk index should be significant");
 
-    System.out.println();
-    System.out.println("✓ Verified: De Boer correctly predicts Hassi Messaoud problems");
+
+    logger.info("✓ Verified: De Boer correctly predicts Hassi Messaoud problems");
   }
 
   @Test
   @DisplayName("Known stable field: North Sea validation")
   void testNorthSeaStableCases() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("CASE STUDY: North Sea Stable Fields");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
-    System.out.println("Reference: De Boer et al. (1995), SPE-24987-PA");
-    System.out.println("These fields operated without asphaltene problems");
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("CASE STUDY: North Sea Stable Fields");
+    logger.info(StringUtils.repeat("=", 70));
+
+    logger.info("Reference: De Boer et al. (1995), SPE-24987-PA");
+    logger.info("These fields operated without asphaltene problems");
+
 
     // North Sea stable cases from De Boer
     Object[][] stableCases = {{"Brent", 138.0, 103.0, 850.0}, {"Statfjord", 172.0, 138.0, 830.0},
@@ -441,7 +445,7 @@ public class AsphalteneValidationTest {
 
     System.out.printf("%-15s | %8s | %8s | %8s | %-16s | %8s%n", "Field", "P_res", "P_bub",
         "Density", "Risk Level", "Index");
-    System.out.println(StringUtils.repeat("-", 70));
+    logger.info(StringUtils.repeat("-", 70));
 
     for (Object[] field : stableCases) {
       String name = (String) field[0];
@@ -461,19 +465,19 @@ public class AsphalteneValidationTest {
       assertTrue(riskIndex < 0.5, name + " should have low asphaltene risk index");
     }
 
-    System.out.println();
-    System.out.println("Field Experience: NO PROBLEMS (confirmed for all)");
-    System.out.println();
-    System.out.println("✓ Verified: De Boer correctly identifies stable North Sea fields");
+
+    logger.info("Field Experience: NO PROBLEMS (confirmed for all)");
+
+    logger.info("✓ Verified: De Boer correctly identifies stable North Sea fields");
   }
 
   @Test
   @DisplayName("Summary statistics for literature validation")
   void testValidationSummary() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("VALIDATION SUMMARY: De Boer vs Literature");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("VALIDATION SUMMARY: De Boer vs Literature");
+    logger.info(StringUtils.repeat("=", 70));
+
 
     int truePositive = 0; // Correctly predicted problems
     int trueNegative = 0; // Correctly predicted no problems
@@ -504,24 +508,24 @@ public class AsphalteneValidationTest {
     double sensitivity = 100.0 * truePositive / (truePositive + falseNegative);
     double specificity = 100.0 * trueNegative / (trueNegative + falsePositive);
 
-    System.out.println("Confusion Matrix:");
-    System.out.println("                    Actual");
-    System.out.println("                 Problem  No Problem");
+    logger.info("Confusion Matrix:");
+    logger.info("                    Actual");
+    logger.info("                 Problem  No Problem");
     System.out.printf("Predicted Problem    %d         %d%n", truePositive, falsePositive);
     System.out.printf("Predicted OK         %d         %d%n", falseNegative, trueNegative);
-    System.out.println();
-    System.out.println("Performance Metrics:");
+
+    logger.info("Performance Metrics:");
     System.out.printf("  Accuracy:    %.1f%% (%d/%d correct)%n", accuracy,
         truePositive + trueNegative, total);
     System.out.printf("  Sensitivity: %.1f%% (detects actual problems)%n", sensitivity);
     System.out.printf("  Specificity: %.1f%% (avoids false alarms)%n", specificity);
-    System.out.println();
+
 
     // The method should have high sensitivity (not miss real problems)
     assertTrue(sensitivity >= 80.0, "De Boer should detect at least 80% of actual problems");
 
-    System.out.println("✓ Validation complete: De Boer correlation performs well");
-    System.out.println("  against published field data from SPE-24987-PA");
+    logger.info("✓ Validation complete: De Boer correlation performs well");
+    logger.info("  against published field data from SPE-24987-PA");
   }
 
   // ============================================================================
@@ -547,13 +551,13 @@ public class AsphalteneValidationTest {
   @Test
   @DisplayName("CPA onset pressure - physically reasonable range")
   void testCPAOnsetPressurePhysicallyReasonable() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("CPA VALIDATION: Onset Pressure Physical Reasonableness");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
-    System.out.println("Reference: Typical AOP values from literature are 100-400 bar");
-    System.out.println("for problematic crudes at reservoir temperature.");
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("CPA VALIDATION: Onset Pressure Physical Reasonableness");
+    logger.info(StringUtils.repeat("=", 70));
+
+    logger.info("Reference: Typical AOP values from literature are 100-400 bar");
+    logger.info("for problematic crudes at reservoir temperature.");
+
 
     // Create a model oil with asphaltene-like heavy component
     SystemSrkCPAstatoil fluid = new SystemSrkCPAstatoil(373.15, 350.0);
@@ -570,13 +574,13 @@ public class AsphalteneValidationTest {
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 
-    System.out.println("Model Fluid Composition:");
-    System.out.println("  Methane: 40%");
-    System.out.println("  Propane: 5%");
-    System.out.println("  n-Heptane: 35%");
-    System.out.println("  n-Decane: 15%");
-    System.out.println("  nC20 (heavy proxy): 4%");
-    System.out.println();
+    logger.info("Model Fluid Composition:");
+    logger.info("  Methane: 40%");
+    logger.info("  Propane: 5%");
+    logger.info("  n-Heptane: 35%");
+    logger.info("  n-Decane: 15%");
+    logger.info("  nC20 (heavy proxy): 4%");
+
 
     // Perform bubble point calculation
     try {
@@ -588,23 +592,23 @@ public class AsphalteneValidationTest {
       assertTrue(bubblePoint > 10.0 && bubblePoint < 400.0,
           "Bubble point should be in reasonable range (10-400 bar)");
 
-      System.out.println();
-      System.out.println("✓ CPA produces physically reasonable bubble point");
+
+      logger.info("✓ CPA produces physically reasonable bubble point");
     } catch (Exception e) {
-      System.out.println("Flash calculation exception: " + e.getMessage());
+      logger.info("Flash calculation exception: " + e.getMessage());
     }
   }
 
   @Test
   @DisplayName("CPA model - pressure effect on phase behavior")
   void testCPAPressureEffect() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("CPA VALIDATION: Pressure Effect on Phase Stability");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
-    System.out.println("Physical basis: As pressure decreases below reservoir pressure,");
-    System.out.println("light components evolve and heavy components become less soluble.");
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("CPA VALIDATION: Pressure Effect on Phase Stability");
+    logger.info(StringUtils.repeat("=", 70));
+
+    logger.info("Physical basis: As pressure decreases below reservoir pressure,");
+    logger.info("light components evolve and heavy components become less soluble.");
+
 
     // Create fluid at high pressure
     SystemSrkCPAstatoil fluid = new SystemSrkCPAstatoil(373.15, 400.0);
@@ -619,7 +623,7 @@ public class AsphalteneValidationTest {
     System.out.printf("%-12s | %-12s | %-12s | %-15s%n", "Pressure", "Phases", "Vapor Frac",
         "Liquid Density");
     System.out.printf("%-12s | %-12s | %-12s | %-15s%n", "[bar]", "", "", "[kg/m³]");
-    System.out.println(StringUtils.repeat("-", 60));
+    logger.info(StringUtils.repeat("-", 60));
 
     double previousDensity = 0;
     boolean densityIncreases = true;
@@ -666,29 +670,29 @@ public class AsphalteneValidationTest {
       }
     }
 
-    System.out.println();
-    System.out.println("Expected behavior: As pressure drops and gas evolves,");
-    System.out.println("the remaining liquid becomes heavier/denser.");
-    System.out.println();
-    System.out.println("✓ CPA correctly models pressure depletion phase behavior");
+
+    logger.info("Expected behavior: As pressure drops and gas evolves,");
+    logger.info("the remaining liquid becomes heavier/denser.");
+
+    logger.info("✓ CPA correctly models pressure depletion phase behavior");
   }
 
   @Test
   @DisplayName("CPA model - composition effect on stability")
   void testCPACompositionEffect() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("CPA VALIDATION: Composition Effect on Stability");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
-    System.out.println("Physical basis: More methane = lower asphaltene solubility");
-    System.out.println("(De Boer found light oils have more problems)");
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("CPA VALIDATION: Composition Effect on Stability");
+    logger.info(StringUtils.repeat("=", 70));
+
+    logger.info("Physical basis: More methane = lower asphaltene solubility");
+    logger.info("(De Boer found light oils have more problems)");
+
 
     double[] methaneContents = {0.20, 0.30, 0.40, 0.50, 0.60};
 
     System.out.printf("%-15s | %-15s | %-15s%n", "Methane Frac", "Bubble Point", "Liquid Density");
     System.out.printf("%-15s | %-15s | %-15s%n", "", "[bar]", "[kg/m³]");
-    System.out.println(StringUtils.repeat("-", 50));
+    logger.info(StringUtils.repeat("-", 50));
 
     double previousBubblePoint = 0;
     boolean bubblePointIncreases = true;
@@ -729,27 +733,27 @@ public class AsphalteneValidationTest {
       }
     }
 
-    System.out.println();
+
     assertTrue(bubblePointIncreases, "Bubble point should increase with methane content");
-    System.out.println("✓ Verified: More methane = higher bubble point (lighter oil)");
-    System.out.println("  This creates larger undersaturation = higher asphaltene risk");
+    logger.info("✓ Verified: More methane = higher bubble point (lighter oil)");
+    logger.info("  This creates larger undersaturation = higher asphaltene risk");
   }
 
   @Test
   @DisplayName("CPA model - temperature effect")
   void testCPATemperatureEffect() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("CPA VALIDATION: Temperature Effect on Phase Behavior");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
-    System.out.println("Reference: Hammami et al. (2000) - Temperature affects AOP");
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("CPA VALIDATION: Temperature Effect on Phase Behavior");
+    logger.info(StringUtils.repeat("=", 70));
+
+    logger.info("Reference: Hammami et al. (2000) - Temperature affects AOP");
+
 
     double[] temperatures = {323.15, 348.15, 373.15, 398.15, 423.15}; // 50-150°C
 
     System.out.printf("%-12s | %-15s | %-15s%n", "Temp [°C]", "Bubble Point", "Density");
     System.out.printf("%-12s | %-15s | %-15s%n", "", "[bar]", "[kg/m³]");
-    System.out.println(StringUtils.repeat("-", 45));
+    logger.info(StringUtils.repeat("-", 45));
 
     for (double temp : temperatures) {
       SystemSrkCPAstatoil fluid = new SystemSrkCPAstatoil(temp, 300.0);
@@ -781,23 +785,23 @@ public class AsphalteneValidationTest {
       }
     }
 
-    System.out.println();
-    System.out.println("Expected: Bubble point increases with temperature");
-    System.out.println("         Density decreases with temperature");
-    System.out.println();
-    System.out.println("✓ CPA correctly models temperature effects");
+
+    logger.info("Expected: Bubble point increases with temperature");
+    logger.info("         Density decreases with temperature");
+
+    logger.info("✓ CPA correctly models temperature effects");
   }
 
   @Test
   @DisplayName("CPA model - comparison with De Boer prediction direction")
   void testCPAvsDeBoerConsistency() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("CPA vs DE BOER CONSISTENCY CHECK");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
-    System.out.println("Verify that CPA phase behavior predictions provide");
-    System.out.println("reasonable inputs for De Boer risk assessment.");
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("CPA vs DE BOER CONSISTENCY CHECK");
+    logger.info(StringUtils.repeat("=", 70));
+
+    logger.info("Verify that CPA phase behavior predictions provide");
+    logger.info("reasonable inputs for De Boer risk assessment.");
+
 
     // Test that CPA can calculate bubble points for different oil compositions
     // and that these can be used for De Boer screening
@@ -839,7 +843,7 @@ public class AsphalteneValidationTest {
         lightDensity = lightOil.getPhase(0).getDensity("kg/m3");
       }
     } catch (Exception e) {
-      System.out.println("Light oil error: " + e.getMessage());
+      logger.info("Light oil error: " + e.getMessage());
     }
 
     try {
@@ -850,13 +854,13 @@ public class AsphalteneValidationTest {
         heavyDensity = heavyOil.getPhase(0).getDensity("kg/m3");
       }
     } catch (Exception e) {
-      System.out.println("Heavy oil error: " + e.getMessage());
+      logger.info("Heavy oil error: " + e.getMessage());
     }
 
-    System.out.println("CPA Predictions:");
+    logger.info("CPA Predictions:");
     System.out.printf("  Light Oil: P_bub = %.1f bar, ρ = %.1f kg/m³%n", lightBubble, lightDensity);
     System.out.printf("  Heavy Oil: P_bub = %.1f bar, ρ = %.1f kg/m³%n", heavyBubble, heavyDensity);
-    System.out.println();
+
 
     // De Boer screening for comparison
     double pRes = 350.0;
@@ -865,12 +869,12 @@ public class AsphalteneValidationTest {
     DeBoerAsphalteneScreening heavyScreen =
         new DeBoerAsphalteneScreening(pRes, heavyBubble, heavyDensity);
 
-    System.out.println("De Boer Risk Assessment (using CPA bubble point and density):");
+    logger.info("De Boer Risk Assessment (using CPA bubble point and density):");
     System.out.printf("  Light Oil: ΔP = %.1f bar, Risk = %s, Index = %.2f%n", pRes - lightBubble,
         lightScreen.evaluateRisk(), lightScreen.calculateRiskIndex());
     System.out.printf("  Heavy Oil: ΔP = %.1f bar, Risk = %s, Index = %.2f%n", pRes - heavyBubble,
         heavyScreen.evaluateRisk(), heavyScreen.calculateRiskIndex());
-    System.out.println();
+
 
     // Validate physically reasonable results:
 
@@ -896,25 +900,25 @@ public class AsphalteneValidationTest {
     assertTrue(heavyScreen.calculateRiskIndex() > 0,
         "De Boer risk index should be positive for heavy oil");
 
-    System.out.println("✓ CPA provides physically reasonable phase behavior predictions:");
-    System.out.println("  - Light oil: higher bubble point, lower undersaturation");
-    System.out.println("  - Heavy oil: lower bubble point, higher undersaturation");
-    System.out.println("  - Both can be used with De Boer screening for risk assessment");
+    logger.info("✓ CPA provides physically reasonable phase behavior predictions:");
+    logger.info("  - Light oil: higher bubble point, lower undersaturation");
+    logger.info("  - Heavy oil: lower bubble point, higher undersaturation");
+    logger.info("  - Both can be used with De Boer screening for risk assessment");
   }
 
   @Test
   @DisplayName("CPA model - n-alkane titration trend")
   void testCPAAlkaneTitrationTrend() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("CPA VALIDATION: n-Alkane Titration Trend");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
-    System.out.println("Reference: Wiehe, I.A. (1996) - Asphaltene solubility decreases");
-    System.out.println("           with increasing n-alkane carbon number.");
-    System.out.println();
-    System.out.println("Adding n-pentane vs n-heptane vs n-decane should show");
-    System.out.println("decreasing asphaltene solubility (higher precipitation tendency).");
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("CPA VALIDATION: n-Alkane Titration Trend");
+    logger.info(StringUtils.repeat("=", 70));
+
+    logger.info("Reference: Wiehe, I.A. (1996) - Asphaltene solubility decreases");
+    logger.info("           with increasing n-alkane carbon number.");
+
+    logger.info("Adding n-pentane vs n-heptane vs n-decane should show");
+    logger.info("decreasing asphaltene solubility (higher precipitation tendency).");
+
 
     // Base oil
     String[] alkanes = {"n-pentane", "n-heptane", "nC10"};
@@ -922,7 +926,7 @@ public class AsphalteneValidationTest {
 
     System.out.printf("%-12s | %-10s | %-15s | %-15s%n", "Alkane", "C-Number", "Bubble Pt [bar]",
         "Density [kg/m³]");
-    System.out.println(StringUtils.repeat("-", 60));
+    logger.info(StringUtils.repeat("-", 60));
 
     double[] bubblePoints = new double[alkanes.length];
     double[] densities = new double[alkanes.length];
@@ -955,10 +959,10 @@ public class AsphalteneValidationTest {
       }
     }
 
-    System.out.println();
-    System.out.println("Expected trend: Higher carbon number alkane = lower solvent quality");
-    System.out.println("                for heavy components (asphaltenes)");
-    System.out.println();
+
+    logger.info("Expected trend: Higher carbon number alkane = lower solvent quality");
+    logger.info("                for heavy components (asphaltenes)");
+
 
     // Physical observation: Heavier alkanes can dissolve more gas before saturation
     // This is because heavier alkanes have higher critical temperatures
@@ -970,24 +974,24 @@ public class AsphalteneValidationTest {
         || (bubblePoints[1] <= bubblePoints[0] && bubblePoints[2] <= bubblePoints[1]);
     assertTrue(monotonic, "Bubble point trend should be monotonic with carbon number");
 
-    System.out.println("✓ CPA correctly captures alkane carbon number effects on phase behavior");
+    logger.info("✓ CPA correctly captures alkane carbon number effects on phase behavior");
   }
 
   @Test
   @DisplayName("CPA model - asphaltene pseudo-component validation")
   void testAsphalteneComponentInCPA() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("CPA VALIDATION: Asphaltene Pseudo-Component");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
-    System.out.println("Reference: Li, Z. & Firoozabadi, A. (2010)");
-    System.out.println("           CPA parameters for asphaltene modeling.");
-    System.out.println();
-    System.out.println("Testing the asphaltene pseudo-component in CPA EOS:");
-    System.out.println("  - MW = 750 g/mol (typical asphaltene monomer)");
-    System.out.println("  - Density = 1.1 g/cm³");
-    System.out.println("  - Self-association (1A scheme, mimics π-π stacking)");
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("CPA VALIDATION: Asphaltene Pseudo-Component");
+    logger.info(StringUtils.repeat("=", 70));
+
+    logger.info("Reference: Li, Z. & Firoozabadi, A. (2010)");
+    logger.info("           CPA parameters for asphaltene modeling.");
+
+    logger.info("Testing the asphaltene pseudo-component in CPA EOS:");
+    logger.info("  - MW = 750 g/mol (typical asphaltene monomer)");
+    logger.info("  - Density = 1.1 g/cm³");
+    logger.info("  - Self-association (1A scheme, mimics π-π stacking)");
+
 
     // Create a crude oil system with asphaltene
     SystemSrkCPAstatoil fluid = new SystemSrkCPAstatoil(373.15, 200.0);
@@ -1001,12 +1005,12 @@ public class AsphalteneValidationTest {
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 
-    System.out.println("Crude Oil Composition:");
-    System.out.println("  Methane:     30 mol%");
-    System.out.println("  n-Heptane:   40 mol%");
-    System.out.println("  nC10:        25 mol%");
-    System.out.println("  Asphaltene:   5 mol%");
-    System.out.println();
+    logger.info("Crude Oil Composition:");
+    logger.info("  Methane:     30 mol%");
+    logger.info("  n-Heptane:   40 mol%");
+    logger.info("  nC10:        25 mol%");
+    logger.info("  Asphaltene:   5 mol%");
+
 
     try {
       // Calculate bubble point
@@ -1043,10 +1047,10 @@ public class AsphalteneValidationTest {
       // 2. Bubble point is in reasonable range
       // 3. No exceptions during calculation
 
-      System.out.println();
-      System.out.println("✓ Asphaltene component successfully integrated into CPA model");
-      System.out.println("  - Flash calculations converge");
-      System.out.println("  - Bubble point calculated: " + String.format("%.1f bar", bubblePoint));
+
+      logger.info("✓ Asphaltene component successfully integrated into CPA model");
+      logger.info("  - Flash calculations converge");
+      logger.info("  - Bubble point calculated: " + String.format("%.1f bar", bubblePoint));
 
     } catch (Exception e) {
       fail("CPA flash with asphaltene component failed: " + e.getMessage());
@@ -1056,13 +1060,13 @@ public class AsphalteneValidationTest {
   @Test
   @DisplayName("CPA model - asphaltene precipitation with pressure depletion")
   void testAsphaltenePrecipitationTrend() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("CPA VALIDATION: Asphaltene Precipitation Trend");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
-    System.out.println("Testing physical trend: As pressure decreases toward bubble point,");
-    System.out.println("oil lightens (gas evolves) which reduces asphaltene solubility.");
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("CPA VALIDATION: Asphaltene Precipitation Trend");
+    logger.info(StringUtils.repeat("=", 70));
+
+    logger.info("Testing physical trend: As pressure decreases toward bubble point,");
+    logger.info("oil lightens (gas evolves) which reduces asphaltene solubility.");
+
 
     // Create oil with asphaltene at high pressure
     SystemSrkCPAstatoil fluid = new SystemSrkCPAstatoil(373.15, 400.0);
@@ -1076,9 +1080,9 @@ public class AsphalteneValidationTest {
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 
-    System.out.println("Pressure Depletion Study:");
+    logger.info("Pressure Depletion Study:");
     System.out.printf("%-15s | %-15s | %-15s%n", "Pressure [bar]", "# Phases", "Oil Density");
-    System.out.println(StringUtils.repeat("-", 50));
+    logger.info(StringUtils.repeat("-", 50));
 
     double[] pressures = {400, 300, 200, 150, 100};
     int[] nPhases = new int[pressures.length];
@@ -1097,28 +1101,28 @@ public class AsphalteneValidationTest {
       }
     }
 
-    System.out.println();
-    System.out.println("Expected: Number of phases increases as gas evolves near bubble point");
-    System.out.println("          Density changes reflect oil composition change");
-    System.out.println();
-    System.out.println("✓ CPA with asphaltene captures pressure depletion effects");
+
+    logger.info("Expected: Number of phases increases as gas evolves near bubble point");
+    logger.info("          Density changes reflect oil composition change");
+
+    logger.info("✓ CPA with asphaltene captures pressure depletion effects");
   }
 
   @Test
   @DisplayName("CPA asphaltene - validate against De Boer field data using TBPfraction")
   void testCPAAsphalteneVsDeBoerFieldData() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("CPA vs DE BOER VALIDATION: Using TBPfraction for Realistic Oils");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
-    System.out.println("Using TBPfraction to create oils with realistic densities matching");
-    System.out.println("De Boer field data from SPE-24987-PA.");
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("CPA vs DE BOER VALIDATION: Using TBPfraction for Realistic Oils");
+    logger.info(StringUtils.repeat("=", 70));
+
+    logger.info("Using TBPfraction to create oils with realistic densities matching");
+    logger.info("De Boer field data from SPE-24987-PA.");
+
 
     // Test Case 1: Light oil with high GOR (like Hassi Messaoud)
     // Hassi Messaoud: P_bub=172 bar, ρ=694 kg/m³ (very light oil, ~45 API, density ~0.80)
-    System.out.println("Case 1: Light Oil (Hassi Messaoud-like, ~45 API)");
-    System.out.println("  Target: P_bub ≈ 170 bar, ρ ≈ 700 kg/m³");
+    logger.info("Case 1: Light Oil (Hassi Messaoud-like, ~45 API)");
+    logger.info("  Target: P_bub ≈ 170 bar, ρ ≈ 700 kg/m³");
 
     SystemSrkCPAstatoil lightOil = new SystemSrkCPAstatoil(373.15, 400.0);
     lightOil.addComponent("methane", 0.45); // High methane for high bubble point
@@ -1144,7 +1148,7 @@ public class AsphalteneValidationTest {
       lightOil.initPhysicalProperties();
       lightDensity = lightOil.getDensity("kg/m3");
     } catch (Exception e) {
-      System.out.println("  Error: " + e.getMessage());
+      logger.info("  Error: " + e.getMessage());
     }
 
     System.out.printf("  CPA Result: P_bub = %.1f bar, ρ = %.1f kg/m³%n", lightBubble,
@@ -1152,9 +1156,9 @@ public class AsphalteneValidationTest {
 
     // Test Case 2: Heavy oil with low GOR (like Brent)
     // Brent: P_bub=103 bar, ρ=850 kg/m³ (heavier oil, ~35 API, density ~0.85)
-    System.out.println();
-    System.out.println("Case 2: Heavy Oil (Brent-like, ~35 API)");
-    System.out.println("  Target: P_bub ≈ 100 bar, ρ ≈ 850 kg/m³");
+
+    logger.info("Case 2: Heavy Oil (Brent-like, ~35 API)");
+    logger.info("  Target: P_bub ≈ 100 bar, ρ ≈ 850 kg/m³");
 
     SystemSrkCPAstatoil heavyOil = new SystemSrkCPAstatoil(373.15, 200.0);
     heavyOil.addComponent("methane", 0.15); // Lower methane for lower bubble point
@@ -1181,15 +1185,15 @@ public class AsphalteneValidationTest {
       heavyOil.initPhysicalProperties();
       heavyDensity = heavyOil.getDensity("kg/m3");
     } catch (Exception e) {
-      System.out.println("  Error: " + e.getMessage());
+      logger.info("  Error: " + e.getMessage());
     }
 
     System.out.printf("  CPA Result: P_bub = %.1f bar, ρ = %.1f kg/m³%n", heavyBubble,
         heavyDensity);
 
     // De Boer risk assessment
-    System.out.println();
-    System.out.println("De Boer Risk Assessment:");
+
+    logger.info("De Boer Risk Assessment:");
 
     DeBoerAsphalteneScreening lightScreen =
         new DeBoerAsphalteneScreening(400.0, lightBubble, lightDensity);
@@ -1202,24 +1206,24 @@ public class AsphalteneValidationTest {
         heavyScreen.evaluateRisk(), heavyScreen.calculateRiskIndex());
 
     // Validate physical consistency
-    System.out.println();
-    System.out.println("Validation:");
+
+    logger.info("Validation:");
 
     // Light oil should have higher bubble point than heavy oil (more dissolved gas)
     assertTrue(lightBubble > heavyBubble,
         "Light oil (more gas) should have higher bubble point than heavy oil");
-    System.out.println("  ✓ Light oil has higher bubble point than heavy oil");
+    logger.info("  ✓ Light oil has higher bubble point than heavy oil");
 
     // Light oil should have lower density than heavy oil
     assertTrue(lightDensity < heavyDensity, "Light oil should have lower density than heavy oil");
-    System.out.println("  ✓ Light oil has lower density than heavy oil");
+    logger.info("  ✓ Light oil has lower density than heavy oil");
 
     // Densities should be in physically reasonable ranges
     assertTrue(lightDensity > 600 && lightDensity < 850,
         "Light oil density should be 600-850 kg/m³, got: " + lightDensity);
     assertTrue(heavyDensity > 750 && heavyDensity < 1000,
         "Heavy oil density should be 750-1000 kg/m³, got: " + heavyDensity);
-    System.out.println("  ✓ Densities are in physically reasonable ranges");
+    logger.info("  ✓ Densities are in physically reasonable ranges");
 
     // Light oil with low density should have higher De Boer risk
     double lightRiskIndex = lightScreen.calculateRiskIndex();
@@ -1227,8 +1231,8 @@ public class AsphalteneValidationTest {
     System.out.printf("  Light oil risk index: %.2f%n", lightRiskIndex);
     System.out.printf("  Heavy oil risk index: %.2f%n", heavyRiskIndex);
 
-    System.out.println();
-    System.out.println("✓ CPA with TBPfraction produces realistic oil densities");
-    System.out.println("  that match De Boer field data trends");
+
+    logger.info("✓ CPA with TBPfraction produces realistic oil densities");
+    logger.info("  that match De Boer field data trends");
   }
 }

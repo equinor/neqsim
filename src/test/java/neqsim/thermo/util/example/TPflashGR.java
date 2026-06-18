@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TPflashGR {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TPflashGR.class);
+  private static final Logger logger = LogManager.getLogger(TPflashGR.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -108,7 +109,7 @@ public class TPflashGR {
     /*
      * for (int i = 0; i < P_bar.length; i++) { fluid1.setPressure(P_bar[i]);
      * thermoOps.PHflash(enthalpy[i]); errH[i] = fluid1.getTemperature() - T_C[i] - 273.15;
-     * System.out.println("err " + errH[i]); //assertTrue(Math.abs(errH[i]) < 1e-2); }
+     * logger.info("err " + errH[i]); //assertTrue(Math.abs(errH[i]) < 1e-2); }
      */
   }
 }

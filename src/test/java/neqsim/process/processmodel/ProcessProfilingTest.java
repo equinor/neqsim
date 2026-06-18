@@ -16,6 +16,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Performance profiling test for NeqSim process simulation.
@@ -42,6 +44,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class ProcessProfilingTest {
+  private static final Logger logger = LogManager.getLogger(ProcessProfilingTest.class);
+
 
   private SystemInterface makeRichGasFluid() {
     SystemInterface f = new SystemSrkEos(298.0, 80.0);
@@ -68,7 +72,7 @@ public class ProcessProfilingTest {
    */
   @Test
   void profileLargeProcess() {
-    System.out.println("\n========== PROCESS PROFILING: Built-in Execution Profiler ==========\n");
+    logger.info("\n========== PROCESS PROFILING: Built-in Execution Profiler ==========\n");
 
     // Build a realistic process: HP/LP separation + compression + heat exchange
     ProcessSystem process = buildRealisticProcess();
@@ -90,7 +94,7 @@ public class ProcessProfilingTest {
     process.printExecutionProfile();
 
     // Show execution strategy info
-    System.out.println("\n" + process.getExecutionPartitionInfo());
+    logger.info("\n" + process.getExecutionPartitionInfo());
   }
 
   /**
@@ -102,7 +106,7 @@ public class ProcessProfilingTest {
    */
   @Test
   void profileWithJFR() throws Exception {
-    System.out.println("\n========== JFR PROFILING: Running 50 iterations ==========\n");
+    logger.info("\n========== JFR PROFILING: Running 50 iterations ==========\n");
 
     // Check if JFR is available
     boolean jfrAvailable = false;
@@ -110,7 +114,7 @@ public class ProcessProfilingTest {
       Class.forName("jdk.jfr.FlightRecorder");
       jfrAvailable = true;
     } catch (ClassNotFoundException e) {
-      System.out.println("JFR not available (Java 8?). Running plain benchmark instead.");
+      logger.info("JFR not available (Java 8?). Running plain benchmark instead.");
     }
 
     // Start JFR programmatically if available (with "profile" config for CPU sampling)
@@ -131,7 +135,7 @@ public class ProcessProfilingTest {
         System.out
             .println("JFR recording started (profile config) -> " + jfrFile.getAbsolutePath());
       } catch (Exception e) {
-        System.out.println("Could not start JFR programmatically: " + e.getMessage());
+        logger.info("Could not start JFR programmatically: " + e.getMessage());
         jfrAvailable = false;
       }
     }
@@ -160,11 +164,11 @@ public class ProcessProfilingTest {
         dumpMethod.invoke(recording, path);
         recordingClass.getMethod("stop").invoke(recording);
         recordingClass.getMethod("close").invoke(recording);
-        System.out.println("JFR recording saved to: " + jfrFile.getAbsolutePath());
+        logger.info("JFR recording saved to: " + jfrFile.getAbsolutePath());
         System.out
             .println("Open with: jmc " + jfrFile.getAbsolutePath() + "  (or IntelliJ profiler)");
       } catch (Exception e) {
-        System.out.println("Error saving JFR: " + e.getMessage());
+        logger.info("Error saving JFR: " + e.getMessage());
       }
     }
 
@@ -179,7 +183,7 @@ public class ProcessProfilingTest {
    */
   @Test
   void microBenchmarkThermodynamicOperations() {
-    System.out.println("\n========== MICRO-BENCHMARK: Thermodynamic Operations ==========\n");
+    logger.info("\n========== MICRO-BENCHMARK: Thermodynamic Operations ==========\n");
 
     SystemInterface fluid = makeRichGasFluid();
     neqsim.thermodynamicoperations.ThermodynamicOperations ops =
@@ -289,7 +293,7 @@ public class ProcessProfilingTest {
     int runs = 10;
 
     // Scenario A: 3-train compression with Mixer
-    System.out.println("--- Scenario A: 3-train parallel compression + Mixer ---");
+    logger.info("--- Scenario A: 3-train parallel compression + Mixer ---");
     {
       ProcessSystem seq = buildParallelCompressionWithMixer();
       seq.setUseOptimizedExecution(false); // Force sequential
@@ -316,7 +320,7 @@ public class ProcessProfilingTest {
     }
 
     // Scenario B: HP/LP separation with HeatExchanger
-    System.out.println("\n--- Scenario B: HP/LP separation + HeatExchanger ---");
+    logger.info("\n--- Scenario B: HP/LP separation + HeatExchanger ---");
     {
       ProcessSystem seq = buildHPLPWithHeatExchanger();
       seq.setUseOptimizedExecution(false);
@@ -343,7 +347,7 @@ public class ProcessProfilingTest {
     }
 
     // Scenario C: Large 6-train process with Mixer (the big parallelism opportunity)
-    System.out.println("\n--- Scenario C: 6-train compression + Mixer (max parallel) ---");
+    logger.info("\n--- Scenario C: 6-train compression + Mixer (max parallel) ---");
     {
       ProcessSystem seq = buildNTrainCompression(6);
       seq.setUseOptimizedExecution(false);
@@ -368,11 +372,11 @@ public class ProcessProfilingTest {
           optMs, seqMs / optMs);
       System.out.printf("  hasMultiInputEquipment: %b  |  Max parallelism: %d%n",
           opt.hasMultiInputEquipment(), opt.getMaxParallelism());
-      System.out.println("\n  Per-unit profile (last run):");
+      logger.info("\n  Per-unit profile (last run):");
       opt.printExecutionProfile();
     }
 
-    System.out.println("\n===== BENCHMARK COMPLETE =====\n");
+    logger.info("\n===== BENCHMARK COMPLETE =====\n");
   }
 
   /**
@@ -381,10 +385,10 @@ public class ProcessProfilingTest {
    */
   @Test
   void measureCPUVsWallTime() {
-    System.out.println("\n========== CPU Time vs Wall-Clock Analysis ==========\n");
+    logger.info("\n========== CPU Time vs Wall-Clock Analysis ==========\n");
     ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
     if (!threadMXBean.isCurrentThreadCpuTimeSupported()) {
-      System.out.println("CPU time measurement not supported on this JVM");
+      logger.info("CPU time measurement not supported on this JVM");
       return;
     }
     threadMXBean.setThreadCpuTimeEnabled(true);

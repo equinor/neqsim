@@ -3,6 +3,8 @@ package neqsim.thermo.system;
 import org.junit.jupiter.api.Test;
 
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Diagnostic test to measure current CPA CO2-water predictions at multiple conditions against
@@ -23,16 +25,18 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(CPACO2WaterDiagnosticTest.class);
+
 
   /**
    * Comprehensive benchmark: CO2 solubility in aqueous phase at multiple T,P conditions.
    */
   @Test
   void diagnosticCO2SolubilityMultipleConditions() {
-    System.out.println("=== CPA CO2-Water Solubility Benchmark ===");
-    System.out.println("Current INTER.csv: cpakij_SRK=-0.27686, cpakijT_SRK=0.001121, "
+    logger.info("=== CPA CO2-Water Solubility Benchmark ===");
+    logger.info("Current INTER.csv: cpakij_SRK=-0.27686, cpakijT_SRK=0.001121, "
         + "betaCross=0.075, epsCross=0");
-    System.out.println();
+
 
     // Reference experimental data: {T(C), P(bar), x_CO2_exp}
     // Sources: Wiebe & Gaddy (1940), Bamberger et al. (2000), Duan & Sun (2003)
@@ -103,10 +107,10 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
     System.out
         .println("--------------------------------------------------------------" + "--------");
     System.out.printf("Mean absolute error: %.1f%%%n", sumAbsError / count);
-    System.out.println();
+
 
     // Also print water in CO2-rich phase
-    System.out.println("=== Water in CO2-rich Phase ===");
+    logger.info("=== Water in CO2-rich Phase ===");
     double[][] waterRefData = {
         // T(C), P(bar), y_H2O_experimental
         {25.0, 100.0, 0.0027}, // King et al.
@@ -117,7 +121,7 @@ class CPACO2WaterDiagnosticTest extends neqsim.NeqSimTest {
 
     System.out.printf("%-8s %-8s %-12s %-12s %-12s%n", "T(C)", "P(bar)", "y_H2O_exp", "y_H2O_CPA",
         "error(%)");
-    System.out.println("--------------------------------------------------");
+    logger.info("--------------------------------------------------");
 
     for (double[] row : waterRefData) {
       double tempC = row[0];

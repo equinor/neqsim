@@ -14,6 +14,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.LevelTransmitter;
 import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -25,6 +27,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestTransientFlow {
+  private static final Logger logger = LogManager.getLogger(TestTransientFlow.class);
+
   /**
    * <p>
    * main.
@@ -122,11 +126,11 @@ public class TestTransientFlow {
 
     /*
      * // transient behaviour operations.setTimeStep(1.1); for(int i=0;i<50;i++){
-     * operations.runTransient(); System.out.println("liquid level " + separator_1.getLiquidLevel()+
+     * operations.runTransient(); logger.info("liquid level " + separator_1.getLiquidLevel()+
      * " PRESSURE " + separator_1.getGasOutStream().getPressure()); }
      *
      * operations.setTimeStep(30.0); for(int i=0;i<2000;i++){ operations.runTransient();
-     * System.out.println("liquid level " + separator_1.getLiquidLevel()+ " PRESSURE " +
+     * logger.info("liquid level " + separator_1.getLiquidLevel()+ " PRESSURE " +
      * separator_1.getGasOutStream().getPressure()); } operations.displayResult();
      *
      * operations.displayResult();

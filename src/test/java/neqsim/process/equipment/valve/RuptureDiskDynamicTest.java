@@ -10,6 +10,8 @@ import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Dynamic test for rupture disk behavior in blocked outlet scenarios. Tests the one-time bursting
@@ -18,6 +20,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author Even Solbraa
  */
 class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(RuptureDiskDynamicTest.class);
+
   /**
    * Dynamic test for rupture disk with blocked outlet scenario.
    *
@@ -206,7 +210,7 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
             + " kg/hr");
 
     // Print summary
-    System.out.println("\n===== RUPTURE DISK TEST SUMMARY =====");
+    logger.info("\n===== RUPTURE DISK TEST SUMMARY =====");
     System.out.printf("Feed flow rate: %.1f kg/hr%n", feedStream.getFlowRate("kg/hr"));
     System.out.printf("Rupture disk burst pressure: %.1f bara%n", burstPressure);
     System.out.printf("Rupture disk full open pressure: %.1f bara%n", fullOpenPressure);
@@ -216,9 +220,9 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
     System.out.printf("Final disk opening: %.1f %%%n", diskOpenings.get(diskOpenings.size() - 1));
     System.out.printf("Final pressure: %.2f bara%n",
         separatorPressures.get(separatorPressures.size() - 1));
-    System.out.println(
+    logger.info(
         "Key behavior: Disk remains FULLY OPEN even though pressure dropped below burst pressure!");
-    System.out.println("======================================");
+    logger.info("======================================");
   }
 
   /**
@@ -250,7 +254,7 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
     disk.setCalculateSteadyState(false);
 
     // Test rupture disk behavior at different pressures
-    System.out.println("\n===== RUPTURE DISK BEHAVIOR TEST =====");
+    logger.info("\n===== RUPTURE DISK BEHAVIOR TEST =====");
 
     // Test sequence: pressure rises, then falls
     double[] testPressures = {45.0, 49.0, 50.0, 52.5, 55.0, 52.0, 50.0, 48.0, 45.0};
@@ -282,10 +286,10 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
       }
     }
 
-    System.out.println("\nKey observation: Disk remained 100% open even when");
-    System.out.println("pressure dropped from 55 bara back down to 45 bara.");
-    System.out.println("A safety valve would have reseated at ~93% of set pressure.");
-    System.out.println("========================================");
+    logger.info("\nKey observation: Disk remained 100% open even when");
+    logger.info("pressure dropped from 55 bara back down to 45 bara.");
+    logger.info("A safety valve would have reseated at ~93% of set pressure.");
+    logger.info("========================================");
   }
 
   /**

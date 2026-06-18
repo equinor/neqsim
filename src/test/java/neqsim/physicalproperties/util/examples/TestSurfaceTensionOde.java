@@ -17,8 +17,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestSurfaceTensionOde {
+  private static final Logger logger = LogManager.getLogger(TestSurfaceTensionOde.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestSurfaceTensionOde.class);
 
   /**
    * <p>

@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowPattern;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -18,6 +20,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 class TwoPhasePipeFlowSystemSimplifiedAPITest {
+  private static final Logger logger =
+      LogManager.getLogger(TwoPhasePipeFlowSystemSimplifiedAPITest.class);
+
   /**
    * Creates a test fluid with proper two-phase conditions.
    */
@@ -311,8 +316,8 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
     PipeFlowResult result = pipe.solve();
 
     // Access results - all in one place
-    System.out.println("=== Simplified API Test ===");
-    System.out.println(result);
+    logger.info("=== Simplified API Test ===");
+    logger.info(result);
 
     double dP = result.getTotalPressureDrop();
     double dT = result.getTemperatureChange();

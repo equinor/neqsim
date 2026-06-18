@@ -7,6 +7,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Performance test for WaterDewPointAnalyser to identify bottlenecks.
@@ -16,6 +18,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 @Tag("slow")
 public class WaterDewPointPerformanceTest {
+  private static final Logger logger = LogManager.getLogger(WaterDewPointPerformanceTest.class);
+
 
   /**
    * Test performance of water dew point calculation - matches the Python code exactly.
@@ -24,9 +28,9 @@ public class WaterDewPointPerformanceTest {
   public void testWaterDewPointPerformance() {
     double referencePressure = 60.0; // bara
 
-    System.out.println(StringUtils.repeat("=", 60));
-    System.out.println("WATER DEW POINT PERFORMANCE TEST");
-    System.out.println(StringUtils.repeat("=", 60));
+    logger.info(StringUtils.repeat("=", 60));
+    logger.info("WATER DEW POINT PERFORMANCE TEST");
+    logger.info(StringUtils.repeat("=", 60));
 
     // ==========================================
     // STEP 1: System creation and component addition
@@ -114,16 +118,16 @@ public class WaterDewPointPerformanceTest {
 
     long totalTime = System.nanoTime() - startTotal;
 
-    System.out.println(StringUtils.repeat("-", 60));
+    logger.info(StringUtils.repeat("-", 60));
     System.out.printf("TOTAL TIME:                            %8.2f ms%n", totalTime / 1e6);
-    System.out.println(StringUtils.repeat("=", 60));
+    logger.info(StringUtils.repeat("=", 60));
 
     // Results
     double waterContentPpm =
         1e6 * feedGasStream.getFluid().getPhase("gas").getComponent("water").getz();
     System.out.printf("Water Dew Point:      %.2f °C%n", waterDewPointC);
     System.out.printf("Water Content:        %.2f ppm%n", waterContentPpm);
-    System.out.println(StringUtils.repeat("=", 60));
+    logger.info(StringUtils.repeat("=", 60));
   }
 
   /**
@@ -133,9 +137,9 @@ public class WaterDewPointPerformanceTest {
   public void testCompareWaterDewPointMethods() {
     double referencePressure = 40.0;
 
-    System.out.println("\n" + StringUtils.repeat("=", 60));
-    System.out.println("COMPARING WATER DEW POINT METHODS");
-    System.out.println(StringUtils.repeat("=", 60));
+    logger.info("\n" + StringUtils.repeat("=", 60));
+    logger.info("COMPARING WATER DEW POINT METHODS");
+    logger.info(StringUtils.repeat("=", 60));
 
     // Create the fluid once
     SystemInterface feedGas = new SystemSrkCPAstatoil(298.15, 1.01325);
@@ -184,7 +188,7 @@ public class WaterDewPointPerformanceTest {
         multiphaseTime / 1e6);
     System.out.printf("Speedup factor:     %.1fx faster with Bukacek%n",
         (double) multiphaseTime / bukacekTime);
-    System.out.println(StringUtils.repeat("=", 60));
+    logger.info(StringUtils.repeat("=", 60));
   }
 
   /**
@@ -192,9 +196,9 @@ public class WaterDewPointPerformanceTest {
    */
   @Test
   public void testIterativeFlashBottleneck() {
-    System.out.println("\n" + StringUtils.repeat("=", 60));
-    System.out.println("ANALYZING ITERATIVE FLASH BOTTLENECK");
-    System.out.println(StringUtils.repeat("=", 60));
+    logger.info("\n" + StringUtils.repeat("=", 60));
+    logger.info("ANALYZING ITERATIVE FLASH BOTTLENECK");
+    logger.info(StringUtils.repeat("=", 60));
 
     // Create system for dew point calculation
     SystemInterface tempFluid = new SystemSrkCPAstatoil(298.15, 1.01325);
@@ -227,7 +231,7 @@ public class WaterDewPointPerformanceTest {
     // Each iteration does a TPflash
     System.out.printf("Estimated time for 100 iterations: %.2f ms%n", 100 * singleFlashTime / 1e6);
     System.out.printf("Estimated time for 350 iterations: %.2f ms%n", 350 * singleFlashTime / 1e6);
-    System.out.println(StringUtils.repeat("=", 60));
+    logger.info(StringUtils.repeat("=", 60));
   }
 
   /**
@@ -237,9 +241,9 @@ public class WaterDewPointPerformanceTest {
   public void testOptimizedWaterDewPoint() {
     double referencePressure = 40.0;
 
-    System.out.println("\n" + StringUtils.repeat("=", 60));
-    System.out.println("OPTIMIZED WATER DEW POINT CALCULATION");
-    System.out.println(StringUtils.repeat("=", 60));
+    logger.info("\n" + StringUtils.repeat("=", 60));
+    logger.info("OPTIMIZED WATER DEW POINT CALCULATION");
+    logger.info(StringUtils.repeat("=", 60));
 
     // Create the fluid
     SystemInterface feedGas = new SystemSrkCPAstatoil(298.15, 1.01325);
@@ -318,7 +322,7 @@ public class WaterDewPointPerformanceTest {
     System.out.printf("Standard result:  %.2f °C (%.2f ms)%n", standardResult, standardTime / 1e6);
     System.out.printf("Speedup: %.1fx faster with optimized approach%n",
         (double) standardTime / (bukacekTime + optimizedTime));
-    System.out.println(StringUtils.repeat("=", 60));
+    logger.info(StringUtils.repeat("=", 60));
   }
 
   /**
@@ -326,9 +330,9 @@ public class WaterDewPointPerformanceTest {
    */
   @Test
   public void testMixingRulePerformance() {
-    System.out.println("\n" + StringUtils.repeat("=", 60));
-    System.out.println("MIXING RULE PERFORMANCE COMPARISON");
-    System.out.println(StringUtils.repeat("=", 60));
+    logger.info("\n" + StringUtils.repeat("=", 60));
+    logger.info("MIXING RULE PERFORMANCE COMPARISON");
+    logger.info(StringUtils.repeat("=", 60));
 
     // Test with classic mixing rule (faster)
     long start = System.nanoTime();
@@ -352,6 +356,6 @@ public class WaterDewPointPerformanceTest {
     long cpaTime = System.nanoTime() - start;
     System.out.printf("CPA mixing rule (10): %.2f ms%n", cpaTime / 1e6);
     System.out.printf("CPA is %.1fx slower than classic%n", (double) cpaTime / classicTime);
-    System.out.println(StringUtils.repeat("=", 60));
+    logger.info(StringUtils.repeat("=", 60));
   }
 }

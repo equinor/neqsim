@@ -9,6 +9,8 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test class for TPHydrateFlash.
@@ -19,6 +21,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 public class TPHydrateFlashTest {
+  private static final Logger logger = LogManager.getLogger(TPHydrateFlashTest.class);
+
   /**
    * Test basic hydrate TPflash with methane and water using CPA EOS.
    */
@@ -576,7 +580,7 @@ public class TPHydrateFlashTest {
     assertTrue(fluid.getNumberOfPhases() >= 2, "Should have at least gas and hydrate phases");
 
     // Print to see the phases
-    System.out.println("=== Gas-Hydrate with Trace Water ===");
+    logger.info("=== Gas-Hydrate with Trace Water ===");
     fluid.prettyPrint();
 
     // Verify hydrate forms
@@ -637,7 +641,7 @@ public class TPHydrateFlashTest {
     assertNotNull(fluid);
 
     // Print to see the phases
-    System.out.println("=== Dry Gas with Trace Water Hydrate ===");
+    logger.info("=== Dry Gas with Trace Water Hydrate ===");
     fluid.prettyPrint();
 
     // Verify hydrate forms at these extreme conditions
@@ -646,7 +650,7 @@ public class TPHydrateFlashTest {
     // Hydrate fraction should be significant since conditions are very favorable
     double hydrateFraction = fluid.getHydrateFraction();
     assertTrue(hydrateFraction > 0, "Hydrate fraction should be positive");
-    System.out.println("Hydrate fraction: " + hydrateFraction);
+    logger.info("Hydrate fraction: " + hydrateFraction);
 
     // Verify mass conservation
     double totalMolesExpected = 0.90 + 0.05 + 0.02 + 0.01 + 0.02;
@@ -682,14 +686,14 @@ public class TPHydrateFlashTest {
     assertNotNull(fluid);
 
     // Print to see the phases
-    System.out.println("=== Gas-Hydrate Equilibrium at 300 bar, -15°C, 0.5% water ===");
+    logger.info("=== Gas-Hydrate Equilibrium at 300 bar, -15°C, 0.5% water ===");
     fluid.prettyPrint();
 
     // Print phase information
-    System.out.println("Number of phases: " + fluid.getNumberOfPhases());
+    logger.info("Number of phases: " + fluid.getNumberOfPhases());
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-      System.out.println(
-          "Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
+      logger
+          .info("Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
     }
 
     // Verify hydrate forms
@@ -732,14 +736,14 @@ public class TPHydrateFlashTest {
     assertNotNull(fluid);
 
     // Print to see the phases
-    System.out.println("=== Gas-Hydrate Equilibrium at 500 bar, -20°C, 0.1% water ===");
+    logger.info("=== Gas-Hydrate Equilibrium at 500 bar, -20°C, 0.1% water ===");
     fluid.prettyPrint();
 
     // Print phase information
-    System.out.println("Number of phases: " + fluid.getNumberOfPhases());
+    logger.info("Number of phases: " + fluid.getNumberOfPhases());
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-      System.out.println(
-          "Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
+      logger
+          .info("Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
     }
 
     // Verify hydrate forms even with trace water
@@ -747,7 +751,7 @@ public class TPHydrateFlashTest {
 
     // Hydrate fraction
     double hydrateFraction = fluid.getHydrateFraction();
-    System.out.println("Hydrate fraction: " + hydrateFraction);
+    logger.info("Hydrate fraction: " + hydrateFraction);
 
     // Check if aqueous phase exists and its fraction
     boolean hasAqueousPhase = false;
@@ -759,7 +763,7 @@ public class TPHydrateFlashTest {
         break;
       }
     }
-    System.out.println("Has aqueous phase: " + hasAqueousPhase + ", fraction: " + aqueousFraction);
+    logger.info("Has aqueous phase: " + hasAqueousPhase + ", fraction: " + aqueousFraction);
 
     // Verify mass conservation
     double totalMolesExpected = 0.899 + 0.05 + 0.03 + 0.02 + 0.001;
@@ -794,22 +798,22 @@ public class TPHydrateFlashTest {
 
     // First check what happens with regular TPflash
     ops.TPflash();
-    System.out.println("=== Before hydrate flash (100 ppm water) ===");
-    System.out.println("Number of phases after TPflash: " + fluid.getNumberOfPhases());
+    logger.info("=== Before hydrate flash (100 ppm water) ===");
+    logger.info("Number of phases after TPflash: " + fluid.getNumberOfPhases());
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-      System.out.println("Phase " + i + ": " + fluid.getPhase(i).getType());
+      logger.info("Phase " + i + ": " + fluid.getPhase(i).getType());
     }
 
     // Now do hydrate flash
     ops.hydrateTPflash();
 
-    System.out.println("\n=== After hydrate flash ===");
+    logger.info("\n=== After hydrate flash ===");
     fluid.prettyPrint();
 
-    System.out.println("Number of phases: " + fluid.getNumberOfPhases());
+    logger.info("Number of phases: " + fluid.getNumberOfPhases());
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-      System.out.println(
-          "Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
+      logger
+          .info("Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
     }
 
     // Check if aqueous phase exists
@@ -820,11 +824,11 @@ public class TPHydrateFlashTest {
         break;
       }
     }
-    System.out.println("Has aqueous phase: " + hasAqueousPhase);
+    logger.info("Has aqueous phase: " + hasAqueousPhase);
 
     // Check if hydrate forms
     boolean hasHydrate = fluid.hasHydratePhase();
-    System.out.println("Has hydrate phase: " + hasHydrate);
+    logger.info("Has hydrate phase: " + hasHydrate);
   }
 
   /**
@@ -850,25 +854,25 @@ public class TPHydrateFlashTest {
 
     // First TPflash to see initial state
     ops.TPflash();
-    System.out.println("=== TPflash with 50 ppm water at -20°C, 300 bar ===");
-    System.out.println("Number of phases: " + fluid.getNumberOfPhases());
+    logger.info("=== TPflash with 50 ppm water at -20°C, 300 bar ===");
+    logger.info("Number of phases: " + fluid.getNumberOfPhases());
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-      System.out.println("Phase " + i + ": " + fluid.getPhase(i).getType());
+      logger.info("Phase " + i + ": " + fluid.getPhase(i).getType());
       if (fluid.getPhase(i).hasComponent("water")) {
-        System.out.println("  Water x = " + fluid.getPhase(i).getComponent("water").getx());
+        logger.info("  Water x = " + fluid.getPhase(i).getComponent("water").getx());
       }
     }
 
     // Now hydrate flash
     ops.hydrateTPflash();
 
-    System.out.println("\n=== After hydrate flash ===");
+    logger.info("\n=== After hydrate flash ===");
     fluid.prettyPrint();
 
-    System.out.println("Number of phases: " + fluid.getNumberOfPhases());
+    logger.info("Number of phases: " + fluid.getNumberOfPhases());
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-      System.out.println(
-          "Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
+      logger
+          .info("Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
     }
 
     // Check phases
@@ -886,8 +890,8 @@ public class TPHydrateFlashTest {
         hydrateBeta = fluid.getBeta(i);
       }
     }
-    System.out.println("Has aqueous phase: " + hasAqueousPhase + ", beta = " + aqueousBeta);
-    System.out.println("Has hydrate phase: " + hasHydrate + ", beta = " + hydrateBeta);
+    logger.info("Has aqueous phase: " + hasAqueousPhase + ", beta = " + aqueousBeta);
+    logger.info("Has hydrate phase: " + hasHydrate + ", beta = " + hydrateBeta);
 
     // Verify hydrate forms
     assertTrue(hasHydrate, "Hydrate should form at -20°C, 300 bar");
@@ -930,7 +934,7 @@ public class TPHydrateFlashTest {
     // Use the new gasHydrateTPflash method
     ops.gasHydrateTPflash();
 
-    System.out.println("=== Gas-Hydrate TPflash (200 ppm water at -15°C, 250 bar) ===");
+    logger.info("=== Gas-Hydrate TPflash (200 ppm water at -15°C, 250 bar) ===");
     fluid.prettyPrint();
 
     // Count phase types
@@ -942,8 +946,8 @@ public class TPHydrateFlashTest {
     double aqueousBeta = 0.0;
 
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-      System.out.println(
-          "Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
+      logger
+          .info("Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
       if (fluid.getPhase(i).getType() == PhaseType.GAS) {
         hasGas = true;
         gasBeta = fluid.getBeta(i);
@@ -965,9 +969,9 @@ public class TPHydrateFlashTest {
     assertTrue(hasGas, "Gas phase should exist");
 
     // Report whether aqueous phase was removed
-    System.out.println("Has aqueous phase: " + hasAqueous);
+    logger.info("Has aqueous phase: " + hasAqueous);
     if (hasAqueous) {
-      System.out.println("Aqueous beta: " + aqueousBeta);
+      logger.info("Aqueous beta: " + aqueousBeta);
     }
 
     // Gas should dominate
@@ -1005,7 +1009,7 @@ public class TPHydrateFlashTest {
     // Use gasHydrateTPflash
     ops.gasHydrateTPflash();
 
-    System.out.println("=== Gas-Hydrate TPflash (500 ppm water at -20°C, 300 bar) ===");
+    logger.info("=== Gas-Hydrate TPflash (500 ppm water at -20°C, 300 bar) ===");
     fluid.prettyPrint();
 
     // Count phase types
@@ -1014,8 +1018,8 @@ public class TPHydrateFlashTest {
     int phaseCount = fluid.getNumberOfPhases();
 
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-      System.out.println(
-          "Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
+      logger
+          .info("Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
       if (fluid.getPhase(i).getType() == PhaseType.HYDRATE) {
         hasHydrate = true;
       }
@@ -1024,9 +1028,9 @@ public class TPHydrateFlashTest {
       }
     }
 
-    System.out.println("Total phases: " + phaseCount);
-    System.out.println("Has hydrate: " + hasHydrate);
-    System.out.println("Has aqueous: " + hasAqueous);
+    logger.info("Total phases: " + phaseCount);
+    logger.info("Has hydrate: " + hasHydrate);
+    logger.info("Has aqueous: " + hasAqueous);
 
     // Verify hydrate forms
     assertTrue(hasHydrate, "Hydrate should form at these extreme conditions");
@@ -1067,14 +1071,14 @@ public class TPHydrateFlashTest {
     // Use gasHydrateTPflash
     ops.gasHydrateTPflash();
 
-    System.out.println("=== Natural Gas Hydrate TPflash (1% water at -5°C, 150 bar) ===");
+    logger.info("=== Natural Gas Hydrate TPflash (1% water at -5°C, 150 bar) ===");
     fluid.prettyPrint();
 
     // Verify hydrate forms
     boolean hasHydrate = false;
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-      System.out.println(
-          "Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
+      logger
+          .info("Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
       if (fluid.getPhase(i).getType() == PhaseType.HYDRATE) {
         hasHydrate = true;
       }

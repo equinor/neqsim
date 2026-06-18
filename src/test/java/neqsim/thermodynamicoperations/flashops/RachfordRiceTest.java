@@ -6,9 +6,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class RachfordRiceTest {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(RachfordRiceTest.class);
+  private static final Logger logger = LogManager.getLogger(RachfordRiceTest.class);
 
+  /** Logger object for class. */
+  
   @Test
   void testCalcBeta() {
     double[] z = new double[] {0.7, 0.3};

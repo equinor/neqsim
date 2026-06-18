@@ -19,9 +19,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class PhaseEnvelope {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
+  private static final Logger logger = LogManager.getLogger(PhaseEnvelope.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -149,7 +150,7 @@ public class PhaseEnvelope {
     // thermo.ThermodynamicModelTest(testSystem);
     // testModel.runTest();
 
-    // System.out.println("tempeerature " + (testSystem.getTemperature() - 273.15));
+    // logger.info("tempeerature " + (testSystem.getTemperature() - 273.15));
     // testOps.displayResult();
   }
 }

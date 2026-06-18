@@ -1,6 +1,8 @@
 package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
@@ -20,6 +22,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 class CDFTSurfaceTensionCalibrationTest {
+  private static final Logger logger =
+      LogManager.getLogger(CDFTSurfaceTensionCalibrationTest.class);
 
   /** Experimental reference data: {component, EOS, T(K), sigma_exp(mN/m)}. */
   private static final Object[][] DATA = {{"methane", "PR", 90.7, 18.90},
@@ -44,9 +48,9 @@ class CDFTSurfaceTensionCalibrationTest {
    */
   @Test
   void sweepAttractiveRangeFactor() {
-    System.out.println("\n=== cDFT Kernel Range Calibration ===");
+    logger.info("\n=== cDFT Kernel Range Calibration ===");
     System.out.printf("%-8s | %-10s | %-10s | %-8s%n", "lambda", "AAD (%)", "MaxDev(%)", "nOK");
-    System.out.println("---------|------------|------------|--------");
+    logger.info("---------|------------|------------|--------");
 
     double bestLambda = 0.5;
     double bestAAD = Double.MAX_VALUE;
@@ -102,15 +106,15 @@ class CDFTSurfaceTensionCalibrationTest {
       }
     }
 
-    System.out.println();
+
     System.out.printf("Optimal lambda = %.3f with AAD = %.2f%%%n", bestLambda, bestAAD);
-    System.out.println();
+
 
     // Print per-component results at optimal lambda
-    System.out.println("=== Per-component results at optimal lambda ===");
+    logger.info("=== Per-component results at optimal lambda ===");
     System.out.printf("%-12s | %-5s | %6s | %8s | %8s | %8s%n", "Component", "EOS", "T (K)", "Exp",
         "cDFT", "Dev(%)");
-    System.out.println("-------------|-------|--------|----------|----------|--------");
+    logger.info("-------------|-------|--------|----------|----------|--------");
 
     for (Object[] row : DATA) {
       String comp = (String) row[0];
@@ -153,9 +157,9 @@ class CDFTSurfaceTensionCalibrationTest {
    */
   @Test
   void fineSweepAroundOptimal() {
-    System.out.println("\n=== Fine sweep with both PR and SRK ===");
+    logger.info("\n=== Fine sweep with both PR and SRK ===");
     System.out.printf("%-8s | %-12s | %-12s%n", "lambda", "AAD-PR (%)", "AAD-SRK (%)");
-    System.out.println("---------|--------------|-------------");
+    logger.info("---------|--------------|-------------");
 
     for (double lambda = 0.50; lambda <= 1.60; lambda += 0.025) {
       double sumDevPR = 0.0;

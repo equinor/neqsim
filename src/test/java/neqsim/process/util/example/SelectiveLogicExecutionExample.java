@@ -16,6 +16,8 @@ import neqsim.process.util.scenario.ScenarioExecutionSummary;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Example demonstrating selective logic execution in ProcessScenarioRunner.
@@ -32,12 +34,14 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version 1.0
  */
 public class SelectiveLogicExecutionExample {
+  private static final Logger logger = LogManager.getLogger(SelectiveLogicExecutionExample.class);
+
 
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    System.out.println("╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║    SELECTIVE LOGIC EXECUTION EXAMPLE                           ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║    SELECTIVE LOGIC EXECUTION EXAMPLE                           ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     // Build simple process system
     ProcessSystem system = buildSimpleSystem();
@@ -59,17 +63,17 @@ public class SelectiveLogicExecutionExample {
     runner.addLogic(hippsLogic);
     runner.addLogic(esdLogic);
 
-    System.out.println("Registered logic sequences:");
+    logger.info("Registered logic sequences:");
     for (ProcessLogic logic : runner.getLogicSequences()) {
-      System.out.println("  - " + logic.getName());
+      logger.info("  - " + logic.getName());
     }
-    System.out.println();
+
 
     // Scenario 1: Test HIPPS independently
     String separator = new String(new char[70]).replace("\0", "=");
-    System.out.println("\n" + separator);
-    System.out.println("SCENARIO 1: HIPPS PROTECTION ONLY");
-    System.out.println(separator);
+    logger.info("\n" + separator);
+    logger.info("SCENARIO 1: HIPPS PROTECTION ONLY");
+    logger.info(separator);
 
     ProcessSafetyScenario highPressure =
         ProcessSafetyScenario.builder("High Pressure").customManipulator("Feed", equipment -> {
@@ -85,9 +89,9 @@ public class SelectiveLogicExecutionExample {
     runner.reset();
 
     // Scenario 2: Test ESD independently
-    System.out.println("\n" + separator);
-    System.out.println("SCENARIO 2: ESD SYSTEM ONLY");
-    System.out.println(separator);
+    logger.info("\n" + separator);
+    logger.info("SCENARIO 2: ESD SYSTEM ONLY");
+    logger.info(separator);
 
     runner.activateLogic("ESD Level 1");
     ScenarioExecutionSummary summary2 = runner.runScenarioWithLogic("ESD Only Test", null, 15.0,
@@ -96,9 +100,9 @@ public class SelectiveLogicExecutionExample {
     runner.reset();
 
     // Scenario 3: Test both systems together
-    System.out.println("\n" + separator);
-    System.out.println("SCENARIO 3: BOTH HIPPS AND ESD");
-    System.out.println(separator);
+    logger.info("\n" + separator);
+    logger.info("SCENARIO 3: BOTH HIPPS AND ESD");
+    logger.info(separator);
 
     runner.activateLogic("HIPPS Protection");
     runner.activateLogic("ESD Level 1");
@@ -106,9 +110,9 @@ public class SelectiveLogicExecutionExample {
         runner.runScenario("Combined Test", highPressure, 15.0, 1.0); // null = all logic
     summary3.printResults();
 
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║    SELECTIVE LOGIC EXECUTION DEMO COMPLETED                    ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║    SELECTIVE LOGIC EXECUTION DEMO COMPLETED                    ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝");
   }
 
   private static ProcessSystem buildSimpleSystem() {
@@ -151,8 +155,8 @@ public class SelectiveLogicExecutionExample {
     system.add(separator);
     system.add(esdValve);
 
-    System.out.println(
-        "Built simple process system with " + system.getUnitOperations().size() + " units\n");
+    logger
+        .info("Built simple process system with " + system.getUnitOperations().size() + " units\n");
 
     return system;
   }

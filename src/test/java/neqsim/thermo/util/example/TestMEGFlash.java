@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestMEGFlash {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestMEGFlash.class);
+  private static final Logger logger = LogManager.getLogger(TestMEGFlash.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -73,10 +74,10 @@ public class TestMEGFlash {
     // int n = testSystem.getNumberOfPhases()-1;
     // double megwtfracInit =
     // testSystem.getPhase(n).getComponent("MEG").getMolarMass()*testSystem.getPhase(n).getComponent("MEG").getx()/testSystem.getPhase(n).getMolarMass();
-    // System.out.println("wt % MEG " + megwtfracInit*100);
+    // logger.info("wt % MEG " + megwtfracInit*100);
     // n = testSystem.getNumberOfPhases()-2;
     // megwtfracInit =
     // testSystem.getPhase(n).getComponent("MEG").getMolarMass()*testSystem.getPhase(n).getComponent("MEG").getx()/testSystem.getPhase(n).getMolarMass();
-    // System.out.println("wt % MEG " + megwtfracInit*100);
+    // logger.info("wt % MEG " + megwtfracInit*100);
   }
 }

@@ -9,6 +9,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.commons.lang3.StringUtils;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
@@ -29,6 +31,7 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 @Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class NonEquilibriumPipeFlowTest {
+  private static final Logger logger = LogManager.getLogger(NonEquilibriumPipeFlowTest.class);
   private TwoPhasePipeFlowSystem pipe;
   private SystemInterface testSystem;
 
@@ -697,18 +700,18 @@ public class NonEquilibriumPipeFlowTest {
         "Liquid holdup profile should have correct size");
 
     // Print profile summary for analysis
-    System.out.println("\n=== Liquid n-Decane Evaporation into Methane Gas Stream ===");
-    System.out.println("Conditions: T=313.3 K (40°C), P=100 bar");
-    System.out.println("Pipe length: 1000 m, Diameter: 150 mm");
-    System.out.println("Gas flow: 1100 kg/hr methane, Liquid: 111 kg/hr n-C10");
-    System.out.println(
+    logger.info("\n=== Liquid n-Decane Evaporation into Methane Gas Stream ===");
+    logger.info("Conditions: T=313.3 K (40°C), P=100 bar");
+    logger.info("Pipe length: 1000 m, Diameter: 150 mm");
+    logger.info("Gas flow: 1100 kg/hr methane, Liquid: 111 kg/hr n-C10");
+    logger.info(
         "Inlet conditions: T=" + temperatureProfile[0] + " K, P=" + pressureProfile[0] + " bar");
-    System.out.println("Outlet conditions: T=" + temperatureProfile[numNodes - 1] + " K, P="
+    logger.info("Outlet conditions: T=" + temperatureProfile[numNodes - 1] + " K, P="
         + pressureProfile[numNodes - 1] + " bar");
 
     // Print first and last few nodes with valid data
-    System.out.println("\nFirst 3 nodes:");
-    System.out.println("Node\tT(K)\tP(bar)\tLiq.Holdup\tVgas(m/s)");
+    logger.info("\nFirst 3 nodes:");
+    logger.info("Node\tT(K)\tP(bar)\tLiq.Holdup\tVgas(m/s)");
     for (int i = 0; i < Math.min(3, numNodes); i++) {
       double gasVel = gasVelocityProfile[i];
       String gasVelStr =
@@ -717,7 +720,7 @@ public class NonEquilibriumPipeFlowTest {
           pressureProfile[i], liquidHoldupProfile[i], gasVelStr);
     }
 
-    System.out.println("\nLast 3 nodes:");
+    logger.info("\nLast 3 nodes:");
     for (int i = Math.max(0, numNodes - 3); i < numNodes; i++) {
       double gasVel = gasVelocityProfile[i];
       String gasVelStr =
@@ -734,24 +737,24 @@ public class NonEquilibriumPipeFlowTest {
 
     // Calculate pressure drop
     double totalPressureDrop = pressureProfile[0] - pressureProfile[numNodes - 1];
-    System.out.println("\nTotal pressure drop: " + totalPressureDrop + " bar");
+    logger.info("\nTotal pressure drop: " + totalPressureDrop + " bar");
 
     // Calculate temperature change
     double temperatureChange = temperatureProfile[numNodes - 1] - temperatureProfile[0];
-    System.out.println("Temperature change: " + temperatureChange + " K");
+    logger.info("Temperature change: " + temperatureChange + " K");
 
     // Report evaporation based on mass transfer rate
     double massTransferRate = evapPipe.getTotalMassTransferRate(0); // methane component
     double massTransferRateC10 = evapPipe.getTotalMassTransferRate(1); // nC10 component
 
-    System.out.println("\n--- Mass Transfer Results ---");
-    System.out.println(
+    logger.info("\n--- Mass Transfer Results ---");
+    logger.info(
         "Mass transfer rate (methane): " + String.format("%.4f", massTransferRate) + " mol/s");
-    System.out.println(
+    logger.info(
         "Mass transfer rate (n-C10): " + String.format("%.4f", massTransferRateC10) + " mol/s");
 
     // Debug: Look at individual node contributions to mass transfer
-    System.out.println("\n--- Node-level Mass Transfer Debug (first 5 nodes) ---");
+    logger.info("\n--- Node-level Mass Transfer Debug (first 5 nodes) ---");
     for (int i = 0; i < Math.min(5, numNodes); i++) {
       FlowNodeInterface node = evapPipe.getNode(i);
       if (node != null && node.getFluidBoundary() != null) {
@@ -780,25 +783,25 @@ public class NonEquilibriumPipeFlowTest {
         if (evaporationRate > 0) {
           double fullEvapTime = inletHoldup / evaporationRate;
           double fullEvapDistance = fullEvapTime * gasVelocityInlet;
-          System.out.println("\nEstimated time for full evaporation: "
+          logger.info("\nEstimated time for full evaporation: "
               + String.format("%.0f", fullEvapTime) + " s");
-          System.out.println("Estimated distance for full evaporation: "
+          logger.info("Estimated distance for full evaporation: "
               + String.format("%.0f", fullEvapDistance) + " m");
         }
       }
     }
 
-    System.out.println("\n--- Holdup Change ---");
-    System.out.println("Inlet liquid holdup: " + String.format("%.4f", liquidHoldupProfile[0])
+    logger.info("\n--- Holdup Change ---");
+    logger.info("Inlet liquid holdup: " + String.format("%.4f", liquidHoldupProfile[0])
         + " (vol fraction)");
-    System.out.println("Outlet liquid holdup: "
-        + String.format("%.4f", liquidHoldupProfile[numNodes - 1]) + " (vol fraction)");
+    logger.info("Outlet liquid holdup: " + String.format("%.4f", liquidHoldupProfile[numNodes - 1])
+        + " (vol fraction)");
 
     // Calculate holdup reduction percentage
     if (liquidHoldupProfile[0] > 0) {
       double holdupReduction =
           (1 - liquidHoldupProfile[numNodes - 1] / liquidHoldupProfile[0]) * 100;
-      System.out.println(
+      logger.info(
           "Liquid holdup reduction in 1000m: " + String.format("%.2f", holdupReduction) + "%");
     }
 
@@ -898,18 +901,18 @@ public class NonEquilibriumPipeFlowTest {
     int numNodes = dissolvePipe.getTotalNumberOfNodes();
 
     // Print profile summary for analysis
-    System.out.println("\n=== Methane Dissolution into n-Decane (Stratified Flow) ===");
-    System.out.println("Conditions: T=313.3 K (40°C), P=100 bar");
-    System.out.println("Pipe length: 1000 m, Diameter: 150 mm");
-    System.out.println("Gas flow: 1100 kg/hr methane, Liquid: 111 kg/hr n-C10");
-    System.out.println(
+    logger.info("\n=== Methane Dissolution into n-Decane (Stratified Flow) ===");
+    logger.info("Conditions: T=313.3 K (40°C), P=100 bar");
+    logger.info("Pipe length: 1000 m, Diameter: 150 mm");
+    logger.info("Gas flow: 1100 kg/hr methane, Liquid: 111 kg/hr n-C10");
+    logger.info(
         "Inlet conditions: T=" + temperatureProfile[0] + " K, P=" + pressureProfile[0] + " bar");
-    System.out.println("Outlet conditions: T=" + temperatureProfile[numNodes - 1] + " K, P="
+    logger.info("Outlet conditions: T=" + temperatureProfile[numNodes - 1] + " K, P="
         + pressureProfile[numNodes - 1] + " bar");
 
     // Print first and last few nodes
-    System.out.println("\nFirst 3 nodes:");
-    System.out.println("Node\tT(K)\tP(bar)\tLiq.Holdup\tVgas(m/s)\tVliq(m/s)");
+    logger.info("\nFirst 3 nodes:");
+    logger.info("Node\tT(K)\tP(bar)\tLiq.Holdup\tVgas(m/s)\tVliq(m/s)");
     for (int i = 0; i < Math.min(3, numNodes); i++) {
       double gasVel = gasVelocityProfile[i];
       double liqVel = liquidVelocityProfile[i];
@@ -921,7 +924,7 @@ public class NonEquilibriumPipeFlowTest {
           pressureProfile[i], liquidHoldupProfile[i], gasVelStr, liqVelStr);
     }
 
-    System.out.println("\nLast 3 nodes:");
+    logger.info("\nLast 3 nodes:");
     for (int i = Math.max(0, numNodes - 3); i < numNodes; i++) {
       double gasVel = gasVelocityProfile[i];
       double liqVel = liquidVelocityProfile[i];
@@ -935,21 +938,21 @@ public class NonEquilibriumPipeFlowTest {
 
     // Calculate pressure drop
     double totalPressureDrop = pressureProfile[0] - pressureProfile[numNodes - 1];
-    System.out.println("\nTotal pressure drop: " + totalPressureDrop + " bar");
+    logger.info("\nTotal pressure drop: " + totalPressureDrop + " bar");
 
     // Report mass transfer - methane should have positive rate (dissolving into liquid)
     double massTransferRateCH4 = dissolvePipe.getTotalMassTransferRate(0); // methane
     double massTransferRateC10 = dissolvePipe.getTotalMassTransferRate(1); // nC10
 
-    System.out.println("\n--- Mass Transfer Results ---");
-    System.out.println(
+    logger.info("\n--- Mass Transfer Results ---");
+    logger.info(
         "Mass transfer rate (methane): " + String.format("%.4f", massTransferRateCH4) + " mol/s");
-    System.out.println("  Positive = dissolving into liquid, Negative = evaporating");
-    System.out.println(
+    logger.info("  Positive = dissolving into liquid, Negative = evaporating");
+    logger.info(
         "Mass transfer rate (n-C10): " + String.format("%.4f", massTransferRateC10) + " mol/s");
 
     // Debug: Look at individual node contributions to mass transfer
-    System.out.println("\n--- Node-level Mass Transfer Debug (first 5 nodes) ---");
+    logger.info("\n--- Node-level Mass Transfer Debug (first 5 nodes) ---");
     for (int i = 0; i < Math.min(5, numNodes); i++) {
       FlowNodeInterface node = dissolvePipe.getNode(i);
       if (node != null && node.getFluidBoundary() != null) {
@@ -965,9 +968,9 @@ public class NonEquilibriumPipeFlowTest {
     double inletGasFraction = 1.0 - liquidHoldupProfile[0];
     double outletGasFraction = 1.0 - liquidHoldupProfile[numNodes - 1];
 
-    System.out.println("\n--- Gas Fraction Change ---");
-    System.out.println("Inlet gas fraction: " + String.format("%.4f", inletGasFraction));
-    System.out.println("Outlet gas fraction: " + String.format("%.4f", outletGasFraction));
+    logger.info("\n--- Gas Fraction Change ---");
+    logger.info("Inlet gas fraction: " + String.format("%.4f", inletGasFraction));
+    logger.info("Outlet gas fraction: " + String.format("%.4f", outletGasFraction));
 
     if (inletGasFraction > 0) {
       double gasFractionReduction = (1 - outletGasFraction / inletGasFraction) * 100;
@@ -977,7 +980,7 @@ public class NonEquilibriumPipeFlowTest {
       // Estimate distance for complete dissolution
       if (gasFractionReduction > 0.1) {
         double estimatedFullDissolutionDistance = 1000.0 * 100.0 / gasFractionReduction;
-        System.out.println("Estimated distance for complete methane dissolution: "
+        logger.info("Estimated distance for complete methane dissolution: "
             + String.format("%.0f", estimatedFullDissolutionDistance) + " m");
       }
     }
@@ -986,15 +989,15 @@ public class NonEquilibriumPipeFlowTest {
     double liquidVelocityInlet = liquidVelocityProfile[0];
     if (Double.isFinite(liquidVelocityInlet) && liquidVelocityInlet > 0) {
       double residenceTime = 1000.0 / liquidVelocityInlet;
-      System.out.println(
+      logger.info(
           "\nLiquid velocity at inlet: " + String.format("%.4f", liquidVelocityInlet) + " m/s");
-      System.out.println("Residence time in 1000m pipe: " + String.format("%.1f", residenceTime)
-          + " s (" + String.format("%.1f", residenceTime / 60) + " min)");
+      logger.info("Residence time in 1000m pipe: " + String.format("%.1f", residenceTime) + " s ("
+          + String.format("%.1f", residenceTime / 60) + " min)");
     }
 
     // Calculate dissolution distance from mass transfer rates
     // This estimates how long a pipe is needed for complete methane dissolution
-    System.out.println("\n--- Dissolution Distance Estimation ---");
+    logger.info("\n--- Dissolution Distance Estimation ---");
 
     // Use the calculated total mass transfer rate
     if (Math.abs(massTransferRateCH4) > 1e-10) {
@@ -1003,25 +1006,25 @@ public class NonEquilibriumPipeFlowTest {
 
       // Time for complete dissolution = initial moles / transfer rate
       double dissolutionTime = ch4MolarFlowPerSec / Math.abs(massTransferRateCH4);
-      System.out.println("Mass transfer rate: " + String.format("%.6f", massTransferRateCH4)
+      logger.info("Mass transfer rate: " + String.format("%.6f", massTransferRateCH4)
           + " mol/s over 1000m");
-      System.out.println(
+      logger.info(
           "Methane inlet molar flow: " + String.format("%.4f", ch4MolarFlowPerSec) + " mol/s");
 
       // Estimate dissolution distance
       double avgVelocity = (gasVelocityProfile[0] + liquidVelocityProfile[0]) / 2.0;
       if (Double.isFinite(avgVelocity) && avgVelocity > 0) {
         double dissolutionDistance = dissolutionTime * avgVelocity;
-        System.out.println("Estimated time for complete dissolution: "
+        logger.info("Estimated time for complete dissolution: "
             + String.format("%.1f", dissolutionTime) + " s");
-        System.out.println("Estimated pipe length for complete dissolution: "
+        logger.info("Estimated pipe length for complete dissolution: "
             + String.format("%.0f", dissolutionDistance) + " m");
       }
     } else {
-      System.out.println("Mass transfer rate is negligible - system may be near equilibrium");
+      logger.info("Mass transfer rate is negligible - system may be near equilibrium");
 
       // Check if there's actually a driving force by looking at interface compositions
-      System.out.println("\nChecking equilibrium state at first node...");
+      logger.info("\nChecking equilibrium state at first node...");
       FlowNodeInterface firstNode = dissolvePipe.getNode(0);
       if (firstNode != null && firstNode.getFluidBoundary() != null) {
         SystemInterface bulkSys = firstNode.getBulkSystem();
@@ -1034,13 +1037,13 @@ public class NonEquilibriumPipeFlowTest {
           double xCH4_bulk_liq = bulkSys.getPhase(1).getComponent("methane").getx();
           double xCH4_interface_liq = interphase.getPhase(1).getComponent("methane").getx();
 
-          System.out.println("Methane in gas - bulk: " + String.format("%.6f", xCH4_bulk_gas)
+          logger.info("Methane in gas - bulk: " + String.format("%.6f", xCH4_bulk_gas)
               + ", interface: " + String.format("%.6f", xCH4_interface));
-          System.out.println("Methane in liquid - bulk: " + String.format("%.6f", xCH4_bulk_liq)
+          logger.info("Methane in liquid - bulk: " + String.format("%.6f", xCH4_bulk_liq)
               + ", interface: " + String.format("%.6f", xCH4_interface_liq));
 
           double drivingForce = Math.abs(xCH4_bulk_liq - xCH4_interface_liq);
-          System.out.println("Mass transfer driving force: " + String.format("%.6f", drivingForce));
+          logger.info("Mass transfer driving force: " + String.format("%.6f", drivingForce));
         }
       }
     }
@@ -1120,12 +1123,12 @@ public class NonEquilibriumPipeFlowTest {
     double outletLiquidMethaneFraction =
         outletNode.getBulkSystem().getPhase(1).getComponent("methane").getx();
 
-    System.out.println("\n=== Bubble Flow Dissolution Check ===");
-    System.out.println("Inlet gas methane fraction: " + inletGasMethaneFraction);
-    System.out.println("Outlet gas methane fraction: " + outletGasMethaneFraction);
-    System.out.println("Inlet liquid methane fraction: " + inletLiquidMethaneFraction);
-    System.out.println("Outlet liquid methane fraction: " + outletLiquidMethaneFraction);
-    System.out.println("Methane mass transfer rate: " + methaneMassTransferRate + " mol/s");
+    logger.info("\n=== Bubble Flow Dissolution Check ===");
+    logger.info("Inlet gas methane fraction: " + inletGasMethaneFraction);
+    logger.info("Outlet gas methane fraction: " + outletGasMethaneFraction);
+    logger.info("Inlet liquid methane fraction: " + inletLiquidMethaneFraction);
+    logger.info("Outlet liquid methane fraction: " + outletLiquidMethaneFraction);
+    logger.info("Methane mass transfer rate: " + methaneMassTransferRate + " mol/s");
 
     // Verify we actually start out of equilibrium (gas methane rich, liquid methane poor).
     assertTrue(inletGasMethaneFraction > 0.99,
@@ -1248,24 +1251,24 @@ public class NonEquilibriumPipeFlowTest {
     double decaneMassTransferRate = evapPipe.getTotalMassTransferRate(1);
 
     // Print results
-    System.out.println("\n=== Liquid Evaporation in " + pipeLength + " m Pipeline ===");
-    System.out.println("Scenario: n-Decane liquid evaporating into methane gas");
-    System.out.println("Conditions: T=313 K (40°C), P=100 bar, ambient=50°C");
+    logger.info("\n=== Liquid Evaporation in " + pipeLength + " m Pipeline ===");
+    logger.info("Scenario: n-Decane liquid evaporating into methane gas");
+    logger.info("Conditions: T=313 K (40°C), P=100 bar, ambient=50°C");
     System.out.printf("Pipe: %.0f m length, 150 mm diameter, horizontal%n", pipeLength);
-    System.out.println("Gas flow: 1100 kg/hr methane, Liquid: 50 kg/hr n-C10");
+    logger.info("Gas flow: 1100 kg/hr methane, Liquid: 50 kg/hr n-C10");
 
-    System.out.println("\nInlet conditions:");
+    logger.info("\nInlet conditions:");
     System.out.printf("  Temperature: %.2f K%n", temperatureProfile[0]);
     System.out.printf("  Pressure: %.3f bar%n", pressureProfile[0]);
     System.out.printf("  Liquid holdup: %.6f%n", liquidHoldupProfile[0]);
 
-    System.out.println("\nOutlet conditions:");
+    logger.info("\nOutlet conditions:");
     System.out.printf("  Temperature: %.2f K%n", temperatureProfile[numNodes - 1]);
     System.out.printf("  Pressure: %.3f bar%n", pressureProfile[numNodes - 1]);
     System.out.printf("  Liquid holdup: %.6f%n", liquidHoldupProfile[numNodes - 1]);
 
     System.out.printf("%nn-Decane mass transfer rate: %.6f mol/s%n", decaneMassTransferRate);
-    System.out.println("(Positive = evaporating from liquid to gas)");
+    logger.info("(Positive = evaporating from liquid to gas)");
 
     // Calculate evaporation percentage
     double inletHoldup = liquidHoldupProfile[0];
@@ -1292,7 +1295,7 @@ public class NonEquilibriumPipeFlowTest {
     } else {
       System.out.printf("Complete evaporation not achieved within %.0f m%n", pipeLength);
       // Print holdup profile for debugging
-      System.out.println("\nHoldup profile (every 10th node):");
+      logger.info("\nHoldup profile (every 10th node):");
       for (int i = 0; i < numNodes; i += 10) {
         double distance = i * pipeLength / numNodes;
         System.out.printf("  %.1f m: %.6f%n", distance, liquidHoldupProfile[i]);
@@ -1300,7 +1303,7 @@ public class NonEquilibriumPipeFlowTest {
     }
 
     // Check node-level mass transfer for insight
-    System.out.println("\nNode-level mass transfer (first 10 nodes):");
+    logger.info("\nNode-level mass transfer (first 10 nodes):");
     for (int i = 0; i < Math.min(10, numNodes); i++) {
       FlowNodeInterface node = evapPipe.getNode(i);
       if (node != null && node.getFluidBoundary() != null) {
@@ -1313,8 +1316,8 @@ public class NonEquilibriumPipeFlowTest {
     }
 
     // Show composition changes along the pipe (mole fractions in each phase)
-    System.out.println("\nComposition profile along pipe (mole fractions):");
-    System.out.println("Node\tDistance\tGas CH4\t\tGas C10\t\tLiq CH4\t\tLiq C10");
+    logger.info("\nComposition profile along pipe (mole fractions):");
+    logger.info("Node\tDistance\tGas CH4\t\tGas C10\t\tLiq CH4\t\tLiq C10");
     for (int i = 0; i < numNodes; i += Math.max(1, numNodes / 10)) {
       FlowNodeInterface node = evapPipe.getNode(i);
       if (node != null) {
@@ -1442,26 +1445,26 @@ public class NonEquilibriumPipeFlowTest {
     double outletGasFraction = 1.0 - liquidHoldupProfile[numNodes - 1];
 
     // Print results
-    System.out.println("\n=== Complete Gas Dissolution in 100 m Pipeline (Bubble Flow) ===");
-    System.out.println("Scenario: Small methane gas bubble dissolving into excess n-decane oil");
-    System.out.println("Conditions: T=305 K (32°C), P=120 bar");
-    System.out.println("Pipe: 100 m length, 50 mm diameter, horizontal, bubble flow");
-    System.out.println("Gas flow: 5 kg/hr methane, Liquid: 1200 kg/hr n-C10");
+    logger.info("\n=== Complete Gas Dissolution in 100 m Pipeline (Bubble Flow) ===");
+    logger.info("Scenario: Small methane gas bubble dissolving into excess n-decane oil");
+    logger.info("Conditions: T=305 K (32°C), P=120 bar");
+    logger.info("Pipe: 100 m length, 50 mm diameter, horizontal, bubble flow");
+    logger.info("Gas flow: 5 kg/hr methane, Liquid: 1200 kg/hr n-C10");
 
-    System.out.println("\nInlet conditions:");
+    logger.info("\nInlet conditions:");
     System.out.printf("  Temperature: %.2f K%n", temperatureProfile[0]);
     System.out.printf("  Pressure: %.3f bar%n", pressureProfile[0]);
     System.out.printf("  Gas void fraction: %.6f%n", inletGasFraction);
     System.out.printf("  Liquid holdup: %.6f%n", liquidHoldupProfile[0]);
 
-    System.out.println("\nOutlet conditions:");
+    logger.info("\nOutlet conditions:");
     System.out.printf("  Temperature: %.2f K%n", temperatureProfile[numNodes - 1]);
     System.out.printf("  Pressure: %.3f bar%n", pressureProfile[numNodes - 1]);
     System.out.printf("  Gas void fraction: %.6f%n", outletGasFraction);
     System.out.printf("  Liquid holdup: %.6f%n", liquidHoldupProfile[numNodes - 1]);
 
     System.out.printf("%nMethane mass transfer rate: %.6f mol/s%n", methaneMassTransferRate);
-    System.out.println("(Negative = dissolving from gas to liquid)");
+    logger.info("(Negative = dissolving from gas to liquid)");
 
     // Calculate dissolution percentage
     double dissolutionPercent = 0;
@@ -1486,13 +1489,13 @@ public class NonEquilibriumPipeFlowTest {
       System.out.printf("Complete dissolution achieved at: %.0f m (node %d)%n", dissolutionDistance,
           dissolutionNode);
     } else {
-      System.out.println("Complete dissolution not achieved within 100 m");
+      logger.info("Complete dissolution not achieved within 100 m");
     }
 
     // Print complete gas fraction profile as function of length
-    System.out.println("\n=== Gas Fraction Profile Along Pipe Length ===");
-    System.out.println("Length [m]    Gas Fraction [-]   Liquid Holdup [-]");
-    System.out.println("---------------------------------------------------");
+    logger.info("\n=== Gas Fraction Profile Along Pipe Length ===");
+    logger.info("Length [m]    Gas Fraction [-]   Liquid Holdup [-]");
+    logger.info("---------------------------------------------------");
     for (int i = 0; i < numNodes; i++) {
       double distance = i * pipeLength / (numNodes - 1);
       double gasFrac = 1.0 - liquidHoldupProfile[i];
@@ -1501,7 +1504,7 @@ public class NonEquilibriumPipeFlowTest {
     }
 
     // Check node-level mass transfer for insight
-    System.out.println("\nNode-level mass transfer (first 5 nodes):");
+    logger.info("\nNode-level mass transfer (first 5 nodes):");
     for (int i = 0; i < Math.min(5, numNodes); i++) {
       FlowNodeInterface node = dissolvePipe.getNode(i);
       if (node != null && node.getFluidBoundary() != null) {
@@ -1605,26 +1608,26 @@ public class NonEquilibriumPipeFlowTest {
     double outletLiquidHoldup = liquidHoldupProfile[numNodes - 1];
 
     // Print results
-    System.out.println("\n=== Complete Liquid Evaporation in 50 m Pipeline (Droplet Flow) ===");
-    System.out.println("Scenario: Small water droplets evaporating into dry methane gas");
-    System.out.println("Conditions: T=350 K (77°C), P=5 bar");
-    System.out.println("Pipe: 50 m length, 50 mm diameter, horizontal, droplet flow");
-    System.out.println("Gas flow: 500 kg/hr methane, Liquid: 2 kg/hr water");
+    logger.info("\n=== Complete Liquid Evaporation in 50 m Pipeline (Droplet Flow) ===");
+    logger.info("Scenario: Small water droplets evaporating into dry methane gas");
+    logger.info("Conditions: T=350 K (77°C), P=5 bar");
+    logger.info("Pipe: 50 m length, 50 mm diameter, horizontal, droplet flow");
+    logger.info("Gas flow: 500 kg/hr methane, Liquid: 2 kg/hr water");
 
-    System.out.println("\nInlet conditions:");
+    logger.info("\nInlet conditions:");
     System.out.printf("  Temperature: %.2f K%n", temperatureProfile[0]);
     System.out.printf("  Pressure: %.3f bar%n", pressureProfile[0]);
     System.out.printf("  Liquid holdup: %.6f%n", inletLiquidHoldup);
     System.out.printf("  Gas void fraction: %.6f%n", 1.0 - inletLiquidHoldup);
 
-    System.out.println("\nOutlet conditions:");
+    logger.info("\nOutlet conditions:");
     System.out.printf("  Temperature: %.2f K%n", temperatureProfile[numNodes - 1]);
     System.out.printf("  Pressure: %.3f bar%n", pressureProfile[numNodes - 1]);
     System.out.printf("  Liquid holdup: %.6f%n", outletLiquidHoldup);
     System.out.printf("  Gas void fraction: %.6f%n", 1.0 - outletLiquidHoldup);
 
     System.out.printf("%nWater mass transfer rate: %.6f mol/s%n", waterMassTransferRate);
-    System.out.println("(Negative = evaporating from liquid to gas)");
+    logger.info("(Negative = evaporating from liquid to gas)");
 
     // Calculate evaporation percentage
     double evaporationPercent = 0;
@@ -1648,13 +1651,13 @@ public class NonEquilibriumPipeFlowTest {
       System.out.printf("Complete evaporation achieved at: %.0f m (node %d)%n", evaporationDistance,
           evaporationNode);
     } else {
-      System.out.println("Complete evaporation not achieved within 50 m");
+      logger.info("Complete evaporation not achieved within 50 m");
     }
 
     // Print complete liquid holdup profile as function of length
-    System.out.println("\n=== Liquid Holdup Profile Along Pipe Length ===");
-    System.out.println("Length [m]    Liquid Holdup [-]   Gas Fraction [-]");
-    System.out.println("---------------------------------------------------");
+    logger.info("\n=== Liquid Holdup Profile Along Pipe Length ===");
+    logger.info("Length [m]    Liquid Holdup [-]   Gas Fraction [-]");
+    logger.info("---------------------------------------------------");
     for (int i = 0; i < numNodes; i++) {
       double distance = i * pipeLength / (numNodes - 1);
       double gasFrac = 1.0 - liquidHoldupProfile[i];
@@ -1663,7 +1666,7 @@ public class NonEquilibriumPipeFlowTest {
     }
 
     // Check node-level mass transfer for insight
-    System.out.println("\nNode-level mass transfer (first 5 nodes):");
+    logger.info("\nNode-level mass transfer (first 5 nodes):");
     for (int i = 0; i < Math.min(5, numNodes); i++) {
       FlowNodeInterface node = evaporatePipe.getNode(i);
       if (node != null && node.getFluidBoundary() != null) {
@@ -1744,7 +1747,7 @@ public class NonEquilibriumPipeFlowTest {
     double inletGasFraction = 1.0 - liquidHoldupProfile[0];
     double outletGasFraction = 1.0 - liquidHoldupProfile[numNodes - 1];
 
-    System.out.println("\n=== BIDIRECTIONAL Mode - Complete Dissolution Test ===");
+    logger.info("\n=== BIDIRECTIONAL Mode - Complete Dissolution Test ===");
     System.out.printf("Inlet gas fraction: %.6f%n", inletGasFraction);
     System.out.printf("Outlet gas fraction: %.6f%n", outletGasFraction);
 
@@ -1760,7 +1763,7 @@ public class NonEquilibriumPipeFlowTest {
               + liquidHoldupProfile[i]);
     }
 
-    System.out.println("BIDIRECTIONAL mode handled complete dissolution correctly.");
+    logger.info("BIDIRECTIONAL mode handled complete dissolution correctly.");
   }
 
   /**
@@ -1842,27 +1845,27 @@ public class NonEquilibriumPipeFlowTest {
     int numNodes = pipeline.getTotalNumberOfNodes();
 
     // Print results
-    System.out.println("\n=== Subsea Gas-Oil Pipeline with Elevation Profile ===");
-    System.out.println("Scenario: Hot well fluid cooling in cold seawater");
-    System.out.println("Conditions: T_inlet=50°C (323 K), P=50 bar");
-    System.out.println("Pipeline: 500 m length, 150 mm diameter, stratified flow");
-    System.out.println("Seawater temperature: 5°C (278 K)");
-    System.out.println("Production rate: 1000 kg/hr total (500 kg/hr CH4 gas, 500 kg/hr nC20 oil)");
+    logger.info("\n=== Subsea Gas-Oil Pipeline with Elevation Profile ===");
+    logger.info("Scenario: Hot well fluid cooling in cold seawater");
+    logger.info("Conditions: T_inlet=50°C (323 K), P=50 bar");
+    logger.info("Pipeline: 500 m length, 150 mm diameter, stratified flow");
+    logger.info("Seawater temperature: 5°C (278 K)");
+    logger.info("Production rate: 1000 kg/hr total (500 kg/hr CH4 gas, 500 kg/hr nC20 oil)");
 
-    System.out.println("\n--- Elevation Profile ---");
-    System.out.println("Position [m]   Height [m]");
+    logger.info("\n--- Elevation Profile ---");
+    logger.info("Position [m]   Height [m]");
     for (int i = 0; i < height.length; i++) {
       System.out.printf("%8.0f       %6.1f%n", length[i], height[i]);
     }
 
-    System.out.println("\nInlet conditions:");
+    logger.info("\nInlet conditions:");
     System.out.printf("  Temperature: %.2f K (%.1f °C)%n", temperatureProfile[0],
         temperatureProfile[0] - 273.15);
     System.out.printf("  Pressure: %.3f bar%n", pressureProfile[0]);
     System.out.printf("  Liquid holdup: %.4f%n", liquidHoldupProfile[0]);
     System.out.printf("  Gas void fraction: %.4f%n", 1.0 - liquidHoldupProfile[0]);
 
-    System.out.println("\nOutlet conditions:");
+    logger.info("\nOutlet conditions:");
     System.out.printf("  Temperature: %.2f K (%.1f °C)%n", temperatureProfile[numNodes - 1],
         temperatureProfile[numNodes - 1] - 273.15);
     System.out.printf("  Pressure: %.3f bar%n", pressureProfile[numNodes - 1]);
@@ -1878,10 +1881,10 @@ public class NonEquilibriumPipeFlowTest {
     System.out.printf("Pressure drop: %.3f bar%n", pressureDrop);
 
     // Print temperature and holdup profile along pipeline
-    System.out.println("\n=== Profile Along Pipeline ===");
-    System.out.println(
-        "Position [m]   Gas Frac   T_gas [°C]   T_liq [°C]   Pressure [bar]   Liquid Holdup");
-    System.out.println("-------------------------------------------------------------------------");
+    logger.info("\n=== Profile Along Pipeline ===");
+    logger
+        .info("Position [m]   Gas Frac   T_gas [°C]   T_liq [°C]   Pressure [bar]   Liquid Holdup");
+    logger.info("-------------------------------------------------------------------------");
     double pipeLength = 500.0;
     for (int i = 0; i < numNodes; i++) { // Print all nodes for short pipeline
       double distance = i * pipeLength / (numNodes - 1);
@@ -1893,9 +1896,9 @@ public class NonEquilibriumPipeFlowTest {
     }
 
     // Print detailed heat transfer diagnostics for nodes 1-3
-    System.out.println("\n=== Heat Transfer Diagnostics (Steady-State Energy Balance) ===");
+    logger.info("\n=== Heat Transfer Diagnostics (Steady-State Energy Balance) ===");
     for (int i = 1; i < Math.min(4, numNodes); i++) {
-      System.out.println("\n--- Node " + i + " ---");
+      logger.info("\n--- Node " + i + " ---");
 
       // Get heat fluxes from FluidBoundary
       double interphasHeatFluxGas = pipeline.getNode(i).getFluidBoundary().getInterphaseHeatFlux(0);
@@ -2018,7 +2021,7 @@ public class NonEquilibriumPipeFlowTest {
           "Liquid holdup at node " + i + " should be between 0 and 1");
     }
 
-    System.out.println("\nSubsea pipeline simulation completed successfully.");
+    logger.info("\nSubsea pipeline simulation completed successfully.");
   }
 
   /**
@@ -2097,7 +2100,7 @@ public class NonEquilibriumPipeFlowTest {
 
     // Verify high flux corrections can be enabled on all nodes
     int numNodes = evapPipe.getTotalNumberOfNodes();
-    System.out.println("\n=== Enabling High Flux Corrections on " + numNodes + " nodes ===");
+    logger.info("\n=== Enabling High Flux Corrections on " + numNodes + " nodes ===");
     for (int i = 0; i < numNodes; i++) {
       // Enable finite flux (Bootstrap) correction for mass transfer
       evapPipe.getNode(i).getFluidBoundary().useFiniteFluxCorrection(true);
@@ -2108,8 +2111,8 @@ public class NonEquilibriumPipeFlowTest {
     // Verify corrections are enabled before solving
     boolean finiteFluxEnabled = evapPipe.getNode(0).getFluidBoundary().useFiniteFluxCorrection(0);
     boolean thermoEnabled = evapPipe.getNode(0).getFluidBoundary().useThermodynamicCorrections(0);
-    System.out.println("Finite flux correction enabled (before solve): " + finiteFluxEnabled);
-    System.out.println("Thermodynamic corrections enabled (before solve): " + thermoEnabled);
+    logger.info("Finite flux correction enabled (before solve): " + finiteFluxEnabled);
+    logger.info("Thermodynamic corrections enabled (before solve): " + thermoEnabled);
 
     // Enable non-equilibrium mass and heat transfer
     evapPipe.enableNonEquilibriumMassTransfer();
@@ -2134,21 +2137,21 @@ public class NonEquilibriumPipeFlowTest {
     double[] pressureProfile = evapPipe.getPressureProfile();
 
     // Print results header
-    System.out.println("\n=== Fast Evaporation with High Flux Corrections ===");
-    System.out.println("Scenario: n-Decane evaporating into methane gas with external heating");
-    System.out.println("Conditions: T_inlet=40°C (313 K), P=100 bar");
-    System.out.println("External heating: 80°C hot oil jacket");
-    System.out.println("Corrections: Finite flux (Bootstrap) + Thermodynamic (Activity)");
-    System.out.println("Mass transfer mode: EVAPORATION_ONLY (liquid nC10 -> vapor nC10)");
+    logger.info("\n=== Fast Evaporation with High Flux Corrections ===");
+    logger.info("Scenario: n-Decane evaporating into methane gas with external heating");
+    logger.info("Conditions: T_inlet=40°C (313 K), P=100 bar");
+    logger.info("External heating: 80°C hot oil jacket");
+    logger.info("Corrections: Finite flux (Bootstrap) + Thermodynamic (Activity)");
+    logger.info("Mass transfer mode: EVAPORATION_ONLY (liquid nC10 -> vapor nC10)");
 
-    System.out.println("\nInlet conditions:");
+    logger.info("\nInlet conditions:");
     System.out.printf("  Temperature: %.2f K (%.1f °C)%n", temperatureProfile[0],
         temperatureProfile[0] - 273.15);
     System.out.printf("  Pressure: %.3f bar%n", pressureProfile[0]);
     System.out.printf("  Liquid holdup: %.6f%n", liquidHoldupProfile[0]);
     System.out.printf("  Gas void fraction: %.6f%n", 1.0 - liquidHoldupProfile[0]);
 
-    System.out.println("\nOutlet conditions:");
+    logger.info("\nOutlet conditions:");
     System.out.printf("  Temperature: %.2f K (%.1f °C)%n", temperatureProfile[numNodes - 1],
         temperatureProfile[numNodes - 1] - 273.15);
     System.out.printf("  Pressure: %.3f bar%n", pressureProfile[numNodes - 1]);
@@ -2156,10 +2159,10 @@ public class NonEquilibriumPipeFlowTest {
     System.out.printf("  Gas void fraction: %.6f%n", 1.0 - liquidHoldupProfile[numNodes - 1]);
 
     // Print evaporation profile
-    System.out.println("\n=== Evaporation Profile Along Pipe ===");
+    logger.info("\n=== Evaporation Profile Along Pipe ===");
     System.out
         .println("Position [m]   Gas Frac   T_gas [°C]   T_liq [°C]   Pressure [bar]   nC10 Flux");
-    System.out.println("-------------------------------------------------------------------------");
+    logger.info("-------------------------------------------------------------------------");
     double pipeLength = 200.0; // 200m pipe
     for (int i = 0; i < numNodes; i++) {
       double distance = i * pipeLength / (numNodes - 1);
@@ -2182,9 +2185,9 @@ public class NonEquilibriumPipeFlowTest {
     }
 
     // Print high flux correction diagnostics
-    System.out.println("\n=== High Flux Correction Diagnostics ===");
+    logger.info("\n=== High Flux Correction Diagnostics ===");
     for (int i = 1; i < Math.min(4, numNodes); i++) {
-      System.out.println("\n--- Node " + i + " ---");
+      logger.info("\n--- Node " + i + " ---");
 
       // Interface temperature
       double tInterface =
@@ -2247,7 +2250,7 @@ public class NonEquilibriumPipeFlowTest {
           "Liquid holdup at node " + i + " should be between 0 and 1");
     }
 
-    System.out.println("\nFast evaporation with high flux corrections test completed.");
+    logger.info("\nFast evaporation with high flux corrections test completed.");
   }
 
   /**
@@ -2335,24 +2338,24 @@ public class NonEquilibriumPipeFlowTest {
     int numNodes = pipeline.getTotalNumberOfNodes();
 
     // ===== PHASE 1: Wet gas feed (50/50 wt%) - Run for initial steady state =====
-    System.out.println("\n=== Transient Water Drying Test ===");
-    System.out.println("Pipeline: 1000 m, 150 mm diameter, horizontal");
-    System.out.println("Operating: 80 bar, 30°C inlet, 15°C ambient");
-    System.out.println("");
-    System.out.println("PHASE 1: Wet gas inlet (50/50 wt% methane/water)");
+    logger.info("\n=== Transient Water Drying Test ===");
+    logger.info("Pipeline: 1000 m, 150 mm diameter, horizontal");
+    logger.info("Operating: 80 bar, 30°C inlet, 15°C ambient");
+    logger.info("");
+    logger.info("PHASE 1: Wet gas inlet (50/50 wt% methane/water)");
 
     // Run initial steady state with wet gas
     pipeline.solveSteadyState(2);
 
     // Record initial state
     double[] initialHoldup = pipeline.getLiquidHoldupProfile();
-    System.out.println("\nInitial steady state (wet gas):");
+    logger.info("\nInitial steady state (wet gas):");
     System.out.printf("  Inlet liquid holdup: %.4f%n", initialHoldup[0]);
     System.out.printf("  Outlet liquid holdup: %.4f%n", initialHoldup[numNodes - 1]);
 
     // Print initial profile
-    System.out.println("\n--- Initial Holdup Profile ---");
-    System.out.println("Position [m]   Liquid Holdup   T_gas [°C]   T_liq [°C]");
+    logger.info("\n--- Initial Holdup Profile ---");
+    logger.info("Position [m]   Liquid Holdup   T_gas [°C]   T_liq [°C]");
     for (int i = 0; i < numNodes; i += 5) { // Print every 5th node
       double dist = i * pipeLength / (numNodes - 1);
       double tGas = pipeline.getNode(i).getBulkSystem().getPhase(0).getTemperature() - 273.15;
@@ -2366,9 +2369,9 @@ public class NonEquilibriumPipeFlowTest {
     // Since the current API solves steady-state, we'll simulate the "dried up" scenario
     // by creating a new system with reduced water content and comparing the results.
 
-    System.out.println("\n" + StringUtils.repeat("=", 60));
-    System.out.println("PHASE 2: Dry gas inlet (0.1 wt% water)");
-    System.out.println("Simulating dehydration unit coming online...");
+    logger.info("\n" + StringUtils.repeat("=", 60));
+    logger.info("PHASE 2: Dry gas inlet (0.1 wt% water)");
+    logger.info("Simulating dehydration unit coming online...");
 
     // Create dry gas system (0.1 wt% water, 99.9 wt% methane)
     // Total mass flow = 1000 kg/hr, 0.1% = 1 kg/hr water, 999 kg/hr methane
@@ -2407,13 +2410,13 @@ public class NonEquilibriumPipeFlowTest {
 
     // Record dry gas state
     double[] dryHoldup = dryPipeline.getLiquidHoldupProfile();
-    System.out.println("\nFinal steady state (dry gas):");
+    logger.info("\nFinal steady state (dry gas):");
     System.out.printf("  Inlet liquid holdup: %.6f%n", dryHoldup[0]);
     System.out.printf("  Outlet liquid holdup: %.6f%n", dryHoldup[numNodes - 1]);
 
     // Print dry gas profile
-    System.out.println("\n--- Dry Gas Holdup Profile ---");
-    System.out.println("Position [m]   Liquid Holdup   T_gas [°C]   T_liq [°C]");
+    logger.info("\n--- Dry Gas Holdup Profile ---");
+    logger.info("Position [m]   Liquid Holdup   T_gas [°C]   T_liq [°C]");
     for (int i = 0; i < numNodes; i += 5) {
       double dist = i * pipeLength / (numNodes - 1);
       double tGas = dryPipeline.getNode(i).getBulkSystem().getPhase(0).getTemperature() - 273.15;
@@ -2423,10 +2426,10 @@ public class NonEquilibriumPipeFlowTest {
     }
 
     // ===== PHASE 3: Full profile for selected water contents =====
-    System.out.println("\n" + StringUtils.repeat("=", 80));
-    System.out.println("DETAILED PROFILES WITH MASS AND HEAT TRANSFER");
-    System.out.println("Showing gas/liquid temperatures and liquid fraction along pipeline");
-    System.out.println(StringUtils.repeat("=", 80));
+    logger.info("\n" + StringUtils.repeat("=", 80));
+    logger.info("DETAILED PROFILES WITH MASS AND HEAT TRANSFER");
+    logger.info("Showing gas/liquid temperatures and liquid fraction along pipeline");
+    logger.info(StringUtils.repeat("=", 80));
 
     double[] waterFractions = {50.0, 10.0, 1.0, 0.1};
 
@@ -2474,7 +2477,7 @@ public class NonEquilibriumPipeFlowTest {
           waterWtPercent, methaneFlow, waterFlow);
       System.out
           .println("Position[m]  LiqFrac   T_gas[°C]  T_liq[°C]  V_gas[m/s]  V_liq[m/s]  P[bar]");
-      System.out.println(StringUtils.repeat("-", 85));
+      logger.info(StringUtils.repeat("-", 85));
 
       int numNodesLocal = intermediatePipeline.getTotalNumberOfNodes();
       for (int i = 0; i < numNodesLocal; i += 5) { // Every 5th node
@@ -2495,8 +2498,8 @@ public class NonEquilibriumPipeFlowTest {
       }
 
       // Print velocity and mass flux details
-      System.out.println("\n  Velocity and Mass Transfer Details (every 10th node):");
-      System.out.println("  Pos[m]  V_gas[m/s]  V_liq[m/s]  Slip[-]   MassFlux[mol/m²s]  dT[K]");
+      logger.info("\n  Velocity and Mass Transfer Details (every 10th node):");
+      logger.info("  Pos[m]  V_gas[m/s]  V_liq[m/s]  Slip[-]   MassFlux[mol/m²s]  dT[K]");
       for (int i = 0; i < numNodesLocal; i += 10) {
         double dist = i * pipeLength / (numNodesLocal - 1);
         double vGas = intermediatePipeline.getNode(i).getVelocity(0);
@@ -2522,9 +2525,8 @@ public class NonEquilibriumPipeFlowTest {
       }
 
       // Print heat transfer diagnostics for first few nodes
-      System.out.println("\n  Heat Transfer Details (first 3 interior nodes):");
-      System.out.println(
-          "  Node  Q_gas->int[W/m²]  Q_int->liq[W/m²]  Q_wall_gas[W/m²]  Q_wall_liq[W/m²]");
+      logger.info("\n  Heat Transfer Details (first 3 interior nodes):");
+      logger.info("  Node  Q_gas->int[W/m²]  Q_int->liq[W/m²]  Q_wall_gas[W/m²]  Q_wall_liq[W/m²]");
       for (int i = 1; i < Math.min(4, numNodesLocal); i++) {
         double qGasInterphase =
             intermediatePipeline.getNode(i).getFluidBoundary().getInterphaseHeatFlux(0);
@@ -2568,12 +2570,12 @@ public class NonEquilibriumPipeFlowTest {
     }
 
     // ===== Summary table =====
-    System.out.println("\n" + StringUtils.repeat("=", 80));
-    System.out.println("SUMMARY TABLE: Effect of Water Content on Holdup and Temperature");
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println(
-        "Water%   LiqFrac_in  LiqFrac_out  Evap%   T_gas_in  T_gas_out  T_liq_in  T_liq_out");
-    System.out.println(StringUtils.repeat("-", 80));
+    logger.info("\n" + StringUtils.repeat("=", 80));
+    logger.info("SUMMARY TABLE: Effect of Water Content on Holdup and Temperature");
+    logger.info(StringUtils.repeat("=", 80));
+    logger
+        .info("Water%   LiqFrac_in  LiqFrac_out  Evap%   T_gas_in  T_gas_out  T_liq_in  T_liq_out");
+    logger.info(StringUtils.repeat("-", 80));
 
     double[] allWaterFractions = {50.0, 25.0, 10.0, 5.0, 1.0, 0.5, 0.1};
     for (double waterWtPercent : allWaterFractions) {
@@ -2621,9 +2623,9 @@ public class NonEquilibriumPipeFlowTest {
     }
 
     // ===== Summary and assertions =====
-    System.out.println("\n" + StringUtils.repeat("=", 60));
-    System.out.println("SUMMARY: Water Drying Behavior");
-    System.out.println(StringUtils.repeat("=", 60));
+    logger.info("\n" + StringUtils.repeat("=", 60));
+    logger.info("SUMMARY: Water Drying Behavior");
+    logger.info(StringUtils.repeat("=", 60));
 
     double wetInletHoldup = initialHoldup[0];
     double wetOutletHoldup = initialHoldup[numNodes - 1];
@@ -2653,6 +2655,6 @@ public class NonEquilibriumPipeFlowTest {
     assertTrue(wetOutletHoldup <= wetInletHoldup,
         "Wet gas: Liquid holdup should not increase along pipe");
 
-    System.out.println("\nTransient water drying test completed successfully.");
+    logger.info("\nTransient water drying test completed successfully.");
   }
 }

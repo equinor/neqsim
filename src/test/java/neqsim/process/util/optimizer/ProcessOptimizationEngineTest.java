@@ -15,6 +15,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Unit tests for ProcessOptimizationEngine.
@@ -28,6 +30,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class ProcessOptimizationEngineTest {
+  private static final Logger logger = LogManager.getLogger(ProcessOptimizationEngineTest.class);
+
   private ProcessSystem processSystem;
   private ProcessOptimizationEngine engine;
 
@@ -162,7 +166,7 @@ class ProcessOptimizationEngineTest {
     assertNotNull(result);
     assertTrue(result.getOptimalValue() >= 1000.0, "Flow should be above min");
     assertTrue(result.getOptimalValue() <= 50000.0, "Flow should be below max");
-    System.out.println("Armijo-Wolfe optimal flow: " + result.getOptimalValue());
+    logger.info("Armijo-Wolfe optimal flow: " + result.getOptimalValue());
   }
 
   @Test
@@ -179,7 +183,7 @@ class ProcessOptimizationEngineTest {
     assertNotNull(result);
     assertTrue(result.getOptimalValue() >= 1000.0, "Flow should be above min");
     assertTrue(result.getOptimalValue() <= 50000.0, "Flow should be below max");
-    System.out.println("BFGS optimal flow: " + result.getOptimalValue());
+    logger.info("BFGS optimal flow: " + result.getOptimalValue());
   }
 
   @Test
@@ -202,11 +206,11 @@ class ProcessOptimizationEngineTest {
     engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.BFGS);
     results[3] = engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0).getOptimalValue();
 
-    System.out.println("Algorithm comparison:");
-    System.out.println("  Golden Section:    " + results[0]);
-    System.out.println("  Gradient Descent:  " + results[1]);
-    System.out.println("  Armijo-Wolfe:      " + results[2]);
-    System.out.println("  BFGS:              " + results[3]);
+    logger.info("Algorithm comparison:");
+    logger.info("  Golden Section:    " + results[0]);
+    logger.info("  Gradient Descent:  " + results[1]);
+    logger.info("  Armijo-Wolfe:      " + results[2]);
+    logger.info("  BFGS:              " + results[3]);
 
     // All algorithms should find similar results (within 20% of each other)
     double maxResult = Math.max(Math.max(results[0], results[1]), Math.max(results[2], results[3]));

@@ -13,8 +13,12 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ParallelBenchmarkTest {
+  private static final Logger logger = LogManager.getLogger(ParallelBenchmarkTest.class);
+
 
   private SystemInterface makeHeavyFluid() {
     SystemInterface f = new SystemSrkEos(298.0, 80.0);
@@ -41,7 +45,7 @@ public class ParallelBenchmarkTest {
     int RUNS = 10;
 
     // ---- SCENARIO 1: Linear chain ----
-    System.out.println("\n===== SCENARIO 1: Linear chain (8 units, no parallelism) =====");
+    logger.info("\n===== SCENARIO 1: Linear chain (8 units, no parallelism) =====");
     {
       ProcessSystem seq = buildLinearChain(false);
       seq.run();
@@ -86,7 +90,7 @@ public class ParallelBenchmarkTest {
     }
 
     // ---- SCENARIO 3: 4 independent heavy trains ----
-    System.out.println("\n===== SCENARIO 3: 4 independent heavy trains (24 units) =====");
+    logger.info("\n===== SCENARIO 3: 4 independent heavy trains (24 units) =====");
     {
       ProcessSystem seq = buildIndependentTrains(false, 4);
       seq.run();
@@ -108,7 +112,7 @@ public class ParallelBenchmarkTest {
     }
 
     // ---- SCENARIO 4: 8 independent heavy trains ----
-    System.out.println("\n===== SCENARIO 4: 8 independent heavy trains (48 units) =====");
+    logger.info("\n===== SCENARIO 4: 8 independent heavy trains (48 units) =====");
     {
       ProcessSystem seq = buildIndependentTrains(false, 8);
       seq.run();
@@ -130,7 +134,7 @@ public class ParallelBenchmarkTest {
     }
 
     // ---- SCENARIO 5: HP/LP sep with HeatExchanger (previously forced sequential) ----
-    System.out.println(
+    logger.info(
         "\n===== SCENARIO 5: HP/LP separation with HeatExchanger (previously forced sequential) =====");
     {
       ProcessSystem seq = buildHPLPWithHX(false);
@@ -153,7 +157,7 @@ public class ParallelBenchmarkTest {
           opt.hasMultiInputEquipment(), opt.getParallelPartition().getMaxParallelism());
     }
 
-    System.out.println("\n===== BENCHMARK COMPLETE =====\n");
+    logger.info("\n===== BENCHMARK COMPLETE =====\n");
   }
 
   private ProcessSystem buildLinearChain(boolean optimized) {

@@ -3,6 +3,8 @@ package neqsim.thermo.phase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicit;
@@ -16,6 +18,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
+
+  private static final Logger logger = LogManager.getLogger(CPAFullyImplicitBenchmarkTest.class);
 
   /** Number of TP flash repetitions for timing. */
   private static final int N_REPS = 10;
@@ -127,12 +131,12 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
    */
   @Test
   void testDetailedTimingBenchmark() {
-    System.out.println("\n====================================================================");
-    System.out.println("  CPA Fully Implicit vs Standard Nested — Detailed Benchmark");
-    System.out.println("====================================================================");
-    System.out.println(
+    logger.info("\n====================================================================");
+    logger.info("  CPA Fully Implicit vs Standard Nested — Detailed Benchmark");
+    logger.info("====================================================================");
+    logger.info(
         String.format("%-45s %8s %8s %6s %6s", "Case", "Std(ms)", "Impl(ms)", "Ratio", "Phases"));
-    System.out.println("--------------------------------------------------------------------");
+    logger.info("--------------------------------------------------------------------");
 
     // Case 1: Pure water sweep
     benchmarkCase("Pure water (T sweep)", new CaseBuilder() {
@@ -227,7 +231,7 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
       }
     }, generateTP(273.15 + 0, 15, 60.0, 30));
 
-    System.out.println("====================================================================\n");
+    logger.info("====================================================================\n");
 
     assertTrue(true, "Benchmark completed");
   }
@@ -249,10 +253,10 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
     runFlash(standard);
     runFlash(implicit);
 
-    System.out.println("\n=== Phase Property Comparison (Oil+Gas+Water+MEG, 50C, 80bar) ===");
-    System.out.println(String.format("%-12s %-10s %-15s %-15s %-8s", "Phase", "Property",
-        "Standard", "Implicit", "Err(%)"));
-    System.out.println("----------------------------------------------------------------");
+    logger.info("\n=== Phase Property Comparison (Oil+Gas+Water+MEG, 50C, 80bar) ===");
+    logger.info(String.format("%-12s %-10s %-15s %-15s %-8s", "Phase", "Property", "Standard",
+        "Implicit", "Err(%)"));
+    logger.info("----------------------------------------------------------------");
 
     int nPhStd = standard.getNumberOfPhases();
     int nPhImpl = implicit.getNumberOfPhases();
@@ -275,7 +279,7 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
           phName + " density mismatch");
       assertEquals(zStd, zImpl, Math.max(Math.abs(zStd) * 0.02, 1e-6), phName + " Z mismatch");
     }
-    System.out.println("----------------------------------------------------------------\n");
+    logger.info("----------------------------------------------------------------\n");
   }
 
   // ------- Helper methods -------
@@ -338,7 +342,7 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
     long timeImpl = System.nanoTime() - startImpl;
 
     double ratio = (double) timeImpl / timeStd;
-    System.out.println(String.format("%-45s %8d %8d %6.2f %6d", label, timeStd / 1_000_000,
+    logger.info(String.format("%-45s %8d %8d %6.2f %6d", label, timeStd / 1_000_000,
         timeImpl / 1_000_000, ratio, nPhases));
   }
 
@@ -425,7 +429,7 @@ class CPAFullyImplicitBenchmarkTest extends neqsim.NeqSimTest {
             : 0;
     double errZ =
         Math.abs(r.zStdPh0) > 1e-6 ? Math.abs(r.zStdPh0 - r.zImplPh0) / r.zStdPh0 * 100 : 0;
-    System.out.println(String.format("  %-40s phases=%d/%d  dens_err=%.4f%%  Z_err=%.4f%%", label,
+    logger.info(String.format("  %-40s phases=%d/%d  dens_err=%.4f%%  Z_err=%.4f%%", label,
         r.nPhasesStd, r.nPhasesImpl, errDens, errZ));
   }
 

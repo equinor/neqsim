@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.Test;
  * Tests for the AISchemaDiscovery class.
  */
 class AISchemaDiscoveryTest {
+  private static final Logger logger = LogManager.getLogger(AISchemaDiscoveryTest.class);
   private AISchemaDiscovery discovery;
 
   @BeforeEach
@@ -114,7 +117,7 @@ class AISchemaDiscoveryTest {
           "Should find setFlowRate method");
     } catch (ClassNotFoundException e) {
       // Skip test if class not on classpath
-      System.out.println("Skipping test - Stream class not on classpath");
+      logger.warn("Skipping test - Stream class not on classpath");
     }
   }
 

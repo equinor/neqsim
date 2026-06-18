@@ -23,6 +23,8 @@ import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
 import neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Comprehensive example demonstrating process optimization with separators and compressors.
@@ -51,6 +53,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class ProcessOptimizationExampleTest {
+  private static final Logger logger = LogManager.getLogger(ProcessOptimizationExampleTest.class);
+
   private ProcessSystem process;
   private Stream feedStream;
   private Separator hpSeparator;
@@ -151,14 +155,14 @@ public class ProcessOptimizationExampleTest {
    */
   @Test
   public void testBasicBottleneckDetection() {
-    System.out.println("\n=== Basic Bottleneck Detection ===");
-    System.out.println("Feed rate: " + feedStream.getFlowRate("kg/hr") + " kg/hr");
+    logger.info("\n=== Basic Bottleneck Detection ===");
+    logger.info("Feed rate: " + feedStream.getFlowRate("kg/hr") + " kg/hr");
 
     // Find the bottleneck equipment
     ProcessEquipmentInterface bottleneck = process.getBottleneck();
 
     if (bottleneck != null) {
-      System.out.println("\nBottleneck equipment: " + bottleneck.getName());
+      logger.info("\nBottleneck equipment: " + bottleneck.getName());
 
       double utilization = 0.0;
       if (bottleneck.getCapacityMax() > 0) {
@@ -168,7 +172,7 @@ public class ProcessOptimizationExampleTest {
     }
 
     // Print utilization for all key equipment
-    System.out.println("\n--- Equipment Utilization Summary ---");
+    logger.info("\n--- Equipment Utilization Summary ---");
     printEquipmentUtilization(hpSeparator);
     printEquipmentUtilization(gasScrubber);
     printEquipmentUtilization(firstStageCompressor);
@@ -183,10 +187,10 @@ public class ProcessOptimizationExampleTest {
    */
   @Test
   public void testSeparatorCapacityEstimation() {
-    System.out.println("\n=== Separator Capacity Estimation ===");
+    logger.info("\n=== Separator Capacity Estimation ===");
 
     // HP Separator capacity analysis
-    System.out.println("\n--- HP Separator ---");
+    logger.info("\n--- HP Separator ---");
     System.out.printf("Internal diameter: %.2f m%n", hpSeparator.getInternalDiameter());
     System.out.printf("Length: %.2f m%n", hpSeparator.getSeparatorLength());
     System.out.printf("Design K-factor: %.3f m/s%n", hpSeparator.getDesignGasLoadFactor());
@@ -199,7 +203,7 @@ public class ProcessOptimizationExampleTest {
     System.out.printf("Capacity utilization: %.1f%%%n", hpSeparator.getCapacityUtilization() * 100);
 
     // Gas Scrubber capacity analysis
-    System.out.println("\n--- Gas Scrubber ---");
+    logger.info("\n--- Gas Scrubber ---");
     System.out.printf("Internal diameter: %.2f m%n", gasScrubber.getInternalDiameter());
     System.out.printf("Length: %.2f m%n", gasScrubber.getSeparatorLength());
     System.out.printf("Design K-factor: %.3f m/s%n", gasScrubber.getDesignGasLoadFactor());
@@ -230,7 +234,7 @@ public class ProcessOptimizationExampleTest {
    */
   @Test
   public void testCompressorCurveSetup() {
-    System.out.println("\n=== Compressor Curve Setup ===");
+    logger.info("\n=== Compressor Curve Setup ===");
 
     // Generate curves for first stage compressor
     CompressorChartGenerator generator1 = new CompressorChartGenerator(firstStageCompressor);
@@ -254,14 +258,14 @@ public class ProcessOptimizationExampleTest {
     secondStageCompressor.reinitializeCapacityConstraints();
 
     // Print compressor operating points
-    System.out.println("\n--- 1st Stage Compressor ---");
+    logger.info("\n--- 1st Stage Compressor ---");
     printCompressorStatus(firstStageCompressor, chart1);
 
-    System.out.println("\n--- 2nd Stage Compressor ---");
+    logger.info("\n--- 2nd Stage Compressor ---");
     printCompressorStatus(secondStageCompressor, chart2);
 
     // Print capacity constraints for first stage compressor
-    System.out.println("\n--- 1st Stage Compressor Constraints ---");
+    logger.info("\n--- 1st Stage Compressor Constraints ---");
     Map<String, CapacityConstraint> constraints = firstStageCompressor.getCapacityConstraints();
     for (CapacityConstraint c : constraints.values()) {
       System.out.printf("  %s: current=%.2f, design=%.2f, utilization=%.1f%%%n", c.getName(),
@@ -279,7 +283,7 @@ public class ProcessOptimizationExampleTest {
    */
   @Test
   public void testThroughputOptimization() {
-    System.out.println("\n=== Throughput Optimization ===");
+    logger.info("\n=== Throughput Optimization ===");
 
     // Set up compressor charts
     setupCompressorCharts();
@@ -327,7 +331,7 @@ public class ProcessOptimizationExampleTest {
         Collections.emptyList(), Collections.emptyList());
 
     // Print results
-    System.out.println("\n--- Optimization Results ---");
+    logger.info("\n--- Optimization Results ---");
     System.out.printf("Optimal feed rate: %.0f kg/hr%n", result.getOptimalRate());
 
     if (result.getBottleneck() != null) {
@@ -336,7 +340,7 @@ public class ProcessOptimizationExampleTest {
           result.getBottleneckUtilization() * 100);
     }
 
-    System.out.println("\n--- Equipment Utilization at Optimum ---");
+    logger.info("\n--- Equipment Utilization at Optimum ---");
     for (UtilizationRecord record : result.getUtilizationRecords()) {
       boolean isBottleneck = result.getBottleneck() != null
           && record.getEquipmentName().equals(result.getBottleneck().getName());
@@ -346,18 +350,18 @@ public class ProcessOptimizationExampleTest {
     }
 
     // Show compressor-specific metrics
-    System.out.println("\n--- Compressor Status at Optimum ---");
+    logger.info("\n--- Compressor Status at Optimum ---");
     printCompressorOptimizationStatus(firstStageCompressor);
     printCompressorOptimizationStatus(secondStageCompressor);
 
-    System.out.println("\n========================================");
-    System.out.println("       OPTIMIZATION SUMMARY");
-    System.out.println("========================================");
+    logger.info("\n========================================");
+    logger.info("       OPTIMIZATION SUMMARY");
+    logger.info("========================================");
     System.out.printf("  Optimal Feed Rate:    %.0f kg/hr%n", result.getOptimalRate());
     System.out.printf("  Bottleneck Equipment: %s%n",
         result.getBottleneck() != null ? result.getBottleneck().getName() : "None");
     System.out.printf("  Bottleneck Util:      %.1f%%%n", result.getBottleneckUtilization() * 100);
-    System.out.println("========================================");
+    logger.info("========================================");
 
     // Verify optimization found a valid solution
     assertTrue(result.getOptimalRate() >= lowerBound, "Optimal rate should be above lower bound");
@@ -389,7 +393,7 @@ public class ProcessOptimizationExampleTest {
     // Show constraint utilizations
     Map<String, CapacityConstraint> constraints = compressor.getCapacityConstraints();
     if (!constraints.isEmpty()) {
-      System.out.println("    Constraints:");
+      logger.info("    Constraints:");
       for (CapacityConstraint c : constraints.values()) {
         double util = c.getUtilization();
         if (!Double.isNaN(util) && !Double.isInfinite(util) && util > 0.01) {
@@ -407,7 +411,7 @@ public class ProcessOptimizationExampleTest {
    */
   @Test
   public void testDetailedBottleneckAnalysis() {
-    System.out.println("\n=== Detailed Bottleneck Analysis ===");
+    logger.info("\n=== Detailed Bottleneck Analysis ===");
 
     // Set up compressor charts
     setupCompressorCharts();
@@ -422,7 +426,7 @@ public class ProcessOptimizationExampleTest {
     BottleneckResult bottleneck = process.findBottleneck();
 
     if (bottleneck != null) {
-      System.out.println("\n--- Bottleneck Details ---");
+      logger.info("\n--- Bottleneck Details ---");
       System.out.printf("Equipment: %s%n", bottleneck.getEquipmentName());
 
       CapacityConstraint constraint = bottleneck.getConstraint();
@@ -436,7 +440,7 @@ public class ProcessOptimizationExampleTest {
     }
 
     // Print all near-bottleneck equipment
-    System.out.println("\n--- Equipment Status (> 50% utilization) ---");
+    logger.info("\n--- Equipment Status (> 50% utilization) ---");
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit.getCapacityMax() > 0 && unit.getCapacityDuty() > 0) {
         double util = unit.getCapacityDuty() / unit.getCapacityMax();
@@ -455,7 +459,7 @@ public class ProcessOptimizationExampleTest {
    */
   @Test
   public void testOptimizationWithVaryingConditions() {
-    System.out.println("\n=== Optimization with Varying Conditions ===");
+    logger.info("\n=== Optimization with Varying Conditions ===");
 
     // Set up compressor charts
     setupCompressorCharts();
@@ -466,10 +470,10 @@ public class ProcessOptimizationExampleTest {
     // Test at different inlet pressures
     double[] inletPressures = {60.0, 80.0, 100.0};
 
-    System.out.println("\n--- Effect of Inlet Pressure ---");
+    logger.info("\n--- Effect of Inlet Pressure ---");
     System.out.printf("%-15s %-15s %-20s %-15s%n", "Inlet P (bara)", "Max Rate (kg/hr)",
         "Bottleneck", "Utilization");
-    System.out.println("----------------------------------------------------------------------");
+    logger.info("----------------------------------------------------------------------");
 
     for (double pressure : inletPressures) {
       // Update inlet pressure
@@ -497,7 +501,7 @@ public class ProcessOptimizationExampleTest {
    */
   @Test
   public void testManualFlowOptimization() {
-    System.out.println("\n=== Manual Flow Optimization ===");
+    logger.info("\n=== Manual Flow Optimization ===");
 
     // Set up compressor charts
     setupCompressorCharts();
@@ -541,7 +545,7 @@ public class ProcessOptimizationExampleTest {
     System.out.printf("Final max utilization: %.1f%%%n", getMaxSystemUtilization() * 100);
 
     // Print final equipment status
-    System.out.println("\n--- Final Equipment Status ---");
+    logger.info("\n--- Final Equipment Status ---");
     printEquipmentUtilization(hpSeparator);
     printEquipmentUtilization(gasScrubber);
     printEquipmentUtilization(firstStageCompressor);

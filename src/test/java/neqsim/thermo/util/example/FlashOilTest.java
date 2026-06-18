@@ -6,8 +6,12 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 class FlashOilTest {
+  private static final Logger logger = LogManager.getLogger(FlashOilTest.class);
+
     static SystemInterface fluid1 = null;
     static ThermodynamicOperations thermoOps;
 

@@ -14,6 +14,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 import java.util.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Example demonstrating how to create process logic from external configuration without any
@@ -33,13 +35,15 @@ import java.util.*;
  * @version 1.0
  */
 public class ConfigurableLogicExample {
+  private static final Logger logger = LogManager.getLogger(ConfigurableLogicExample.class);
+
 
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    System.out.println("╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║         CONFIGURABLE PROCESS LOGIC EXAMPLE                     ║");
-    System.out.println("║         (Logic Loaded from Configuration at Runtime)           ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║         CONFIGURABLE PROCESS LOGIC EXAMPLE                     ║");
+    logger.info("║         (Logic Loaded from Configuration at Runtime)           ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     // Create a simple process system
     ProcessSystem system = createSimpleProcess();
@@ -59,9 +63,9 @@ public class ConfigurableLogicExample {
     // Example 3: Create logic from user input (simulated)
     demonstrateUserDefinedLogic(factory);
 
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║      CONFIGURABLE LOGIC CREATION COMPLETED SUCCESSFULLY        ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║      CONFIGURABLE LOGIC CREATION COMPLETED SUCCESSFULLY        ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝");
   }
 
   /**
@@ -120,7 +124,7 @@ public class ConfigurableLogicExample {
       equipmentMap.put(unit.getName(), unit);
     }
 
-    System.out.println("Equipment map created with " + equipmentMap.size() + " units");
+    logger.info("Equipment map created with " + equipmentMap.size() + " units");
     return equipmentMap;
   }
 
@@ -130,15 +134,15 @@ public class ConfigurableLogicExample {
    * @param factory the LogicFactory to use for creating logic instances
    */
   private static void demonstrateConfigStringLogic(LogicFactory factory) {
-    System.out.println("\n=== EXAMPLE 1: CONFIGURATION STRING LOGIC ===");
+    logger.info("\n=== EXAMPLE 1: CONFIGURATION STRING LOGIC ===");
 
     // Configuration string format: ACTION_TYPE:EQUIPMENT:PARAMETER:DELAY
     String[] esdConfig = {"VALVE_CLOSE:Control Valve:0:0.0", "VALVE_SET:Backup Valve:25.0:0.5",
         "SEPARATOR_MODE:Test Separator:transient:1.0"};
 
     ESDLogic configuredESD = factory.createESDFromConfig("Configured ESD", esdConfig);
-    System.out.println("✓ Created ESD logic from configuration strings:");
-    System.out.println("  - " + configuredESD.getActionCount() + " actions loaded");
+    logger.info("✓ Created ESD logic from configuration strings:");
+    logger.info("  - " + configuredESD.getActionCount() + " actions loaded");
 
     // Configuration string format: CONDITION_TYPE:EQUIPMENT:VALUE:OPERATOR
     String[] startupConfig = {"VALVE_POSITION:Control Valve:10.0:<",
@@ -149,10 +153,10 @@ public class ConfigurableLogicExample {
 
     StartupLogic configuredStartup =
         factory.createStartupFromConfig("Configured Startup", startupConfig, startupActions);
-    System.out.println("✓ Created startup logic from configuration strings:");
-    System.out.println("  - Name: " + configuredStartup.getName());
-    System.out.println("  - Conditions: " + startupConfig.length);
-    System.out.println("  - Actions: " + startupActions.length);
+    logger.info("✓ Created startup logic from configuration strings:");
+    logger.info("  - Name: " + configuredStartup.getName());
+    logger.info("  - Conditions: " + startupConfig.length);
+    logger.info("  - Actions: " + startupActions.length);
   }
 
   /**
@@ -161,7 +165,7 @@ public class ConfigurableLogicExample {
    * @param factory the LogicFactory to use for creating logic instances
    */
   private static void demonstrateConfigFileLogic(LogicFactory factory) {
-    System.out.println("\n=== EXAMPLE 2: CONFIGURATION FILE LOGIC ===");
+    logger.info("\n=== EXAMPLE 2: CONFIGURATION FILE LOGIC ===");
 
     // Simulate reading from configuration file
     String configFileContent = "# Emergency Shutdown Logic Configuration\n" + "LOGIC_TYPE=ESD\n"
@@ -177,18 +181,18 @@ public class ConfigurableLogicExample {
 
     List<ProcessLogicConfig> configs = parseConfigFile(configFileContent);
 
-    System.out.println("✓ Parsed " + configs.size() + " logic configurations from file");
+    logger.info("✓ Parsed " + configs.size() + " logic configurations from file");
 
     for (ProcessLogicConfig config : configs) {
       if ("ESD".equals(config.type)) {
         ESDLogic esdFromFile =
             factory.createESDFromConfig(config.name, config.actions.toArray(new String[0]));
-        System.out.println("  - Created ESD: " + esdFromFile.getName() + " ("
+        logger.info("  - Created ESD: " + esdFromFile.getName() + " ("
             + esdFromFile.getActionCount() + " actions)");
       } else if ("STARTUP".equals(config.type)) {
         StartupLogic startupFromFile = factory.createStartupFromConfig(config.name,
             config.conditions.toArray(new String[0]), config.actions.toArray(new String[0]));
-        System.out.println("  - Created Startup: " + startupFromFile.getName() + " (conditions: "
+        logger.info("  - Created Startup: " + startupFromFile.getName() + " (conditions: "
             + config.conditions.size() + ", actions: " + config.actions.size() + ")");
       }
     }
@@ -200,7 +204,7 @@ public class ConfigurableLogicExample {
    * @param factory the LogicFactory to use for creating logic instances
    */
   private static void demonstrateUserDefinedLogic(LogicFactory factory) {
-    System.out.println("\n=== EXAMPLE 3: USER-DEFINED LOGIC ===");
+    logger.info("\n=== EXAMPLE 3: USER-DEFINED LOGIC ===");
 
     // Simulate user input (in real app, this might come from a GUI or command line)
     Scanner simulatedUserInput = new Scanner("My Custom Logic\n" + "3\n"
@@ -208,7 +212,7 @@ public class ConfigurableLogicExample {
         + "Close Backup Valve\n" + "VALVE_CLOSE:Backup Valve:0:1.0\n"
         + "Switch separator to transient\n" + "SEPARATOR_MODE:Test Separator:transient:2.0\n");
 
-    System.out.println("Collecting user input for custom logic...");
+    logger.info("Collecting user input for custom logic...");
 
     System.out.print("Enter logic name: ");
     String logicName = simulatedUserInput.nextLine();
@@ -226,14 +230,14 @@ public class ConfigurableLogicExample {
       String config = simulatedUserInput.nextLine();
 
       userActions.add(config);
-      System.out.println("  ✓ Added: " + description);
+      logger.info("  ✓ Added: " + description);
     }
 
     ESDLogic userDefinedLogic =
         factory.createESDFromConfig(logicName, userActions.toArray(new String[0]));
 
-    System.out.println("✓ Created user-defined logic: " + userDefinedLogic.getName());
-    System.out.println("  - Total actions: " + userDefinedLogic.getActionCount());
+    logger.info("✓ Created user-defined logic: " + userDefinedLogic.getName());
+    logger.info("  - Total actions: " + userDefinedLogic.getActionCount());
     simulatedUserInput.close();
   }
 

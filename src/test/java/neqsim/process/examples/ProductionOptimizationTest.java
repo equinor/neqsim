@@ -8,15 +8,19 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.examples.OilGasProcessSimulationOptimization.MaxProductionResult;
 import neqsim.process.examples.OilGasProcessSimulationOptimization.ProcessOutputResults;
 import neqsim.process.processmodel.ProcessSystem;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test to run production optimization with separator and scrubber design checks
  */
 @Tag("slow")
 public class ProductionOptimizationTest {
+  private static final Logger logger = LogManager.getLogger(ProductionOptimizationTest.class);
+
   @Test
   void testMaximizeProduction() {
-    System.out.println("===== Production Optimization Test (Max 15000 kmol/hr) =====\n");
+    logger.info("===== Production Optimization Test (Max 15000 kmol/hr) =====\n");
 
     // Create the simulation
     OilGasProcessSimulationOptimization simulation = new OilGasProcessSimulationOptimization();
@@ -34,7 +38,7 @@ public class ProductionOptimizationTest {
 
     ProcessOutputResults initialResults = simulation.runSimulation();
 
-    System.out.println("=== Initial Process Results ===");
+    logger.info("=== Initial Process Results ===");
     System.out.printf("Gas Export Rate: %.2f kmole/hr\n",
         initialResults.getGasExportRate() / 1000.0);
     System.out.printf("Oil Export Rate: %.2f kmole/hr\n",
@@ -43,7 +47,7 @@ public class ProductionOptimizationTest {
     System.out.printf("Total Power: %.2f kW\n", initialResults.getTotalPowerConsumption());
 
     // Print separator utilization
-    System.out.println("\n=== Separator Capacity Utilization (Initial) ===");
+    logger.info("\n=== Separator Capacity Utilization (Initial) ===");
     Map<String, Double> sepCapacity = initialResults.getSeparatorCapacityUtilization();
     for (Map.Entry<String, Double> entry : sepCapacity.entrySet()) {
       System.out.printf("  %s: %.1f%%\n", entry.getKey(), entry.getValue() * 100.0);
@@ -51,7 +55,7 @@ public class ProductionOptimizationTest {
     System.out.printf("Any separator overloaded: %s\n", initialResults.isAnySeparatorOverloaded());
 
     // Print compressor speed utilization
-    System.out.println("\n=== Compressor Speed Utilization (Initial) ===");
+    logger.info("\n=== Compressor Speed Utilization (Initial) ===");
     Map<String, Double> compSpeeds = initialResults.getCompressorSpeeds();
     Map<String, Double> compMaxSpeeds = initialResults.getCompressorMaxSpeeds();
     Map<String, Double> compSpeedUtil = initialResults.getCompressorSpeedUtilization();
@@ -71,11 +75,11 @@ public class ProductionOptimizationTest {
     printSeparatorDesignInfo(simulation.getOilProcess(), "Initial");
 
     // Now run optimization for max production
-    System.out.println("\n=== Running Production Optimization (up to 15000 kmol/hr) ===");
+    logger.info("\n=== Running Production Optimization (up to 15000 kmol/hr) ===");
     MaxProductionResult maxProdResult =
         simulation.optimizeMaxProduction(simulation.getInputParameters());
 
-    System.out.println("\n=== Optimization Results ===");
+    logger.info("\n=== Optimization Results ===");
     System.out.printf("Maximum Feed Rate: %.2f kmol/hr\n", maxProdResult.getMaxFeedRate());
     System.out.printf("Gas Export Rate: %.2f kmole/hr\n",
         maxProdResult.getMaxGasExportRate() / 1000.0);
@@ -90,7 +94,7 @@ public class ProductionOptimizationTest {
 
     // Print separator capacities at max production
     if (maxProdResult.getSeparatorCapacities() != null) {
-      System.out.println("\n=== Separator Capacity Utilization (at Max Feed Rate) ===");
+      logger.info("\n=== Separator Capacity Utilization (at Max Feed Rate) ===");
       for (Map.Entry<String, Double> entry : maxProdResult.getSeparatorCapacities().entrySet()) {
         String status = entry.getValue() > 0.95 ? " <-- NEAR LIMIT"
             : (entry.getValue() > 1.0 ? " <-- OVERLOADED" : "");
@@ -100,7 +104,7 @@ public class ProductionOptimizationTest {
 
     // Print compressor speed at max production
     if (maxProdResult.getCompressorSpeedUtilization() != null) {
-      System.out.println("\n=== Compressor Speed Utilization (at Max Feed Rate) ===");
+      logger.info("\n=== Compressor Speed Utilization (at Max Feed Rate) ===");
       for (Map.Entry<String, Double> entry : maxProdResult.getCompressorSpeedUtilization()
           .entrySet()) {
         String status = entry.getValue() > 1.0 ? " <-- OVERSPEED!"
@@ -115,8 +119,7 @@ public class ProductionOptimizationTest {
       simulation.runSimulation();
       printSeparatorDesignInfo(simulation.getOilProcess(), "Optimized");
     } else {
-      System.out.println(
-          "No feasible optimized feed rate found; skipping zero-flow detailed simulation.");
+      logger.info("No feasible optimized feed rate found; skipping zero-flow detailed simulation.");
     }
 
     // Calculate improvement
@@ -127,21 +130,21 @@ public class ProductionOptimizationTest {
         (maxProdResult.getMaxOilExportRate() - initialResults.getOilExportRate())
             / initialResults.getOilExportRate() * 100;
 
-    System.out.println("\n=== Improvement ===");
+    logger.info("\n=== Improvement ===");
     System.out.printf("Feed Rate Increase: %.1f%%\n", feedImprovement);
     System.out.printf("Oil Production Increase: %.1f%%\n", oilImprovement);
 
     // Print optimization summary
-    System.out.println(maxProdResult);
+    logger.info(maxProdResult);
 
-    System.out.println("\n===== Optimization Complete =====");
+    logger.info("\n===== Optimization Complete =====");
   }
 
   /**
    * Print detailed separator and scrubber design information
    */
   private void printSeparatorDesignInfo(ProcessSystem process, String label) {
-    System.out.println("\n=== Separator & Scrubber Design Check (" + label + ") ===");
+    logger.info("\n=== Separator & Scrubber Design Check (" + label + ") ===");
 
     // Get all separators from process
     String[] separatorNames =

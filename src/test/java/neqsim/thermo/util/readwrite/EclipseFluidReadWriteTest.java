@@ -21,11 +21,15 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @author ESOL
  */
 class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(EclipseFluidReadWriteTest.class);
+
   static neqsim.thermo.system.SystemInterface testSystem = null;
 
   File file = new File("src/test/java/neqsim/thermo/util/readwrite");
@@ -158,7 +162,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // ((PhaseEos)
     // testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters();
 
-    // System.out.println(Arrays.deepToString(interactionParams));
+    // logger.info(Arrays.deepToString(interactionParams));
   }
 
   @Test
@@ -172,7 +176,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // testSystem.getPhase(0)).getMixingRule().getBinaryInteractionParameters()));
 
     // for (int i = 0; i < testSystem.getNumberOfComponents(); i++) {
-    // System.out.println(testSystem.getComponent(i).getName() + " TC "
+    // logger.info(testSystem.getComponent(i).getName() + " TC "
     // + (testSystem.getComponent(i).getVolumeCorrectionConst()));
     // }
   }
@@ -325,7 +329,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     // Check mass balance
     double massBalanceError = separator.getMassBalance("kg/hr");
-    System.out.println("Mass balance error: " + massBalanceError + " kg/hr");
+    logger.info("Mass balance error: " + massBalanceError + " kg/hr");
 
     double inletFlow = stream1.getFlowRate("kg/hr");
     double gasOutFlow = separator.getGasOutStream().getFlowRate("kg/hr");
@@ -333,11 +337,11 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     double waterOutFlow = separator.getWaterOutStream().getFlowRate("kg/hr");
     double totalOutFlow = gasOutFlow + oilOutFlow + waterOutFlow;
 
-    System.out.println("Inlet flow: " + inletFlow + " kg/hr");
-    System.out.println("Gas out: " + gasOutFlow + " kg/hr");
-    System.out.println("Oil out: " + oilOutFlow + " kg/hr");
-    System.out.println("Water out: " + waterOutFlow + " kg/hr");
-    System.out.println("Total out: " + totalOutFlow + " kg/hr");
+    logger.info("Inlet flow: " + inletFlow + " kg/hr");
+    logger.info("Gas out: " + gasOutFlow + " kg/hr");
+    logger.info("Oil out: " + oilOutFlow + " kg/hr");
+    logger.info("Water out: " + waterOutFlow + " kg/hr");
+    logger.info("Total out: " + totalOutFlow + " kg/hr");
 
     // Verify mass balance (outlet - inlet should be near zero)
     Assertions.assertEquals(0.0, massBalanceError, 0.01, "Mass balance error should be near zero");
@@ -431,7 +435,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     double rvp = stream1.getRVP(37.8, "C", "bara");
 
-    System.out.println("RVP at 37C: " + rvp + " bara");
+    logger.info("RVP at 37C: " + rvp + " bara");
 
     Assertions.assertTrue(Double.isFinite(rvp) && rvp > 0.0);
     stream1.setPressure(rvp, "bara");
@@ -555,14 +559,14 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(3, testSystem.getNumberOfPhases());
 
     double gasFraction = testSystem.getPhase("gas").getPhaseFraction();
-    System.out.println("gasFraction=" + gasFraction);
+    logger.info("gasFraction=" + gasFraction);
     for (int phaseIdx = 0; phaseIdx < testSystem.getNumberOfPhases(); phaseIdx++) {
-      System.out.println("phase" + phaseIdx + " type=" + testSystem.getPhase(phaseIdx).getType()
-          + " beta=" + testSystem.getPhase(phaseIdx).getBeta());
+      logger.info("phase" + phaseIdx + " type=" + testSystem.getPhase(phaseIdx).getType() + " beta="
+          + testSystem.getPhase(phaseIdx).getBeta());
     }
     // testSystem.display();
     for (int phaseIdx = 0; phaseIdx < testSystem.getNumberOfPhases(); phaseIdx++) {
-      System.out.println("phase" + phaseIdx + " type=" + testSystem.getPhase(phaseIdx).getType()
+      logger.info("phase" + phaseIdx + " type=" + testSystem.getPhase(phaseIdx).getType()
           + " methane x=" + testSystem.getPhase(phaseIdx).getComponent("methane").getx() + " Z="
           + testSystem.getPhase(phaseIdx).getZ() + " rho="
           + testSystem.getPhase(phaseIdx).getPhysicalProperties().getDensity());
@@ -608,7 +612,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     separationProcess.add(firstStageDischarge);
     firstStageDischarge.run();
 
-    System.out.println("flow inlet " + firstStageDischarge.getFluid().getFlowRate("m3/hr"));
+    logger.info("flow inlet " + firstStageDischarge.getFluid().getFlowRate("m3/hr"));
 
     Stream lpGasFeed = new Stream("LP flash gas", suctionGas.clone());
     lpGasFeed.setPressure(SECOND_STAGE_PRESSURE_BARA, "bara");
@@ -642,7 +646,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     separationProcess.add(firstStageScrubber2);
     firstStageScrubber2.run();
 
-    System.out.println("flow inlet feed compressor start"
+    logger.info("flow inlet feed compressor start"
         + firstStageScrubber2.getGasOutStream().getFluid().getFlowRate("m3/hr"));
 
     Compressor secondStageCompressor =
@@ -694,11 +698,10 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // assertFalse(secondStageCompressor.isStoneWall(), "compressor is stone wall
     // limited");
 
-    System.out.println(
-        "compressor polytropic head end " + secondStageCompressor.getPolytropicFluidHead());
-    System.out.println("flow inlet feed compressor end "
+    logger.info("compressor polytropic head end " + secondStageCompressor.getPolytropicFluidHead());
+    logger.info("flow inlet feed compressor end "
         + firstStageScrubber2.getGasOutStream().getFluid().getFlowRate("m3/hr"));
-    System.out.println(recycle2.toJson());
+    logger.info(recycle2.toJson());
   }
 
   /**

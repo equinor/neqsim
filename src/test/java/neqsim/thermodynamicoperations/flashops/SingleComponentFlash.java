@@ -12,8 +12,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class SingleComponentFlash {
+  private static final Logger logger = LogManager.getLogger(SingleComponentFlash.class);
+
   @Test
   void testConstantPhaseFractionPressureFlash() {
     neqsim.thermo.system.SystemInterface testSystem =
@@ -23,7 +27,7 @@ public class SingleComponentFlash {
     try {
       testOps.constantPhaseFractionPressureFlash(0.5);
     } catch (Exception ex) {
-      System.out.println("error" + ex.toString());
+      logger.info("error" + ex.toString());
     }
     assertEquals(323.15, testSystem.getTemperature(), 1e-2);
     assertEquals(17.19579859, testSystem.getPressure(), 1e-2);
@@ -38,7 +42,7 @@ public class SingleComponentFlash {
     try {
       testOps.constantPhaseFractionTemperatureFlash(0.9);
     } catch (Exception ex) {
-      System.out.println("error" + ex.toString());
+      logger.info("error" + ex.toString());
     }
     assertEquals(300.08299597, testSystem.getTemperature(), 1e-2);
     assertEquals(10.0, testSystem.getPressure(), 1e-2);
@@ -55,7 +59,7 @@ public class SingleComponentFlash {
     try {
       testOps.constantPhaseFractionTemperatureFlash(0.591);
     } catch (Exception ex) {
-      System.out.println("error" + ex.toString());
+      logger.info("error" + ex.toString());
     }
     assertEquals(279.767487894, testSystem.getTemperature(), 1e-2);
     assertEquals(10.0, testSystem.getPressure(), 1e-2);
@@ -72,7 +76,7 @@ public class SingleComponentFlash {
     try {
       testOps.constantPhaseFractionPressureFlash(0.591);
     } catch (Exception ex) {
-      System.out.println("error" + ex.toString());
+      logger.info("error" + ex.toString());
     }
     assertEquals(279.767487894, testSystem.getTemperature(), 1e-2);
     assertEquals(11.95267803, testSystem.getPressure(), 1e-2);
@@ -89,7 +93,7 @@ public class SingleComponentFlash {
     try {
       testOps.constantPhaseFractionPressureFlash(0.99591);
     } catch (Exception ex) {
-      System.out.println("error" + ex.toString());
+      logger.info("error" + ex.toString());
     }
     assertEquals(279.767487894, testSystem.getTemperature(), 1e-2);
     assertEquals(0.047926652566, testSystem.getPressure(), 1e-2);
@@ -106,7 +110,7 @@ public class SingleComponentFlash {
     try {
       testOps.constantPhaseFractionTemperatureFlash(0.99591);
     } catch (Exception ex) {
-      System.out.println("error" + ex.toString());
+      logger.info("error" + ex.toString());
     }
     assertEquals(301.23082803, testSystem.getTemperature(), 1e-2);
     assertEquals(0.047926652566, testSystem.getPressure(), 1e-2);
@@ -122,7 +126,7 @@ public class SingleComponentFlash {
     try {
       testOps.constantPhaseFractionPressureFlash(0.5);
     } catch (Exception ex) {
-      System.out.println("error" + ex.toString());
+      logger.info("error" + ex.toString());
     }
     assertEquals(123.1499999, testSystem.getTemperature(), 1e-2);
     assertEquals(36.58179680, testSystem.getPressure(), 1e-2);
@@ -248,8 +252,8 @@ public class SingleComponentFlash {
       process.runTransient();
       time[i] = process.getTime();
       temp[i] = separator.getThermoSystem().getTemperature("C");
-      System.out.println(
-          "time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel()
+      logger
+          .info("time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel()
               + " flow rate " + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure "
               + feedValve.getOutletStream().getPressure() + " temp_out "
               + liquidValve.getOutletStream().getTemperature("C"));
@@ -260,8 +264,8 @@ public class SingleComponentFlash {
       process.runTransient();
       time[i] = process.getTime();
       temp[i] = separator.getThermoSystem().getTemperature("C");
-      System.out.println(
-          "time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel()
+      logger
+          .info("time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel()
               + " flow rate " + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure "
               + feedValve.getOutletStream().getPressure() + " temp_out "
               + liquidValve.getOutletStream().getTemperature("C"));

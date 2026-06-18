@@ -2,6 +2,8 @@ package neqsim.physicalproperties.methods.diffusivity;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -29,6 +31,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author Even Solbraa
  */
 public class DiffusivityExperimentalValidationTest {
+  private static final Logger logger =
+      LogManager.getLogger(DiffusivityExperimentalValidationTest.class);
 
   // Gas-phase experimental data at ~1 atm, in m2/s
   // CH4-N2 at 298 K: 0.22 cm2/s (Marrero & Mason 1972)
@@ -207,22 +211,22 @@ public class DiffusivityExperimentalValidationTest {
     // CO2 is solute (i=0), water is solvent (j=1)
     double D = sys.getPhase("aqueous").getPhysicalProperties().diffusivityCalc
         .calcBinaryDiffusionCoefficient(0, 1, 0);
-    System.out.println(model + " CO2/water: D = " + D + " m2/s (" + (D * 1e4) + " cm2/s), exp = "
+    logger.info(model + " CO2/water: D = " + D + " m2/s (" + (D * 1e4) + " cm2/s), exp = "
         + EXP_CO2_WATER_298K + " m2/s");
     return D;
   }
 
   private void assertGasAccuracy(String label, double calc, double exp, double tol) {
     double error = Math.abs(calc - exp) / exp;
-    System.out.println(label + ": calc=" + (calc * 1e4) + " cm2/s, exp=" + (exp * 1e4)
-        + " cm2/s, error=" + String.format("%.1f", error * 100) + "%");
+    logger.info(label + ": calc=" + (calc * 1e4) + " cm2/s, exp=" + (exp * 1e4) + " cm2/s, error="
+        + String.format("%.1f", error * 100) + "%");
     assertTrue(error < tol,
         label + " error " + String.format("%.1f", error * 100) + "% exceeds " + (tol * 100) + "%");
   }
 
   private void assertLiquidAccuracy(String label, double calc, double exp, double tol) {
     double error = Math.abs(calc - exp) / exp;
-    System.out.println(label + ": calc=" + calc + " m2/s, exp=" + exp + " m2/s, error="
+    logger.info(label + ": calc=" + calc + " m2/s, exp=" + exp + " m2/s, error="
         + String.format("%.1f", error * 100) + "%");
     assertTrue(calc > 1e-12 && calc < 1e-6,
         label + " value " + calc + " outside reasonable liquid D range");

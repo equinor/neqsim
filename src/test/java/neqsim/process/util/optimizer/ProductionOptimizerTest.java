@@ -38,8 +38,12 @@ import neqsim.process.util.optimizer.ProductionOptimizer.ScenarioResult;
 import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
 import neqsim.process.util.optimizer.ProductionOptimizer.UtilizationSeries;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ProductionOptimizerTest {
+  private static final Logger logger = LogManager.getLogger(ProductionOptimizerTest.class);
+
   public void testOptimizationCollectsUtilizationsAndConstraints() {
     SystemSrkEos testSystem = new SystemSrkEos(298.15, 10.0);
     testSystem.addComponent("methane", 1200.0);
@@ -60,19 +64,20 @@ public class ProductionOptimizerTest {
     process.add(separator);
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
-    OptimizationConfig config = new OptimizationConfig(100.0, 5_000.0).rateUnit("kg/hr").tolerance(10.0)
-        .defaultUtilizationLimit(5.0).utilizationLimitForName(compressor.getName(), 5.0);
+    OptimizationConfig config =
+        new OptimizationConfig(100.0, 5_000.0).rateUnit("kg/hr").tolerance(10.0)
+            .defaultUtilizationLimit(5.0).utilizationLimitForName(compressor.getName(), 5.0);
 
-    OptimizationObjective minimizePower = new OptimizationObjective("compressor power", proc -> compressor.getPower(),
-        -1.0);
+    OptimizationObjective minimizePower =
+        new OptimizationObjective("compressor power", proc -> compressor.getPower(), -1.0);
 
     OptimizationConstraint softConstraint = OptimizationConstraint.lessThan("soft compressor load",
         proc -> compressor.getCapacityDuty() / compressor.getCapacityMax(), 0.01,
         ConstraintSeverity.SOFT, 10.0, "Prefer low compressor utilization for testing");
 
-    OptimizationConstraint hardConstraint = OptimizationConstraint.lessThan("max units",
-        proc -> proc.getUnitOperations().size(), 10.0,
-        ConstraintSeverity.HARD, 0.0, "Keep overall system size bounded");
+    OptimizationConstraint hardConstraint =
+        OptimizationConstraint.lessThan("max units", proc -> proc.getUnitOperations().size(), 10.0,
+            ConstraintSeverity.HARD, 0.0, "Keep overall system size bounded");
 
     OptimizationResult result = optimizer.optimize(process, inletStream, config,
         Collections.singletonList(minimizePower), Arrays.asList(softConstraint, hardConstraint));
@@ -120,9 +125,9 @@ public class ProductionOptimizerTest {
       return -compressor.getPower();
     }, 1.0);
 
-    OptimizationConstraint keepUnitsReasonable = OptimizationConstraint.lessThan("max units",
-        proc -> proc.getUnitOperations().size(), 20.0,
-        ConstraintSeverity.HARD, 0.0, "Ensure system remains small");
+    OptimizationConstraint keepUnitsReasonable =
+        OptimizationConstraint.lessThan("max units", proc -> proc.getUnitOperations().size(), 20.0,
+            ConstraintSeverity.HARD, 0.0, "Ensure system remains small");
 
     OptimizationResult result = optimizer.optimize(process, inletStream, config,
         Collections.singletonList(minimizePower), Collections.singletonList(keepUnitsReasonable));
@@ -195,14 +200,16 @@ public class ProductionOptimizerTest {
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig baseConfig = new OptimizationConfig(100.0, 2_000.0).rateUnit("kg/hr");
-    OptimizationConfig debottleneckConfig = new OptimizationConfig(100.0, 2_000.0).rateUnit("kg/hr");
+    OptimizationConfig debottleneckConfig =
+        new OptimizationConfig(100.0, 2_000.0).rateUnit("kg/hr");
 
     ScenarioRequest baseScenario = new ScenarioRequest("base", baseProcess, baseStream, baseConfig,
         Collections.emptyList(), Collections.emptyList());
     ScenarioRequest debottleneckScenario = new ScenarioRequest("debottleneck", debottleneckProcess,
         debottleneckStream, debottleneckConfig, Collections.emptyList(), Collections.emptyList());
 
-    List<ScenarioResult> results = optimizer.optimizeScenarios(Arrays.asList(baseScenario, debottleneckScenario));
+    List<ScenarioResult> results =
+        optimizer.optimizeScenarios(Arrays.asList(baseScenario, debottleneckScenario));
 
     Assertions.assertEquals(2, results.size(), "Both scenarios should be evaluated");
     Map<String, ScenarioResult> byName = results.stream()
@@ -252,8 +259,8 @@ public class ProductionOptimizerTest {
 
     List<ScenarioKpi> kpis = Arrays.asList(ScenarioKpi.optimalRate("kg/hr"), ScenarioKpi.score());
 
-    ScenarioComparisonResult comparison = optimizer.compareScenarios(Arrays.asList(baseScenario, debottleneckScenario),
-        kpis);
+    ScenarioComparisonResult comparison =
+        optimizer.compareScenarios(Arrays.asList(baseScenario, debottleneckScenario), kpis);
 
     Assertions.assertEquals("base", comparison.getBaselineScenario(),
         "First scenario should be treated as baseline");
@@ -339,8 +346,8 @@ public class ProductionOptimizerTest {
     Path specFile = Files.createTempFile("optimization", ".yaml");
     Files.write(specFile, yaml.getBytes(StandardCharsets.UTF_8));
 
-    List<ProductionOptimizer.ScenarioRequest> scenarios = ProductionOptimizationSpecLoader.load(specFile, processes,
-        feeds, metrics);
+    List<ProductionOptimizer.ScenarioRequest> scenarios =
+        ProductionOptimizationSpecLoader.load(specFile, processes, feeds, metrics);
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
     List<ProductionOptimizer.ScenarioResult> results = optimizer.optimizeScenarios(scenarios);
@@ -381,11 +388,12 @@ public class ProductionOptimizerTest {
     process.add(separator);
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
-    EquipmentConstraintRule maxPressureRatio = new EquipmentConstraintRule(Compressor.class, "pressure ratio",
-        unit -> ((Compressor) unit).getOutStream().getPressure()
-            / ((Compressor) unit).getInletStream().getPressure(),
-        20.0, ConstraintDirection.LESS_THAN, ConstraintSeverity.HARD, 0.0,
-        "Prevent excessive pressure ratio");
+    EquipmentConstraintRule maxPressureRatio =
+        new EquipmentConstraintRule(Compressor.class, "pressure ratio",
+            unit -> ((Compressor) unit).getOutStream().getPressure()
+                / ((Compressor) unit).getInletStream().getPressure(),
+            20.0, ConstraintDirection.LESS_THAN, ConstraintSeverity.HARD, 0.0,
+            "Prevent excessive pressure ratio");
 
     OptimizationConfig config = new OptimizationConfig(100.0, 2_000.0).rateUnit("kg/hr")
         .capacityRangeForType(Compressor.class, new CapacityRange(0.7, 0.8, 0.9))
@@ -446,8 +454,8 @@ public class ProductionOptimizerTest {
 
   @Test
   public void testUtilizationReportHelper() {
-    List<ProductionOptimizer.UtilizationRecord> records = Arrays
-        .asList(new ProductionOptimizer.UtilizationRecord("pump", 100.0, 200.0, 0.5, 0.9));
+    List<ProductionOptimizer.UtilizationRecord> records =
+        Arrays.asList(new ProductionOptimizer.UtilizationRecord("pump", 100.0, 200.0, 0.5, 0.9));
     String report = ProductionOptimizer.formatUtilizationTable(records);
     Assertions.assertTrue(report.contains("pump"));
     Assertions.assertTrue(report.contains("Capacity"));
@@ -505,12 +513,10 @@ public class ProductionOptimizerTest {
       }
 
       @Override
-      public void run(UUID id) {
-      }
+      public void run(UUID id) {}
 
       @Override
-      public void run() {
-      }
+      public void run() {}
     }
 
     SystemSrkEos system = new SystemSrkEos(298.15, 7.5);
@@ -644,12 +650,12 @@ public class ProductionOptimizerTest {
     process.run(); // Run process to initialize equipment state
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
-    OptimizationConstraint keepSmall = OptimizationConstraint.lessThan("unit count",
-        proc -> proc.getUnitOperations().size(), 10.0,
-        ConstraintSeverity.HARD, 0.0, "Sanity check");
+    OptimizationConstraint keepSmall =
+        OptimizationConstraint.lessThan("unit count", proc -> proc.getUnitOperations().size(), 10.0,
+            ConstraintSeverity.HARD, 0.0, "Sanity check");
 
-    OptimizationSummary summary = optimizer.quickOptimize(process, inlet, "kg/hr",
-        Collections.singletonList(keepSmall));
+    OptimizationSummary summary =
+        optimizer.quickOptimize(process, inlet, "kg/hr", Collections.singletonList(keepSmall));
 
     // Basic summary structure checks
     Assertions.assertEquals("kg/hr", summary.getRateUnit());
@@ -686,7 +692,8 @@ public class ProductionOptimizerTest {
     OptimizationResult result = optimizer.optimize(process, inlet, config,
         Collections.singletonList(objective), Collections.emptyList());
 
-    List<UtilizationSeries> series = ProductionOptimizer.buildUtilizationSeries(result.getIterationHistory());
+    List<UtilizationSeries> series =
+        ProductionOptimizer.buildUtilizationSeries(result.getIterationHistory());
     Assertions.assertFalse(series.isEmpty(), "Series data should be produced");
     boolean bottleneckTracked = series.stream()
         .anyMatch(s -> s.getBottleneckFlags().stream().anyMatch(Boolean::booleanValue));
@@ -698,12 +705,9 @@ public class ProductionOptimizerTest {
   }
 
   /**
-   * Test that optimizer correctly uses capacity constraints from auto-sized
-   * separator.
-   * This verifies that after autoSize(), the separator's capacity constraints are
-   * properly
-   * used by the optimizer (via getMaxUtilization() from
-   * CapacityConstrainedEquipment).
+   * Test that optimizer correctly uses capacity constraints from auto-sized separator. This
+   * verifies that after autoSize(), the separator's capacity constraints are properly used by the
+   * optimizer (via getMaxUtilization() from CapacityConstrainedEquipment).
    */
   @Test
   public void testSeparatorCapacityConstraintAfterAutoSize() {
@@ -734,7 +738,7 @@ public class ProductionOptimizerTest {
     // Get initial utilization before autoSize (should be low since separator is
     // oversized)
     double initialUtil = separator.getMaxUtilization();
-    System.out.println("Initial utilization (before autoSize): " + (initialUtil * 100) + "%");
+    logger.info("Initial utilization (before autoSize): " + (initialUtil * 100) + "%");
 
     // Auto-size the separator to match current flow
     separator.autoSize(1.0); // No safety factor for this test
@@ -742,39 +746,38 @@ public class ProductionOptimizerTest {
 
     // After autoSize with safety factor 1.0, utilization should be close to 100%
     double utilAfterAutoSize = separator.getMaxUtilization();
-    System.out.println("Utilization after autoSize(1.0): " + (utilAfterAutoSize * 100) + "%");
+    logger.info("Utilization after autoSize(1.0): " + (utilAfterAutoSize * 100) + "%");
     Assertions.assertTrue(utilAfterAutoSize > 0.5 && utilAfterAutoSize < 1.5,
-        "Utilization should be reasonable (50-150%) after autoSize(1.0), got: " + (utilAfterAutoSize * 100) + "%");
+        "Utilization should be reasonable (50-150%) after autoSize(1.0), got: "
+            + (utilAfterAutoSize * 100) + "%");
 
     // Now test the optimizer
     ProductionOptimizer optimizer = new ProductionOptimizer();
     double baseRate = inlet.getFlowRate("kg/hr");
     OptimizationConfig config = new OptimizationConfig(baseRate * 0.5, baseRate * 1.5)
-        .rateUnit("kg/hr")
-        .tolerance(baseRate * 0.01)
-        .maxIterations(20);
+        .rateUnit("kg/hr").tolerance(baseRate * 0.01).maxIterations(20);
 
     OptimizationResult result = optimizer.optimize(process, inlet, config, Collections.emptyList(),
         Collections.emptyList());
 
     // Print iteration history for debugging
-    System.out.println("=== ITERATION HISTORY ===");
+    logger.info("=== ITERATION HISTORY ===");
     for (IterationRecord rec : result.getIterationHistory()) {
-      System.out.printf("  Rate=%.1f, Util=%.1f%%, Feasible=%b%n",
-          rec.getRate(), rec.getBottleneckUtilization() * 100, rec.isFeasible());
+      System.out.printf("  Rate=%.1f, Util=%.1f%%, Feasible=%b%n", rec.getRate(),
+          rec.getBottleneckUtilization() * 100, rec.isFeasible());
     }
 
     // The optimal rate should be close to the original rate (since separator was
     // sized for it)
     double optimalRate = result.getOptimalRate();
-    System.out.println("Optimal rate: " + optimalRate + " kg/hr");
-    System.out.println("Feasible: " + result.isFeasible());
+    logger.info("Optimal rate: " + optimalRate + " kg/hr");
+    logger.info("Feasible: " + result.isFeasible());
 
     // Verify no crazy utilization values (like 53597%)
     for (IterationRecord rec : result.getIterationHistory()) {
       Assertions.assertTrue(rec.getBottleneckUtilization() < 10.0,
-          "Utilization should be reasonable (<1000%), got: " + (rec.getBottleneckUtilization() * 100) + "% at rate "
-              + rec.getRate());
+          "Utilization should be reasonable (<1000%), got: "
+              + (rec.getBottleneckUtilization() * 100) + "% at rate " + rec.getRate());
     }
 
     // Result should be feasible if we started at a feasible point
@@ -808,17 +811,17 @@ public class ProductionOptimizerTest {
     process.run();
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
-    OptimizationConfig config = new OptimizationConfig(1000.0, 10000.0)
-        .rateUnit("kg/hr")
-        .maxIterations(10);
+    OptimizationConfig config =
+        new OptimizationConfig(1000.0, 10000.0).rateUnit("kg/hr").maxIterations(10);
 
-    OptimizationResult result = optimizer.optimize(process, inlet, config,
-        Collections.emptyList(), Collections.emptyList());
+    OptimizationResult result = optimizer.optimize(process, inlet, config, Collections.emptyList(),
+        Collections.emptyList());
 
     // Test JSON export
     String json = result.exportIterationHistoryAsJson();
     Assertions.assertNotNull(json, "JSON export should not be null");
-    Assertions.assertTrue(json.contains("\"iterationHistory\""), "JSON should contain iterationHistory");
+    Assertions.assertTrue(json.contains("\"iterationHistory\""),
+        "JSON should contain iterationHistory");
     Assertions.assertTrue(json.contains("\"rate\""), "JSON should contain rate field");
     Assertions.assertTrue(json.contains("\"feasible\""), "JSON should contain feasible field");
     Assertions.assertTrue(json.contains("\"optimalRate\""), "JSON should contain optimalRate");
@@ -837,15 +840,12 @@ public class ProductionOptimizerTest {
   }
 
   /**
-   * Tests optimization of a three-phase separator with all capacity constraints
-   * enabled and
+   * Tests optimization of a three-phase separator with all capacity constraints enabled and
    * autosizing. This comprehensive test verifies:
    * <ul>
-   * <li>ThreePhaseSeparator capacity analysis with gas, oil, and water
-   * phases</li>
+   * <li>ThreePhaseSeparator capacity analysis with gas, oil, and water phases</li>
    * <li>autoSize() properly sizes the separator for the given flow</li>
-   * <li>All capacity constraints (gas load, liquid load, residence time) are
-   * active</li>
+   * <li>All capacity constraints (gas load, liquid load, residence time) are active</li>
    * <li>Optimizer finds the maximum feasible flow rate</li>
    * <li>Constraint summary shows all active constraints</li>
    * </ul>
@@ -890,8 +890,8 @@ public class ProductionOptimizerTest {
 
     // Get initial utilization before autoSize
     double initialUtil = separator.getMaxUtilization();
-    System.out.println("\n=== THREE-PHASE SEPARATOR OPTIMIZATION TEST ===");
-    System.out.println("Initial utilization (before autoSize): " + (initialUtil * 100) + "%");
+    logger.info("\n=== THREE-PHASE SEPARATOR OPTIMIZATION TEST ===");
+    logger.info("Initial utilization (before autoSize): " + (initialUtil * 100) + "%");
 
     // Auto-size the separator to match current flow with 50% safety margin
     // Note: Use higher safety factor to ensure K-value constraint is satisfied
@@ -912,25 +912,26 @@ public class ProductionOptimizerTest {
 
     // Check utilization after autoSize
     double utilAfterAutoSize = separator.getMaxUtilization();
-    System.out.println("Utilization after autoSize(1.2): " + (utilAfterAutoSize * 100) + "%");
+    logger.info("Utilization after autoSize(1.2): " + (utilAfterAutoSize * 100) + "%");
 
     // Print separator dimensions
-    System.out.println("Separator dimensions after autoSize:");
-    System.out.println("  Inner diameter: " + separator.getInternalDiameter() + " m");
-    System.out.println("  Length: " + separator.getSeparatorLength() + " m");
-    System.out.println("  Inlet nozzle ID: " + separator.getMechanicalDesign().getInletNozzleID() + " m");
+    logger.info("Separator dimensions after autoSize:");
+    logger.info("  Inner diameter: " + separator.getInternalDiameter() + " m");
+    logger.info("  Length: " + separator.getSeparatorLength() + " m");
+    logger.info("  Inlet nozzle ID: " + separator.getMechanicalDesign().getInletNozzleID() + " m");
 
     // Print constraint summary
     String constraintSummary = separator.getConstraintSummary();
-    System.out.println("\n" + constraintSummary);
+    logger.info("\n" + constraintSummary);
 
     // Debug: Print all constraint values including disabled ones
-    System.out.println("\n=== ALL CONSTRAINTS (including disabled) ===");
-    for (Map.Entry<String, CapacityConstraint> entry : separator.getCapacityConstraints().entrySet()) {
+    logger.info("\n=== ALL CONSTRAINTS (including disabled) ===");
+    for (Map.Entry<String, CapacityConstraint> entry : separator.getCapacityConstraints()
+        .entrySet()) {
       CapacityConstraint c = entry.getValue();
       System.out.printf("  %s: enabled=%b, value=%.4f %s, maxValue=%.4f, util=%.1f%%%n",
-          c.getName(), c.isEnabled(), c.getCurrentValue(), c.getUnit(),
-          c.getMaxValue(), c.getUtilization() * 100);
+          c.getName(), c.isEnabled(), c.getCurrentValue(), c.getUnit(), c.getMaxValue(),
+          c.getUtilization() * 100);
     }
 
     // Verify constraints exist
@@ -941,43 +942,39 @@ public class ProductionOptimizerTest {
     ProductionOptimizer optimizer = new ProductionOptimizer();
     double baseRate = inlet.getFlowRate("kg/hr");
 
-    OptimizationConfig config = new OptimizationConfig(baseRate * 0.2, baseRate * 2.0)
-        .rateUnit("kg/hr")
-        .tolerance(baseRate * 0.01)
-        .maxIterations(30)
-        .searchMode(SearchMode.BINARY_FEASIBILITY);
+    OptimizationConfig config =
+        new OptimizationConfig(baseRate * 0.2, baseRate * 2.0).rateUnit("kg/hr")
+            .tolerance(baseRate * 0.01).maxIterations(30).searchMode(SearchMode.BINARY_FEASIBILITY);
 
-    OptimizationResult result = optimizer.optimize(process, inlet, config,
-        Collections.emptyList(), Collections.emptyList());
+    OptimizationResult result = optimizer.optimize(process, inlet, config, Collections.emptyList(),
+        Collections.emptyList());
 
     // Print optimization results
-    System.out.println("\n=== OPTIMIZATION RESULTS ===");
-    System.out.println("Optimal flow rate: " + result.getOptimalRate() + " " + result.getRateUnit());
-    System.out.println("Feasible: " + result.isFeasible());
-    System.out.println("Iterations: " + result.getIterations());
-    System.out.println("Bottleneck: "
+    logger.info("\n=== OPTIMIZATION RESULTS ===");
+    logger.info("Optimal flow rate: " + result.getOptimalRate() + " " + result.getRateUnit());
+    logger.info("Feasible: " + result.isFeasible());
+    logger.info("Iterations: " + result.getIterations());
+    logger.info("Bottleneck: "
         + (result.getBottleneck() != null ? result.getBottleneck().getName() : "none"));
-    System.out.println("Bottleneck utilization: " + (result.getBottleneckUtilization() * 100) + "%");
+    logger.info("Bottleneck utilization: " + (result.getBottleneckUtilization() * 100) + "%");
 
     // Print utilization records
-    System.out.println("\nEquipment utilizations at optimal point:");
+    logger.info("\nEquipment utilizations at optimal point:");
     for (ProductionOptimizer.UtilizationRecord rec : result.getUtilizationRecords()) {
-      System.out.println("  " + rec.getEquipmentName() + ": "
-          + String.format("%.1f%%", rec.getUtilization() * 100)
-          + " (limit: " + String.format("%.1f%%", rec.getUtilizationLimit() * 100) + ")");
+      logger.info(
+          "  " + rec.getEquipmentName() + ": " + String.format("%.1f%%", rec.getUtilization() * 100)
+              + " (limit: " + String.format("%.1f%%", rec.getUtilizationLimit() * 100) + ")");
     }
 
     // Print iteration history summary
-    System.out.println("\n=== ITERATION HISTORY ===");
+    logger.info("\n=== ITERATION HISTORY ===");
     for (IterationRecord rec : result.getIterationHistory()) {
-      System.out.printf("  Rate=%.0f, Bottleneck=%s, Util=%.1f%%, Feasible=%b%n",
-          rec.getRate(), rec.getBottleneckName(),
-          rec.getBottleneckUtilization() * 100, rec.isFeasible());
+      System.out.printf("  Rate=%.0f, Bottleneck=%s, Util=%.1f%%, Feasible=%b%n", rec.getRate(),
+          rec.getBottleneckName(), rec.getBottleneckUtilization() * 100, rec.isFeasible());
     }
 
     // Assertions
-    Assertions.assertTrue(result.isFeasible(),
-        "Optimization should find a feasible solution");
+    Assertions.assertTrue(result.isFeasible(), "Optimization should find a feasible solution");
 
     // Optimal rate should be higher than minimum but not exceed original rate by
     // too much
@@ -999,9 +996,8 @@ public class ProductionOptimizerTest {
         "JSON export should contain iteration history");
 
     String csv = result.exportIterationHistoryAsCsv();
-    Assertions.assertTrue(csv.split("\n").length > 5,
-        "CSV should have multiple iteration rows");
+    Assertions.assertTrue(csv.split("\n").length > 5, "CSV should have multiple iteration rows");
 
-    System.out.println("\n=== TEST PASSED ===");
+    logger.info("\n=== TEST PASSED ===");
   }
 }

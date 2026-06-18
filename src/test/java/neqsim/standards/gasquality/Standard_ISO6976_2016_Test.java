@@ -8,11 +8,15 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @author ESOL
  */
 class Standard_ISO6976_2016_Test extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(Standard_ISO6976_2016_Test.class);
+
   static SystemInterface testSystem = null;
 
   /**

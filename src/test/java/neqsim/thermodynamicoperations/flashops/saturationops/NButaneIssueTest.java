@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test to investigate n-butane performance issue in electrolyte systems.
@@ -14,6 +16,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 @Tag("slow")
 public class NButaneIssueTest {
+  private static final Logger logger = LogManager.getLogger(NButaneIssueTest.class);
+
 
   /**
    * Test with n-butane - the problematic case.
@@ -21,7 +25,7 @@ public class NButaneIssueTest {
   @Test
   @DisplayName("Test WITH n-butane")
   public void testWithNButane() throws Exception {
-    System.out.println("=== Test WITH n-butane ===\n");
+    logger.info("=== Test WITH n-butane ===\n");
 
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 50.0);
 
@@ -46,10 +50,10 @@ public class NButaneIssueTest {
     long end = System.currentTimeMillis();
 
     double hydrateTemp = fluid.getTemperature() - 273.15;
-    System.out.println("With n-butane:");
-    System.out.println("  Hydrate temp: " + hydrateTemp + " °C");
-    System.out.println("  Time: " + (end - start) + " ms");
-    System.out.println("  Phases: " + fluid.getNumberOfPhases());
+    logger.info("With n-butane:");
+    logger.info("  Hydrate temp: " + hydrateTemp + " °C");
+    logger.info("  Time: " + (end - start) + " ms");
+    logger.info("  Phases: " + fluid.getNumberOfPhases());
   }
 
   /**
@@ -58,7 +62,7 @@ public class NButaneIssueTest {
   @Test
   @DisplayName("Test WITHOUT n-butane")
   public void testWithoutNButane() throws Exception {
-    System.out.println("=== Test WITHOUT n-butane ===\n");
+    logger.info("=== Test WITHOUT n-butane ===\n");
 
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 50.0);
 
@@ -83,10 +87,10 @@ public class NButaneIssueTest {
     long end = System.currentTimeMillis();
 
     double hydrateTemp = fluid.getTemperature() - 273.15;
-    System.out.println("Without n-butane:");
-    System.out.println("  Hydrate temp: " + hydrateTemp + " °C");
-    System.out.println("  Time: " + (end - start) + " ms");
-    System.out.println("  Phases: " + fluid.getNumberOfPhases());
+    logger.info("Without n-butane:");
+    logger.info("  Hydrate temp: " + hydrateTemp + " °C");
+    logger.info("  Time: " + (end - start) + " ms");
+    logger.info("  Phases: " + fluid.getNumberOfPhases());
   }
 
   /**
@@ -95,7 +99,7 @@ public class NButaneIssueTest {
   @Test
   @DisplayName("Test TPflash with n-butane at different temperatures")
   public void testTPflashWithNButane() {
-    System.out.println("=== TPflash with n-butane at different temperatures ===\n");
+    logger.info("=== TPflash with n-butane at different temperatures ===\n");
 
     double[] temps = {273.15 + 10, 273.15 - 5, 273.15 - 10, 273.15 - 15};
 
@@ -121,14 +125,14 @@ public class NButaneIssueTest {
       ops.TPflash();
       long end = System.currentTimeMillis();
 
-      System.out.println("T = " + (temp - 273.15) + " °C:");
-      System.out.println("  Time: " + (end - start) + " ms");
-      System.out.println("  Phases: " + fluid.getNumberOfPhases());
+      logger.info("T = " + (temp - 273.15) + " °C:");
+      logger.info("  Time: " + (end - start) + " ms");
+      logger.info("  Phases: " + fluid.getNumberOfPhases());
       for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-        System.out.println("    Phase " + i + ": " + fluid.getPhase(i).getPhaseTypeName() + " beta="
+        logger.info("    Phase " + i + ": " + fluid.getPhase(i).getPhaseTypeName() + " beta="
             + String.format("%.4f", fluid.getBeta(i)));
       }
-      System.out.println();
+
     }
   }
 
@@ -138,7 +142,7 @@ public class NButaneIssueTest {
   @Test
   @DisplayName("Compare phase count with and without n-butane")
   public void testPhaseCountComparison() {
-    System.out.println("=== Phase count comparison ===\n");
+    logger.info("=== Phase count comparison ===\n");
 
     // WITH n-butane
     SystemInterface fluid1 = new SystemElectrolyteCPAstatoil(273.15 - 10.0, 50.0);
@@ -157,10 +161,10 @@ public class NButaneIssueTest {
     ThermodynamicOperations ops1 = new ThermodynamicOperations(fluid1);
     ops1.TPflash();
 
-    System.out.println("WITH n-butane at -10°C:");
-    System.out.println("  Phases: " + fluid1.getNumberOfPhases());
+    logger.info("WITH n-butane at -10°C:");
+    logger.info("  Phases: " + fluid1.getNumberOfPhases());
     for (int i = 0; i < fluid1.getNumberOfPhases(); i++) {
-      System.out.println("    Phase " + i + ": " + fluid1.getPhase(i).getPhaseTypeName());
+      logger.info("    Phase " + i + ": " + fluid1.getPhase(i).getPhaseTypeName());
       if (fluid1.getPhase(i).hasComponent("n-butane")) {
         System.out
             .println("      n-butane x = " + fluid1.getPhase(i).getComponent("n-butane").getx());
@@ -184,10 +188,10 @@ public class NButaneIssueTest {
     ThermodynamicOperations ops2 = new ThermodynamicOperations(fluid2);
     ops2.TPflash();
 
-    System.out.println("\nWITHOUT n-butane at -10°C:");
-    System.out.println("  Phases: " + fluid2.getNumberOfPhases());
+    logger.info("\nWITHOUT n-butane at -10°C:");
+    logger.info("  Phases: " + fluid2.getNumberOfPhases());
     for (int i = 0; i < fluid2.getNumberOfPhases(); i++) {
-      System.out.println("    Phase " + i + ": " + fluid2.getPhase(i).getPhaseTypeName());
+      logger.info("    Phase " + i + ": " + fluid2.getPhase(i).getPhaseTypeName());
     }
   }
 
@@ -197,7 +201,7 @@ public class NButaneIssueTest {
   @Test
   @DisplayName("Check n-butane component properties")
   public void testNButaneProperties() {
-    System.out.println("=== n-butane component properties ===\n");
+    logger.info("=== n-butane component properties ===\n");
 
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15, 50.0);
     fluid.addComponent("n-butane", 1.0);
@@ -205,14 +209,14 @@ public class NButaneIssueTest {
 
     fluid.init(0);
 
-    System.out.println("n-butane properties:");
-    System.out.println("  TC = " + fluid.getPhase(0).getComponent("n-butane").getTC() + " K");
-    System.out.println("  PC = " + fluid.getPhase(0).getComponent("n-butane").getPC() + " bar");
+    logger.info("n-butane properties:");
+    logger.info("  TC = " + fluid.getPhase(0).getComponent("n-butane").getTC() + " K");
+    logger.info("  PC = " + fluid.getPhase(0).getComponent("n-butane").getPC() + " bar");
     System.out
         .println("  Acentric = " + fluid.getPhase(0).getComponent("n-butane").getAcentricFactor());
-    System.out.println(
+    logger.info(
         "  Molar mass = " + fluid.getPhase(0).getComponent("n-butane").getMolarMass() + " kg/mol");
-    System.out.println(
+    logger.info(
         "  Is hydrate former: " + fluid.getPhase(0).getComponent("n-butane").isHydrateFormer());
     System.out
         .println("  Ionic charge: " + fluid.getPhase(0).getComponent("n-butane").getIonicCharge());
@@ -224,7 +228,7 @@ public class NButaneIssueTest {
   @Test
   @DisplayName("Profile stability analysis with n-butane")
   public void testStabilityAnalysisWithNButane() {
-    System.out.println("=== Stability analysis timing ===\n");
+    logger.info("=== Stability analysis timing ===\n");
 
     // At low temperature where stability analysis is most expensive
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 - 10.0, 50.0);
@@ -242,10 +246,10 @@ public class NButaneIssueTest {
     fluid.setMixingRule(10);
     fluid.setMultiPhaseCheck(true);
 
-    System.out.println("Number of components: " + fluid.getNumberOfComponents());
-    System.out.println("Components:");
+    logger.info("Number of components: " + fluid.getNumberOfComponents());
+    logger.info("Components:");
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-      System.out.println("  " + i + ": " + fluid.getComponent(i).getName() + " (ionic charge: "
+      logger.info("  " + i + ": " + fluid.getComponent(i).getName() + " (ionic charge: "
           + fluid.getComponent(i).getIonicCharge() + ")");
     }
 
@@ -256,7 +260,7 @@ public class NButaneIssueTest {
     ops.TPflash();
     long end = System.currentTimeMillis();
 
-    System.out.println("\nTPflash time: " + (end - start) + " ms");
-    System.out.println("Final phases: " + fluid.getNumberOfPhases());
+    logger.info("\nTPflash time: " + (end - start) + " ms");
+    logger.info("Final phases: " + fluid.getNumberOfPhases());
   }
 }

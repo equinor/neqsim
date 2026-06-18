@@ -5,6 +5,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -16,6 +18,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestNeqsim {
+  private static final Logger logger = LogManager.getLogger(TestNeqsim.class);
+
   /**
    * <p>
    * main.
@@ -91,12 +95,12 @@ public class TestNeqsim {
         + stream1.getThermoSystem().getWtFraction(1) * DensityOil
         + stream1.getThermoSystem().getWtFraction(2) * Densityliquid;
     // operations.run();
-    // System.out.println("work " + compressor1.getTotalWork() + " density " + Density1 + " Cp "
+    // logger.info("work " + compressor1.getTotalWork() + " density " + Density1 + " Cp "
     // + Cpone + " SPEED OF SOUND " + stream1.getThermoSystem().getPhase(0).getSoundSpeed());
 
     compressor1.solveEfficiency(390.15);
     compressor1.getOutletStream().displayResult();
-    // System.out.println("Hvap " + stream1.getThermoSystem().getHeatOfVaporization() + " POLI "
+    // logger.info("Hvap " + stream1.getThermoSystem().getHeatOfVaporization() + " POLI "
     // + compressor1.getPolytropicEfficiency() + " dentity "
     // + stream1.getThermoSystem().getDensity() + " cp " + stream1.getThermoSystem().getCp());
     stream1.getThermoSystem().display();
@@ -114,7 +118,7 @@ public class TestNeqsim {
 
     double GMF = massFlowGas / (massFlowGas + massFlowOil + massFlowLiq);
     double GVF = volFlowGas / (volFlowGas + volFlowOil + volFlowLiq);
-    System.out.println(
+    logger.info(
         "inlet stream -  GMF " + GMF + "  GVF " + GVF + " Z IN " + stream1.getThermoSystem().getZ()
             + " Z OUT " + compressor1.getOutletStream().getThermoSystem().getZ());
     /*
@@ -133,7 +137,7 @@ public class TestNeqsim {
      */
     // }
 
-    // System.out.println("poli");
+    // logger.info("poli");
     // stream2.displayResult();
     // operations.displayResult();
     // ThermodynamicOperations flash = new ThermodynamicOperations(testFluid);
@@ -142,15 +146,14 @@ public class TestNeqsim {
   }
   // catch(Exception ex){
   /*
-   * System.out.println( "P_out" ); for (int i=0;i<10;i++ ) { System.out.println(20 + 5*i); }
+   * logger.info( "P_out" ); for (int i=0;i<10;i++ ) { logger.info(20 + 5*i); }
    *
-   * System.out.println( "Temperature" ); for (int i=0;i<10;i++ ) { System.out.println(
-   * temperature[i] ); }
+   * logger.info( "Temperature" ); for (int i=0;i<10;i++ ) { logger.info( temperature[i] ); }
    *
-   * System.out.println( "Work" ); for (int i=0;i<10;i++ ) { System.out.println( work [i] ); }
-   * System.out.println( "Cp" ); for (int i=0;i<10;i++ ) { System.out.println( Cp [i] ); }
+   * logger.info( "Work" ); for (int i=0;i<10;i++ ) { logger.info( work [i] ); } logger.info( "Cp"
+   * ); for (int i=0;i<10;i++ ) { logger.info( Cp [i] ); }
    *
-   * System.out.println( "Density" ); for (int i=0;i<10;i++ ) { System.out.println( Density [i] );
+   * logger.info( "Density" ); for (int i=0;i<10;i++ ) { logger.info( Density [i] );
    */
 }
 // }

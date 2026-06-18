@@ -9,9 +9,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(SystemThermoSetMolarCompositionTest.class);
+  private static final Logger logger = LogManager.getLogger(SystemThermoSetMolarCompositionTest.class);
 
+  /** Logger object for class. */
+  
   SystemInterface sys;
 
   @BeforeEach

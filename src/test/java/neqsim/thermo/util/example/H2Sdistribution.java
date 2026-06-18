@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class H2Sdistribution {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(H2Sdistribution.class);
+  private static final Logger logger = LogManager.getLogger(H2Sdistribution.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -54,6 +55,6 @@ public class H2Sdistribution {
     } catch (Exception ex) {
     }
     testSystem.display();
-    // System.out.println("pH " + testSystem.getPhase("aqueous").getpH());
+    // logger.info("pH " + testSystem.getPhase("aqueous").getpH());
   }
 }

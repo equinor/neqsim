@@ -3,6 +3,8 @@ package neqsim.fluidmechanics.flowsolver.twophaseflowsolver;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowPattern;
 import neqsim.fluidmechanics.flownode.InterfacialAreaCalculator;
 import neqsim.fluidmechanics.flownode.MassTransferCoefficientCalculator;
@@ -30,6 +32,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class MassTransferEnhancedTest {
+  private static final Logger logger = LogManager.getLogger(MassTransferEnhancedTest.class);
 
   private static final double TOLERANCE = 0.15; // 15% tolerance for literature comparison
 
@@ -238,7 +241,7 @@ public class MassTransferEnhancedTest {
 
     // Perry's Handbook (8th ed.) Table 5-18: kL ~ 3e-5 to 3e-4 m/s for typical packed columns
     // Pipe flow with high turbulence can be higher
-    System.out.println("Lamont-Scott kL = " + kL_LamontScott + " m/s, Sc = " + Sc);
+    logger.info("Lamont-Scott kL = " + kL_LamontScott + " m/s, Sc = " + Sc);
   }
 
   /**
@@ -266,7 +269,7 @@ public class MassTransferEnhancedTest {
     assertTrue(kG > 1e-3, "kG should be in reasonable range for turbulent gas flow");
     assertTrue(kG < 1.0, "kG should be in reasonable range for turbulent gas flow");
 
-    System.out.println("Gilliland-Sherwood kG = " + kG + " m/s, Sh = " + Sh);
+    logger.info("Gilliland-Sherwood kG = " + kG + " m/s, Sh = " + Sh);
   }
 
   /**
@@ -298,7 +301,7 @@ public class MassTransferEnhancedTest {
     assertTrue(correction > 0.0, "Marangoni correction should be positive");
     assertTrue(correction <= 1.0, "Marangoni correction should be <= 1.0 for reduction");
 
-    System.out.println("Marangoni number = " + Ma + ", correction = " + correction);
+    logger.info("Marangoni number = " + Ma + ", correction = " + correction);
   }
 
   // ========================================================================
@@ -401,7 +404,7 @@ public class MassTransferEnhancedTest {
     assertTrue(enhancedArea > 5.0, "Interfacial area should be > 5 m²/m³ for stratified wavy");
     assertTrue(enhancedArea < 50.0, "Interfacial area should be < 50 m²/m³ for stratified wavy");
 
-    System.out.println("Solbraa (2002) validation: calculated a = " + enhancedArea + " m²/m³");
+    logger.info("Solbraa (2002) validation: calculated a = " + enhancedArea + " m²/m³");
   }
 
   /**
@@ -425,7 +428,7 @@ public class MassTransferEnhancedTest {
     assertTrue(kL > 1e-6, "kL should be > 1e-6 m/s for annular flow per Hewitt (1998)");
     assertTrue(kL < 1e-3, "kL should be < 1e-3 m/s for annular flow per Hewitt (1998)");
 
-    System.out.println("Hewitt (1998) validation: kL = " + kL + " m/s, Sh = " + Sh);
+    logger.info("Hewitt (1998) validation: kL = " + kL + " m/s, Sh = " + Sh);
   }
 
   /**
@@ -450,7 +453,7 @@ public class MassTransferEnhancedTest {
 
     // Our correlations should give values in this range
     // for similar conditions (turbulent, high gas velocity)
-    System.out.println("Perry's expected range: " + expected_KGa_min + " to " + expected_KGa_max
+    logger.info("Perry's expected range: " + expected_KGa_min + " to " + expected_KGa_max
         + " mol/(m³.s.Pa)");
 
     assertTrue(expected_KGa_min > 0, "KG*a should be positive");

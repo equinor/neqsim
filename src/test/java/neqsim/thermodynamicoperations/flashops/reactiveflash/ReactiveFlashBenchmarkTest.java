@@ -6,6 +6,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Benchmark tests for the reactive multiphase flash against literature data.
@@ -30,6 +32,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class ReactiveFlashBenchmarkTest {
+  private static final Logger logger = LogManager.getLogger(ReactiveFlashBenchmarkTest.class);
+
 
   /**
    * Test ThermodynamicOperations.reactiveTPflash() integration.
@@ -1519,15 +1523,15 @@ public class ReactiveFlashBenchmarkTest {
     system.init(1);
 
     FormulaMatrix fm = new FormulaMatrix(system);
-    System.out.println("DEBUG NaCl: NE=" + fm.getNumberOfElements() + " NC="
-        + fm.getNumberOfComponents() + " rank=" + fm.getRank() + " NR="
-        + fm.getNumberOfIndependentReactions() + " hasIons=" + fm.hasIonicSpecies());
-    System.out.println("DEBUG NaCl: elements=" + java.util.Arrays.toString(fm.getElementNames()));
-    System.out.println("DEBUG NaCl: numPhases=" + system.getNumberOfPhases());
+    logger.info("DEBUG NaCl: NE=" + fm.getNumberOfElements() + " NC=" + fm.getNumberOfComponents()
+        + " rank=" + fm.getRank() + " NR=" + fm.getNumberOfIndependentReactions() + " hasIons="
+        + fm.hasIonicSpecies());
+    logger.info("DEBUG NaCl: elements=" + java.util.Arrays.toString(fm.getElementNames()));
+    logger.info("DEBUG NaCl: numPhases=" + system.getNumberOfPhases());
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.run();
-    System.out.println("DEBUG NaCl: converged=" + flash.isConverged() + " NR="
+    logger.info("DEBUG NaCl: converged=" + flash.isConverged() + " NR="
         + flash.getNumberOfReactions() + " iters=" + flash.getTotalIterations());
 
     // Should converge (ions are conserved, no reactions needed)
@@ -1782,8 +1786,8 @@ public class ReactiveFlashBenchmarkTest {
     flash.run();
 
     int ncAfter = system.getPhase(0).getNumberOfComponents();
-    System.out.println("chemicalReactionInit: before=" + ncBefore + " after=" + ncAfter
-        + " converged=" + flash.isConverged() + " NR=" + flash.getNumberOfReactions());
+    logger.info("chemicalReactionInit: before=" + ncBefore + " after=" + ncAfter + " converged="
+        + flash.isConverged() + " NR=" + flash.getNumberOfReactions());
 
     // chemicalReactionInit should have added ionic species
     assertTrue(ncAfter > ncBefore,
@@ -1796,7 +1800,7 @@ public class ReactiveFlashBenchmarkTest {
     for (int i = 0; i < ncAfter; i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName();
       double xi = system.getPhase(0).getComponent(i).getx();
-      System.out.println("  " + name + ": " + xi);
+      logger.info("  " + name + ": " + xi);
     }
 
     // Water should remain dominant
@@ -1836,8 +1840,8 @@ public class ReactiveFlashBenchmarkTest {
     system.init(1);
 
     int nc = system.getPhase(0).getNumberOfComponents();
-    System.out.println("=== Methane/CO2/nC7/Water reactive flash (VLE+CE) ===");
-    System.out.println("NC=" + nc + " T=" + (system.getTemperature() - 273.15) + "C P="
+    logger.info("=== Methane/CO2/nC7/Water reactive flash (VLE+CE) ===");
+    logger.info("NC=" + nc + " T=" + (system.getTemperature() - 273.15) + "C P="
         + system.getPressure() + " bar");
 
     // Step 1: Standard VLE flash to get proper 2-phase initial state
@@ -1845,21 +1849,21 @@ public class ReactiveFlashBenchmarkTest {
     // before applying chemical equilibrium reactions
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     ops.TPflash();
-    System.out.println("After VLE: phases=" + system.getNumberOfPhases());
+    logger.info("After VLE: phases=" + system.getNumberOfPhases());
 
     // Step 2: Reactive flash for CE on top of the VLE result
     FormulaMatrix fm = new FormulaMatrix(system);
     int nReactions = fm.getNumberOfIndependentReactions();
-    System.out.println("NE=" + fm.getNumberOfElements() + " rank=" + fm.getRank() + " NR="
-        + nReactions + " hasIons=" + fm.hasIonicSpecies());
+    logger.info("NE=" + fm.getNumberOfElements() + " rank=" + fm.getRank() + " NR=" + nReactions
+        + " hasIons=" + fm.hasIonicSpecies());
     assertTrue(nReactions >= 2,
         "Multi-component CO2/water/ions system should have >= 2 independent reactions");
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.run();
 
-    System.out.println("converged=" + flash.isConverged() + " iterations="
-        + flash.getTotalIterations() + " phases=" + system.getNumberOfPhases());
+    logger.info("converged=" + flash.isConverged() + " iterations=" + flash.getTotalIterations()
+        + " phases=" + system.getNumberOfPhases());
 
     assertTrue(flash.isConverged(), "Methane/CO2/nC7/water reactive flash should converge");
 
@@ -1906,15 +1910,15 @@ public class ReactiveFlashBenchmarkTest {
     system.init(1);
 
     int ncBefore = system.getPhase(0).getNumberOfComponents();
-    System.out.println("=== Methane/CO2/nC7/Water with chemicalReactionInit ===");
-    System.out.println("NC before = " + ncBefore);
+    logger.info("=== Methane/CO2/nC7/Water with chemicalReactionInit ===");
+    logger.info("NC before = " + ncBefore);
 
     ReactiveMultiphaseTPflash flash = new ReactiveMultiphaseTPflash(system);
     flash.setUseChemicalReactionInit(true);
     flash.run();
 
     int ncAfter = system.getPhase(0).getNumberOfComponents();
-    System.out.println("NC after = " + ncAfter + " converged=" + flash.isConverged() + " NR="
+    logger.info("NC after = " + ncAfter + " converged=" + flash.isConverged() + " NR="
         + flash.getNumberOfReactions() + " iters=" + flash.getTotalIterations());
 
     // chemicalReactionInit should have added ionic species

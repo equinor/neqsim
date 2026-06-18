@@ -6,11 +6,15 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @author ESOL
  */
 class TPmultiflashTest {
+  private static final Logger logger = LogManager.getLogger(TPmultiflashTest.class);
+
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static ThermodynamicOperations testOps = null;
 
@@ -35,12 +39,12 @@ class TPmultiflashTest {
       testOps = new ThermodynamicOperations(testSystem);
       testOps.TPflash();
       testSystem.initProperties();
-      System.out.println("Pressure: " + p + " bara");
+      logger.info("Pressure: " + p + " bara");
       testSystem.prettyPrint();
       if (testSystem.getNumberOfPhases() == 1) {
-        System.out.println("Single phase detected at pressure: " + p + " bara");
+        logger.info("Single phase detected at pressure: " + p + " bara");
       } else {
-        System.out.println("Multiple phases detected at pressure: " + p + " bara");
+        logger.info("Multiple phases detected at pressure: " + p + " bara");
       }
     }
   }
@@ -164,11 +168,11 @@ class TPmultiflashTest {
         "Expected at least 2 phases for sour gas at low T, got " + sourGas.getNumberOfPhases());
 
     // Print phase information for debugging
-    System.out.println("Sour gas flash at T=" + sourGas.getTemperature("C") + " C, P="
+    logger.info("Sour gas flash at T=" + sourGas.getTemperature("C") + " C, P="
         + sourGas.getPressure("bara") + " bar");
-    System.out.println("Number of phases: " + sourGas.getNumberOfPhases());
+    logger.info("Number of phases: " + sourGas.getNumberOfPhases());
     for (int i = 0; i < sourGas.getNumberOfPhases(); i++) {
-      System.out.println(
+      logger.info(
           "  Phase " + i + ": " + sourGas.getPhase(i).getType() + ", beta=" + sourGas.getBeta(i));
     }
   }
@@ -210,7 +214,7 @@ class TPmultiflashTest {
             if (presBar > maxPressureThreePhase) {
               maxPressureThreePhase = presBar;
             }
-            // System.out.println(
+            // logger.info(
             // "Three phases found at T=" + (tempK - 273.15) + " C, P=" + presBar + " bar");
           }
         } catch (Exception e) {
@@ -219,8 +223,8 @@ class TPmultiflashTest {
       }
     }
 
-    System.out.println("Total three-phase points found: " + threePhaseCount);
-    System.out.println("Maximum pressure with three phases: " + maxPressureThreePhase + " bar");
+    logger.info("Total three-phase points found: " + threePhaseCount);
+    logger.info("Maximum pressure with three phases: " + maxPressureThreePhase + " bar");
 
     // We don't strictly assert three-phase is found since the thermodynamic model
     // may not predict it for all parameter combinations, but we verify no crashes

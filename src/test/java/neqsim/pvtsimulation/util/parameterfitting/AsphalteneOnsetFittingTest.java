@@ -9,6 +9,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for AsphalteneOnsetFitting class.
@@ -16,6 +18,8 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * @author ASMF
  */
 public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(AsphalteneOnsetFittingTest.class);
+
   private SystemInterface baseSystem;
 
   @BeforeEach
@@ -123,48 +127,48 @@ public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Test workflow documentation")
   void testWorkflowDocumentation() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("ASPHALTENE ONSET FITTING - WORKFLOW DEMONSTRATION");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("ASPHALTENE ONSET FITTING - WORKFLOW DEMONSTRATION");
+    logger.info(StringUtils.repeat("=", 70));
 
-    System.out.println("Step 1: Create fluid system with asphaltene component");
-    System.out.println("  SystemInterface fluid = new SystemSrkCPAstatoil(373.15, 200.0);");
-    System.out.println("  fluid.addComponent(\"methane\", 0.30);");
-    System.out.println("  fluid.addTBPfraction(\"C7\", 0.30, 0.100, 0.75);");
-    System.out.println("  fluid.addComponent(\"asphaltene\", 0.05);");
-    System.out.println("  fluid.setMixingRule(\"classic\");");
-    System.out.println();
 
-    System.out.println("Step 2: Create fitter and add experimental onset data");
-    System.out.println("  AsphalteneOnsetFitting fitter = new AsphalteneOnsetFitting(fluid);");
-    System.out.println("  fitter.addOnsetPoint(353.15, 350.0);  // T=353K, P_onset=350 bar");
-    System.out.println("  fitter.addOnsetPoint(373.15, 320.0);  // T=373K, P_onset=320 bar");
-    System.out.println("  fitter.addOnsetPoint(393.15, 280.0);  // T=393K, P_onset=280 bar");
-    System.out.println();
+    logger.info("Step 1: Create fluid system with asphaltene component");
+    logger.info("  SystemInterface fluid = new SystemSrkCPAstatoil(373.15, 200.0);");
+    logger.info("  fluid.addComponent(\"methane\", 0.30);");
+    logger.info("  fluid.addTBPfraction(\"C7\", 0.30, 0.100, 0.75);");
+    logger.info("  fluid.addComponent(\"asphaltene\", 0.05);");
+    logger.info("  fluid.setMixingRule(\"classic\");");
 
-    System.out.println("Step 3: Set initial parameter guesses");
-    System.out.println("  fitter.setInitialGuess(3500.0, 0.005);  // epsilon/R=3500K, kappa=0.005");
-    System.out.println();
 
-    System.out.println("Step 4: Configure pressure search range (optional)");
-    System.out.println("  fitter.setPressureRange(500.0, 10.0, 10.0);");
-    System.out.println();
+    logger.info("Step 2: Create fitter and add experimental onset data");
+    logger.info("  AsphalteneOnsetFitting fitter = new AsphalteneOnsetFitting(fluid);");
+    logger.info("  fitter.addOnsetPoint(353.15, 350.0);  // T=353K, P_onset=350 bar");
+    logger.info("  fitter.addOnsetPoint(373.15, 320.0);  // T=373K, P_onset=320 bar");
+    logger.info("  fitter.addOnsetPoint(393.15, 280.0);  // T=393K, P_onset=280 bar");
 
-    System.out.println("Step 5: Run fitting");
-    System.out.println("  boolean success = fitter.solve();");
-    System.out.println();
 
-    System.out.println("Step 6: Get fitted parameters");
-    System.out.println("  double epsilonR = fitter.getFittedAssociationEnergy();");
-    System.out.println("  double kappa = fitter.getFittedAssociationVolume();");
-    System.out.println();
+    logger.info("Step 3: Set initial parameter guesses");
+    logger.info("  fitter.setInitialGuess(3500.0, 0.005);  // epsilon/R=3500K, kappa=0.005");
 
-    System.out.println("Step 7: Use fitted parameters to predict onset at new conditions");
-    System.out.println("  double onsetP = fitter.calculateOnsetPressure(400.0);  // T=400K");
-    System.out.println();
 
-    System.out.println(StringUtils.repeat("=", 70));
+    logger.info("Step 4: Configure pressure search range (optional)");
+    logger.info("  fitter.setPressureRange(500.0, 10.0, 10.0);");
+
+
+    logger.info("Step 5: Run fitting");
+    logger.info("  boolean success = fitter.solve();");
+
+
+    logger.info("Step 6: Get fitted parameters");
+    logger.info("  double epsilonR = fitter.getFittedAssociationEnergy();");
+    logger.info("  double kappa = fitter.getFittedAssociationVolume();");
+
+
+    logger.info("Step 7: Use fitted parameters to predict onset at new conditions");
+    logger.info("  double onsetP = fitter.calculateOnsetPressure(400.0);  // T=400K");
+
+
+    logger.info(StringUtils.repeat("=", 70));
 
     // Verify the documentation matches actual API
     AsphalteneOnsetFitting fitter = new AsphalteneOnsetFitting(baseSystem);
@@ -181,27 +185,27 @@ public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Test typical asphaltene parameter ranges")
   void testTypicalParameterRanges() {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("TYPICAL CPA PARAMETERS FOR ASPHALTENE");
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 70));
+    logger.info("TYPICAL CPA PARAMETERS FOR ASPHALTENE");
+    logger.info(StringUtils.repeat("=", 70));
 
-    System.out.println("Based on literature (Li & Firoozabadi, Vargas et al.):");
-    System.out.println();
-    System.out.println("Parameter                  | Typical Range      | Units");
-    System.out.println("---------------------------|--------------------|---------");
-    System.out.println("Molar Mass                 | 500 - 1500         | g/mol");
-    System.out.println("Association Energy (ε/R)   | 2500 - 4500        | K");
-    System.out.println("Association Volume (κ)     | 0.001 - 0.05       | -");
-    System.out.println("Association Scheme         | 1A (single site)   | -");
-    System.out.println("Critical Temperature (Tc)  | 700 - 900          | K");
-    System.out.println("Critical Pressure (Pc)     | 5 - 15             | bar");
-    System.out.println("Acentric Factor (ω)        | 1.0 - 2.0          | -");
-    System.out.println();
-    System.out.println("Starting guess recommendations:");
-    System.out.println("  Light oils (>35 API):  ε/R = 3000 K, κ = 0.01");
-    System.out.println("  Medium oils (25-35):   ε/R = 3500 K, κ = 0.005");
-    System.out.println("  Heavy oils (<25 API):  ε/R = 4000 K, κ = 0.003");
+
+    logger.info("Based on literature (Li & Firoozabadi, Vargas et al.):");
+
+    logger.info("Parameter                  | Typical Range      | Units");
+    logger.info("---------------------------|--------------------|---------");
+    logger.info("Molar Mass                 | 500 - 1500         | g/mol");
+    logger.info("Association Energy (ε/R)   | 2500 - 4500        | K");
+    logger.info("Association Volume (κ)     | 0.001 - 0.05       | -");
+    logger.info("Association Scheme         | 1A (single site)   | -");
+    logger.info("Critical Temperature (Tc)  | 700 - 900          | K");
+    logger.info("Critical Pressure (Pc)     | 5 - 15             | bar");
+    logger.info("Acentric Factor (ω)        | 1.0 - 2.0          | -");
+
+    logger.info("Starting guess recommendations:");
+    logger.info("  Light oils (>35 API):  ε/R = 3000 K, κ = 0.01");
+    logger.info("  Medium oils (25-35):   ε/R = 3500 K, κ = 0.005");
+    logger.info("  Heavy oils (<25 API):  ε/R = 4000 K, κ = 0.003");
 
     // Verify these are reasonable for CPA
     double epsilonR_min = 2500.0;

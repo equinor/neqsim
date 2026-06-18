@@ -6,6 +6,8 @@ import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Profiling test to identify bottlenecks in electrolyte CPA TPflash.
@@ -14,6 +16,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 @Tag("slow")
 public class ElectrolyteCPAProfilingTest {
+  private static final Logger logger = LogManager.getLogger(ElectrolyteCPAProfilingTest.class);
+
 
   /**
    * Compare TPflash cost: electrolyte CPA vs regular CPA.
@@ -54,7 +58,7 @@ public class ElectrolyteCPAProfilingTest {
     }
     long cpaWithMPC = (System.nanoTime() - t0) / reps;
 
-    System.out.println("=== Regular CPA (7 components, no ions) ===");
+    logger.info("=== Regular CPA (7 components, no ions) ===");
     System.out.printf("  TPflash (no multiPhaseCheck):   %8.1f ms%n", cpaNoMPC / 1e6);
     System.out.printf("  TPflash (with multiPhaseCheck): %8.1f ms%n", cpaWithMPC / 1e6);
     System.out.printf("  Ratio multiPhaseCheck/noCheck:  %8.1fx%n", (double) cpaWithMPC / cpaNoMPC);
@@ -94,20 +98,20 @@ public class ElectrolyteCPAProfilingTest {
     }
     long ecpaWithMPC = (System.nanoTime() - t0) / reps;
 
-    System.out.println("\n=== Electrolyte CPA (9 components, with Na+/Cl-) ===");
+    logger.info("\n=== Electrolyte CPA (9 components, with Na+/Cl-) ===");
     System.out.printf("  TPflash (no multiPhaseCheck):   %8.1f ms%n", ecpaNoMPC / 1e6);
     System.out.printf("  TPflash (with multiPhaseCheck): %8.1f ms%n", ecpaWithMPC / 1e6);
     System.out.printf("  Ratio multiPhaseCheck/noCheck:  %8.1fx%n",
         (double) ecpaWithMPC / ecpaNoMPC);
 
-    System.out.println("\n=== Cross Comparison ===");
+    logger.info("\n=== Cross Comparison ===");
     System.out.printf("  Electrolyte/CPA ratio (no MPC):   %8.1fx%n",
         (double) ecpaNoMPC / cpaNoMPC);
     System.out.printf("  Electrolyte/CPA ratio (with MPC): %8.1fx%n",
         (double) ecpaWithMPC / cpaWithMPC);
 
     // ===== Breakdown: measure init(1) cost =====
-    System.out.println("\n=== init(1) Breakdown ===");
+    logger.info("\n=== init(1) Breakdown ===");
     t0 = System.nanoTime();
     for (int i = 0; i < reps; i++) {
       cpa.init(1);
@@ -142,7 +146,7 @@ public class ElectrolyteCPAProfilingTest {
     System.out.printf("  Ratio:                %8.1fx%n", (double) ecpaInit2 / cpaInit2);
 
     // ===== Phase count comparison =====
-    System.out.println("\n=== Phase Information ===");
+    logger.info("\n=== Phase Information ===");
     System.out.printf("  CPA phases: %d%n", cpa.getNumberOfPhases());
     System.out.printf("  Electrolyte CPA phases: %d%n", ecpa.getNumberOfPhases());
     for (int p = 0; p < ecpa.getNumberOfPhases(); p++) {

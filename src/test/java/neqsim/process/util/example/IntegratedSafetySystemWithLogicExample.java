@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.flare.Flare;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
@@ -54,6 +56,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version 1.0
  */
 public class IntegratedSafetySystemWithLogicExample {
+  private static final Logger logger =
+      LogManager.getLogger(IntegratedSafetySystemWithLogicExample.class);
 
   // Safety setpoints
   private static final double NORMAL_OPERATING_PRESSURE = 50.0; // bara
@@ -279,19 +283,19 @@ public class IntegratedSafetySystemWithLogicExample {
 
     public void runScenario(String scenarioName, ProcessSafetyScenario scenario, double duration,
         double timeStep) {
-      System.out.println("╔══════════════════════════════════════════════════════════════╗");
+      logger.info("╔══════════════════════════════════════════════════════════════╗");
       System.out.printf("║  RUNNING SCENARIO: %-42s ║%n", scenarioName);
-      System.out.println("╚══════════════════════════════════════════════════════════════╝");
+      logger.info("╚══════════════════════════════════════════════════════════════╝");
 
       // Apply scenario perturbations
       if (scenario != null) {
         scenario.applyTo(system);
-        System.out.println("Applied scenario perturbations:");
+        logger.info("Applied scenario perturbations:");
         if (!scenario.getBlockedOutletUnits().isEmpty()) {
-          System.out.println("  - Blocked outlets: " + scenario.getBlockedOutletUnits());
+          logger.info("  - Blocked outlets: " + scenario.getBlockedOutletUnits());
         }
         if (!scenario.getUtilityLossUnits().isEmpty()) {
-          System.out.println("  - Utility losses: " + scenario.getUtilityLossUnits());
+          logger.info("  - Utility losses: " + scenario.getUtilityLossUnits());
         }
         if (!scenario.getControllerSetPointOverrides().isEmpty()) {
           System.out
@@ -299,9 +303,9 @@ public class IntegratedSafetySystemWithLogicExample {
         }
       }
 
-      System.out.println(
+      logger.info(
           "Time(s) | Sep P(bara) | HIPPS | ESD | Startup | Shutdown | BD Flow(kg/h) | PSV Status");
-      System.out.println(
+      logger.info(
           "--------|-------------|-------|-----|---------|----------|---------------|------------");
 
       double time = 0.0;
@@ -324,7 +328,7 @@ public class IntegratedSafetySystemWithLogicExample {
         time += timeStep;
       }
 
-      System.out.println("\n" + scenarioName + " completed.\n");
+      logger.info("\n" + scenarioName + " completed.\n");
     }
 
     private void printStatus(double time) {
@@ -366,10 +370,10 @@ public class IntegratedSafetySystemWithLogicExample {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    System.out.println("╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║          INTEGRATED SAFETY SYSTEM WITH PROCESS LOGIC           ║");
-    System.out.println("║     Advanced Example with Scenario Simulation Framework        ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║          INTEGRATED SAFETY SYSTEM WITH PROCESS LOGIC           ║");
+    logger.info("║     Advanced Example with Scenario Simulation Framework        ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     // Build process system
     setupProcessSystem();
@@ -387,9 +391,9 @@ public class IntegratedSafetySystemWithLogicExample {
     // Perform safety analysis
     performSafetyAnalysis();
 
-    System.out.println("╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║          ALL SCENARIOS AND ANALYSIS COMPLETED                  ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝");
+    logger.info("╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║          ALL SCENARIOS AND ANALYSIS COMPLETED                  ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝");
   }
 
   /**
@@ -484,11 +488,11 @@ public class IntegratedSafetySystemWithLogicExample {
     // Push button
     esdButton = new PushButton("ESD-PB-201");
 
-    System.out.println("Instrumentation setup completed:");
-    System.out.println("  - HIPPS pressure transmitters: PT-101A, PT-101B (2oo2 voting)");
-    System.out.println("  - Separator monitoring: PT-301, TT-301");
-    System.out.println("  - Fire detection: TT-401A/B/C (3 sensors, 2oo3 voting)");
-    System.out.println("  - Manual ESD: PB-201");
+    logger.info("Instrumentation setup completed:");
+    logger.info("  - HIPPS pressure transmitters: PT-101A, PT-101B (2oo2 voting)");
+    logger.info("  - Separator monitoring: PT-301, TT-301");
+    logger.info("  - Fire detection: TT-401A/B/C (3 sensors, 2oo3 voting)");
+    logger.info("  - Manual ESD: PB-201");
   }
 
   /**
@@ -509,10 +513,9 @@ public class IntegratedSafetySystemWithLogicExample {
     // Link ESD button to logic
     esdButton.linkToLogic(esdLogic);
 
-    System.out.println("Process logic setup completed:");
-    System.out.println(
-        "  - HIPPS Logic: SIL-3 with 2oo2 voting @ " + HIPPS_ACTIVATION_PRESSURE + " bara");
-    System.out.println("  - ESD Logic: SIL-2 with 4-step sequence");
+    logger.info("Process logic setup completed:");
+    logger.info("  - HIPPS Logic: SIL-3 with 2oo2 voting @ " + HIPPS_ACTIVATION_PRESSURE + " bara");
+    logger.info("  - ESD Logic: SIL-2 with 4-step sequence");
   }
 
   /**
@@ -522,7 +525,7 @@ public class IntegratedSafetySystemWithLogicExample {
    */
   private static void runAllScenarios(ScenarioRunner runner) {
     // Scenario 1: Normal operation
-    System.out.println("\n=== Running Scenario 1: Normal Operation ===");
+    logger.info("\n=== Running Scenario 1: Normal Operation ===");
     ProcessSafetyScenario normalScenario =
         ProcessSafetyScenario.builder("Normal Operation").build();
 
@@ -530,7 +533,7 @@ public class IntegratedSafetySystemWithLogicExample {
     resetSystem();
 
     // Scenario 2: HIPPS activation
-    System.out.println("\n=== Running Scenario 2: HIPPS Activation ===");
+    logger.info("\n=== Running Scenario 2: HIPPS Activation ===");
     ProcessSafetyScenario hippsScenario = ProcessSafetyScenario.builder("HIPPS Overpressure")
         .customManipulator("HP Feed", equipment -> {
           if (equipment instanceof neqsim.process.equipment.stream.Stream) {
@@ -543,7 +546,7 @@ public class IntegratedSafetySystemWithLogicExample {
     resetSystem();
 
     // Scenario 3: Manual ESD activation
-    System.out.println("\n=== Running Scenario 3: Manual ESD ===");
+    logger.info("\n=== Running Scenario 3: Manual ESD ===");
     ProcessSafetyScenario esdScenario = ProcessSafetyScenario.builder("Manual ESD").build();
 
     // Simulate operator pushing ESD button after 10 seconds
@@ -560,7 +563,7 @@ public class IntegratedSafetySystemWithLogicExample {
     resetSystem();
 
     // Scenario 4: Multiple failure scenario
-    System.out.println("\n=== Running Scenario 4: Multiple Failures ===");
+    logger.info("\n=== Running Scenario 4: Multiple Failures ===");
     ProcessSafetyScenario multiFailureScenario = ProcessSafetyScenario.builder("Multiple Failures")
         .customManipulator("HP Feed", equipment -> {
           if (equipment instanceof neqsim.process.equipment.stream.Stream) {
@@ -578,9 +581,9 @@ public class IntegratedSafetySystemWithLogicExample {
    * Perform comprehensive safety analysis using scenario framework.
    */
   private static void performSafetyAnalysis() {
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║                    SAFETY ANALYSIS REPORT                      ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║                    SAFETY ANALYSIS REPORT                      ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝");
 
     // Define analysis scenarios
     List<ProcessSafetyScenario> analysisScenarios = Arrays.asList(
@@ -595,42 +598,42 @@ public class IntegratedSafetySystemWithLogicExample {
         ProcessSafetyScenario.builder("Fire Scenario")
             .customManipulator("HP Separator", equipment -> {
               // Simulate high temperature due to fire
-              System.out.println("  - Fire detected: High temperature alarm");
+              logger.info("  - Fire detected: High temperature alarm");
             }).build());
 
     // Print analysis results
-    System.out.println("SCENARIO ANALYSIS RESULTS:");
+    logger.info("SCENARIO ANALYSIS RESULTS:");
     String separator = new String(new char[81]).replace("\0", "=");
-    System.out.println(separator);
+    logger.info(separator);
 
     for (ProcessSafetyScenario scenario : analysisScenarios) {
-      System.out.println("Scenario: " + scenario.getName());
-      System.out.println("  Target Units: " + scenario.getTargetUnits());
-      System.out.println("  Status: ANALYZED");
-      System.out.println("  Recommendation: Safety systems should respond appropriately");
-      System.out.println();
+      logger.info("Scenario: " + scenario.getName());
+      logger.info("  Target Units: " + scenario.getTargetUnits());
+      logger.info("  Status: ANALYZED");
+      logger.info("  Recommendation: Safety systems should respond appropriately");
+
     }
 
     // System-wide safety summary
-    System.out.println("SYSTEM SAFETY SUMMARY:");
+    logger.info("SYSTEM SAFETY SUMMARY:");
     String separator2 = new String(new char[51]).replace("\0", "=");
-    System.out.println(separator2);
-    System.out.println("Safety Integrity Levels Implemented:");
-    System.out.println("  SIL-3: HIPPS with 2oo2 voting @ " + HIPPS_ACTIVATION_PRESSURE + " bara");
+    logger.info(separator2);
+    logger.info("Safety Integrity Levels Implemented:");
+    logger.info("  SIL-3: HIPPS with 2oo2 voting @ " + HIPPS_ACTIVATION_PRESSURE + " bara");
     System.out
         .println("  SIL-2: ESD with multiple triggers @ " + HIGH_HIGH_PRESSURE_ALARM + " bara");
-    System.out.println("  SIL-1: Process alarms @ " + HIGH_PRESSURE_ALARM + " bara");
-    System.out.println("  PSV:   Mechanical relief @ " + PSV_SET_PRESSURE + " bara");
-    System.out.println();
-    System.out.println("Process Logic Sequences:");
-    System.out.println("  - HIPPS Logic: " + hippsLogic.getStatusDescription());
-    System.out.println("  - ESD Logic: " + esdLogic.getActionCount() + " actions defined");
-    System.out.println();
-    System.out.println("Recommendations:");
-    System.out.println("  - All safety systems functioning as designed");
-    System.out.println("  - Process logic provides automated response");
-    System.out.println("  - Multiple independent protection layers active");
-    System.out.println("  - Scenario framework enables comprehensive testing");
+    logger.info("  SIL-1: Process alarms @ " + HIGH_PRESSURE_ALARM + " bara");
+    logger.info("  PSV:   Mechanical relief @ " + PSV_SET_PRESSURE + " bara");
+
+    logger.info("Process Logic Sequences:");
+    logger.info("  - HIPPS Logic: " + hippsLogic.getStatusDescription());
+    logger.info("  - ESD Logic: " + esdLogic.getActionCount() + " actions defined");
+
+    logger.info("Recommendations:");
+    logger.info("  - All safety systems functioning as designed");
+    logger.info("  - Process logic provides automated response");
+    logger.info("  - Multiple independent protection layers active");
+    logger.info("  - Scenario framework enables comprehensive testing");
   }
 
   /**

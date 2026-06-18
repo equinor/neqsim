@@ -11,6 +11,8 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Speed benchmark for recycle-containing processes. Compares runOptimized() (which on master routes
@@ -18,6 +20,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * runSequential() execution.
  */
 public class RecycleSpeedBenchmarkTest {
+  private static final Logger logger = LogManager.getLogger(RecycleSpeedBenchmarkTest.class);
+
 
   private SystemInterface makeFluid() {
     SystemInterface f = new SystemSrkEos(298.0, 80.0);
@@ -92,7 +96,7 @@ public class RecycleSpeedBenchmarkTest {
   void benchmarkRecycleProcess() throws Exception {
     int RUNS = 5;
 
-    System.out.println("\n===== RECYCLE BENCHMARK: 3-train parallel + tail recycle =====");
+    logger.info("\n===== RECYCLE BENCHMARK: 3-train parallel + tail recycle =====");
 
     // Sequential baseline
     ProcessSystem seq = buildParallelWithTailRecycle(false);

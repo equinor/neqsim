@@ -18,8 +18,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class shtokman_MEG {
+  private static final Logger logger = LogManager.getLogger(shtokman_MEG.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(shtokman_MEG.class);
 
   /**
    * This method is just meant to test the thermo package.
@@ -66,7 +67,7 @@ public class shtokman_MEG {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    System.out.println("temp " + stream_2.getThermoSystem().getTemperature());
+    logger.info("temp " + stream_2.getThermoSystem().getTemperature());
     operations.displayResult();
   }
 }

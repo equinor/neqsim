@@ -1,6 +1,8 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Diagnostic for TPFlashTestHighTemp — NOT a JUnit test, just a main() to run. Investigates whether
@@ -8,6 +10,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * system.
  */
 public class TPFlashHighTempDiagnostic {
+  private static final Logger logger = LogManager.getLogger(TPFlashHighTempDiagnostic.class);
+
 
   static neqsim.thermo.system.SystemInterface createSystem() {
     neqsim.thermo.system.SystemInterface sys = new neqsim.thermo.system.SystemSrkEos(243.15, 300.0);
@@ -43,11 +47,11 @@ public class TPFlashHighTempDiagnostic {
   }
 
   public static void main(String[] args) {
-    System.out.println("=== TPFlashTestHighTemp Diagnostic ===");
-    System.out.println();
+    logger.info("=== TPFlashTestHighTemp Diagnostic ===");
+
 
     // Test 1: Basic flash at the test condition
-    System.out.println("--- Test 1: Flash at 268 C, 88 bara (multiPhaseCheck=true) ---");
+    logger.info("--- Test 1: Flash at 268 C, 88 bara (multiPhaseCheck=true) ---");
     {
       neqsim.thermo.system.SystemInterface sys = createSystem();
       sys.setMultiPhaseCheck(true);
@@ -55,23 +59,23 @@ public class TPFlashHighTempDiagnostic {
       sys.setTemperature(268.0, "C");
       ThermodynamicOperations ops = new ThermodynamicOperations(sys);
       ops.TPflash();
-      System.out.println("  Number of phases: " + sys.getNumberOfPhases());
-      System.out.println("  Gas mole fraction: " + sys.getPhaseFraction("gas", "mole"));
-      System.out.println("  Gibbs energy: " + sys.getGibbsEnergy());
+      logger.info("  Number of phases: " + sys.getNumberOfPhases());
+      logger.info("  Gas mole fraction: " + sys.getPhaseFraction("gas", "mole"));
+      logger.info("  Gibbs energy: " + sys.getGibbsEnergy());
       double betaSum = 0;
       for (int p = 0; p < sys.getNumberOfPhases(); p++) {
         double b = sys.getBeta(p);
         betaSum += b;
-        System.out.println("  Phase " + p + ": type=" + sys.getPhase(p).getPhaseTypeName()
-            + " beta=" + b + " Z=" + sys.getPhase(p).getZ());
+        logger.info("  Phase " + p + ": type=" + sys.getPhase(p).getPhaseTypeName() + " beta=" + b
+            + " Z=" + sys.getPhase(p).getZ());
       }
-      System.out.println("  Beta sum: " + betaSum
+      logger.info("  Beta sum: " + betaSum
           + (Math.abs(betaSum - 1.0) > 1e-6 ? " *** NOT NORMALIZED ***" : " (OK)"));
     }
-    System.out.println();
+
 
     // Test 2: Flash WITHOUT multiPhaseCheck
-    System.out.println("--- Test 2: Flash at 268 C, 88 bara (multiPhaseCheck=false) ---");
+    logger.info("--- Test 2: Flash at 268 C, 88 bara (multiPhaseCheck=false) ---");
     {
       neqsim.thermo.system.SystemInterface sys = createSystem();
       sys.setMultiPhaseCheck(false);
@@ -79,23 +83,23 @@ public class TPFlashHighTempDiagnostic {
       sys.setTemperature(268.0, "C");
       ThermodynamicOperations ops = new ThermodynamicOperations(sys);
       ops.TPflash();
-      System.out.println("  Number of phases: " + sys.getNumberOfPhases());
-      System.out.println("  Gas mole fraction: " + sys.getPhaseFraction("gas", "mole"));
-      System.out.println("  Gibbs energy: " + sys.getGibbsEnergy());
+      logger.info("  Number of phases: " + sys.getNumberOfPhases());
+      logger.info("  Gas mole fraction: " + sys.getPhaseFraction("gas", "mole"));
+      logger.info("  Gibbs energy: " + sys.getGibbsEnergy());
       double betaSum = 0;
       for (int p = 0; p < sys.getNumberOfPhases(); p++) {
         double b = sys.getBeta(p);
         betaSum += b;
-        System.out.println("  Phase " + p + ": type=" + sys.getPhase(p).getPhaseTypeName()
-            + " beta=" + b + " Z=" + sys.getPhase(p).getZ());
+        logger.info("  Phase " + p + ": type=" + sys.getPhase(p).getPhaseTypeName() + " beta=" + b
+            + " Z=" + sys.getPhase(p).getZ());
       }
-      System.out.println("  Beta sum: " + betaSum
+      logger.info("  Beta sum: " + betaSum
           + (Math.abs(betaSum - 1.0) > 1e-6 ? " *** NOT NORMALIZED ***" : " (OK)"));
     }
-    System.out.println();
+
 
     // Test 3: Temperature sweep around 268 C to see trend
-    System.out.println("--- Test 3: Temperature sweep 260-275 C at 88 bara ---");
+    logger.info("--- Test 3: Temperature sweep 260-275 C at 88 bara ---");
     {
       neqsim.thermo.system.SystemInterface sys = createSystem();
       sys.setMultiPhaseCheck(true);
@@ -110,10 +114,10 @@ public class TPFlashHighTempDiagnostic {
             sys.getGibbsEnergy());
       }
     }
-    System.out.println();
+
 
     // Test 4: Multiple independent flash runs at 268 C to check reproducibility
-    System.out.println("--- Test 4: Reproducibility - 5 independent flashes at 268 C ---");
+    logger.info("--- Test 4: Reproducibility - 5 independent flashes at 268 C ---");
     for (int run = 0; run < 5; run++) {
       neqsim.thermo.system.SystemInterface sys = createSystem();
       sys.setMultiPhaseCheck(true);
@@ -124,10 +128,10 @@ public class TPFlashHighTempDiagnostic {
       System.out.printf("  Run %d: gasFrac=%.15f  nPhases=%d  Gibbs=%.6f%n", run,
           sys.getPhaseFraction("gas", "mole"), sys.getNumberOfPhases(), sys.getGibbsEnergy());
     }
-    System.out.println();
+
 
     // Test 5: Force single-phase flash and compare Gibbs energy
-    System.out.println("--- Test 5: Single-phase vs 2-phase Gibbs energy ---");
+    logger.info("--- Test 5: Single-phase vs 2-phase Gibbs energy ---");
     {
       // 2-phase flash (standard)
       neqsim.thermo.system.SystemInterface sys2 = createSystem();
@@ -152,11 +156,11 @@ public class TPFlashHighTempDiagnostic {
 
       System.out
           .println("  2-phase: nPhases=" + nph2 + " gasFrac=" + gasFrac2 + " Gibbs=" + gibbs2);
-      System.out.println("  1-phase (forced): Gibbs=" + gibbs1single);
-      System.out.println("  Gibbs difference (2ph - 1ph): " + (gibbs2 - gibbs1single));
-      System.out.println("  2-phase is "
+      logger.info("  1-phase (forced): Gibbs=" + gibbs1single);
+      logger.info("  Gibbs difference (2ph - 1ph): " + (gibbs2 - gibbs1single));
+      logger.info("  2-phase is "
           + (gibbs2 < gibbs1single ? "LOWER (correct)" : "HIGHER (wrong or mixed up)"));
-      System.out.println();
+
 
       // Also try: flash without multiPhaseCheck to get "natural" 2-phase
       neqsim.thermo.system.SystemInterface sysNoMPC = createSystem();
@@ -166,16 +170,16 @@ public class TPFlashHighTempDiagnostic {
       ThermodynamicOperations opsNoMPC = new ThermodynamicOperations(sysNoMPC);
       opsNoMPC.TPflash();
       double gibbsNoMPC = sysNoMPC.getGibbsEnergy();
-      System.out.println("  2-phase (no MPC): nPhases=" + sysNoMPC.getNumberOfPhases() + " gasFrac="
+      logger.info("  2-phase (no MPC): nPhases=" + sysNoMPC.getNumberOfPhases() + " gasFrac="
           + sysNoMPC.getPhaseFraction("gas", "mole") + " Gibbs=" + gibbsNoMPC);
-      System.out.println("  MPC vs no-MPC Gibbs diff: " + (gibbs2 - gibbsNoMPC));
+      logger.info("  MPC vs no-MPC Gibbs diff: " + (gibbs2 - gibbsNoMPC));
       System.out
           .println("  MPC result " + (gibbs2 <= gibbsNoMPC ? "is better or equal" : "is WORSE"));
     }
-    System.out.println();
+
 
     // Test 6: Check what happens with PR EOS
-    System.out.println("--- Test 6: Same system with PR EOS ---");
+    logger.info("--- Test 6: Same system with PR EOS ---");
     {
       neqsim.thermo.system.SystemInterface sysPR =
           new neqsim.thermo.system.SystemPrEos(243.15, 300.0);
@@ -212,13 +216,13 @@ public class TPFlashHighTempDiagnostic {
       sysPR.setTemperature(268.0, "C");
       ThermodynamicOperations opsPR = new ThermodynamicOperations(sysPR);
       opsPR.TPflash();
-      System.out.println("  PR EOS: nPhases=" + sysPR.getNumberOfPhases() + " gasFrac="
+      logger.info("  PR EOS: nPhases=" + sysPR.getNumberOfPhases() + " gasFrac="
           + sysPR.getPhaseFraction("gas", "mole") + " Gibbs=" + sysPR.getGibbsEnergy());
     }
-    System.out.println();
+
 
     // Test 7: System-level vs Phase-level beta comparison
-    System.out.println("--- Test 7: System vs Phase beta comparison ---");
+    logger.info("--- Test 7: System vs Phase beta comparison ---");
     {
       neqsim.thermo.system.SystemInterface sys = createSystem();
       sys.setMultiPhaseCheck(true);
@@ -227,25 +231,25 @@ public class TPFlashHighTempDiagnostic {
       ThermodynamicOperations ops = new ThermodynamicOperations(sys);
       ops.TPflash();
 
-      System.out.println("  Number of phases: " + sys.getNumberOfPhases());
+      logger.info("  Number of phases: " + sys.getNumberOfPhases());
       for (int p = 0; p < sys.getNumberOfPhases(); p++) {
         double sysBeta = sys.getBeta(p);
         double phaseBeta = sys.getPhase(p).getBeta();
-        System.out.println("  Phase " + p + " (" + sys.getPhase(p).getPhaseTypeName() + "):"
+        logger.info("  Phase " + p + " (" + sys.getPhase(p).getPhaseTypeName() + "):"
             + " sys.getBeta(" + p + ")=" + sysBeta + " phase.getBeta()=" + phaseBeta
             + (Math.abs(sysBeta - phaseBeta) > 1e-10 ? " *** MISMATCH ***" : " (match)"));
       }
 
       // Print phaseIndex mapping
-      System.out.println("  Phase index mapping:");
+      logger.info("  Phase index mapping:");
       for (int i = 0; i < sys.getNumberOfPhases(); i++) {
-        System.out.println("    phaseIndex[" + i + "] = " + sys.getPhaseIndex(i));
+        logger.info("    phaseIndex[" + i + "] = " + sys.getPhaseIndex(i));
       }
     }
-    System.out.println();
+
 
     // Test 8: Fugacity equality check
-    System.out.println("--- Test 8: Fugacity equality check ---");
+    logger.info("--- Test 8: Fugacity equality check ---");
     {
       neqsim.thermo.system.SystemInterface sys = createSystem();
       sys.setMultiPhaseCheck(true);
@@ -255,7 +259,7 @@ public class TPFlashHighTempDiagnostic {
       ops.TPflash();
 
       if (sys.getNumberOfPhases() >= 2) {
-        System.out.println("  MPC flash - checking fi*xi across phases:");
+        logger.info("  MPC flash - checking fi*xi across phases:");
         double maxRelError = 0;
         int worstComp = -1;
         for (int j = 0; j < sys.getPhase(0).getNumberOfComponents(); j++) {
@@ -275,7 +279,7 @@ public class TPFlashHighTempDiagnostic {
         }
         System.out.printf("  Max fugacity relative error: %.2e (comp %d)%n", maxRelError,
             worstComp);
-        System.out.println("  " + (maxRelError < 1e-4 ? "OK (converged)" : "POOR CONVERGENCE"));
+        logger.info("  " + (maxRelError < 1e-4 ? "OK (converged)" : "POOR CONVERGENCE"));
       }
 
       // Same check for no-MPC flash
@@ -287,7 +291,7 @@ public class TPFlashHighTempDiagnostic {
       opsNoMPC.TPflash();
 
       if (sysNoMPC.getNumberOfPhases() >= 2) {
-        System.out.println("  No-MPC flash - checking fi*xi across phases:");
+        logger.info("  No-MPC flash - checking fi*xi across phases:");
         double maxRelError = 0;
         for (int j = 0; j < sysNoMPC.getPhase(0).getNumberOfComponents(); j++) {
           double fug0 = sysNoMPC.getPhase(0).getComponent(j).getFugacityCoefficient()
@@ -301,10 +305,10 @@ public class TPFlashHighTempDiagnostic {
         System.out.printf("  Max fugacity relative error (no-MPC): %.2e%n", maxRelError);
       }
     }
-    System.out.println();
+
 
     // Test 9: Re-normalize after MPC flash and observe effect on Gibbs
-    System.out.println("--- Test 9: Re-normalize after MPC flash ---");
+    logger.info("--- Test 9: Re-normalize after MPC flash ---");
     {
       neqsim.thermo.system.SystemInterface sys = createSystem();
       sys.setMultiPhaseCheck(true);
@@ -320,8 +324,8 @@ public class TPFlashHighTempDiagnostic {
         betaSumBefore += sys.getBeta(p);
       }
 
-      System.out.println("  Before: gasFrac=" + gasFracBefore + " betaSum=" + betaSumBefore
-          + " Gibbs=" + gibbsBefore);
+      logger.info("  Before: gasFrac=" + gasFracBefore + " betaSum=" + betaSumBefore + " Gibbs="
+          + gibbsBefore);
 
       // Re-normalize and re-init
       sys.normalizeBeta();
@@ -334,10 +338,10 @@ public class TPFlashHighTempDiagnostic {
         betaSumAfter += sys.getBeta(p);
       }
 
-      System.out.println("  After:  gasFrac=" + gasFracAfter + " betaSum=" + betaSumAfter
-          + " Gibbs=" + gibbsAfter);
-      System.out.println("  Gibbs change: " + (gibbsAfter - gibbsBefore));
-      System.out.println("  GasFrac change: " + (gasFracAfter - gasFracBefore));
+      logger.info("  After:  gasFrac=" + gasFracAfter + " betaSum=" + betaSumAfter + " Gibbs="
+          + gibbsAfter);
+      logger.info("  Gibbs change: " + (gibbsAfter - gibbsBefore));
+      logger.info("  GasFrac change: " + (gasFracAfter - gasFracBefore));
     }
   }
 }

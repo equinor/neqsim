@@ -4,12 +4,16 @@ package neqsim.process.equipment.distillation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.mechanicaldesign.distillation.DistillationColumnMechanicalDesign;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class DistillationOptimizationTest {
+  private static final Logger logger = LogManager.getLogger(DistillationOptimizationTest.class);
+
   @Test
   public void testPerStageMurphreeEfficiencyApi() {
     DistillationColumn column = new DistillationColumn("MurphreeApiColumn", 5, true, true);
@@ -83,7 +87,7 @@ public class DistillationOptimizationTest {
       if (column.getTray(i).getNumberOfInputStreams() > 0) {
         if (Math.abs(column.getTray(i).getStream(0).getFlowRate("kg/hr") - 1000.0) < 1.0) {
           feedAssigned = true;
-          System.out.println("Feed assigned to tray: " + i);
+          logger.info("Feed assigned to tray: " + i);
         }
       }
     }
@@ -332,7 +336,7 @@ public class DistillationOptimizationTest {
     double targetPropaneMoleFraction = 0.60;
     int optimalTrays =
         column.findOptimalNumberOfTrays(targetPropaneMoleFraction, "propane", true, 8);
-    System.out.println("Optimal trays found: " + optimalTrays);
+    logger.info("Optimal trays found: " + optimalTrays);
 
     assertTrue(optimalTrays > 0, "Should find a solution");
     assertTrue(column.getGasOutStream().getFluid().getComponent("propane")
@@ -344,7 +348,7 @@ public class DistillationOptimizationTest {
       if (column.getTray(i).getNumberOfInputStreams() > 0) {
         if (Math.abs(column.getTray(i).getStream(0).getFlowRate("kg/hr") - 1000.0) < 1.0) {
           feedAssigned = true;
-          System.out.println("Feed assigned to tray: " + i);
+          logger.info("Feed assigned to tray: " + i);
         }
       }
     }
@@ -392,7 +396,7 @@ public class DistillationOptimizationTest {
     int optimalTrays =
         column.findOptimalNumberOfTrays(targetPropaneMoleFraction, "propane", true, 8);
 
-    System.out.println("Optimal trays found (Inside-Out): " + optimalTrays);
+    logger.info("Optimal trays found (Inside-Out): " + optimalTrays);
 
     assertTrue(optimalTrays > 0, "Should find a solution with Inside-Out solver");
     assertTrue(column.getGasOutStream().getFluid().getComponent("propane")

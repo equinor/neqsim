@@ -16,8 +16,12 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class OilGasProcessTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(OilGasProcessTest.class);
+
   @Test
   public void runProcess() throws InterruptedException {
     SystemInterface thermoSystem = new SystemSrkEos(298.0, 10.0);
@@ -126,7 +130,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     assertEquals(seprator3rdStage.getGasOutStream().getFlowRate("kg/hr"),
         coolerLP.getOutletStream().getFlowRate("kg/hr"), 1e-4);
 
-    // System.out.println("recycle flow " +
+    // logger.info("recycle flow " +
     // recycle1.getOutletStream().getFlowRate("kg/hr"));
     // valveLP1.getOutletStream().getFluid().prettyPrint();
   }

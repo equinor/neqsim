@@ -7,6 +7,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Demo: steady-state run of a separator, then dynamic blowdown.
@@ -21,6 +23,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class BlowdownDemoTest {
+  private static final Logger logger = LogManager.getLogger(BlowdownDemoTest.class);
+
 
   @Test
   void steadyStateThenBlowdown() {
@@ -54,8 +58,8 @@ class BlowdownDemoTest {
 
     double pStart = sep.getThermoSystem().getPressure("bara");
     double tStart = sep.getThermoSystem().getTemperature("C");
-    System.out.println();
-    System.out.println("=== STEADY STATE ===");
+
+    logger.info("=== STEADY STATE ===");
     System.out.printf("Separator pressure   : %7.2f bara%n", pStart);
     System.out.printf("Separator temperature: %7.2f C%n", tStart);
     System.out.printf("Vessel volume        : %7.2f m3%n", Math.PI / 4.0 * 2.0 * 2.0 * 6.0);
@@ -67,8 +71,8 @@ class BlowdownDemoTest {
     bdValve.setPercentValveOpening(100.0); // open blowdown to atmosphere
 
     // ---------- 3. Time-step blowdown ----------
-    System.out.println();
-    System.out.println("=== BLOWDOWN ===");
+
+    logger.info("=== BLOWDOWN ===");
     System.out.printf("%6s  %10s  %10s  %12s  %12s%n", "t [s]", "P [bara]", "T [C]", "BDV [kg/hr]",
         "n [kmol]");
 
@@ -95,7 +99,7 @@ class BlowdownDemoTest {
     }
 
     double pEnd = sep.getThermoSystem().getPressure("bara");
-    System.out.println();
+
     System.out.printf("Pressure dropped: %.2f -> %.2f bara (%.2f bar)%n", pStart, pEnd,
         pStart - pEnd);
 

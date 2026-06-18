@@ -13,9 +13,13 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @Tag("slow")
 public class DistillationColumnTest {
+  private static final Logger logger = LogManager.getLogger(DistillationColumnTest.class);
+
   /**
    * @throws java.lang.Exception
    */
@@ -114,16 +118,15 @@ public class DistillationColumnTest {
     double totalWaterIn = waterFlowRateInColumn2 + waterFlowRateInColumnGasToReb;
     double totalWaterOut = waterFlowRateOutColumn + waterFlowRateOutColumnLeanTEG;
     /*
-     * System.out.println("Column in is " + totalWaterIn + " kg/hr");
-     * System.out.println("Column out is " + totalWaterOut + " kg/hr");
-     * System.out.println("Column is solved  " + column.solved());
+     * logger.info("Column in is " + totalWaterIn + " kg/hr"); logger.info("Column out is " +
+     * totalWaterOut + " kg/hr"); logger.info("Column is solved  " + column.solved());
      *
-     * System.out.println("Calc Water Flow rate via fluid component " + waterFlowRateInColumn);
-     * System.out.println("Calc Water Flow rate via molar mass and flow rate total " +
+     * logger.info("Calc Water Flow rate via fluid component " + waterFlowRateInColumn);
+     * logger.info("Calc Water Flow rate via molar mass and flow rate total " +
      * waterFlowRateInColumn2 + " kg/hr");
      *
      * System.out .println("condenser temperature " +
-     * column.getCondenser().getFluid().getTemperature("C")); System.out.println("condenser duty " +
+     * column.getCondenser().getFluid().getTemperature("C")); logger.info("condenser duty " +
      * ((Condenser) column.getCondenser()).getDuty());
      */
     assertEquals(totalWaterIn, totalWaterOut, 2.0);
@@ -838,34 +841,33 @@ public class DistillationColumnTest {
 
     distillationColumn.toJson();
     /*
-     * System.out.println("---------- PROCESS RESULTS ----------");
-     * System.out.println("density feed " + stream1.getFluid().getDensity("kg/m3") + " kg/m3");
-     * System.out.println("Distillation column top gas flow:    " +
+     * logger.info("---------- PROCESS RESULTS ----------"); logger.info("density feed " +
+     * stream1.getFluid().getDensity("kg/m3") + " kg/m3");
+     * logger.info("Distillation column top gas flow:    " +
      * distillationColumn.getGasOutStream().getFlowRate("kg/hr") + " kg/hr");
-     * System.out.println("Distillation column top temperature:    " +
+     * logger.info("Distillation column top temperature:    " +
      * distillationColumn.getGasOutStream().getTemperature("C") + " C");
-     * System.out.println("Distillation column bottom liquid flow: " +
+     * logger.info("Distillation column bottom liquid flow: " +
      * distillationColumn.getLiquidOutStream().getFlowRate("kg/hr") + " kg/hr");
-     * System.out.println("Split to water treatment: " +
+     * logger.info("Split to water treatment: " +
      * distillationColumn.getCondenser().getLiquidProductStream().getFlowRate( "kg/hr") + " kg/hr");
-     * System.out.println("Split to resycle to column: " +
+     * logger.info("Split to resycle to column: " +
      * distillationColumn.getCondenser().getLiquidOutStream().getFlowRate("kg/hr") + " kg/hr");
-     * System.out.println("wt% MEG to treatment " + (distillationColumn.getCondenser()
+     * logger.info("wt% MEG to treatment " + (distillationColumn.getCondenser()
      * .getLiquidProductStream().getFluid().getPhase(0).getWtFrac("MEG") * 100) + " wt%");
-     * System.out.println("wt% MEG to treatment " + (distillationColumn.getCondenser()
+     * logger.info("wt% MEG to treatment " + (distillationColumn.getCondenser()
      * .getLiquidProductStream().getFluid().getPhase(0).getWtFrac("MEG") * 100) + " wt%");
-     * System.out.println("flow MEG to treatment " + distillationColumn.getCondenser()
+     * logger.info("flow MEG to treatment " + distillationColumn.getCondenser()
      * .getLiquidProductStream().getFluid().getComponent("MEG").getFlowRate("kg/hr") + " kg/hr");
-     * System.out.println("density reflux " +
+     * logger.info("density reflux " +
      * distillationColumn.getCondenser().getLiquidProductStream().getFluid(). getDensity("kg/m3") +
-     * " kg/m3"); System.out.println("wt% MEG " +
+     * " kg/m3"); logger.info("wt% MEG " +
      * (distillationColumn.getLiquidOutStream().getFluid().getPhase(0).getWtFrac( "MEG") * 100) +
-     * " wt%"); System.out.println("KOF " +
-     * (distillationColumn.getCondenser().getLiquidProductStream()
+     * " wt%"); logger.info("KOF " + (distillationColumn.getCondenser().getLiquidProductStream()
      * .getFluid().getPhase(0).getWtFrac("MEG") * 1e6 / 1.547) + " KOF"); System.out
      * .println("Reboiler duty " + (distillationColumn.getReboiler().getDuty() / 1e6) + " MW");
      * System.out .println("Condenser duty " + (distillationColumn.getCondenser().getDuty() / 1e6) +
-     * " MW"); System.out.println( "Condenser temperature " +
+     * " MW"); logger.info( "Condenser temperature " +
      * (distillationColumn.getCondenser().getTemperature()) + " C"); System.out
      * .println("Tray 1 temperature " + (distillationColumn.getTray(1).getTemperature()) + " C");
      * System.out .println("Tray 2 temperature " + (distillationColumn.getTray(2).getTemperature())

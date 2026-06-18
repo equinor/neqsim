@@ -7,6 +7,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Validation tests for multiphase choke flow models against published experimental data.
@@ -25,6 +27,8 @@ import org.junit.jupiter.api.Test;
  * @author esol
  */
 public class MultiphaseChokeFlowValidationTest {
+  private static final Logger logger = LogManager.getLogger(MultiphaseChokeFlowValidationTest.class);
+
 
   // Unit conversion constants
   private static final double PSIA_TO_PA = 6894.76;
@@ -206,9 +210,9 @@ public class MultiphaseChokeFlowValidationTest {
       double sumSquaredError = 0.0;
       int count = 0;
 
-      System.out.println("\n=== Sachdeva Critical Pressure Ratio Validation ===");
-      System.out.println("Gas Quality | Measured y_c | Calculated y_c | Error %");
-      System.out.println("----------------------------------------------------");
+      logger.info("\n=== Sachdeva Critical Pressure Ratio Validation ===");
+      logger.info("Gas Quality | Measured y_c | Calculated y_c | Error %");
+      logger.info("----------------------------------------------------");
 
       for (CriticalRatioDataPoint dp : sachdevaCriticalRatioData) {
         double calculated = model.calculateCriticalPressureRatio(dp.gasQuality, gamma);
@@ -275,9 +279,9 @@ public class MultiphaseChokeFlowValidationTest {
       GilbertChokeFlow model = new GilbertChokeFlow();
       model.setCorrelationType(GilbertChokeFlow.CorrelationType.GILBERT);
 
-      System.out.println("\n=== Gilbert Field Data Validation ===");
-      System.out.println("P1(psia) | d(64ths) | GLR | qL_meas(stb/d) | qL_calc | Error %");
-      System.out.println("-------------------------------------------------------------------");
+      logger.info("\n=== Gilbert Field Data Validation ===");
+      logger.info("P1(psia) | d(64ths) | GLR | qL_meas(stb/d) | qL_calc | Error %");
+      logger.info("-------------------------------------------------------------------");
 
       double sumError = 0;
       int count = 0;
@@ -355,9 +359,9 @@ public class MultiphaseChokeFlowValidationTest {
     void testFlowRegimeClassification() {
       SachdevaChokeFlow model = new SachdevaChokeFlow();
 
-      System.out.println("\n=== Fortunati Flow Regime Validation ===");
-      System.out.println("P1(bar) | P2(bar) | P2/P1 | Expected Regime | Calculated");
-      System.out.println("------------------------------------------------------------");
+      logger.info("\n=== Fortunati Flow Regime Validation ===");
+      logger.info("P1(bar) | P2(bar) | P2/P1 | Expected Regime | Calculated");
+      logger.info("------------------------------------------------------------");
 
       int correctClassifications = 0;
       int total = 0;
@@ -437,9 +441,9 @@ public class MultiphaseChokeFlowValidationTest {
       double d_64ths = 32;
       double GLR = 1000;
 
-      System.out.println("\n=== Gilbert Correlation Variants Comparison ===");
-      System.out.println("At P1=500 psia, d=32/64\", GLR=1000 scf/stb");
-      System.out.println("----------------------------------------------");
+      logger.info("\n=== Gilbert Correlation Variants Comparison ===");
+      logger.info("At P1=500 psia, d=32/64\", GLR=1000 scf/stb");
+      logger.info("----------------------------------------------");
 
       // Gilbert: q = P * d^1.89 / (10.0 * GLR^0.546)
       double qGilbert = calcGilbertVariant(P1, d_64ths, GLR, 1.89, 0.546, 10.0);
@@ -482,9 +486,9 @@ public class MultiphaseChokeFlowValidationTest {
       // Gilbert gives liquid flow rate directly
       double qL_gilbert = calcGilbertVariant(P1, d_64ths, GLR, 1.89, 0.546, 10.0);
 
-      System.out.println("\n=== Sachdeva vs Gilbert Comparison ===");
+      logger.info("\n=== Sachdeva vs Gilbert Comparison ===");
       System.out.printf("Gilbert liquid flow: %.0f stb/d\n", qL_gilbert);
-      System.out.println("(Sachdeva requires full fluid composition for comparison)");
+      logger.info("(Sachdeva requires full fluid composition for comparison)");
 
       // Basic sanity check - flow should be positive
       assertTrue(qL_gilbert > 0, "Gilbert flow should be positive");
@@ -504,9 +508,9 @@ public class MultiphaseChokeFlowValidationTest {
     @Test
     @DisplayName("Overall model accuracy summary")
     void testOverallAccuracySummary() {
-      System.out.println("\n============================================================");
-      System.out.println("   MULTIPHASE CHOKE FLOW MODEL VALIDATION SUMMARY");
-      System.out.println("============================================================\n");
+      logger.info("\n============================================================");
+      logger.info("   MULTIPHASE CHOKE FLOW MODEL VALIDATION SUMMARY");
+      logger.info("============================================================\n");
 
       // Sachdeva critical ratio accuracy
       SachdevaChokeFlow sachdeva = new SachdevaChokeFlow();
@@ -518,22 +522,22 @@ public class MultiphaseChokeFlowValidationTest {
       }
       sachdevaCritRatioError /= sachdevaCriticalRatioData.size();
 
-      System.out.println("Model Performance Against Literature Data:");
-      System.out.println("------------------------------------------");
+      logger.info("Model Performance Against Literature Data:");
+      logger.info("------------------------------------------");
       System.out.printf("1. Sachdeva Critical Pressure Ratio:  %.1f%% average error\n",
           sachdevaCritRatioError);
-      System.out.println("   Source: Sachdeva et al. (1986) SPE 15657, 13 data points");
-      System.out.println();
+      logger.info("   Source: Sachdeva et al. (1986) SPE 15657, 13 data points");
+
 
       // Gilbert correlation accuracy
       double gilbertError = calculateGilbertFieldError();
       System.out.printf("2. Gilbert Empirical Correlation:     %.1f%% average error\n",
           gilbertError);
-      System.out.println("   Source: Gilbert (1954) Lake Maracaibo, 20 data points");
-      System.out.println();
+      logger.info("   Source: Gilbert (1954) Lake Maracaibo, 20 data points");
 
-      System.out.println("Validation Status:");
-      System.out.println("------------------");
+
+      logger.info("Validation Status:");
+      logger.info("------------------");
       boolean sachdevaPass = sachdevaCritRatioError < 5.0;
       boolean gilbertPass = gilbertError < 25.0;
 
@@ -541,9 +545,9 @@ public class MultiphaseChokeFlowValidationTest {
           sachdevaPass ? "PASS ✓" : "FAIL ✗");
       System.out.printf("- Gilbert Field Data:      %s (threshold: 25%%)\n",
           gilbertPass ? "PASS ✓" : "FAIL ✗");
-      System.out.println();
 
-      System.out.println("============================================================\n");
+
+      logger.info("============================================================\n");
 
       assertTrue(sachdevaPass, "Sachdeva critical ratio validation failed");
       assertTrue(gilbertPass, "Gilbert field data validation failed");

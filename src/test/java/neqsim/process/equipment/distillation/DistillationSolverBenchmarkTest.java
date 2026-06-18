@@ -12,12 +12,16 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Comprehensive benchmark tests comparing built-in solver types on standard distillation problems.
  * These tests validate the improvements described in the distillation column paper.
  */
 public class DistillationSolverBenchmarkTest {
+  private static final Logger logger = LogManager.getLogger(DistillationSolverBenchmarkTest.class);
+
 
   /** Components used in the column4.py C1 to C5 benchmark. */
   private static final String[] COLUMN4_COMPONENTS =
@@ -73,42 +77,42 @@ public class DistillationSolverBenchmarkTest {
     return column;
   }
 
-    /**
-     * Apply a bounded deethanizer temperature profile to avoid expensive PH flashes.
-     *
-     * @param column column receiving the tray temperature profile
-     * @param trayCount number of equilibrium trays above the reboiler
-     */
-    private void applyDeethanizerTemperatureProfile(DistillationColumn column, int trayCount) {
-        for (int trayIndex = 1; trayIndex <= trayCount; trayIndex++) {
-            double trayFraction = trayCount <= 1 ? 0.0 : (trayIndex - 1.0) / (trayCount - 1.0);
-            column.getTray(trayIndex).setOutTemperature(273.15 + 90.0 - trayFraction * 135.0);
-        }
+  /**
+   * Apply a bounded deethanizer temperature profile to avoid expensive PH flashes.
+   *
+   * @param column column receiving the tray temperature profile
+   * @param trayCount number of equilibrium trays above the reboiler
+   */
+  private void applyDeethanizerTemperatureProfile(DistillationColumn column, int trayCount) {
+    for (int trayIndex = 1; trayIndex <= trayCount; trayIndex++) {
+      double trayFraction = trayCount <= 1 ? 0.0 : (trayIndex - 1.0) / (trayCount - 1.0);
+      column.getTray(trayIndex).setOutTemperature(273.15 + 90.0 - trayFraction * 135.0);
     }
+  }
 
-    /**
-     * Run a 5-tray deethanizer with a bounded tray-temperature profile.
-     *
-     * @param solverType solver to use for the column
-     * @return configured and executed deethanizer column
-     */
-    private DistillationColumn runProfiledDeethanizer(DistillationColumn.SolverType solverType) {
-        Stream feed = new Stream("profiled_feed_" + solverType.name(), createDeethanizerFeed().clone());
-        feed.setFlowRate(100.0, "kg/hr");
-        feed.run();
+  /**
+   * Run a 5-tray deethanizer with a bounded tray-temperature profile.
+   *
+   * @param solverType solver to use for the column
+   * @return configured and executed deethanizer column
+   */
+  private DistillationColumn runProfiledDeethanizer(DistillationColumn.SolverType solverType) {
+    Stream feed = new Stream("profiled_feed_" + solverType.name(), createDeethanizerFeed().clone());
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.run();
 
-        DistillationColumn column =
-                new DistillationColumn("profiled_deethanizer_" + solverType.name(), 5, true, false);
-        column.addFeedStream(feed, 5);
-        column.getReboiler().setOutTemperature(105.0 + 273.15);
-        applyDeethanizerTemperatureProfile(column, 5);
-        column.setTopPressure(30.0);
-        column.setBottomPressure(32.0);
-        column.setMaxNumberOfIterations(50);
-        column.setSolverType(solverType);
-        column.run();
-        return column;
-    }
+    DistillationColumn column =
+        new DistillationColumn("profiled_deethanizer_" + solverType.name(), 5, true, false);
+    column.addFeedStream(feed, 5);
+    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    applyDeethanizerTemperatureProfile(column, 5);
+    column.setTopPressure(30.0);
+    column.setBottomPressure(32.0);
+    column.setMaxNumberOfIterations(50);
+    column.setSolverType(solverType);
+    column.run();
+    return column;
+  }
 
   /**
    * Run a compact binary column configured for Murphree-efficiency regression checks.
@@ -148,53 +152,53 @@ public class DistillationSolverBenchmarkTest {
     return column;
   }
 
-    /**
-     * Run a compact binary column for MESH residual diagnostics.
-     *
-     * @param name column name
-     * @param solverType solver to use for the column
-     * @return configured and executed binary column
-     */
-    private DistillationColumn runCompactMeshResidualColumn(String name,
-            DistillationColumn.SolverType solverType) {
-        return runBinaryMurphreeColumn(name, 1.0, solverType);
-    }
+  /**
+   * Run a compact binary column for MESH residual diagnostics.
+   *
+   * @param name column name
+   * @param solverType solver to use for the column
+   * @return configured and executed binary column
+   */
+  private DistillationColumn runCompactMeshResidualColumn(String name,
+      DistillationColumn.SolverType solverType) {
+    return runBinaryMurphreeColumn(name, 1.0, solverType);
+  }
 
-    /**
-     * Run a compact binary inside-out column with configurable inner-loop steps.
-     *
-     * @param name column name
-     * @param innerLoopSteps number of simplified inner-loop steps to run
-     * @return configured and executed binary column
-     */
-    private DistillationColumn runBinaryInsideOutColumn(String name, int innerLoopSteps) {
-        SystemInterface system = new SystemSrkEos(323.15, 10.0);
-        system.addComponent("propane", 1.0);
-        system.addComponent("n-butane", 1.0);
-        system.setMixingRule("classic");
+  /**
+   * Run a compact binary inside-out column with configurable inner-loop steps.
+   *
+   * @param name column name
+   * @param innerLoopSteps number of simplified inner-loop steps to run
+   * @return configured and executed binary column
+   */
+  private DistillationColumn runBinaryInsideOutColumn(String name, int innerLoopSteps) {
+    SystemInterface system = new SystemSrkEos(323.15, 10.0);
+    system.addComponent("propane", 1.0);
+    system.addComponent("n-butane", 1.0);
+    system.setMixingRule("classic");
 
-        Stream feed = new Stream(name + "_feed", system);
-        feed.setFlowRate(100.0, "kg/hr");
-        feed.setTemperature(323.15);
-        feed.setPressure(10.0, "bara");
-        feed.run();
+    Stream feed = new Stream(name + "_feed", system);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.setTemperature(323.15);
+    feed.setPressure(10.0, "bara");
+    feed.run();
 
-        DistillationColumn column = new DistillationColumn(name, 5, true, true);
-        column.addFeedStream(feed, 3);
-        column.getCondenser().setOutTemperature(298.15);
-        column.getReboiler().setOutTemperature(348.15);
-        column.getCondenser().setRefluxRatio(2.0);
-        column.getReboiler().setRefluxRatio(2.0);
-        column.setTopPressure(10.0);
-        column.setBottomPressure(10.0);
-        column.setMaxNumberOfIterations(80);
-        column.setTemperatureTolerance(1.0e-1);
-        column.setMassBalanceTolerance(1.0e-1);
-        column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
-        column.setInnerLoopSteps(innerLoopSteps);
-        column.run();
-        return column;
-    }
+    DistillationColumn column = new DistillationColumn(name, 5, true, true);
+    column.addFeedStream(feed, 3);
+    column.getCondenser().setOutTemperature(298.15);
+    column.getReboiler().setOutTemperature(348.15);
+    column.getCondenser().setRefluxRatio(2.0);
+    column.getReboiler().setRefluxRatio(2.0);
+    column.setTopPressure(10.0);
+    column.setBottomPressure(10.0);
+    column.setMaxNumberOfIterations(80);
+    column.setTemperatureTolerance(1.0e-1);
+    column.setMassBalanceTolerance(1.0e-1);
+    column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
+    column.setInnerLoopSteps(innerLoopSteps);
+    column.run();
+    return column;
+  }
 
   /**
    * Assert that a converged deethanizer solve reports an accepted non-fallback status.
@@ -236,7 +240,7 @@ public class DistillationSolverBenchmarkTest {
     DistillationColumn.SolverType[] solversUsed = new DistillationColumn.SolverType[solvers.length];
 
     for (int i = 0; i < solvers.length; i++) {
-    DistillationColumn col = runProfiledDeethanizer(solvers[i]);
+      DistillationColumn col = runProfiledDeethanizer(solvers[i]);
       assertTrue(col.solved(),
           solvers[i].name() + " should converge: " + col.getConvergenceDiagnostics());
       assertAcceptedSolveStatus(col, solvers[i]);
@@ -270,7 +274,7 @@ public class DistillationSolverBenchmarkTest {
     // SolverUsed surfaces accelerator-to-damped fallbacks).
     System.out.printf("%n%-25s %6s %10s %10s %10s %-22s %-22s%n", "Solver", "Iters", "Time(s)",
         "GasFlow", "LiqFlow", "Status", "SolverUsed");
-    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 115));
+    logger.info(org.apache.commons.lang3.StringUtils.repeat("-", 115));
     for (int i = 0; i < solvers.length; i++) {
       System.out.printf("%-25s %6d %10.3f %10.2f %10.2f %-22s %-22s%n", solvers[i].name(),
           iterations[i], times[i], gasFlows[i], liquidFlows[i],
@@ -386,8 +390,8 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void convergenceHistoryIsRecorded() {
-        DistillationColumn col = runCompactMeshResidualColumn("direct_convergence_history",
-                DistillationColumn.SolverType.DIRECT_SUBSTITUTION);
+    DistillationColumn col = runCompactMeshResidualColumn("direct_convergence_history",
+        DistillationColumn.SolverType.DIRECT_SUBSTITUTION);
 
     List<double[]> history = col.getConvergenceHistory();
     assertFalse(history.isEmpty(), "Convergence history should not be empty");
@@ -630,8 +634,8 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void meshResidualVectorIsFiniteOnSolvedDeethanizer() {
-        DistillationColumn column = runCompactMeshResidualColumn("mesh_residual_vector",
-                DistillationColumn.SolverType.DIRECT_SUBSTITUTION);
+    DistillationColumn column = runCompactMeshResidualColumn("mesh_residual_vector",
+        DistillationColumn.SolverType.DIRECT_SUBSTITUTION);
 
     ColumnMeshResidual residual = column.getLastMeshResidual();
     int trayCount = column.getTrays().size();
@@ -697,11 +701,11 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void meshResidualSolverRunsOnDeethanizer() {
-        DistillationColumn column = runCompactMeshResidualColumn("mesh_residual_solver",
-                DistillationColumn.SolverType.MESH_RESIDUAL);
+    DistillationColumn column = runCompactMeshResidualColumn("mesh_residual_solver",
+        DistillationColumn.SolverType.MESH_RESIDUAL);
 
-    assertTrue(column.solved(), "MESH residual-monitored solver should converge: "
-        + column.getConvergenceDiagnostics());
+    assertTrue(column.solved(),
+        "MESH residual-monitored solver should converge: " + column.getConvergenceDiagnostics());
     assertNotNull(column.getLastMeshResidual(), "MESH residual solver should record diagnostics");
     assertTrue(Double.isFinite(column.getLastMeshResidualNorm()),
         "MESH residual solver should report a finite norm");
@@ -739,10 +743,10 @@ public class DistillationSolverBenchmarkTest {
     DistillationColumn meshResidual = runCompactMeshResidualColumn("mesh_residual_polish",
         DistillationColumn.SolverType.MESH_RESIDUAL);
 
-    assertTrue(insideOut.solved(), "Inside-out reference should converge: "
-        + insideOut.getConvergenceDiagnostics());
-    assertTrue(meshResidual.solved(), "MESH residual solver should converge: "
-        + meshResidual.getConvergenceDiagnostics());
+    assertTrue(insideOut.solved(),
+        "Inside-out reference should converge: " + insideOut.getConvergenceDiagnostics());
+    assertTrue(meshResidual.solved(),
+        "MESH residual solver should converge: " + meshResidual.getConvergenceDiagnostics());
     assertTrue(
         meshResidual.getLastMeshResidualNorm() <= insideOut.getLastMeshResidualNorm() * 1.001
             + 1.0e-12,
@@ -756,8 +760,8 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void meshResidualToleranceCanBeEnforced() {
-        DistillationColumn column = runCompactMeshResidualColumn("mesh_residual_tolerance",
-                DistillationColumn.SolverType.MESH_RESIDUAL);
+    DistillationColumn column = runCompactMeshResidualColumn("mesh_residual_tolerance",
+        DistillationColumn.SolverType.MESH_RESIDUAL);
     double residualNorm = column.getLastMeshResidualNorm();
     double productDrawResidualNorm = column.getLastMeshProductDrawResidualNorm();
     double permissiveTolerance = Math.max(1.0, residualNorm * 2.0 + 1.0);
@@ -800,8 +804,8 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void productDrawResidualDetectsUnsynchronizedTerminalDraw() {
-        DistillationColumn column = runCompactMeshResidualColumn("mesh_product_draw_residual",
-                DistillationColumn.SolverType.MESH_RESIDUAL);
+    DistillationColumn column = runCompactMeshResidualColumn("mesh_product_draw_residual",
+        DistillationColumn.SolverType.MESH_RESIDUAL);
     assertTrue(
         column.getLastMeshProductDrawResidualNorm() <= column.getMeshProductDrawResidualTolerance(),
         "Solved column should start with synchronized terminal product draws");
@@ -1044,7 +1048,7 @@ public class DistillationSolverBenchmarkTest {
           new DistillationColumn("large_col_" + solver.name(), 10, true, false);
       column.addFeedStream(feed, 5);
       column.getReboiler().setOutTemperature(105.0 + 273.15);
-            applyDeethanizerTemperatureProfile(column, 10);
+      applyDeethanizerTemperatureProfile(column, 10);
       column.setTopPressure(30.0);
       column.setBottomPressure(32.0);
       column.setMaxNumberOfIterations(80);
@@ -1101,8 +1105,8 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void insideOutRecordsKvalueResidual() {
-        DistillationColumn col = runCompactMeshResidualColumn("inside_out_kvalue_history",
-                DistillationColumn.SolverType.INSIDE_OUT);
+    DistillationColumn col = runCompactMeshResidualColumn("inside_out_kvalue_history",
+        DistillationColumn.SolverType.INSIDE_OUT);
     assertTrue(col.solved(), "Inside-Out should converge");
 
     List<double[]> history = col.getConvergenceHistory();
@@ -1250,8 +1254,8 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void innerLoopProducesExtraHistoryEntries() {
-        DistillationColumn withInner = runBinaryInsideOutColumn("col_inner_hist", 3);
-        DistillationColumn noInner = runBinaryInsideOutColumn("col_no_inner_hist", 0);
+    DistillationColumn withInner = runBinaryInsideOutColumn("col_inner_hist", 3);
+    DistillationColumn noInner = runBinaryInsideOutColumn("col_no_inner_hist", 0);
 
     assertTrue(withInner.solved(), "IO with inner loop should converge");
     assertTrue(noInner.solved(), "IO without inner loop should converge");
@@ -1357,8 +1361,8 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void newtonRecordsConvergenceHistory() {
-        DistillationColumn col = runCompactMeshResidualColumn("newton_convergence_history",
-                DistillationColumn.SolverType.NEWTON);
+    DistillationColumn col = runCompactMeshResidualColumn("newton_convergence_history",
+        DistillationColumn.SolverType.NEWTON);
     assertTrue(col.solved(), "Newton should converge");
 
     List<double[]> history = col.getConvergenceHistory();

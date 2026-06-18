@@ -10,6 +10,8 @@ import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Integration tests for TwoFluidPipe transient multiphase flow solver.
@@ -20,6 +22,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 class TwoFluidPipeIntegrationTest {
+  private static final Logger logger = LogManager.getLogger(TwoFluidPipeIntegrationTest.class);
+
   private static final int NUM_SECTIONS = 5; // Reduced for faster tests
   private TwoFluidPipe pipe;
   private static Stream sharedInletStream;
@@ -461,7 +465,7 @@ class TwoFluidPipeIntegrationTest {
     // Get thermal summary
     String summary = subseaPipe.getThermalSummary();
     assertNotNull(summary, "Thermal summary should not be null");
-    System.out.println("\n" + summary);
+    logger.info("\n" + summary);
   }
 
   /**

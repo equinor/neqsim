@@ -16,12 +16,16 @@ import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test class for transient separator simulation using improved VU flash calculations. This test
  * replicates a complex oil processing scenario with control systems.
  */
 public class TransientSeparatorVUFlashTest {
+  private static final Logger logger = LogManager.getLogger(TransientSeparatorVUFlashTest.class);
+
   // Process parameters
   private static final double TIME_STEP = 10.0; // seconds
   private static final double TOTAL_TIME = 300.0; // seconds (reduced for testing)
@@ -323,7 +327,7 @@ public class TransientSeparatorVUFlashTest {
       testProcess.runTransient(5.0);
     }
 
-    System.out.println("VU flash convergence test completed successfully");
+    logger.info("VU flash convergence test completed successfully");
   }
 
   /**

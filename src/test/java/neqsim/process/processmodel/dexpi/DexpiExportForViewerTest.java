@@ -19,6 +19,8 @@ import neqsim.process.measurementdevice.TemperatureTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Generates DEXPI XML files for testing in external DEXPI viewers. Run this test then open the
@@ -28,6 +30,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class DexpiExportForViewerTest extends NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(DexpiExportForViewerTest.class);
+
 
   /**
    * Generates a gas processing flowsheet with separator, compressor, cooler, and valve. Writes to
@@ -79,7 +83,7 @@ public class DexpiExportForViewerTest extends NeqSimTest {
 
     File outFile = new File("target/dexpi-viewer/gas_processing.xml");
     DexpiXmlWriter.write(process, outFile);
-    System.out.println("DEXPI XML written to: " + outFile.getAbsolutePath());
+    logger.info("DEXPI XML written to: " + outFile.getAbsolutePath());
   }
 
   /**
@@ -125,7 +129,7 @@ public class DexpiExportForViewerTest extends NeqSimTest {
 
     File outFile = new File("target/dexpi-viewer/two_stage_compression.xml");
     DexpiXmlWriter.write(process, outFile);
-    System.out.println("DEXPI XML written to: " + outFile.getAbsolutePath());
+    logger.info("DEXPI XML written to: " + outFile.getAbsolutePath());
   }
 
   /**
@@ -141,7 +145,7 @@ public class DexpiExportForViewerTest extends NeqSimTest {
     dest.getParentFile().mkdirs();
     java.nio.file.Files.copy(source.toPath(), dest.toPath(),
         java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-    System.out.println("Official DEXPI example copied to: " + dest.getAbsolutePath());
+    logger.info("Official DEXPI example copied to: " + dest.getAbsolutePath());
   }
 
   /**
@@ -199,7 +203,7 @@ public class DexpiExportForViewerTest extends NeqSimTest {
 
     File outFile = new File("target/dexpi-viewer/instruments_test.xml");
     DexpiXmlWriter.write(process, outFile, transmitters, null);
-    System.out.println("DEXPI XML with instruments written to: " + outFile.getAbsolutePath());
+    logger.info("DEXPI XML with instruments written to: " + outFile.getAbsolutePath());
   }
 
   /**
@@ -303,6 +307,6 @@ public class DexpiExportForViewerTest extends NeqSimTest {
     // Write with auto-instrument collection (no explicit transmitter map needed)
     File outFile = new File("target/dexpi-viewer/professional_pid.xml");
     DexpiXmlWriter.write(process, outFile);
-    System.out.println("Professional P&ID written to: " + outFile.getAbsolutePath());
+    logger.info("Professional P&ID written to: " + outFile.getAbsolutePath());
   }
 }

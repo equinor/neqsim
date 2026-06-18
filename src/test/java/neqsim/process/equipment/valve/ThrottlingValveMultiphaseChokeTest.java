@@ -13,6 +13,8 @@ import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Integration tests for multiphase choke models with ThrottlingValve.
@@ -25,6 +27,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author esol
  */
 public class ThrottlingValveMultiphaseChokeTest {
+  private static final Logger logger = LogManager.getLogger(ThrottlingValveMultiphaseChokeTest.class);
+
 
   private SystemInterface twoPhaseFluid;
   private Stream inletStream;
@@ -71,7 +75,7 @@ public class ThrottlingValveMultiphaseChokeTest {
     assertEquals(50.0, choke.getOutletStream().getPressure("bara"), 0.1,
         "Outlet pressure should match setpoint");
 
-    System.out.println("\n=== Sachdeva Model Results ===");
+    logger.info("\n=== Sachdeva Model Results ===");
     System.out.printf("Inlet Pressure: %.1f bara\n", inletStream.getPressure("bara"));
     System.out.printf("Outlet Pressure: %.1f bara\n", choke.getOutletStream().getPressure("bara"));
     System.out.printf("Flow Rate: %.1f kg/hr\n", choke.getOutletStream().getFlowRate("kg/hr"));
@@ -96,7 +100,7 @@ public class ThrottlingValveMultiphaseChokeTest {
     assertNotNull(choke.getOutletStream());
     assertTrue(choke.getOutletStream().getFlowRate("kg/hr") > 0, "Flow should be positive");
 
-    System.out.println("\n=== Gilbert Model Results ===");
+    logger.info("\n=== Gilbert Model Results ===");
     System.out.printf("Inlet Pressure: %.1f bara\n", inletStream.getPressure("bara"));
     System.out.printf("Outlet Pressure: %.1f bara\n", choke.getOutletStream().getPressure("bara"));
     System.out.printf("Flow Rate: %.1f kg/hr\n", choke.getOutletStream().getFlowRate("kg/hr"));
@@ -107,9 +111,9 @@ public class ThrottlingValveMultiphaseChokeTest {
   void testAllGilbertCorrelations() {
     String[] models = {"Gilbert", "Baxendell", "Ros", "Achong"};
 
-    System.out.println("\n=== Comparison of Gilbert-Type Correlations ===");
-    System.out.println("Model       | Outlet Flow (kg/hr)");
-    System.out.println("---------------------------------");
+    logger.info("\n=== Comparison of Gilbert-Type Correlations ===");
+    logger.info("Model       | Outlet Flow (kg/hr)");
+    logger.info("---------------------------------");
 
     for (String model : models) {
       ThrottlingValve choke = new ThrottlingValve("Choke " + model, inletStream);
@@ -134,9 +138,9 @@ public class ThrottlingValveMultiphaseChokeTest {
     double[] diameters = {0.25, 0.5, 0.75, 1.0}; // inches
     double previousCalculatedFlow = 0;
 
-    System.out.println("\n=== Choke Diameter Effect on Flow ===");
-    System.out.println("Diameter (in) | Calculated Flow (kg/hr) | Ratio to Previous");
-    System.out.println("--------------------------------------------------");
+    logger.info("\n=== Choke Diameter Effect on Flow ===");
+    logger.info("Diameter (in) | Calculated Flow (kg/hr) | Ratio to Previous");
+    logger.info("--------------------------------------------------");
 
     for (double d : diameters) {
       ThrottlingValve choke = new ThrottlingValve("Test Choke", inletStream);
@@ -171,9 +175,9 @@ public class ThrottlingValveMultiphaseChokeTest {
   void testPressureDropEffect() {
     double[] outletPressures = {90, 70, 50, 30}; // bara
 
-    System.out.println("\n=== Pressure Drop Effect on Flow (Sachdeva) ===");
-    System.out.println("P_out (bara) | Delta_P | Flow (kg/hr) | Regime");
-    System.out.println("----------------------------------------------------");
+    logger.info("\n=== Pressure Drop Effect on Flow (Sachdeva) ===");
+    logger.info("P_out (bara) | Delta_P | Flow (kg/hr) | Regime");
+    logger.info("----------------------------------------------------");
 
     double previousFlow = 0;
 
@@ -213,9 +217,9 @@ public class ThrottlingValveMultiphaseChokeTest {
   void testDischargeCoefficient() {
     double[] cdValues = {0.70, 0.80, 0.85, 0.90};
 
-    System.out.println("\n=== Discharge Coefficient Effect ===");
-    System.out.println("Cd    | Flow (kg/hr)");
-    System.out.println("----------------------");
+    logger.info("\n=== Discharge Coefficient Effect ===");
+    logger.info("Cd    | Flow (kg/hr)");
+    logger.info("----------------------");
 
     for (double cd : cdValues) {
       ThrottlingValve choke = new ThrottlingValve("Test Choke", inletStream);
@@ -274,7 +278,7 @@ public class ThrottlingValveMultiphaseChokeTest {
         chokeMethod.getChokeModel().calculateCriticalPressureRatio(gasQuality, 1.3);
     double pressureRatio = 20.0 / 100.0;
 
-    System.out.println("\n=== Critical Flow Detection ===");
+    logger.info("\n=== Critical Flow Detection ===");
     System.out.printf("Gas Quality: %.3f\n", gasQuality);
     System.out.printf("Critical Pressure Ratio: %.3f\n", criticalRatio);
     System.out.printf("Actual Pressure Ratio: %.3f\n", pressureRatio);
@@ -310,7 +314,7 @@ public class ThrottlingValveMultiphaseChokeTest {
     double density = inletStream.getThermoSystem().getDensity("kg/m3");
     double volumetricFlow50 = massFlow50 / density; // m3/s
 
-    System.out.println("\n=== Valve Opening from Flow Rate Test ===");
+    logger.info("\n=== Valve Opening from Flow Rate Test ===");
     System.out.printf("Test opening: %.1f%%\n", testOpening);
     System.out.printf("Mass flow at %.1f%% opening: %.4f kg/s\n", testOpening, massFlow50);
     System.out.printf("Volumetric flow: %.6f m3/s\n", volumetricFlow50);
@@ -330,9 +334,9 @@ public class ThrottlingValveMultiphaseChokeTest {
         "Calculated opening should match original opening within 2%");
 
     // Test with different target openings
-    System.out.println("\n--- Validation at Multiple Openings ---");
-    System.out.println("Target Opening | Calc Flow (kg/s) | Reverse Calc Opening | Error");
-    System.out.println("----------------------------------------------------------------");
+    logger.info("\n--- Validation at Multiple Openings ---");
+    logger.info("Target Opening | Calc Flow (kg/s) | Reverse Calc Opening | Error");
+    logger.info("----------------------------------------------------------------");
 
     double[] testOpenings = {20.0, 40.0, 60.0, 80.0, 100.0};
     for (double opening : testOpenings) {
@@ -358,7 +362,7 @@ public class ThrottlingValveMultiphaseChokeTest {
   @Test
   @DisplayName("Test flow calculation in transient mode - choke calculates outlet flow")
   void testFlowCalculationTransientMode() {
-    System.out.println("\n=== Flow Calculation in Transient Mode Test ===");
+    logger.info("\n=== Flow Calculation in Transient Mode Test ===");
 
     // Test 1: Steady-state mode (default) - outlet flow equals inlet flow
     ThrottlingValve choke1 = new ThrottlingValve("Choke1", inletStream);
@@ -403,9 +407,9 @@ public class ThrottlingValveMultiphaseChokeTest {
     double[] diameters = {0.25, 0.5, 1.0}; // inches
     double previousFlow = 0;
 
-    System.out.println("\n--- Flow vs Choke Diameter (Transient Mode) ---");
-    System.out.println("Diameter (in) | Calculated Flow (kg/hr)");
-    System.out.println("------------------------------------------");
+    logger.info("\n--- Flow vs Choke Diameter (Transient Mode) ---");
+    logger.info("Diameter (in) | Calculated Flow (kg/hr)");
+    logger.info("------------------------------------------");
 
     for (double d : diameters) {
       ThrottlingValve choke = new ThrottlingValve("Choke", inletStream);
@@ -426,9 +430,9 @@ public class ThrottlingValveMultiphaseChokeTest {
     }
 
     // Test 4: Different valve openings should give different flows
-    System.out.println("\n--- Flow vs Valve Opening (Transient Mode) ---");
-    System.out.println("Opening (%) | Calculated Flow (kg/hr)");
-    System.out.println("------------------------------------------");
+    logger.info("\n--- Flow vs Valve Opening (Transient Mode) ---");
+    logger.info("Opening (%) | Calculated Flow (kg/hr)");
+    logger.info("------------------------------------------");
 
     previousFlow = 0;
     double[] openings = {25.0, 50.0, 75.0, 100.0};

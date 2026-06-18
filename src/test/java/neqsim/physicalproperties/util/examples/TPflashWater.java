@@ -17,8 +17,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TPflashWater {
+  private static final Logger logger = LogManager.getLogger(TPflashWater.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TPflashWater.class);
 
   /**
    * <p>
@@ -48,10 +49,10 @@ public class TPflashWater {
       logger.error(ex.getMessage(), ex);
     }
     testSystem.initPhysicalProperties();
-    // System.out.println("viscosity " + testSystem.getViscosity());
-    System.out.println("viscosity " + testSystem.getPhase("aqueous").getViscosity());
+    // logger.info("viscosity " + testSystem.getViscosity());
+    logger.info("viscosity " + testSystem.getPhase("aqueous").getViscosity());
     testSystem.display();
-    // System.out.println("surftens 0-2 " +
+    // logger.info("surftens 0-2 " +
     // testSystem.getInterphaseProperties().getSurfaceTension(0,2));
   }
 }
