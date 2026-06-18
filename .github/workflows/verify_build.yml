@@ -60,7 +60,7 @@ jobs:
         run: mvn -B test -ntp -DexcludedTestGroups= "-Daether.connector.basic.retries=5"
       - name: Run fast tests, do not generate JaCoCo report
         if: ${{ !matrix.verify_jacoco }}
-        run: mvn -B test -ntp -DskipITs "-Daether.connector.basic.retries=5" -Djacoco.skip=true
+        run: mvn -B test -ntp -DskipITs "-Daether.connector.basic.retries=5" "-Djacoco.skip=true"
       - name: Verify JaCoCo report exists
         if: matrix.verify_jacoco && github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
