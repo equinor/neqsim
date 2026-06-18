@@ -18,9 +18,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TPflashDehyd {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TPflashDehyd.class);
+  private static final Logger logger = LogManager.getLogger(TPflashDehyd.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -71,7 +72,7 @@ public class TPflashDehyd {
     // thermo.ThermodynamicModelTest(testSystem);
     // testModel.runTest();
     // testSystem.display();
-    // System.out.println("water activity " +
+    // logger.info("water activity " +
     // testSystem.getPhase(1).getActivityCoefficient(2));
     // testSystem.init(0);
     // testSystem.setPhaseType(0, 1);
@@ -80,87 +81,86 @@ public class TPflashDehyd {
      * testSystem.init(2);
      *
      * // testSystem.init(1); // testSystem.init(2); // testSystem.init(3); //
-     * System.out.println("heat cap " + (testSystem.getPhase(1).getCp())); //
+     * logger.info("heat cap " + (testSystem.getPhase(1).getCp())); //
      * testOps.calcPTphaseEnvelope(); testSystem.display(); // testSystem.getPhase(0).getCp(); }
-     * catch (Exception ex) { System.out.println(ex.toString()); }
+     * catch (Exception ex) { logger.info(ex.toString()); }
      *
-     * /* System.out.println("gas density " + (testSystem.getPhase(0).getDensity()));
-     * System.out.println("gas density " + (1.0 / (testSystem.getPhase(0).getDensity() /
+     * /* logger.info("gas density " + (testSystem.getPhase(0).getDensity()));
+     * logger.info("gas density " + (1.0 / (testSystem.getPhase(0).getDensity() /
      * testSystem.getPhase(0).getMolarMass())));
      *
-     * System.out.println("liq density " + (testSystem.getPhase(1).getDensity()));
-     * System.out.println("liq density " + (1.0 / (testSystem.getPhase(1).getDensity() /
+     * logger.info("liq density " + (testSystem.getPhase(1).getDensity()));
+     * logger.info("liq density " + (1.0 / (testSystem.getPhase(1).getDensity() /
      * testSystem.getPhase(1).getMolarMass())));
      *
      * testSystem.initPhysicalProperties(); testSystem.init(1);
      *
-     * System.out.println("start....."); testSystem.setEmptyFluid();
-     * testSystem.setMolarComposition(new double[]{1.0, 1e-20, 1e-20}); testSystem.init(0, 0);
-     * testSystem.init(1); testSystem.display();
+     * logger.info("start....."); testSystem.setEmptyFluid(); testSystem.setMolarComposition(new
+     * double[]{1.0, 1e-20, 1e-20}); testSystem.init(0, 0); testSystem.init(1);
+     * testSystem.display();
      *
-     * System.out.println("end....."); testSystem.setMolarComposition(new double[]{0.000001,
-     * 0.00001, 1e-20}); // testSystem.init(1); testSystem.init(0, 0); testSystem.init(1); //
+     * logger.info("end....."); testSystem.setMolarComposition(new double[]{0.000001, 0.00001,
+     * 1e-20}); // testSystem.init(1); testSystem.init(0, 0); testSystem.init(1); //
      * testSystem.display();
      *
      * /* testSystem.initPhysicalProperties(); double rho1 =
-     * testSystem.getPhase(0).getPhysicalProperties().getDensity(); System.out.println("drhodP " +
-     * testSystem.getPhase(0).getdrhodP()); System.out.println("drhodT " +
+     * testSystem.getPhase(0).getPhysicalProperties().getDensity(); logger.info("drhodP " +
+     * testSystem.getPhase(0).getdrhodP()); logger.info("drhodT " +
      * testSystem.getPhase(0).getdrhodP()); testSystem.setPressure(testSystem.getPressure()+0.01);
      * testSystem.setPressure(testSystem.getPressure() + 0.001); testSystem.init(1); //
      * testSystem.display(); // testSystem.initPhysicalProperties(); double rho2 =
      * testSystem.getPhase(0).getPhysicalProperties().getDensity();
      *
-     * //System.out.println("drhodPnum " + (rho2 - rho1) / 0.01); System.out.println("drhodTnum " +
-     * (rho2 - rho1) / 0.001);
+     * //logger.info("drhodPnum " + (rho2 - rho1) / 0.01); logger.info("drhodTnum " + (rho2 - rho1)
+     * / 0.001);
      *
      * testSystem.saveFluid(2327); testSystem.saveFluid(2301); // testSystem.setNumberOfPhases(1);
      * // testSystem.setTemperature(299.0); // testSystem.init(1); //
-     * testSystem.getPhase(0).getEntropy(); // System.out.println("enthalpy " +
+     * testSystem.getPhase(0).getEntropy(); // logger.info("enthalpy " +
      * testSystem.getPhase(0).getEntropy()); //testSystem.setTemperature(299.0); testSystem.init(1);
-     * System.out.println("water activity " + testSystem.getPhase(1).getActivityCoefficient(1)); //
-     * testSystem.getPhase(0).getEntropydP(); System.out.println("Cp " +
-     * testSystem.getPhase(0).getCp()); System.out.println("enthalpy " +
-     * testSystem.getPhase(0).getEnthalpy()); System.out.println("entropy " +
+     * logger.info("water activity " + testSystem.getPhase(1).getActivityCoefficient(1)); //
+     * testSystem.getPhase(0).getEntropydP(); logger.info("Cp " + testSystem.getPhase(0).getCp());
+     * logger.info("enthalpy " + testSystem.getPhase(0).getEnthalpy()); logger.info("entropy " +
      * testSystem.getPhase(0).getEntropy());
      *
-     * testSystem.init(2); System.out.println("Cp " + testSystem.getPhase(0).getCp());
-     * System.out.println("enthalpy " + testSystem.getPhase(0).getEnthalpy());
-     * System.out.println("entropy " + testSystem.getPhase(0).getEntropy()); testSystem.init(3);
-     * System.out.println("Cp " + testSystem.getPhase(0).getCp()); System.out.println("enthalpy " +
-     * testSystem.getPhase(0).getEnthalpy()); System.out.println("entropy " +
+     * testSystem.init(2); logger.info("Cp " + testSystem.getPhase(0).getCp());
+     * logger.info("enthalpy " + testSystem.getPhase(0).getEnthalpy()); logger.info("entropy " +
+     * testSystem.getPhase(0).getEntropy()); testSystem.init(3); logger.info("Cp " +
+     * testSystem.getPhase(0).getCp()); logger.info("enthalpy " +
+     * testSystem.getPhase(0).getEnthalpy()); logger.info("entropy " +
      * testSystem.getPhase(0).getEntropy()); // testSystem.setPhysicalPropertyModel(4);
      * //testSystem.setSolidPhaseCheck("CO2");9 //
      * testSystem.getInterphaseProperties().setInterfacialTensionModel(3); testOps = new
      * ThermodynamicOperations(testSystem); try { // testOps.freezingPointTemperatureFlash();
      * testOps.TPflash(); // testOps.calcPTphaseEnvelope(); // testOps.display(); //
-     * testSystem.display(); } catch (Exception ex) { System.out.println(ex.toString()); }
+     * testSystem.display(); } catch (Exception ex) { logger.info(ex.toString()); }
      *
-     * /* double h1 = testSystem.getPhase(0).getEntropy(); System.out.println("H " +
-     * testSystem.getPhase(0).getEntropy()); System.out.println("H dP " +
+     * /* double h1 = testSystem.getPhase(0).getEntropy(); logger.info("H " +
+     * testSystem.getPhase(0).getEntropy()); logger.info("H dP " +
      * testSystem.getPhase(0).getEntropydT()); testSystem.setTemperature(testSystem.getTemperature()
-     * + 1); testSystem.init(3); double h2 = testSystem.getPhase(0).getEntropy();
-     * System.out.println("H " + testSystem.getPhase(0).getEntropy()); System.out.println("H dP " +
+     * + 1); testSystem.init(3); double h2 = testSystem.getPhase(0).getEntropy(); logger.info("H " +
+     * testSystem.getPhase(0).getEntropy()); logger.info("H dP " +
      * testSystem.getPhase(0).getEntropydT());
      */
-    // System.out.println("dhdp " + (h2 - h1));
+    // logger.info("dhdp " + (h2 - h1));
     /*
      * double seletivity = testSystem.getPhase(1).getComponent("CO2").getx() /
      * testSystem.getPhase(0).getComponent("CO2").getx() /
      * (testSystem.getPhase(1).getComponent("methane").getx() /
      * testSystem.getPhase(0).getComponent("methane").getx());
-     * System.out.println("selectivity CO2/methane " + seletivity);
+     * logger.info("selectivity CO2/methane " + seletivity);
      *
      * double seletivity2 = testSystem.getPhase(1).getComponent("CO2").getx() /
      * testSystem.getPhase(0).getComponent("CO2").getx() /
      * (testSystem.getPhase(1).getComponent("ethane").getx() /
-     * testSystem.getPhase(0).getComponent("ethane").getx());
-     * System.out.println("selectivity CO2/ethane " + seletivity2);
+     * testSystem.getPhase(0).getComponent("ethane").getx()); logger.info("selectivity CO2/ethane "
+     * + seletivity2);
      */
     // testSystem.saveObject(2201);
-    // System.out.println("activity coef MDEA " +
+    // logger.info("activity coef MDEA " +
     // testSystem.getPhase(1).getActivityCoefficient(1));
     /*
-     * testSystem.saveObject(928); testSystem.display(); System.out.println("wt " +
+     * testSystem.saveObject(928); testSystem.display(); logger.info("wt " +
      * testSystem.getPhase(2).getWtFraction(testSystem) +
      * testSystem.getPhase(1).getWtFraction(testSystem) +
      * testSystem.getPhase(0).getWtFraction(testSystem));
@@ -176,35 +176,33 @@ public class TPflashDehyd {
      * ThermodynamicConstantsInterface.R * 298.15 /ThermodynamicConstantsInterface.atm /
      * (testSystem.getPhase(1).getMolarMass()) * 1000;
      *
-     * System.out.println("selectivity " + seletivity); System.out.println("CO2 solubility " +
-     * solubility); System.out.println("Z " + testSystem.getPhase(0).getZ()); //
+     * logger.info("selectivity " + seletivity); logger.info("CO2 solubility " + solubility);
+     * logger.info("Z " + testSystem.getPhase(0).getZ()); //
      * testSystem.getPhase(0).getComponentWithIndex(1); // testSystem.saveObject(300); //
-     * System.out.println("ethanol activity " + testSystem.getPhase(0).getActivityCoefficient(0));
+     * logger.info("ethanol activity " + testSystem.getPhase(0).getActivityCoefficient(0));
      *
-     * //testSystem. // System.out.println("water activity " +
-     * testSystem.getPhase(1).getActivityCoefficient(1)); // System.out.println("TEG activity " +
+     * //testSystem. // logger.info("water activity " +
+     * testSystem.getPhase(1).getActivityCoefficient(1)); // logger.info("TEG activity " +
      * testSystem.getPhase(1).getActivityCoefficient(0)); // testSystem.display();
-     * //System.out.println("fugacitycoefficient " +
+     * //logger.info("fugacitycoefficient " +
      * testSystem.getPhase(1).getComponent("water").getLogFugacityCoefficient()); /*
-     * System.out.println("fugacitycoefficientdp " +
-     * testSystem.getPhase(0).getComponent("MEG").getdfugdp());
-     * System.out.println("fugacitycoefficientdp " +
-     * testSystem.getPhase(0).getComponent("water").getdfugdp());
-     * System.out.println("fugacitycoefficientdt " +
-     * testSystem.getPhase(0).getComponent("MEG").getdfugdt());
-     * System.out.println("fugacitycoefficientdt " +
-     * testSystem.getPhase(0).getComponent("water").getdfugdt());
-     * System.out.println("fugacitycoefficientdn " +
+     * logger.info("fugacitycoefficientdp " +
+     * testSystem.getPhase(0).getComponent("MEG").getdfugdp()); logger.info("fugacitycoefficientdp "
+     * + testSystem.getPhase(0).getComponent("water").getdfugdp());
+     * logger.info("fugacitycoefficientdt " +
+     * testSystem.getPhase(0).getComponent("MEG").getdfugdt()); logger.info("fugacitycoefficientdt "
+     * + testSystem.getPhase(0).getComponent("water").getdfugdt());
+     * logger.info("fugacitycoefficientdn " +
      * testSystem.getPhase(0).getComponent("MEG").getdfugdn(1));
-     * System.out.println("fugacitycoefficientdn " +
+     * logger.info("fugacitycoefficientdn " +
      * testSystem.getPhase(0).getComponent("water").getdfugdn(0));
      *
-     * System.out.println("Hres " + testSystem.getPhase(0).getHresTP() /
-     * thermo.ThermodynamicConstantsInterface.R); System.out.println("Sres " +
+     * logger.info("Hres " + testSystem.getPhase(0).getHresTP() /
+     * thermo.ThermodynamicConstantsInterface.R); logger.info("Sres " +
      * testSystem.getPhase(0).getSresTP() / thermo.ThermodynamicConstantsInterface.R);
-     * System.out.println("Cpres " + testSystem.getPhase(0).getCpres() /
-     * thermo.ThermodynamicConstantsInterface.R); System.out.println("Gibbs gas " +
-     * testSystem.getPhase(0).getGibbsEnergy()); System.out.println("Gibbs liquid " +
+     * logger.info("Cpres " + testSystem.getPhase(0).getCpres() /
+     * thermo.ThermodynamicConstantsInterface.R); logger.info("Gibbs gas " +
+     * testSystem.getPhase(0).getGibbsEnergy()); logger.info("Gibbs liquid " +
      * testSystem.getPhase(1).getGibbsEnergy());
      */
   }

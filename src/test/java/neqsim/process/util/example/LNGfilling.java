@@ -6,6 +6,8 @@
 
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -20,6 +22,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class LNGfilling {
+  private static final Logger logger = LogManager.getLogger(LNGfilling.class);
+
   /**
    * <p>
    * main.
@@ -58,9 +62,8 @@ public class LNGfilling {
     operations.run();
     operations.displayResult();
 
-    System.out.println("Volume Methane " + stream_1.getThermoSystem().getVolume());
-    System.out.println("Volume Nitrogen " + stream_2.getThermoSystem().getVolume());
-    System.out
-        .println("Mixer Cooled Nitrogen " + mixer.getOutletStream().getThermoSystem().getVolume());
+    logger.info("Volume Methane " + stream_1.getThermoSystem().getVolume());
+    logger.info("Volume Nitrogen " + stream_2.getThermoSystem().getVolume());
+    logger.info("Mixer Cooled Nitrogen " + mixer.getOutletStream().getThermoSystem().getVolume());
   }
 }

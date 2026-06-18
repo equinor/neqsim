@@ -12,9 +12,10 @@ import org.netlib.util.intW;
 import neqsim.thermo.system.SystemInterface;
 
 public class GERG2008Test {
-  private GERG2008 gerg;
-  static Logger logger = LogManager.getLogger(GERG2008Test.class);
+  private static final Logger logger = LogManager.getLogger(GERG2008Test.class);
 
+  private GERG2008 gerg;
+  
   @BeforeEach
   public void setUp() {
     gerg = new GERG2008();

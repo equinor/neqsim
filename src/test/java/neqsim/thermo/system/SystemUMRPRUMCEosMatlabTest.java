@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test reproducing MATLAB scrubber carry-over calculation with UMR-PRU EOS. Based on
@@ -15,6 +17,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class SystemUMRPRUMCEosMatlabTest {
+  private static final Logger logger = LogManager.getLogger(SystemUMRPRUMCEosMatlabTest.class);
+
 
   /**
    * Test the gas-only fluid creation and TPflash with UMR-PRU. This reproduces what
@@ -314,7 +318,7 @@ public class SystemUMRPRUMCEosMatlabTest {
     }, "Dew point temperature flash should not throw with UMR-PRU");
 
     double dewT = gasFluid.getTemperature() - 273.15;
-    System.out.println("Dew point temperature (UMR-PRU): " + dewT + " C");
+    logger.info("Dew point temperature (UMR-PRU): " + dewT + " C");
     assertTrue(dewT > -50 && dewT < 50, "Dew point should be in reasonable range, got: " + dewT);
   }
 

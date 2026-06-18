@@ -5,8 +5,9 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 public class waterDegasserTest {
-  Logger logger = LogManager.getLogger(waterDegasserTest.class);
+  private static final Logger logger = LogManager.getLogger(waterDegasserTest.class);
 
+  
   @Test
   public void runProcess() throws InterruptedException {
     neqsim.thermo.system.SystemSrkCPAstatoil fluid1 =
@@ -172,7 +173,7 @@ public class waterDegasserTest {
      * heater_TP_setter_main_stream.setOutPressure(6.22176469039917, "bara");
      * heater_TP_setter_main_stream.setOutTemperature(77.92657470703125, "C");
      * heater_TP_setter_main_stream.run();
-     * System.out.println(heater_TP_setter_main_stream.getOutStream().getFlowRate( "kg/hr"));
+     * logger.info(heater_TP_setter_main_stream.getOutStream().getFlowRate( "kg/hr"));
      *
      * neqsim.thermo.system.SystemSrkCPAstatoil fluid_test_separator = new
      * neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
@@ -238,7 +239,7 @@ public class waterDegasserTest {
      * mixing_degasser.addStream(heater_TP_setter_test_stream.getOutStream());
      * mixing_degasser.run();
      *
-     * System.out.println(mixing_degasser.getOutStream().getFlowRate("kg/hr")); // Should be arount
+     * logger.info(mixing_degasser.getOutStream().getFlowRate("kg/hr")); // Should be arount
      * 33946.08070091751
      */
   }

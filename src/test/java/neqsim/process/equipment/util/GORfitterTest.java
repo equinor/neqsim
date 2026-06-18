@@ -7,8 +7,12 @@ import neqsim.process.measurementdevice.MultiPhaseMeter;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class GORfitterTest {
+  private static final Logger logger = LogManager.getLogger(GORfitterTest.class);
+
   @Test
   void testMain() {
     SystemInterface testFluid = new SystemSrkEos(338.15, 50.0);
@@ -69,12 +73,12 @@ public class GORfitterTest {
     double gor_sm3gas_sm3oil_corrected = stream_2.getFluid().getPhase("gas").getCorrectedVolume()
         / stream_2.getFluid().getPhase("oil").getCorrectedVolume();
 
-    System.out.println("Stream 2 (results outside MPM) " + " GOR sm3/sm3 " + gor_sm3gas_sm3oil
+    logger.info("Stream 2 (results outside MPM) " + " GOR sm3/sm3 " + gor_sm3gas_sm3oil
         + " GOR Corrected by volume " + gor_sm3gas_sm3oil_corrected);
 
-    System.out.println("Stream 2 (results outside MPM) getPhase(gas).getCorrectedVolume() "
+    logger.info("Stream 2 (results outside MPM) getPhase(gas).getCorrectedVolume() "
         + stream_2.getFluid().getPhase("gas").getCorrectedVolume());
-    System.out.println("Stream 2 (results outside MPM) getPhase(oil).getCorrectedVolume() "
+    logger.info("Stream 2 (results outside MPM) getPhase(oil).getCorrectedVolume() "
         + stream_2.getFluid().getPhase("oil").getCorrectedVolume());
 
     // Assertions.assertEquals(51.3073530232923, multiPhaseMeter.getMeasuredValue("GOR", ""),

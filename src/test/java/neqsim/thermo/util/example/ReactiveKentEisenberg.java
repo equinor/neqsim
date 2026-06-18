@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class ReactiveKentEisenberg {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(ReactiveKentEisenberg.class);
+  private static final Logger logger = LogManager.getLogger(ReactiveKentEisenberg.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.

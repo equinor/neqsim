@@ -5,8 +5,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.thermo.system.SystemInterface;
+// import org.apache.logging.log4j.LogManager;
+// import org.apache.logging.log4j.Logger;
 
 public class PipeFlowSystemTest extends neqsim.NeqSimTest {
+  // private static final Logger logger = LogManager.getLogger(PipeFlowSystemTest.class);
+
   FlowSystemInterface pipe;
 
   @BeforeEach

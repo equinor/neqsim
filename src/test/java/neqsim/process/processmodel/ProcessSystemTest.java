@@ -40,8 +40,9 @@ import neqsim.process.util.event.ProcessEventListener;
  * Class for testing ProcessSystem class.
  */
 public class ProcessSystemTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(ProcessSystemTest.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(ProcessSystemTest.class);
 
   ProcessSystem p;
   String _name = "TestProcess";
@@ -802,13 +803,13 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     operations.add(recycleLeanTEG);
     operations.run();
     /*
-     * System.out.println("flowo " + hotLeanTEGPump.getOutletStream().getFlowRate("kg/hr"));
-     * System.out.println("makeup " + makeupTEG.getFlowRate("kg/hr")); System.out.println("mixo " +
-     * coolerhOTteg3.getOutletStream().getFlowRate("kg/hr")); System.out.println("leantoresirc " +
-     * leanTEGtoabs.getFlowRate("kg/hr")); // operations.run(); System.out.println("flowo " +
-     * hotLeanTEGPump.getOutletStream().getFlowRate("kg/hr")); System.out.println("makeup " +
-     * makeupTEG.getFlowRate("kg/hr")); System.out.println("mixo " +
-     * coolerhOTteg3.getOutletStream().getFlowRate("kg/hr")); System.out.println("leantoresirc " +
+     * logger.info("flowo " + hotLeanTEGPump.getOutletStream().getFlowRate("kg/hr"));
+     * logger.info("makeup " + makeupTEG.getFlowRate("kg/hr")); logger.info("mixo " +
+     * coolerhOTteg3.getOutletStream().getFlowRate("kg/hr")); logger.info("leantoresirc " +
+     * leanTEGtoabs.getFlowRate("kg/hr")); // operations.run(); logger.info("flowo " +
+     * hotLeanTEGPump.getOutletStream().getFlowRate("kg/hr")); logger.info("makeup " +
+     * makeupTEG.getFlowRate("kg/hr")); logger.info("mixo " +
+     * coolerhOTteg3.getOutletStream().getFlowRate("kg/hr")); logger.info("leantoresirc " +
      * leanTEGtoabs.getFlowRate("kg/hr"));
      */
     assertEquals(1.5449593316401103E-5, dehydratedGas.getFluid().getComponent("water").getx(),
@@ -1207,7 +1208,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     process1.run();
 
-    // System.out.println("name " + liquidOut.getName());
+    // logger.info("name " + liquidOut.getName());
 
     // compressor1.getOutletStream().getFluid().prettyPrint();
 

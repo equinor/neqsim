@@ -23,8 +23,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class multiThreadTest {
+  private static final Logger logger = LogManager.getLogger(multiThreadTest.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(multiThreadTest.class);
 
   /**
    * This method is just meant to test the thermo package.

@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class HydrateFlash {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(HydrateFlash.class);
+  private static final Logger logger = LogManager.getLogger(HydrateFlash.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -104,7 +105,7 @@ public class HydrateFlash {
       // testSystem.init(0);
       // testSystem.setHydrateCheck(true);
       // testSystem.setMultiPhaseCheck(true);
-      // System.out.println("temperature1 " + (testSystem.getTemperature() - 273.15));
+      // logger.info("temperature1 " + (testSystem.getTemperature() - 273.15));
       // testOps.setRunAsThread(true);
 
       // // testSystem.setSolidPhaseCheck("water");
@@ -116,9 +117,9 @@ public class HydrateFlash {
         // testOps.hydrateFormationTemperature();
       }
       // testOps.TPflash();
-      // System.out.println("temperature2 " + (testSystem.getTemperature() - 273.15));
+      // logger.info("temperature2 " + (testSystem.getTemperature() - 273.15));
       // boolean isFinished = testOps.waitAndCheckForFinishedCalculation(1000000);
-      // System.out.println("finished? " + isFinished);
+      // logger.info("finished? " + isFinished);
 
       // testOps.freezingPointTemperatureFlash();
       // testOps.calcSolidComlexTemperature();
@@ -139,11 +140,11 @@ public class HydrateFlash {
       logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
-    // System.out.println("temperature " + (testSystem.getTemperature() - 273.15));
-    // System.out.println("activity coef water " +
+    // logger.info("temperature " + (testSystem.getTemperature() - 273.15));
+    // logger.info("activity coef water " +
     // testSystem.getPhase(1).getActivityCoefficientSymetric(testSystem.getPhase(1).getComponent("water").getComponentNumber()));
 
-    // System.out.println("wt% TEG " + 100 *
+    // logger.info("wt% TEG " + 100 *
     // testSystem.getPhase(1).getComponent("TEG").getx() *
     // testSystem.getPhase(1).getComponent("TEG").getMolarMass() /
     // (testSystem.getPhase(1).getComponent("TEG").getx() *
@@ -151,17 +152,17 @@ public class HydrateFlash {
     // testSystem.getPhase(1).getComponent("water").getx() *
     // testSystem.getPhase(1).getComponent("water").getMolarMass()));
     // testSystem.display();
-    // System.out.println("kg vann/MSm^3 gas " +
+    // logger.info("kg vann/MSm^3 gas " +
     // (testSystem.getPhase(0).getComponent("water").getx() *
     // testSystem.getPhase(0).getComponent("water").getMolarMass()
     // *ThermodynamicConstantsInterface.atm /
     // ThermodynamicConstantsInterface.R / 288.15) * 1.0e6);
-    // System.out.println("activity coef water " +
+    // logger.info("activity coef water " +
     // testSystem.getPhase(1).getActivityCoefficientSymetric(1));
     // int n = testSystem.getNumberOfPhases()-1;
     // double megwtfrac =
     // testSystem.getPhase(n).getComponent("MEG").getMolarMass()*testSystem.getPhase(n).getComponent("MEG").getx()/testSystem.getPhase(n).getMolarMass();
-    // System.out.println("wt % MEG " + megwtfrac*100);
+    // logger.info("wt % MEG " + megwtfrac*100);
     /*
      * SystemInterface testSystem2 = new SystemSrkCPAstatoil(273.0 - 12, 60.0);
      * testSystem2.addComponent("methane", 1.0 -

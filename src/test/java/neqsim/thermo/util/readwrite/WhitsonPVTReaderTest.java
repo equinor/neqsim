@@ -17,6 +17,8 @@ import neqsim.pvtsimulation.util.PVTReportGenerator;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Unit tests for WhitsonPVTReader.
@@ -24,6 +26,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class WhitsonPVTReaderTest {
+  private static final Logger logger = LogManager.getLogger(WhitsonPVTReaderTest.class);
+
   @TempDir
   Path tempDir;
 
@@ -411,7 +415,7 @@ public class WhitsonPVTReaderTest {
     // Verify saturation pressure is reasonable (should be > 0 and < 400 bar for this fluid)
     assertTrue(psat > 50, "Saturation pressure should be > 50 bar, got: " + psat);
     assertTrue(psat < 400, "Saturation pressure should be < 400 bar, got: " + psat);
-    System.out.println("Saturation pressure: " + psat + " bar");
+    logger.info("Saturation pressure: " + psat + " bar");
 
     // Run CCE
     ConstantMassExpansion cce = new ConstantMassExpansion(fluid);
@@ -425,7 +429,7 @@ public class WhitsonPVTReaderTest {
     assertNotNull(relVol, "CCE relative volume should not be null");
     assertTrue(relVol.length > 0, "CCE should have results");
     assertTrue(relVol[0] > 0, "Relative volume should be positive");
-    System.out.println("CCE relative volume at Psat: " + relVol[2]);
+    logger.info("CCE relative volume at Psat: " + relVol[2]);
 
     // Run Viscosity simulation at various pressures
     ViscositySim viscSim = new ViscositySim(fluid);
@@ -497,74 +501,74 @@ public class WhitsonPVTReaderTest {
     assertTrue(fluidJson.contains("methane"), "JSON should contain methane");
 
     // Print comprehensive summary for visual verification
-    System.out.println("\n========================================");
-    System.out.println("       PVT REPORT SUMMARY");
-    System.out.println("========================================");
-    System.out.println("Fluid: Test Gas Condensate (7 components)");
-    System.out.println("Reservoir T: " + reservoirTemperatureC + " C");
-    System.out.println("Reservoir P: 300.0 bar");
-    System.out.println("Dew Point Pressure: " + String.format("%.2f", psat) + " bar");
+    logger.info("\n========================================");
+    logger.info("       PVT REPORT SUMMARY");
+    logger.info("========================================");
+    logger.info("Fluid: Test Gas Condensate (7 components)");
+    logger.info("Reservoir T: " + reservoirTemperatureC + " C");
+    logger.info("Reservoir P: 300.0 bar");
+    logger.info("Dew Point Pressure: " + String.format("%.2f", psat) + " bar");
     System.out
         .println("Molar Mass: " + String.format("%.2f", fluid.getMolarMass() * 1000) + " g/mol");
 
-    System.out.println("\n--- CCE Results ---");
+    logger.info("\n--- CCE Results ---");
     for (int i = 0; i < ccePressures.length; i++) {
-      System.out.println("  P=" + String.format("%.1f", ccePressures[i]) + " bar, Vrel="
+      logger.info("  P=" + String.format("%.1f", ccePressures[i]) + " bar, Vrel="
           + String.format("%.4f", relVol[i]));
     }
 
-    System.out.println("\n--- Gas Viscosity ---");
+    logger.info("\n--- Gas Viscosity ---");
     for (int i = 0; i < viscPressures.length; i++) {
       // ViscositySim returns Pa·s, multiply by 1000 to convert to cP (mPa·s)
-      System.out.println("  P=" + String.format("%.1f", viscPressures[i]) + " bar, mu="
+      logger.info("  P=" + String.format("%.1f", viscPressures[i]) + " bar, mu="
           + String.format("%.4f", gasViscosity[i] * 1000) + " cP");
     }
 
-    System.out.println("\n--- Gas Density ---");
+    logger.info("\n--- Gas Density ---");
     for (int i = 0; i < viscPressures.length; i++) {
-      System.out.println("  P=" + String.format("%.1f", viscPressures[i]) + " bar, rho="
+      logger.info("  P=" + String.format("%.1f", viscPressures[i]) + " bar, rho="
           + String.format("%.2f", gasDensity[i]) + " kg/m3");
     }
 
-    System.out.println("\n--- Separator Test Results ---");
-    System.out.println("  (Note: For gas condensates, CGR is more meaningful than GOR)");
-    System.out.println("  Reported GOR: " + String.format("%.1f", totalGOR) + " Sm3/Sm3");
-    System.out.println("  CGR: " + String.format("%.3f", CGR) + " Sm3 condensate/Sm3 gas");
-    System.out.println("  CGR: " + String.format("%.1f", CGR_bblperMMscf) + " bbl/MMscf");
-    System.out.println("  Bo: " + String.format("%.4f", Bo) + " m3/Sm3");
+    logger.info("\n--- Separator Test Results ---");
+    logger.info("  (Note: For gas condensates, CGR is more meaningful than GOR)");
+    logger.info("  Reported GOR: " + String.format("%.1f", totalGOR) + " Sm3/Sm3");
+    logger.info("  CGR: " + String.format("%.3f", CGR) + " Sm3 condensate/Sm3 gas");
+    logger.info("  CGR: " + String.format("%.1f", CGR_bblperMMscf) + " bbl/MMscf");
+    logger.info("  Bo: " + String.format("%.4f", Bo) + " m3/Sm3");
     System.out
         .println("  Stock Tank API: " + String.format("%.1f", sepTest.getStockTankAPIGravity()));
-    System.out.println("  Stock Tank Oil Density: "
+    logger.info("  Stock Tank Oil Density: "
         + String.format("%.1f", sepTest.getStockTankOilDensity()) + " kg/m3");
 
-    System.out.println("\n========================================");
-    System.out.println("       GENERATED PVT REPORT");
-    System.out.println("========================================\n");
-    System.out.println(markdown);
+    logger.info("\n========================================");
+    logger.info("       GENERATED PVT REPORT");
+    logger.info("========================================\n");
+    logger.info(markdown);
 
     // Print additional PVT data not in the standard report
-    System.out.println("\n## Additional PVT Data\n");
-    System.out.println("### Gas Viscosity (LBC Model)\n");
-    System.out.println("| Pressure (bara) | Viscosity (cP) |");
-    System.out.println("|-----------------|----------------|");
+    logger.info("\n## Additional PVT Data\n");
+    logger.info("### Gas Viscosity (LBC Model)\n");
+    logger.info("| Pressure (bara) | Viscosity (cP) |");
+    logger.info("|-----------------|----------------|");
     for (int i = 0; i < viscPressures.length; i++) {
       System.out
           .println(String.format("| %.1f | %.4f |", viscPressures[i], gasViscosity[i] * 1000));
     }
 
-    System.out.println("\n### Gas Density\n");
-    System.out.println("| Pressure (bara) | Density (kg/m³) |");
-    System.out.println("|-----------------|-----------------|");
+    logger.info("\n### Gas Density\n");
+    logger.info("| Pressure (bara) | Density (kg/m³) |");
+    logger.info("|-----------------|-----------------|");
     for (int i = 0; i < viscPressures.length; i++) {
-      System.out.println(String.format("| %.1f | %.2f |", viscPressures[i], gasDensity[i]));
+      logger.info(String.format("| %.1f | %.2f |", viscPressures[i], gasDensity[i]));
     }
 
-    System.out.println("\n### Separator Stage Oil Properties\n");
-    System.out.println("| Stage | P (bara) | T (°C) | Oil Density (kg/m³) | Oil Viscosity (cP) |");
-    System.out.println("|-------|----------|--------|---------------------|---------------------|");
+    logger.info("\n### Separator Stage Oil Properties\n");
+    logger.info("| Stage | P (bara) | T (°C) | Oil Density (kg/m³) | Oil Viscosity (cP) |");
+    logger.info("|-------|----------|--------|---------------------|---------------------|");
     for (neqsim.pvtsimulation.simulation.MultiStageSeparatorTest.SeparatorStageResult stage : sepTest
         .getStageResults()) {
-      System.out.println(String.format("| %s | %.1f | %.1f | %.2f | %.4f |", stage.getStageName(),
+      logger.info(String.format("| %s | %.1f | %.1f | %.2f | %.4f |", stage.getStageName(),
           stage.getPressure(), stage.getTemperature(), stage.getOilDensity(),
           stage.getOilViscosity()));
     }
@@ -580,9 +584,9 @@ public class WhitsonPVTReaderTest {
     }
 
     if (hasOilViscosity) {
-      System.out.println("\n### Oil Viscosity vs Pressure\n");
-      System.out.println("| Pressure (bara) | Viscosity (cP) |");
-      System.out.println("|-----------------|----------------|");
+      logger.info("\n### Oil Viscosity vs Pressure\n");
+      logger.info("| Pressure (bara) | Viscosity (cP) |");
+      logger.info("|-----------------|----------------|");
       for (int i = 0; i < viscPressures.length; i++) {
         if (oilViscosity[i] > 0) {
           System.out
@@ -611,29 +615,29 @@ public class WhitsonPVTReaderTest {
     }
 
     if (hasOilDensity) {
-      System.out.println("\n### Oil Density vs Pressure\n");
-      System.out.println("| Pressure (bara) | Density (kg/m³) |");
-      System.out.println("|-----------------|-----------------|");
+      logger.info("\n### Oil Density vs Pressure\n");
+      logger.info("| Pressure (bara) | Density (kg/m³) |");
+      logger.info("|-----------------|-----------------|");
       for (int i = 0; i < viscPressures.length; i++) {
         if (oilDensity[i] > 0) {
-          System.out.println(String.format("| %.1f | %.2f |", viscPressures[i], oilDensity[i]));
+          logger.info(String.format("| %.1f | %.2f |", viscPressures[i], oilDensity[i]));
         }
       }
     }
 
-    System.out.println("\n### Gas Condensate Metrics\n");
-    System.out.println("| Property | Value | Unit |");
-    System.out.println("|----------|-------|------|");
-    System.out.println(String.format("| Dew Point Pressure | %.2f | bara |", psat));
-    System.out.println(String.format("| GOR | %.1f | Sm³/Sm³ |", totalGOR));
-    System.out.println(String.format("| CGR | %.1f | bbl/MMscf |", CGR_bblperMMscf));
-    System.out.println(String.format("| Bo | %.4f | m³/Sm³ |", Bo));
-    System.out.println(
-        String.format("| Stock Tank API | %.1f | °API |", sepTest.getStockTankAPIGravity()));
-    System.out.println(
+    logger.info("\n### Gas Condensate Metrics\n");
+    logger.info("| Property | Value | Unit |");
+    logger.info("|----------|-------|------|");
+    logger.info(String.format("| Dew Point Pressure | %.2f | bara |", psat));
+    logger.info(String.format("| GOR | %.1f | Sm³/Sm³ |", totalGOR));
+    logger.info(String.format("| CGR | %.1f | bbl/MMscf |", CGR_bblperMMscf));
+    logger.info(String.format("| Bo | %.4f | m³/Sm³ |", Bo));
+    logger
+        .info(String.format("| Stock Tank API | %.1f | °API |", sepTest.getStockTankAPIGravity()));
+    logger.info(
         String.format("| Stock Tank Density | %.1f | kg/m³ |", sepTest.getStockTankOilDensity()));
-    System.out.println(String.format("| Molar Mass | %.2f | g/mol |", fluid.getMolarMass() * 1000));
+    logger.info(String.format("| Molar Mass | %.2f | g/mol |", fluid.getMolarMass() * 1000));
 
-    System.out.println("\n========================================\n");
+    logger.info("\n========================================\n");
   }
 }

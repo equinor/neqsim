@@ -10,8 +10,9 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SystemEOSCGEosCO2DensityTest extends neqsim.NeqSimTest {
-  static Logger logger = LogManager.getLogger(SystemEOSCGEosCO2DensityTest.class);
+  private static final Logger logger = LogManager.getLogger(SystemEOSCGEosCO2DensityTest.class);
 
+  
   @Test
   @DisplayName("Check density of CO2 gas with EOS-CG")
   public void testCO2GasDensity() {

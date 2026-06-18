@@ -13,6 +13,8 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -24,6 +26,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TEGdehydrationProcess2 {
+  private static final Logger logger = LogManager.getLogger(TEGdehydrationProcess2.class);
+
   /**
    * <p>
    * main.
@@ -236,7 +240,7 @@ public class TEGdehydrationProcess2 {
 
     operations.run();
     richGLycolHeater2.getOutletStream().getFluid().display();
-    System.out.println("Energy reboiler " + heaterToReboiler.getDuty());
+    logger.info("Energy reboiler " + heaterToReboiler.getDuty());
     mixerTOreboiler.addStream(liquidRegenReflux);
     mixerTOreboiler.addStream(recycle3.getOutletStream());
 
@@ -245,9 +249,9 @@ public class TEGdehydrationProcess2 {
     operations.run();
     // richGLycolHeater2.getOutStream().getFluid().display();
 
-    System.out.println("Energy reboiler 2 " + heaterToReboiler.getDuty());
+    logger.info("Energy reboiler 2 " + heaterToReboiler.getDuty());
 
-    System.out.println(
+    logger.info(
         "wt lean TEG after stripper " + ((WaterStripperColumn) operations.getUnit("TEG stripper"))
             .getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
 

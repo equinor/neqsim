@@ -2,6 +2,8 @@ package neqsim.process.equipment.compressor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.mixer.Mixer;
@@ -26,6 +28,8 @@ import neqsim.thermo.system.SystemPrEos;
  * @version 1.0
  */
 class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(CompressorWaterWashProcessTest.class);
+
   /** Inlet pressure in bara. */
   private static final double COMP_PIN = 26.9 + 1.0;
   /** Inlet temperature in Kelvin. */
@@ -131,13 +135,13 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
     double outletPressure = compressor1.getOutletStream().getPressure("bara");
     double outletTemperature = compressor1.getOutletStream().getTemperature("K");
 
-    System.out.println("=== Prior to wash test ===");
-    System.out.println("Power: " + power + " MW");
-    System.out.println("Polytropic head: " + polytropicHead + " kJ/kg");
-    System.out.println("Polytropic efficiency: " + polytropicEfficiency * 100.0 + " %");
-    System.out.println("Inlet volume rate: " + feedStream.getFlowRate("m3/hr") + " m3/hr");
-    System.out.println("Outlet pressure: " + outletPressure + " bara");
-    System.out.println("Outlet temperature: " + (outletTemperature - 273.15) + " C");
+    logger.info("=== Prior to wash test ===");
+    logger.info("Power: " + power + " MW");
+    logger.info("Polytropic head: " + polytropicHead + " kJ/kg");
+    logger.info("Polytropic efficiency: " + polytropicEfficiency * 100.0 + " %");
+    logger.info("Inlet volume rate: " + feedStream.getFlowRate("m3/hr") + " m3/hr");
+    logger.info("Outlet pressure: " + outletPressure + " bara");
+    logger.info("Outlet temperature: " + (outletTemperature - 273.15) + " C");
 
     // Sanity checks on compressor operation
     assertTrue(power > 0, "Compressor power should be positive");
@@ -215,15 +219,15 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
     boolean hasAqueousOutlet =
         compressor1.getOutletStream().getThermoSystem().hasPhaseType("aqueous");
 
-    System.out.println("=== During wash test ===");
-    System.out.println("Power: " + power + " MW");
-    System.out.println("Polytropic head: " + polytropicHead + " kJ/kg");
-    System.out.println("Polytropic efficiency: " + actualEfficiency * 100.0 + " %");
-    System.out.println("Inlet volume rate: " + feedStream.getFlowRate("m3/hr") + " m3/hr");
-    System.out.println("Outlet pressure: " + (outletPressure - 1.0) + " barg");
-    System.out.println("Outlet temperature: " + outletTemperature + " C");
-    System.out.println("Water mass fraction: " + waterMassFraction + " %");
-    System.out.println("Aqueous phase in outlet: " + hasAqueousOutlet);
+    logger.info("=== During wash test ===");
+    logger.info("Power: " + power + " MW");
+    logger.info("Polytropic head: " + polytropicHead + " kJ/kg");
+    logger.info("Polytropic efficiency: " + actualEfficiency * 100.0 + " %");
+    logger.info("Inlet volume rate: " + feedStream.getFlowRate("m3/hr") + " m3/hr");
+    logger.info("Outlet pressure: " + (outletPressure - 1.0) + " barg");
+    logger.info("Outlet temperature: " + outletTemperature + " C");
+    logger.info("Water mass fraction: " + waterMassFraction + " %");
+    logger.info("Aqueous phase in outlet: " + hasAqueousOutlet);
 
     // Sanity checks
     assertTrue(power > 0, "Compressor power should be positive");
@@ -307,7 +311,7 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
       processOps.run();
 
       outletTemperatures[i] = compressor1.getOutletStream().getTemperature("C");
-      System.out.println(
+      logger.info(
           "Wash rate " + washRates[i] + " kg/hr -> outlet T = " + outletTemperatures[i] + " C");
     }
 
@@ -354,7 +358,7 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
     double rhoOut = compressor.getOutletStream().getFluid().getDensity("kg/m3");
     int profileLength = compressor.getPropertyProfile().getFluid().size();
 
-    System.out.println("Pure MEG on PR: outlet T = " + tOut + " C, rho = " + rhoOut + " kg/m3");
+    logger.info("Pure MEG on PR: outlet T = " + tOut + " C, rho = " + rhoOut + " kg/m3");
 
     // Outlet must be physical: T above inlet (compression heats), finite, not catastrophic.
     assertTrue(Double.isFinite(tOut), "Outlet temperature must be finite");

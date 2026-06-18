@@ -21,8 +21,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemProperties;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations.FlashType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(ThermodynamicOperationsTest.class);
+
   @Test
   void testFlash() {
     SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(280.0, 10.0);
@@ -438,7 +442,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
       ArrayList<Double> fractions = (ArrayList<Double>) inputData.get("fractions");
 
       if (compNames == null) {
-        // System.out.println("Skips test " + test.toString());
+        // logger.info("Skips test " + test.toString());
         /*
          * for (int k = 0; k < fractions.size(); k++) { fluid.addComponent(k, fractions.get(k)); }
          */

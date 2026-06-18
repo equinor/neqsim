@@ -15,10 +15,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Java 17 environment
+      - name: Set up Java 21 environment
         uses: actions/setup-java@v5
         with:
-          java-version: 17
+          java-version: 21
           distribution: 'temurin'
           cache: 'maven'
       - name: Get the version number from the pushed tag

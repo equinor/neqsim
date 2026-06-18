@@ -18,9 +18,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class SulfureDeposition {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(SulfureDeposition.class);
+  private static final Logger logger = LogManager.getLogger(SulfureDeposition.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.

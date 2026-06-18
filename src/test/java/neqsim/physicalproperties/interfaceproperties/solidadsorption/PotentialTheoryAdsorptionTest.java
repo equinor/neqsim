@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -21,6 +23,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class PotentialTheoryAdsorptionTest {
+  private static final Logger logger = LogManager.getLogger(PotentialTheoryAdsorptionTest.class);
 
   private SystemInterface testSystem;
 
@@ -54,7 +57,7 @@ public class PotentialTheoryAdsorptionTest {
 
     assertTrue(dra.isCalculated(), "Adsorption should be marked as calculated");
     double totalExcess = dra.getTotalSurfaceExcess();
-    System.out.println("DRA total surface excess: " + totalExcess);
+    logger.info("DRA total surface excess: " + totalExcess);
 
     // DRA model should produce some surface excess
     assertNotNull(dra.getTotalSurfaceExcess());
@@ -81,8 +84,8 @@ public class PotentialTheoryAdsorptionTest {
     double ch4Excess = dra.getSurfaceExcess(0);
     double co2Excess = dra.getSurfaceExcess(1);
 
-    System.out.println("DRA CH4 excess: " + ch4Excess);
-    System.out.println("DRA CO2 excess: " + co2Excess);
+    logger.info("DRA CH4 excess: " + ch4Excess);
+    logger.info("DRA CO2 excess: " + co2Excess);
 
     // Both should be finite numbers
     assertTrue(Double.isFinite(ch4Excess), "CH4 excess should be finite");
@@ -130,8 +133,8 @@ public class PotentialTheoryAdsorptionTest {
     dra2.calcAdsorption(0);
     double loading2 = dra2.getTotalSurfaceExcess();
 
-    System.out.println("DRA on AC Calgon F400: " + loading1);
-    System.out.println("DRA on AC Norit R1: " + loading2);
+    logger.info("DRA on AC Calgon F400: " + loading1);
+    logger.info("DRA on AC Norit R1: " + loading2);
 
     // Both should produce results but may differ
     assertTrue(Double.isFinite(loading1), "Loading on Calgon F400 should be finite");
@@ -159,7 +162,7 @@ public class PotentialTheoryAdsorptionTest {
     dra.calcAdsorption(0);
 
     double ch4Excess = dra.getSurfaceExcess(0);
-    System.out.println("Pure CH4 DRA at 10 bar on Calgon F400: " + ch4Excess);
+    logger.info("Pure CH4 DRA at 10 bar on Calgon F400: " + ch4Excess);
 
     assertTrue(Double.isFinite(ch4Excess), "Surface excess should be finite");
     assertTrue(dra.isCalculated(), "Should be marked as calculated");

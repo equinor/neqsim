@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class CompGradientFlash {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(CompGradientFlash.class);
+  private static final Logger logger = LogManager.getLogger(CompGradientFlash.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.

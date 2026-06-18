@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flownode.FlowPattern;
 import neqsim.thermo.system.SystemInterface;
@@ -18,6 +20,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 class TwoPhasePipeFlowSystemSimplifiedAPITest {
+  private static final Logger logger =
+      LogManager.getLogger(TwoPhasePipeFlowSystemSimplifiedAPITest.class);
+
   /**
    * Creates a test fluid with proper two-phase conditions.
    */
@@ -311,14 +316,14 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
     PipeFlowResult result = pipe.solve();
 
     // Access results - all in one place
-    System.out.println("=== Simplified API Test ===");
-    System.out.println(result);
+    logger.info("=== Simplified API Test ===");
+    logger.info(result);
 
     double dP = result.getTotalPressureDrop();
     double dT = result.getTemperatureChange();
 
-    System.out.printf("Pressure drop: %.4f bar%n", dP);
-    System.out.printf("Temperature change: %.2f K%n", dT);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure drop: %.4f bar%n", dP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Temperature change: %.2f K%n", dT);
 
     // Verify results are reasonable
     assertTrue(dP >= 0, "Pressure should drop along flow");

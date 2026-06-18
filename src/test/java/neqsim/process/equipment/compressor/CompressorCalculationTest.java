@@ -6,8 +6,12 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class CompressorCalculationTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(CompressorCalculationTest.class);
+
   Compressor comp1;
   Stream stream_1;
 

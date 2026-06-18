@@ -10,6 +10,8 @@ import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Dynamic safety calculation test for sizing a pressure safety valve (PSV). This test simulates a
@@ -19,6 +21,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author Even Solbraa
  */
 class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(SafetyValveDynamicSizingTest.class);
+
   /**
    * Dynamic test for PSV sizing with blocked outlet scenario.
    *
@@ -143,7 +147,7 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
 
       // Optional: Print progress for key time points
       if (i % 40 == 0 || (currentTime >= 49.5 && currentTime <= 100.0 && i % 4 == 0)) {
-        System.out.printf(
+        logger.printf(org.apache.logging.log4j.Level.INFO,
             "Time: %6.1f s | Sep Press: %6.2f bara | PCV Opening: %5.1f %% | "
                 + "PSV Opening: %5.1f %% | PCV Flow: %7.1f kg/hr | PSV Flow: %7.1f kg/hr%n",
             currentTime, separatorPressure, pressureControlValve.getPercentValveOpening(),
@@ -222,20 +226,26 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
       // of full hysteresis behavior. The key safety function (preventing overpressure)
       // is validated by the other assertions.
       if (!foundHysteresis) {
-        System.out.println("Note: Hysteresis behavior not observed in this simulation run. "
+        logger.info("Note: Hysteresis behavior not observed in this simulation run. "
             + "This may be due to separator emptying or other transient effects.");
       }
     }
 
     // Print summary
-    System.out.println("\n===== PSV SIZING SUMMARY =====");
-    System.out.printf("Feed flow rate: %.1f kg/hr%n", feedFlowRate);
-    System.out.printf("PSV set pressure: %.1f bara%n", setPressure);
-    System.out.printf("PSV full open pressure: %.1f bara%n", fullOpenPressure);
-    System.out.printf("Maximum separator pressure: %.2f bara%n", maxPressure);
-    System.out.printf("Maximum PSV relief flow: %.1f kg/hr%n", maxPSVFlow);
-    System.out.printf("PSV Cv required (from simulation): %.2f%n", pressureSafetyValve.getCv());
-    System.out.println("==============================");
+    logger.info("\n===== PSV SIZING SUMMARY =====");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Feed flow rate: %.1f kg/hr%n",
+        feedFlowRate);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV set pressure: %.1f bara%n",
+        setPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV full open pressure: %.1f bara%n",
+        fullOpenPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum separator pressure: %.2f bara%n",
+        maxPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Maximum PSV relief flow: %.1f kg/hr%n",
+        maxPSVFlow);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV Cv required (from simulation): %.2f%n",
+        pressureSafetyValve.getCv());
+    logger.info("==============================");
 
     // Additional assertion: Verify PSV prevented catastrophic overpressure
     // PSV should keep pressure within reasonable limits (allow 35% overpressure max)
@@ -294,7 +304,7 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
       psv.setPercentValveOpening(opening);
       psv.run();
 
-      System.out.printf(
+      logger.printf(org.apache.logging.log4j.Level.INFO,
           "Pressure: %.1f bara | Expected Opening: %.1f %% | Actual Opening: %.1f %%%n",
           testPressures[i], expectedOpenings[i], opening);
 

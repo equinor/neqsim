@@ -1,5 +1,7 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.equipment.flare.Flare;
 import neqsim.process.equipment.mixer.Mixer;
@@ -42,6 +44,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version 1.0
  */
 public class IntegratedSafetySystemExample {
+  private static final Logger logger = LogManager.getLogger(IntegratedSafetySystemExample.class);
 
   // Safety setpoints
   private static final double NORMAL_OPERATING_PRESSURE = 50.0; // bara
@@ -83,7 +86,7 @@ public class IntegratedSafetySystemExample {
       if (voting2oo2) {
         if (p1 >= HIPPS_ACTIVATION_PRESSURE && p2 >= HIPPS_ACTIVATION_PRESSURE) {
           if (!activated) {
-            System.out.println(">>> HIPPS ACTIVATED (SIL-3) - Both pressure sensors confirm <<<");
+            logger.info(">>> HIPPS ACTIVATED (SIL-3) - Both pressure sensors confirm <<<");
             activated = true;
           }
           hippsValve.setPercentValveOpening(0.0); // Close immediately
@@ -92,7 +95,7 @@ public class IntegratedSafetySystemExample {
         // 1oo2 voting (either sensor can trigger - less safe but more available)
         if (p1 >= HIPPS_ACTIVATION_PRESSURE || p2 >= HIPPS_ACTIVATION_PRESSURE) {
           if (!activated) {
-            System.out.println(">>> HIPPS ACTIVATED (SIL-3) - Pressure sensor triggered <<<");
+            logger.info(">>> HIPPS ACTIVATED (SIL-3) - Pressure sensor triggered <<<");
             activated = true;
           }
           hippsValve.setPercentValveOpening(0.0);
@@ -138,13 +141,13 @@ public class IntegratedSafetySystemExample {
       // ESD activation conditions (SIL-2)
       if (!activated) {
         if (pressure >= HIGH_HIGH_PRESSURE_ALARM) {
-          System.out.println(">>> ESD ACTIVATED (SIL-2) - High-High Pressure <<<");
+          logger.info(">>> ESD ACTIVATED (SIL-2) - High-High Pressure <<<");
           activated = true;
         } else if (temperature >= FIRE_DETECTION_TEMPERATURE) {
-          System.out.println(">>> ESD ACTIVATED (SIL-2) - Fire Detected <<<");
+          logger.info(">>> ESD ACTIVATED (SIL-2) - Fire Detected <<<");
           activated = true;
         } else if (manualESD.isPushed()) {
-          System.out.println(">>> ESD ACTIVATED (SIL-2) - Manual Push Button <<<");
+          logger.info(">>> ESD ACTIVATED (SIL-2) - Manual Push Button <<<");
           activated = true;
         }
       }
@@ -188,7 +191,7 @@ public class IntegratedSafetySystemExample {
       }
 
       if (fireCount >= sensorVoting && !fireDetected) {
-        System.out.println(">>> FIRE DETECTED - " + fireCount + " sensors confirm <<<");
+        logger.info(">>> FIRE DETECTED - " + fireCount + " sensors confirm <<<");
         fireDetected = true;
       }
     }
@@ -205,10 +208,10 @@ public class IntegratedSafetySystemExample {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    System.out.println("╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║     INTEGRATED SAFETY SYSTEMS EXAMPLE                          ║");
-    System.out.println("║     ESD + HIPPS + PSV + Flare + Monitoring                     ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║     INTEGRATED SAFETY SYSTEMS EXAMPLE                          ║");
+    logger.info("║     ESD + HIPPS + PSV + Flare + Monitoring                     ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     // Create high-pressure gas system
     SystemInterface feedGas = new SystemSrkEos(298.15, 70.0);
@@ -343,30 +346,30 @@ public class IntegratedSafetySystemExample {
         flareHeader, flareHeaderOutlet, flare, hippsPT1, hippsPT2, separatorPT, separatorTT,
         hippsController, esdController, fireSystem);
 
-    System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║     ALL SAFETY SCENARIOS COMPLETED                             ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝");
+    logger.info("\n╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║     ALL SAFETY SCENARIOS COMPLETED                             ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝");
   }
 
   /**
    * Print system configuration and safety setpoints.
    */
   private static void printSystemConfiguration() {
-    System.out.println("═══ SYSTEM CONFIGURATION ═══");
-    System.out.println("Feed: 15000 kg/hr at 70 bara");
-    System.out.println("Normal operating pressure: " + NORMAL_OPERATING_PRESSURE + " bara");
-    System.out.println();
-    System.out.println("SAFETY LAYERS (Defense in Depth):");
-    System.out.println("1. High Pressure Alarm (SIL-1): " + HIGH_PRESSURE_ALARM + " bara");
+    logger.info("═══ SYSTEM CONFIGURATION ═══");
+    logger.info("Feed: 15000 kg/hr at 70 bara");
+    logger.info("Normal operating pressure: " + NORMAL_OPERATING_PRESSURE + " bara");
+
+    logger.info("SAFETY LAYERS (Defense in Depth):");
+    logger.info("1. High Pressure Alarm (SIL-1): " + HIGH_PRESSURE_ALARM + " bara");
     System.out
         .println("2. High-High Pressure / ESD (SIL-2): " + HIGH_HIGH_PRESSURE_ALARM + " bara");
-    System.out.println("3. HIPPS Protection (SIL-3): " + HIPPS_ACTIVATION_PRESSURE + " bara");
-    System.out.println("4. PSV Relief (Mechanical): " + PSV_SET_PRESSURE + " bara");
-    System.out.println();
-    System.out.println("FIRE PROTECTION:");
-    System.out.println("Fire detection temperature: " + FIRE_DETECTION_TEMPERATURE + " C");
-    System.out.println("Fire sensors: 3 (2oo3 voting)");
-    System.out.println();
+    logger.info("3. HIPPS Protection (SIL-3): " + HIPPS_ACTIVATION_PRESSURE + " bara");
+    logger.info("4. PSV Relief (Mechanical): " + PSV_SET_PRESSURE + " bara");
+
+    logger.info("FIRE PROTECTION:");
+    logger.info("Fire detection temperature: " + FIRE_DETECTION_TEMPERATURE + " C");
+    logger.info("Fire sensors: 3 (2oo3 voting)");
+
   }
 
   /**
@@ -403,9 +406,9 @@ public class IntegratedSafetySystemExample {
       PressureTransmitter hippsPT2, PressureTransmitter separatorPT,
       TemperatureTransmitter separatorTT, HIPPSController hippsController,
       ESDController esdController, FireDetectionSystem fireSystem) {
-    System.out.println("╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║     SCENARIO 1: NORMAL OPERATION                               ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║     SCENARIO 1: NORMAL OPERATION                               ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     // Set normal inlet pressure
     highPressureFeed.setPressure(55.0, "bara");
@@ -421,19 +424,28 @@ public class IntegratedSafetySystemExample {
     fireSystem.monitor();
 
     // Report status
-    System.out.println("═══ NORMAL OPERATION STATUS ═══");
-    System.out.printf("Feed pressure: %.1f bara%n", highPressureFeed.getPressure("bara"));
-    System.out.printf("HIPPS PT-101A: %.2f bara%n", hippsPT1.getMeasuredValue());
-    System.out.printf("HIPPS PT-101B: %.2f bara%n", hippsPT2.getMeasuredValue());
-    System.out.printf("Separator pressure (PT-301): %.2f bara%n", separatorPT.getMeasuredValue());
-    System.out.printf("Separator temperature (TT-301): %.1f C%n", separatorTT.getMeasuredValue());
-    System.out.printf("Process flow: %.1f kg/hr%n", processStream.getFlowRate("kg/hr"));
-    System.out.printf("HIPPS status: %s%n", hippsController.isActivated() ? "ACTIVATED" : "NORMAL");
-    System.out.printf("ESD status: %s%n", esdController.isActivated() ? "ACTIVATED" : "NORMAL");
-    System.out.printf("Fire detection: %s%n", fireSystem.isFireDetected() ? "FIRE" : "NORMAL");
-    System.out.printf("PSV status: %s (%.1f%% open)%n",
+    logger.info("═══ NORMAL OPERATION STATUS ═══");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Feed pressure: %.1f bara%n",
+        highPressureFeed.getPressure("bara"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "HIPPS PT-101A: %.2f bara%n",
+        hippsPT1.getMeasuredValue());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "HIPPS PT-101B: %.2f bara%n",
+        hippsPT2.getMeasuredValue());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Separator pressure (PT-301): %.2f bara%n",
+        separatorPT.getMeasuredValue());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Separator temperature (TT-301): %.1f C%n",
+        separatorTT.getMeasuredValue());
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Process flow: %.1f kg/hr%n",
+        processStream.getFlowRate("kg/hr"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "HIPPS status: %s%n",
+        hippsController.isActivated() ? "ACTIVATED" : "NORMAL");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "ESD status: %s%n",
+        esdController.isActivated() ? "ACTIVATED" : "NORMAL");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Fire detection: %s%n",
+        fireSystem.isFireDetected() ? "FIRE" : "NORMAL");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "PSV status: %s (%.1f%% open)%n",
         psv.getPercentValveOpening() > 0 ? "RELIEVING" : "CLOSED", psv.getPercentValveOpening());
-    System.out.println("\n✓ All systems operating normally\n");
+    logger.info("\n✓ All systems operating normally\n");
   }
 
   /**
@@ -470,16 +482,16 @@ public class IntegratedSafetySystemExample {
       PressureTransmitter hippsPT2, PressureTransmitter separatorPT,
       TemperatureTransmitter separatorTT, HIPPSController hippsController,
       ESDController esdController, FireDetectionSystem fireSystem) {
-    System.out.println("╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║     SCENARIO 2: HIPPS ACTIVATION (SIL-3)                       ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║     SCENARIO 2: HIPPS ACTIVATION (SIL-3)                       ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     // Simulate pressure surge
-    System.out.println(">>> SIMULATING PRESSURE SURGE <<<\n");
+    logger.info(">>> SIMULATING PRESSURE SURGE <<<\n");
     highPressureFeed.setPressure(70.0, "bara");
 
-    System.out.println("Time (s) | Feed P | HIPPS Valve | Sep P | HIPPS Status | ESD Status");
-    System.out.println("---------|--------|-------------|-------|--------------|------------");
+    logger.info("Time (s) | Feed P | HIPPS Valve | Sep P | HIPPS Status | ESD Status");
+    logger.info("---------|--------|-------------|-------|--------------|------------");
 
     for (double time = 0; time <= 15.0; time += 1.0) {
       // Gradually close HIPPS valve if activated
@@ -496,13 +508,14 @@ public class IntegratedSafetySystemExample {
       hippsController.runController(1.0);
       esdController.runController(1.0);
 
-      System.out.printf("%8.1f | %6.1f | %10.1f%% | %5.1f | %12s | %10s%n", time,
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%8.1f | %6.1f | %10.1f%% | %5.1f | %12s | %10s%n", time,
           highPressureFeed.getPressure("bara"), hippsValve.getPercentValveOpening(),
           separatorPT.getMeasuredValue(), hippsController.isActivated() ? "ACTIVATED" : "NORMAL",
           esdController.isActivated() ? "ACTIVATED" : "NORMAL");
     }
 
-    System.out.println("\n✓ HIPPS successfully prevented overpressure (SIL-3 protection)\n");
+    logger.info("\n✓ HIPPS successfully prevented overpressure (SIL-3 protection)\n");
   }
 
   /**
@@ -540,9 +553,9 @@ public class IntegratedSafetySystemExample {
       PressureTransmitter hippsPT2, PressureTransmitter separatorPT,
       TemperatureTransmitter separatorTT, HIPPSController hippsController,
       ESDController esdController, FireDetectionSystem fireSystem, PushButton esdButton) {
-    System.out.println("╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║     SCENARIO 3: ESD ACTIVATION & BLOWDOWN (SIL-2)              ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║     SCENARIO 3: ESD ACTIVATION & BLOWDOWN (SIL-2)              ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
     // Start at normal pressure
     highPressureFeed.setPressure(55.0, "bara");
@@ -553,7 +566,7 @@ public class IntegratedSafetySystemExample {
         flareHeader, flareHeaderOutlet, flare);
 
     // Operator pushes ESD button
-    System.out.println(">>> OPERATOR ACTIVATES MANUAL ESD <<<\n");
+    logger.info(">>> OPERATOR ACTIVATES MANUAL ESD <<<\n");
     esdButton.push();
 
     // Switch to blowdown routing
@@ -601,17 +614,21 @@ public class IntegratedSafetySystemExample {
       flare.run();
       flare.updateCumulative(timeStep);
 
-      System.out.printf("%8.1f | %5.1f | %8.1f%% | %7.1f%% | %7.0f | %9.2f | %10.1f%n", time,
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%8.1f | %5.1f | %8.1f%% | %7.1f%% | %7.0f | %9.2f | %10.1f%n", time,
           separatorPT.getMeasuredValue(), esdInletValve.getPercentValveOpening(),
           bdValve.getPercentValveOpening(), blowdownStream.getFlowRate("kg/hr"),
           flare.getHeatDuty("MW"), flare.getCumulativeGasBurned("kg"));
     }
 
-    System.out.println("\n═══ ESD & BLOWDOWN SUMMARY ═══");
-    System.out.printf("Total gas blown down: %.1f kg%n", flare.getCumulativeGasBurned("kg"));
-    System.out.printf("Total heat released: %.2f GJ%n", flare.getCumulativeHeatReleased("GJ"));
-    System.out.printf("Final separator pressure: %.1f bara%n", separatorPT.getMeasuredValue());
-    System.out.println("\n✓ ESD and blowdown completed successfully (SIL-2 protection)\n");
+    logger.info("\n═══ ESD & BLOWDOWN SUMMARY ═══");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total gas blown down: %.1f kg%n",
+        flare.getCumulativeGasBurned("kg"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total heat released: %.2f GJ%n",
+        flare.getCumulativeHeatReleased("GJ"));
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Final separator pressure: %.1f bara%n",
+        separatorPT.getMeasuredValue());
+    logger.info("\n✓ ESD and blowdown completed successfully (SIL-2 protection)\n");
   }
 
   /**
@@ -648,29 +665,30 @@ public class IntegratedSafetySystemExample {
       PressureTransmitter hippsPT2, PressureTransmitter separatorPT,
       TemperatureTransmitter separatorTT, HIPPSController hippsController,
       ESDController esdController, FireDetectionSystem fireSystem) {
-    System.out.println("╔════════════════════════════════════════════════════════════════╗");
-    System.out.println("║     SCENARIO 4: PSV RELIEF (FINAL PROTECTION)                  ║");
-    System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
+    logger.info("╔════════════════════════════════════════════════════════════════╗");
+    logger.info("║     SCENARIO 4: PSV RELIEF (FINAL PROTECTION)                  ║");
+    logger.info("╚════════════════════════════════════════════════════════════════╝\n");
 
-    System.out.println(">>> SIMULATING EXTREME OVERPRESSURE (HIPPS/ESD FAILED) <<<\n");
+    logger.info(">>> SIMULATING EXTREME OVERPRESSURE (HIPPS/ESD FAILED) <<<\n");
 
     // Simulate extreme pressure to trigger PSV
     highPressureFeed.setPressure(75.0, "bara");
 
-    System.out.println("Time (s) | Sep P | PSV Status | PSV Flow | Flare Heat");
-    System.out.println("---------|-------|------------|----------|------------");
+    logger.info("Time (s) | Sep P | PSV Status | PSV Flow | Flare Heat");
+    logger.info("---------|-------|------------|----------|------------");
 
     for (double time = 0; time <= 20.0; time += 1.0) {
       runSystem(highPressureFeed, hippsValve, esdInletValve, separatorInlet, separator,
           separatorGasOut, gasSplitter, processStream, blowdownStream, bdValve, psv, psvOutlet,
           flareHeader, flareHeaderOutlet, flare);
 
-      System.out.printf("%8.1f | %5.1f | %10s | %8.0f | %10.2f%n", time,
-          separatorPT.getMeasuredValue(), psv.getPercentValveOpening() > 0 ? "RELIEVING" : "CLOSED",
-          psvOutlet.getFlowRate("kg/hr"), flare.getHeatDuty("MW"));
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%8.1f | %5.1f | %10s | %8.0f | %10.2f%n",
+          time, separatorPT.getMeasuredValue(),
+          psv.getPercentValveOpening() > 0 ? "RELIEVING" : "CLOSED", psvOutlet.getFlowRate("kg/hr"),
+          flare.getHeatDuty("MW"));
     }
 
-    System.out.println("\n✓ PSV provided final mechanical protection\n");
+    logger.info("\n✓ PSV provided final mechanical protection\n");
   }
 
   /**
@@ -729,7 +747,7 @@ public class IntegratedSafetySystemExample {
   private static void resetSystem(ThrottlingValve hippsValve, ThrottlingValve esdInletValve,
       Splitter gasSplitter, BlowdownValve bdValve, Separator separator,
       HIPPSController hippsController, ESDController esdController, PushButton esdButton) {
-    System.out.println(">>> RESETTING SYSTEM FOR NEXT SCENARIO <<<\n");
+    logger.info(">>> RESETTING SYSTEM FOR NEXT SCENARIO <<<\n");
     hippsValve.setPercentValveOpening(100.0);
     esdInletValve.setPercentValveOpening(100.0);
     gasSplitter.setSplitFactors(new double[] {1.0, 0.0});

@@ -7,6 +7,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Validation tests for multiphase choke flow models against published experimental data.
@@ -25,6 +27,8 @@ import org.junit.jupiter.api.Test;
  * @author esol
  */
 public class MultiphaseChokeFlowValidationTest {
+  private static final Logger logger = LogManager.getLogger(MultiphaseChokeFlowValidationTest.class);
+
 
   // Unit conversion constants
   private static final double PSIA_TO_PA = 6894.76;
@@ -206,16 +210,16 @@ public class MultiphaseChokeFlowValidationTest {
       double sumSquaredError = 0.0;
       int count = 0;
 
-      System.out.println("\n=== Sachdeva Critical Pressure Ratio Validation ===");
-      System.out.println("Gas Quality | Measured y_c | Calculated y_c | Error %");
-      System.out.println("----------------------------------------------------");
+      logger.info("\n=== Sachdeva Critical Pressure Ratio Validation ===");
+      logger.info("Gas Quality | Measured y_c | Calculated y_c | Error %");
+      logger.info("----------------------------------------------------");
 
       for (CriticalRatioDataPoint dp : sachdevaCriticalRatioData) {
         double calculated = model.calculateCriticalPressureRatio(dp.gasQuality, gamma);
         double error =
             Math.abs(calculated - dp.measuredCriticalRatio) / dp.measuredCriticalRatio * 100;
 
-        System.out.printf("   %.2f     |    %.2f      |     %.3f      |  %.1f%%\n", dp.gasQuality,
+        logger.printf(org.apache.logging.log4j.Level.INFO, "   %.2f     |    %.2f      |     %.3f      |  %.1f%%\n", dp.gasQuality,
             dp.measuredCriticalRatio, calculated, error);
 
         sumSquaredError += Math.pow(error, 2);
@@ -227,7 +231,7 @@ public class MultiphaseChokeFlowValidationTest {
       }
 
       double rmse = Math.sqrt(sumSquaredError / count);
-      System.out.printf("\nRMS Error: %.2f%%\n", rmse);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "\nRMS Error: %.2f%%\n", rmse);
 
       // Overall RMSE should be less than 5%
       assertTrue(rmse < 5.0, "Overall RMSE " + rmse + "% should be less than 5%");
@@ -275,9 +279,9 @@ public class MultiphaseChokeFlowValidationTest {
       GilbertChokeFlow model = new GilbertChokeFlow();
       model.setCorrelationType(GilbertChokeFlow.CorrelationType.GILBERT);
 
-      System.out.println("\n=== Gilbert Field Data Validation ===");
-      System.out.println("P1(psia) | d(64ths) | GLR | qL_meas(stb/d) | qL_calc | Error %");
-      System.out.println("-------------------------------------------------------------------");
+      logger.info("\n=== Gilbert Field Data Validation ===");
+      logger.info("P1(psia) | d(64ths) | GLR | qL_meas(stb/d) | qL_calc | Error %");
+      logger.info("-------------------------------------------------------------------");
 
       double sumError = 0;
       int count = 0;
@@ -295,7 +299,7 @@ public class MultiphaseChokeFlowValidationTest {
         double qL_meas_stbd = dp.measuredLiquidFlow_m3_s / BBL_PER_DAY_TO_M3_PER_SEC;
         double error = Math.abs(qL_calc_stbd - qL_meas_stbd) / qL_meas_stbd * 100;
 
-        System.out.printf("  %4.0f   |   %2.0f     | %4.0f |     %5.0f      |  %5.0f  |  %.1f%%\n",
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  %4.0f   |   %2.0f     | %4.0f |     %5.0f      |  %5.0f  |  %.1f%%\n",
             P_psia, d_64ths, dp.GLR_scf_stb, qL_meas_stbd, qL_calc_stbd, error);
 
         sumError += error;
@@ -303,7 +307,7 @@ public class MultiphaseChokeFlowValidationTest {
       }
 
       double avgError = sumError / count;
-      System.out.printf("\nAverage Error: %.1f%%\n", avgError);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "\nAverage Error: %.1f%%\n", avgError);
 
       // Gilbert correlation typically accurate within 20% for field data
       assertTrue(avgError < 25.0,
@@ -355,9 +359,9 @@ public class MultiphaseChokeFlowValidationTest {
     void testFlowRegimeClassification() {
       SachdevaChokeFlow model = new SachdevaChokeFlow();
 
-      System.out.println("\n=== Fortunati Flow Regime Validation ===");
-      System.out.println("P1(bar) | P2(bar) | P2/P1 | Expected Regime | Calculated");
-      System.out.println("------------------------------------------------------------");
+      logger.info("\n=== Fortunati Flow Regime Validation ===");
+      logger.info("P1(bar) | P2(bar) | P2/P1 | Expected Regime | Calculated");
+      logger.info("------------------------------------------------------------");
 
       int correctClassifications = 0;
       int total = 0;
@@ -374,7 +378,7 @@ public class MultiphaseChokeFlowValidationTest {
         String expectedRegime = ratio < criticalRatio ? "CRITICAL" : "SUBCRITICAL";
         String calculatedRegime = ratio < criticalRatio ? "CRITICAL" : "SUBCRITICAL";
 
-        System.out.printf("  %4.1f  |  %4.1f  | %.2f  |  %-11s   |  %s\n",
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  %4.1f  |  %4.1f  | %.2f  |  %-11s   |  %s\n",
             dp.upstreamPressure_Pa / BARA_TO_PA, dp.downstreamPressure_Pa / BARA_TO_PA, ratio,
             expectedRegime, calculatedRegime);
 
@@ -385,7 +389,7 @@ public class MultiphaseChokeFlowValidationTest {
       }
 
       double accuracy = (double) correctClassifications / total * 100;
-      System.out.printf("\nClassification Accuracy: %.1f%% (%d/%d)\n", accuracy,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "\nClassification Accuracy: %.1f%% (%d/%d)\n", accuracy,
           correctClassifications, total);
 
       assertTrue(accuracy >= 80.0, "Flow regime classification accuracy should be >= 80%");
@@ -437,25 +441,25 @@ public class MultiphaseChokeFlowValidationTest {
       double d_64ths = 32;
       double GLR = 1000;
 
-      System.out.println("\n=== Gilbert Correlation Variants Comparison ===");
-      System.out.println("At P1=500 psia, d=32/64\", GLR=1000 scf/stb");
-      System.out.println("----------------------------------------------");
+      logger.info("\n=== Gilbert Correlation Variants Comparison ===");
+      logger.info("At P1=500 psia, d=32/64\", GLR=1000 scf/stb");
+      logger.info("----------------------------------------------");
 
       // Gilbert: q = P * d^1.89 / (10.0 * GLR^0.546)
       double qGilbert = calcGilbertVariant(P1, d_64ths, GLR, 1.89, 0.546, 10.0);
-      System.out.printf("Gilbert (1954):   q = %.0f stb/d\n", qGilbert);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Gilbert (1954):   q = %.0f stb/d\n", qGilbert);
 
       // Baxendell: q = P * d^1.93 / (9.56 * GLR^0.546)
       double qBaxendell = calcGilbertVariant(P1, d_64ths, GLR, 1.93, 0.546, 9.56);
-      System.out.printf("Baxendell (1958): q = %.0f stb/d\n", qBaxendell);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Baxendell (1958): q = %.0f stb/d\n", qBaxendell);
 
       // Ros: q = P * d^2.00 / (17.4 * GLR^0.500)
       double qRos = calcGilbertVariant(P1, d_64ths, GLR, 2.00, 0.500, 17.40);
-      System.out.printf("Ros (1960):       q = %.0f stb/d\n", qRos);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Ros (1960):       q = %.0f stb/d\n", qRos);
 
       // Achong: q = P * d^1.88 / (3.82 * GLR^0.650)
       double qAchong = calcGilbertVariant(P1, d_64ths, GLR, 1.88, 0.650, 3.82);
-      System.out.printf("Achong (1961):    q = %.0f stb/d\n", qAchong);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Achong (1961):    q = %.0f stb/d\n", qAchong);
 
       // All variants should give similar order of magnitude
       double avg = (qGilbert + qBaxendell + qRos + qAchong) / 4;
@@ -482,9 +486,9 @@ public class MultiphaseChokeFlowValidationTest {
       // Gilbert gives liquid flow rate directly
       double qL_gilbert = calcGilbertVariant(P1, d_64ths, GLR, 1.89, 0.546, 10.0);
 
-      System.out.println("\n=== Sachdeva vs Gilbert Comparison ===");
-      System.out.printf("Gilbert liquid flow: %.0f stb/d\n", qL_gilbert);
-      System.out.println("(Sachdeva requires full fluid composition for comparison)");
+      logger.info("\n=== Sachdeva vs Gilbert Comparison ===");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Gilbert liquid flow: %.0f stb/d\n", qL_gilbert);
+      logger.info("(Sachdeva requires full fluid composition for comparison)");
 
       // Basic sanity check - flow should be positive
       assertTrue(qL_gilbert > 0, "Gilbert flow should be positive");
@@ -504,9 +508,9 @@ public class MultiphaseChokeFlowValidationTest {
     @Test
     @DisplayName("Overall model accuracy summary")
     void testOverallAccuracySummary() {
-      System.out.println("\n============================================================");
-      System.out.println("   MULTIPHASE CHOKE FLOW MODEL VALIDATION SUMMARY");
-      System.out.println("============================================================\n");
+      logger.info("\n============================================================");
+      logger.info("   MULTIPHASE CHOKE FLOW MODEL VALIDATION SUMMARY");
+      logger.info("============================================================\n");
 
       // Sachdeva critical ratio accuracy
       SachdevaChokeFlow sachdeva = new SachdevaChokeFlow();
@@ -518,32 +522,32 @@ public class MultiphaseChokeFlowValidationTest {
       }
       sachdevaCritRatioError /= sachdevaCriticalRatioData.size();
 
-      System.out.println("Model Performance Against Literature Data:");
-      System.out.println("------------------------------------------");
-      System.out.printf("1. Sachdeva Critical Pressure Ratio:  %.1f%% average error\n",
+      logger.info("Model Performance Against Literature Data:");
+      logger.info("------------------------------------------");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "1. Sachdeva Critical Pressure Ratio:  %.1f%% average error\n",
           sachdevaCritRatioError);
-      System.out.println("   Source: Sachdeva et al. (1986) SPE 15657, 13 data points");
-      System.out.println();
+      logger.info("   Source: Sachdeva et al. (1986) SPE 15657, 13 data points");
+
 
       // Gilbert correlation accuracy
       double gilbertError = calculateGilbertFieldError();
-      System.out.printf("2. Gilbert Empirical Correlation:     %.1f%% average error\n",
+      logger.printf(org.apache.logging.log4j.Level.INFO, "2. Gilbert Empirical Correlation:     %.1f%% average error\n",
           gilbertError);
-      System.out.println("   Source: Gilbert (1954) Lake Maracaibo, 20 data points");
-      System.out.println();
+      logger.info("   Source: Gilbert (1954) Lake Maracaibo, 20 data points");
 
-      System.out.println("Validation Status:");
-      System.out.println("------------------");
+
+      logger.info("Validation Status:");
+      logger.info("------------------");
       boolean sachdevaPass = sachdevaCritRatioError < 5.0;
       boolean gilbertPass = gilbertError < 25.0;
 
-      System.out.printf("- Sachdeva Critical Ratio: %s (threshold: 5%%)\n",
+      logger.printf(org.apache.logging.log4j.Level.INFO, "- Sachdeva Critical Ratio: %s (threshold: 5%%)\n",
           sachdevaPass ? "PASS ✓" : "FAIL ✗");
-      System.out.printf("- Gilbert Field Data:      %s (threshold: 25%%)\n",
+      logger.printf(org.apache.logging.log4j.Level.INFO, "- Gilbert Field Data:      %s (threshold: 25%%)\n",
           gilbertPass ? "PASS ✓" : "FAIL ✗");
-      System.out.println();
 
-      System.out.println("============================================================\n");
+
+      logger.info("============================================================\n");
 
       assertTrue(sachdevaPass, "Sachdeva critical ratio validation failed");
       assertTrue(gilbertPass, "Gilbert field data validation failed");

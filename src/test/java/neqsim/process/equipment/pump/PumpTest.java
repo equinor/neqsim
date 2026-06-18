@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.Recycle;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -16,6 +18,8 @@ import neqsim.process.equipment.util.Recycle;
  * @since 2.2.3
  */
 public class PumpTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(PumpTest.class);
+
   @Test
   void testRun() {
     neqsim.thermo.system.SystemInterface feedGas =
@@ -83,7 +87,7 @@ public class PumpTest extends neqsim.NeqSimTest {
     feedC10Stream.setPressure(1.0, "bara");
     feedC10Stream.run();
 
-    System.out.println("flow " + feedC10Stream.getFlowRate("m3/hr"));
+    logger.info("flow " + feedC10Stream.getFlowRate("m3/hr"));
     double[] chartConditions = new double[] {};
     double[] speed = new double[] {500.0};
     double[][] flow =

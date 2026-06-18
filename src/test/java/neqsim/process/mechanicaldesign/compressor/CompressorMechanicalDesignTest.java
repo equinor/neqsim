@@ -9,9 +9,13 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /** Tests for compressor mechanical design calculations. */
 public class CompressorMechanicalDesignTest {
+  private static final Logger logger = LogManager.getLogger(CompressorMechanicalDesignTest.class);
+
   @Test
   void testCalcDesign() {
     SystemInterface gas = new SystemSrkEos(300.0, 10.0);
@@ -168,7 +172,7 @@ public class CompressorMechanicalDesignTest {
     double surgeMargin = design.getSurgeMarginPercent();
     assertTrue(surgeMargin >= 10.0, "Surge margin should be >= 10%");
     assertTrue(surgeMargin <= 30.0, "Surge margin should be reasonable (<= 30%)");
-    System.out.println("Surge margin: " + surgeMargin + "%");
+    logger.info("Surge margin: " + surgeMargin + "%");
   }
 
   @Test
@@ -193,7 +197,7 @@ public class CompressorMechanicalDesignTest {
 
     double stonewallMargin = design.getStonewallMarginPercent();
     assertTrue(stonewallMargin >= 5.0, "Stonewall margin should be >= 5%");
-    System.out.println("Stonewall margin: " + stonewallMargin + "%");
+    logger.info("Stonewall margin: " + stonewallMargin + "%");
   }
 
   @Test
@@ -221,7 +225,7 @@ public class CompressorMechanicalDesignTest {
     // Target efficiency is stored as percentage (70-90%)
     assertTrue(targetEff >= 70.0, "Target efficiency should be >= 70%");
     assertTrue(targetEff <= 90.0, "Target efficiency should be <= 90%");
-    System.out.println("Target polytropic efficiency: " + targetEff + "%");
+    logger.info("Target polytropic efficiency: " + targetEff + "%");
   }
 
   // ============================================================================
@@ -254,7 +258,7 @@ public class CompressorMechanicalDesignTest {
     // Test with very low efficiency (might fail)
     // The validation depends on the target set in process design
     boolean lowEffResult = design.validateEfficiency(50.0);
-    System.out.println("Low efficiency (50%) validation: " + lowEffResult);
+    logger.info("Low efficiency (50%) validation: " + lowEffResult);
   }
 
   @Test
@@ -314,10 +318,10 @@ public class CompressorMechanicalDesignTest {
     assertTrue(result != null, "Validation result should not be null");
     assertTrue(result.getIssues() != null, "Issues list should not be null");
 
-    System.out.println("Compressor validation valid: " + result.isValid());
+    logger.info("Compressor validation valid: " + result.isValid());
     if (!result.isValid()) {
       for (String issue : result.getIssues()) {
-        System.out.println("  Issue: " + issue);
+        logger.info("  Issue: " + issue);
       }
     }
   }

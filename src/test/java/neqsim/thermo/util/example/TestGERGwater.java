@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class TestGERGwater {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestGERGwater.class);
+  private static final Logger logger = LogManager.getLogger(TestGERGwater.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.

@@ -17,6 +17,8 @@ import neqsim.process.measurementdevice.LevelTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Integration test for slug pipeline to separator with level control.
@@ -36,6 +38,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Team
  */
 class SlugPipelineToSeparatorTest {
+  private static final Logger logger = LogManager.getLogger(SlugPipelineToSeparatorTest.class);
+
   /**
    * Test the complete slug pipeline to separator system.
    *
@@ -51,7 +55,7 @@ class SlugPipelineToSeparatorTest {
   @Test
   @DisplayName("Slug pipeline to separator integration test")
   void testSlugPipelineToSeparatorSystem() {
-    System.out.println("=== Slug Pipeline to Separator Integration Test ===\n");
+    logger.info("=== Slug Pipeline to Separator Integration Test ===\n");
 
     // ========== FLUID ==========
     SystemInterface fluid = new SystemSrkEos(288.15, 80.0);
@@ -75,10 +79,10 @@ class SlugPipelineToSeparatorTest {
     pipeInlet.setTemperature(inletTemp, "K");
     pipeInlet.run();
 
-    System.out.println("Inlet stream:");
-    System.out.println("  Pressure: " + inletPressure + " bara");
-    System.out.println("  Temperature: " + (inletTemp - 273.15) + " °C");
-    System.out.println("  Phases: " + pipeInlet.getFluid().getNumberOfPhases());
+    logger.info("Inlet stream:");
+    logger.info("  Pressure: " + inletPressure + " bara");
+    logger.info("  Temperature: " + (inletTemp - 273.15) + " °C");
+    logger.info("  Phases: " + pipeInlet.getFluid().getNumberOfPhases());
 
     // ========== TWO-FLUID PIPELINE ==========
     TwoFluidPipe pipeline = new TwoFluidPipe("Flowline", pipeInlet);
@@ -103,10 +107,10 @@ class SlugPipelineToSeparatorTest {
     }
     pipeline.setElevationProfile(elevations);
 
-    System.out.println("\nPipeline:");
-    System.out.println("  Length: 1 km");
-    System.out.println("  Diameter: 200 mm");
-    System.out.println("  Inlet BC: CONSTANT_PRESSURE = " + inletPressure + " bara");
+    logger.info("\nPipeline:");
+    logger.info("  Length: 1 km");
+    logger.info("  Diameter: 200 mm");
+    logger.info("  Inlet BC: CONSTANT_PRESSURE = " + inletPressure + " bara");
 
     // ========== CHOKE VALVE ==========
     double chokeOutletP = 55.0; // bara
@@ -116,8 +120,8 @@ class SlugPipelineToSeparatorTest {
     choke.setPercentValveOpening(50.0);
     choke.setCalculateSteadyState(false);
 
-    System.out.println("\nChoke valve:");
-    System.out.println("  Outlet pressure: " + chokeOutletP + " bara");
+    logger.info("\nChoke valve:");
+    logger.info("  Outlet pressure: " + chokeOutletP + " bara");
 
     // ========== SEPARATOR ==========
     Separator separator = new Separator("Separator");
@@ -126,9 +130,9 @@ class SlugPipelineToSeparatorTest {
     separator.setInternalDiameter(2.0);
     separator.setSeparatorLength(6.0);
 
-    System.out.println("\nSeparator:");
-    System.out.println("  Diameter: 2.0 m");
-    System.out.println("  Length: 6.0 m");
+    logger.info("\nSeparator:");
+    logger.info("  Diameter: 2.0 m");
+    logger.info("  Length: 6.0 m");
 
     // ========== LEVEL CONTROL ==========
     ThrottlingValve liquidValve =
@@ -171,14 +175,14 @@ class SlugPipelineToSeparatorTest {
     double initialLevel = separator.getLiquidLevel();
     double initialSepP = separator.getPressure();
 
-    System.out.println("\n=== Initial State ===");
-    System.out.println("  Separator level: " + String.format("%.1f", initialLevel * 100) + "%");
-    System.out.println("  Separator pressure: " + String.format("%.1f", initialSepP) + " bara");
+    logger.info("\n=== Initial State ===");
+    logger.info("  Separator level: " + String.format("%.1f", initialLevel * 100) + "%");
+    logger.info("  Separator pressure: " + String.format("%.1f", initialSepP) + " bara");
 
     // ========== TRANSIENT SIMULATION ==========
-    System.out.println("\n=== Transient Simulation (60 seconds) ===");
-    System.out.println("Time(s)  PipeOut(kg/s)  Level(%)  SepP(bara)");
-    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 50));
+    logger.info("\n=== Transient Simulation (60 seconds) ===");
+    logger.info("Time(s)  PipeOut(kg/s)  Level(%)  SepP(bara)");
+    logger.info(org.apache.commons.lang3.StringUtils.repeat("-", 50));
 
     UUID simId = UUID.randomUUID();
     List<Double> levels = new ArrayList<>();
@@ -199,37 +203,37 @@ class SlugPipelineToSeparatorTest {
       flows.add(pipeOutFlow);
 
       if (step % 5 == 0) {
-        System.out.println(
+        logger.info(
             String.format("%6.0f   %12.2f  %8.1f  %10.1f", time, pipeOutFlow, level * 100, sepP));
       }
     }
 
     // ========== ASSERTIONS ==========
-    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 50));
-    System.out.println("\n=== Verification ===");
+    logger.info(org.apache.commons.lang3.StringUtils.repeat("-", 50));
+    logger.info("\n=== Verification ===");
 
     // 1. Pipeline should produce flow
     double avgFlow = flows.stream().mapToDouble(d -> d).average().orElse(0.0);
-    System.out.println("Average pipe outlet flow: " + String.format("%.2f", avgFlow) + " kg/s");
+    logger.info("Average pipe outlet flow: " + String.format("%.2f", avgFlow) + " kg/s");
     assertTrue(avgFlow > 0.1, "Pipeline should produce positive flow");
 
     // 2. Separator level should be maintained near setpoint
     double avgLevel = levels.stream().mapToDouble(d -> d).average().orElse(0.0);
     double maxLevelDev = levels.stream().mapToDouble(l -> Math.abs(l - levelSP)).max().orElse(0.0);
-    System.out.println("Average level: " + String.format("%.1f", avgLevel * 100) + "%");
-    System.out.println("Max level deviation: " + String.format("%.1f", maxLevelDev * 100) + "%");
+    logger.info("Average level: " + String.format("%.1f", avgLevel * 100) + "%");
+    logger.info("Max level deviation: " + String.format("%.1f", maxLevelDev * 100) + "%");
     assertTrue(maxLevelDev < 0.3, "Level should stay within 30% of setpoint");
 
     // 3. Separator pressure should be stable
     double finalSepP = separator.getPressure();
-    System.out.println("Final separator pressure: " + String.format("%.1f", finalSepP) + " bara");
+    logger.info("Final separator pressure: " + String.format("%.1f", finalSepP) + " bara");
     assertTrue(finalSepP > 30 && finalSepP < 80, "Separator pressure should be in range");
 
     // 4. System should remain stable (no negative pressures or levels)
     boolean allLevelsValid = levels.stream().allMatch(l -> l >= 0 && l <= 1);
     assertTrue(allLevelsValid, "All levels should be valid (0-100%)");
 
-    System.out.println("\n=== Test PASSED ===");
+    logger.info("\n=== Test PASSED ===");
   }
 
   /**
@@ -238,7 +242,7 @@ class SlugPipelineToSeparatorTest {
   @Test
   @DisplayName("Test constant inlet pressure boundary condition")
   void testConstantInletPressureBoundary() {
-    System.out.println("=== Constant Inlet Pressure Boundary Test ===\n");
+    logger.info("=== Constant Inlet Pressure Boundary Test ===\n");
 
     // Create fluid
     SystemInterface fluid = new SystemSrkEos(300, 50);
@@ -267,14 +271,14 @@ class SlugPipelineToSeparatorTest {
     assertTrue(pressures.length > 0, "Pressure profile should have data");
 
     double inletP = pressures[0] / 1e5; // Convert to bar
-    System.out.println("Inlet pressure: " + String.format("%.1f", inletP) + " bara");
-    System.out.println("Outlet pressure: "
-        + String.format("%.1f", pressures[pressures.length - 1] / 1e5) + " bara");
+    logger.info("Inlet pressure: " + String.format("%.1f", inletP) + " bara");
+    logger.info("Outlet pressure: " + String.format("%.1f", pressures[pressures.length - 1] / 1e5)
+        + " bara");
 
     // Inlet pressure should be close to specified value
     assertEquals(50.0, inletP, 5.0, "Inlet pressure should be near specified value");
 
-    System.out.println("\n=== Test PASSED ===");
+    logger.info("\n=== Test PASSED ===");
   }
 
   /**
@@ -287,7 +291,7 @@ class SlugPipelineToSeparatorTest {
   @Test
   @DisplayName("Verify pipeline outlet flow, pressure and holdup variations")
   void testPipelineOutletVariations() {
-    System.out.println("=== Pipeline Outlet Variations Test ===\n");
+    logger.info("=== Pipeline Outlet Variations Test ===\n");
 
     // Create two-phase fluid
     SystemInterface fluid = new SystemSrkEos(288.15, 60.0);
@@ -307,11 +311,11 @@ class SlugPipelineToSeparatorTest {
     inlet.setTemperature(333.15, "K");
     inlet.run();
 
-    System.out.println("Inlet conditions:");
-    System.out.println("  Pressure: 60 bara");
-    System.out.println("  Flow rate: 8 kg/s");
-    System.out.println("  Gas fraction: " + String.format("%.2f", inlet.getFluid().getBeta()));
-    System.out.println("  Phases: " + inlet.getFluid().getNumberOfPhases());
+    logger.info("Inlet conditions:");
+    logger.info("  Pressure: 60 bara");
+    logger.info("  Flow rate: 8 kg/s");
+    logger.info("  Gas fraction: " + String.format("%.2f", inlet.getFluid().getBeta()));
+    logger.info("  Phases: " + inlet.getFluid().getNumberOfPhases());
 
     // TwoFluidPipe with terrain for slug generation
     TwoFluidPipe pipe = new TwoFluidPipe("SlugPipe", inlet);
@@ -339,10 +343,10 @@ class SlugPipelineToSeparatorTest {
     }
     pipe.setElevationProfile(elevations);
 
-    System.out.println("\nPipeline:");
-    System.out.println("  Length: 2 km");
-    System.out.println("  Sections: 40");
-    System.out.println("  Terrain: Downhill → Low point (-40m) → Riser (+40m)");
+    logger.info("\nPipeline:");
+    logger.info("  Length: 2 km");
+    logger.info("  Sections: 40");
+    logger.info("  Terrain: Downhill → Low point (-40m) → Riser (+40m)");
 
     // Run initial steady state
     pipe.run();
@@ -357,9 +361,9 @@ class SlugPipelineToSeparatorTest {
     double dt = 1.0; // 1 second time step
     int numSteps = 120; // 2 minutes
 
-    System.out.println("\n=== Transient Simulation (2 minutes) ===");
-    System.out.println("Time(s)   Flow(kg/s)   OutletP(bara)   AvgHoldup");
-    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 55));
+    logger.info("\n=== Transient Simulation (2 minutes) ===");
+    logger.info("Time(s)   Flow(kg/s)   OutletP(bara)   AvgHoldup");
+    logger.info(org.apache.commons.lang3.StringUtils.repeat("-", 55));
 
     for (int step = 0; step <= numSteps; step++) {
       double time = step * dt;
@@ -393,12 +397,12 @@ class SlugPipelineToSeparatorTest {
 
       // Print every 10 seconds
       if (step % 10 == 0) {
-        System.out.println(
+        logger.info(
             String.format("%6.0f    %10.3f   %12.2f   %10.4f", time, outFlow, outletP, avgHoldup));
       }
     }
 
-    System.out.println(StringUtils.repeat("-", 55)); // Calculate statistics
+    logger.info(StringUtils.repeat("-", 55)); // Calculate statistics
     double minFlow = outletFlows.stream().filter(f -> f > 0).min(Double::compareTo).orElse(0.0);
     double maxFlow = outletFlows.stream().max(Double::compareTo).orElse(0.0);
     double avgFlow = outletFlows.stream().mapToDouble(d -> d).average().orElse(0.0);
@@ -412,27 +416,27 @@ class SlugPipelineToSeparatorTest {
     double maxHoldup = avgHoldups.stream().max(Double::compareTo).orElse(0.0);
     double holdupRange = maxHoldup - minHoldup;
 
-    System.out.println("\n=== Results Summary ===");
-    System.out.println("\nOutlet Mass Flow:");
-    System.out.println("  Min: " + String.format("%.3f", minFlow) + " kg/s");
-    System.out.println("  Max: " + String.format("%.3f", maxFlow) + " kg/s");
-    System.out.println("  Avg: " + String.format("%.3f", avgFlow) + " kg/s");
-    System.out.println("  Range: " + String.format("%.3f", flowRange) + " kg/s");
-    System.out.println("  Variation: " + String.format("%.1f", (flowRange / avgFlow) * 100) + "%");
+    logger.info("\n=== Results Summary ===");
+    logger.info("\nOutlet Mass Flow:");
+    logger.info("  Min: " + String.format("%.3f", minFlow) + " kg/s");
+    logger.info("  Max: " + String.format("%.3f", maxFlow) + " kg/s");
+    logger.info("  Avg: " + String.format("%.3f", avgFlow) + " kg/s");
+    logger.info("  Range: " + String.format("%.3f", flowRange) + " kg/s");
+    logger.info("  Variation: " + String.format("%.1f", (flowRange / avgFlow) * 100) + "%");
 
-    System.out.println("\nOutlet Pressure:");
-    System.out.println("  Min: " + String.format("%.2f", minP) + " bara");
-    System.out.println("  Max: " + String.format("%.2f", maxP) + " bara");
-    System.out.println("  Range: " + String.format("%.2f", pressureRange) + " bar");
+    logger.info("\nOutlet Pressure:");
+    logger.info("  Min: " + String.format("%.2f", minP) + " bara");
+    logger.info("  Max: " + String.format("%.2f", maxP) + " bara");
+    logger.info("  Range: " + String.format("%.2f", pressureRange) + " bar");
 
-    System.out.println("\nAverage Liquid Holdup:");
-    System.out.println("  Min: " + String.format("%.4f", minHoldup));
-    System.out.println("  Max: " + String.format("%.4f", maxHoldup));
-    System.out.println("  Range: " + String.format("%.4f", holdupRange));
+    logger.info("\nAverage Liquid Holdup:");
+    logger.info("  Min: " + String.format("%.4f", minHoldup));
+    logger.info("  Max: " + String.format("%.4f", maxHoldup));
+    logger.info("  Range: " + String.format("%.4f", holdupRange));
 
     // Verify there is some variation (even small)
     // Note: In a short simulation, variations may be small
-    System.out.println("\n=== Verification ===");
+    logger.info("\n=== Verification ===");
     assertTrue(avgFlow > 0, "Average flow should be positive");
     assertTrue(maxP > 0, "Outlet pressure should be positive");
 
@@ -441,7 +445,7 @@ class SlugPipelineToSeparatorTest {
     assertNotNull(finalHoldups, "Holdup profile should exist");
     assertTrue(finalHoldups.length > 0, "Holdup profile should have data");
 
-    System.out.println("Pipeline outlet data collected successfully");
-    System.out.println("\n=== Test PASSED ===");
+    logger.info("Pipeline outlet data collected successfully");
+    logger.info("\n=== Test PASSED ===");
   }
 }

@@ -6,8 +6,9 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 public class SystemEOSCGEosSO2Test {
-  static Logger logger = LogManager.getLogger(SystemEOSCGEosSO2Test.class);
+  private static final Logger logger = LogManager.getLogger(SystemEOSCGEosSO2Test.class);
 
+  
   @Test
   public void testSO2Density() {
     SystemInterface fluid = new SystemEOSCGEos(298.15, 50.0); // 50 bar

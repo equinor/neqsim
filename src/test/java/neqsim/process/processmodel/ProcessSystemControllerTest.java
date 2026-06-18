@@ -14,8 +14,9 @@ import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.thermo.system.SystemInterface;
 
 public class ProcessSystemControllerTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(ProcessSystemControllerTest.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(ProcessSystemControllerTest.class);
 
   ProcessSystem p;
 

@@ -19,9 +19,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class ReadFluidData2 {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(ReadFluidData.class);
+  private static final Logger logger = LogManager.getLogger(ReadFluidData2.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -59,7 +60,7 @@ public class ReadFluidData2 {
      *
      * try { testOps.TPflash(); testSystem.display(); testOps.PSflash(-123.108602625942);
      * testSystem.display(); testSystem.setPressure(100.0); testOps.PSflash(-119.003271056256);
-     * testSystem.display(); System.out.println("entropy " + testSystem.getEntropy());
+     * testSystem.display(); logger.info("entropy " + testSystem.getEntropy());
      * //testSystem.setPressure(100.0); //testOps.PSflash(-1.503016881785468e+02);
      * //testSystem.display(); //testSystem.setPressure(100.0);
      * testOps.PSflash(-1.266377583884310e+02); } catch (Exception ex) {

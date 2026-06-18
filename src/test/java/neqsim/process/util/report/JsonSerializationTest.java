@@ -30,6 +30,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests JSON serialization capability for all process equipment types.
@@ -43,6 +45,8 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 @Disabled
 public class JsonSerializationTest {
+  private static final Logger logger = LogManager.getLogger(JsonSerializationTest.class);
+
   private static SystemSrkEos testFluid;
   private static Stream feedStream;
 
@@ -386,8 +390,8 @@ public class JsonSerializationTest {
       // Note: Some equipment may return null if toJson() is not implemented
       // This test documents which equipment types need toJson() implementations
       if (equipmentJson == null) {
-        System.out.println("WARNING: " + equipment.getClass().getSimpleName() + " ("
-            + equipment.getName() + ") returns null from toJson()");
+        logger.info("WARNING: " + equipment.getClass().getSimpleName() + " (" + equipment.getName()
+            + ") returns null from toJson()");
       }
     }
   }
@@ -622,8 +626,8 @@ public class JsonSerializationTest {
       }
     }
 
-    System.out.println("ProcessSystem JSON serialization: " + successCount + " successful, "
-        + nullCount + " returned null");
+    logger.info("ProcessSystem JSON serialization: " + successCount + " successful, " + nullCount
+        + " returned null");
     assertTrue(successCount >= 8,
         "At least 8 equipment types should serialize (got " + successCount + ")");
   }
@@ -714,8 +718,8 @@ public class JsonSerializationTest {
     assertTrue(modelJson.contains("GasProcessing") || modelJson.contains("gas"),
         "JSON should contain gas processing data");
 
-    System.out.println("ProcessModel JSON length: " + modelJson.length() + " characters");
-    System.out.println("ProcessModel contains " + model.getAllProcesses().size() + " processes");
+    logger.info("ProcessModel JSON length: " + modelJson.length() + " characters");
+    logger.info("ProcessModel contains " + model.getAllProcesses().size() + " processes");
 
     // Verify all processes can be individually serialized
     for (ProcessSystem process : model.getAllProcesses()) {
@@ -750,7 +754,7 @@ public class JsonSerializationTest {
 
     // Verify equipment count matches
     int equipmentCount = process.getUnitOperations().size();
-    System.out.println("ProcessSystem has " + equipmentCount + " units");
+    logger.info("ProcessSystem has " + equipmentCount + " units");
 
     // Parse and check equipment presence in JSON
     // Note: Equipment returning null from toJson() won't appear in the report
@@ -761,7 +765,7 @@ public class JsonSerializationTest {
       }
     }
 
-    System.out.println("Equipment with JSON support: " + jsonEquipmentCount);
+    logger.info("Equipment with JSON support: " + jsonEquipmentCount);
     assertTrue(jsonEquipmentCount == equipmentCount,
         "All equipment in this test should have JSON support");
   }
@@ -803,7 +807,7 @@ public class JsonSerializationTest {
     // Get mass balance report
     String massBalanceReport = model.getMassBalanceReport("kg/hr");
     assertNotNull(massBalanceReport, "Mass balance report should not be null");
-    System.out.println("Mass balance report:\n" + massBalanceReport);
+    logger.info("Mass balance report:\n" + massBalanceReport);
   }
 
   @Test

@@ -19,8 +19,12 @@ import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.process.measurementdevice.WaterDewPointAnalyser;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class GlycolModulesTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(GlycolModulesTest.class);
+
   @Test
   public void runProcessTEG() throws InterruptedException {
     neqsim.thermo.system.SystemInterface feedGas =
@@ -406,6 +410,6 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     } catch (Exception ex) {
     }
 
-    // System.out.println(splitterGasToFlare.getSplitStream(1).getFlowRate("kg/hr"));
+    // logger.info(splitterGasToFlare.getSplitStream(1).getFlowRate("kg/hr"));
   }
 }

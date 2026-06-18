@@ -9,6 +9,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -20,6 +22,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @since 2.2.3
  */
 public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(SystemElectrolyteCPATest.class);
+
   static SystemInterface thermoSystem;
   static ThermodynamicOperations testOps;
   static neqsim.thermo.ThermodynamicModelTest testModel = null;
@@ -509,8 +513,8 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
         "Hydrate temperature with salt should be positive, got: " + hydrateTempWithSalt);
 
     // Log the results for inspection
-    System.out.println("Hydrate temp without salt: " + hydrateTempNoSalt + "°C");
-    System.out.println("Hydrate temp with salt: " + hydrateTempWithSalt + "°C");
+    logger.info("Hydrate temp without salt: " + hydrateTempNoSalt + "°C");
+    logger.info("Hydrate temp with salt: " + hydrateTempWithSalt + "°C");
   }
 
   /**
@@ -554,9 +558,9 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
         "MEG should inhibit hydrate formation (lower temperature). Without MEG: " + hydrateTempNoMEG
             + "°C, With MEG: " + hydrateTempWithMEG + "°C");
 
-    System.out.println("Hydrate temp without MEG: " + hydrateTempNoMEG + "°C");
-    System.out.println("Hydrate temp with MEG: " + hydrateTempWithMEG + "°C");
-    System.out.println("MEG inhibition effect: " + (hydrateTempNoMEG - hydrateTempWithMEG) + "°C");
+    logger.info("Hydrate temp without MEG: " + hydrateTempNoMEG + "°C");
+    logger.info("Hydrate temp with MEG: " + hydrateTempWithMEG + "°C");
+    logger.info("MEG inhibition effect: " + (hydrateTempNoMEG - hydrateTempWithMEG) + "°C");
   }
 
   /**
@@ -596,8 +600,8 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
         "Methanol should inhibit hydrate formation (lower temperature). Without MeOH: "
             + hydrateTempNoMeOH + "°C, With MeOH: " + hydrateTempWithMeOH + "°C");
 
-    System.out.println("Hydrate temp without methanol: " + hydrateTempNoMeOH + "°C");
-    System.out.println("Hydrate temp with methanol: " + hydrateTempWithMeOH + "°C");
+    logger.info("Hydrate temp without methanol: " + hydrateTempNoMeOH + "°C");
+    logger.info("Hydrate temp with methanol: " + hydrateTempWithMeOH + "°C");
     System.out
         .println("Methanol inhibition effect: " + (hydrateTempNoMeOH - hydrateTempWithMeOH) + "°C");
   }
@@ -634,7 +638,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
         "Hydrate temperature for natural gas at 100 bar should be 5-30°C, got: " + hydrateTemp
             + "°C");
 
-    System.out.println("Hydrate temp for natural gas with inerts: " + hydrateTemp + "°C");
+    logger.info("Hydrate temp for natural gas with inerts: " + hydrateTemp + "°C");
   }
 
   /**
@@ -671,7 +675,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
         "Hydrate temperature for gas-condensate at 100 bar should be 0-30°C, got: " + hydrateTemp
             + "°C");
 
-    System.out.println("Hydrate temp for gas-condensate with oil fractions: " + hydrateTemp + "°C");
+    logger.info("Hydrate temp for gas-condensate with oil fractions: " + hydrateTemp + "°C");
   }
 
   /**
@@ -721,7 +725,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
         "Hydrate temperature for complex offshore fluid should be reasonable, got: " + hydrateTemp
             + "°C");
 
-    System.out.println("Comprehensive offshore scenario hydrate temp: " + hydrateTemp + "°C");
+    logger.info("Comprehensive offshore scenario hydrate temp: " + hydrateTemp + "°C");
 
     // Print full results
     fluid.prettyPrint();
@@ -750,7 +754,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
 
     // Check if hydrate formed
     double hydrateFraction = fluid.getHydrateFraction();
-    System.out.println("Hydrate fraction at 4°C, 100 bar with electrolyte CPA: " + hydrateFraction);
+    logger.info("Hydrate fraction at 4°C, 100 bar with electrolyte CPA: " + hydrateFraction);
 
     // Print results
     fluid.prettyPrint();
@@ -815,7 +819,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     double waterMassKg = waterMoles * fluid.getPhase(0).getComponent("water").getMolarMass();
     double megWtPercent = 100.0 * megMassKg / (megMassKg + waterMassKg);
 
-    System.out.println(
+    logger.info(
         "Required MEG concentration to inhibit hydrate at 5°C, 100 bar: " + megWtPercent + " wt%");
 
     // MEG concentration should be positive and reasonable (typically 20-60 wt%)
@@ -872,10 +876,10 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
         "Combined MEG+salt should give equal or lower hydrate temp than MEG alone. " + "MEG only: "
             + hydrateTempMegOnly + "°C, MEG+salt: " + hydrateTempMegAndSalt + "°C");
 
-    System.out.println("Hydrate temp with MEG only: " + hydrateTempMegOnly + "°C");
-    System.out.println("Hydrate temp with MEG + NaCl: " + hydrateTempMegAndSalt + "°C");
-    System.out.println("Additional salt inhibition effect: "
-        + (hydrateTempMegOnly - hydrateTempMegAndSalt) + "°C");
+    logger.info("Hydrate temp with MEG only: " + hydrateTempMegOnly + "°C");
+    logger.info("Hydrate temp with MEG + NaCl: " + hydrateTempMegAndSalt + "°C");
+    logger.info("Additional salt inhibition effect: " + (hydrateTempMegOnly - hydrateTempMegAndSalt)
+        + "°C");
   }
 
   /**
@@ -936,9 +940,9 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     assertTrue(hydrateTempMeohAndSalt < 10.0,
         "Methanol+salt should provide significant inhibition, got: " + hydrateTempMeohAndSalt);
 
-    System.out.println("Hydrate temp with methanol only: " + hydrateTempMeohOnly + "°C");
-    System.out.println("Hydrate temp with methanol + NaCl: " + hydrateTempMeohAndSalt + "°C");
-    System.out.println("Salt effect on methanol-inhibited system: "
+    logger.info("Hydrate temp with methanol only: " + hydrateTempMeohOnly + "°C");
+    logger.info("Hydrate temp with methanol + NaCl: " + hydrateTempMeohAndSalt + "°C");
+    logger.info("Salt effect on methanol-inhibited system: "
         + (hydrateTempMeohOnly - hydrateTempMeohAndSalt) + "°C");
 
     // Per Hu-Lee-Sum correlation, combined effect should be additive (more inhibition)
@@ -1041,13 +1045,13 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     // (subtracting pure water contribution to get just the inhibitor effects)
     double lnAwExpected = lnAwSalt + lnAwMEG - lnAwPure;
 
-    System.out.println("Hu-Lee-Sum Water Activity Test:");
-    System.out.println("  Pure water a_w: " + awPure + " (ln: " + lnAwPure + ")");
-    System.out.println("  With salt a_w: " + awSalt + " (ln: " + lnAwSalt + ")");
-    System.out.println("  With MEG a_w: " + awMEG + " (ln: " + lnAwMEG + ")");
-    System.out.println("  With both a_w: " + awBoth + " (ln: " + lnAwBoth + ")");
-    System.out.println("  Expected additive ln(a_w): " + lnAwExpected);
-    System.out.println("  Actual ln(a_w): " + lnAwBoth);
+    logger.info("Hu-Lee-Sum Water Activity Test:");
+    logger.info("  Pure water a_w: " + awPure + " (ln: " + lnAwPure + ")");
+    logger.info("  With salt a_w: " + awSalt + " (ln: " + lnAwSalt + ")");
+    logger.info("  With MEG a_w: " + awMEG + " (ln: " + lnAwMEG + ")");
+    logger.info("  With both a_w: " + awBoth + " (ln: " + lnAwBoth + ")");
+    logger.info("  Expected additive ln(a_w): " + lnAwExpected);
+    logger.info("  Actual ln(a_w): " + lnAwBoth);
 
     // Combined inhibitors should give lower water activity than either alone
     assertTrue(awBoth < awSalt && awBoth < awMEG,

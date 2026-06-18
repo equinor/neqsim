@@ -8,8 +8,12 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class CompressorChartTest {
+  private static final Logger logger = LogManager.getLogger(CompressorChartTest.class);
+
   public Compressor comp1;
 
   @BeforeEach

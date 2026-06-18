@@ -9,6 +9,8 @@ import com.google.gson.JsonParser;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test class for SplitterResponse JSON response handling.
@@ -16,6 +18,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class SplitterResponseTest {
+  private static final Logger logger = LogManager.getLogger(SplitterResponseTest.class);
+
   private Splitter splitter;
   private Stream inletStream;
 
@@ -42,7 +46,7 @@ public class SplitterResponseTest {
     String json = splitter.toJson();
     assertNotNull(json, "JSON response should not be null");
     assertTrue(json.length() > 0, "JSON response should not be empty");
-    System.out.println("JSON output: " + json);
+    logger.info("JSON output: " + json);
 
     // Parse JSON to verify it's valid
     JsonElement element = JsonParser.parseString(json);

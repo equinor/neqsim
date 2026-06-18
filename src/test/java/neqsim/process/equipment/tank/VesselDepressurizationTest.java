@@ -10,6 +10,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for VesselDepressurization class.
@@ -23,6 +25,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @see <a href="https://doi.org/10.21105/joss.03695">Andreasen (2021) - HydDown JOSS Paper</a>
  */
 public class VesselDepressurizationTest {
+  private static final Logger logger = LogManager.getLogger(VesselDepressurizationTest.class);
+
   private Stream createTestStream(double tempK, double pressBar) {
     SystemInterface gas = new SystemSrkEos(tempK, pressBar);
     gas.addComponent("methane", 0.9);
@@ -1026,7 +1030,7 @@ public class VesselDepressurizationTest {
 
     // Print risks for manual verification
     for (java.util.Map.Entry<String, String> entry : risks.entrySet()) {
-      System.out.println(entry.getKey() + ": " + entry.getValue());
+      logger.info(entry.getKey() + ": " + entry.getValue());
     }
   }
 
@@ -1207,8 +1211,8 @@ public class VesselDepressurizationTest {
     vessel.setInletTemperature(288.15);
     vessel.run();
 
-    System.out.println("=== CNG Filling Diagnostic (ADIABATIC) ===");
-    System.out.println("Initial: T=" + (vessel.getTemperature() - 273.15) + "C, P="
+    logger.info("=== CNG Filling Diagnostic (ADIABATIC) ===");
+    logger.info("Initial: T=" + (vessel.getTemperature() - 273.15) + "C, P="
         + vessel.getPressure("bar") + " bar, mass=" + vessel.getMass() + " kg");
 
     // Get access to the thermoSystem state via fluid properties
@@ -1220,25 +1224,25 @@ public class VesselDepressurizationTest {
     ThermodynamicOperations tOps = new ThermodynamicOperations(sys);
     tOps.TPflash();
     sys.init(3);
-    System.out.println(
+    logger.info(
         "Feed fluid at 288K, 20bar: H=" + sys.getEnthalpy() + " J, U=" + sys.getInternalEnergy()
             + " J, mass=" + (sys.getTotalNumberOfMoles() * sys.getMolarMass()) + " kg");
-    System.out.println("Feed specific h="
+    logger.info("Feed specific h="
         + sys.getEnthalpy() / (sys.getTotalNumberOfMoles() * sys.getMolarMass()) + " J/kg");
-    System.out.println("Feed specific u="
+    logger.info("Feed specific u="
         + sys.getInternalEnergy() / (sys.getTotalNumberOfMoles() * sys.getMolarMass()) + " J/kg");
 
     UUID id = UUID.randomUUID();
     for (int i = 0; i < 10; i++) {
       vessel.runTransient(10.0, id);
-      System.out.println(
-          "Step " + (i + 1) + ": T=" + String.format("%.2f", vessel.getTemperature() - 273.15)
+      logger
+          .info("Step " + (i + 1) + ": T=" + String.format("%.2f", vessel.getTemperature() - 273.15)
               + "C, P=" + String.format("%.4f", vessel.getPressure("bar")) + " bar, mass="
               + String.format("%.4f", vessel.getMass()) + " kg");
     }
 
     double finalT = vessel.getTemperature() - 273.15;
-    System.out.println("After 10 steps: T=" + finalT + " C");
+    logger.info("After 10 steps: T=" + finalT + " C");
     // For adiabatic filling from 20 bar, expect moderate temperature increase
     assertTrue(finalT < 100.0,
         "Adiabatic filling temperature " + finalT + " C should be < 100 C for 10 small steps");
@@ -1296,11 +1300,11 @@ public class VesselDepressurizationTest {
     double finalT = vessel.getTemperature();
     double wallT = vessel.getWallTemperature();
 
-    System.out.println("CNG Filling test results:");
-    System.out.println("  Initial P: " + initialP + " bar, Final P: " + finalP + " bar");
-    System.out.println("  Initial mass: " + initialMass + " kg, Final mass: " + finalMass + " kg");
-    System.out.println("  Gas temperature: " + (finalT - 273.15) + " C");
-    System.out.println("  Wall temperature: " + (wallT - 273.15) + " C");
+    logger.info("CNG Filling test results:");
+    logger.info("  Initial P: " + initialP + " bar, Final P: " + finalP + " bar");
+    logger.info("  Initial mass: " + initialMass + " kg, Final mass: " + finalMass + " kg");
+    logger.info("  Gas temperature: " + (finalT - 273.15) + " C");
+    logger.info("  Wall temperature: " + (wallT - 273.15) + " C");
 
     assertTrue(finalP > initialP, "Pressure should increase during CNG filling");
     assertTrue(finalMass > initialMass, "Mass should increase during CNG filling");

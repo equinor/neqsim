@@ -11,8 +11,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class StratifiedFlowNodeTest {
+  private static final Logger logger = LogManager.getLogger(StratifiedFlowNodeTest.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(StratifiedFlowNodeTest.class);
 
   @Test
   void testInit() {
@@ -34,16 +35,15 @@ public class StratifiedFlowNodeTest {
       test.calcFluxes();
       test.update();
       /*
-       * System.out.println( "flux methane " + test.getFluidBoundary().getInterphaseMolarFlux(0) +
-       * " [mol/m2*sec]"); System.out.println( "flux nC10 " +
+       * logger.info( "flux methane " + test.getFluidBoundary().getInterphaseMolarFlux(0) +
+       * " [mol/m2*sec]"); logger.info( "flux nC10 " +
        * test.getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
-       * System.out.println("gas velocity " + test.getSuperficialVelocity(0) + " m/sec");
-       * System.out.println("liquid velocity " + test.getVelocity(1) + " m/sec");
-       * System.out.println("liquid holdup " + test.getPhaseFraction(1) + "-");
-       * System.out.println("interface contact area " + test.getInterphaseContactLength(0) +
-       * "m2/m"); System.out.println("gas flow rate " + test.getMassFlowRate(0) * 60 * 60 +
-       * " kg/hr"); System.out.println("liquid flow rate " + test.getMassFlowRate(1) * 60 * 60 +
-       * " kg/hr");
+       * logger.info("gas velocity " + test.getSuperficialVelocity(0) + " m/sec");
+       * logger.info("liquid velocity " + test.getVelocity(1) + " m/sec");
+       * logger.info("liquid holdup " + test.getPhaseFraction(1) + "-");
+       * logger.info("interface contact area " + test.getInterphaseContactLength(0) + "m2/m");
+       * logger.info("gas flow rate " + test.getMassFlowRate(0) * 60 * 60 + " kg/hr");
+       * logger.info("liquid flow rate " + test.getMassFlowRate(1) * 60 * 60 + " kg/hr");
        */
     }
   }
@@ -67,9 +67,9 @@ public class StratifiedFlowNodeTest {
     test.initFlowCalc();
     test.calcFluxes();
 
-    // System.out.println(
+    // logger.info(
     // "flux methane " + test.getFluidBoundary().getInterphaseMolarFlux(0) + " [mol/m2*sec]");
-    // System.out.println(
+    // logger.info(
     // "flux nC10 " + test.getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
 
     SystemInterface gasPhase = testSystem.phaseToSystem("gas");
@@ -99,9 +99,9 @@ public class StratifiedFlowNodeTest {
     test2.initFlowCalc();
     test2.calcFluxes();
 
-    // System.out.println(
+    // logger.info(
     // "flux methane " + test2.getFluidBoundary().getInterphaseMolarFlux(0) + " [mol/m2*sec]");
-    // System.out.println(
+    // logger.info(
     // "flux nC10 " + test2.getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
 
     oilPhase.addComponent(0, test2.getFluidBoundary().getInterphaseMolarFlux(0) * 100.0
@@ -129,9 +129,9 @@ public class StratifiedFlowNodeTest {
     test3.initFlowCalc();
     test3.calcFluxes();
 
-    // System.out.println(
+    // logger.info(
     // "flux methane " + test3.getFluidBoundary().getInterphaseMolarFlux(0) + " [mol/m2*sec]");
-    // System.out.println(
+    // logger.info(
     // "flux nC10 " + test3.getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
   }
 
@@ -196,16 +196,16 @@ public class StratifiedFlowNodeTest {
         }
 
         // gasPhases[i + 1].prettyPrint();
-        // System.out.println("time " + time + " node " + i + " mass oil "
+        // logger.info("time " + time + " node " + i + " mass oil "
         // + oilPhases[i].getFlowRate("kg/hr") + " gas velocity " + nodes[i].getVelocity(0));
       }
 
       // oilPhases[0].prettyPrint();
-      // System.out.println("flux methane " + nodes[0].getFluidBoundary().getInterphaseMolarFlux(0)
+      // logger.info("flux methane " + nodes[0].getFluidBoundary().getInterphaseMolarFlux(0)
       // + " [mol/m2*sec]");
-      // System.out.println(
+      // logger.info(
       // "flux nC10 " + nodes[0].getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
-      // System.out.println("ethane gas "
+      // logger.info("ethane gas "
       // + nodes[0].getBulkSystem().getPhase(0).getComponent(1).getNumberOfMolesInPhase()
       // + " liquid "
       // + nodes[0].getBulkSystem().getPhase(1).getComponent(1).getNumberOfMolesInPhase());
@@ -241,16 +241,16 @@ public class StratifiedFlowNodeTest {
         }
 
         // gasPhases[i + 1].prettyPrint();
-        // System.out.println("time " + time + " node " + i + " mass oil "
+        // logger.info("time " + time + " node " + i + " mass oil "
         // + oilPhases[i].getFlowRate("kg/hr") + " gas velocity " + nodes[i].getVelocity(0));
       }
 
       // oilPhases[0].prettyPrint();
-      // System.out.println("flux methane " + nodes[1].getFluidBoundary().getInterphaseMolarFlux(0)
+      // logger.info("flux methane " + nodes[1].getFluidBoundary().getInterphaseMolarFlux(0)
       // + " [mol/m2*sec]");
-      // System.out.println(
+      // logger.info(
       // "flux ethane " + nodes[0].getFluidBoundary().getInterphaseMolarFlux(1) + " [mol/m2*sec]");
-      // System.out.println("ethane gas "
+      // logger.info("ethane gas "
       // + nodes[0].getBulkSystem().getPhase(0).getComponent(1).getNumberOfMolesInPhase()
       // + " liquid "
       // + nodes[0].getBulkSystem().getPhase(1).getComponent(1).getNumberOfMolesInPhase());
@@ -287,10 +287,13 @@ public class StratifiedFlowNodeTest {
     double totalWallContact = gasWallContact + liquidWallContact;
     double pipeCircumference = Math.PI * pipe.getDiameter();
 
-    System.out.printf("Gas fraction: %.4f, Liquid fraction: %.4f%n", gasFraction, liquidFraction);
-    System.out.printf("Gas wall contact: %.6f m, Liquid wall contact: %.6f m%n", gasWallContact,
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Gas fraction: %.4f, Liquid fraction: %.4f%n", gasFraction, liquidFraction);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Gas wall contact: %.6f m, Liquid wall contact: %.6f m%n", gasWallContact,
         liquidWallContact);
-    System.out.printf("Total wall contact: %.6f m, Pipe circumference: %.6f m%n", totalWallContact,
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Total wall contact: %.6f m, Pipe circumference: %.6f m%n", totalWallContact,
         pipeCircumference);
 
     // Verify we have two phases

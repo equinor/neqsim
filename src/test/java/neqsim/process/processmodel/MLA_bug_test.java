@@ -26,8 +26,9 @@ import neqsim.thermo.system.SystemSrkCPA;
 import neqsim.thermo.util.empiric.BukacekWaterInGas;
 
 public class MLA_bug_test extends neqsim.NeqSimTest {
-  Logger logger = LogManager.getLogger(MLA_bug_test.class);
+  private static final Logger logger = LogManager.getLogger(MLA_bug_test.class);
 
+  
   @Test
   public void runProcessTEG() throws InterruptedException {
     ProcessSystem p = new ProcessSystem();
@@ -329,7 +330,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     } catch (Exception ex) {
       logger.error("Something failed");
     }
-    // System.out.println("water in gas " + dehydratedGas.getFluid().getComponent("water").getx());
+    // logger.info("water in gas " + dehydratedGas.getFluid().getComponent("water").getx());
 
     assertEquals(-19.1886678,
         p.getMeasurementDevice("water dew point analyser3").getMeasuredValue("C"), 1e-1);

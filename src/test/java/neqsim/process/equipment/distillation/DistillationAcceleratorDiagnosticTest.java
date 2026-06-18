@@ -3,6 +3,8 @@ package neqsim.process.equipment.distillation;
 import java.lang.reflect.Method;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -14,6 +16,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * substitution on small heavy-rich columns.
  */
 public class DistillationAcceleratorDiagnosticTest {
+  private static final Logger logger =
+      LogManager.getLogger(DistillationAcceleratorDiagnosticTest.class);
 
   /**
    * Build a deethanizer feed matching the benchmark test's composition.
@@ -66,17 +70,16 @@ public class DistillationAcceleratorDiagnosticTest {
    */
   @Test
   public void dumpAcceleratorPreFallbackState() {
-    DistillationColumn.SolverType[] accelerators =
-        {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
-            DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
-            DistillationColumn.SolverType.INSIDE_OUT,
-            DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
-            DistillationColumn.SolverType.WEGSTEIN, DistillationColumn.SolverType.SUM_RATES,
-            DistillationColumn.SolverType.NEWTON, DistillationColumn.SolverType.MESH_RESIDUAL,
-            DistillationColumn.SolverType.NAPHTALI_SANDHOLM};
+    DistillationColumn.SolverType[] accelerators = {
+        DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
+        DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
+        DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
+        DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.NEWTON,
+        DistillationColumn.SolverType.MESH_RESIDUAL,
+        DistillationColumn.SolverType.NAPHTALI_SANDHOLM};
 
-    System.out.println();
-    System.out.println("=== Accelerator pre-fallback diagnostic (5-tray deethanizer) ===");
+
+    logger.info("=== Accelerator pre-fallback diagnostic (5-tray deethanizer) ===");
     for (DistillationColumn.SolverType type : accelerators) {
       DistillationColumn column = buildDeethanizer(type);
       // Mimic the front-end without going through ColumnSolverFactory: initialize feed-tray
@@ -85,52 +88,50 @@ public class DistillationAcceleratorDiagnosticTest {
       try {
         callInnerSolver(column, type, id);
       } catch (RuntimeException ex) {
-        System.out.println(type.name() + ": EXCEPTION " + ex.getClass().getSimpleName() + ": "
-            + ex.getMessage());
+        logger.info(
+            type.name() + ": EXCEPTION " + ex.getClass().getSimpleName() + ": " + ex.getMessage());
         continue;
       }
-      System.out.println();
-      System.out.println("--- " + type.name() + " ---");
-      System.out.println("  solved()                       = " + column.solved());
-      System.out.println("  lastSolveStatus                = " + column.getLastSolveStatus());
-      System.out.println("  lastSolveStatusReason          = " + column.getLastSolveStatusReason());
-      System.out.println("  wasFeedFlashFallbackApplied()  = " + column.wasFeedFlashFallbackApplied());
-      System.out.println("  lastIterationCount             = " + column.getLastIterationCount());
-      System.out.println("  lastMassResidual               = " + column.getLastMassResidual());
-      System.out.println("  lastEnergyResidual             = " + column.getLastEnergyResidual());
-      System.out.println("  lastMeshResidualNorm           = " + column.getLastMeshResidualNorm());
-      System.out.println("  lastMeshMaterialResidualNorm   = "
-          + column.getLastMeshMaterialResidualNorm());
-      System.out.println("  lastMeshEquilibriumResidualNorm= "
-          + column.getLastMeshEquilibriumResidualNorm());
-      System.out.println("  lastMeshSummationResidualNorm  = "
-          + column.getLastMeshSummationResidualNorm());
-      System.out.println("  lastMeshEnergyResidualNorm     = "
-          + column.getLastMeshEnergyResidualNorm());
-      System.out.println("  lastMeshProductDrawResidualNorm= "
-          + column.getLastMeshProductDrawResidualNorm());
-      System.out.println("  lastInternalTrafficRatio       = " + column.getLastInternalTrafficRatio());
-      System.out.println("  gasOut flow (kg/hr)            = "
-          + column.getGasOutStream().getFlowRate("kg/hr"));
-      System.out.println("  liquidOut flow (kg/hr)         = "
-          + column.getLiquidOutStream().getFlowRate("kg/hr"));
+
+      logger.info("--- " + type.name() + " ---");
+      logger.info("  solved()                       = " + column.solved());
+      logger.info("  lastSolveStatus                = " + column.getLastSolveStatus());
+      logger.info("  lastSolveStatusReason          = " + column.getLastSolveStatusReason());
+      logger.info("  wasFeedFlashFallbackApplied()  = " + column.wasFeedFlashFallbackApplied());
+      logger.info("  lastIterationCount             = " + column.getLastIterationCount());
+      logger.info("  lastMassResidual               = " + column.getLastMassResidual());
+      logger.info("  lastEnergyResidual             = " + column.getLastEnergyResidual());
+      logger.info("  lastMeshResidualNorm           = " + column.getLastMeshResidualNorm());
+      logger.info("  lastMeshMaterialResidualNorm   = " + column.getLastMeshMaterialResidualNorm());
+      logger.info(
+          "  lastMeshEquilibriumResidualNorm= " + column.getLastMeshEquilibriumResidualNorm());
+      logger
+          .info("  lastMeshSummationResidualNorm  = " + column.getLastMeshSummationResidualNorm());
+      logger.info("  lastMeshEnergyResidualNorm     = " + column.getLastMeshEnergyResidualNorm());
+      logger.info(
+          "  lastMeshProductDrawResidualNorm= " + column.getLastMeshProductDrawResidualNorm());
+      logger.info("  lastInternalTrafficRatio       = " + column.getLastInternalTrafficRatio());
+      logger.info(
+          "  gasOut flow (kg/hr)            = " + column.getGasOutStream().getFlowRate("kg/hr"));
+      logger.info(
+          "  liquidOut flow (kg/hr)         = " + column.getLiquidOutStream().getFlowRate("kg/hr"));
       // Direct tray reads — what the inner solver actually computed BEFORE fallback overwrite
       try {
-        double topTrayGas = column.getTray(column.getNumberOfTrays() - 1).getGasOutStream()
-            .getFlowRate("kg/hr");
+        double topTrayGas =
+            column.getTray(column.getNumberOfTrays() - 1).getGasOutStream().getFlowRate("kg/hr");
         double botTrayLiq = column.getTray(0).getLiquidOutStream().getFlowRate("kg/hr");
-        System.out.println("  topTray gasOut    (kg/hr)      = " + topTrayGas);
-        System.out.println("  botTray liquidOut (kg/hr)      = " + botTrayLiq);
+        logger.info("  topTray gasOut    (kg/hr)      = " + topTrayGas);
+        logger.info("  botTray liquidOut (kg/hr)      = " + botTrayLiq);
         // Bottom tray phase inventory
         SystemInterface bot = column.getTray(0).getLiquidOutStream().getThermoSystem();
-        System.out.println("  botTray hasPhase oil/liq/aq    = " + bot.hasPhaseType("oil") + "/"
+        logger.info("  botTray hasPhase oil/liq/aq    = " + bot.hasPhaseType("oil") + "/"
             + bot.hasPhaseType("liquid") + "/" + bot.hasPhaseType("aqueous"));
-        System.out.println("  botTray numberOfPhases         = " + bot.getNumberOfPhases());
+        logger.info("  botTray numberOfPhases         = " + bot.getNumberOfPhases());
         if (bot.getNumberOfPhases() > 0) {
-          System.out.println("  botTray phase0 name            = " + bot.getPhase(0).getPhaseTypeName());
+          logger.info("  botTray phase0 name            = " + bot.getPhase(0).getPhaseTypeName());
         }
       } catch (RuntimeException re) {
-        System.out.println("  tray read failed: " + re.getMessage());
+        logger.info("  tray read failed: " + re.getMessage());
       }
       // Reflection probes for private gates
       probePrivate(column, "internalTrafficSatisfied");
@@ -138,8 +139,8 @@ public class DistillationAcceleratorDiagnosticTest {
       probePrivate(column, "getExternalMassBalanceError");
       probePrivate(column, "getEffectiveMassBalanceTolerance");
     }
-    System.out.println("=== end diagnostic ===");
-    System.out.println();
+    logger.info("=== end diagnostic ===");
+
   }
 
   /**
@@ -195,9 +196,9 @@ public class DistillationAcceleratorDiagnosticTest {
       Method m = DistillationColumn.class.getDeclaredMethod(methodName);
       m.setAccessible(true);
       Object result = m.invoke(column);
-      System.out.println(String.format("  %-30s = %s", methodName + "()", result));
+      logger.info(String.format("  %-30s = %s", methodName + "()", result));
     } catch (ReflectiveOperationException ex) {
-      System.out.println("  " + methodName + "() = REFLECTION FAILED: " + ex.getMessage());
+      logger.info("  " + methodName + "() = REFLECTION FAILED: " + ex.getMessage());
     }
   }
 }

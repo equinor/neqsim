@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class BubbleFlash {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(BubbleFlash.class);
+  private static final Logger logger = LogManager.getLogger(BubbleFlash.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -52,7 +53,7 @@ public class BubbleFlash {
       logger.error(ex.getMessage(), ex);
     }
 
-    // System.out.println("wt% MEG " +
+    // logger.info("wt% MEG " +
     // 100*testSystem.getPhase(1).getComponent("MEG").getx()*testSystem.getPhase(1).getComponent("MEG").getMolarMass()/testSystem.getPhase(1).getMolarMass());
 
     // testSystem.display();

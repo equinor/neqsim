@@ -3,7 +3,6 @@ package neqsim.process.mechanicaldesign.expander;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JFrame;
@@ -16,7 +15,6 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.expander.TurboExpanderCompressor;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**

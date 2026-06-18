@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Comparison test for gas pipeline pressure drop calculations.
@@ -19,6 +21,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class GasPipelinePressureDropComparisonTest {
+  private static final Logger logger = LogManager.getLogger(GasPipelinePressureDropComparisonTest.class);
+
   private SystemInterface pureMethane;
   private Stream gasInlet;
 
@@ -44,15 +48,15 @@ class GasPipelinePressureDropComparisonTest {
     gasInlet.setPressure(INLET_PRESSURE, "bara");
     gasInlet.run();
 
-    System.out.println("\n=== Gas Pipeline Pressure Drop Comparison ===");
-    System.out.println("Fluid: Pure methane");
-    System.out.println("Flow rate: " + FLOW_RATE + " kg/s");
-    System.out.println("Inlet pressure: " + INLET_PRESSURE + " bara");
-    System.out.println("Inlet temperature: " + INLET_TEMPERATURE + " °C");
-    System.out.println("Pipe length: " + LENGTH + " m");
-    System.out.println("Pipe diameter: " + DIAMETER * 1000 + " mm");
-    System.out.println("Roughness: " + ROUGHNESS * 1000 + " mm");
-    System.out.println();
+    logger.info("\n=== Gas Pipeline Pressure Drop Comparison ===");
+    logger.info("Fluid: Pure methane");
+    logger.info("Flow rate: " + FLOW_RATE + " kg/s");
+    logger.info("Inlet pressure: " + INLET_PRESSURE + " bara");
+    logger.info("Inlet temperature: " + INLET_TEMPERATURE + " °C");
+    logger.info("Pipe length: " + LENGTH + " m");
+    logger.info("Pipe diameter: " + DIAMETER * 1000 + " mm");
+    logger.info("Roughness: " + ROUGHNESS * 1000 + " mm");
+
   }
 
   /**
@@ -70,11 +74,11 @@ class GasPipelinePressureDropComparisonTest {
     double outletP = pipe.getOutletStream().getPressure("bara");
     double dp = inletP - outletP;
 
-    System.out.println("AdiabaticPipe:");
-    System.out.println("  Inlet pressure:  " + inletP + " bara");
-    System.out.println("  Outlet pressure: " + outletP + " bara");
-    System.out.println("  Pressure drop:   " + dp + " bar");
-    System.out.println();
+    logger.info("AdiabaticPipe:");
+    logger.info("  Inlet pressure:  " + inletP + " bara");
+    logger.info("  Outlet pressure: " + outletP + " bara");
+    logger.info("  Pressure drop:   " + dp + " bar");
+
 
     assertTrue(dp > 0, "Pressure drop should be positive");
     assertTrue(dp < inletP * 0.5, "Pressure drop should be less than 50% of inlet");
@@ -97,11 +101,11 @@ class GasPipelinePressureDropComparisonTest {
     double outletP = pipe.getOutletStream().getPressure("bara");
     double dp = inletP - outletP;
 
-    System.out.println("PipeBeggsAndBrills:");
-    System.out.println("  Inlet pressure:  " + inletP + " bara");
-    System.out.println("  Outlet pressure: " + outletP + " bara");
-    System.out.println("  Pressure drop:   " + dp + " bar");
-    System.out.println();
+    logger.info("PipeBeggsAndBrills:");
+    logger.info("  Inlet pressure:  " + inletP + " bara");
+    logger.info("  Outlet pressure: " + outletP + " bara");
+    logger.info("  Pressure drop:   " + dp + " bar");
+
 
     assertTrue(dp > 0, "Pressure drop should be positive");
     assertTrue(dp < inletP * 0.5, "Pressure drop should be less than 50% of inlet");
@@ -131,18 +135,18 @@ class GasPipelinePressureDropComparisonTest {
     double outletP = pressureProfile[pressureProfile.length - 1] / 1e5; // Pa to bara
     double dp = inletP - outletP;
 
-    System.out.println("TwoFluidPipe:");
-    System.out.println("  Inlet pressure:  " + inletP + " bara");
-    System.out.println("  Outlet pressure: " + outletP + " bara");
-    System.out.println("  Pressure drop:   " + dp + " bar");
-    System.out.println("  Pressure profile (bara): ");
+    logger.info("TwoFluidPipe:");
+    logger.info("  Inlet pressure:  " + inletP + " bara");
+    logger.info("  Outlet pressure: " + outletP + " bara");
+    logger.info("  Pressure drop:   " + dp + " bar");
+    logger.info("  Pressure profile (bara): ");
     for (int i = 0; i < Math.min(5, pressureProfile.length); i++) {
-      System.out.println("    [" + i + "]: " + String.format("%.4f", pressureProfile[i] / 1e5));
+      logger.info("    [" + i + "]: " + String.format("%.4f", pressureProfile[i] / 1e5));
     }
-    System.out.println("    ...");
-    System.out.println("    [" + (pressureProfile.length - 1) + "]: "
+    logger.info("    ...");
+    logger.info("    [" + (pressureProfile.length - 1) + "]: "
         + String.format("%.4f", pressureProfile[pressureProfile.length - 1] / 1e5));
-    System.out.println();
+
 
     assertTrue(dp > 0, "Pressure drop should be positive");
     assertTrue(dp < inletP * 0.5, "Pressure drop should be less than 50% of inlet");
@@ -204,11 +208,11 @@ class GasPipelinePressureDropComparisonTest {
     double outletPTwoFluid = pressureProfile[pressureProfile.length - 1] / 1e5;
     double dpTwoFluid = inlet3.getPressure("bara") - outletPTwoFluid;
 
-    System.out.println("=== Pressure Drop Comparison ===");
-    System.out.println("AdiabaticPipe:      " + String.format("%.4f", dpAdiabatic) + " bar");
-    System.out.println("PipeBeggsAndBrills: " + String.format("%.4f", dpBeggs) + " bar");
-    System.out.println("TwoFluidPipe:       " + String.format("%.4f", dpTwoFluid) + " bar");
-    System.out.println();
+    logger.info("=== Pressure Drop Comparison ===");
+    logger.info("AdiabaticPipe:      " + String.format("%.4f", dpAdiabatic) + " bar");
+    logger.info("PipeBeggsAndBrills: " + String.format("%.4f", dpBeggs) + " bar");
+    logger.info("TwoFluidPipe:       " + String.format("%.4f", dpTwoFluid) + " bar");
+
 
     // Calculate relative differences
     double avgDp = (dpAdiabatic + dpBeggs + dpTwoFluid) / 3.0;
@@ -216,14 +220,14 @@ class GasPipelinePressureDropComparisonTest {
     double diffAdiabaticTwoFluid = Math.abs(dpAdiabatic - dpTwoFluid) / avgDp * 100;
     double diffBeggsTwoFluid = Math.abs(dpBeggs - dpTwoFluid) / avgDp * 100;
 
-    System.out.println("Relative Differences:");
-    System.out.println("  AdiabaticPipe vs PipeBeggsAndBrills: "
+    logger.info("Relative Differences:");
+    logger.info("  AdiabaticPipe vs PipeBeggsAndBrills: "
         + String.format("%.1f", diffAdiabaticBeggs) + "%");
-    System.out.println("  AdiabaticPipe vs TwoFluidPipe:       "
+    logger.info("  AdiabaticPipe vs TwoFluidPipe:       "
         + String.format("%.1f", diffAdiabaticTwoFluid) + "%");
-    System.out.println(
+    logger.info(
         "  PipeBeggsAndBrills vs TwoFluidPipe:  " + String.format("%.1f", diffBeggsTwoFluid) + "%");
-    System.out.println();
+
 
     // All pressure drops should be positive
     assertTrue(dpAdiabatic > 0, "AdiabaticPipe pressure drop should be positive");
@@ -302,11 +306,11 @@ class GasPipelinePressureDropComparisonTest {
     double outletPTwoFluid = pressureProfile[pressureProfile.length - 1] / 1e5;
     double dpTwoFluid = inlet3.getPressure("bara") - outletPTwoFluid;
 
-    System.out.println("=== High Flow Rate (" + highFlowRate + " kg/s) Comparison ===");
-    System.out.println("AdiabaticPipe:      " + String.format("%.4f", dpAdiabatic) + " bar");
-    System.out.println("PipeBeggsAndBrills: " + String.format("%.4f", dpBeggs) + " bar");
-    System.out.println("TwoFluidPipe:       " + String.format("%.4f", dpTwoFluid) + " bar");
-    System.out.println();
+    logger.info("=== High Flow Rate (" + highFlowRate + " kg/s) Comparison ===");
+    logger.info("AdiabaticPipe:      " + String.format("%.4f", dpAdiabatic) + " bar");
+    logger.info("PipeBeggsAndBrills: " + String.format("%.4f", dpBeggs) + " bar");
+    logger.info("TwoFluidPipe:       " + String.format("%.4f", dpTwoFluid) + " bar");
+
 
     // All should be positive and larger than low flow
     assertTrue(dpAdiabatic > 0, "Pressure drop should be positive");

@@ -9,6 +9,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Robustness tests for the PTPhaseEnvelopeMichelsen implementation. Covers the full spectrum from
@@ -24,6 +26,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class PTPhaseEnvelopeRobustnessTest {
+  private static final Logger logger = LogManager.getLogger(PTPhaseEnvelopeRobustnessTest.class);
+
 
   // ========================== PURE COMPONENTS ==========================
 
@@ -1019,20 +1023,20 @@ public class PTPhaseEnvelopeRobustnessTest {
     double[] bubT = ops.get("bubT");
     double[] bubP = ops.get("bubP");
 
-    System.out.println("=== Phase Envelope Reference Values (SRK EOS) ===");
-    System.out.println("Composition: N2=0.5%, CO2=2%, CH4=85%, C2=6%, C3=3%, "
+    logger.info("=== Phase Envelope Reference Values (SRK EOS) ===");
+    logger.info("Composition: N2=0.5%, CO2=2%, CH4=85%, C2=6%, C3=3%, "
         + "iC4=1%, nC4=1.5%, iC5=0.5%, nC5=0.5%");
-    System.out.println(
+    logger.info(
         "Cricondenbar:   T=" + ccb[0] + " K (" + (ccb[0] - 273.15) + " °C), P=" + ccb[1] + " bar");
-    System.out.println(
+    logger.info(
         "Cricondentherm: T=" + cct[0] + " K (" + (cct[0] - 273.15) + " °C), P=" + cct[1] + " bar");
-    System.out.println("Critical point: T=" + crit[0] + " K (" + (crit[0] - 273.15) + " °C), P="
-        + crit[1] + " bar");
-    System.out.println("Dew curve: " + dewT.length + " points");
-    System.out.println("Bubble curve: " + bubT.length + " points");
+    logger.info("Critical point: T=" + crit[0] + " K (" + (crit[0] - 273.15) + " °C), P=" + crit[1]
+        + " bar");
+    logger.info("Dew curve: " + dewT.length + " points");
+    logger.info("Bubble curve: " + bubT.length + " points");
 
     PTPhaseEnvelopeMichelsen env = (PTPhaseEnvelopeMichelsen) ops.getOperation();
-    System.out.println("Envelope closed: " + env.isEnvelopeClosed());
+    logger.info("Envelope closed: " + env.isEnvelopeClosed());
 
     // Basic sanity: critical point should be between cricondenbar and cricondentherm
     assertTrue(crit[0] > 0, "Critical T should be positive");

@@ -12,6 +12,8 @@ import neqsim.process.examples.OilGasProcessSimulationOptimization.ProcessInputP
 import neqsim.process.examples.OilGasProcessSimulationOptimization.ProcessOutputResults;
 import neqsim.process.measurementdevice.FlowInducedVibrationAnalyser;
 import neqsim.process.processmodel.ProcessSystem;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test class for OilGasProcessSimulationOptimization.
@@ -30,6 +32,8 @@ import neqsim.process.processmodel.ProcessSystem;
  */
 @Tag("slow")
 public class OilGasProcessSimulationOptimizationTest {
+  private static final Logger logger = LogManager.getLogger(OilGasProcessSimulationOptimizationTest.class);
+
   private ProcessOutputResults cachedResults;
   private boolean simulationConverged = false;
   private OilGasProcessSimulationOptimization simulation;
@@ -210,24 +214,24 @@ public class OilGasProcessSimulationOptimizationTest {
 
     // Verify distance to surge is calculated (not NaN)
     double distanceToSurge = comp27KA01.getDistanceToSurge();
-    System.out.println("Distance to surge: " + distanceToSurge + "%");
+    logger.info("Distance to surge: " + distanceToSurge + "%");
 
     // Verify distance to stonewall is calculated
     double distanceToStonewall = comp27KA01.getDistanceToStoneWall();
-    System.out.println("Distance to stonewall: " + distanceToStonewall + "%");
+    logger.info("Distance to stonewall: " + distanceToStonewall + "%");
 
     // Verify that the chart has speed curves
     double[] speeds = comp27KA01.getCompressorChart().getSpeeds();
     assertTrue(speeds.length > 0, "Compressor chart should have speed curves");
-    System.out.println("Number of speed curves: " + speeds.length);
+    logger.info("Number of speed curves: " + speeds.length);
 
     // Verify compressor is operating within acceptable margins
     // (should be between surge and stonewall)
-    System.out.println("Compressor operating point:");
-    System.out.println("  Speed: " + comp27KA01.getSpeed() + " RPM");
-    System.out.println("  Flow: " + comp27KA01.getInletStream().getFlowRate("m3/hr") + " m3/hr");
-    System.out.println("  Head: " + comp27KA01.getPolytropicFluidHead() + " kJ/kg");
-    System.out.println("  Power: " + comp27KA01.getPower("kW") + " kW");
+    logger.info("Compressor operating point:");
+    logger.info("  Speed: " + comp27KA01.getSpeed() + " RPM");
+    logger.info("  Flow: " + comp27KA01.getInletStream().getFlowRate("m3/hr") + " m3/hr");
+    logger.info("  Head: " + comp27KA01.getPolytropicFluidHead() + " kJ/kg");
+    logger.info("  Power: " + comp27KA01.getPower("kW") + " kW");
   }
 
   /**
@@ -259,25 +263,25 @@ public class OilGasProcessSimulationOptimizationTest {
     assertNotNull(constraints, "Capacity constraints should not be null");
 
     // Print chart speed range for debugging
-    System.out.println("\nCompressor chart speed range:");
-    System.out.println(
-        "  Min speed curve: " + comp27KA01.getCompressorChart().getMinSpeedCurve() + " RPM");
-    System.out.println(
-        "  Max speed curve: " + comp27KA01.getCompressorChart().getMaxSpeedCurve() + " RPM");
-    System.out.println("  Compressor minimum speed: " + comp27KA01.getMinimumSpeed() + " RPM");
-    System.out.println("  Compressor maximum speed: " + comp27KA01.getMaximumSpeed() + " RPM");
+    logger.info("\nCompressor chart speed range:");
+    logger
+        .info("  Min speed curve: " + comp27KA01.getCompressorChart().getMinSpeedCurve() + " RPM");
+    logger
+        .info("  Max speed curve: " + comp27KA01.getCompressorChart().getMaxSpeedCurve() + " RPM");
+    logger.info("  Compressor minimum speed: " + comp27KA01.getMinimumSpeed() + " RPM");
+    logger.info("  Compressor maximum speed: " + comp27KA01.getMaximumSpeed() + " RPM");
 
-    System.out.println("\nCompressor capacity constraints:");
+    logger.info("\nCompressor capacity constraints:");
     for (java.util.Map.Entry<String, neqsim.process.equipment.capacity.CapacityConstraint> entry : constraints
         .entrySet()) {
       neqsim.process.equipment.capacity.CapacityConstraint c = entry.getValue();
-      System.out.printf("  %s: current=%.2f, design=%.2f, utilization=%.1f%%%n", c.getName(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: current=%.2f, design=%.2f, utilization=%.1f%%%n", c.getName(),
           c.getCurrentValue(), c.getDesignValue(), c.getUtilization() * 100);
     }
 
     // Verify no hard limits are exceeded during normal operation
     boolean hardLimitExceeded = comp27KA01.isHardLimitExceeded();
-    System.out.println("Hard limit exceeded: " + hardLimitExceeded);
+    logger.info("Hard limit exceeded: " + hardLimitExceeded);
   }
 
   /**
@@ -318,13 +322,13 @@ public class OilGasProcessSimulationOptimizationTest {
     // Print baseline operating point
     double baselineFeedRateMoleSec = wellStream.getFlowRate("mole/sec");
     double baselineFeedRateKgmoleHr = baselineFeedRateMoleSec * 3600 / 1000;
-    System.out.println("\n=== Production Optimization Test ===");
-    System.out.println(
+    logger.info("\n=== Production Optimization Test ===");
+    logger.info(
         "Baseline feed rate: " + String.format("%.0f", baselineFeedRateKgmoleHr) + " kgmole/hr");
-    System.out.println("Baseline gas export: "
-        + String.format("%.2f", baselineResults.getGasExportRate()) + " MSm3/day");
-    System.out.println("Baseline oil export: "
-        + String.format("%.2f", baselineResults.getOilExportRate()) + " m3/day");
+    logger.info("Baseline gas export: " + String.format("%.2f", baselineResults.getGasExportRate())
+        + " MSm3/day");
+    logger.info("Baseline oil export: " + String.format("%.2f", baselineResults.getOilExportRate())
+        + " m3/day");
 
     // Create optimizer
     neqsim.process.util.optimizer.ProductionOptimizer optimizer =
@@ -349,10 +353,10 @@ public class OilGasProcessSimulationOptimizationTest {
                 // Allow compressors to operate at up to 100% of their capacity
                 .utilizationLimitForType(neqsim.process.equipment.compressor.Compressor.class, 1.0);
 
-    System.out.println("\nOptimization configuration:");
-    System.out.println("  Search range: " + String.format("%.2f", lowerBound) + " - "
+    logger.info("\nOptimization configuration:");
+    logger.info("  Search range: " + String.format("%.2f", lowerBound) + " - "
         + String.format("%.2f", upperBound) + " mol/sec");
-    System.out.println("  Compressor utilization limit: 100%");
+    logger.info("  Compressor utilization limit: 100%");
 
     // Run optimization
     neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult result =
@@ -360,40 +364,40 @@ public class OilGasProcessSimulationOptimizationTest {
             java.util.Collections.emptyList());
 
     // Print optimization results
-    System.out.println("\n--- Optimization Results ---");
-    System.out.println(
-        "Optimal feed rate: " + String.format("%.2f", result.getOptimalRate()) + " mol/sec");
-    System.out.println("Optimal feed rate: "
-        + String.format("%.0f", result.getOptimalRate() * 3600 / 1000) + " kgmole/hr");
-    System.out.println("Feasible: " + result.isFeasible());
-    System.out.println("Iterations: " + result.getIterations());
+    logger.info("\n--- Optimization Results ---");
+    logger
+        .info("Optimal feed rate: " + String.format("%.2f", result.getOptimalRate()) + " mol/sec");
+    logger.info("Optimal feed rate: " + String.format("%.0f", result.getOptimalRate() * 3600 / 1000)
+        + " kgmole/hr");
+    logger.info("Feasible: " + result.isFeasible());
+    logger.info("Iterations: " + result.getIterations());
 
     if (result.getBottleneck() != null) {
-      System.out.println("Limiting equipment: " + result.getBottleneck().getName());
-      System.out.println("Bottleneck utilization: "
+      logger.info("Limiting equipment: " + result.getBottleneck().getName());
+      logger.info("Bottleneck utilization: "
           + String.format("%.1f", result.getBottleneckUtilization() * 100) + "%");
     }
 
     // Print utilization records
-    System.out.println("\n--- Equipment Utilization at Optimum ---");
+    logger.info("\n--- Equipment Utilization at Optimum ---");
     for (neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord record : result
         .getUtilizationRecords()) {
       boolean isBottleneck = result.getBottleneck() != null
           && record.getEquipmentName().equals(result.getBottleneck().getName());
-      System.out.printf("  %-25s: %6.1f%% (limit: %.0f%%) %s%n", record.getEquipmentName(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %-25s: %6.1f%% (limit: %.0f%%) %s%n", record.getEquipmentName(),
           record.getUtilization() * 100, record.getUtilizationLimit() * 100,
           isBottleneck ? " <-- BOTTLENECK" : "");
     }
 
     // Print compressor status at optimum
-    System.out.println("\n--- Compressor 27-KA-01 Status at Optimum ---");
-    System.out.println("  Speed: " + String.format("%.1f", comp27KA01.getSpeed()) + " RPM");
-    System.out.println("  Power: " + String.format("%.1f", comp27KA01.getPower("kW")) + " kW");
-    System.out.println("  Distance to surge: "
+    logger.info("\n--- Compressor 27-KA-01 Status at Optimum ---");
+    logger.info("  Speed: " + String.format("%.1f", comp27KA01.getSpeed()) + " RPM");
+    logger.info("  Power: " + String.format("%.1f", comp27KA01.getPower("kW")) + " kW");
+    logger.info("  Distance to surge: "
         + String.format("%.1f", comp27KA01.getDistanceToSurge() * 100) + "%");
-    System.out.println("  Distance to stonewall: "
+    logger.info("  Distance to stonewall: "
         + String.format("%.1f", comp27KA01.getDistanceToStoneWall() * 100) + "%");
-    System.out.println(
+    logger.info(
         "  Max utilization: " + String.format("%.1f", comp27KA01.getMaxUtilization() * 100) + "%");
 
     // Verify optimization found a feasible solution
@@ -588,19 +592,19 @@ public class OilGasProcessSimulationOptimizationTest {
     // Print baseline operating point
     double baselineFeedRateMoleSec = wellStream.getFlowRate("mole/sec");
     double baselineFeedRateKgmoleHr = baselineFeedRateMoleSec * 3600 / 1000;
-    System.out.println(
+    logger.info(
         "\n=== Production Optimization with Separator + Compressor + Heater/Cooler Constraints ===");
-    System.out.println(
+    logger.info(
         "Baseline feed rate: " + String.format("%.0f", baselineFeedRateKgmoleHr) + " kgmole/hr");
 
     // Print baseline separator utilizations
-    System.out.println("\n--- Baseline Separator Status ---");
+    logger.info("\n--- Baseline Separator Status ---");
     printSeparatorStatus("20-VA-01 (Inlet)", inletSeparator);
     printSeparatorStatus("20-VA-02 (2nd Stage)", secondStageSep);
     printSeparatorStatus("20-VA-03 (3rd Stage)", thirdStageSep);
 
     // Print baseline heater/cooler duties
-    System.out.println("\n--- Baseline Heater/Cooler Status ---");
+    logger.info("\n--- Baseline Heater/Cooler Status ---");
     printHeaterCoolerStatus("20-HA-01 (Inlet Heater)", inletHeater);
     printHeaterCoolerStatus("23-HA-03 (1st Stage Cooler)", firstStageCooler);
     printHeaterCoolerStatus("23-HA-02 (2nd Stage Cooler)", secondStageCooler);
@@ -609,16 +613,16 @@ public class OilGasProcessSimulationOptimizationTest {
     printHeaterCoolerStatus("27-HA-01 (Export Gas Cooler)", exportGasCooler);
 
     // Print baseline valve status
-    System.out.println("\n--- Baseline Valve Status ---");
+    logger.info("\n--- Baseline Valve Status ---");
     printValveStatus("VLV-100 (HP to MP Oil)", oilValve1);
     printValveStatus("VLV-102 (MP to LP Oil)", oilValve2);
 
     // Print baseline inlet pipeline status
-    System.out.println("\n--- Baseline Inlet Pipeline Status ---");
+    logger.info("\n--- Baseline Inlet Pipeline Status ---");
     printPipelineStatus("Inlet Pipeline", inletPipeline);
 
     // Print baseline Flow-Induced Vibration (FIV) analysis
-    System.out.println("\n--- Baseline FIV Analysis ---");
+    logger.info("\n--- Baseline FIV Analysis ---");
     printFIVStatus(fivAnalyzerLOF, fivAnalyzerFRMS);
 
     // Create optimizer
@@ -649,10 +653,10 @@ public class OilGasProcessSimulationOptimizationTest {
                 // Pipelines limited to 100% of erosional velocity
                 .utilizationLimitForType(PipeBeggsAndBrills.class, 1.0);
 
-    System.out.println("\nOptimization configuration:");
-    System.out.println("  Search range: " + String.format("%.2f", lowerBound) + " - "
+    logger.info("\nOptimization configuration:");
+    logger.info("  Search range: " + String.format("%.2f", lowerBound) + " - "
         + String.format("%.2f", upperBound) + " mole/sec");
-    System.out.println("  All equipment utilization limit: 100% (full capacity)");
+    logger.info("  All equipment utilization limit: 100% (full capacity)");
 
     // Create pipeline velocity constraint
     // The metric function runs the pipeline and returns velocity utilization
@@ -675,53 +679,53 @@ public class OilGasProcessSimulationOptimizationTest {
         .optimize(process, wellStream, config, java.util.Collections.emptyList(), constraints);
 
     // Print optimization results
-    System.out.println("\n--- Optimization Results ---");
-    System.out.println(
-        "Optimal feed rate: " + String.format("%.2f", result.getOptimalRate()) + " mole/sec");
-    System.out.println("Optimal feed rate: "
-        + String.format("%.0f", result.getOptimalRate() * 3600 / 1000) + " kgmole/hr");
-    System.out.println("Feasible: " + result.isFeasible());
-    System.out.println("Iterations: " + result.getIterations());
+    logger.info("\n--- Optimization Results ---");
+    logger
+        .info("Optimal feed rate: " + String.format("%.2f", result.getOptimalRate()) + " mole/sec");
+    logger.info("Optimal feed rate: " + String.format("%.0f", result.getOptimalRate() * 3600 / 1000)
+        + " kgmole/hr");
+    logger.info("Feasible: " + result.isFeasible());
+    logger.info("Iterations: " + result.getIterations());
 
     if (result.getBottleneck() != null) {
-      System.out.println("Limiting equipment: " + result.getBottleneck().getName());
-      System.out.println("Bottleneck utilization: "
+      logger.info("Limiting equipment: " + result.getBottleneck().getName());
+      logger.info("Bottleneck utilization: "
           + String.format("%.1f", result.getBottleneckUtilization() * 100) + "%");
     }
 
     // Print all equipment utilizations at optimum
-    System.out.println("\n--- Equipment Utilization at Optimum ---");
+    logger.info("\n--- Equipment Utilization at Optimum ---");
     for (neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord record : result
         .getUtilizationRecords()) {
       boolean isBottleneck = result.getBottleneck() != null
           && record.getEquipmentName().equals(result.getBottleneck().getName());
-      System.out.printf("  %-25s: %6.1f%% (limit: %.0f%%) %s%n", record.getEquipmentName(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %-25s: %6.1f%% (limit: %.0f%%) %s%n", record.getEquipmentName(),
           record.getUtilization() * 100, record.getUtilizationLimit() * 100,
           isBottleneck ? " <-- BOTTLENECK" : "");
     }
 
     // Print final separator status
-    System.out.println("\n--- Separator Status at Optimum ---");
+    logger.info("\n--- Separator Status at Optimum ---");
     printSeparatorStatus("20-VA-01 (Inlet)", inletSeparator);
     printSeparatorStatus("20-VA-02 (2nd Stage)", secondStageSep);
     printSeparatorStatus("20-VA-03 (3rd Stage)", thirdStageSep);
 
     // Print compressor status at optimum
-    System.out.println("\n--- Compressor 27-KA-01 Status at Optimum ---");
-    System.out.println("  Speed: " + String.format("%.1f", comp27KA01.getSpeed()) + " RPM");
-    System.out.println("  Power: " + String.format("%.1f", comp27KA01.getPower("kW")) + " kW");
-    System.out.println("  Distance to surge: "
+    logger.info("\n--- Compressor 27-KA-01 Status at Optimum ---");
+    logger.info("  Speed: " + String.format("%.1f", comp27KA01.getSpeed()) + " RPM");
+    logger.info("  Power: " + String.format("%.1f", comp27KA01.getPower("kW")) + " kW");
+    logger.info("  Distance to surge: "
         + String.format("%.1f", comp27KA01.getDistanceToSurge() * 100) + "%");
-    System.out.println(
+    logger.info(
         "  Max utilization: " + String.format("%.1f", comp27KA01.getMaxUtilization() * 100) + "%");
 
     // Print inlet pipeline status at optimum
-    System.out.println("\n--- Inlet Pipeline Status at Optimum ---");
+    logger.info("\n--- Inlet Pipeline Status at Optimum ---");
     inletPipeline.run(); // Re-run with optimized feed rate
     printPipelineStatus("Inlet Pipeline", inletPipeline);
 
     // Print FIV status at optimum
-    System.out.println("\n--- FIV Analysis at Optimum ---");
+    logger.info("\n--- FIV Analysis at Optimum ---");
     printFIVStatus(fivAnalyzerLOF, fivAnalyzerFRMS);
 
     // Verify optimization found a feasible solution
@@ -742,22 +746,22 @@ public class OilGasProcessSimulationOptimizationTest {
       double designK = separator.getDesignGasLoadFactor();
       double utilization = separator.getCapacityUtilization();
 
-      System.out.printf("  %s:%n", label);
-      System.out.printf("    Gas load factor (K): %.4f m/s (design: %.4f m/s)%n", gasLoadFactor,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s:%n", label);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Gas load factor (K): %.4f m/s (design: %.4f m/s)%n", gasLoadFactor,
           designK);
-      System.out.printf("    Capacity utilization: %.1f%%%n", utilization * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Capacity utilization: %.1f%%%n", utilization * 100);
 
       // Print capacity constraints if available
       java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> constraints =
           separator.getCapacityConstraints();
       if (!constraints.isEmpty()) {
         for (neqsim.process.equipment.capacity.CapacityConstraint c : constraints.values()) {
-          System.out.printf("    Constraint '%s': %.1f%% utilized%n", c.getName(),
+          logger.printf(org.apache.logging.log4j.Level.INFO, "    Constraint '%s': %.1f%% utilized%n", c.getName(),
               c.getUtilization() * 100);
         }
       }
     } catch (Exception e) {
-      System.out.printf("  %s: Unable to calculate status (%s)%n", label, e.getMessage());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: Unable to calculate status (%s)%n", label, e.getMessage());
     }
   }
 
@@ -771,11 +775,11 @@ public class OilGasProcessSimulationOptimizationTest {
       double maxDuty = heaterCooler.getMaxDesignDuty("kW");
       double utilization = maxDuty > 0 ? Math.abs(duty) / maxDuty : 0;
 
-      System.out.printf("  %s:%n", label);
-      System.out.printf("    Duty: %.1f kW (max design: %.1f kW)%n", duty, maxDuty);
-      System.out.printf("    Utilization: %.1f%%%n", utilization * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s:%n", label);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Duty: %.1f kW (max design: %.1f kW)%n", duty, maxDuty);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Utilization: %.1f%%%n", utilization * 100);
     } catch (Exception e) {
-      System.out.printf("  %s: Unable to calculate status (%s)%n", label, e.getMessage());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: Unable to calculate status (%s)%n", label, e.getMessage());
     }
   }
 
@@ -792,13 +796,13 @@ public class OilGasProcessSimulationOptimizationTest {
       double utilization = maxOpening > 0 ? valveOpening / maxOpening : 0;
       double volumeFlow = valve.getOutletStream().getFlowRate("m3/hr");
 
-      System.out.printf("  %s:%n", label);
-      System.out.printf("    Cv: %.1f (Kv: %.1f)%n", cv, kv);
-      System.out.printf("    Valve opening: %.1f%% (max: %.1f%%)%n", valveOpening, maxOpening);
-      System.out.printf("    Volume flow: %.1f m3/hr%n", volumeFlow);
-      System.out.printf("    Capacity utilization: %.1f%%%n", utilization * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s:%n", label);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Cv: %.1f (Kv: %.1f)%n", cv, kv);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Valve opening: %.1f%% (max: %.1f%%)%n", valveOpening, maxOpening);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Volume flow: %.1f m3/hr%n", volumeFlow);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Capacity utilization: %.1f%%%n", utilization * 100);
     } catch (Exception e) {
-      System.out.printf("  %s: Unable to calculate status (%s)%n", label, e.getMessage());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: Unable to calculate status (%s)%n", label, e.getMessage());
     }
   }
 
@@ -832,18 +836,18 @@ public class OilGasProcessSimulationOptimizationTest {
       // to expansion)
       double utilization = maxVelocity > 0 ? outletVelocity / maxVelocity : 0;
 
-      System.out.printf("  %s:%n", label);
-      System.out.printf("    Length: %.0f m, Diameter: %.3f m (%.1f inch)%n", pipeline.getLength(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s:%n", label);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Length: %.0f m, Diameter: %.3f m (%.1f inch)%n", pipeline.getLength(),
           pipeline.getDiameter(), pipeline.getDiameter() / 0.0254);
-      System.out.printf("    Inlet velocity: %.2f m/s%n", inletVelocity);
-      System.out.printf("    Outlet velocity: %.2f m/s (max: %.1f m/s)%n", outletVelocity,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Inlet velocity: %.2f m/s%n", inletVelocity);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Outlet velocity: %.2f m/s (max: %.1f m/s)%n", outletVelocity,
           maxVelocity);
-      System.out.printf("    Pressure drop: %.2f bar (%.1f -> %.1f bara)%n", pressureDrop,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Pressure drop: %.2f bar (%.1f -> %.1f bara)%n", pressureDrop,
           inletPressure, outletPressure);
-      System.out.printf("    Flow regime: %s%n", flowRegime);
-      System.out.printf("    Velocity utilization: %.1f%%%n", utilization * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Flow regime: %s%n", flowRegime);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Velocity utilization: %.1f%%%n", utilization * 100);
     } catch (Exception e) {
-      System.out.printf("  %s: Unable to calculate status (%s)%n", label, e.getMessage());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: Unable to calculate status (%s)%n", label, e.getMessage());
     }
   }
 
@@ -880,14 +884,14 @@ public class OilGasProcessSimulationOptimizationTest {
         riskLevel = "CRITICAL (immediate action required)";
       }
 
-      System.out.println("  LOF (Likelihood of Failure) Method:");
-      System.out.printf("    LOF value: %.4f%n", lofValue);
-      System.out.printf("    Risk assessment: %s%n", riskLevel);
-      System.out.println("    (LOF < 1.0 is generally acceptable per Energy Institute guidelines)");
-      System.out.println("  FRMS Method:");
-      System.out.printf("    FRMS value: %.4f%n", frmsValue);
+      logger.info("  LOF (Likelihood of Failure) Method:");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    LOF value: %.4f%n", lofValue);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    Risk assessment: %s%n", riskLevel);
+      logger.info("    (LOF < 1.0 is generally acceptable per Energy Institute guidelines)");
+      logger.info("  FRMS Method:");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "    FRMS value: %.4f%n", frmsValue);
     } catch (Exception e) {
-      System.out.printf("  FIV Analysis: Unable to calculate (%s)%n", e.getMessage());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  FIV Analysis: Unable to calculate (%s)%n", e.getMessage());
     }
   }
 }

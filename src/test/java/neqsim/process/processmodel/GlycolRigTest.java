@@ -19,8 +19,9 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  * Test class for GlycolRig.
  */
 public class GlycolRigTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(GlycolRigTest.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(GlycolRigTest.class);
 
   ProcessSystem p;
   String _name = "TestProcess";

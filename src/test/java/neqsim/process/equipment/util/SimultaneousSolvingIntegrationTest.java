@@ -17,12 +17,16 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.graph.ProcessGraph;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Integration tests for simultaneous modular solving and sensitivity-based tear stream selection
  * using large, realistic process simulations.
  */
 class SimultaneousSolvingIntegrationTest {
+  private static final Logger logger = LogManager.getLogger(SimultaneousSolvingIntegrationTest.class);
+
   private SystemInterface richGasFluid;
   private SystemInterface leanGasFluid;
 
@@ -130,28 +134,28 @@ class SimultaneousSolvingIntegrationTest {
     // Build and analyze graph
     ProcessGraph graph = process.buildGraph();
 
-    System.out.println("\n===== Gas Processing Plant Graph Analysis =====");
-    System.out.println(graph.getSummary());
+    logger.info("\n===== Gas Processing Plant Graph Analysis =====");
+    logger.info(graph.getSummary());
 
     // Check for cycles
     assertTrue(graph.hasCycles(), "Process should have cycles (recycle loop)");
 
     // Get sensitivity analysis report
     String sensitivityReport = graph.getSensitivityAnalysisReport();
-    System.out.println(sensitivityReport);
+    logger.info(sensitivityReport);
 
     // Select tear streams with sensitivity analysis
     ProcessGraph.TearStreamResult tearResult = graph.selectTearStreamsWithSensitivity();
-    System.out.println("Selected tear streams: " + tearResult.getTearStreamCount());
+    logger.info("Selected tear streams: " + tearResult.getTearStreamCount());
 
     // Run the process
     long startTime = System.currentTimeMillis();
     process.run();
     long endTime = System.currentTimeMillis();
 
-    System.out.println("Simulation completed in " + (endTime - startTime) + " ms");
-    System.out.println("Recycle iterations: " + recycle.getIterations());
-    System.out.println("Recycle converged: " + recycle.solved());
+    logger.info("Simulation completed in " + (endTime - startTime) + " ms");
+    logger.info("Recycle iterations: " + recycle.getIterations());
+    logger.info("Recycle converged: " + recycle.solved());
 
     // Verify convergence
     assertTrue(recycle.solved(), "Recycle should converge");
@@ -163,17 +167,17 @@ class SimultaneousSolvingIntegrationTest {
     double liquidFlow = inletSeparator.getLiquidOutStream().getFlowRate("kg/hr")
         + hpSeparator.getLiquidOutStream().getFlowRate("kg/hr");
 
-    System.out.println("\nMass Balance:");
-    System.out.println("  Feed: " + String.format("%.2f", feedFlow) + " kg/hr");
-    System.out.println("  Product Gas: " + String.format("%.2f", productFlow) + " kg/hr");
-    System.out.println("  Liquids: " + String.format("%.2f", liquidFlow) + " kg/hr");
+    logger.info("\nMass Balance:");
+    logger.info("  Feed: " + String.format("%.2f", feedFlow) + " kg/hr");
+    logger.info("  Product Gas: " + String.format("%.2f", productFlow) + " kg/hr");
+    logger.info("  Liquids: " + String.format("%.2f", liquidFlow) + " kg/hr");
 
     double massBalance = Math.abs(feedFlow - productFlow - liquidFlow) / feedFlow * 100;
-    System.out.println("  Mass balance error: " + String.format("%.4f", massBalance) + "%");
+    logger.info("  Mass balance error: " + String.format("%.4f", massBalance) + "%");
 
     assertTrue(massBalance < 1.0, "Mass balance should be within 1%");
 
-    System.out.println("=================================================\n");
+    logger.info("=================================================\n");
   }
 
   @Test
@@ -285,16 +289,16 @@ class SimultaneousSolvingIntegrationTest {
     // Build and analyze graph
     ProcessGraph graph = process.buildGraph();
 
-    System.out.println("\n===== Two-Stage Compression Graph Analysis =====");
-    System.out.println(graph.getSummary());
+    logger.info("\n===== Two-Stage Compression Graph Analysis =====");
+    logger.info(graph.getSummary());
 
     // Get sensitivity analysis
     String sensitivityReport = graph.getSensitivityAnalysisReport();
-    System.out.println(sensitivityReport);
+    logger.info(sensitivityReport);
 
     // Check SCCs
     ProcessGraph.SCCResult sccResult = graph.findStronglyConnectedComponents();
-    System.out.println("Recycle loops detected: " + sccResult.getRecycleLoops().size());
+    logger.info("Recycle loops detected: " + sccResult.getRecycleLoops().size());
 
     // Set up RecycleController with coordinated acceleration
     RecycleController controller = new RecycleController();
@@ -303,23 +307,23 @@ class SimultaneousSolvingIntegrationTest {
     controller.setUseCoordinatedAcceleration(true);
     controller.init();
 
-    System.out.println("\nRecycleController setup:");
-    System.out.println("  Recycles: " + controller.getRecycleCount());
-    System.out.println("  Coordinated acceleration: " + controller.isUseCoordinatedAcceleration());
+    logger.info("\nRecycleController setup:");
+    logger.info("  Recycles: " + controller.getRecycleCount());
+    logger.info("  Coordinated acceleration: " + controller.isUseCoordinatedAcceleration());
 
     // Run the process
     long startTime = System.currentTimeMillis();
     process.run();
     long endTime = System.currentTimeMillis();
 
-    System.out.println("\nSimulation completed in " + (endTime - startTime) + " ms");
-    System.out.println("Recycle 1 iterations: " + recycle1.getIterations());
-    System.out.println("Recycle 2 iterations: " + recycle2.getIterations());
-    System.out.println("Recycle 1 converged: " + recycle1.solved());
-    System.out.println("Recycle 2 converged: " + recycle2.solved());
+    logger.info("\nSimulation completed in " + (endTime - startTime) + " ms");
+    logger.info("Recycle 1 iterations: " + recycle1.getIterations());
+    logger.info("Recycle 2 iterations: " + recycle2.getIterations());
+    logger.info("Recycle 1 converged: " + recycle1.solved());
+    logger.info("Recycle 2 converged: " + recycle2.solved());
 
     // Get diagnostics
-    System.out.println("\n" + controller.getConvergenceDiagnostics());
+    logger.info("\n" + controller.getConvergenceDiagnostics());
 
     // Verify convergence
     assertTrue(recycle1.solved(), "Recycle 1 should converge");
@@ -327,10 +331,10 @@ class SimultaneousSolvingIntegrationTest {
 
     // Check compression ratio
     double compressionRatio = splitter2.getSplitStream(0).getPressure() / feedGas.getPressure();
-    System.out.println("Overall compression ratio: " + String.format("%.2f", compressionRatio));
+    logger.info("Overall compression ratio: " + String.format("%.2f", compressionRatio));
     assertTrue(compressionRatio > 4.5, "Compression ratio should be > 4.5");
 
-    System.out.println("==================================================\n");
+    logger.info("==================================================\n");
   }
 
   @Test
@@ -383,62 +387,62 @@ class SimultaneousSolvingIntegrationTest {
     // Build and analyze graph
     ProcessGraph graph = process.buildGraph();
 
-    System.out.println("\n===== Gas Recirculation Loop Graph Analysis =====");
-    System.out.println(graph.getSummary());
-    System.out.println(graph.getSensitivityAnalysisReport());
+    logger.info("\n===== Gas Recirculation Loop Graph Analysis =====");
+    logger.info(graph.getSummary());
+    logger.info(graph.getSensitivityAnalysisReport());
 
     // Run simulation
     long startTime = System.currentTimeMillis();
     process.run();
     long endTime = System.currentTimeMillis();
 
-    System.out.println("Simulation completed in " + (endTime - startTime) + " ms");
-    System.out.println("Recycle iterations: " + recycle.getIterations());
-    System.out.println("Recycle converged: " + recycle.solved());
+    logger.info("Simulation completed in " + (endTime - startTime) + " ms");
+    logger.info("Recycle iterations: " + recycle.getIterations());
+    logger.info("Recycle converged: " + recycle.solved());
 
     // Verify convergence
     assertTrue(recycle.solved(), "Gas recirculation loop should converge");
 
     // Check compressor power
     double compressorPower = compressor.getPower("kW");
-    System.out.println("Compressor power: " + String.format("%.2f", compressorPower) + " kW");
+    logger.info("Compressor power: " + String.format("%.2f", compressorPower) + " kW");
 
     // Check expander power (negative means producing power)
     double expanderPower = expander.getPower("kW");
-    System.out.println("Expander power: " + String.format("%.2f", expanderPower) + " kW");
+    logger.info("Expander power: " + String.format("%.2f", expanderPower) + " kW");
 
     // Net power is compressor minus expander recovery
     double netPower = compressorPower + expanderPower; // expander power is negative
-    System.out.println("Net power: " + String.format("%.2f", netPower) + " kW");
+    logger.info("Net power: " + String.format("%.2f", netPower) + " kW");
 
     assertTrue(compressorPower > 0, "Compressor should consume power");
 
-    System.out.println("================================================\n");
+    logger.info("================================================\n");
   }
 
   @Test
   @DisplayName("Performance comparison: Individual vs Coordinated acceleration")
   void testAccelerationPerformanceComparison() {
-    System.out.println("\n===== Acceleration Method Performance Comparison =====\n");
+    logger.info("\n===== Acceleration Method Performance Comparison =====\n");
 
     // Test with Direct Substitution
     long dsTime = runCompressionWithMethod(AccelerationMethod.DIRECT_SUBSTITUTION);
-    System.out.println("Direct Substitution: " + dsTime + " ms");
+    logger.info("Direct Substitution: " + dsTime + " ms");
 
     // Test with Wegstein
     long wegsteinTime = runCompressionWithMethod(AccelerationMethod.WEGSTEIN);
-    System.out.println("Wegstein: " + wegsteinTime + " ms");
+    logger.info("Wegstein: " + wegsteinTime + " ms");
 
     // Test with Broyden
     long broydenTime = runCompressionWithMethod(AccelerationMethod.BROYDEN);
-    System.out.println("Broyden: " + broydenTime + " ms");
+    logger.info("Broyden: " + broydenTime + " ms");
 
-    System.out.println(
+    logger.info(
         "\nSpeedup Wegstein vs DS: " + String.format("%.2fx", (double) dsTime / wegsteinTime));
     System.out
         .println("Speedup Broyden vs DS: " + String.format("%.2fx", (double) dsTime / broydenTime));
 
-    System.out.println("=======================================================\n");
+    logger.info("=======================================================\n");
   }
 
   private long runCompressionWithMethod(AccelerationMethod method) {
@@ -492,8 +496,8 @@ class SimultaneousSolvingIntegrationTest {
     process.run();
     long endTime = System.currentTimeMillis();
 
-    System.out.println("  " + method + ": " + recycle.getIterations() + " iterations, "
-        + "converged=" + recycle.solved());
+    logger.info("  " + method + ": " + recycle.getIterations() + " iterations, " + "converged="
+        + recycle.solved());
 
     return endTime - startTime;
   }

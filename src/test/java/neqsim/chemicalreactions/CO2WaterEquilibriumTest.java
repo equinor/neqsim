@@ -1,5 +1,7 @@
 package neqsim.chemicalreactions;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 public class CO2WaterEquilibriumTest {
+  private static final Logger logger = LogManager.getLogger(CO2WaterEquilibriumTest.class);
+
   /**
    * Test basic CO2-water equilibrium at ambient conditions.
    *
@@ -54,12 +58,12 @@ public class CO2WaterEquilibriumTest {
     system.init(0);
 
     // Print moles before flash to check initial state
-    System.out.println("\n=== CO2-Water Equilibrium Test (Ambient) ===");
-    System.out.println("Before flash - Initial moles:");
+    logger.info("\n=== CO2-Water Equilibrium Test (Ambient) ===");
+    logger.info("Before flash - Initial moles:");
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       double moles = system.getPhase(0).getComponent(i).getNumberOfMolesInPhase();
       if (moles > 1e-20) {
-        System.out.println(
+        logger.info(
             "  " + system.getPhase(0).getComponent(i).getComponentName() + ": " + moles + " mol");
       }
     }
@@ -72,24 +76,24 @@ public class CO2WaterEquilibriumTest {
     system.initProperties();
 
     // Print results for debugging
-    System.out.println("\nAfter flash:");
-    System.out.println("Temperature: " + system.getTemperature() + " K");
-    System.out.println("Pressure: " + system.getPressure() + " bar");
-    System.out.println("Number of phases: " + system.getNumberOfPhases());
+    logger.info("\nAfter flash:");
+    logger.info("Temperature: " + system.getTemperature() + " K");
+    logger.info("Pressure: " + system.getPressure() + " bar");
+    logger.info("Number of phases: " + system.getNumberOfPhases());
 
     // Check that we have at least one phase
     assertTrue(system.getNumberOfPhases() >= 1, "Should have at least 1 phase");
 
     // Print composition of each phase
     for (int p = 0; p < system.getNumberOfPhases(); p++) {
-      System.out.println("\nPhase " + p + " (" + system.getPhase(p).getPhaseTypeName() + "):");
-      System.out.println("  Moles: " + system.getPhase(p).getNumberOfMolesInPhase());
+      logger.info("\nPhase " + p + " (" + system.getPhase(p).getPhaseTypeName() + "):");
+      logger.info("  Moles: " + system.getPhase(p).getNumberOfMolesInPhase());
       for (int i = 0; i < system.getPhase(p).getNumberOfComponents(); i++) {
         double moles = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
         double moleFrac = system.getPhase(p).getComponent(i).getx();
         if (moles > 1e-20) {
-          System.out.println("  " + system.getPhase(p).getComponent(i).getComponentName() + ": "
-              + moles + " mol (x=" + moleFrac + ")");
+          logger.info("  " + system.getPhase(p).getComponent(i).getComponentName() + ": " + moles
+              + " mol (x=" + moleFrac + ")");
         }
       }
     }
@@ -106,14 +110,14 @@ public class CO2WaterEquilibriumTest {
         }
       }
     }
-    System.out.println("\nTotal carbon: " + totalCarbon + " mol (initial: 0.01 mol)");
+    logger.info("\nTotal carbon: " + totalCarbon + " mol (initial: 0.01 mol)");
 
     // Carbon should be approximately conserved (allowing small numerical tolerance)
     // NOTE: If this fails, it indicates a bug in the chemical equilibrium algorithm
     // where mass is not being conserved properly
     if (Math.abs(totalCarbon - 0.01) > 0.001) {
-      System.out.println("WARNING: Carbon NOT conserved! Bug in chemical equilibrium solver.");
-      System.out.println("  Expected: 0.01 mol, Actual: " + totalCarbon + " mol");
+      logger.info("WARNING: Carbon NOT conserved! Bug in chemical equilibrium solver.");
+      logger.info("  Expected: 0.01 mol, Actual: " + totalCarbon + " mol");
       // For now, just verify the system runs without throwing - the conservation check
       // will help identify algorithm issues
     }
@@ -156,18 +160,18 @@ public class CO2WaterEquilibriumTest {
     ops.TPflash();
     system.initProperties();
 
-    System.out.println("\n=== CO2-Water Equilibrium Test (High Pressure) ===");
-    System.out.println("Temperature: " + system.getTemperature() + " K");
-    System.out.println("Pressure: " + system.getPressure() + " bar");
-    System.out.println("Number of phases: " + system.getNumberOfPhases());
+    logger.info("\n=== CO2-Water Equilibrium Test (High Pressure) ===");
+    logger.info("Temperature: " + system.getTemperature() + " K");
+    logger.info("Pressure: " + system.getPressure() + " bar");
+    logger.info("Number of phases: " + system.getNumberOfPhases());
 
     // Print composition
     for (int p = 0; p < system.getNumberOfPhases(); p++) {
-      System.out.println("\nPhase " + p + " (" + system.getPhase(p).getPhaseTypeName() + "):");
+      logger.info("\nPhase " + p + " (" + system.getPhase(p).getPhaseTypeName() + "):");
       for (int i = 0; i < system.getPhase(p).getNumberOfComponents(); i++) {
         double moles = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
         if (moles > 1e-20) {
-          System.out.println(
+          logger.info(
               "  " + system.getPhase(p).getComponent(i).getComponentName() + ": " + moles + " mol");
         }
       }
@@ -199,8 +203,8 @@ public class CO2WaterEquilibriumTest {
     assertTrue(system.getChemicalReactionOperations().hasReactions(),
         "Should have chemical reactions for CO2-water system");
 
-    System.out.println("\n=== Chemical Reaction Operations Test ===");
-    System.out.println("Has reactions: " + system.getChemicalReactionOperations().hasReactions());
+    logger.info("\n=== Chemical Reaction Operations Test ===");
+    logger.info("Has reactions: " + system.getChemicalReactionOperations().hasReactions());
   }
 
   /**
@@ -230,11 +234,11 @@ public class CO2WaterEquilibriumTest {
     double initialO = 2 * initialCO2 + initialWater;
     double initialH = 2 * initialWater;
 
-    System.out.println("\n=== Element Conservation Test ===");
-    System.out.println("Initial elements:");
-    System.out.println("  C: " + initialC + " mol");
-    System.out.println("  O: " + initialO + " mol");
-    System.out.println("  H: " + initialH + " mol");
+    logger.info("\n=== Element Conservation Test ===");
+    logger.info("Initial elements:");
+    logger.info("  C: " + initialC + " mol");
+    logger.info("  O: " + initialO + " mol");
+    logger.info("  H: " + initialH + " mol");
 
     // Perform flash
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -243,8 +247,8 @@ public class CO2WaterEquilibriumTest {
 
     // After equilibrium, element totals should be conserved
     // This test verifies the Smith & Missen algorithm conserves mass
-    System.out.println("\nAfter equilibrium:");
-    System.out.println("Number of phases: " + system.getNumberOfPhases());
+    logger.info("\nAfter equilibrium:");
+    logger.info("Number of phases: " + system.getNumberOfPhases());
 
     // The test passes if no exceptions are thrown and flash converges
     assertTrue(system.getNumberOfPhases() >= 1, "Flash should produce at least 1 phase");
@@ -281,8 +285,8 @@ public class CO2WaterEquilibriumTest {
     boolean success = chemOps.solveChemEq(0, 1);
 
     // Verify solve completed (may or may not converge depending on system)
-    System.out.println("\n=== Configurable Solver Parameters Test ===");
-    System.out.println("Solve completed: " + success);
+    logger.info("\n=== Configurable Solver Parameters Test ===");
+    logger.info("Solve completed: " + success);
 
     // Test passes if no exceptions thrown
     assertTrue(true, "Configurable parameters test completed without exceptions");

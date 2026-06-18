@@ -3,8 +3,12 @@ package neqsim.process.equipment.pipeline;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class AdiabaticTwoPhasePipeTest {
+  private static final Logger logger = LogManager.getLogger(AdiabaticTwoPhasePipeTest.class);
+
   @Test
   public void testMain() {
     neqsim.thermo.system.SystemInterface testSystem =
@@ -35,11 +39,11 @@ public class AdiabaticTwoPhasePipeTest {
     operations.add(pipe2);
     operations.run();
     // pipe.displayResult();
-    // System.out.println("flow " + pipe2.getOutletStream().getFluid().getFlowRate("MSm3/day"));
-    // System.out.println("out pressure " + pipe.getOutletStream().getPressure("bara"));
-    // System.out.println("velocity " + pipe.getSuperficialVelocity());
-    // System.out.println("out pressure " + pipe2.getOutletStream().getPressure("bara"));
-    // System.out.println("velocity " + pipe2.getSuperficialVelocity());
+    // logger.info("flow " + pipe2.getOutletStream().getFluid().getFlowRate("MSm3/day"));
+    // logger.info("out pressure " + pipe.getOutletStream().getPressure("bara"));
+    // logger.info("velocity " + pipe.getSuperficialVelocity());
+    // logger.info("out pressure " + pipe2.getOutletStream().getPressure("bara"));
+    // logger.info("velocity " + pipe2.getSuperficialVelocity());
 
     Assertions.assertEquals(75.0000001, pipe2.getOutletStream().getFluid().getFlowRate("MSm3/day"),
         1e-5);

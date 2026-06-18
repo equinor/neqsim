@@ -11,8 +11,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class NewComponentTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(NewComponentTest.class);
+
   static SystemInterface thermoSystem = null;
 
   @Test
@@ -156,7 +160,7 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     try {
       ops.TPflash();
     } catch (Exception e) {
-      System.out.println("error in bubble point flash");
+      logger.info("error in bubble point flash");
     }
     assertEquals(3.447289881042099E-6,
         thermoSystem.getPhase(0).getComponent("sulfuric acid").getx(), 100e-9);
@@ -176,7 +180,7 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     try {
       ops.TPflash();
     } catch (Exception e) {
-      System.out.println("error in bubble point flash");
+      logger.info("error in bubble point flash");
     }
 
     assertEquals(0.002568785, thermoSystem.getPhase(0).getComponent("nitric acid").getx(), 100e-6);

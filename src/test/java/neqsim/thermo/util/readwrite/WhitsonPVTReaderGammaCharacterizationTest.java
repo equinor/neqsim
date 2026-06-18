@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for using WhitsonPVTReader with Whitson Gamma characterization model.
@@ -17,6 +19,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class WhitsonPVTReaderGammaCharacterizationTest {
+  private static final Logger logger = LogManager.getLogger(WhitsonPVTReaderGammaCharacterizationTest.class);
+
   @TempDir
   Path tempDir;
 
@@ -157,9 +161,9 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
     // Print fluid composition for debugging
     // fluid.prettyPrint();
 
-    System.out.println("Number of components after Whitson Gamma characterization: "
+    logger.info("Number of components after Whitson Gamma characterization: "
         + fluid.getNumberOfComponents());
-    System.out.println("Vapor fraction: " + fluid.getBeta());
+    logger.info("Vapor fraction: " + fluid.getBeta());
     fluid.prettyPrint();
   }
 
@@ -206,7 +210,7 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
 
     assertTrue(fluid.getNumberOfComponents() >= 7, "Should have components after characterization");
 
-    System.out.println("Components after fluent API config: " + fluid.getNumberOfComponents());
+    logger.info("Components after fluent API config: " + fluid.getNumberOfComponents());
     fluid.prettyPrint();
   }
 
@@ -277,13 +281,13 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
         "Pedersen should have at least 7 components");
     assertTrue(fluidGamma.getNumberOfComponents() >= 7, "Gamma should have at least 7 components");
 
-    System.out.println("\n=== Characterization Comparison ===");
-    System.out.println("Pedersen model:");
-    System.out.println("  Components: " + fluidPedersen.getNumberOfComponents());
-    System.out.println("  Vapor fraction: " + String.format("%.6f", fluidPedersen.getBeta()));
+    logger.info("\n=== Characterization Comparison ===");
+    logger.info("Pedersen model:");
+    logger.info("  Components: " + fluidPedersen.getNumberOfComponents());
+    logger.info("  Vapor fraction: " + String.format("%.6f", fluidPedersen.getBeta()));
 
-    System.out.println("Whitson Gamma model:");
-    System.out.println("  Components: " + fluidGamma.getNumberOfComponents());
-    System.out.println("  Vapor fraction: " + String.format("%.6f", fluidGamma.getBeta()));
+    logger.info("Whitson Gamma model:");
+    logger.info("  Components: " + fluidGamma.getNumberOfComponents());
+    logger.info("  Vapor fraction: " + String.format("%.6f", fluidGamma.getBeta()));
   }
 }

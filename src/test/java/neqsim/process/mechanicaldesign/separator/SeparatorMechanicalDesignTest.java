@@ -17,6 +17,8 @@ import neqsim.process.mechanicaldesign.separator.primaryseparation.InletVaneWith
 import neqsim.process.mechanicaldesign.separator.primaryseparation.PrimarySeparation;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for SeparatorMechanicalDesign class.
@@ -28,6 +30,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Development Team
  */
 public class SeparatorMechanicalDesignTest {
+  private static final Logger logger = LogManager.getLogger(SeparatorMechanicalDesignTest.class);
+
   private Separator separator;
   private SeparatorMechanicalDesign mechDesign;
 
@@ -63,7 +67,7 @@ public class SeparatorMechanicalDesignTest {
     double factor = mechDesign.getFoamAllowanceFactor();
     assertTrue(factor >= 1.0, "Foam allowance factor should be >= 1.0");
     assertTrue(factor <= 2.0, "Foam allowance factor should be reasonable (<= 2.0)");
-    System.out.println("Foam allowance factor: " + factor);
+    logger.info("Foam allowance factor: " + factor);
   }
 
   @Test
@@ -75,8 +79,8 @@ public class SeparatorMechanicalDesignTest {
     assertTrue(liquidLiquid > 0, "Liquid-liquid droplet diameter should be positive");
     assertTrue(gasLiquid < liquidLiquid, "Gas-liquid droplet diameter should typically be smaller");
 
-    System.out.println("Gas-liquid droplet diameter: " + gasLiquid + " um");
-    System.out.println("Liquid-liquid droplet diameter: " + liquidLiquid + " um");
+    logger.info("Gas-liquid droplet diameter: " + gasLiquid + " um");
+    logger.info("Liquid-liquid droplet diameter: " + liquidLiquid + " um");
   }
 
   @Test
@@ -89,9 +93,9 @@ public class SeparatorMechanicalDesignTest {
     assertTrue(voidFraction > 0 && voidFraction < 1, "Void fraction should be between 0 and 1");
     assertTrue(thickness > 0, "Demister thickness should be positive");
 
-    System.out.println("Demister pressure drop: " + pressureDrop + " mbar");
-    System.out.println("Demister void fraction: " + voidFraction);
-    System.out.println("Demister thickness: " + thickness + " m");
+    logger.info("Demister pressure drop: " + pressureDrop + " mbar");
+    logger.info("Demister void fraction: " + voidFraction);
+    logger.info("Demister thickness: " + thickness + " m");
   }
 
   @Test
@@ -103,8 +107,8 @@ public class SeparatorMechanicalDesignTest {
     assertTrue(maxLiquid > 0, "Max liquid velocity should be positive");
     assertTrue(maxGas > maxLiquid, "Max gas velocity should typically be > max liquid velocity");
 
-    System.out.println("Max gas velocity: " + maxGas + " m/s");
-    System.out.println("Max liquid velocity: " + maxLiquid + " m/s");
+    logger.info("Max gas velocity: " + maxGas + " m/s");
+    logger.info("Max liquid velocity: " + maxLiquid + " m/s");
   }
 
   @Test
@@ -115,8 +119,8 @@ public class SeparatorMechanicalDesignTest {
     assertTrue(oilRetention > 0, "Min oil retention time should be positive");
     assertTrue(waterRetention > 0, "Min water retention time should be positive");
 
-    System.out.println("Min oil retention time: " + oilRetention + " min");
-    System.out.println("Min water retention time: " + waterRetention + " min");
+    logger.info("Min oil retention time: " + oilRetention + " min");
+    logger.info("Min water retention time: " + waterRetention + " min");
   }
 
   @Test
@@ -127,8 +131,8 @@ public class SeparatorMechanicalDesignTest {
     assertTrue(pressureMargin >= 1.0, "Design pressure margin should be >= 1.0");
     assertTrue(tempMargin >= 0, "Design temperature margin should be >= 0");
 
-    System.out.println("Design pressure margin: " + pressureMargin);
-    System.out.println("Design temperature margin: " + tempMargin + " C");
+    logger.info("Design pressure margin: " + pressureMargin);
+    logger.info("Design temperature margin: " + tempMargin + " C");
   }
 
   // ============================================================================
@@ -192,10 +196,10 @@ public class SeparatorMechanicalDesignTest {
     assertNotNull(result, "Validation result should not be null");
     assertNotNull(result.getIssues(), "Issues list should not be null");
 
-    System.out.println("Separator validation valid: " + result.isValid());
+    logger.info("Separator validation valid: " + result.isValid());
     if (!result.isValid()) {
       for (String issue : result.getIssues()) {
-        System.out.println("  Issue: " + issue);
+        logger.info("  Issue: " + issue);
       }
     }
   }
@@ -216,7 +220,7 @@ public class SeparatorMechanicalDesignTest {
     assertEquals(mechDesign.getDemisterPressureDrop(), response.getDemisterPressureDrop(), 0.001,
         "Demister pressure drop should match");
 
-    System.out.println("Response class populated successfully");
+    logger.info("Response class populated successfully");
   }
 
   // ============================================================================
@@ -270,12 +274,12 @@ public class SeparatorMechanicalDesignTest {
         "Detailed entrainment should be enabled after calcDesign");
     System.out
         .println("Entrainment enabled — efficiency: " + design.getOverallGasLiquidEfficiency());
-    System.out.println("Oil-in-gas: " + design.getOilInGasFraction());
-    System.out.println("K-factor utilization: " + design.getKFactorUtilization());
-    System.out.println("Mist eliminator flooded: " + design.isMistEliminatorFlooded());
-    System.out.println("Detail JSON null: " + (design.getEntrainmentDetailJson() == null));
+    logger.info("Oil-in-gas: " + design.getOilInGasFraction());
+    logger.info("K-factor utilization: " + design.getKFactorUtilization());
+    logger.info("Mist eliminator flooded: " + design.isMistEliminatorFlooded());
+    logger.info("Detail JSON null: " + (design.getEntrainmentDetailJson() == null));
     if (design.getEntrainmentDetailJson() != null) {
-      System.out.println("Detail JSON length: " + design.getEntrainmentDetailJson().length());
+      logger.info("Detail JSON length: " + design.getEntrainmentDetailJson().length());
     }
     // The performance calculator is populated after run() — entrainment fractions
     // and efficiency should be populated (may be 0 if no gas-liquid separation
@@ -322,7 +326,7 @@ public class SeparatorMechanicalDesignTest {
     assertTrue(json.contains("liquidInGasCalibrationFactor"),
         "JSON should contain calibration factor");
 
-    System.out.println("Entrainment data present in mechanical design JSON: OK");
+    logger.info("Entrainment data present in mechanical design JSON: OK");
   }
 
   @Test

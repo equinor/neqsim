@@ -4,6 +4,8 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -15,6 +17,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class shtokman {
+  private static final Logger logger = LogManager.getLogger(shtokman.class);
+
   /**
    * This method is just meant to test the thermo package.
    *
@@ -76,7 +80,7 @@ public class shtokman {
      * stream_2.getThermoSystem().getPhase(1).getComponent("water").getx()*stream_2.
      * getThermoSystem().getPhase(1).getComponent("water").getMolarMass();
      *
-     * System.out.println("wt% MEG " + wtMEG/(wtMEG+wtwater)*100); // operations.displayResult();
+     * logger.info("wt% MEG " + wtMEG/(wtMEG+wtwater)*100); // operations.displayResult();
      */
   }
 }

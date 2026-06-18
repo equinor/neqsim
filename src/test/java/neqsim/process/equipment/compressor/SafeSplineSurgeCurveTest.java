@@ -2,6 +2,8 @@ package neqsim.process.equipment.compressor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.heatexchanger.Cooler;
@@ -18,6 +20,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.serialization.NeqSimXtream;
 
 public class SafeSplineSurgeCurveTest {
+  private static final Logger logger = LogManager.getLogger(SafeSplineSurgeCurveTest.class);
+
   @Test
   public void testSurgeCurve10250() {
     double[] flow10250 = {9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81,
@@ -496,15 +500,15 @@ public class SafeSplineSurgeCurveTest {
     // Test getDistanceToSurge - should be positive (margin above surge)
     double distanceToSurge = comp.getDistanceToSurge();
     assertTrue(distanceToSurge > 0, "Distance to surge should be positive (above surge)");
-    System.out.println("Operating flow: " + operatingFlow + " m3/hr");
-    System.out.println("Surge flow: " + 5607.45 + " m3/hr");
-    System.out.println("Distance to surge: " + (distanceToSurge * 100) + "%");
+    logger.info("Operating flow: " + operatingFlow + " m3/hr");
+    logger.info("Surge flow: " + 5607.45 + " m3/hr");
+    logger.info("Distance to surge: " + (distanceToSurge * 100) + "%");
 
     // Test getDistanceToStoneWall - should be positive (margin below stone wall)
     double distanceToStoneWall = comp.getDistanceToStoneWall();
     assertTrue(distanceToStoneWall > 0, "Distance to stone wall should be positive (below choke)");
-    System.out.println("Stone wall flow: " + 9758.49 + " m3/hr");
-    System.out.println("Distance to stone wall: " + (distanceToStoneWall * 100) + "%");
+    logger.info("Stone wall flow: " + 9758.49 + " m3/hr");
+    logger.info("Distance to stone wall: " + (distanceToStoneWall * 100) + "%");
 
     // Test getSurgeFlowRate - should return the single-point surge flow
     double surgeFlowRate = comp.getSurgeFlowRate();

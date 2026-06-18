@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestmercuryTPflash {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestmercuryTPflash.class);
+  private static final Logger logger = LogManager.getLogger(TestmercuryTPflash.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -52,9 +53,9 @@ public class TestmercuryTPflash {
       logger.error(ex.getMessage(), ex);
     }
     // ((PhaseEosInterface)testSystem.getPhase(0)).displayInteractionCoefficients("");
-    System.out.println("vapour pressure "
+    logger.info("vapour pressure "
         + testSystem.getPhase(0).getComponent("mercury").getx() * testSystem.getPressure());
-    System.out.println(
+    logger.info(
         "Ttrip " + testSystem.getPhase(0).getComponent("mercury").getTriplePointTemperature());
   }
 }

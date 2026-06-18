@@ -3,6 +3,8 @@ package neqsim.physicalproperties.interfaceproperties.solidadsorption;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -25,6 +27,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class ExperimentalDataValidationTest {
+  private static final Logger logger = LogManager.getLogger(ExperimentalDataValidationTest.class);
 
   /**
    * Validate CH4 adsorption on activated carbon at 298K from database parameters.
@@ -52,7 +55,7 @@ public class ExperimentalDataValidationTest {
     langmuir.calcAdsorption(0);
 
     double loading = langmuir.getSurfaceExcess(0);
-    System.out.println("CH4 on AC Calgon F400 (Langmuir) at 10 bar: " + loading + " mol/kg");
+    logger.info("CH4 on AC Calgon F400 (Langmuir) at 10 bar: " + loading + " mol/kg");
 
     // Experimental range: 3-7 mol/kg at ~10 bar
     assertTrue(loading > 2.0, "CH4 loading should be > 2 mol/kg at 10 bar");
@@ -84,7 +87,7 @@ public class ExperimentalDataValidationTest {
     langmuir.calcAdsorption(0);
 
     double loading = langmuir.getSurfaceExcess(0);
-    System.out.println("CO2 on AC Calgon F400 (Langmuir) at 10 bar: " + loading + " mol/kg");
+    logger.info("CO2 on AC Calgon F400 (Langmuir) at 10 bar: " + loading + " mol/kg");
 
     // CO2 typically adsorbs more than CH4
     assertTrue(loading > 3.0, "CO2 loading should be > 3 mol/kg at 10 bar");
@@ -120,9 +123,9 @@ public class ExperimentalDataValidationTest {
     double ch4Loading = langmuir.getSurfaceExcess("methane");
     double selectivity = langmuir.getSelectivity(0, 1, 0);
 
-    System.out.println("CO2/CH4 on AC at 5 bar:");
-    System.out.println("  CO2: " + co2Loading + " mol/kg, CH4: " + ch4Loading + " mol/kg");
-    System.out.println("  Selectivity: " + selectivity);
+    logger.info("CO2/CH4 on AC at 5 bar:");
+    logger.info("  CO2: " + co2Loading + " mol/kg, CH4: " + ch4Loading + " mol/kg");
+    logger.info("  Selectivity: " + selectivity);
 
     assertTrue(co2Loading > ch4Loading, "CO2 should adsorb more than CH4 on AC");
     assertTrue(selectivity > 1.5, "CO2/CH4 selectivity should be > 1.5");
@@ -149,7 +152,7 @@ public class ExperimentalDataValidationTest {
       freundlich.calcAdsorption(0);
 
       double loading = freundlich.getSurfaceExcess(0);
-      System.out.println("CH4 Freundlich at " + p + " bar: " + loading + " mol/kg");
+      logger.info("CH4 Freundlich at " + p + " bar: " + loading + " mol/kg");
 
       assertTrue(loading >= prevLoading, "Adsorption should increase with pressure (P=" + p + ")");
       assertTrue(loading >= 0, "Adsorption should be non-negative");
@@ -192,8 +195,8 @@ public class ExperimentalDataValidationTest {
     sips.calcAdsorption(0);
     double sipsLoading = sips.getSurfaceExcess(0);
 
-    System.out.println("Langmuir loading: " + langmuirLoading + " mol/kg");
-    System.out.println("Sips (n=1) loading: " + sipsLoading + " mol/kg");
+    logger.info("Langmuir loading: " + langmuirLoading + " mol/kg");
+    logger.info("Sips (n=1) loading: " + sipsLoading + " mol/kg");
 
     assertEquals(langmuirLoading, sipsLoading, 0.01, "Sips with n=1 should match Langmuir");
   }
@@ -232,8 +235,8 @@ public class ExperimentalDataValidationTest {
     highPAds.calcAdsorption(0);
     double highPLoading = highPAds.getSurfaceExcess(0);
 
-    System.out.println("Langmuir CO2 at 0.01 bar: " + lowPLoading + " mol/kg");
-    System.out.println("Langmuir CO2 at 100 bar: " + highPLoading + " mol/kg");
+    logger.info("Langmuir CO2 at 0.01 bar: " + lowPLoading + " mol/kg");
+    logger.info("Langmuir CO2 at 100 bar: " + highPLoading + " mol/kg");
 
     // At high pressure, should approach qmax
     assertTrue(highPLoading > 9.0, "At 100 bar, loading should approach qmax of 10");
@@ -267,7 +270,7 @@ public class ExperimentalDataValidationTest {
     langmuir.calcAdsorption(0);
 
     double loading = langmuir.getSurfaceExcess(0);
-    System.out.println("CO2 on Zeolite 13X (Langmuir) at 1 bar: " + loading + " mol/kg");
+    logger.info("CO2 on Zeolite 13X (Langmuir) at 1 bar: " + loading + " mol/kg");
 
     // Zeolite 13X has high CO2 capacity: 3-6 mol/kg at 1 bar
     assertTrue(loading > 2.0, "CO2 on 13X should be > 2 mol/kg at 1 bar");
@@ -303,9 +306,9 @@ public class ExperimentalDataValidationTest {
     double n2Loading = langmuir.getSurfaceExcess("nitrogen");
     double selectivity = langmuir.getSelectivity(0, 1, 0);
 
-    System.out.println("CO2/N2 on Zeolite 13X at 1 bar (15% CO2):");
-    System.out.println("  CO2: " + co2Loading + " mol/kg, N2: " + n2Loading + " mol/kg");
-    System.out.println("  Selectivity: " + selectivity);
+    logger.info("CO2/N2 on Zeolite 13X at 1 bar (15% CO2):");
+    logger.info("  CO2: " + co2Loading + " mol/kg, N2: " + n2Loading + " mol/kg");
+    logger.info("  Selectivity: " + selectivity);
 
     assertTrue(co2Loading > n2Loading, "CO2 should adsorb much more than N2 on 13X");
     assertTrue(selectivity > 10.0, "CO2/N2 selectivity should be > 10 on zeolite 13X");
@@ -350,8 +353,8 @@ public class ExperimentalDataValidationTest {
     ads373.calcAdsorption(0);
     double loading373 = ads373.getSurfaceExcess(0);
 
-    System.out.println("CO2 on AC at 298K: " + loading298 + " mol/kg");
-    System.out.println("CO2 on AC at 373K: " + loading373 + " mol/kg");
+    logger.info("CO2 on AC at 298K: " + loading298 + " mol/kg");
+    logger.info("CO2 on AC at 373K: " + loading373 + " mol/kg");
 
     assertTrue(loading298 > loading373, "Adsorption should decrease with increasing temperature");
   }
@@ -437,8 +440,8 @@ public class ExperimentalDataValidationTest {
         n2Loading = ads.getSurfaceExcess(0);
       }
 
-      System.out.println(model + " at 5 bar on AC: CO2=" + co2Loading + ", CH4=" + ch4Loading
-          + ", N2=" + n2Loading);
+      logger.info(model + " at 5 bar on AC: CO2=" + co2Loading + ", CH4=" + ch4Loading + ", N2="
+          + n2Loading);
 
       assertTrue(co2Loading > ch4Loading, model + ": CO2 should adsorb more than CH4 on AC");
       assertTrue(ch4Loading > n2Loading, model + ": CH4 should adsorb more than N2 on AC");
@@ -457,7 +460,7 @@ public class ExperimentalDataValidationTest {
     gas.init(0);
 
     double pSatCO2 = FluidPropertyEstimator.estimateSaturationPressure(gas, 0, 0);
-    System.out.println("CO2 Psat at 298K (Lee-Kesler): " + pSatCO2 + " bar");
+    logger.info("CO2 Psat at 298K (Lee-Kesler): " + pSatCO2 + " bar");
 
     // CO2 saturation pressure at 298K should be ~64 bar
     assertTrue(pSatCO2 > 50.0, "CO2 Psat should be > 50 bar at 298K");
@@ -470,7 +473,7 @@ public class ExperimentalDataValidationTest {
     water.init(0);
 
     double pSatH2O = FluidPropertyEstimator.estimateSaturationPressure(water, 0, 0);
-    System.out.println("Water Psat at 373K (Lee-Kesler): " + pSatH2O + " bar");
+    logger.info("Water Psat at 373K (Lee-Kesler): " + pSatH2O + " bar");
 
     assertTrue(pSatH2O > 0.5, "Water Psat should be > 0.5 bar at 373K");
     assertTrue(pSatH2O < 2.0, "Water Psat should be < 2 bar at 373K");
@@ -520,11 +523,11 @@ public class ExperimentalDataValidationTest {
     bet.calcAdsorption(0);
     double betVal = bet.getSurfaceExcess(0);
 
-    System.out.println("CH4 on AC at 5 bar, model comparison:");
-    System.out.println("  Langmuir: " + langmuirVal + " mol/kg");
-    System.out.println("  Freundlich: " + freundlichVal + " mol/kg");
-    System.out.println("  Sips: " + sipsVal + " mol/kg");
-    System.out.println("  BET: " + betVal + " mol/kg");
+    logger.info("CH4 on AC at 5 bar, model comparison:");
+    logger.info("  Langmuir: " + langmuirVal + " mol/kg");
+    logger.info("  Freundlich: " + freundlichVal + " mol/kg");
+    logger.info("  Sips: " + sipsVal + " mol/kg");
+    logger.info("  BET: " + betVal + " mol/kg");
 
     // All models should give positive values
     assertTrue(langmuirVal > 0, "Langmuir should give positive loading");

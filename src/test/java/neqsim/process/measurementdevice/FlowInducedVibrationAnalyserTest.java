@@ -11,11 +11,15 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Unit tests for the {@link FlowInducedVibrationAnalyser} class.
  */
 public class FlowInducedVibrationAnalyserTest {
+  private static final Logger logger = LogManager.getLogger(FlowInducedVibrationAnalyserTest.class);
+
 
   @Test
   @DisplayName("Test LOF calculation method with Stiff support arrangement")
@@ -61,7 +65,7 @@ public class FlowInducedVibrationAnalyserTest {
     assertTrue(lofValue < 1.0, "LOF value should be less than 1.0 for this flow regime");
 
     // The actual value will depend on the simulation results, but we can check if it's reasonable
-    // System.out.println("LOF value (Stiff support): " + lofValue);
+    // logger.info("LOF value (Stiff support): " + lofValue);
   }
 
   @Test
@@ -120,9 +124,9 @@ public class FlowInducedVibrationAnalyserTest {
     double mediumStiffValue = mediumStiffAnalyzer.getMeasuredValue();
     double mediumValue = mediumAnalyzer.getMeasuredValue();
 
-    // System.out.println("LOF value (Stiff support): " + stiffValue);
-    // System.out.println("LOF value (Medium stiff support): " + mediumStiffValue);
-    // System.out.println("LOF value (Medium support): " + mediumValue);
+    // logger.info("LOF value (Stiff support): " + stiffValue);
+    // logger.info("LOF value (Medium stiff support): " + mediumStiffValue);
+    // logger.info("LOF value (Medium support): " + mediumValue);
 
     // Different support arrangements should give different values
     // assertNotEquals(stiffValue, mediumStiffValue, DELTA);
@@ -176,7 +180,7 @@ public class FlowInducedVibrationAnalyserTest {
     // Get measured FRMS value
     double frmsValue = frmsAnalyzer.getMeasuredValue();
 
-    System.out.println("FRMS value: " + frmsValue);
+    logger.info("FRMS value: " + frmsValue);
     // The result depends on GVF. If GVF > 0.8, it will be calculated with the formula.
     // If GVF < 0.8, it will return the GVF value directly.
     // assertTrue(frmsValue > 0.0, "FRMS value should be positive");
@@ -228,8 +232,8 @@ public class FlowInducedVibrationAnalyserTest {
     double defaultSegmentValue = analyzerDefaultSegment.getMeasuredValue();
     double segment5Value = analyzerSegment5.getMeasuredValue();
 
-    System.out.println("Default segment LOF value: " + defaultSegmentValue);
-    System.out.println("Segment 5 LOF value: " + segment5Value);
+    logger.info("Default segment LOF value: " + defaultSegmentValue);
+    logger.info("Segment 5 LOF value: " + segment5Value);
 
     // Due to pressure and density changes along the pipe, the values should be different
     // assertNotEquals(defaultSegmentValue, segment5Value, DELTA);

@@ -6,8 +6,12 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class WellFlowTest {
+  private static final Logger logger = LogManager.getLogger(WellFlowTest.class);
+
   @Test
   void testRun() {
     neqsim.thermo.system.SystemInterface fluid1 =
@@ -36,10 +40,9 @@ public class WellFlowTest {
 
     process.run();
     /*
-     * System.out.println("production index " + wellflow.getWellProductionIndex() +
-     * " MSm3/day/bar^2"); System.out.println("reservoir pressure " +
-     * producedGasStream.getPressure("bara")); System.out .println("pres bottomhole " +
-     * wellflow.getOutletStream().getPressure("bara") + " bara");
+     * logger.info("production index " + wellflow.getWellProductionIndex() + " MSm3/day/bar^2");
+     * logger.info("reservoir pressure " + producedGasStream.getPressure("bara")); System.out
+     * .println("pres bottomhole " + wellflow.getOutletStream().getPressure("bara") + " bara");
      */
   }
 
@@ -189,12 +192,11 @@ public class WellFlowTest {
     process.add(adjuster);
     process.run();
     /*
-     * System.out.println("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));
-     * System.out.println("production index " + wellflow.getWellProductionIndex() +
-     * " MSm3/day/bar^2"); System.out.println("reservoir pressure " +
-     * producedGasStream.getPressure("bara")); System.out .println("pres bottomhole " +
-     * wellflow.getOutletStream().getPressure("bara") + " bara");
-     * System.out.println("xmas pressure " + pipe.getOutletStream().getPressure("bara") + " bara");
+     * logger.info("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));
+     * logger.info("production index " + wellflow.getWellProductionIndex() + " MSm3/day/bar^2");
+     * logger.info("reservoir pressure " + producedGasStream.getPressure("bara")); System.out
+     * .println("pres bottomhole " + wellflow.getOutletStream().getPressure("bara") + " bara");
+     * logger.info("xmas pressure " + pipe.getOutletStream().getPressure("bara") + " bara");
      * System.out .println("top side pressure " + pipeline.getOutletStream().getPressure("bara") +
      * " bara");
      */
@@ -206,16 +208,16 @@ public class WellFlowTest {
       if (pipeline.getOutletStream().getPressure("bara") < 5.0) {
       }
       /*
-       * System.out.println("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));
-       * System.out.println("reservoir pressure " + wellflow.getInletStream().getPressure("bara"));
+       * logger.info("production flow rate " + producedGasStream.getFlowRate("MSm3/day"));
+       * logger.info("reservoir pressure " + wellflow.getInletStream().getPressure("bara"));
        * System.out .println("pres bottomhole " + wellflow.getOutletStream().getPressure("bara") +
        * " bara");
        *
-       * System.out.println("xmas pressure " + pipe.getOutletStream().getPressure("bara") +
-       * " bara"); System.out .println("top side pressure " +
-       * pipeline.getOutletStream().getPressure("bara") + " bara"); System.out
-       * .println("Total produced gas " + reservoirOps.getGasProductionTotal("GMSm3") + " GMSm3");
-       * System.out.println("gas velocity " + pipeline.getInletSuperficialVelocity());
+       * logger.info("xmas pressure " + pipe.getOutletStream().getPressure("bara") + " bara");
+       * System.out .println("top side pressure " + pipeline.getOutletStream().getPressure("bara") +
+       * " bara"); System.out .println("Total produced gas " +
+       * reservoirOps.getGasProductionTotal("GMSm3") + " GMSm3"); logger.info("gas velocity " +
+       * pipeline.getInletSuperficialVelocity());
        */
     }
   }

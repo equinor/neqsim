@@ -15,6 +15,8 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test class for the degasser salt water process model. This replicates the Python-based grisebinge
@@ -24,6 +26,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(DegasserSaltWaterProcessTest.class);
+
 
   // Component names (Java uses hyphens)
   private static final String WATER = "water";
@@ -589,38 +593,38 @@ public class DegasserSaltWaterProcessTest extends neqsim.NeqSimTest {
         "Sum of component Sm3/hr should equal total Sm3/hr");
 
     // Print key results for debugging/verification
-    System.out.println("===== Degasser Salt Water Process Results =====");
-    System.out.println("Degasser gas flow rate: " + gasFlowRateDegasserKgHr + " kg/hr");
-    System.out.println("Degasser gas flow rate: " + gasFlowRateDegasserSm3Hr + " Sm3/hr");
-    System.out.println("Degasser water flow rate: " + waterFlowRateDegasserM3Hr + " m3/hr");
-    System.out.println("Gas-to-water ratio: " + ratioGasWater + " kg/m3");
-    System.out.println("Degasser CO2 mole fraction: " + degasserCO2Frac);
-    System.out.println("Degasser CH4 mole fraction: " + degasserCH4Frac);
-    System.out.println("Degasser H2O mole fraction: " + degasserH2OFrac);
-    System.out.println("Degasser N2 mole fraction: " + degasserN2Frac);
-    System.out.println("Degasser NMVOC mole fraction: " + degasserNMVOCFrac);
-    System.out.println("Degasser CO2 mass fraction: " + degasserCO2MassFrac);
-    System.out.println("Degasser CH4 mass fraction: " + degasserCH4MassFrac);
-    System.out.println("CFO gas flow rate: " + cfoGasFlowKgHr + " kg/hr");
-    System.out.println("Caisson gas flow rate: " + caissonGasFlowKgHr + " kg/hr");
-    System.out.println("P-43-VD01 gas flow rate: " + sepVD01GasFlowKgHr + " kg/hr");
-    System.out.println("P-43-VD01 gas flow rate: " + sepVD01GasFlowSm3Hr + " Sm3/hr");
-    System.out.println("P-43-VD01 gas density: " + sepVD01GasDensity + " kg/m3");
-    System.out.println("P-43-VD01 molar mass: " + sepVD01MolarMass + " g/mol");
-    System.out.println("P-43-VD02 gas flow rate: " + sepVD02GasFlowKgHr + " kg/hr");
-    System.out.println("P-43-VD02 gas flow rate: " + sepVD02GasFlowSm3Hr + " Sm3/hr");
-    System.out.println("1st sep gas: " + gasFlowRate1stSm3Hr + " Sm3/hr");
-    System.out.println("1st sep oil: " + oilFlowRate1stSm3Hr + " Sm3/hr");
-    System.out.println("1st sep water: " + waterFlowRate1stSm3Hr + " Sm3/hr");
-    System.out.println("Test sep gas: " + gasFlowRateTestSm3Hr + " Sm3/hr");
-    System.out.println("Test sep oil: " + oilFlowRateTestSm3Hr + " Sm3/hr");
-    System.out.println("Test sep water: " + waterFlowRateTestSm3Hr + " Sm3/hr");
-    System.out.println("Aqueous density 1st stage: " + aqueousDensityFirstStage + " kg/m3");
-    System.out.println("Aqueous density test: " + aqueousDensityTest + " kg/m3");
-    System.out.println("Degasser CO2 kg/hr: " + degasserCO2KgHr + ", Sm3/hr: " + degasserCO2Sm3Hr);
-    System.out.println("Degasser CH4 kg/hr: " + degasserCH4KgHr + ", Sm3/hr: " + degasserCH4Sm3Hr);
-    System.out.println("Degasser H2O kg/hr: " + degasserH2OKgHr + ", Sm3/hr: " + degasserH2OSm3Hr);
-    System.out.println("Degasser N2 kg/hr: " + degasserN2KgHr + ", Sm3/hr: " + degasserN2Sm3Hr);
+    logger.info("===== Degasser Salt Water Process Results =====");
+    logger.info("Degasser gas flow rate: " + gasFlowRateDegasserKgHr + " kg/hr");
+    logger.info("Degasser gas flow rate: " + gasFlowRateDegasserSm3Hr + " Sm3/hr");
+    logger.info("Degasser water flow rate: " + waterFlowRateDegasserM3Hr + " m3/hr");
+    logger.info("Gas-to-water ratio: " + ratioGasWater + " kg/m3");
+    logger.info("Degasser CO2 mole fraction: " + degasserCO2Frac);
+    logger.info("Degasser CH4 mole fraction: " + degasserCH4Frac);
+    logger.info("Degasser H2O mole fraction: " + degasserH2OFrac);
+    logger.info("Degasser N2 mole fraction: " + degasserN2Frac);
+    logger.info("Degasser NMVOC mole fraction: " + degasserNMVOCFrac);
+    logger.info("Degasser CO2 mass fraction: " + degasserCO2MassFrac);
+    logger.info("Degasser CH4 mass fraction: " + degasserCH4MassFrac);
+    logger.info("CFO gas flow rate: " + cfoGasFlowKgHr + " kg/hr");
+    logger.info("Caisson gas flow rate: " + caissonGasFlowKgHr + " kg/hr");
+    logger.info("P-43-VD01 gas flow rate: " + sepVD01GasFlowKgHr + " kg/hr");
+    logger.info("P-43-VD01 gas flow rate: " + sepVD01GasFlowSm3Hr + " Sm3/hr");
+    logger.info("P-43-VD01 gas density: " + sepVD01GasDensity + " kg/m3");
+    logger.info("P-43-VD01 molar mass: " + sepVD01MolarMass + " g/mol");
+    logger.info("P-43-VD02 gas flow rate: " + sepVD02GasFlowKgHr + " kg/hr");
+    logger.info("P-43-VD02 gas flow rate: " + sepVD02GasFlowSm3Hr + " Sm3/hr");
+    logger.info("1st sep gas: " + gasFlowRate1stSm3Hr + " Sm3/hr");
+    logger.info("1st sep oil: " + oilFlowRate1stSm3Hr + " Sm3/hr");
+    logger.info("1st sep water: " + waterFlowRate1stSm3Hr + " Sm3/hr");
+    logger.info("Test sep gas: " + gasFlowRateTestSm3Hr + " Sm3/hr");
+    logger.info("Test sep oil: " + oilFlowRateTestSm3Hr + " Sm3/hr");
+    logger.info("Test sep water: " + waterFlowRateTestSm3Hr + " Sm3/hr");
+    logger.info("Aqueous density 1st stage: " + aqueousDensityFirstStage + " kg/m3");
+    logger.info("Aqueous density test: " + aqueousDensityTest + " kg/m3");
+    logger.info("Degasser CO2 kg/hr: " + degasserCO2KgHr + ", Sm3/hr: " + degasserCO2Sm3Hr);
+    logger.info("Degasser CH4 kg/hr: " + degasserCH4KgHr + ", Sm3/hr: " + degasserCH4Sm3Hr);
+    logger.info("Degasser H2O kg/hr: " + degasserH2OKgHr + ", Sm3/hr: " + degasserH2OSm3Hr);
+    logger.info("Degasser N2 kg/hr: " + degasserN2KgHr + ", Sm3/hr: " + degasserN2Sm3Hr);
     System.out
         .println("Degasser NMVOC kg/hr: " + degasserNMVOCKgHr + ", Sm3/hr: " + degasserNMVOCSm3Hr);
   }

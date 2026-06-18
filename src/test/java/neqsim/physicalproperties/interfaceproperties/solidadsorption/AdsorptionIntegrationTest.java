@@ -3,6 +3,8 @@ package neqsim.physicalproperties.interfaceproperties.solidadsorption;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -18,6 +20,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class AdsorptionIntegrationTest {
+  private static final Logger logger = LogManager.getLogger(AdsorptionIntegrationTest.class);
 
   /**
    * Test CO2 capture on activated carbon scenario.
@@ -54,10 +57,10 @@ public class AdsorptionIntegrationTest {
     double n2Loading = langmuir.getSurfaceExcess("nitrogen");
     double selectivity = langmuir.getSelectivity(0, 1, 0);
 
-    System.out.println("CO2 Capture on Activated Carbon:");
-    System.out.println("  CO2 loading: " + co2Loading + " mol/kg");
-    System.out.println("  N2 loading: " + n2Loading + " mol/kg");
-    System.out.println("  CO2/N2 selectivity: " + selectivity);
+    logger.info("CO2 Capture on Activated Carbon:");
+    logger.info("  CO2 loading: " + co2Loading + " mol/kg");
+    logger.info("  N2 loading: " + n2Loading + " mol/kg");
+    logger.info("  CO2/N2 selectivity: " + selectivity);
 
     assertTrue(co2Loading > n2Loading, "CO2 should adsorb more than N2");
     assertTrue(selectivity > 5.0, "CO2/N2 selectivity should be > 5 for AC");
@@ -98,9 +101,9 @@ public class AdsorptionIntegrationTest {
     double waterLoading = bet.getSurfaceExcess(1);
     double nLayers = bet.getNumberOfLayers(1);
 
-    System.out.println("Natural Gas Dehydration on Silica Gel:");
-    System.out.println("  Water loading: " + waterLoading + " mol/kg");
-    System.out.println("  Number of water layers: " + nLayers);
+    logger.info("Natural Gas Dehydration on Silica Gel:");
+    logger.info("  Water loading: " + waterLoading + " mol/kg");
+    logger.info("  Number of water layers: " + nLayers);
 
     assertTrue(waterLoading > 0, "Water should adsorb on silica gel");
   }
@@ -137,11 +140,11 @@ public class AdsorptionIntegrationTest {
     double kelvinRadius = capillary.getKelvinRadius(0);
     double totalUptake = betAdsorption + condensate;
 
-    System.out.println("N2 Porosimetry at 77K (P/P0 ~ 0.5):");
-    System.out.println("  BET adsorption: " + betAdsorption + " mol/kg");
-    System.out.println("  Capillary condensate: " + condensate + " mol/kg");
-    System.out.println("  Total uptake: " + totalUptake + " mol/kg");
-    System.out.println("  Kelvin radius: " + kelvinRadius + " nm");
+    logger.info("N2 Porosimetry at 77K (P/P0 ~ 0.5):");
+    logger.info("  BET adsorption: " + betAdsorption + " mol/kg");
+    logger.info("  Capillary condensate: " + condensate + " mol/kg");
+    logger.info("  Total uptake: " + totalUptake + " mol/kg");
+    logger.info("  Kelvin radius: " + kelvinRadius + " nm");
 
     assertTrue(betAdsorption > 0, "BET adsorption should be positive");
     assertTrue(kelvinRadius > 0, "Kelvin radius should be positive");
@@ -218,11 +221,11 @@ public class AdsorptionIntegrationTest {
     double co2WorkingCapacity = highPCO2 - lowPCO2;
     double ch4WorkingCapacity = highPCH4 - lowPCH4;
 
-    System.out.println("PSA Cycle Simulation:");
-    System.out.println("  CO2 at 10 bar: " + highPCO2 + " mol/kg");
-    System.out.println("  CO2 at 1 bar: " + lowPCO2 + " mol/kg");
-    System.out.println("  CO2 working capacity: " + co2WorkingCapacity + " mol/kg");
-    System.out.println("  CH4 working capacity: " + ch4WorkingCapacity + " mol/kg");
+    logger.info("PSA Cycle Simulation:");
+    logger.info("  CO2 at 10 bar: " + highPCO2 + " mol/kg");
+    logger.info("  CO2 at 1 bar: " + lowPCO2 + " mol/kg");
+    logger.info("  CO2 working capacity: " + co2WorkingCapacity + " mol/kg");
+    logger.info("  CH4 working capacity: " + ch4WorkingCapacity + " mol/kg");
 
     assertTrue(co2WorkingCapacity > 0, "CO2 working capacity should be positive");
     // Both should have positive working capacity demonstrating PSA principle
@@ -261,9 +264,9 @@ public class AdsorptionIntegrationTest {
     bet.calcAdsorption(0);
     double betLoading = bet.getSurfaceExcess(0);
 
-    System.out.println("Isotherm Model Comparison at 5 bar CO2:");
-    System.out.println("  Langmuir: " + langmuirLoading + " mol/kg");
-    System.out.println("  BET: " + betLoading + " mol/kg");
+    logger.info("Isotherm Model Comparison at 5 bar CO2:");
+    logger.info("  Langmuir: " + langmuirLoading + " mol/kg");
+    logger.info("  BET: " + betLoading + " mol/kg");
 
     assertTrue(langmuirLoading > 0, "Langmuir loading should be positive");
     assertTrue(betLoading > 0, "BET loading should be positive");
@@ -308,11 +311,11 @@ public class AdsorptionIntegrationTest {
     double condensate = capillary.getCondensateAmount(0);
     double kelvinR = capillary.getKelvinRadius(0);
 
-    System.out.println("Toluene on MCM-41:");
-    System.out.println("  Surface adsorption: " + surfaceAdsorption + " mol/kg");
-    System.out.println("  Capillary condensate: " + condensate + " mol/kg");
-    System.out.println("  Kelvin radius: " + kelvinR + " nm");
-    System.out.println("  P/P0: " + (0.02 / 0.038));
+    logger.info("Toluene on MCM-41:");
+    logger.info("  Surface adsorption: " + surfaceAdsorption + " mol/kg");
+    logger.info("  Capillary condensate: " + condensate + " mol/kg");
+    logger.info("  Kelvin radius: " + kelvinR + " nm");
+    logger.info("  P/P0: " + (0.02 / 0.038));
 
     assertTrue(surfaceAdsorption >= 0, "Surface adsorption should be non-negative");
     assertTrue(kelvinR > 0, "Kelvin radius should be positive");

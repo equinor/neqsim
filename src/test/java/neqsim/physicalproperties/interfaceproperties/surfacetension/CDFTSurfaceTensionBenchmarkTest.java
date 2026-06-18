@@ -1,6 +1,8 @@
 package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -12,6 +14,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * NeqSim IFT models (Parachor, Gradient Theory) across multiple pure components and EOS types.
  */
 public class CDFTSurfaceTensionBenchmarkTest {
+  private static final Logger logger = LogManager.getLogger(CDFTSurfaceTensionBenchmarkTest.class);
 
   /**
    * Computes IFT using a specified model.
@@ -70,7 +73,7 @@ public class CDFTSurfaceTensionBenchmarkTest {
     double devCDFT = sigmaExp > 0 ? 100.0 * (sigmaCDFT - sigmaExp) / sigmaExp : Double.NaN;
     double devGT = sigmaExp > 0 ? 100.0 * (sigmaGT - sigmaExp) / sigmaExp : Double.NaN;
     double devParachor = sigmaExp > 0 ? 100.0 * (sigmaParachor - sigmaExp) / sigmaExp : Double.NaN;
-    System.out.printf(
+    logger.printf(org.apache.logging.log4j.Level.INFO,
         "| %-12s | %-3s | %6.1f | %6.2f | %6.2f (%+5.1f%%) | %6.2f (%+5.1f%%) | %6.2f (%+5.1f%%) |%n",
         component, eos, tempK, sigmaExp, sigmaCDFT, devCDFT, sigmaGT, devGT, sigmaParachor,
         devParachor);
@@ -92,11 +95,12 @@ public class CDFTSurfaceTensionBenchmarkTest {
 
     String[] eosTypes = {"PR", "SRK"};
 
-    System.out.println();
-    System.out.println("=== cDFT Surface Tension Benchmark ===");
-    System.out.printf("| %-12s | %-3s | %6s | %6s | %19s | %19s | %19s |%n", "Component", "EOS",
-        "T (K)", "Exp", "cDFT", "Full GT", "Parachor");
-    System.out.println("|--------------|-----|--------|--------|"
+
+    logger.info("=== cDFT Surface Tension Benchmark ===");
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "| %-12s | %-3s | %6s | %6s | %19s | %19s | %19s |%n", "Component", "EOS", "T (K)", "Exp",
+        "cDFT", "Full GT", "Parachor");
+    logger.info("|--------------|-----|--------|--------|"
         + "---------------------|---------------------|---------------------|");
 
     int totalTests = 0;
@@ -132,8 +136,8 @@ public class CDFTSurfaceTensionBenchmarkTest {
     }
 
     double avgAbsDev = totalTests > 0 ? sumAbsDevCDFT / totalTests : 999;
-    System.out.println();
-    System.out.println("cDFT summary: " + totalTests + " systems computed, " + cdftWithin50pct
+
+    logger.info("cDFT summary: " + totalTests + " systems computed, " + cdftWithin50pct
         + " within 50% of experiment, avg abs dev = " + String.format("%.1f", avgAbsDev) + "%");
 
     // Basic assertions
@@ -145,9 +149,10 @@ public class CDFTSurfaceTensionBenchmarkTest {
   @Test
   void testMethaneTemperatureSweep_PR() {
     // Sweep methane from 95K to 180K (near Tc=190.6K)
-    System.out.println();
-    System.out.println("=== Methane IFT Temperature Sweep (PR EOS) ===");
-    System.out.printf("| %6s | %8s | %8s | %8s |%n", "T (K)", "cDFT", "Full GT", "Parachor");
+
+    logger.info("=== Methane IFT Temperature Sweep (PR EOS) ===");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %6s | %8s | %8s | %8s |%n", "T (K)",
+        "cDFT", "Full GT", "Parachor");
 
     double[] temps = {95, 100, 110, 120, 130, 140, 150, 160, 170, 180};
     int validCount = 0;
@@ -160,7 +165,8 @@ public class CDFTSurfaceTensionBenchmarkTest {
       double gt = computeIFT(sys, "Full Gradient Theory");
       double par = computeIFT(sys, "Parachor");
 
-      System.out.printf("| %6.1f | %8.3f | %8.3f | %8.3f |%n", t, cdft, gt, par);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "| %6.1f | %8.3f | %8.3f | %8.3f |%n", t,
+          cdft, gt, par);
       if (cdft > 0) {
         validCount++;
       }
@@ -171,21 +177,24 @@ public class CDFTSurfaceTensionBenchmarkTest {
   @Test
   void testHeavierAlkanes_PR() {
     // Test heavier alkanes at 300K
-    System.out.println();
-    System.out.println("=== Heavier Alkanes at 300K (PR EOS) ===");
-    System.out.printf("| %-12s | %8s | %8s |%n", "Component", "cDFT", "Parachor");
+
+    logger.info("=== Heavier Alkanes at 300K (PR EOS) ===");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "| %-12s | %8s | %8s |%n", "Component",
+        "cDFT", "Parachor");
 
     String[] components = {"n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10"};
 
     for (String comp : components) {
       SystemInterface sys = setupVLE("PR", comp, 300.0);
       if (sys == null) {
-        System.out.printf("| %-12s |  no VLE  |  no VLE  |%n", comp);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "| %-12s |  no VLE  |  no VLE  |%n",
+            comp);
         continue;
       }
       double cdft = computeIFT(sys, "cDFT");
       double par = computeIFT(sys, "Parachor");
-      System.out.printf("| %-12s | %8.3f | %8.3f |%n", comp, cdft, par);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "| %-12s | %8.3f | %8.3f |%n", comp, cdft,
+          par);
       assertTrue(cdft > 0, comp + " cDFT IFT should be positive: " + cdft);
     }
   }

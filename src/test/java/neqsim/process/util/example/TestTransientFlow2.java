@@ -7,6 +7,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -18,6 +20,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestTransientFlow2 {
+  private static final Logger logger = LogManager.getLogger(TestTransientFlow2.class);
+
   /**
    * <p>
    * main.
@@ -81,14 +85,14 @@ public class TestTransientFlow2 {
     // transient behaviour
     operations.setTimeStep(5.0);
     for (int i = 0; i < 460; i++) {
-      // System.out.println("volume flow " + flowTransmitter.getMeasuredValue()
+      // logger.info("volume flow " + flowTransmitter.getMeasuredValue()
       // + " valve opening " + valve_1.getPercentValveOpening() + " pressure "
       // + separator_1.getGasOutStream().getPressure());
       operations.runTransient();
     }
 
     operations.displayResult();
-    // System.out.println("volume flow " + flowTransmitter.getMeasuredValue() + " valve opening "
+    // logger.info("volume flow " + flowTransmitter.getMeasuredValue() + " valve opening "
     // + valve_1.getPercentValveOpening());
 
     // operations.displayResult();

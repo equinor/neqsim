@@ -9,6 +9,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for reactive distillation using {@link ReactiveTray} inside a {@link DistillationColumn}.
@@ -23,6 +25,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class ReactiveDistillationTest {
+  private static final Logger logger = LogManager.getLogger(ReactiveDistillationTest.class);
+
 
   /**
    * Test that a reactive distillation column creates ReactiveTray instances when setReactive(true)
@@ -136,7 +140,7 @@ public class ReactiveDistillationTest {
     double stdGas = stdColumn.getGasOutStream().getFlowRate("kg/hr");
     double stdLiq = stdColumn.getLiquidOutStream().getFlowRate("kg/hr");
     double stdTotal = stdGas + stdLiq;
-    System.out.println("Standard column: gas=" + stdGas + " liq=" + stdLiq + " total=" + stdTotal);
+    logger.info("Standard column: gas=" + stdGas + " liq=" + stdLiq + " total=" + stdTotal);
 
     // Reactive column
     feed.run();

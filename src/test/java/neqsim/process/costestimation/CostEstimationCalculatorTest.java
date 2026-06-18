@@ -20,7 +20,6 @@ public class CostEstimationCalculatorTest {
     // Turton correlation for vertical vessels (CEPCI 2025 escalated)
     // These are PURCHASED EQUIPMENT COSTS for industrial-grade vessels
     double cost = calc.calcVerticalVesselCost(1000.0);
-    System.out.println("1 tonne vessel cost (2025 USD): " + cost);
     assertTrue(cost > 0, "Vessel cost should be positive");
     assertTrue(cost > 100000, "1 tonne industrial vessel should cost > $100k");
     assertTrue(cost < 2000000, "1 tonne vessel should cost less than $2M (sanity check)");

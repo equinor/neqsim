@@ -6,6 +6,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test to verify that TwoFluidPipe liquid holdup profile trends correctly.
@@ -25,6 +27,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class TwoFluidPipeHoldupProfileTest {
+  private static final Logger logger = LogManager.getLogger(TwoFluidPipeHoldupProfileTest.class);
+
 
   /**
    * Test that liquid holdup increases along a horizontal pipeline.
@@ -103,17 +107,17 @@ public class TwoFluidPipeHoldupProfileTest {
     avgHoldupLastQuarter /= quarterLength;
 
     // Print profiles for debugging
-    System.out.println("=== Holdup Profile Test ===");
-    System.out.println("Inlet P: " + inletPressure / 1e5 + " bara");
-    System.out.println("Outlet P: " + outletPressure / 1e5 + " bara");
-    System.out.println("Avg holdup first quarter: " + (avgHoldupFirstQuarter * 100) + "%");
-    System.out.println("Avg holdup last quarter: " + (avgHoldupLastQuarter * 100) + "%");
+    logger.info("=== Holdup Profile Test ===");
+    logger.info("Inlet P: " + inletPressure / 1e5 + " bara");
+    logger.info("Outlet P: " + outletPressure / 1e5 + " bara");
+    logger.info("Avg holdup first quarter: " + (avgHoldupFirstQuarter * 100) + "%");
+    logger.info("Avg holdup last quarter: " + (avgHoldupLastQuarter * 100) + "%");
 
     // Print some profile points
-    System.out.println("\nProfile samples:");
+    logger.info("\nProfile samples:");
     int step = Math.max(1, n / 10);
     for (int i = 0; i < n; i += step) {
-      System.out.printf("  Section %d: P=%.1f bara, HL=%.2f%%\n", i, pressureProfile[i] / 1e5,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Section %d: P=%.1f bara, HL=%.2f%%\n", i, pressureProfile[i] / 1e5,
           holdupProfile[i] * 100);
     }
 
@@ -232,17 +236,17 @@ public class TwoFluidPipeHoldupProfileTest {
     double tfTrend = tfHoldup[tfN - 1] - tfHoldup[0];
     double bbTrend = bbHoldup[bbN - 1] - bbHoldup[0];
 
-    System.out.println("\n=== Holdup Trend Comparison ===");
-    System.out.println("TwoFluidPipe:");
-    System.out.println("  Inlet holdup: " + (tfHoldup[0] * 100) + "%");
-    System.out.println("  Outlet holdup: " + (tfHoldup[tfN - 1] * 100) + "%");
-    System.out.println(
+    logger.info("\n=== Holdup Trend Comparison ===");
+    logger.info("TwoFluidPipe:");
+    logger.info("  Inlet holdup: " + (tfHoldup[0] * 100) + "%");
+    logger.info("  Outlet holdup: " + (tfHoldup[tfN - 1] * 100) + "%");
+    logger.info(
         "  Trend: " + (tfTrend > 0 ? "INCREASING" : "DECREASING") + " (" + (tfTrend * 100) + "%)");
 
-    System.out.println("Beggs & Brills:");
-    System.out.println("  Inlet holdup: " + (bbHoldup[0] * 100) + "%");
-    System.out.println("  Outlet holdup: " + (bbHoldup[bbN - 1] * 100) + "%");
-    System.out.println(
+    logger.info("Beggs & Brills:");
+    logger.info("  Inlet holdup: " + (bbHoldup[0] * 100) + "%");
+    logger.info("  Outlet holdup: " + (bbHoldup[bbN - 1] * 100) + "%");
+    logger.info(
         "  Trend: " + (bbTrend > 0 ? "INCREASING" : "DECREASING") + " (" + (bbTrend * 100) + "%)");
 
     // Both should have the same trend direction (both increasing or both decreasing)
@@ -298,8 +302,8 @@ public class TwoFluidPipeHoldupProfileTest {
     // Convert flow rate: 30 MSm³/day × 0.75 kg/Sm³ × 1e6 / 24 = 937500 kg/hr
     double flowKgHr = flowMSm3d * gasDensityStd * 1e6 / 24.0;
 
-    System.out.println("\n=== NOTEBOOK SCENARIO TEST ===");
-    System.out.println("Flow rate: " + flowKgHr + " kg/hr = " + flowMSm3d + " MSm³/day");
+    logger.info("\n=== NOTEBOOK SCENARIO TEST ===");
+    logger.info("Flow rate: " + flowKgHr + " kg/hr = " + flowMSm3d + " MSm³/day");
 
     // === TwoFluidPipe ===
     SystemInterface tfFluid = fluid.clone();
@@ -310,8 +314,8 @@ public class TwoFluidPipeHoldupProfileTest {
     neqsim.thermodynamicoperations.ThermodynamicOperations ops =
         new neqsim.thermodynamicoperations.ThermodynamicOperations(tfFluid);
     ops.TPflash();
-    System.out.println("\nFlash at inlet conditions:");
-    System.out.println("  Phases: " + tfFluid.getNumberOfPhases());
+    logger.info("\nFlash at inlet conditions:");
+    logger.info("  Phases: " + tfFluid.getNumberOfPhases());
     if (tfFluid.hasPhaseType("gas")) {
       double volGas = tfFluid.getPhase("gas").getVolume("m3");
       double volTotal = tfFluid.getVolume("m3");
@@ -319,9 +323,9 @@ public class TwoFluidPipeHoldupProfileTest {
       double rhoG = tfFluid.getPhase("gas").getDensity("kg/m3");
       double rhoL = tfFluid.hasPhaseType("oil") ? tfFluid.getPhase("oil").getDensity("kg/m3")
           : tfFluid.getPhase("aqueous").getDensity("kg/m3");
-      System.out.println("  Gas vol: " + volGas + " m³, Total vol: " + volTotal + " m³");
-      System.out.println("  No-slip liquid fraction (λL): " + (lambdaL * 100) + "%");
-      System.out.println("  Gas density: " + rhoG + " kg/m³, Liquid density: " + rhoL + " kg/m³");
+      logger.info("  Gas vol: " + volGas + " m³, Total vol: " + volTotal + " m³");
+      logger.info("  No-slip liquid fraction (λL): " + (lambdaL * 100) + "%");
+      logger.info("  Gas density: " + rhoG + " kg/m³, Liquid density: " + rhoL + " kg/m³");
     }
 
     // Enable debug output in TwoFluidPipe
@@ -332,7 +336,7 @@ public class TwoFluidPipeHoldupProfileTest {
     tfInlet.run();
 
     // Check phase composition at inlet
-    System.out.println("\nInlet fluid phases: " + tfInlet.getFluid().getNumberOfPhases());
+    logger.info("\nInlet fluid phases: " + tfInlet.getFluid().getNumberOfPhases());
 
     TwoFluidPipe tfPipe = new TwoFluidPipe("TF Pipeline", tfInlet);
     tfPipe.setLength(pipeLength);
@@ -412,46 +416,46 @@ public class TwoFluidPipeHoldupProfileTest {
     double bbOutletHL = bbHoldup[bbN - 1];
     double bbTrend = bbOutletHL - bbInletHL;
 
-    System.out.println("\nTwoFluidPipe:");
-    System.out.println("  Inlet P: " + tfInlet.getPressure("bara") + " bara");
-    System.out.println("  Outlet P: " + tfPipe.getOutletStream().getPressure("bara") + " bara");
-    System.out.println("  Inlet holdup: " + (tfInletHL * 100) + "%");
-    System.out.println("  Outlet holdup: " + (tfOutletHL * 100) + "%");
-    System.out.println("  Trend: " + (tfTrend > 0 ? "INCREASING ✓" : "DECREASING ✗") + " ("
+    logger.info("\nTwoFluidPipe:");
+    logger.info("  Inlet P: " + tfInlet.getPressure("bara") + " bara");
+    logger.info("  Outlet P: " + tfPipe.getOutletStream().getPressure("bara") + " bara");
+    logger.info("  Inlet holdup: " + (tfInletHL * 100) + "%");
+    logger.info("  Outlet holdup: " + (tfOutletHL * 100) + "%");
+    logger.info("  Trend: " + (tfTrend > 0 ? "INCREASING ✓" : "DECREASING ✗") + " ("
         + String.format("%.2f", tfTrend * 100) + "%)");
 
-    System.out.println("\nBeggs & Brills:");
-    System.out.println("  Inlet P: " + bbInlet.getPressure("bara") + " bara");
-    System.out.println("  Outlet P: " + bbPipe.getOutletStream().getPressure("bara") + " bara");
-    System.out.println("  Inlet holdup: " + (bbInletHL * 100) + "%");
-    System.out.println("  Outlet holdup: " + (bbOutletHL * 100) + "%");
-    System.out.println("  Trend: " + (bbTrend > 0 ? "INCREASING ✓" : "DECREASING ✗") + " ("
+    logger.info("\nBeggs & Brills:");
+    logger.info("  Inlet P: " + bbInlet.getPressure("bara") + " bara");
+    logger.info("  Outlet P: " + bbPipe.getOutletStream().getPressure("bara") + " bara");
+    logger.info("  Inlet holdup: " + (bbInletHL * 100) + "%");
+    logger.info("  Outlet holdup: " + (bbOutletHL * 100) + "%");
+    logger.info("  Trend: " + (bbTrend > 0 ? "INCREASING ✓" : "DECREASING ✗") + " ("
         + String.format("%.2f", bbTrend * 100) + "%)");
 
     // Profile samples
-    System.out.println("\nTwoFluidPipe profile samples (x, HL%):");
+    logger.info("\nTwoFluidPipe profile samples (x, HL%):");
     int step = Math.max(1, tfN / 10);
     for (int i = 0; i < tfN; i += step) {
       double x = i * pipeLength / numSections / 1000.0;
-      System.out.printf("  %.0f km: %.2f%%\n", x, tfHoldup[i] * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %.0f km: %.2f%%\n", x, tfHoldup[i] * 100);
     }
 
     // Print oil and water holdup profiles
     double[] oilHoldup = tfPipe.getOilHoldupProfile();
     double[] waterHoldup = tfPipe.getWaterHoldupProfile();
-    System.out.println("\nOil & Water holdup breakdown:");
+    logger.info("\nOil & Water holdup breakdown:");
     for (int i = 0; i < Math.min(10, tfN); i += 3) {
       double x = i * pipeLength / numSections / 1000.0;
-      System.out.printf("  %.0f km: Oil=%.2f%%, Water=%.2f%%, Sum=%.2f%%\n", x, oilHoldup[i] * 100,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %.0f km: Oil=%.2f%%, Water=%.2f%%, Sum=%.2f%%\n", x, oilHoldup[i] * 100,
           waterHoldup[i] * 100, (oilHoldup[i] + waterHoldup[i]) * 100);
     }
 
     // Print flow regimes
-    System.out.println("\nFlow regime profile:");
+    logger.info("\nFlow regime profile:");
     neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime[] regimes =
         tfPipe.getFlowRegimeProfile();
     if (regimes != null) {
-      System.out.println("  First 5: " + java.util.Arrays
+      logger.info("  First 5: " + java.util.Arrays
           .toString(java.util.Arrays.copyOfRange(regimes, 0, Math.min(5, regimes.length))));
     }
 

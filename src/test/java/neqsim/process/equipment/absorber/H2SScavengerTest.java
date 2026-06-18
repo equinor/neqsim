@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.absorber.H2SScavenger.ScavengerType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
@@ -17,6 +19,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 public class H2SScavengerTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(H2SScavengerTest.class);
   private SystemInterface sourGas;
   private Stream feedStream;
 
@@ -51,12 +54,12 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
 
     scavenger.run();
 
-    System.out.println("=== Triazine Scavenger Test ===");
-    System.out.println("Inlet H2S: " + scavenger.getInletH2SConcentration() + " ppm");
-    System.out.println("Outlet H2S: " + scavenger.getOutletH2SConcentration() + " ppm");
-    System.out.println("Removal Efficiency: " + scavenger.getH2SRemovalEfficiencyPercent() + "%");
-    System.out.println("H2S Removed: " + scavenger.getH2SRemoved("kg/hr") + " kg/hr");
-    System.out.println(scavenger.getPerformanceSummary());
+    logger.info("=== Triazine Scavenger Test ===");
+    logger.info("Inlet H2S: " + scavenger.getInletH2SConcentration() + " ppm");
+    logger.info("Outlet H2S: " + scavenger.getOutletH2SConcentration() + " ppm");
+    logger.info("Removal Efficiency: " + scavenger.getH2SRemovalEfficiencyPercent() + "%");
+    logger.info("H2S Removed: " + scavenger.getH2SRemoved("kg/hr") + " kg/hr");
+    logger.info(scavenger.getPerformanceSummary());
 
     // Verify H2S was removed
     assertTrue(scavenger.getOutletH2SConcentration() < scavenger.getInletH2SConcentration(),
@@ -76,12 +79,12 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
 
       scavenger.run();
 
-      System.out.println("\n=== " + type.getDisplayName() + " ===");
-      System.out.println("Base Stoichiometry: " + type.getBaseStoichiometry() + " lb/lb H2S");
-      System.out.println("Base Efficiency: " + (type.getBaseEfficiency() * 100) + "%");
+      logger.info("\n=== " + type.getDisplayName() + " ===");
+      logger.info("Base Stoichiometry: " + type.getBaseStoichiometry() + " lb/lb H2S");
+      logger.info("Base Efficiency: " + (type.getBaseEfficiency() * 100) + "%");
       System.out
           .println("Achieved Efficiency: " + scavenger.getH2SRemovalEfficiencyPercent() + "%");
-      System.out.println(
+      logger.info(
           "Outlet H2S: " + String.format("%.1f", scavenger.getOutletH2SConcentration()) + " ppm");
 
       assertTrue(scavenger.getH2SRemovalEfficiency() >= 0, "Efficiency should be non-negative");
@@ -99,9 +102,9 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
 
     double requiredRate = scavenger.calculateRequiredInjectionRate();
 
-    System.out.println("\n=== Required Injection Rate Test ===");
-    System.out.println("Target H2S: " + scavenger.getTargetH2SConcentration() + " ppm");
-    System.out.println("Required Injection Rate: " + requiredRate + " l/hr");
+    logger.info("\n=== Required Injection Rate Test ===");
+    logger.info("Target H2S: " + scavenger.getTargetH2SConcentration() + " ppm");
+    logger.info("Required Injection Rate: " + requiredRate + " l/hr");
 
     assertTrue(requiredRate > 0, "Required rate should be positive for sour gas");
 
@@ -109,9 +112,8 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
     scavenger.setScavengerInjectionRate(requiredRate, "l/hr");
     scavenger.run();
 
-    System.out.println(
-        "Outlet H2S at calculated rate: " + scavenger.getOutletH2SConcentration() + " ppm");
-    System.out.println("Removal efficiency: " + scavenger.getH2SRemovalEfficiencyPercent() + "%");
+    logger.info("Outlet H2S at calculated rate: " + scavenger.getOutletH2SConcentration() + " ppm");
+    logger.info("Removal efficiency: " + scavenger.getH2SRemovalEfficiencyPercent() + "%");
 
     // Should achieve some removal (correlation is approximate)
     assertTrue(scavenger.getOutletH2SConcentration() < scavenger.getInletH2SConcentration(),
@@ -147,7 +149,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Test effect of contact time")
   void testContactTimeEffect() {
-    System.out.println("\n=== Contact Time Effect Test ===");
+    logger.info("\n=== Contact Time Effect Test ===");
 
     double[] contactTimes = {5.0, 15.0, 30.0, 60.0, 120.0};
 
@@ -160,7 +162,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
 
       scavenger.run();
 
-      System.out.println(String.format("Contact Time: %.0f s -> Efficiency: %.1f%%", ct,
+      logger.info(String.format("Contact Time: %.0f s -> Efficiency: %.1f%%", ct,
           scavenger.getH2SRemovalEfficiencyPercent()));
     }
   }
@@ -168,7 +170,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Test effect of mixing efficiency")
   void testMixingEfficiencyEffect() {
-    System.out.println("\n=== Mixing Efficiency Effect Test ===");
+    logger.info("\n=== Mixing Efficiency Effect Test ===");
 
     double[] mixingEfficiencies = {0.3, 0.5, 0.7, 0.85, 1.0};
 
@@ -181,7 +183,7 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
 
       scavenger.run();
 
-      System.out.println(String.format("Mixing Efficiency: %.0f%% -> Removal: %.1f%%", me * 100,
+      logger.info(String.format("Mixing Efficiency: %.0f%% -> Removal: %.1f%%", me * 100,
           scavenger.getH2SRemovalEfficiencyPercent()));
     }
   }
@@ -201,14 +203,14 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
 
     process.run();
 
-    System.out.println("\n=== ProcessSystem Integration Test ===");
-    System.out.println("Feed H2S: " + scavenger.getInletH2SConcentration() + " ppm");
-    System.out.println("Treated Gas H2S: " + scavenger.getOutletH2SConcentration() + " ppm");
+    logger.info("\n=== ProcessSystem Integration Test ===");
+    logger.info("Feed H2S: " + scavenger.getInletH2SConcentration() + " ppm");
+    logger.info("Treated Gas H2S: " + scavenger.getOutletH2SConcentration() + " ppm");
 
     // Verify outlet stream has reduced H2S
     double outletH2S =
         scavenger.getOutletStream().getFluid().getPhase(0).getComponent("H2S").getx() * 1e6;
-    System.out.println("Outlet Stream H2S (from fluid): " + outletH2S + " ppm");
+    logger.info("Outlet Stream H2S (from fluid): " + outletH2S + " ppm");
 
     assertTrue(outletH2S < 5000, "Outlet H2S should be reduced from inlet 5000 ppm");
   }
@@ -228,11 +230,11 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
     double hourlyCost = scavenger.calculateHourlyCost(costPerGal, "$/gal");
     double dailyCost = hourlyCost * 24;
 
-    System.out.println("\n=== Cost Calculation Test ===");
-    System.out.println(String.format("Injection Rate: %.1f l/hr", 50.0));
-    System.out.println(String.format("Unit Cost: $%.2f/gal", costPerGal));
-    System.out.println(String.format("Hourly Cost: $%.2f", hourlyCost));
-    System.out.println(String.format("Daily Cost: $%.2f", dailyCost));
+    logger.info("\n=== Cost Calculation Test ===");
+    logger.info(String.format("Injection Rate: %.1f l/hr", 50.0));
+    logger.info(String.format("Unit Cost: $%.2f/gal", costPerGal));
+    logger.info(String.format("Hourly Cost: $%.2f", hourlyCost));
+    logger.info(String.format("Daily Cost: $%.2f", dailyCost));
 
     assertTrue(hourlyCost > 0, "Cost should be positive");
   }
@@ -247,8 +249,8 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
     scavenger.run();
 
     String json = scavenger.toJson();
-    System.out.println("\n=== JSON Output ===");
-    System.out.println(json);
+    logger.info("\n=== JSON Output ===");
+    logger.info(json);
 
     assertTrue(json.contains("Test Scavenger"), "JSON should contain equipment name");
     assertTrue(json.contains("Sodium Hydroxide"), "JSON should contain scavenger type");
@@ -264,15 +266,15 @@ public class H2SScavengerTest extends neqsim.NeqSimTest {
 
     scavenger.run();
 
-    System.out.println("\n=== Unit Conversion Test ===");
-    System.out.println("Injection rate (l/hr): " + scavenger.getScavengerInjectionRate("l/hr"));
-    System.out.println("Injection rate (gal/hr): " + scavenger.getScavengerInjectionRate("gal/hr"));
-    System.out.println("Injection rate (kg/hr): " + scavenger.getScavengerInjectionRate("kg/hr"));
-    System.out.println("Injection rate (lb/hr): " + scavenger.getScavengerInjectionRate("lb/hr"));
+    logger.info("\n=== Unit Conversion Test ===");
+    logger.info("Injection rate (l/hr): " + scavenger.getScavengerInjectionRate("l/hr"));
+    logger.info("Injection rate (gal/hr): " + scavenger.getScavengerInjectionRate("gal/hr"));
+    logger.info("Injection rate (kg/hr): " + scavenger.getScavengerInjectionRate("kg/hr"));
+    logger.info("Injection rate (lb/hr): " + scavenger.getScavengerInjectionRate("lb/hr"));
 
-    System.out.println("H2S removed (kg/hr): " + scavenger.getH2SRemoved("kg/hr"));
-    System.out.println("H2S removed (lb/hr): " + scavenger.getH2SRemoved("lb/hr"));
-    System.out.println("H2S removed (kg/day): " + scavenger.getH2SRemoved("kg/day"));
+    logger.info("H2S removed (kg/hr): " + scavenger.getH2SRemoved("kg/hr"));
+    logger.info("H2S removed (lb/hr): " + scavenger.getH2SRemoved("lb/hr"));
+    logger.info("H2S removed (kg/day): " + scavenger.getH2SRemoved("kg/day"));
 
     // Verify conversion consistency
     double lPerHr = scavenger.getScavengerInjectionRate("l/hr");

@@ -10,11 +10,15 @@ import neqsim.process.mechanicaldesign.pipeline.TopsidePipingMechanicalDesign;
 import neqsim.process.mechanicaldesign.pipeline.TopsidePipingMechanicalDesignCalculator;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test class for TopsidePiping and its mechanical design.
  */
 public class TopsidePipingTest {
+  private static final Logger logger = LogManager.getLogger(TopsidePipingTest.class);
+
   private SystemInterface gasSystem;
   private Stream gasStream;
   private TopsidePiping gasHeader;
@@ -169,13 +173,13 @@ public class TopsidePipingTest {
 
     double supportSpacing = calc.calculateSupportSpacing();
 
-    System.out.println("Support spacing: " + supportSpacing);
-    System.out.println("Moment of inertia: " + calc.calculateMomentOfInertia());
-    System.out.println("Allowable stress: " + calc.getAllowableStress());
+    logger.info("Support spacing: " + supportSpacing);
+    logger.info("Moment of inertia: " + calc.calculateMomentOfInertia());
+    logger.info("Allowable stress: " + calc.getAllowableStress());
 
     // Typical 8" pipe: 3.7-4.5m span, but use ASME simplified method
     double asmeSpacing = calc.calculateSupportSpacingASME();
-    System.out.println("ASME support spacing: " + asmeSpacing);
+    logger.info("ASME support spacing: " + asmeSpacing);
     assertTrue(asmeSpacing > 2.0);
     assertTrue(asmeSpacing < 6.0);
   }

@@ -29,9 +29,10 @@ import org.netlib.util.intW;
  * @version 1.0
  */
 public class GERG2008NH3ValidationTest {
-  private GERG2008NH3 gerg;
-  static Logger logger = LogManager.getLogger(GERG2008NH3ValidationTest.class);
+  private static final Logger logger = LogManager.getLogger(GERG2008NH3ValidationTest.class);
 
+  private GERG2008NH3 gerg;
+  
   /**
    * Set up the GERG-2008-NH3 model before each test.
    */

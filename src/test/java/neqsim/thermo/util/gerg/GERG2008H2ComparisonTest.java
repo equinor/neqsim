@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Comparison test between GERG-2008 and GERG-2008-H2 for hydrogen-containing mixtures.
@@ -17,6 +19,8 @@ import org.netlib.util.intW;
  * </p>
  */
 public class GERG2008H2ComparisonTest {
+  private static final Logger logger = LogManager.getLogger(GERG2008H2ComparisonTest.class);
+
   private GERG2008 gergStandard;
   private GERG2008H2 gergH2;
 
@@ -35,19 +39,19 @@ public class GERG2008H2ComparisonTest {
    */
   @Test
   public void compareCH4H2BinaryDensity() {
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println("COMPARISON: CH4-H2 Binary Mixture Density");
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 80));
+    logger.info("COMPARISON: CH4-H2 Binary Mixture Density");
+    logger.info(StringUtils.repeat("=", 80));
+
 
     double T = 300.0; // K
     double P = 10000.0; // kPa (10 MPa)
 
-    System.out.printf("Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
-    System.out.println();
-    System.out.printf("%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "ρ GERG-2008", "ρ GERG-2008-H2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
+
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "ρ GERG-2008", "ρ GERG-2008-H2",
         "Δρ (mol/L)", "Δρ (%)");
-    System.out.println(StringUtils.repeat("-", 80));
+    logger.info(StringUtils.repeat("-", 80));
 
     double[] h2Fractions = {0.0, 0.05, 0.10, 0.20, 0.30, 0.50, 0.70, 1.0};
 
@@ -67,10 +71,10 @@ public class GERG2008H2ComparisonTest {
       double deltaD = D2.val - D1.val;
       double relDiff = (D1.val != 0) ? (deltaD / D1.val) * 100 : 0;
 
-      System.out.printf("%-10.2f %-15.6f %-15.6f %-15.6f %-15.4f%n", xH2, D1.val, D2.val, deltaD,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-15.6f %-15.6f %-15.6f %-15.4f%n", xH2, D1.val, D2.val, deltaD,
           relDiff);
     }
-    System.out.println();
+
   }
 
   /**
@@ -79,19 +83,19 @@ public class GERG2008H2ComparisonTest {
    */
   @Test
   public void compareN2H2BinaryCompressibility() {
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println("COMPARISON: N2-H2 Binary Mixture Compressibility Factor");
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 80));
+    logger.info("COMPARISON: N2-H2 Binary Mixture Compressibility Factor");
+    logger.info(StringUtils.repeat("=", 80));
+
 
     double T = 300.0; // K
     double P = 20000.0; // kPa (20 MPa)
 
-    System.out.printf("Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
-    System.out.println();
-    System.out.printf("%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "Z GERG-2008", "Z GERG-2008-H2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
+
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "Z GERG-2008", "Z GERG-2008-H2",
         "ΔZ", "ΔZ (%)");
-    System.out.println(StringUtils.repeat("-", 80));
+    logger.info(StringUtils.repeat("-", 80));
 
     double[] h2Fractions = {0.0, 0.10, 0.20, 0.30, 0.50, 0.70, 1.0};
 
@@ -118,10 +122,10 @@ public class GERG2008H2ComparisonTest {
       double deltaZ = Z2.val - Z1.val;
       double relDiff = (Z1.val != 0) ? (deltaZ / Z1.val) * 100 : 0;
 
-      System.out.printf("%-10.2f %-15.6f %-15.6f %-15.6f %-15.4f%n", xH2, Z1.val, Z2.val, deltaZ,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-15.6f %-15.6f %-15.6f %-15.4f%n", xH2, Z1.val, Z2.val, deltaZ,
           relDiff);
     }
-    System.out.println();
+
   }
 
   /**
@@ -129,19 +133,19 @@ public class GERG2008H2ComparisonTest {
    */
   @Test
   public void compareCO2H2BinaryDensity() {
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println("COMPARISON: CO2-H2 Binary Mixture Density");
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 80));
+    logger.info("COMPARISON: CO2-H2 Binary Mixture Density");
+    logger.info(StringUtils.repeat("=", 80));
+
 
     double T = 350.0; // K (higher to avoid CO2 liquid)
     double P = 10000.0; // kPa
 
-    System.out.printf("Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
-    System.out.println();
-    System.out.printf("%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "ρ GERG-2008", "ρ GERG-2008-H2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
+
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "ρ GERG-2008", "ρ GERG-2008-H2",
         "Δρ (mol/L)", "Δρ (%)");
-    System.out.println(StringUtils.repeat("-", 80));
+    logger.info(StringUtils.repeat("-", 80));
 
     double[] h2Fractions = {0.0, 0.10, 0.20, 0.30, 0.50, 0.70, 1.0};
 
@@ -161,10 +165,10 @@ public class GERG2008H2ComparisonTest {
       double deltaD = D2.val - D1.val;
       double relDiff = (D1.val != 0) ? (deltaD / D1.val) * 100 : 0;
 
-      System.out.printf("%-10.2f %-15.6f %-15.6f %-15.6f %-15.4f%n", xH2, D1.val, D2.val, deltaD,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-15.6f %-15.6f %-15.6f %-15.4f%n", xH2, D1.val, D2.val, deltaD,
           relDiff);
     }
-    System.out.println();
+
   }
 
   /**
@@ -172,19 +176,19 @@ public class GERG2008H2ComparisonTest {
    */
   @Test
   public void compareSpeedOfSound() {
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println("COMPARISON: Speed of Sound in CH4-H2 Mixtures");
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 80));
+    logger.info("COMPARISON: Speed of Sound in CH4-H2 Mixtures");
+    logger.info(StringUtils.repeat("=", 80));
+
 
     double T = 300.0; // K
     double P = 5000.0; // kPa
 
-    System.out.printf("Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
-    System.out.println();
-    System.out.printf("%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "W GERG-2008", "W GERG-2008-H2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
+
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "W GERG-2008", "W GERG-2008-H2",
         "ΔW (m/s)", "ΔW (%)");
-    System.out.println(StringUtils.repeat("-", 80));
+    logger.info(StringUtils.repeat("-", 80));
 
     double[] h2Fractions = {0.0, 0.05, 0.10, 0.20, 0.30, 0.50, 1.0};
 
@@ -201,9 +205,9 @@ public class GERG2008H2ComparisonTest {
       double deltaW = W2 - W1;
       double relDiff = (W1 != 0) ? (deltaW / W1) * 100 : 0;
 
-      System.out.printf("%-10.2f %-15.4f %-15.4f %-15.4f %-15.4f%n", xH2, W1, W2, deltaW, relDiff);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-15.4f %-15.4f %-15.4f %-15.4f%n", xH2, W1, W2, deltaW, relDiff);
     }
-    System.out.println();
+
   }
 
   /**
@@ -211,19 +215,19 @@ public class GERG2008H2ComparisonTest {
    */
   @Test
   public void compareHeatCapacities() {
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println("COMPARISON: Heat Capacities (Cp) in CH4-H2 Mixtures");
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 80));
+    logger.info("COMPARISON: Heat Capacities (Cp) in CH4-H2 Mixtures");
+    logger.info(StringUtils.repeat("=", 80));
+
 
     double T = 300.0;
     double P = 10000.0;
 
-    System.out.printf("Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
-    System.out.println();
-    System.out.printf("%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "Cp GERG-2008", "Cp GERG-2008-H2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
+
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-15s %-15s %-15s %-15s%n", "x(H2)", "Cp GERG-2008", "Cp GERG-2008-H2",
         "ΔCp", "ΔCp (%)");
-    System.out.println(StringUtils.repeat("-", 80));
+    logger.info(StringUtils.repeat("-", 80));
 
     double[] h2Fractions = {0.0, 0.10, 0.20, 0.30, 0.50, 1.0};
 
@@ -240,10 +244,10 @@ public class GERG2008H2ComparisonTest {
       double deltaCp = Cp2 - Cp1;
       double relDiff = (Cp1 != 0) ? (deltaCp / Cp1) * 100 : 0;
 
-      System.out.printf("%-10.2f %-15.4f %-15.4f %-15.4f %-15.4f%n", xH2, Cp1, Cp2, deltaCp,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-15.4f %-15.4f %-15.4f %-15.4f%n", xH2, Cp1, Cp2, deltaCp,
           relDiff);
     }
-    System.out.println();
+
   }
 
   /**
@@ -251,10 +255,10 @@ public class GERG2008H2ComparisonTest {
    */
   @Test
   public void comparePressureEffect() {
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println("COMPARISON: Pressure Effect on CH4-H2 (50/50) Mixture Density");
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 80));
+    logger.info("COMPARISON: Pressure Effect on CH4-H2 (50/50) Mixture Density");
+    logger.info(StringUtils.repeat("=", 80));
+
 
     double T = 300.0;
     double xH2 = 0.50;
@@ -263,11 +267,11 @@ public class GERG2008H2ComparisonTest {
     x[1] = 0.50; // Methane
     x[15] = 0.50; // Hydrogen
 
-    System.out.printf("Composition: 50%% CH4, 50%% H2 at T = %.1f K%n", T);
-    System.out.println();
-    System.out.printf("%-15s %-15s %-15s %-15s %-15s%n", "P (MPa)", "ρ GERG-2008", "ρ GERG-2008-H2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Composition: 50%% CH4, 50%% H2 at T = %.1f K%n", T);
+
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %-15s %-15s %-15s %-15s%n", "P (MPa)", "ρ GERG-2008", "ρ GERG-2008-H2",
         "Δρ (mol/L)", "Δρ (%)");
-    System.out.println(StringUtils.repeat("-", 80));
+    logger.info(StringUtils.repeat("-", 80));
 
     double[] pressures = {1000, 2000, 5000, 10000, 20000, 30000, 50000}; // kPa
 
@@ -283,10 +287,10 @@ public class GERG2008H2ComparisonTest {
       double deltaD = D2.val - D1.val;
       double relDiff = (D1.val != 0) ? (deltaD / D1.val) * 100 : 0;
 
-      System.out.printf("%-15.1f %-15.6f %-15.6f %-15.6f %-15.4f%n", P / 1000.0, D1.val, D2.val,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-15.1f %-15.6f %-15.6f %-15.6f %-15.4f%n", P / 1000.0, D1.val, D2.val,
           deltaD, relDiff);
     }
-    System.out.println();
+
   }
 
   /**
@@ -294,10 +298,10 @@ public class GERG2008H2ComparisonTest {
    */
   @Test
   public void compareTemperatureEffect() {
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println("COMPARISON: Temperature Effect on Hydrogen-Rich Natural Gas");
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 80));
+    logger.info("COMPARISON: Temperature Effect on Hydrogen-Rich Natural Gas");
+    logger.info(StringUtils.repeat("=", 80));
+
 
     double P = 10000.0; // kPa
 
@@ -312,10 +316,10 @@ public class GERG2008H2ComparisonTest {
 
     System.out
         .println("Composition: 70% CH4, 2% N2, 1% CO2, 5% C2H6, 2% C3H8, 20% H2 at P = 10 MPa");
-    System.out.println();
-    System.out.printf("%-15s %-15s %-15s %-15s %-15s%n", "T (K)", "ρ GERG-2008", "ρ GERG-2008-H2",
+
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %-15s %-15s %-15s %-15s%n", "T (K)", "ρ GERG-2008", "ρ GERG-2008-H2",
         "Δρ (mol/L)", "Δρ (%)");
-    System.out.println(StringUtils.repeat("-", 80));
+    logger.info(StringUtils.repeat("-", 80));
 
     double[] temperatures = {200, 250, 300, 350, 400, 450, 500};
 
@@ -331,10 +335,10 @@ public class GERG2008H2ComparisonTest {
       double deltaD = D2.val - D1.val;
       double relDiff = (D1.val != 0) ? (deltaD / D1.val) * 100 : 0;
 
-      System.out.printf("%-15.1f %-15.6f %-15.6f %-15.6f %-15.4f%n", T, D1.val, D2.val, deltaD,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-15.1f %-15.6f %-15.6f %-15.6f %-15.4f%n", T, D1.val, D2.val, deltaD,
           relDiff);
     }
-    System.out.println();
+
   }
 
   /**
@@ -342,19 +346,19 @@ public class GERG2008H2ComparisonTest {
    */
   @Test
   public void compareJouleThomson() {
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println("COMPARISON: Joule-Thomson Coefficient in CH4-H2 Mixtures");
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 80));
+    logger.info("COMPARISON: Joule-Thomson Coefficient in CH4-H2 Mixtures");
+    logger.info(StringUtils.repeat("=", 80));
+
 
     double T = 300.0;
     double P = 10000.0;
 
-    System.out.printf("Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
-    System.out.println();
-    System.out.printf("%-10s %-18s %-18s %-18s%n", "x(H2)", "JT GERG-2008", "JT GERG-2008-H2",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Conditions: T = %.1f K, P = %.1f kPa (%.1f MPa)%n", T, P, P / 1000.0);
+
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-18s %-18s %-18s%n", "x(H2)", "JT GERG-2008", "JT GERG-2008-H2",
         "ΔJT (%)");
-    System.out.println(StringUtils.repeat("-", 80));
+    logger.info(StringUtils.repeat("-", 80));
 
     double[] h2Fractions = {0.0, 0.10, 0.20, 0.30, 0.50, 1.0};
 
@@ -370,12 +374,12 @@ public class GERG2008H2ComparisonTest {
       double JT2 = props2[2];
       double relDiff = (JT1 != 0) ? ((JT2 - JT1) / Math.abs(JT1)) * 100 : 0;
 
-      System.out.printf("%-10.2f %-18.6e %-18.6e %-18.4f%n", xH2, JT1, JT2, relDiff);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-10.2f %-18.6e %-18.6e %-18.4f%n", xH2, JT1, JT2, relDiff);
     }
-    System.out.println();
-    System.out.println("Note: Negative JT coefficient indicates inverse Joule-Thomson effect");
-    System.out.println("(cooling upon expansion), which is characteristic of hydrogen.");
-    System.out.println();
+
+    logger.info("Note: Negative JT coefficient indicates inverse Joule-Thomson effect");
+    logger.info("(cooling upon expansion), which is characteristic of hydrogen.");
+
   }
 
   /**
@@ -383,10 +387,10 @@ public class GERG2008H2ComparisonTest {
    */
   @Test
   public void summarizeDeviations() {
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println("SUMMARY: Maximum Deviations Between GERG-2008 and GERG-2008-H2");
-    System.out.println(StringUtils.repeat("=", 80));
-    System.out.println();
+    logger.info(StringUtils.repeat("=", 80));
+    logger.info("SUMMARY: Maximum Deviations Between GERG-2008 and GERG-2008-H2");
+    logger.info(StringUtils.repeat("=", 80));
+
 
     double T = 300.0;
     double P = 10000.0;
@@ -396,10 +400,10 @@ public class GERG2008H2ComparisonTest {
     int[][] components = {{1, 15}, {2, 15}, {3, 15}, {4, 15}};
     double[] temps = {300, 300, 350, 300};
 
-    System.out.println("Binary System Analysis at P = 10 MPa, x(H2) = 0.50");
-    System.out.println();
-    System.out.printf("%-20s %-15s %-15s %-15s%n", "System", "Δρ (%)", "ΔZ (%)", "ΔW (%)");
-    System.out.println(StringUtils.repeat("-", 65));
+    logger.info("Binary System Analysis at P = 10 MPa, x(H2) = 0.50");
+
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-20s %-15s %-15s %-15s%n", "System", "Δρ (%)", "ΔZ (%)", "ΔW (%)");
+    logger.info(StringUtils.repeat("-", 65));
 
     for (int s = 0; s < systems.length; s++) {
       double[] x = new double[22];
@@ -422,18 +426,18 @@ public class GERG2008H2ComparisonTest {
       double relDiffZ = (props1[3] != 0) ? ((props2[3] - props1[3]) / props1[3]) * 100 : 0;
       double relDiffW = (props1[0] != 0) ? ((props2[0] - props1[0]) / props1[0]) * 100 : 0;
 
-      System.out.printf("%-20s %-15.4f %-15.4f %-15.4f%n", systems[s], relDiffD, relDiffZ,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-20s %-15.4f %-15.4f %-15.4f%n", systems[s], relDiffD, relDiffZ,
           relDiffW);
     }
 
-    System.out.println();
-    System.out.println("Key Observations:");
-    System.out.println(
+
+    logger.info("Key Observations:");
+    logger.info(
         "1. Differences are most significant for CO2-H2 and N2-H2 due to new departure functions");
     System.out
         .println("2. CH4-H2 shows smaller differences as it already had a departure function");
-    System.out.println("3. Differences increase with hydrogen content and pressure");
-    System.out.println();
+    logger.info("3. Differences increase with hydrogen content and pressure");
+
   }
 
   /**

@@ -8,8 +8,12 @@ import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class VegaTest {
+  private static final Logger logger = LogManager.getLogger(VegaTest.class);
+
   private Vega Vega;
 
   @BeforeEach
@@ -245,15 +249,15 @@ public class VegaTest {
     compressor_Schultz.run();
 
     /*
-     * System.out.println("Density before compressor " + Vegafluid.getDensity("kg/m3"));
-     * System.out.println("-----------------Normal-----------------"); System.out.println(
+     * logger.info("Density before compressor " + Vegafluid.getDensity("kg/m3"));
+     * logger.info("-----------------Normal-----------------"); logger.info(
      * "Temperature out of Compr." + compressor_Vega.getOutletStream().getTemperature("C"));
-     * System.out.println("Power out of Compr." + compressor_Vega.getPower("MW")); System.out
+     * logger.info("Power out of Compr." + compressor_Vega.getPower("MW")); System.out
      * .println("Polytropic Head out of Compr." + compressor_Vega.getPolytropicHead("kJ/kg"));
      *
-     * System.out.println("-----------------Schultz-----------------"); System.out.println(
+     * logger.info("-----------------Schultz-----------------"); logger.info(
      * "Temperature out of Compr." + compressor_Schultz.getOutletStream().getTemperature("C"));
-     * System.out.println("Power out of Compr." + compressor_Schultz.getPower("MW")); System.out
+     * logger.info("Power out of Compr." + compressor_Schultz.getPower("MW")); System.out
      * .println("Polytropic Head out of Compr." + compressor_Schultz.getPolytropicHead("kJ/kg"));
      */
   }

@@ -10,6 +10,8 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Analysis tests for Newton solver improvements.
@@ -23,6 +25,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 class NewtonSolverAnalysisTest {
+  private static final Logger logger = LogManager.getLogger(NewtonSolverAnalysisTest.class);
+
 
   /**
    * Benchmark JAMA vs EJML dense linear solve (Ax = b) for typical flash sizes.
@@ -39,9 +43,8 @@ class NewtonSolverAnalysisTest {
     int N = 20000;
     Random rng = new Random(42);
 
-    System.out.println("=== JAMA vs EJML Dense Linear Solve Benchmark ===");
-    System.out.println(
-        String.format("%-6s %-12s %-12s %-10s", "Size", "JAMA(ns)", "EJML(ns)", "Speedup"));
+    logger.info("=== JAMA vs EJML Dense Linear Solve Benchmark ===");
+    logger.info(String.format("%-6s %-12s %-12s %-10s", "Size", "JAMA(ns)", "EJML(ns)", "Speedup"));
 
     for (int n : sizes) {
       // Create random SPD matrix (typical Jacobian is SPD)
@@ -97,17 +100,17 @@ class NewtonSolverAnalysisTest {
       double ejmlPerCall = (double) ejmlTime / N;
       double speedup = jamaPerCall / ejmlPerCall;
 
-      System.out.println(
+      logger.info(
           String.format("%-6d %-12.0f %-12.0f %-10.2fx", n, jamaPerCall, ejmlPerCall, speedup));
 
       // Just verify both return reasonable values
       assertTrue(jamaPerCall > 0);
       assertTrue(ejmlPerCall > 0);
     }
-    System.out.println();
+
 
     // Also benchmark EJML with in-place solve (no copy)
-    System.out.println("=== EJML In-Place vs Copy Solve ===");
+    logger.info("=== EJML In-Place vs Copy Solve ===");
     for (int n : new int[] {10, 20}) {
       double[][] aData = new double[n][n];
       double[] bData = new double[n];
@@ -146,7 +149,7 @@ class NewtonSolverAnalysisTest {
       System.out
           .println(String.format("n=%d EJML pre-alloc copy: %.0f ns/call", n, (double) time / N));
     }
-    System.out.println();
+
   }
 
   /**
@@ -189,17 +192,17 @@ class NewtonSolverAnalysisTest {
     double compDerivCost = init3us - init2us;
     double wastedPercent = tpDerivCost / init3us * 100;
 
-    System.out.println("=== Init Level Cost Breakdown (10-comp SRK) ===");
-    System.out.println(String.format("init(1) fugacities:       %6.1f us", init1us));
-    System.out.println(
+    logger.info("=== Init Level Cost Breakdown (10-comp SRK) ===");
+    logger.info(String.format("init(1) fugacities:       %6.1f us", init1us));
+    logger.info(
         String.format("init(2) + T,P derivs:    %6.1f us (delta: +%.1f us)", init2us, tpDerivCost));
-    System.out.println(String.format("init(3) + comp derivs:   %6.1f us (delta: +%.1f us)", init3us,
+    logger.info(String.format("init(3) + comp derivs:   %6.1f us (delta: +%.1f us)", init3us,
         compDerivCost));
-    System.out.println(String.format("T,P derivative cost:     %6.1f us (%.1f%% of init(3))",
-        tpDerivCost, wastedPercent));
-    System.out.println(
-        String.format("Wasted per Newton iter:  %6.1f us (logfugcoefdT + dP)", tpDerivCost));
-    System.out.println();
+    logger.info(String.format("T,P derivative cost:     %6.1f us (%.1f%% of init(3))", tpDerivCost,
+        wastedPercent));
+    logger
+        .info(String.format("Wasted per Newton iter:  %6.1f us (logfugcoefdT + dP)", tpDerivCost));
+
 
     // T/P derivatives should be a measurable fraction of init(3)
     assertTrue(tpDerivCost >= 0, "T,P derivative cost should be non-negative");
@@ -231,11 +234,11 @@ class NewtonSolverAnalysisTest {
     }
     long perPhaseTime = System.nanoTime() - start;
 
-    System.out.println("=== init(3) All-at-once vs Per-phase ===");
-    System.out.println(String.format("init(3) all:     %6.1f us", allTime / 1000.0 / N));
-    System.out.println(String.format("init(3,0)+init(3,1): %6.1f us", perPhaseTime / 1000.0 / N));
-    System.out.println(String.format("Ratio: %.2f", (double) perPhaseTime / allTime));
-    System.out.println();
+    logger.info("=== init(3) All-at-once vs Per-phase ===");
+    logger.info(String.format("init(3) all:     %6.1f us", allTime / 1000.0 / N));
+    logger.info(String.format("init(3,0)+init(3,1): %6.1f us", perPhaseTime / 1000.0 / N));
+    logger.info(String.format("Ratio: %.2f", (double) perPhaseTime / allTime));
+
   }
 
   /**
@@ -247,7 +250,7 @@ class NewtonSolverAnalysisTest {
     int warmup = 20;
 
     // Measure a single SS step vs Newton step on a 10-comp two-phase system
-    System.out.println("=== Newton vs SS Iteration Cost (10-comp, two-phase) ===");
+    logger.info("=== Newton vs SS Iteration Cost (10-comp, two-phase) ===");
 
     // First establish a converged two-phase state
     SystemInterface sys = createMediumGas();
@@ -295,10 +298,10 @@ class NewtonSolverAnalysisTest {
 
     double ssUs = totalSS / 1000.0 / N;
     double newtonUs = totalNewton / 1000.0 / N;
-    System.out.println(String.format("SS step (init(1) x2):    %8.1f us", ssUs));
-    System.out.println(String.format("Newton step (init(3) + solve): %8.1f us", newtonUs));
-    System.out.println(String.format("Newton/SS ratio:         %8.1fx", newtonUs / ssUs));
-    System.out.println();
+    logger.info(String.format("SS step (init(1) x2):    %8.1f us", ssUs));
+    logger.info(String.format("Newton step (init(3) + solve): %8.1f us", newtonUs));
+    logger.info(String.format("Newton/SS ratio:         %8.1fx", newtonUs / ssUs));
+
   }
 
   /**
@@ -364,11 +367,11 @@ class NewtonSolverAnalysisTest {
     }
     long ejmlTime = System.nanoTime() - start;
 
-    System.out.println("=== Allocation Overhead (n=10, " + N + " solves) ===");
-    System.out.println(String.format("JAMA (new alloc each): %.0f ns/call", (double) jamaTime / N));
-    System.out.println(String.format("EJML (pre-allocated):  %.0f ns/call", (double) ejmlTime / N));
-    System.out.println(String.format("Speedup:               %.2fx", (double) jamaTime / ejmlTime));
-    System.out.println();
+    logger.info("=== Allocation Overhead (n=10, " + N + " solves) ===");
+    logger.info(String.format("JAMA (new alloc each): %.0f ns/call", (double) jamaTime / N));
+    logger.info(String.format("EJML (pre-allocated):  %.0f ns/call", (double) ejmlTime / N));
+    logger.info(String.format("Speedup:               %.2fx", (double) jamaTime / ejmlTime));
+
   }
 
   /**

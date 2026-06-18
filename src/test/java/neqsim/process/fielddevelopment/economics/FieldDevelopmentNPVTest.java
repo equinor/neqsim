@@ -11,6 +11,8 @@ import neqsim.process.fielddevelopment.economics.CashFlowEngine.CashFlowResult;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Field development NPV calculation test.
@@ -27,6 +29,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class FieldDevelopmentNPVTest {
+  private static final Logger logger = LogManager.getLogger(FieldDevelopmentNPVTest.class);
+
 
   // ============================================================================
   // TECHNICAL PARAMETERS (from notebook)
@@ -154,7 +158,7 @@ class FieldDevelopmentNPVTest {
     double[] totalProducedOe = new double[25];
     int productionYears = 0;
 
-    System.out.println("=== Production Profile ===");
+    logger.info("=== Production Profile ===");
     boolean inDecline = false;
     double currentMaxRate = MAX_GAS_PRODUCTION;
 
@@ -200,7 +204,7 @@ class FieldDevelopmentNPVTest {
       yearlyGasProductionGSm3[t] = gasProductionMSm3Day[t] / 1e3 * 365.0 * PRODUCTION_EFFICIENCY;
       productionYears = t + 1;
 
-      System.out.println(String.format(
+      logger.info(String.format(
           "Year %2d: Pres=%.1f bara, Qgas=%.2f MSm3/d, Yearly=%.2f GSm3, P_out=%.2f bara, StreamQ=%.2f",
           t, reservoirPressureBara[t], gasProductionMSm3Day[t], yearlyGasProductionGSm3[t],
           pipeline2.getOutletStream().getPressure("bara"),
@@ -283,31 +287,31 @@ class FieldDevelopmentNPVTest {
         "Total revenue should be > 1000 MNOK, got: " + result.getTotalRevenue());
 
     // Print summary for inspection
-    System.out.println("=== Field Development NPV Results ===");
-    System.out.println(String.format("Gas in Place: %.1f GSm3", GIP));
-    System.out.println(String.format("Production years: %d", productionYears));
-    System.out.println(
-        String.format("Total produced: %.1f MSm3 oe", totalProducedOe[productionYears - 1]));
-    System.out.println(String.format("Recovery rate: %.1f %%",
+    logger.info("=== Field Development NPV Results ===");
+    logger.info(String.format("Gas in Place: %.1f GSm3", GIP));
+    logger.info(String.format("Production years: %d", productionYears));
+    logger
+        .info(String.format("Total produced: %.1f MSm3 oe", totalProducedOe[productionYears - 1]));
+    logger.info(String.format("Recovery rate: %.1f %%",
         totalProducedOe[productionYears - 1] / GIP / 1e3 * 100.0));
-    System.out.println();
-    System.out.println(String.format("Total CAPEX: %.0f MNOK", result.getTotalCapex()));
-    System.out.println(String.format("Total Revenue: %.0f MNOK", result.getTotalRevenue()));
-    System.out.println(String.format("Total Tax: %.0f MNOK", result.getTotalTax()));
+
+    logger.info(String.format("Total CAPEX: %.0f MNOK", result.getTotalCapex()));
+    logger.info(String.format("Total Revenue: %.0f MNOK", result.getTotalRevenue()));
+    logger.info(String.format("Total Tax: %.0f MNOK", result.getTotalTax()));
     System.out
         .println(String.format("NPV @ %.0f%%: %.0f MNOK", DISCOUNT_RATE * 100, result.getNpv()));
-    System.out.println(String.format("IRR: %.1f%%", result.getIrr() * 100));
+    logger.info(String.format("IRR: %.1f%%", result.getIrr() * 100));
     if (!Double.isNaN(result.getPaybackYears())) {
-      System.out.println(String.format("Payback: %.0f years", result.getPaybackYears()));
+      logger.info(String.format("Payback: %.0f years", result.getPaybackYears()));
     }
 
     // Print year-by-year
-    System.out.println();
-    System.out.println(result.toMarkdownTable());
+
+    logger.info(result.toMarkdownTable());
 
     // Breakeven gas price
     double breakevenGasPrice = engine.calculateBreakevenGasPrice(DISCOUNT_RATE);
-    System.out.println(String.format("Breakeven gas price: %.4f NOK/Sm3", breakevenGasPrice));
+    logger.info(String.format("Breakeven gas price: %.4f NOK/Sm3", breakevenGasPrice));
     assertTrue(breakevenGasPrice > 0 && breakevenGasPrice < GAS_PRICE_NOK_PER_SM3,
         "Breakeven price should be between 0 and gas price, got: " + breakevenGasPrice);
   }
@@ -348,13 +352,13 @@ class FieldDevelopmentNPVTest {
     assertEquals(12299.0, result.getTotalCapex(), 1.0);
 
     // NPV should be positive for this profitable gas field
-    System.out.println("Simplified NPV: " + result.getNpv());
+    logger.info("Simplified NPV: " + result.getNpv());
     assertTrue(result.getTotalRevenue() > result.getTotalCapex(),
         "Revenue should exceed CAPEX for this field");
 
     // Print results
-    System.out.println("=== Simplified NPV Test ===");
-    System.out.println(result.getSummary());
+    logger.info("=== Simplified NPV Test ===");
+    logger.info(result.getSummary());
   }
 
   /**
@@ -441,14 +445,14 @@ class FieldDevelopmentNPVTest {
       npvAfterTax += cashFlowAT * discountFactor;
     }
 
-    System.out.println("=== Direct NPV Calculation ===");
-    System.out.println(
+    logger.info("=== Direct NPV Calculation ===");
+    logger.info(
         String.format("Total Revenue: %.0f MNOK (%.2f GNOK)", totalRevenue, totalRevenue / 1e3));
     System.out
         .println(String.format("Total CAPEX: %.0f MNOK (%.2f GNOK)", totalCapex, totalCapex / 1e3));
-    System.out.println(
+    logger.info(
         String.format("NPV before tax: %.0f MNOK (%.2f GNOK)", npvBeforeTax, npvBeforeTax / 1e3));
-    System.out.println(
+    logger.info(
         String.format("NPV after tax: %.0f MNOK (%.2f GNOK)", npvAfterTax, npvAfterTax / 1e3));
 
     // Assertions

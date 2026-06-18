@@ -2,12 +2,16 @@ package neqsim.thermo.phase;
 
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Simple benchmark comparing Math.pow implementations with explicit multiplications for selected
  * expressions.
  */
 public class PhasePowBenchmarkTest {
+  private static final Logger logger = LogManager.getLogger(PhasePowBenchmarkTest.class);
+
   private static double calcLngVV_old(double t, double b) {
     return 2.0
         * (640.0 * Math.pow(t, 3.0) - 216.0 * b * t * t + 24.0 * Math.pow(b, 2.0) * t
@@ -71,8 +75,8 @@ public class PhasePowBenchmarkTest {
       res += calcLngVVV_new(t, b);
     }
     long end = System.nanoTime();
-    // System.out.println("old implementation: " + (mid - start));
-    // System.out.println("new implementation: " + (end - mid));
+    // logger.info("old implementation: " + (mid - start));
+    // logger.info("new implementation: " + (end - mid));
     assertNotEquals(0.0, res);
   }
 }

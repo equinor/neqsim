@@ -19,9 +19,10 @@ import org.netlib.util.intW;
  * </p>
  */
 public class GERG2008H2Test {
-  private GERG2008H2 gerg;
-  static Logger logger = LogManager.getLogger(GERG2008H2Test.class);
+  private static final Logger logger = LogManager.getLogger(GERG2008H2Test.class);
 
+  private GERG2008H2 gerg;
+  
   @BeforeEach
   public void setUp() {
     gerg = new GERG2008H2();

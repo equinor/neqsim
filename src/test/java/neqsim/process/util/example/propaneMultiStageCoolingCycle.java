@@ -6,6 +6,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -17,6 +19,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class propaneMultiStageCoolingCycle {
+  private static final Logger logger = LogManager.getLogger(propaneMultiStageCoolingCycle.class);
+
   /**
    * <p>
    * main.
@@ -152,10 +156,10 @@ public class propaneMultiStageCoolingCycle {
 
     /*
      * heatEx1.getOutStream(0).displayResult(); heatEx1.getInStream(1).displayResult();
-     * heatEx1.getOutStream(1).displayResult(); System.out.println("heatex duty " +
-     * heatEx1.getDuty()); heatEx2.run(); heatEx2.getOutStream(0).displayResult();
+     * heatEx1.getOutStream(1).displayResult(); logger.info("heatex duty " + heatEx1.getDuty());
+     * heatEx2.run(); heatEx2.getOutStream(0).displayResult();
      * heatEx2.getInStream(1).displayResult(); heatEx2.getOutStream(1).displayResult();
-     * System.out.println("heatex duty " + heatEx2.getDuty());
+     * logger.info("heatex duty " + heatEx2.getDuty());
      */
     // stream_3.displayResult();
     // compressor1.displayResult();
@@ -164,13 +168,13 @@ public class propaneMultiStageCoolingCycle {
     // compressor1.displayResult();
     // stream_2.displayResult();
     // operations.displayResult();
-    // System.out.println("compressor work" + compressor1.getEnergy()/1.0e3 + "
+    // logger.info("compressor work" + compressor1.getEnergy()/1.0e3 + "
     // kW");
-    // System.out.println("compressor isentropic ef " +
+    // logger.info("compressor isentropic ef " +
     // compressor1.getIsentropicEfficiency());
-    // System.out.println("cooler duty " + cooler.getEnergyInput()/1.0e3 + " kW");
-    // System.out.println("cooler2 duty " + cooler2.getEnergyInput()/1.0e3 + " kW");
-    // System.out.println("cooler3 duty " + cooler3.getEnergyInput()/1.0e3 + " kW");
-    // System.out.println("heater duty " + heater.getEnergyInput());
+    // logger.info("cooler duty " + cooler.getEnergyInput()/1.0e3 + " kW");
+    // logger.info("cooler2 duty " + cooler2.getEnergyInput()/1.0e3 + " kW");
+    // logger.info("cooler3 duty " + cooler3.getEnergyInput()/1.0e3 + " kW");
+    // logger.info("heater duty " + heater.getEnergyInput());
   }
 }

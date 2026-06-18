@@ -5,6 +5,8 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -16,6 +18,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class OsmoticCoefficient_1 {
+  private static final Logger logger = LogManager.getLogger(OsmoticCoefficient_1.class);
+
   /**
    * <p>
    * main.
@@ -50,7 +54,7 @@ public class OsmoticCoefficient_1 {
     testSystem.setMixingRule(7);
     testSystem.init(0);
     testSystem.init(3);
-    // // System.out.println("volume " + testSystem.getPhase(1).getMolarVolume());
+    // // logger.info("volume " + testSystem.getPhase(1).getMolarVolume());
     // double meanact2 = testSystem.getPhase(1).getActivityCoefficient(2);
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -66,9 +70,9 @@ public class OsmoticCoefficient_1 {
     double meanact2 = testSystem.getPhase(1).getActivityCoefficient(4, 1);
     // testSystem.getPhase(1).getActivityCoefficient(3);
     // testSystem.getPhase(1).getActivityCoefficient(3);
-    // System.out.println("mean ionic activity: " + meanact);
-    // System.out.println("Na+ ionic activity: " + meanact2);
-    // System.out.println("osmotic coefficient: " + osmCoef);
+    // logger.info("mean ionic activity: " + meanact);
+    // logger.info("Na+ ionic activity: " + meanact2);
+    // logger.info("osmotic coefficient: " + osmCoef);
 
     // thermo.ThermodynamicModelTest testModel = new
     // thermo.ThermodynamicModelTest(testSystem);

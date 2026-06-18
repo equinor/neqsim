@@ -4,12 +4,16 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Decomposes TPflash+stability cost into isolated sub-phases to find speedup opportunities. Each
  * scenario is run as a fresh clone so allocation costs are included.
  */
 public class StabilityProfileTest {
+  private static final Logger logger = LogManager.getLogger(StabilityProfileTest.class);
+
 
   private SystemInterface makeHeavyFluid() {
     SystemInterface f = new SystemSrkEos(298.0, 80.0);
@@ -66,9 +70,9 @@ public class StabilityProfileTest {
         new SystemInterface[] {makeLightFluid(), makeHeavyFluid(), makeWetGas()};
     String[] caseNames = new String[] {"Light 5c gas (1ph)", "Heavy 13c gas", "Wet gas 2ph"};
 
-    System.out.printf("%n%-22s %12s %12s %12s %12s %12s%n", "case", "flash_noStab", "flash_stab",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%n%-22s %12s %12s %12s %12s %12s%n", "case", "flash_noStab", "flash_stab",
         "stab_delta", "stab_only", "multiPh+stab");
-    System.out.println(
+    logger.info(
         "--------------------------------------------------------------------------------------");
 
     for (int c = 0; c < cases.length; c++) {
@@ -141,9 +145,9 @@ public class StabilityProfileTest {
         e = (System.nanoTime() - t0) / (double) ITERS / 1e6;
       }
 
-      System.out.printf("%-22s %12.3f %12.3f %12.3f %12.3f %12.3f%n", caseNames[c], a, b, (b - a),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-22s %12.3f %12.3f %12.3f %12.3f %12.3f%n", caseNames[c], a, b, (b - a),
           d, e);
     }
-    System.out.println();
+
   }
 }

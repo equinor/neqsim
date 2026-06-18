@@ -12,6 +12,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for OnePhasePipeLine transient compositional tracking.
@@ -24,6 +26,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 public class OnePhasePipeLineCompositionalTest {
+  private static final Logger logger = LogManager.getLogger(OnePhasePipeLineCompositionalTest.class);
+
   private SystemInterface naturalGas;
   private SystemInterface nitrogen;
 
@@ -254,20 +258,20 @@ public class OnePhasePipeLineCompositionalTest {
   @Test
   @DisplayName("Advection scheme properties should be accessible")
   void testAdvectionSchemeProperties() {
-    System.out.println("=== Advection Scheme Selection for Gas Switching ===\n");
+    logger.info("=== Advection Scheme Selection for Gas Switching ===\n");
 
-    System.out.println("Scheme                  | Order | Max CFL | Dispersion Reduction");
-    System.out.println("------------------------|-------|---------|---------------------");
+    logger.info("Scheme                  | Order | Max CFL | Dispersion Reduction");
+    logger.info("------------------------|-------|---------|---------------------");
 
     for (AdvectionScheme scheme : AdvectionScheme.values()) {
-      System.out.printf("%-23s | %5d | %7.1f | %dx%n", scheme.getDisplayName(), scheme.getOrder(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-23s | %5d | %7.1f | %dx%n", scheme.getDisplayName(), scheme.getOrder(),
           scheme.getMaxCFL(), Math.round(1.0 / scheme.getDispersionReductionFactor()));
     }
 
-    System.out.println();
-    System.out.println("RECOMMENDATION for gas switching:");
-    System.out.println("  - TVD_VAN_LEER: Best balance of accuracy and stability");
-    System.out.println("  - TVD_SUPERBEE: Sharpest fronts, use for critical tracking");
-    System.out.println("  - FIRST_ORDER_UPWIND: Use only for coarse/quick estimates");
+
+    logger.info("RECOMMENDATION for gas switching:");
+    logger.info("  - TVD_VAN_LEER: Best balance of accuracy and stability");
+    logger.info("  - TVD_SUPERBEE: Sharpest fronts, use for critical tracking");
+    logger.info("  - FIRST_ORDER_UPWIND: Use only for coarse/quick estimates");
   }
 }

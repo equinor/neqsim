@@ -11,8 +11,12 @@ import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import neqsim.blackoil.io.EclipseBlackOilImporter;
+// import org.apache.logging.log4j.LogManager;
+// import org.apache.logging.log4j.Logger;
 
 class SystemBlackOilTest {
+  // private static final Logger logger = LogManager.getLogger(SystemBlackOilTest.class);
+
   private static String sampleDeck() {
     return String.join("\n",
         Arrays.asList("UNITS  METRIC", "", "DENSITY", "  800.0   1000.0   1.2  /", "", "PVTO",
@@ -53,15 +57,15 @@ class SystemBlackOilTest {
     BlackOilFlashResult result = sys.flash();
 
     assertNotNull(result);
-    // System.out.println("Oil density: " + sys.getOilDensity());
-    // System.out.println("Gas density: " + sys.getGasDensity());
-    // System.out.println("Water density: " + sys.getWaterDensity());
-    // System.out.println("Oil reservoir volume: " + sys.getOilReservoirVolume());
-    // System.out.println("Gas reservoir volume: " + sys.getGasReservoirVolume());
-    // System.out.println("Water reservoir volume: " + sys.getWaterReservoirVolume());
-    // System.out.println("Oil viscosity: " + sys.getOilViscosity());
-    // System.out.println("Gas viscosity: " + sys.getGasViscosity());
-    // System.out.println("Water viscosity: " + sys.getWaterViscosity());
+    // logger.info("Oil density: " + sys.getOilDensity());
+    // logger.info("Gas density: " + sys.getGasDensity());
+    // logger.info("Water density: " + sys.getWaterDensity());
+    // logger.info("Oil reservoir volume: " + sys.getOilReservoirVolume());
+    // logger.info("Gas reservoir volume: " + sys.getGasReservoirVolume());
+    // logger.info("Water reservoir volume: " + sys.getWaterReservoirVolume());
+    // logger.info("Oil viscosity: " + sys.getOilViscosity());
+    // logger.info("Gas viscosity: " + sys.getGasViscosity());
+    // logger.info("Water viscosity: " + sys.getWaterViscosity());
 
     assertTrue(sys.getOilDensity() > 0.0, "Oil density should be positive");
     assertTrue(sys.getGasDensity() > 0.0, "Gas density should be positive");

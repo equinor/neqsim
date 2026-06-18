@@ -17,6 +17,8 @@ import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -28,6 +30,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TEGdehydrationProcessDistillation {
+  private static final Logger logger = LogManager.getLogger(TEGdehydrationProcessDistillation.class);
+
   /**
    * <p>
    * main.
@@ -249,12 +253,12 @@ public class TEGdehydrationProcessDistillation {
         .println("water in wet gas  " + ((Stream) operations.getUnit("water saturated feed gas"))
             .getFluid().getPhase(0).getComponent("water").getz() * 1.0e6 * 0.01802
             * ThermodynamicConstantsInterface.atm / (ThermodynamicConstantsInterface.R * 288.15));
-    System.out.println("water in dry gas  " + ((Stream) operations.getUnit("dry gas from absorber"))
+    logger.info("water in dry gas  " + ((Stream) operations.getUnit("dry gas from absorber"))
         .getFluid().getPhase(0).getComponent("water").getz() * 1.0e6);
-    System.out.println("reboiler duty (KW) "
+    logger.info("reboiler duty (KW) "
         + ((Reboiler) ((DistillationColumn) operations.getUnit("TEG regeneration column"))
             .getReboiler()).getDuty() / 1.0e3);
-    System.out.println("wt lean TEG " + ((WaterStripperColumn) operations.getUnit("TEG stripper"))
+    logger.info("wt lean TEG " + ((WaterStripperColumn) operations.getUnit("TEG stripper"))
         .getSolventOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG") * 100.0);
 
     double waterInWetGasppm =
@@ -268,58 +272,58 @@ public class TEGdehydrationProcessDistillation {
     double waterInDryGaskgMSm3 = waterInDehydratedGasppm * 0.01802
         * ThermodynamicConstantsInterface.atm / (ThermodynamicConstantsInterface.R * 288.15);
     double richTEG2 = richTEG.getFluid().getPhase("aqueous").getWtFrac("TEG");
-    System.out.println("reboiler duty (KW) " + ((Reboiler) column.getReboiler()).getDuty() / 1.0e3);
-    System.out.println("flow rate from reboiler "
+    logger.info("reboiler duty (KW) " + ((Reboiler) column.getReboiler()).getDuty() / 1.0e3);
+    logger.info("flow rate from reboiler "
         + ((Reboiler) column.getReboiler()).getLiquidOutStream().getFlowRate("kg/hr"));
-    System.out.println(
+    logger.info(
         "flow rate from stripping column " + stripper.getLiquidOutStream().getFlowRate("kg/hr"));
-    System.out.println("flow rate from pump2  "
+    logger.info("flow rate from pump2  "
         + hotLeanTEGPump2.getOutletStream().getFluid().getFlowRate("kg/hr"));
-    System.out.println("makeup TEG  " + makeupTEG.getFluid().getFlowRate("kg/hr"));
+    logger.info("makeup TEG  " + makeupTEG.getFluid().getFlowRate("kg/hr"));
 
     TEGFeed.getFluid().display();
     absorber.run();
 
-    System.out.println("pump power " + hotLeanTEGPump.getDuty());
-    System.out.println("pump2 power " + hotLeanTEGPump2.getDuty());
-    System.out.println("wt lean TEG after reboiler "
+    logger.info("pump power " + hotLeanTEGPump.getDuty());
+    logger.info("pump2 power " + hotLeanTEGPump2.getDuty());
+    logger.info("wt lean TEG after reboiler "
         + column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
-    System.out.println(
+    logger.info(
         "temperature from pump " + (hotLeanTEGPump2.getOutletStream().getTemperature() - 273.15));
 
-    System.out.println("flow rate from reboiler "
+    logger.info("flow rate from reboiler "
         + ((Reboiler) column.getReboiler()).getLiquidOutStream().getFlowRate("kg/hr"));
-    System.out.println("flow rate from pump2  "
+    logger.info("flow rate from pump2  "
         + hotLeanTEGPump2.getOutletStream().getFluid().getFlowRate("kg/hr"));
-    System.out.println("flow rate to flare  " + gasToFlare.getFluid().getFlowRate("kg/hr"));
+    logger.info("flow rate to flare  " + gasToFlare.getFluid().getFlowRate("kg/hr"));
 
-    System.out.println("condenser duty  "
+    logger.info("condenser duty  "
         + ((Condenser) ((DistillationColumn) operations.getUnit("TEG regeneration column"))
             .getCondenser()).getDuty() / 1.0e3);
-    System.out.println("richGLycolHeaterCondenser duty  "
+    logger.info("richGLycolHeaterCondenser duty  "
         + richGLycolHeaterCondenser.getEnergyStream().getDuty() / 1.0e3);
-    System.out.println("richGLycolHeaterCondenser temperature out  "
+    logger.info("richGLycolHeaterCondenser temperature out  "
         + richGLycolHeaterCondenser.getOutletStream().getTemperature("C"));
     richGLycolHeaterCondenser.run();
 
     hotLeanTEGPump.getOutletStream().displayResult();
     flashLiquid.displayResult();
 
-    System.out.println("Temperature rich TEG out of reflux condenser "
+    logger.info("Temperature rich TEG out of reflux condenser "
         + richGLycolHeaterCondenser.getOutletStream().getTemperature("C"));
     heatEx.displayResult();
-    System.out.println("glycol out temperature "
+    logger.info("glycol out temperature "
         + glycol_flash_valve2.getOutletStream().getFluid().getTemperature("C"));
-    System.out.println("glycol out temperature2 " + heatEx2.getOutStream(0).getTemperature("C"));
-    System.out.println("glycol out temperature2 " + heatEx2.getOutStream(1).getTemperature("C"));
+    logger.info("glycol out temperature2 " + heatEx2.getOutStream(0).getTemperature("C"));
+    logger.info("glycol out temperature2 " + heatEx2.getOutStream(1).getTemperature("C"));
 
-    System.out.println("out water rate LP valve" + glycol_flash_valve2.getOutletStream().getFluid()
+    logger.info("out water rate LP valve" + glycol_flash_valve2.getOutletStream().getFluid()
         .getPhase(0).getComponent("water").getNumberOfmoles());
-    System.out.println("glycol out water rate reboil " + ((Reboiler) column.getReboiler())
+    logger.info("glycol out water rate reboil " + ((Reboiler) column.getReboiler())
         .getLiquidOutStream().getFluid().getComponent("water").getNumberOfmoles());
-    System.out.println("glycol out water rate condens " + ((Condenser) column.getCondenser())
+    logger.info("glycol out water rate condens " + ((Condenser) column.getCondenser())
         .getGasOutStream().getFluid().getComponent("water").getNumberOfmoles());
-    System.out.println("recycle out water rate  " + recycleGasFromStripper.getOutletStream()
-        .getFluid().getComponent("water").getNumberOfmoles());
+    logger.info("recycle out water rate  " + recycleGasFromStripper.getOutletStream().getFluid()
+        .getComponent("water").getNumberOfmoles());
   }
 }

@@ -17,8 +17,9 @@ import neqsim.thermo.system.SystemInterface;
  * Class for testing ProcessSystem class.
  */
 public class EmptyStreamsTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(EmptyStreamsTest.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(EmptyStreamsTest.class);
 
   @Test
   void testEmptyStream() {
@@ -112,8 +113,8 @@ public class EmptyStreamsTest extends neqsim.NeqSimTest {
     stream3.run();
 
     // stream3.getFluid().prettyPrint();
-    // System.out.println("flow rate " + stream3.getFlowRate("kg/hr"));
-    // System.out.println(recycle1.isActive());
+    // logger.info("flow rate " + stream3.getFlowRate("kg/hr"));
+    // logger.info(recycle1.isActive());
     operations.run();
   }
 
@@ -176,7 +177,7 @@ public class EmptyStreamsTest extends neqsim.NeqSimTest {
     mixer2.run();
     operations.add(mixer2);
 
-    // System.out.println(mixer2.getOutletStream().getFlowRate("kg/hr"));
+    // logger.info(mixer2.getOutletStream().getFlowRate("kg/hr"));
     // mixer2.getOutletStream().getFluid().prettyPrint();
   }
 
@@ -235,8 +236,8 @@ public class EmptyStreamsTest extends neqsim.NeqSimTest {
     stream3.run();
 
     // stream3.getFluid().prettyPrint();
-    // System.out.println("flow rate " + stream3.getFlowRate("kg/hr"));
-    // System.out.println(recycle1.isActive());
+    // logger.info("flow rate " + stream3.getFlowRate("kg/hr"));
+    // logger.info(recycle1.isActive());
     operations.run();
   }
 }

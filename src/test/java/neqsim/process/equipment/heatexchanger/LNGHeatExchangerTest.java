@@ -14,6 +14,8 @@ import neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerDesignFeasibil
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for {@link LNGHeatExchanger}.
@@ -27,6 +29,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim
  */
 class LNGHeatExchangerTest {
+  private static final Logger logger = LogManager.getLogger(LNGHeatExchangerTest.class);
+
 
   /** Create a standard hot feed gas stream for reuse in tests. */
   private Stream createHotStream() {
@@ -573,16 +577,16 @@ class LNGHeatExchangerTest {
     hx.assessMercuryRisk(0.5);
     assertFalse(hx.isMercuryRiskPresent(), "0.5 ppb should be safe");
 
-    System.out.println("Full integration test passed:");
-    System.out.println("  MITA = " + String.format("%.2f", hx.getMITA()) + " C");
+    logger.info("Full integration test passed:");
+    logger.info("  MITA = " + String.format("%.2f", hx.getMITA()) + " C");
     System.out
         .println("  eta_II = " + String.format("%.1f", hx.getSecondLawEfficiency() * 100) + " %");
-    System.out.println("  Core: " + String.format("%.1f x %.1f x %.1f m", sized.getLength(),
+    logger.info("  Core: " + String.format("%.1f x %.1f x %.1f m", sized.getLength(),
         sized.getWidth(), sized.getHeight()));
-    System.out.println("  Weight: " + String.format("%.0f", sized.getWeight()) + " kg");
+    logger.info("  Weight: " + String.format("%.0f", sized.getWeight()) + " kg");
     System.out
         .println("  Thermal mass: " + String.format("%.0f", hx.getCoreThermalMass()) + " kJ/K");
-    System.out.println("  Cool-down steps: " + transientPts.size());
+    logger.info("  Cool-down steps: " + transientPts.size());
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -655,13 +659,12 @@ class LNGHeatExchangerTest {
     assertTrue(json.contains("wallThickness"));
     assertTrue(json.contains("weights"));
 
-    System.out.println("BAHX Mechanical Design:");
-    System.out.println("  Parting sheet: "
+    logger.info("BAHX Mechanical Design:");
+    logger.info("  Parting sheet: "
         + String.format("%.2f mm", mechDesign.getRequiredPartingSheetThicknessMm()));
-    System.out.println(
-        "  Header: " + String.format("%.2f mm", mechDesign.getRequiredHeaderThicknessMm()));
-    System.out.println("  Core weight: " + String.format("%.0f kg", mechDesign.getCoreWeightKg()));
-    System.out.println("  Total weight: " + String.format("%.0f kg", mechDesign.getWeightTotal()));
+    logger.info("  Header: " + String.format("%.2f mm", mechDesign.getRequiredHeaderThicknessMm()));
+    logger.info("  Core weight: " + String.format("%.0f kg", mechDesign.getCoreWeightKg()));
+    logger.info("  Total weight: " + String.format("%.0f kg", mechDesign.getWeightTotal()));
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -718,11 +721,11 @@ class LNGHeatExchangerTest {
     assertNotNull(breakdown);
     assertFalse(breakdown.isEmpty());
 
-    System.out.println("BAHX Cost Estimation:");
-    System.out.println("  Equipment cost: $" + String.format("%,.0f", equipmentCost));
-    System.out.println("  Installed cost: $" + String.format("%,.0f", installedCost));
-    System.out.println("  Specific cost: $" + String.format("%.0f /m2", specificCost));
-    System.out.println("  Annual maintenance: $" + String.format("%,.0f", maintenance));
+    logger.info("BAHX Cost Estimation:");
+    logger.info("  Equipment cost: $" + String.format("%,.0f", equipmentCost));
+    logger.info("  Installed cost: $" + String.format("%,.0f", installedCost));
+    logger.info("  Specific cost: $" + String.format("%.0f /m2", specificCost));
+    logger.info("  Annual maintenance: $" + String.format("%,.0f", maintenance));
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -797,14 +800,14 @@ class LNGHeatExchangerTest {
     assertTrue(json.contains("operatingPoint"));
     assertTrue(json.contains("costEstimation"));
 
-    System.out.println("Feasibility Report:");
-    System.out.println("  Verdict: " + verdict);
-    System.out.println("  PEC: $" + String.format("%,.0f", pec));
-    System.out.println("  Installed: $" + String.format("%,.0f", installed));
-    System.out.println("  Matching suppliers: " + supplierCount);
-    System.out.println("  Issues: " + issues.size());
+    logger.info("Feasibility Report:");
+    logger.info("  Verdict: " + verdict);
+    logger.info("  PEC: $" + String.format("%,.0f", pec));
+    logger.info("  Installed: $" + String.format("%,.0f", installed));
+    logger.info("  Matching suppliers: " + supplierCount);
+    logger.info("  Issues: " + issues.size());
     for (HeatExchangerDesignFeasibilityReport.FeasibilityIssue issue : issues) {
-      System.out.println("    [" + issue.getSeverity() + "] " + issue.getMessage());
+      logger.info("    [" + issue.getSeverity() + "] " + issue.getMessage());
     }
   }
 
@@ -840,6 +843,6 @@ class LNGHeatExchangerTest {
     assertTrue(report.getPurchasedEquipmentCostUSD() > 0.0,
         "Cost should be positive from convenience method");
 
-    System.out.println("Convenience report verdict: " + verdict);
+    logger.info("Convenience report verdict: " + verdict);
   }
 }

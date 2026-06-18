@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestCharacterizationCondensate {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestCharacterizationCondensate.class);
+  private static final Logger logger = LogManager.getLogger(TestCharacterizationCondensate.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -73,7 +74,7 @@ public class TestCharacterizationCondensate {
     // testSystem.addPlusFraction("C11", 1.44, 231.0 / 1000, 0.87);
     testSystem.setHeavyTBPfractionAsPlusFraction();
     testSystem.getCharacterization().characterisePlusFraction();
-    System.out.println("number of components " + testSystem.getNumberOfComponents());
+    logger.info("number of components " + testSystem.getNumberOfComponents());
     // testSystem.setHydrateCheck(true);
     testSystem.createDatabase(true);
     logger.info("start benchmark TPflash......");
@@ -105,16 +106,15 @@ public class TestCharacterizationCondensate {
       logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
-    // System.out.println("number of lumped components " +
+    // logger.info("number of lumped components " +
     // testSystem.getCharacterization().getLumpingModel().getNumberOfLumpedComponents());
-    // System.out.println("number of pseudo components " +
+    // logger.info("number of pseudo components " +
     // testSystem.getCharacterization().getLumpingModel().getNumberOfPseudoComponents());
-    // System.out.println("lumped component " +
+    // logger.info("lumped component " +
     // testSystem.getCharacterization().getLumpingModel().getLumpedComponentName(3));
 
     /*
-     * System.out.println("molar mass "
-     * +testSystem.getPhase(0).getComponent("PC4_PC").getMolarMass() );
+     * logger.info("molar mass " +testSystem.getPhase(0).getComponent("PC4_PC").getMolarMass() );
      *
      * testSystem.setMolarCompositionOfPlusFluid(new double[]{0.02, 0.005, 0.4, 0.01, 0.01, 0.02,
      * 0.02, 0.01 ,0.01, 0.01, 0.01 ,0.01, 0.01, 0.2 }); try { testOps.TPflash(); //

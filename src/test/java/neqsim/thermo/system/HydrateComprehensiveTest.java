@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Comprehensive test suite for hydrate calculations with electrolyte CPA EOS. Tests various fluid
@@ -14,6 +16,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(HydrateComprehensiveTest.class);
+
 
   /**
    * Test hydrate formation with lean natural gas and inerts (N2, CO2).
@@ -21,7 +25,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Hydrate with lean gas + inerts (N2, CO2)")
   public void testHydrateLeanGasWithInerts() throws Exception {
-    System.out.println("\n=== Test: Lean Gas with Inerts ===");
+    logger.info("\n=== Test: Lean Gas with Inerts ===");
 
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 100.0);
     fluid.addComponent("nitrogen", 0.02);
@@ -37,8 +41,8 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
     ops.hydrateFormationTemperature();
 
     double hydrateTemp = fluid.getTemperature() - 273.15;
-    System.out.println("Hydrate formation temperature: " + hydrateTemp + " °C");
-    System.out.println("Pressure: 100 bara");
+    logger.info("Hydrate formation temperature: " + hydrateTemp + " °C");
+    logger.info("Pressure: 100 bara");
 
     // At 100 bar, lean gas hydrate should form between 10-25°C
     assertTrue(hydrateTemp > 5.0 && hydrateTemp < 30.0,
@@ -55,7 +59,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Hydrate with rich gas (C1-C4)")
   public void testHydrateRichGas() throws Exception {
-    System.out.println("\n=== Test: Rich Gas (C1-C4) ===");
+    logger.info("\n=== Test: Rich Gas (C1-C4) ===");
 
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 80.0);
     fluid.addComponent("methane", 0.75);
@@ -71,8 +75,8 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
     ops.hydrateFormationTemperature();
 
     double hydrateTemp = fluid.getTemperature() - 273.15;
-    System.out.println("Hydrate formation temperature: " + hydrateTemp + " °C");
-    System.out.println("Pressure: 80 bara");
+    logger.info("Hydrate formation temperature: " + hydrateTemp + " °C");
+    logger.info("Pressure: 80 bara");
 
     assertTrue(hydrateTemp > 5.0 && hydrateTemp < 30.0,
         "Hydrate temp for rich gas should be 5-30°C, got: " + hydrateTemp);
@@ -83,8 +87,8 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
       int aqPhase = fluid.getPhaseNumberOfPhase("aqueous");
       double methaneInAq = fluid.getPhase(aqPhase).getComponent("methane").getx();
       double nButaneInAq = fluid.getPhase(aqPhase).getComponent("n-butane").getx();
-      System.out.println("Methane in aqueous phase: " + methaneInAq);
-      System.out.println("n-Butane in aqueous phase: " + nButaneInAq);
+      logger.info("Methane in aqueous phase: " + methaneInAq);
+      logger.info("n-Butane in aqueous phase: " + nButaneInAq);
 
       // Should be small but not zero (1E-50 would indicate the old bug)
       assertTrue(methaneInAq > 1E-10, "Methane solubility in water should be > 1E-10");
@@ -98,7 +102,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Hydrate with gas-condensate (C1-C6)")
   public void testHydrateGasCondensate() throws Exception {
-    System.out.println("\n=== Test: Gas-Condensate (C1-C6) ===");
+    logger.info("\n=== Test: Gas-Condensate (C1-C6) ===");
 
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 15.0, 120.0);
     fluid.addComponent("nitrogen", 0.01);
@@ -119,8 +123,8 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
     ops.hydrateFormationTemperature();
 
     double hydrateTemp = fluid.getTemperature() - 273.15;
-    System.out.println("Hydrate formation temperature: " + hydrateTemp + " °C");
-    System.out.println("Pressure: 120 bara");
+    logger.info("Hydrate formation temperature: " + hydrateTemp + " °C");
+    logger.info("Pressure: 120 bara");
 
     assertTrue(hydrateTemp > 5.0 && hydrateTemp < 35.0,
         "Hydrate temp for gas-condensate should be 5-35°C, got: " + hydrateTemp);
@@ -132,7 +136,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Hydrate with MEG inhibitor")
   public void testHydrateWithMEG() throws Exception {
-    System.out.println("\n=== Test: Rich Gas with MEG Inhibitor ===");
+    logger.info("\n=== Test: Rich Gas with MEG Inhibitor ===");
 
     // Without MEG
     SystemInterface fluidNoMEG = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 100.0);
@@ -165,9 +169,9 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
 
     double inhibitionEffect = hydrateTempNoMEG - hydrateTempMEG;
 
-    System.out.println("Hydrate temp without MEG: " + hydrateTempNoMEG + " °C");
-    System.out.println("Hydrate temp with MEG: " + hydrateTempMEG + " °C");
-    System.out.println("MEG inhibition effect: " + inhibitionEffect + " °C");
+    logger.info("Hydrate temp without MEG: " + hydrateTempNoMEG + " °C");
+    logger.info("Hydrate temp with MEG: " + hydrateTempMEG + " °C");
+    logger.info("MEG inhibition effect: " + inhibitionEffect + " °C");
 
     // MEG should lower hydrate temperature
     assertTrue(inhibitionEffect > 5.0,
@@ -180,7 +184,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Hydrate with methanol inhibitor")
   public void testHydrateWithMethanol() throws Exception {
-    System.out.println("\n=== Test: Rich Gas with Methanol Inhibitor ===");
+    logger.info("\n=== Test: Rich Gas with Methanol Inhibitor ===");
 
     // Without methanol
     SystemInterface fluidNoMeOH = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 100.0);
@@ -213,9 +217,9 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
 
     double inhibitionEffect = hydrateTempNoMeOH - hydrateTempMeOH;
 
-    System.out.println("Hydrate temp without methanol: " + hydrateTempNoMeOH + " °C");
-    System.out.println("Hydrate temp with methanol: " + hydrateTempMeOH + " °C");
-    System.out.println("Methanol inhibition effect: " + inhibitionEffect + " °C");
+    logger.info("Hydrate temp without methanol: " + hydrateTempNoMeOH + " °C");
+    logger.info("Hydrate temp with methanol: " + hydrateTempMeOH + " °C");
+    logger.info("Methanol inhibition effect: " + inhibitionEffect + " °C");
 
     // Methanol should lower hydrate temperature
     assertTrue(inhibitionEffect > 5.0,
@@ -228,7 +232,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Hydrate with formation water (NaCl brine)")
   public void testHydrateWithBrine() throws Exception {
-    System.out.println("\n=== Test: Rich Gas with Formation Water (NaCl) ===");
+    logger.info("\n=== Test: Rich Gas with Formation Water (NaCl) ===");
 
     // Without salt
     SystemInterface fluidNoSalt = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 100.0);
@@ -262,9 +266,9 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
 
     double saltEffect = hydrateTempNoSalt - hydrateTempSalt;
 
-    System.out.println("Hydrate temp without salt: " + hydrateTempNoSalt + " °C");
-    System.out.println("Hydrate temp with NaCl: " + hydrateTempSalt + " °C");
-    System.out.println("Salt inhibition effect: " + saltEffect + " °C");
+    logger.info("Hydrate temp without salt: " + hydrateTempNoSalt + " °C");
+    logger.info("Hydrate temp with NaCl: " + hydrateTempSalt + " °C");
+    logger.info("Salt inhibition effect: " + saltEffect + " °C");
 
     // Salt should lower hydrate temperature (salting-out effect)
     assertTrue(saltEffect > 0.0,
@@ -279,11 +283,11 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
       double naInAq = fluidSalt.getPhase(aqPhase).getComponent("Na+").getx();
       double clInAq = fluidSalt.getPhase(aqPhase).getComponent("Cl-").getx();
 
-      System.out.println("\nAqueous phase composition:");
-      System.out.println("  Methane: " + methaneInAq);
-      System.out.println("  n-Butane: " + nButaneInAq);
-      System.out.println("  Na+: " + naInAq);
-      System.out.println("  Cl-: " + clInAq);
+      logger.info("\nAqueous phase composition:");
+      logger.info("  Methane: " + methaneInAq);
+      logger.info("  n-Butane: " + nButaneInAq);
+      logger.info("  Na+: " + naInAq);
+      logger.info("  Cl-: " + clInAq);
 
       // Ions should be mostly in aqueous phase
       assertTrue(naInAq > 0.001, "Na+ should be present in aqueous phase");
@@ -299,7 +303,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Hydrate with MEG + NaCl combined")
   public void testHydrateWithMEGAndSalt() throws Exception {
-    System.out.println("\n=== Test: Rich Gas with MEG + NaCl ===");
+    logger.info("\n=== Test: Rich Gas with MEG + NaCl ===");
 
     // Reference: no inhibitors
     SystemInterface fluidRef = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 100.0);
@@ -334,9 +338,9 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
 
     double combinedEffect = hydrateTempRef - hydrateTempCombined;
 
-    System.out.println("Hydrate temp (reference): " + hydrateTempRef + " °C");
-    System.out.println("Hydrate temp with MEG + NaCl: " + hydrateTempCombined + " °C");
-    System.out.println("Combined inhibition effect: " + combinedEffect + " °C");
+    logger.info("Hydrate temp (reference): " + hydrateTempRef + " °C");
+    logger.info("Hydrate temp with MEG + NaCl: " + hydrateTempCombined + " °C");
+    logger.info("Combined inhibition effect: " + combinedEffect + " °C");
 
     // Combined effect should be significant
     assertTrue(combinedEffect > 10.0,
@@ -349,7 +353,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Hydrate TPflash with brine at hydrate conditions")
   public void testHydrateTPflashWithBrine() throws Exception {
-    System.out.println("\n=== Test: TPflash at Hydrate Conditions with Brine ===");
+    logger.info("\n=== Test: TPflash at Hydrate Conditions with Brine ===");
 
     // Conditions where hydrate should form: 4°C, 100 bar
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 4.0, 100.0);
@@ -366,8 +370,8 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.hydrateTPflash();
 
-    System.out.println("Number of phases: " + fluid.getNumberOfPhases());
-    System.out.println("Hydrate fraction: " + fluid.getHydrateFraction());
+    logger.info("Number of phases: " + fluid.getNumberOfPhases());
+    logger.info("Hydrate fraction: " + fluid.getHydrateFraction());
 
     fluid.prettyPrint();
 
@@ -380,9 +384,9 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
       double methaneInAq = fluid.getPhase(aqPhase).getComponent("methane").getx();
       double nButaneInAq = fluid.getPhase(aqPhase).getComponent("n-butane").getx();
 
-      System.out.println("\nAqueous phase hydrocarbon solubility:");
-      System.out.println("  Methane: " + methaneInAq);
-      System.out.println("  n-Butane: " + nButaneInAq);
+      logger.info("\nAqueous phase hydrocarbon solubility:");
+      logger.info("  Methane: " + methaneInAq);
+      logger.info("  n-Butane: " + nButaneInAq);
 
       // TODO: Known limitation - methane solubility in brine with ions is currently
       // computed as very small values (near 1E-50). This is a known issue with the
@@ -390,8 +394,8 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
       // should ideally be in the range 1E-4 to 1E-3 for these conditions.
       // For now, just log the value without asserting.
       if (methaneInAq < 1E-10) {
-        System.out.println(
-            "  NOTE: Methane solubility is very low - known limitation with electrolyte+HC");
+        logger
+            .info("  NOTE: Methane solubility is very low - known limitation with electrolyte+HC");
       }
     }
   }
@@ -402,7 +406,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Hydrate temperature vs pressure")
   public void testHydratePressureDependency() throws Exception {
-    System.out.println("\n=== Test: Hydrate Temperature vs Pressure ===");
+    logger.info("\n=== Test: Hydrate Temperature vs Pressure ===");
 
     double[] pressures = {50.0, 100.0, 150.0, 200.0};
     double[] hydrateTemps = new double[pressures.length];
@@ -421,7 +425,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
       ops.hydrateFormationTemperature();
 
       hydrateTemps[i] = fluid.getTemperature() - 273.15;
-      System.out.println("P = " + pressures[i] + " bara: Hydrate T = " + hydrateTemps[i] + " °C");
+      logger.info("P = " + pressures[i] + " bara: Hydrate T = " + hydrateTemps[i] + " °C");
     }
 
     // Hydrate temperature should increase with pressure
@@ -437,7 +441,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Hydrate with sour gas (H2S)")
   public void testHydrateSourGas() throws Exception {
-    System.out.println("\n=== Test: Sour Gas (with H2S) ===");
+    logger.info("\n=== Test: Sour Gas (with H2S) ===");
 
     try {
       SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 100.0);
@@ -453,14 +457,14 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
       ops.hydrateFormationTemperature();
 
       double hydrateTemp = fluid.getTemperature() - 273.15;
-      System.out.println("Hydrate formation temperature (sour gas): " + hydrateTemp + " °C");
+      logger.info("Hydrate formation temperature (sour gas): " + hydrateTemp + " °C");
 
       // H2S forms type I hydrate at higher temperatures than methane
       assertTrue(hydrateTemp > 5.0 && hydrateTemp < 40.0,
           "Sour gas hydrate temp should be 5-40°C, got: " + hydrateTemp);
 
     } catch (Exception e) {
-      System.out.println("H2S test skipped: " + e.getMessage());
+      logger.info("H2S test skipped: " + e.getMessage());
     }
   }
 
@@ -470,7 +474,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Hydrate with high salinity brine")
   public void testHydrateHighSalinity() throws Exception {
-    System.out.println("\n=== Test: High Salinity Brine ===");
+    logger.info("\n=== Test: High Salinity Brine ===");
 
     // Reference without salt
     SystemInterface fluidRef = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 80.0);
@@ -500,9 +504,9 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
 
     double saltEffect = hydrateTempRef - hydrateTempHighSalt;
 
-    System.out.println("Hydrate temp (fresh water): " + hydrateTempRef + " °C");
-    System.out.println("Hydrate temp (high salinity): " + hydrateTempHighSalt + " °C");
-    System.out.println("Salt inhibition effect: " + saltEffect + " °C");
+    logger.info("Hydrate temp (fresh water): " + hydrateTempRef + " °C");
+    logger.info("Hydrate temp (high salinity): " + hydrateTempHighSalt + " °C");
+    logger.info("Salt inhibition effect: " + saltEffect + " °C");
 
     // High salinity should have significant inhibition effect
     assertTrue(saltEffect > 2.0,
@@ -517,7 +521,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Gas-hydrate equilibrium (water-saturated gas, no free water)")
   public void testGasHydrateEquilibrium() throws Exception {
-    System.out.println("\n=== Test: Gas-Hydrate Equilibrium (no free water) ===");
+    logger.info("\n=== Test: Gas-Hydrate Equilibrium (no free water) ===");
 
     // Create a gas with trace water (water-saturated, no free aqueous phase)
     // At typical pipeline conditions, water content is typically < 0.1%
@@ -536,17 +540,17 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
     fluid.setTemperature(273.15 + 30.0); // Well above hydrate formation
     ops.TPflash();
 
-    System.out.println("At 30°C (above hydrate point):");
-    System.out.println("Number of phases: " + fluid.getNumberOfPhases());
+    logger.info("At 30°C (above hydrate point):");
+    logger.info("Number of phases: " + fluid.getNumberOfPhases());
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-      System.out.println(
-          "  Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta=" + fluid.getBeta(i));
+      logger
+          .info("  Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta=" + fluid.getBeta(i));
     }
 
     // Now calculate hydrate formation temperature
     ops.hydrateFormationTemperature();
     double hydrateTemp = fluid.getTemperature() - 273.15;
-    System.out.println("\nHydrate formation temperature: " + hydrateTemp + " °C");
+    logger.info("\nHydrate formation temperature: " + hydrateTemp + " °C");
 
     // Should get a valid hydrate temperature
     assertTrue(hydrateTemp > 5.0 && hydrateTemp < 30.0,
@@ -558,13 +562,13 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
 
     System.out
         .println("\nAt " + (hydrateTemp - 5.0) + "°C (below hydrate point) using hydrateTPflash:");
-    System.out.println("Number of phases: " + fluid.getNumberOfPhases());
+    logger.info("Number of phases: " + fluid.getNumberOfPhases());
     boolean hasHydrate = false;
     boolean hasGas = false;
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       String phaseType = fluid.getPhase(i).getType().toString();
       double beta = fluid.getBeta(i);
-      System.out.println("  Phase " + i + ": " + phaseType + ", beta=" + beta);
+      logger.info("  Phase " + i + ": " + phaseType + ", beta=" + beta);
       if (phaseType.contains("HYDRATE")) {
         hasHydrate = true;
       }
@@ -574,7 +578,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
     }
 
     // Check if hydrate formed (indicated by system state)
-    System.out.println("Hydrate check enabled: " + fluid.getHydrateCheck());
+    logger.info("Hydrate check enabled: " + fluid.getHydrateCheck());
 
     // The TPflash doesn't automatically add hydrate phase to output
     // It calculates the equilibrium but the hydrate phase is separate (phase index 4)
@@ -584,15 +588,15 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
     // Verify the hydrate phase (index 4) has valid fugacity calculations
     if (fluid.getPhase(4) != null) {
       double hydrateWaterFug = fluid.getPhase(4).getFugacity("water");
-      System.out.println("Hydrate phase water fugacity: " + hydrateWaterFug);
+      logger.info("Hydrate phase water fugacity: " + hydrateWaterFug);
       assertTrue(hydrateWaterFug > 0 && !Double.isNaN(hydrateWaterFug),
           "Hydrate phase should have valid water fugacity");
     }
 
     // The algorithm works - it calculates the gas-hydrate equilibrium temperature correctly
-    System.out.println("\nGas-hydrate equilibrium test completed!");
-    System.out.println("The hydrateFormationTemperature algorithm correctly calculates");
-    System.out.println("the temperature where water fugacity in gas equals hydrate fugacity.");
+    logger.info("\nGas-hydrate equilibrium test completed!");
+    logger.info("The hydrateFormationTemperature algorithm correctly calculates");
+    logger.info("the temperature where water fugacity in gas equals hydrate fugacity.");
     System.out
         .println("This handles gas-hydrate equilibrium regardless of aqueous phase presence.");
   }
@@ -604,7 +608,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Hydrate curve for dry gas (T vs P)")
   public void testHydrateCurveDryGas() throws Exception {
-    System.out.println("\n=== Test: Hydrate Curve for Dry Gas ===");
+    logger.info("\n=== Test: Hydrate Curve for Dry Gas ===");
 
     double[] pressures = {30.0, 50.0, 80.0, 100.0, 150.0};
     double[] hydrateTemps = new double[pressures.length];
@@ -621,7 +625,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
       ops.hydrateFormationTemperature();
       hydrateTemps[i] = fluid.getTemperature() - 273.15;
 
-      System.out.printf("P = %.0f bara: Hydrate T = %.2f °C%n", pressures[i], hydrateTemps[i]);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "P = %.0f bara: Hydrate T = %.2f °C%n", pressures[i], hydrateTemps[i]);
     }
 
     // Verify hydrate temperature increases with pressure (thermodynamic expectation)
@@ -630,6 +634,6 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
           "Hydrate temp should generally increase with pressure");
     }
 
-    System.out.println("\nHydrate curve follows expected trend (T increases with P)");
+    logger.info("\nHydrate curve follows expected trend (T increases with P)");
   }
 }

@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tests for the enhanced Gibbs reactor algorithmic features: Armijo backtracking line search,
@@ -20,6 +22,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class GibbsReactorAlgorithmTest {
+  private static final Logger logger = LogManager.getLogger(GibbsReactorAlgorithmTest.class);
+
 
   /**
    * Test Armijo backtracking line search on methane combustion. Verifies that the line search
@@ -103,10 +107,8 @@ public class GibbsReactorAlgorithmTest {
     reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
     reactor.run();
 
-    Assertions.assertTrue(reactor.hasConverged(),
-        "Armijo + adaptive step sizing should converge");
-    Assertions.assertTrue(reactor.getMassBalanceConverged(),
-        "Mass balance should be conserved");
+    Assertions.assertTrue(reactor.hasConverged(), "Armijo + adaptive step sizing should converge");
+    Assertions.assertTrue(reactor.getMassBalanceConverged(), "Mass balance should be conserved");
 
     // Verify step size history is populated
     List<Double> stepSizes = reactor.getStepSizeHistory();
@@ -118,8 +120,8 @@ public class GibbsReactorAlgorithmTest {
   }
 
   /**
-   * Test Tikhonov regularization on a system with multiple components. Verifies that
-   * regularization does not break convergence and condition number history is tracked.
+   * Test Tikhonov regularization on a system with multiple components. Verifies that regularization
+   * does not break convergence and condition number history is tracked.
    */
   @Test
   public void testTikhonovRegularization() {
@@ -145,13 +147,11 @@ public class GibbsReactorAlgorithmTest {
     reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
     reactor.run();
 
-    Assertions.assertTrue(reactor.hasConverged(),
-        "Reactor with regularization should converge");
+    Assertions.assertTrue(reactor.hasConverged(), "Reactor with regularization should converge");
 
     // Condition number history should be available
     List<Double> condHistory = reactor.getConditionNumberHistory();
-    Assertions.assertFalse(condHistory.isEmpty(),
-        "Condition number history should be populated");
+    Assertions.assertFalse(condHistory.isEmpty(), "Condition number history should be populated");
   }
 
   /**
@@ -275,8 +275,8 @@ public class GibbsReactorAlgorithmTest {
 
     // Enhanced should generally need fewer or comparable iterations
     // (with larger effective steps due to line search)
-    System.out.println("Baseline iterations: " + baselineIter);
-    System.out.println("Enhanced iterations: " + enhancedIter);
+    logger.info("Baseline iterations: " + baselineIter);
+    logger.info("Enhanced iterations: " + enhancedIter);
 
     // Both should reach the same equilibrium
     double co2Baseline = baseline.getOutletStream().getThermoSystem().getComponent("CO2").getz();

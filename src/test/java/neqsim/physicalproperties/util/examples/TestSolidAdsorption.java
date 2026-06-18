@@ -17,8 +17,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TestSolidAdsorption {
+  private static final Logger logger = LogManager.getLogger(TestSolidAdsorption.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestSolidAdsorption.class);
 
   /**
    * <p>
@@ -48,10 +49,10 @@ public class TestSolidAdsorption {
     testSystem.getInterphaseProperties().setSolidAdsorbentMaterial("AC"); // AC Norit R1
     testSystem.getInterphaseProperties().calcAdsorption();
     // testSystem.initPhysicalProperties();
-    System.out.println("surface excess CO2 from gas "
+    logger.info("surface excess CO2 from gas "
         + testSystem.getInterphaseProperties().getAdsorptionCalc("gas").getSurfaceExcess("CO2")
         + " kg CO2/kg AC");
-    System.out.println("surface excess CO2 from oil "
+    logger.info("surface excess CO2 from oil "
         + testSystem.getInterphaseProperties().getAdsorptionCalc("oil").getSurfaceExcess("CO2")
         + " kg CO2/kg AC");
   }

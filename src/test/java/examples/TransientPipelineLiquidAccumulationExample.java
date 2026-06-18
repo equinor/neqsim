@@ -1,6 +1,8 @@
 package examples;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -28,17 +30,21 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * @version 1.0
  */
 public class TransientPipelineLiquidAccumulationExample {
+  private static final Logger logger =
+      LogManager.getLogger(TransientPipelineLiquidAccumulationExample.class);
+
+
   /**
    * Main entry point.
    *
    * @param args Command line arguments (not used)
    */
   public static void main(String[] args) {
-    System.out.println("=============================================================");
-    System.out.println("  Transient Pipeline Liquid Accumulation Simulation");
-    System.out.println("  80 km, 0.5 m diameter subsea pipeline");
-    System.out.println("  Gas condensate with water");
-    System.out.println("=============================================================\n");
+    logger.info("=============================================================");
+    logger.info("  Transient Pipeline Liquid Accumulation Simulation");
+    logger.info("  80 km, 0.5 m diameter subsea pipeline");
+    logger.info("  Gas condensate with water");
+    logger.info("=============================================================\n");
 
     // Run the simulation for different flow rates
     runFlowRateSensitivityStudy();
@@ -99,28 +105,27 @@ public class TransientPipelineLiquidAccumulationExample {
     // Flow rates to simulate (kg/s) - higher flow rates
     double[] flowRates = {50.0, 100.0, 150.0};
 
-    System.out.println("Pipeline Configuration:");
-    System.out.println("  Length:           " + (pipeLength / 1000) + " km");
-    System.out.println("  Diameter:         " + (pipeDiameter * 1000) + " mm");
-    System.out.println("  Inlet temperature:" + inletTemperature + " °C");
-    System.out.println("  Inlet pressure:   " + inletPressure + " bara");
-    System.out.println("  Outlet pressure:  " + outletPressure + " bara");
-    System.out.println("  Number of sections: " + numberOfSections);
-    System.out.println();
+    logger.info("Pipeline Configuration:");
+    logger.info("  Length:           " + (pipeLength / 1000) + " km");
+    logger.info("  Diameter:         " + (pipeDiameter * 1000) + " mm");
+    logger.info("  Inlet temperature:" + inletTemperature + " °C");
+    logger.info("  Inlet pressure:   " + inletPressure + " bara");
+    logger.info("  Outlet pressure:  " + outletPressure + " bara");
+    logger.info("  Number of sections: " + numberOfSections);
 
     // Create terrain profile with some undulations
     double[] elevationProfile = createSubseaTerrainProfile(numberOfSections, pipeLength);
 
     // Results storage
-    System.out.println("=============================================================");
-    System.out.println("  STEADY-STATE RESULTS AT DIFFERENT FLOW RATES");
-    System.out.println("=============================================================");
-    System.out.println();
-    System.out.printf("%-12s %-15s %-15s %-15s %-15s%n", "Flow Rate", "Liquid Inv.", "Water Holdup",
-        "Oil Holdup", "Pressure Drop");
-    System.out.printf("%-12s %-15s %-15s %-15s %-15s%n", "(kg/s)", "(m³)", "(avg)", "(avg)",
-        "(bar)");
-    System.out.println("-------------------------------------------------------------");
+    logger.info("=============================================================");
+    logger.info("  STEADY-STATE RESULTS AT DIFFERENT FLOW RATES");
+    logger.info("=============================================================");
+
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-15s %-15s %-15s %-15s%n",
+        "Flow Rate", "Liquid Inv.", "Water Holdup", "Oil Holdup", "Pressure Drop");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-15s %-15s %-15s %-15s%n", "(kg/s)",
+        "(m³)", "(avg)", "(avg)", "(bar)");
+    logger.info("-------------------------------------------------------------");
 
     for (double flowRate : flowRates) {
       // Create fluid
@@ -162,11 +167,12 @@ public class TransientPipelineLiquidAccumulationExample {
       double pressureDrop =
           (pressureProfile[0] - pressureProfile[pressureProfile.length - 1]) / 1e5;
 
-      System.out.printf("%-12.1f %-15.2f %-15.4f %-15.4f %-15.2f%n", flowRate, liquidInventory,
-          avgWaterHoldup, avgOilHoldup, pressureDrop);
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%-12.1f %-15.2f %-15.4f %-15.4f %-15.2f%n", flowRate, liquidInventory, avgWaterHoldup,
+          avgOilHoldup, pressureDrop);
     }
 
-    System.out.println();
+
 
     // Now run detailed transient simulation for one flow rate
     runDetailedTransientSimulation(pipeLength, pipeDiameter, numberOfSections, elevationProfile,
@@ -226,12 +232,12 @@ public class TransientPipelineLiquidAccumulationExample {
   private static void runDetailedTransientSimulation(double pipeLength, double pipeDiameter,
       int numberOfSections, double[] elevationProfile, double inletTemperature,
       double inletPressure, double outletPressure) {
-    System.out.println("=============================================================");
-    System.out.println("  TRANSIENT SIMULATION: FLOW RATE RAMP-UP");
-    System.out.println("  Starting from 50 kg/s, ramping to 150 kg/s over 2 hours");
-    System.out.println("  Total simulation time: 4 hours");
-    System.out.println("=============================================================");
-    System.out.println();
+    logger.info("=============================================================");
+    logger.info("  TRANSIENT SIMULATION: FLOW RATE RAMP-UP");
+    logger.info("  Starting from 50 kg/s, ramping to 150 kg/s over 2 hours");
+    logger.info("  Total simulation time: 4 hours");
+    logger.info("=============================================================");
+
 
     // Create fluid and inlet stream
     SystemInterface fluid = createGasCondensateWithWater(inletTemperature, inletPressure);
@@ -257,9 +263,10 @@ public class TransientPipelineLiquidAccumulationExample {
     pipe.run();
 
     double initialInventory = pipe.getLiquidInventory("m3");
-    System.out.printf("Initial steady-state (50 kg/s):%n");
-    System.out.printf("  Liquid inventory: %.2f m³%n", initialInventory);
-    System.out.println();
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Initial steady-state (50 kg/s):%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Liquid inventory: %.2f m³%n",
+        initialInventory);
+
 
     // Transient simulation parameters
     double dt = 120.0; // 120 second time step (larger for faster simulation)
@@ -271,13 +278,13 @@ public class TransientPipelineLiquidAccumulationExample {
 
     UUID runId = UUID.randomUUID();
 
-    System.out.printf("%-12s %-12s %-15s %-15s %-15s%n", "Time (min)", "Flow (kg/s)", "Liquid (m³)",
-        "Avg Water HL", "Avg Oil HL");
-    System.out.println("-------------------------------------------------------------");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-15s %-15s %-15s%n",
+        "Time (min)", "Flow (kg/s)", "Liquid (m³)", "Avg Water HL", "Avg Oil HL");
+    logger.info("-------------------------------------------------------------");
 
     // Print initial state at t=0 (before any transient steps)
-    System.out.printf("%-12.1f %-12.1f %-15.2f %-15.4f %-15.4f%n", 0.0, startFlowRate,
-        initialInventory, calculateAverage(pipe.getWaterHoldupProfile()),
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12.1f %-12.1f %-15.2f %-15.4f %-15.4f%n",
+        0.0, startFlowRate, initialInventory, calculateAverage(pipe.getWaterHoldupProfile()),
         calculateAverage(pipe.getOilHoldupProfile()));
 
     // Run transient simulation (starting from dt, not 0)
@@ -303,17 +310,20 @@ public class TransientPipelineLiquidAccumulationExample {
         double avgWaterHoldup = calculateAverage(pipe.getWaterHoldupProfile());
         double avgOilHoldup = calculateAverage(pipe.getOilHoldupProfile());
 
-        System.out.printf("%-12.1f %-12.1f %-15.2f %-15.4f %-15.4f%n", t / 60.0, flowRate,
-            liquidInventory, avgWaterHoldup, avgOilHoldup);
+        logger.printf(org.apache.logging.log4j.Level.INFO,
+            "%-12.1f %-12.1f %-15.2f %-15.4f %-15.4f%n", t / 60.0, flowRate, liquidInventory,
+            avgWaterHoldup, avgOilHoldup);
       }
     }
 
     double finalInventory = pipe.getLiquidInventory("m3");
-    System.out.println();
-    System.out.printf("Final steady-state (150 kg/s):%n");
-    System.out.printf("  Liquid inventory: %.2f m³%n", finalInventory);
-    System.out.printf("  Inventory change: %.2f m³%n", finalInventory - initialInventory);
-    System.out.println();
+
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Final steady-state (150 kg/s):%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Liquid inventory: %.2f m³%n",
+        finalInventory);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Inventory change: %.2f m³%n",
+        finalInventory - initialInventory);
+
 
     // Print holdup profile at key locations
     printHoldupProfileSummary(pipe, elevationProfile);
@@ -323,10 +333,10 @@ public class TransientPipelineLiquidAccumulationExample {
    * Prints a summary of liquid holdup along the pipeline.
    */
   private static void printHoldupProfileSummary(TwoFluidPipe pipe, double[] elevationProfile) {
-    System.out.println("=============================================================");
-    System.out.println("  HOLDUP PROFILE ALONG PIPELINE (FINAL STATE)");
-    System.out.println("=============================================================");
-    System.out.println();
+    logger.info("=============================================================");
+    logger.info("  HOLDUP PROFILE ALONG PIPELINE (FINAL STATE)");
+    logger.info("=============================================================");
+
 
     double[] positions = pipe.getPositionProfile();
     double[] pressures = pipe.getPressureProfile();
@@ -335,29 +345,33 @@ public class TransientPipelineLiquidAccumulationExample {
     double[] oilHoldups = pipe.getOilHoldupProfile();
     double[] liquidHoldups = pipe.getLiquidHoldupProfile();
 
-    System.out.printf("%-10s %-12s %-12s %-12s %-12s %-12s %-12s%n", "Position", "Elevation",
-        "Pressure", "Temp", "Liq Holdup", "Water HL", "Oil HL");
-    System.out.printf("%-10s %-12s %-12s %-12s %-12s %-12s %-12s%n", "(km)", "(m)", "(bara)",
-        "(°C)", "(-)", "(-)", "(-)");
-    System.out.println("-------------------------------------------------------------------------");
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "%-10s %-12s %-12s %-12s %-12s %-12s %-12s%n", "Position", "Elevation", "Pressure", "Temp",
+        "Liq Holdup", "Water HL", "Oil HL");
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "%-10s %-12s %-12s %-12s %-12s %-12s %-12s%n", "(km)", "(m)", "(bara)", "(°C)", "(-)",
+        "(-)", "(-)");
+    logger.info("-------------------------------------------------------------------------");
 
     // Print every 10 km
     int step = positions.length / 8;
     for (int i = 0; i < positions.length; i += step) {
-      System.out.printf("%-10.1f %-12.1f %-12.1f %-12.1f %-12.4f %-12.4f %-12.4f%n",
-          positions[i] / 1000.0, elevationProfile[i], pressures[i] / 1e5, temperatures[i] - 273.15,
-          liquidHoldups[i], waterHoldups[i], oilHoldups[i]);
+      logger.printf(org.apache.logging.log4j.Level.INFO,
+          "%-10.1f %-12.1f %-12.1f %-12.1f %-12.4f %-12.4f %-12.4f%n", positions[i] / 1000.0,
+          elevationProfile[i], pressures[i] / 1e5, temperatures[i] - 273.15, liquidHoldups[i],
+          waterHoldups[i], oilHoldups[i]);
     }
     // Print final position
     int last = positions.length - 1;
-    System.out.printf("%-10.1f %-12.1f %-12.1f %-12.1f %-12.4f %-12.4f %-12.4f%n",
-        positions[last] / 1000.0, elevationProfile[last], pressures[last] / 1e5,
-        temperatures[last] - 273.15, liquidHoldups[last], waterHoldups[last], oilHoldups[last]);
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "%-10.1f %-12.1f %-12.1f %-12.1f %-12.4f %-12.4f %-12.4f%n", positions[last] / 1000.0,
+        elevationProfile[last], pressures[last] / 1e5, temperatures[last] - 273.15,
+        liquidHoldups[last], waterHoldups[last], oilHoldups[last]);
 
-    System.out.println();
+
 
     // Identify accumulation zones
-    System.out.println("Liquid Accumulation Zones (valleys):");
+    logger.info("Liquid Accumulation Zones (valleys):");
     double maxHoldup = 0;
     int maxIdx = 0;
     for (int i = 0; i < liquidHoldups.length; i++) {
@@ -366,7 +380,8 @@ public class TransientPipelineLiquidAccumulationExample {
         maxIdx = i;
       }
     }
-    System.out.printf("  Maximum holdup: %.4f at %.1f km (elevation: %.1f m)%n", maxHoldup,
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "  Maximum holdup: %.4f at %.1f km (elevation: %.1f m)%n", maxHoldup,
         positions[maxIdx] / 1000.0, elevationProfile[maxIdx]);
   }
 

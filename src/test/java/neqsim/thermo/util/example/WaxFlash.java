@@ -18,9 +18,10 @@ import neqsim.util.database.NeqSimDataBase;
  * @since 2.2.3
  */
 public class WaxFlash {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(WaxFlash.class);
+  private static final Logger logger = LogManager.getLogger(WaxFlash.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -73,7 +74,7 @@ public class WaxFlash {
     }
     // testSystem.getPhase("oil").getPhysicalProperties().getViscosityOfWaxyOil(waxVOlumeFrac,
     // 1000.0);
-    // System.out.println("viscosity wax-oil suspesion " +
+    // logger.info("viscosity wax-oil suspesion " +
     // testSystem.getPhase("oil").getPhysicalProperties().getViscosityOfWaxyOil(waxVOlumeFrac,
     // 1000.0));
   }

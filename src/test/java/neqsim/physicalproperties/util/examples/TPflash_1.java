@@ -17,8 +17,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class TPflash_1 {
+  private static final Logger logger = LogManager.getLogger(TPflash_1.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TPflash_1.class);
 
   /**
    * <p>
@@ -65,9 +66,9 @@ public class TPflash_1 {
     }
     testSystem.display();
 
-    // System.out.println("chem pot 1 " +
+    // logger.info("chem pot 1 " +
     // testSystem.getPhase(0).getComponent(0).getGibbsEnergy(testSystem.getTemperature(),testSystem.getPressure())/testSystem.getPhase(0).getComponent(0).getNumberOfMolesInPhase());
-    // System.out.println("chem pot 2 " +
+    // logger.info("chem pot 2 " +
     // testSystem.getPhase(1).getComponent(0).getGibbsEnergy(testSystem.getTemperature(),testSystem.getPressure())/testSystem.getPhase(1).getComponent(0).getNumberOfMolesInPhase());
   }
 }

@@ -3,6 +3,8 @@ package neqsim.pvtsimulation.simulation;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Verification test for SolutionGasWaterRatio (Rsw) calculations. Compares results from all three
@@ -18,6 +20,8 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * </ul>
  */
 public class SolutionGasWaterRatioVerificationTest {
+  private static final Logger logger = LogManager.getLogger(SolutionGasWaterRatioVerificationTest.class);
+
   // Java 8 compatible separator strings (instead of String.repeat())
   private static final String SEPARATOR_EQUALS =
       "================================================================================";
@@ -30,9 +34,9 @@ public class SolutionGasWaterRatioVerificationTest {
    */
   @Test
   public void compareAllMethodsAtReservoirConditions() {
-    System.out.println("\n" + SEPARATOR_EQUALS);
-    System.out.println("SOLUTION GAS-WATER RATIO (Rsw) - METHOD COMPARISON");
-    System.out.println(SEPARATOR_EQUALS);
+    logger.info("\n" + SEPARATOR_EQUALS);
+    logger.info("SOLUTION GAS-WATER RATIO (Rsw) - METHOD COMPARISON");
+    logger.info(SEPARATOR_EQUALS);
 
     // Create a typical reservoir gas (mostly methane)
     SystemInterface gas = new SystemSrkCPAstatoil(373.15, 200.0);
@@ -50,9 +54,9 @@ public class SolutionGasWaterRatioVerificationTest {
       temperatures[i] = 373.15; // 100°C
     }
 
-    System.out.println("\nConditions: T = 100°C (373.15 K), Pure Water (salinity = 0)");
-    System.out.println("Gas composition: 90% CH4, 5% C2H6, 5% CO2");
-    System.out.println(SEPARATOR_DASH);
+    logger.info("\nConditions: T = 100°C (373.15 K), Pure Water (salinity = 0)");
+    logger.info("Gas composition: 90% CH4, 5% C2H6, 5% CO2");
+    logger.info(SEPARATOR_DASH);
 
     // Calculate for pure water (salinity = 0)
     rswCalc.setSalinity(0.0);
@@ -74,21 +78,21 @@ public class SolutionGasWaterRatioVerificationTest {
     double[] rswCPA = rswCalc.getRsw().clone();
 
     // Print comparison table
-    System.out.printf("%-12s %-15s %-15s %-15s%n", "P (bara)", "McCain", "Soreide-Whitson",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-15s %-15s %-15s%n", "P (bara)", "McCain", "Soreide-Whitson",
         "Electrolyte-CPA");
-    System.out.printf("%-12s %-15s %-15s %-15s%n", "", "(Sm3/Sm3)", "(Sm3/Sm3)", "(Sm3/Sm3)");
-    System.out.println(SEPARATOR_DASH);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-15s %-15s %-15s%n", "", "(Sm3/Sm3)", "(Sm3/Sm3)", "(Sm3/Sm3)");
+    logger.info(SEPARATOR_DASH);
 
     for (int i = 0; i < pressures.length; i++) {
-      System.out.printf("%-12.1f %-15.6f %-15.6f %-15.6f%n", pressures[i], rswMcCain[i],
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-12.1f %-15.6f %-15.6f %-15.6f%n", pressures[i], rswMcCain[i],
           rswSoreide[i], rswCPA[i]);
     }
 
-    System.out.println();
-    System.out.println("Analysis:");
-    System.out.println("- Rsw should increase with pressure (more gas dissolves at higher P)");
-    System.out.println("- McCain correlation is empirical, optimized for methane-water systems");
-    System.out.println("- EoS methods (Soreide-Whitson, CPA) account for gas composition effects");
+
+    logger.info("Analysis:");
+    logger.info("- Rsw should increase with pressure (more gas dissolves at higher P)");
+    logger.info("- McCain correlation is empirical, optimized for methane-water systems");
+    logger.info("- EoS methods (Soreide-Whitson, CPA) account for gas composition effects");
   }
 
   /**
@@ -96,9 +100,9 @@ public class SolutionGasWaterRatioVerificationTest {
    */
   @Test
   public void compareSalinityEffectAllMethods() {
-    System.out.println("\n" + SEPARATOR_EQUALS);
-    System.out.println("SALINITY EFFECT ON Rsw - METHOD COMPARISON");
-    System.out.println(SEPARATOR_EQUALS);
+    logger.info("\n" + SEPARATOR_EQUALS);
+    logger.info("SALINITY EFFECT ON Rsw - METHOD COMPARISON");
+    logger.info(SEPARATOR_EQUALS);
 
     // Create a methane-rich gas
     SystemInterface gas = new SystemSrkCPAstatoil(350.0, 100.0);
@@ -116,14 +120,14 @@ public class SolutionGasWaterRatioVerificationTest {
     // Test various salinities
     double[] salinities = {0.0, 1.0, 2.0, 3.5, 5.0}; // wt% NaCl
 
-    System.out.println("\nConditions: T = 76.85°C (350 K), P = 100 bara");
-    System.out.println("Gas composition: 95% CH4, 5% CO2");
-    System.out.println(SEPARATOR_DASH);
-    System.out.printf("%-15s %-15s %-15s %-15s%n", "Salinity", "McCain", "Soreide-Whitson",
+    logger.info("\nConditions: T = 76.85°C (350 K), P = 100 bara");
+    logger.info("Gas composition: 95% CH4, 5% CO2");
+    logger.info(SEPARATOR_DASH);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %-15s %-15s %-15s%n", "Salinity", "McCain", "Soreide-Whitson",
         "Electrolyte-CPA");
-    System.out.printf("%-15s %-15s %-15s %-15s%n", "(wt% NaCl)", "(Sm3/Sm3)", "(Sm3/Sm3)",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %-15s %-15s %-15s%n", "(wt% NaCl)", "(Sm3/Sm3)", "(Sm3/Sm3)",
         "(Sm3/Sm3)");
-    System.out.println(SEPARATOR_DASH);
+    logger.info(SEPARATOR_DASH);
 
     for (double sal : salinities) {
       rswCalc.setSalinity(sal, "wt%");
@@ -140,13 +144,13 @@ public class SolutionGasWaterRatioVerificationTest {
       rswCalc.runCalc();
       double rswCPA = rswCalc.getRsw(0);
 
-      System.out.printf("%-15.1f %-15.6f %-15.6f %-15.6f%n", sal, rswMcCain, rswSoreide, rswCPA);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-15.1f %-15.6f %-15.6f %-15.6f%n", sal, rswMcCain, rswSoreide, rswCPA);
     }
 
-    System.out.println();
-    System.out.println("Analysis:");
-    System.out.println("- Rsw should DECREASE with increasing salinity (salting-out effect)");
-    System.out.println("- Seawater (~3.5 wt% NaCl) typically reduces Rsw by 20-30%");
+
+    logger.info("Analysis:");
+    logger.info("- Rsw should DECREASE with increasing salinity (salting-out effect)");
+    logger.info("- Seawater (~3.5 wt% NaCl) typically reduces Rsw by 20-30%");
     System.out
         .println("- Formation water (5+ wt% NaCl) can reduce Rsw by 30-50% compared to pure water");
   }
@@ -163,11 +167,11 @@ public class SolutionGasWaterRatioVerificationTest {
    */
   @Test
   public void verifyMcCainAgainstLiterature() {
-    System.out.println("\n" + SEPARATOR_EQUALS);
-    System.out.println("McCAIN CORRELATION VERIFICATION AGAINST LITERATURE");
-    System.out.println(SEPARATOR_EQUALS);
-    System.out.println("Reference: Culberson & McKetta (1951), McCain (1990)");
-    System.out.println(SEPARATOR_DASH);
+    logger.info("\n" + SEPARATOR_EQUALS);
+    logger.info("McCAIN CORRELATION VERIFICATION AGAINST LITERATURE");
+    logger.info(SEPARATOR_EQUALS);
+    logger.info("Reference: Culberson & McKetta (1951), McCain (1990)");
+    logger.info(SEPARATOR_DASH);
 
     // Create pure methane system
     SystemInterface methane = new SystemSrkCPAstatoil(310.93, 68.9);
@@ -187,10 +191,10 @@ public class SolutionGasWaterRatioVerificationTest {
         {366.48, 206.8, 25.0, 35.0}, // 200°F, 3000 psia
     };
 
-    System.out.printf("%-12s %-12s %-18s %-18s %-10s%n", "T (°F)", "P (psia)", "Expected Range",
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-18s %-18s %-10s%n", "T (°F)", "P (psia)", "Expected Range",
         "Calculated", "Status");
-    System.out.printf("%-12s %-12s %-18s %-18s %-10s%n", "", "", "(scf/STB)", "(scf/STB)", "");
-    System.out.println(SEPARATOR_DASH);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-18s %-18s %-10s%n", "", "", "(scf/STB)", "(scf/STB)", "");
+    logger.info(SEPARATOR_DASH);
 
     for (double[] point : testPoints) {
       double tempK = point[0];
@@ -212,14 +216,14 @@ public class SolutionGasWaterRatioVerificationTest {
           (rswScfStb >= expectedLow * 0.5 && rswScfStb <= expectedHigh * 2.0) ? "REASONABLE"
               : "CHECK";
 
-      System.out.printf("%-12.0f %-12.0f %-8.1f - %-7.1f %-18.2f %-10s%n", tempF, presPsia,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-12.0f %-12.0f %-8.1f - %-7.1f %-18.2f %-10s%n", tempF, presPsia,
           expectedLow, expectedHigh, rswScfStb, status);
     }
 
-    System.out.println();
-    System.out.println("Note: Literature values are approximate ranges from various sources.");
-    System.out.println("      The correlation coefficients used may differ slightly from");
-    System.out.println("      original McCain publication.");
+
+    logger.info("Note: Literature values are approximate ranges from various sources.");
+    logger.info("      The correlation coefficients used may differ slightly from");
+    logger.info("      original McCain publication.");
   }
 
   /**
@@ -227,9 +231,9 @@ public class SolutionGasWaterRatioVerificationTest {
    */
   @Test
   public void compareTemperatureEffect() {
-    System.out.println("\n" + SEPARATOR_EQUALS);
-    System.out.println("TEMPERATURE EFFECT ON Rsw");
-    System.out.println(SEPARATOR_EQUALS);
+    logger.info("\n" + SEPARATOR_EQUALS);
+    logger.info("TEMPERATURE EFFECT ON Rsw");
+    logger.info(SEPARATOR_EQUALS);
 
     // Create methane gas
     SystemInterface gas = new SystemSrkCPAstatoil(300.0, 100.0);
@@ -247,11 +251,11 @@ public class SolutionGasWaterRatioVerificationTest {
     }
     rswCalc.setTemperaturesAndPressures(temps, pressures);
 
-    System.out.println("\nConditions: P = 100 bara, Pure Water, Pure Methane");
-    System.out.println(SEPARATOR_DASH);
-    System.out.printf("%-12s %-12s %-15s %-15s %-15s%n", "T (K)", "T (°C)", "McCain",
+    logger.info("\nConditions: P = 100 bara, Pure Water, Pure Methane");
+    logger.info(SEPARATOR_DASH);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-15s %-15s %-15s%n", "T (K)", "T (°C)", "McCain",
         "Soreide-Whitson", "Electrolyte-CPA");
-    System.out.println(SEPARATOR_DASH);
+    logger.info(SEPARATOR_DASH);
 
     // McCain
     rswCalc.setCalculationMethod(SolutionGasWaterRatio.CalculationMethod.MCCAIN);
@@ -270,16 +274,16 @@ public class SolutionGasWaterRatioVerificationTest {
 
     for (int i = 0; i < temps.length; i++) {
       double tempC = temps[i] - 273.15;
-      System.out.printf("%-12.1f %-12.1f %-15.6f %-15.6f %-15.6f%n", temps[i], tempC, rswMcCain[i],
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-12.1f %-12.1f %-15.6f %-15.6f %-15.6f%n", temps[i], tempC, rswMcCain[i],
           rswSoreide[i], rswCPA[i]);
     }
 
-    System.out.println();
-    System.out.println("Analysis:");
-    System.out.println(
+
+    logger.info("Analysis:");
+    logger.info(
         "- Gas solubility in water generally shows a minimum around 70-100°C for hydrocarbons");
-    System.out.println("- At low T: solubility decreases with T (entropic effect dominates)");
-    System.out.println("- At high T: solubility increases with T (approaching critical point)");
+    logger.info("- At low T: solubility decreases with T (entropic effect dominates)");
+    logger.info("- At high T: solubility increases with T (approaching critical point)");
   }
 
   /**
@@ -287,9 +291,9 @@ public class SolutionGasWaterRatioVerificationTest {
    */
   @Test
   public void compareCO2RichGas() {
-    System.out.println("\n" + SEPARATOR_EQUALS);
-    System.out.println("CO2-RICH GAS - Rsw COMPARISON");
-    System.out.println(SEPARATOR_EQUALS);
+    logger.info("\n" + SEPARATOR_EQUALS);
+    logger.info("CO2-RICH GAS - Rsw COMPARISON");
+    logger.info(SEPARATOR_EQUALS);
 
     // Create CO2-rich gas
     SystemInterface gas = new SystemSrkCPAstatoil(323.15, 50.0);
@@ -304,12 +308,12 @@ public class SolutionGasWaterRatioVerificationTest {
     double[] temps = {323.15, 323.15, 323.15}; // 50°C
     rswCalc.setTemperaturesAndPressures(temps, pressures);
 
-    System.out.println("\nConditions: T = 50°C (323.15 K), Pure Water");
-    System.out.println("Gas composition: 50% CO2, 50% CH4");
-    System.out.println(SEPARATOR_DASH);
-    System.out.printf("%-12s %-15s %-15s %-15s%n", "P (bara)", "McCain*", "Soreide-Whitson",
+    logger.info("\nConditions: T = 50°C (323.15 K), Pure Water");
+    logger.info("Gas composition: 50% CO2, 50% CH4");
+    logger.info(SEPARATOR_DASH);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-15s %-15s %-15s%n", "P (bara)", "McCain*", "Soreide-Whitson",
         "Electrolyte-CPA");
-    System.out.println(SEPARATOR_DASH);
+    logger.info(SEPARATOR_DASH);
 
     // McCain
     rswCalc.setCalculationMethod(SolutionGasWaterRatio.CalculationMethod.MCCAIN);
@@ -327,18 +331,18 @@ public class SolutionGasWaterRatioVerificationTest {
     double[] rswCPA = rswCalc.getRsw().clone();
 
     for (int i = 0; i < pressures.length; i++) {
-      System.out.printf("%-12.1f %-15.6f %-15.6f %-15.6f%n", pressures[i], rswMcCain[i],
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-12.1f %-15.6f %-15.6f %-15.6f%n", pressures[i], rswMcCain[i],
           rswSoreide[i], rswCPA[i]);
     }
 
-    System.out.println();
-    System.out.println("* McCain correlation is for pure methane - use with caution for CO2");
-    System.out.println();
-    System.out.println("Analysis:");
-    System.out.println("- CO2 is ~20-50x more soluble in water than methane at same conditions");
-    System.out.println(
-        "- EoS methods should show higher Rsw for CO2-rich gas than McCain (methane-based)");
-    System.out.println("- For CO2-rich systems, prefer Soreide-Whitson or CPA methods");
+
+    logger.info("* McCain correlation is for pure methane - use with caution for CO2");
+
+    logger.info("Analysis:");
+    logger.info("- CO2 is ~20-50x more soluble in water than methane at same conditions");
+    logger
+        .info("- EoS methods should show higher Rsw for CO2-rich gas than McCain (methane-based)");
+    logger.info("- For CO2-rich systems, prefer Soreide-Whitson or CPA methods");
   }
 
   /**
@@ -347,9 +351,9 @@ public class SolutionGasWaterRatioVerificationTest {
    */
   @Test
   public void consistencyCheck() {
-    System.out.println("\n" + SEPARATOR_EQUALS);
-    System.out.println("CONSISTENCY CHECK - ALL METHODS");
-    System.out.println(SEPARATOR_EQUALS);
+    logger.info("\n" + SEPARATOR_EQUALS);
+    logger.info("CONSISTENCY CHECK - ALL METHODS");
+    logger.info(SEPARATOR_EQUALS);
 
     SystemInterface gas = new SystemSrkCPAstatoil(350.0, 100.0);
     gas.addComponent("methane", 0.90);
@@ -362,7 +366,7 @@ public class SolutionGasWaterRatioVerificationTest {
     int totalTests = 0;
 
     // Test 1: All methods give positive Rsw
-    System.out.println("\nTest 1: All methods give positive Rsw at typical conditions");
+    logger.info("\nTest 1: All methods give positive Rsw at typical conditions");
     double[] temps = {350.0};
     double[] pres = {100.0};
     rswCalc.setTemperaturesAndPressures(temps, pres);
@@ -377,12 +381,12 @@ public class SolutionGasWaterRatioVerificationTest {
       boolean pass = rsw > 0;
       if (pass)
         passCount++;
-      System.out.printf("  %-20s: Rsw = %.6f Sm3/Sm3 - %s%n", method.name(), rsw,
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %-20s: Rsw = %.6f Sm3/Sm3 - %s%n", method.name(), rsw,
           pass ? "PASS" : "FAIL");
     }
 
     // Test 2: Rsw increases with pressure (McCain)
-    System.out.println("\nTest 2: Rsw increases with pressure (McCain method)");
+    logger.info("\nTest 2: Rsw increases with pressure (McCain method)");
     rswCalc.setCalculationMethod(SolutionGasWaterRatio.CalculationMethod.MCCAIN);
     rswCalc.setSalinity(0.0);
     double[] pressures = {50.0, 100.0, 150.0};
@@ -395,11 +399,11 @@ public class SolutionGasWaterRatioVerificationTest {
     boolean pressureTest = rsw[0] < rsw[1] && rsw[1] < rsw[2];
     if (pressureTest)
       passCount++;
-    System.out.printf("  50 bar: %.6f, 100 bar: %.6f, 150 bar: %.6f - %s%n", rsw[0], rsw[1], rsw[2],
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  50 bar: %.6f, 100 bar: %.6f, 150 bar: %.6f - %s%n", rsw[0], rsw[1], rsw[2],
         pressureTest ? "PASS" : "FAIL");
 
     // Test 3: Rsw decreases with salinity (McCain)
-    System.out.println("\nTest 3: Rsw decreases with salinity (McCain method)");
+    logger.info("\nTest 3: Rsw decreases with salinity (McCain method)");
     rswCalc.setTemperaturesAndPressures(new double[] {350.0}, new double[] {100.0});
 
     rswCalc.setSalinity(0.0);
@@ -414,12 +418,12 @@ public class SolutionGasWaterRatioVerificationTest {
     boolean salinityTest = rswSaline < rswPure;
     if (salinityTest)
       passCount++;
-    System.out.printf("  Pure water: %.6f, 5 wt%% NaCl: %.6f - %s%n", rswPure, rswSaline,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "  Pure water: %.6f, 5 wt%% NaCl: %.6f - %s%n", rswPure, rswSaline,
         salinityTest ? "PASS" : "FAIL");
 
     // Summary
-    System.out.println("\n" + SEPARATOR_DASH);
-    System.out.printf("CONSISTENCY CHECK SUMMARY: %d/%d tests passed%n", passCount, totalTests);
-    System.out.println(SEPARATOR_EQUALS);
+    logger.info("\n" + SEPARATOR_DASH);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "CONSISTENCY CHECK SUMMARY: %d/%d tests passed%n", passCount, totalTests);
+    logger.info(SEPARATOR_EQUALS);
   }
 }

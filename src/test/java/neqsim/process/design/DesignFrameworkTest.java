@@ -487,10 +487,5 @@ class DesignFrameworkTest {
     // Verify result
     assertNotNull(result);
     assertTrue(result.isConverged());
-
-    // Print sizing reports
-    System.out.println("\n=== Process System Auto-Sizing Results ===\n");
-    System.out.println(inletSep.getSizingReport());
-    System.out.println(compressor.getSizingReport());
   }
 }

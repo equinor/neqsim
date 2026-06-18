@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -18,6 +20,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author Even Solbraa
  */
 public class DiffusivityModelsTest {
+  private static final Logger logger = LogManager.getLogger(DiffusivityModelsTest.class);
   private SystemInterface hydrocarbonSystem;
   private SystemInterface aqueousSystem;
   private SystemInterface highPressureSystem;
@@ -269,11 +272,11 @@ public class DiffusivityModelsTest {
 
       System.out
           .println("\n=== Comparison: Hayduk-Minhas vs Siddiqi-Lucas (Hydrocarbon System) ===");
-      System.out.println("T = " + hydrocarbonSystem.getPhase("oil").getTemperature() + " K, P = "
+      logger.info("T = " + hydrocarbonSystem.getPhase("oil").getTemperature() + " K, P = "
           + hydrocarbonSystem.getPhase("oil").getPressure() + " bar");
-      System.out.println(String.format("%-20s %-20s %-20s %-15s", "Component Pair", "Hayduk-Minhas",
+      logger.info(String.format("%-20s %-20s %-20s %-15s", "Component Pair", "Hayduk-Minhas",
           "Siddiqi-Lucas", "Ratio (HM/SL)"));
-      System.out.println(StringUtils.repeat("-", 80));
+      logger.info(StringUtils.repeat("-", 80));
 
       int validComparisons = 0;
       for (int i = 0; i < nComps; i++) {
@@ -289,7 +292,7 @@ public class DiffusivityModelsTest {
             double ratio =
                 (dSiddiqi > 0 && Double.isFinite(dSiddiqi)) ? dHayduk / dSiddiqi : Double.NaN;
 
-            System.out.println(
+            logger.info(
                 String.format("%-20s %-20.4e %-20.4e %-15.2f", pair, dHayduk, dSiddiqi, ratio));
 
             // Hayduk-Minhas should always be in reasonable liquid diffusivity range
@@ -310,8 +313,8 @@ public class DiffusivityModelsTest {
           }
         }
       }
-      System.out.println("Valid model comparisons: " + validComparisons);
-      System.out.println();
+      logger.info("Valid model comparisons: " + validComparisons);
+
 
       // At least some comparisons should have valid Siddiqi-Lucas values
       assertTrue(validComparisons > 0,
@@ -345,18 +348,18 @@ public class DiffusivityModelsTest {
       // Literature value for CO2 in water at 25°C: ~1.9e-9 m²/s
       double literatureValue = 1.9e-9;
 
-      System.out.println("\n=== Comparison: CO2-Water Diffusivity Models ===");
-      System.out.println("T = " + aqueousSystem.getPhase("aqueous").getTemperature() + " K");
-      System.out.println(String.format("%-25s %-20s %-20s", "Model", "D (m²/s)", "vs Literature"));
-      System.out.println(StringUtils.repeat("-", 70));
-      System.out.println(String.format("%-25s %-20.4e %-20.2f%%", "Hayduk-Minhas (Aqueous)",
-          dHayduk, 100 * (dHayduk - literatureValue) / literatureValue));
-      System.out.println(String.format("%-25s %-20.4e %-20.2f%%", "Siddiqi-Lucas", dSiddiqi,
+      logger.info("\n=== Comparison: CO2-Water Diffusivity Models ===");
+      logger.info("T = " + aqueousSystem.getPhase("aqueous").getTemperature() + " K");
+      logger.info(String.format("%-25s %-20s %-20s", "Model", "D (m²/s)", "vs Literature"));
+      logger.info(StringUtils.repeat("-", 70));
+      logger.info(String.format("%-25s %-20.4e %-20.2f%%", "Hayduk-Minhas (Aqueous)", dHayduk,
+          100 * (dHayduk - literatureValue) / literatureValue));
+      logger.info(String.format("%-25s %-20.4e %-20.2f%%", "Siddiqi-Lucas", dSiddiqi,
           100 * (dSiddiqi - literatureValue) / literatureValue));
-      System.out.println(String.format("%-25s %-20.4e %-20.2f%%", "CO2-Water (Tamimi)", dCO2water,
+      logger.info(String.format("%-25s %-20.4e %-20.2f%%", "CO2-Water (Tamimi)", dCO2water,
           100 * (dCO2water - literatureValue) / literatureValue));
-      System.out.println(String.format("%-25s %-20.4e", "Literature (~25°C)", literatureValue));
-      System.out.println();
+      logger.info(String.format("%-25s %-20.4e", "Literature (~25°C)", literatureValue));
+
 
       // All models should give physically reasonable values
       assertTrue(dHayduk > 1e-11 && dHayduk < 1e-7,
@@ -408,11 +411,11 @@ public class DiffusivityModelsTest {
   void testTemperatureDependenceComparison() {
     double[] temps = {280.0, 300.0, 320.0, 350.0};
 
-    System.out.println("\n=== Temperature Dependence Comparison ===");
-    System.out.println("System: methane/n-hexane at 10 bar");
+    logger.info("\n=== Temperature Dependence Comparison ===");
+    logger.info("System: methane/n-hexane at 10 bar");
     System.out
         .println(String.format("%-10s %-18s %-18s", "T (K)", "Hayduk-Minhas", "Siddiqi-Lucas"));
-    System.out.println(StringUtils.repeat("-", 50));
+    logger.info(StringUtils.repeat("-", 50));
 
     for (double temp : temps) {
       SystemInterface testSystem = new SystemSrkEos(temp, 10.0);
@@ -435,13 +438,13 @@ public class DiffusivityModelsTest {
         double dHayduk = haydukModel.calcBinaryDiffusionCoefficient(0, 1, 0);
         double dSiddiqi = siddiqiModel.calcBinaryDiffusionCoefficient(0, 1, 0);
 
-        System.out.println(String.format("%-10.1f %-18.4e %-18.4e", temp, dHayduk, dSiddiqi));
+        logger.info(String.format("%-10.1f %-18.4e %-18.4e", temp, dHayduk, dSiddiqi));
 
         // All should increase with temperature
         assertTrue(dHayduk > 0, "Hayduk-Minhas should be positive at T=" + temp);
       }
     }
-    System.out.println();
+
   }
 
   /**
@@ -451,11 +454,11 @@ public class DiffusivityModelsTest {
   void testHighPressureEffectComparison() {
     double[] pressures = {10.0, 50.0, 100.0, 200.0, 400.0};
 
-    System.out.println("\n=== High-Pressure Effect Comparison ===");
-    System.out.println("System: methane/n-heptane at 350 K");
-    System.out.println(String.format("%-10s %-18s %-18s %-18s %-12s", "P (bar)", "Hayduk-Minhas",
+    logger.info("\n=== High-Pressure Effect Comparison ===");
+    logger.info("System: methane/n-heptane at 350 K");
+    logger.info(String.format("%-10s %-18s %-18s %-18s %-12s", "P (bar)", "Hayduk-Minhas",
         "HP-Corrected", "Siddiqi-Lucas", "HP Factor"));
-    System.out.println(StringUtils.repeat("-", 85));
+    logger.info(StringUtils.repeat("-", 85));
 
     for (double pressure : pressures) {
       SystemInterface testSystem = new SystemSrkEos(350.0, pressure);
@@ -480,8 +483,8 @@ public class DiffusivityModelsTest {
         double dSiddiqi = siddiqiModel.calcBinaryDiffusionCoefficient(0, 1, 0);
         double hpFactor = hpModel.getPressureCorrectionFactor();
 
-        System.out.println(String.format("%-10.1f %-18.4e %-18.4e %-18.4e %-12.4f", pressure,
-            dHayduk, dHP, dSiddiqi, hpFactor));
+        logger.info(String.format("%-10.1f %-18.4e %-18.4e %-18.4e %-12.4f", pressure, dHayduk, dHP,
+            dSiddiqi, hpFactor));
 
         // High-pressure corrected should be <= base model
         assertTrue(dHP <= dHayduk * 1.01, "HP-corrected should be <= base model");
@@ -490,6 +493,6 @@ public class DiffusivityModelsTest {
         assertTrue(hpFactor <= 1.0, "HP factor should be <= 1");
       }
     }
-    System.out.println();
+
   }
 }

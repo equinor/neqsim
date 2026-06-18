@@ -17,9 +17,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class ReactiveTPflash {
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(ReactiveTPflash.class);
+  private static final Logger logger = LogManager.getLogger(ReactiveTPflash.class);
 
+  /** Logger object for class. */
+  
   /**
    * <p>
    * main.
@@ -55,9 +56,9 @@ public class ReactiveTPflash {
     testSystem.init(0);
     testSystem.init(1);
     // testSystem.init(1);
-    // System.out.println("wt% MDEA " +
+    // logger.info("wt% MDEA " +
     // 100*testSystem.getPhase(1).getComponent("MDEA").getx()*testSystem.getPhase(1).getComponent("MDEA").getMolarMass()/(testSystem.getPhase(1).getComponent("MDEA").getx()*testSystem.getPhase(1).getComponent("MDEA").getMolarMass()+testSystem.getPhase(1).getComponent("water").getx()*testSystem.getPhase(1).getComponent("water").getMolarMass()));
-    // System.out.println("wt% Piperazine " +
+    // logger.info("wt% Piperazine " +
     // testSystem.getPhase(1).getComponent("Piperazine").getx()*testSystem.getPhase(1).getComponent("Piperazine").getMolarMass()/testSystem.getPhase(1).getMolarMass());
 
     try {
@@ -70,7 +71,7 @@ public class ReactiveTPflash {
     } catch (Exception ex) {
     }
     testSystem.display();
-    // System.out.println("pH " + testSystem.getPhase(1).getpH());
+    // logger.info("pH " + testSystem.getPhase(1).getpH());
     logger.info("pH " + testSystem.getPhase(1).getpH());
     logger.info(
         "activity coefficiet water " + testSystem.getPhase("aqueous").getActivityCoefficient(2));
@@ -82,7 +83,7 @@ public class ReactiveTPflash {
     // //ops.TPflash();
     // } catch(Exception ex){}
 
-    // System.out.println("loading " + (0.0005+0.05*i)+ " PCO2 " +
+    // logger.info("loading " + (0.0005+0.05*i)+ " PCO2 " +
     // testSystem.getPhase(0).getComponent("CO2").getx()*testSystem.getPressure());
     // testSystem.addComponent("CO2", 0.05*(6.45+1.78));
     // }

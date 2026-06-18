@@ -19,8 +19,9 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 class CompressorTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(CompressorTest.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(CompressorTest.class);
 
   static neqsim.thermo.system.SystemInterface testSystem = null;
 
@@ -588,7 +589,7 @@ class CompressorTest extends neqsim.NeqSimTest {
     Assertions.assertTrue(jsonReport.contains("\"autoSized\": true"));
     Assertions.assertTrue(jsonReport.contains("\"solveSpeed\": true"));
 
-    System.out.println("Auto-sizing report:\n" + report);
+    logger.info("Auto-sizing report:\n" + report);
   }
 
   /**
@@ -627,9 +628,9 @@ class CompressorTest extends neqsim.NeqSimTest {
     double originalSpeed = comp.getSpeed();
     comp.run();
 
-    System.out.println("Pipeline compressor auto-sized:");
-    System.out.println("  Template: " + comp.getCurveTemplate());
-    System.out.println("  Original speed: " + originalSpeed + " RPM");
-    System.out.println("  Calculated speed: " + comp.getSpeed() + " RPM");
+    logger.info("Pipeline compressor auto-sized:");
+    logger.info("  Template: " + comp.getCurveTemplate());
+    logger.info("  Original speed: " + originalSpeed + " RPM");
+    logger.info("  Calculated speed: " + comp.getSpeed() + " RPM");
   }
 }

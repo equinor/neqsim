@@ -2,6 +2,8 @@ package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -41,6 +43,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class TwoFluidPipeLedaFlowParityTest {
+  private static final Logger logger = LogManager.getLogger(TwoFluidPipeLedaFlowParityTest.class);
 
   // ==================== ONE-PHASE VALIDATION ====================
 
@@ -93,8 +96,8 @@ public class TwoFluidPipeLedaFlowParityTest {
       double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
       double dpPerKm = dp / 10.0;
 
-      System.out.println("=== Single-Phase Gas: 10 km, 200mm, 25000 kg/hr ===");
-      System.out.println("  dP = " + String.format("%.3f bar (%.3f bar/km)", dp, dpPerKm));
+      logger.info("=== Single-Phase Gas: 10 km, 200mm, 25000 kg/hr ===");
+      logger.info("  dP = " + String.format("%.3f bar (%.3f bar/km)", dp, dpPerKm));
 
       // Cross-validate with PipeBeggsAndBrills (which uses Darcy for single-phase)
       Stream inlet2 = new Stream("gas-feed2", gas);
@@ -111,8 +114,8 @@ public class TwoFluidPipeLedaFlowParityTest {
 
       double dpRef = inlet2.getPressure("bara") - ref.getOutletStream().getPressure("bara");
       double ratio = dp / dpRef;
-      System.out.println("  B&B dP = " + String.format("%.3f bar", dpRef));
-      System.out.println("  Ratio TF/BB = " + String.format("%.3f", ratio));
+      logger.info("  B&B dP = " + String.format("%.3f bar", dpRef));
+      logger.info("  Ratio TF/BB = " + String.format("%.3f", ratio));
 
       // Single-phase: models must agree within 10%
       assertTrue(dp > 0, "Pressure drop must be positive");
@@ -149,8 +152,8 @@ public class TwoFluidPipeLedaFlowParityTest {
       proc.run();
 
       double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
-      System.out.println("=== Single-Phase Oil: 5 km, 150mm, 50000 kg/hr ===");
-      System.out.println("  dP = " + String.format("%.3f bar", dp));
+      logger.info("=== Single-Phase Oil: 5 km, 150mm, 50000 kg/hr ===");
+      logger.info("  dP = " + String.format("%.3f bar", dp));
 
       assertTrue(dp > 0, "Oil pressure drop must be positive");
       // Oil through 150mm pipe at 50 t/hr for 5km: expect 1-20 bar
@@ -186,8 +189,8 @@ public class TwoFluidPipeLedaFlowParityTest {
       proc.run();
 
       double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
-      System.out.println("=== Single-Phase Water: 3 km, 150mm, 30000 kg/hr ===");
-      System.out.println("  dP = " + String.format("%.3f bar", dp));
+      logger.info("=== Single-Phase Water: 3 km, 150mm, 30000 kg/hr ===");
+      logger.info("  dP = " + String.format("%.3f bar", dp));
 
       assertTrue(dp > 0, "Water pressure drop must be positive");
       assertTrue(dp > 0.1 && dp < 20, "Water dP should be in physical range. Got " + dp);
@@ -248,9 +251,9 @@ public class TwoFluidPipeLedaFlowParityTest {
       double[] holdup = pipe.getLiquidHoldupProfile();
       double avgHoldup = calcAvg(holdup);
 
-      System.out.println("=== Wet Gas Stratified: 20 km, 10 inch ===");
-      System.out.println("  dP = " + String.format("%.3f bar (%.3f bar/km)", dp, dpPerKm));
-      System.out.println("  Avg holdup = " + String.format("%.4f", avgHoldup));
+      logger.info("=== Wet Gas Stratified: 20 km, 10 inch ===");
+      logger.info("  dP = " + String.format("%.3f bar (%.3f bar/km)", dp, dpPerKm));
+      logger.info("  Avg holdup = " + String.format("%.4f", avgHoldup));
 
       assertTrue(dp > 0, "dP must be positive");
       // Published range: Nossen et al. (2000): dP/km = 0.1-2.0 bar/km for similar conditions
@@ -304,9 +307,9 @@ public class TwoFluidPipeLedaFlowParityTest {
       double[] holdup = pipe.getLiquidHoldupProfile();
       double avgHoldup = calcAvg(holdup);
 
-      System.out.println("=== Slug Flow: 10 km, 8 inch ===");
-      System.out.println("  dP = " + String.format("%.3f bar", dp));
-      System.out.println("  Avg holdup = " + String.format("%.3f", avgHoldup));
+      logger.info("=== Slug Flow: 10 km, 8 inch ===");
+      logger.info("  dP = " + String.format("%.3f bar", dp));
+      logger.info("  Avg holdup = " + String.format("%.3f", avgHoldup));
 
       assertTrue(dp > 0, "dP must be positive");
       // Slug flow: holdup 0.15-0.75 (Beggs-Brill 1973, Fig 8)
@@ -357,8 +360,8 @@ public class TwoFluidPipeLedaFlowParityTest {
 
       double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
 
-      System.out.println("=== Vertical Riser: 200 m ===");
-      System.out.println("  dP = " + String.format("%.3f bar", dp));
+      logger.info("=== Vertical Riser: 200 m ===");
+      logger.info("  dP = " + String.format("%.3f bar", dp));
 
       // For 200m riser with gas-liquid mixture:
       // Minimum (pure gas at 80 bara): ~50*9.81*200/1e5 = 0.98 bar
@@ -433,10 +436,10 @@ public class TwoFluidPipeLedaFlowParityTest {
 
       double dpFlat = inlet2.getPressure("bara") - pipeFlat.getOutletStream().getPressure("bara");
 
-      System.out.println("=== Downhill vs Horizontal ===");
-      System.out.println("  Downhill dP = " + String.format("%.3f bar", dpDown));
-      System.out.println("  Flat dP     = " + String.format("%.3f bar", dpFlat));
-      System.out.println("  Elev drop   = " + String.format("%.1f m", elevDrop));
+      logger.info("=== Downhill vs Horizontal ===");
+      logger.info("  Downhill dP = " + String.format("%.3f bar", dpDown));
+      logger.info("  Flat dP     = " + String.format("%.3f bar", dpFlat));
+      logger.info("  Elev drop   = " + String.format("%.1f m", elevDrop));
 
       // Downhill should have lower dP than horizontal
       assertTrue(dpDown < dpFlat,
@@ -502,9 +505,9 @@ public class TwoFluidPipeLedaFlowParityTest {
       double[] holdup = pipe.getLiquidHoldupProfile();
       double avgHoldup = calcAvg(holdup);
 
-      System.out.println("=== Three-Phase: 20% WC, 15 km, 10 inch ===");
-      System.out.println("  dP = " + String.format("%.3f bar", dp));
-      System.out.println("  Avg holdup = " + String.format("%.4f", avgHoldup));
+      logger.info("=== Three-Phase: 20% WC, 15 km, 10 inch ===");
+      logger.info("  dP = " + String.format("%.3f bar", dp));
+      logger.info("  Avg holdup = " + String.format("%.4f", avgHoldup));
 
       assertTrue(dp > 0, "dP must be positive");
 
@@ -556,9 +559,9 @@ public class TwoFluidPipeLedaFlowParityTest {
       double[] holdup = pipe.getLiquidHoldupProfile();
       double avgHoldup = calcAvg(holdup);
 
-      System.out.println("=== Three-Phase: 50% WC, 10 km, 8 inch ===");
-      System.out.println("  dP = " + String.format("%.3f bar", dp));
-      System.out.println("  Avg holdup = " + String.format("%.3f", avgHoldup));
+      logger.info("=== Three-Phase: 50% WC, 10 km, 8 inch ===");
+      logger.info("  dP = " + String.format("%.3f bar", dp));
+      logger.info("  Avg holdup = " + String.format("%.3f", avgHoldup));
 
       assertTrue(dp > 0, "dP must be positive for three-phase flow");
       // High water cut: substantial liquid loading
@@ -613,9 +616,9 @@ public class TwoFluidPipeLedaFlowParityTest {
       double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
       double[] holdup = pipe.getLiquidHoldupProfile();
 
-      System.out.println("=== Three-Phase Terrain: 10 km, undulating ===");
-      System.out.println("  dP = " + String.format("%.3f bar", dp));
-      System.out.println("  Holdup range: [" + String.format("%.4f", min(holdup)) + ", "
+      logger.info("=== Three-Phase Terrain: 10 km, undulating ===");
+      logger.info("  dP = " + String.format("%.3f bar", dp));
+      logger.info("  Holdup range: [" + String.format("%.4f", min(holdup)) + ", "
           + String.format("%.4f", max(holdup)) + "]");
 
       // Note: dP can be negative for undulating terrain with liquid accumulation
@@ -699,8 +702,8 @@ public class TwoFluidPipeLedaFlowParityTest {
       // Run transient
       double dt = 0.5;
       int nSteps = 20;
-      System.out.println("=== Transient: 100% flow increase, 200 m pipe ===");
-      System.out.println("  Initial outlet P: " + String.format("%.3f bara", initialOutletP));
+      logger.info("=== Transient: 100% flow increase, 200 m pipe ===");
+      logger.info("  Initial outlet P: " + String.format("%.3f bara", initialOutletP));
 
       for (int step = 0; step < nSteps; step++) {
         pipe.runTransient(dt, UUID.randomUUID());
@@ -715,7 +718,7 @@ public class TwoFluidPipeLedaFlowParityTest {
         assertTrue(h >= 0 && h <= 1.0, "Final holdup must be in [0,1]. Got " + h);
       }
 
-      System.out.println("  Transient completed without crash or NaN — PASS");
+      logger.info("  Transient completed without crash or NaN — PASS");
     }
 
     /**
@@ -765,9 +768,9 @@ public class TwoFluidPipeLedaFlowParityTest {
 
       double dpFinal = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
 
-      System.out.println("=== Single-Phase Gas Transient ===");
-      System.out.println("  Initial dP: " + String.format("%.3f bar", dpInitial));
-      System.out.println("  Final dP:   " + String.format("%.3f bar", dpFinal));
+      logger.info("=== Single-Phase Gas Transient ===");
+      logger.info("  Initial dP: " + String.format("%.3f bar", dpInitial));
+      logger.info("  Final dP:   " + String.format("%.3f bar", dpFinal));
 
       // Verify the transient ran stably — all pressures finite and positive
       // Note: runTransient only advances internal section state; the inlet BC is
@@ -836,10 +839,10 @@ public class TwoFluidPipeLedaFlowParityTest {
         }
       }
 
-      System.out.println("=== Three-Phase Transient Stability ===");
-      System.out.println("  " + nSteps + " steps x " + dt + "s each");
-      System.out.println("  NaN count: " + nanCount);
-      System.out.println("  Boundary violations: " + boundaryViolations);
+      logger.info("=== Three-Phase Transient Stability ===");
+      logger.info("  " + nSteps + " steps x " + dt + "s each");
+      logger.info("  NaN count: " + nanCount);
+      logger.info("  Boundary violations: " + boundaryViolations);
 
       assertEquals(0, nanCount, "No NaN values should appear during transient");
       assertEquals(0, boundaryViolations, "Holdup must stay in [0,1] during transient");
@@ -864,8 +867,8 @@ public class TwoFluidPipeLedaFlowParityTest {
       double[] flows = {5000, 10000, 20000, 40000};
       double prevDp = 0;
 
-      System.out.println("=== dP Monotonicity ===");
-      System.out.println("Flow (kg/hr) | dP (bar)");
+      logger.info("=== dP Monotonicity ===");
+      logger.info("Flow (kg/hr) | dP (bar)");
 
       for (double flow : flows) {
         SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 60.0);
@@ -894,7 +897,7 @@ public class TwoFluidPipeLedaFlowParityTest {
         proc.run();
 
         double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
-        System.out.printf("  %10.0f | %8.3f%n", flow, dp);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  %10.0f | %8.3f%n", flow, dp);
 
         if (prevDp > 0) {
           assertTrue(dp > prevDp * 0.8,
@@ -953,8 +956,8 @@ public class TwoFluidPipeLedaFlowParityTest {
       double[] diameters = {0.1, 0.15, 0.2, 0.3}; // 100mm to 300mm
       double prevDp = Double.MAX_VALUE;
 
-      System.out.println("=== Diameter Effect ===");
-      System.out.println("Diameter (mm) | dP (bar)");
+      logger.info("=== Diameter Effect ===");
+      logger.info("Diameter (mm) | dP (bar)");
 
       for (double d : diameters) {
         SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 60.0);
@@ -983,7 +986,7 @@ public class TwoFluidPipeLedaFlowParityTest {
         proc.run();
 
         double dp = inlet.getPressure("bara") - pipe.getOutletStream().getPressure("bara");
-        System.out.printf("  %13.0f | %8.3f%n", d * 1000, dp);
+        logger.printf(org.apache.logging.log4j.Level.INFO, "  %13.0f | %8.3f%n", d * 1000, dp);
 
         // dP should decrease with increasing diameter
         assertTrue(dp < prevDp,

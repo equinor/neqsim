@@ -18,6 +18,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Test class demonstrating HYSYS-style diagram generation.
@@ -36,6 +38,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class HysysStyleDiagramTest {
+  private static final Logger logger = LogManager.getLogger(HysysStyleDiagramTest.class);
+
   private ProcessSystem processSystem;
 
   /**
@@ -130,8 +134,8 @@ public class HysysStyleDiagramTest {
     Files.createDirectories(Paths.get(outputDir));
     Files.write(Paths.get(outputDir, "hysys-style-process.dot"), dotContent.getBytes());
 
-    System.out.println("HYSYS-style DOT file generated: output/hysys-style-process.dot");
-    System.out.println("\nTo convert to SVG, run:");
+    logger.info("HYSYS-style DOT file generated: output/hysys-style-process.dot");
+    logger.info("\nTo convert to SVG, run:");
     System.out
         .println("  dot -Tsvg output/hysys-style-process.dot -o output/hysys-style-process.svg");
 
@@ -164,7 +168,7 @@ public class HysysStyleDiagramTest {
     Files.createDirectories(Paths.get(outputDir));
     Files.write(Paths.get(outputDir, "proii-style-process.dot"), dotContent.getBytes());
 
-    System.out.println("PRO/II-style DOT file generated: output/proii-style-process.dot");
+    logger.info("PRO/II-style DOT file generated: output/proii-style-process.dot");
 
     // Verify content
     org.junit.jupiter.api.Assertions.assertTrue(dotContent.contains("digraph"),
@@ -195,7 +199,7 @@ public class HysysStyleDiagramTest {
     Files.createDirectories(Paths.get(outputDir));
     Files.write(Paths.get(outputDir, "aspen-style-process.dot"), dotContent.getBytes());
 
-    System.out.println("Aspen Plus-style DOT file generated: output/aspen-style-process.dot");
+    logger.info("Aspen Plus-style DOT file generated: output/aspen-style-process.dot");
 
     // Verify content
     org.junit.jupiter.api.Assertions.assertTrue(dotContent.contains("digraph"),
@@ -223,10 +227,10 @@ public class HysysStyleDiagramTest {
       String filename = style.name().toLowerCase() + "-style.dot";
       Files.write(Paths.get(outputDir, filename), dotContent.getBytes());
 
-      System.out.println("Generated: output/" + filename);
+      logger.info("Generated: output/" + filename);
     }
 
-    System.out.println("\nGenerated diagrams for all styles. Convert with:");
-    System.out.println("  for %f in (output\\*-style.dot) do dot -Tsvg %f -o %~dpnf.svg");
+    logger.info("\nGenerated diagrams for all styles. Convert with:");
+    logger.info("  for %f in (output\\*-style.dot) do dot -Tsvg %f -o %~dpnf.svg");
   }
 }
