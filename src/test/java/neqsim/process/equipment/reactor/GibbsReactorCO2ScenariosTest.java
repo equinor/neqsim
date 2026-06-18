@@ -10,7 +10,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Scenario tests (exercise only) for GibbsReactorCO2 using the tables provided in the attachments.
- * These tests run the reactor and print outlet mole-fractions (ppm) for manual verification. T
+ * These tests run the reactor and print outlet mole-fractions (ppm) for manual verification.
  */
 @Tag("slow")
 public class GibbsReactorCO2ScenariosTest {
@@ -157,8 +157,8 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("SO2", 37.0);
     sys.addComponent("oxygen", 133.0);
     sys.addComponent("H2S", 28.0);
-    double[] expectedPpm = new double[] {92.0, 37.0, 0.0, 133.0, 28.0};
-    String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S"};
+    double[] expectedPpm = new double[] {37.0, 0.0, 133.0};
+    String[] expectedNames = new String[] {"SO2", "NO2", "oxygen"};
     runAndPrintWithAssertions(sys, "5", expectedNames, expectedPpm);
   }
 

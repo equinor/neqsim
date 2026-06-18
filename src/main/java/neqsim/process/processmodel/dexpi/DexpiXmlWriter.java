@@ -12,7 +12,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -40,6 +39,7 @@ import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.expander.Expander;
@@ -64,7 +64,6 @@ import neqsim.process.measurementdevice.TemperatureTransmitter;
 import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.equipment.TwoPortEquipment;
 
 /**
  * Utility for exporting {@link ProcessSystem}s created from DEXPI data back into a lightweight
