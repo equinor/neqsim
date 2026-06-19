@@ -20,6 +20,13 @@ import neqsim.util.exception.InvalidInputException;
 public class RateUnit extends neqsim.util.unit.BaseUnit {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  private static final String[] ALLOWED_UNITS = { "mole/sec", "mol/sec", "SI", "mol", "mole/min", "mol/min", "mole/hr",
+      "mol/hr", "kmole/sec", "kmol/sec", "kmole/min", "kmol/min", "kmole/hr", "kmol/hr", "kmole/day", "kmol/day",
+      "Nlitre/min", "Nlitre/sec", "Am3/hr", "m3/hr", "Am3/day", "m3/day", "Am3/min", "m3/min", "Am3/sec", "m3/sec",
+      "kg/sec", "kg/min", "kg/hr", "kg/day", "Sm^3/sec", "Sm3/sec", "Sm^3/min", "Sm3/min", "Sm^3/hr", "Sm3/hr",
+      "Sm^3/day", "Sm3/day", "MSm^3/day", "MSm3/day", "MSm^3/hr", "MSm3/hr", "idSm3/sec", "idSm3/min", "idSm3/hr",
+      "idSm3/day", "gallons/min", "lb/hr", "lbmole/hr", "lbmol/hr", "barrel/day", "bbl/day" };
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(RateUnit.class);
 
@@ -58,6 +65,7 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
     } else {
       mol_m3 = 1.0 / (molarmass) * stddens * 1000;
     }
+    double factor = 1.0;
 
     if (unit.equals("mole/sec") || unit.equals("mol/sec") || unit.equals("SI") || unit.equals("mol")) {
       factor = 1.0;
@@ -135,6 +143,10 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
     return factor;
   }
 
+  public String getSIUnit() {
+    return "mol/sec";
+  }
+
   /** {@inheritDoc} */
   @Override
   public String getSIUnit() {
@@ -149,7 +161,39 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String tounit) {
-    return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
+  public double getValue(String toUnit) {
+    return getSIvalue() / getConversionFactor(toUnit);
+  }
+
+  /**
+   * Convert a rate value using the generic static signature.
+   *
+   * <p>
+   * Rate conversion depends on fluid properties, so this overload is intentionally unsupported.
+   *
+   * @param value value to convert
+   * @param unit source unit
+   * @param toUnit target unit
+   * @return never returns normally
+   */
+  public static double convert(double value, String unit, String toUnit) {
+    throw new UnsupportedOperationException(
+        "Rate conversion requires fluid properties. " + "Use convert(value, unit, toUnit, molarmass, stddens, boilp).");
+  }
+
+  /**
+   * Convert a rate value between units using fluid properties.
+   *
+   * @param value value to convert
+   * @param unit source unit
+   * @param toUnit target unit
+   * @param molarmass molar mass
+   * @param stddens standard density
+   * @param boilp boiling point proxy
+   * @return converted rate value
+   */
+  public static double convert(double value, String unit, String toUnit, double molarmass, double stddens,
+      double boilp) {
+    return new RateUnit(value, unit, molarmass, stddens, boilp).getValue(toUnit);
   }
 }

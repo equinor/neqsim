@@ -71,6 +71,7 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit implements LinearScaleU
    * <li>PowerUnit(1, "MW").getValue("kW") = 1000</li>
    * <li>PowerUnit(745.7, "hp").getValue("W") ≈ 556000</li>
    * </ul>
+   * </p>
    *
    * @param toUnit target unit name (one of the supported units)
    * @return converted value in the target unit
@@ -92,6 +93,7 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit implements LinearScaleU
    * <li>PowerUnit.convert(1000, "W", "kW") = 1</li>
    * <li>PowerUnit.convert(746, "hp", "W") ≈ 557000</li>
    * </ul>
+   * </p>
    *
    * @param value value to convert
    * @param unit source unit name
@@ -101,11 +103,5 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit implements LinearScaleU
    */
   public static double convert(double value, String unit, String toUnit) {
     return new PowerUnit(value, unit).getValue(toUnit);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(double value, String fromUnit, String toUnit) {
-    return LinearScaleUnit.super.getValue(value, fromUnit, toUnit);
   }
 }

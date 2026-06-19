@@ -80,6 +80,7 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
    * <li>LengthUnit(5, "ft").getValue("m") = 1.524</li>
    * <li>LengthUnit(1, "km").getValue("ft") = 3280.84</li>
    * </ul>
+   * </p>
    *
    * @param toUnit target unit name (one of the supported units)
    * @return converted value in the target unit
@@ -100,6 +101,7 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
    * <li>LengthUnit.convert(100, "cm", "m") = 1.0</li>
    * <li>LengthUnit.convert(5280, "ft", "km") = 1.60934</li>
    * </ul>
+   * </p>
    *
    * @param value value to convert
    * @param unit source unit name
@@ -109,11 +111,5 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
    */
   public static double convert(double value, String unit, String toUnit) {
     return new LengthUnit(value, unit).getValue(toUnit);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(double value, String fromUnit, String toUnit) {
-    return LinearScaleUnit.super.getValue(value, fromUnit, toUnit);
   }
 }

@@ -86,6 +86,7 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit implements LinearScale
    * <li>EnergyUnit(3.6, "MJ").getValue("kWh") = 1.0</li>
    * <li>EnergyUnit(1055, "BTU").getValue("kJ") ≈ 1114</li>
    * </ul>
+   * </p>
    *
    * @param toUnit target unit name (one of the supported units)
    * @return converted value in the target unit
@@ -107,6 +108,7 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit implements LinearScale
    * <li>EnergyUnit.convert(3600, "Wh", "MJ") = 12.96</li>
    * <li>EnergyUnit.convert(4184, "kcal", "J") = 17513056</li>
    * </ul>
+   * </p>
    *
    * @param value value to convert
    * @param unit source unit name
@@ -116,11 +118,5 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit implements LinearScale
    */
   public static double convert(double value, String unit, String toUnit) {
     return new EnergyUnit(value, unit).getValue(toUnit);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(double value, String fromUnit, String toUnit) {
-    return LinearScaleUnit.super.getValue(value, fromUnit, toUnit);
   }
 }

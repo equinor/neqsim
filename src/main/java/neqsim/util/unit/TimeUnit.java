@@ -72,12 +72,12 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
    * <p>
    * Converts the stored value from its original unit to the target unit. Supported units: s, sec, second, min, minute,
    * h, hr, hour, d, day. Examples:
-   * </p>
    * <ul>
    * <li>TimeUnit(60, "min").getValue("s") = 3600</li>
    * <li>TimeUnit(24, "h").getValue("d") = 1.0</li>
    * <li>TimeUnit(1, "d").getValue("s") = 86400</li>
    * </ul>
+   * </p>
    *
    * @param toUnit target unit name (one of the supported units)
    * @return converted value in the target unit
@@ -94,12 +94,12 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
    * <p>
    * Static convenience method for converting between any two supported units. Supported units: s, sec, second, min,
    * minute, h, hr, hour, d, day. Examples:
-   * </p>
    * <ul>
    * <li>TimeUnit.convert(60, "min", "h") = 1.0</li>
    * <li>TimeUnit.convert(2, "h", "min") = 120</li>
    * <li>TimeUnit.convert(1, "d", "s") = 86400</li>
    * </ul>
+   * </p>
    *
    * @param value value to convert
    * @param unit source unit name
@@ -110,11 +110,4 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
   public static double convert(double value, String unit, String toUnit) {
     return new TimeUnit(value, unit).getValue(toUnit);
   }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(double value, String fromUnit, String toUnit) {
-    return LinearScaleUnit.super.getValue(value, fromUnit, toUnit);
-  }
-
 }
