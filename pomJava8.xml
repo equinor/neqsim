@@ -70,12 +70,12 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
-			<version>2.26.0</version>
+			<version>2.26.0</version> <!-- 2.x Last version supporting Java 8 runtime -->
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>2.26.0</version>
+			<version>2.26.0</version> <!-- 2.x Last version supporting Java 8 runtime -->
 		</dependency>
 		<dependency>
 			<groupId>com.thoughtworks.xstream</groupId>
@@ -132,17 +132,17 @@
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
-			<version>2.13.2</version>
+			<version>2.14.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.17.3</version> <!-- Last 2.17.x supporting Java 8 -->
+			<version>2.22.0</version> <!-- Last 2.22.x supporting Java 8 -->
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-yaml</artifactId>
-			<version>2.17.3</version> <!-- Last 2.17.x supporting Java 8 -->
+			<version>2.22.0</version> <!-- Last 2.22.x supporting Java 8 -->
 		</dependency>
 	</dependencies>
 	<profiles>
